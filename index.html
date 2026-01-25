@@ -3,24 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yertal Corp | Tech & Education</title>
+    <title>Yertal Corp | AI & Engineering Excellence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: #f8fafc; scroll-behavior: smooth; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
         .active-nav { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
+        .curriculum-card:hover { transform: translateY(-5px); border-color: #3b82f6; transition: all 0.3s ease; }
+        .logo-img { height: 40px; width: auto; object-fit: contain; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans">
     <header class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-xl">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl text-white">Y</div>
-            <h1 class="text-xl font-bold tracking-tight uppercase">Yertal <span class="text-blue-500">Corp</span></h1>
+        <div class="flex items-center gap-3 cursor-pointer" onclick="showPage('home')">
+            <!-- LOGO PLACEHOLDER: Replace 'logo.png' with your actual filename -->
+            <img src="logo.png" alt="Yertal Corp Logo" onerror="this.src='https://placehold.co/40x40/3b82f6/white?text=Y'" class="logo-img">
+            <h1 class="text-xl font-bold tracking-tight uppercase hidden sm:block">Yertal <span class="text-blue-500">Corp</span></h1>
         </div>
         <nav class="hidden md:flex gap-8 text-sm font-medium uppercase tracking-wider">
             <button onclick="showPage('home')" id="nav-home" class="hover:text-blue-400 transition">Home</button>
+            <button onclick="showPage('curriculum')" id="nav-curriculum" class="hover:text-blue-400 transition">Curriculum</button>
             <button onclick="showPage('arcade')" id="nav-arcade" class="hover:text-blue-400 transition">Arcade</button>
-            <a href="https://yertal.wordpress.com" target="_blank" class="hover:text-blue-400 transition">Curriculum</a>
         </nav>
         <button onclick="showPage('support')" class="bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded-full text-sm font-bold transition">Support</button>
     </header>
@@ -29,12 +32,15 @@
         <!-- Content Injected by JS -->
     </main>
 
-    <footer class="glass mt-auto py-6 px-6 border-t border-white/5 text-center md:text-left">
-        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <p class="text-xs opacity-50">© 2026 Yertal Corp. Mastering the core tech stack.</p>
+    <footer class="glass mt-auto py-10 px-6 border-t border-white/5">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
+            <div>
+                <p class="text-sm font-semibold text-blue-400 uppercase tracking-widest">Yertal Corp</p>
+                <p class="text-xs opacity-50 mt-2 max-w-xs italic">"Mastering AI, Logic, and Technical Systems."</p>
+            </div>
             <div class="flex gap-6 text-xs uppercase tracking-widest">
-                <a href="https://github.com/yertalcorp" class="text-blue-400 hover:text-white transition">GitHub</a>
-                <a href="https://yertal.wordpress.com" class="text-blue-400 hover:text-white transition">WordPress</a>
+                <a href="https://github.com/yertalcorp" target="_blank" class="text-blue-400 hover:text-white transition underline">GitHub</a>
+                <a href="https://yertal.wordpress.com" target="_blank" class="text-blue-400 hover:text-white transition underline">WordPress</a>
             </div>
         </div>
     </footer>
@@ -48,40 +54,79 @@
 
         function showPage(page) {
             const app = document.getElementById('app');
+            window.scrollTo(0, 0);
             updateNav(page);
+
             if (page === 'home') {
                 app.innerHTML = `
-                    <section class="max-w-4xl mx-auto py-20 text-center">
-                        <h2 class="text-5xl font-black mb-6">Think Like a <span class="text-blue-500">Core Techie.</span></h2>
-                        <p class="text-xl text-slate-400 mb-10">Welcome to Yertal Corp. We specialize in Python automation and game logic education.</p>
-                        <button onclick="showPage('arcade')" class="bg-blue-600 px-8 py-3 rounded-xl font-bold hover:bg-blue-500 transition">Enter Arcade</button>
+                    <section class="max-w-5xl mx-auto py-20 text-center md:text-left flex flex-col md:flex-row items-center gap-12">
+                        <div class="flex-1">
+                            <h2 class="text-5xl md:text-7xl font-black mb-8 leading-tight">Mastering the <span class="text-blue-500">Core.</span></h2>
+                            <p class="text-xl text-slate-400 mb-10 leading-relaxed">
+                                Welcome to Yertal Corp. We specialize in AI systems, high-performance automation, and deep technical education designed for the modern engineer.
+                            </p>
+                            <div class="flex flex-wrap gap-4 justify-center md:justify-start">
+                                <button onclick="showPage('curriculum')" class="bg-blue-600 px-10 py-4 rounded-2xl font-bold hover:bg-blue-500 transition shadow-lg shadow-blue-600/20">View Curriculum</button>
+                                <button onclick="showPage('arcade')" class="glass px-10 py-4 rounded-2xl font-bold hover:bg-white/10 transition">Play Games</button>
+                            </div>
+                        </div>
+                        <div class="flex-1 hidden md:block">
+                            <div class="w-full h-80 glass rounded-[3rem] border border-blue-500/30 flex items-center justify-center text-9xl">🚀</div>
+                        </div>
+                    </section>`;
+            } else if (page === 'curriculum') {
+                app.innerHTML = `
+                    <section class="max-w-6xl mx-auto py-10">
+                        <h2 class="text-4xl font-black mb-4">Engineering <span class="text-blue-500">Curriculum</span></h2>
+                        <p class="text-slate-400 mb-12">Structured learning paths for the AI era.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${createCurriculumCard('AI Foundations', 'Basics, Tools, and Strategic Productivity.', '🤖')}
+                            ${createCurriculumCard('AI Automation', 'Building intelligent agents and automated workflows.', '⚙️')}
+                            ${createCurriculumCard('Python Programming', 'From foundational logic to complex automation.', '🐍')}
+                            ${createCurriculumCard('C Programming', 'Mastering the metal with low-level systems engineering.', '💎')}
+                            ${createCurriculumCard('Web Engineering', 'Modern, responsive architectures (Coming Soon).', '🌐')}
+                        </div>
                     </section>`;
             } else if (page === 'arcade') {
                 app.innerHTML = `
-                    <section class="max-w-4xl mx-auto py-10">
-                        <h2 class="text-3xl font-bold mb-8">The Arcade</h2>
-                        <div onclick="showPage('play')" class="glass p-6 rounded-2xl cursor-pointer border-2 border-transparent hover:border-blue-500 transition">
-                            <h3 class="text-xl font-bold text-blue-400">Space Dodger</h3>
-                            <p class="text-slate-400 text-sm">Test your reaction speed and collision logic.</p>
+                    <section class="max-w-6xl mx-auto py-10">
+                        <h2 class="text-4xl font-black mb-12 italic">The Lab Arcade</h2>
+                        <div onclick="showPage('play')" class="glass p-8 rounded-[2rem] cursor-pointer curriculum-card border-2 border-transparent group">
+                            <div class="h-48 bg-slate-900/50 rounded-2xl mb-6 flex items-center justify-center text-7xl group-hover:scale-110 transition duration-500">🌌</div>
+                            <h3 class="text-2xl font-bold mb-2 text-blue-400">Space Dodger</h3>
+                            <p class="text-sm text-slate-400 mb-6">Master Canvas-based collision detection and coordinate systems.</p>
+                            <span class="text-white font-bold tracking-widest text-sm underline underline-offset-8">LAUNCH →</span>
                         </div>
                     </section>`;
             } else if (page === 'play') {
                 app.innerHTML = `
-                    <section class="max-w-5xl mx-auto">
-                        <button onclick="showPage('arcade')" class="text-blue-400 mb-4 block underline">← Back</button>
-                        <div class="aspect-video glass rounded-2xl overflow-hidden bg-black border-4 border-white/5">
+                    <section class="max-w-6xl mx-auto py-6">
+                        <button onclick="showPage('arcade')" class="text-blue-400 mb-6 block font-bold">← Back to Lab</button>
+                        <div class="aspect-video glass rounded-[3rem] overflow-hidden bg-black border-4 border-white/5">
                             <iframe src="game-logic.html" class="w-full h-full border-none"></iframe>
                         </div>
                     </section>`;
             } else if (page === 'support') {
                 app.innerHTML = `
-                    <section class="max-w-xl mx-auto py-20 text-center">
-                        <h2 class="text-4xl font-bold mb-6 italic">Support the Mission.</h2>
-                        <p class="text-slate-400 mb-8">Help keep the Yertal curriculum independent and free.</p>
-                        <button class="w-full bg-blue-600 py-4 rounded-xl font-bold">Donate via Card / UPI</button>
+                    <section class="max-w-2xl mx-auto py-24 text-center">
+                        <h2 class="text-5xl font-black mb-8 italic text-blue-500">Support the Mission.</h2>
+                        <p class="text-slate-400 text-lg mb-12">Help maintain the infrastructure for our free curriculum and open-source labs.</p>
+                        <a href="https://yertal.wordpress.com" target="_blank" class="block glass py-5 rounded-2xl font-bold text-xl hover:bg-white/10 transition">Visit the Blog</a>
                     </section>`;
             }
         }
+
+        function createCurriculumCard(title, desc, icon) {
+            return \`
+                <div class="glass p-8 rounded-[2rem] curriculum-card border-2 border-transparent">
+                    <div class="text-4xl mb-4">\${icon}</div>
+                    <h3 class="text-xl font-bold mb-3">\${title}</h3>
+                    <p class="text-sm text-slate-400 leading-relaxed mb-6">\${desc}</p>
+                    <a href="https://yertal.wordpress.com" target="_blank" class="text-blue-400 text-xs font-bold uppercase tracking-widest hover:underline">Start Learning →</a>
+                </div>\`;
+        }
+
         window.onload = () => showPage('home');
     </script>
 </body>
