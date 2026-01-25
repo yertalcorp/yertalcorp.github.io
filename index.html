@@ -1,3 +1,88 @@
-<html>
-  <header><h1>Yertal Corp Hub</h1></header>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yertal Corp | Tech & Education</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; scroll-behavior: smooth; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        .active-nav { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans">
+    <header class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-xl">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl text-white">Y</div>
+            <h1 class="text-xl font-bold tracking-tight uppercase">Yertal <span class="text-blue-500">Corp</span></h1>
+        </div>
+        <nav class="hidden md:flex gap-8 text-sm font-medium uppercase tracking-wider">
+            <button onclick="showPage('home')" id="nav-home" class="hover:text-blue-400 transition">Home</button>
+            <button onclick="showPage('arcade')" id="nav-arcade" class="hover:text-blue-400 transition">Arcade</button>
+            <a href="https://yertal.wordpress.com" target="_blank" class="hover:text-blue-400 transition">Curriculum</a>
+        </nav>
+        <button onclick="showPage('support')" class="bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded-full text-sm font-bold transition">Support</button>
+    </header>
+
+    <main id="app" class="flex-grow p-6">
+        <!-- Content Injected by JS -->
+    </main>
+
+    <footer class="glass mt-auto py-6 px-6 border-t border-white/5 text-center md:text-left">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-xs opacity-50">© 2026 Yertal Corp. Mastering the core tech stack.</p>
+            <div class="flex gap-6 text-xs uppercase tracking-widest">
+                <a href="https://github.com/yertalcorp" class="text-blue-400 hover:text-white transition">GitHub</a>
+                <a href="https://yertal.wordpress.com" class="text-blue-400 hover:text-white transition">WordPress</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function updateNav(activeId) {
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active-nav'));
+            const activeBtn = document.getElementById('nav-' + activeId);
+            if (activeBtn) activeBtn.classList.add('active-nav');
+        }
+
+        function showPage(page) {
+            const app = document.getElementById('app');
+            updateNav(page);
+            if (page === 'home') {
+                app.innerHTML = `
+                    <section class="max-w-4xl mx-auto py-20 text-center">
+                        <h2 class="text-5xl font-black mb-6">Think Like a <span class="text-blue-500">Core Techie.</span></h2>
+                        <p class="text-xl text-slate-400 mb-10">Welcome to Yertal Corp. We specialize in Python automation and game logic education.</p>
+                        <button onclick="showPage('arcade')" class="bg-blue-600 px-8 py-3 rounded-xl font-bold hover:bg-blue-500 transition">Enter Arcade</button>
+                    </section>`;
+            } else if (page === 'arcade') {
+                app.innerHTML = `
+                    <section class="max-w-4xl mx-auto py-10">
+                        <h2 class="text-3xl font-bold mb-8">The Arcade</h2>
+                        <div onclick="showPage('play')" class="glass p-6 rounded-2xl cursor-pointer border-2 border-transparent hover:border-blue-500 transition">
+                            <h3 class="text-xl font-bold text-blue-400">Space Dodger</h3>
+                            <p class="text-slate-400 text-sm">Test your reaction speed and collision logic.</p>
+                        </div>
+                    </section>`;
+            } else if (page === 'play') {
+                app.innerHTML = `
+                    <section class="max-w-5xl mx-auto">
+                        <button onclick="showPage('arcade')" class="text-blue-400 mb-4 block underline">← Back</button>
+                        <div class="aspect-video glass rounded-2xl overflow-hidden bg-black border-4 border-white/5">
+                            <iframe src="game-logic.html" class="w-full h-full border-none"></iframe>
+                        </div>
+                    </section>`;
+            } else if (page === 'support') {
+                app.innerHTML = `
+                    <section class="max-w-xl mx-auto py-20 text-center">
+                        <h2 class="text-4xl font-bold mb-6 italic">Support the Mission.</h2>
+                        <p class="text-slate-400 mb-8">Help keep the Yertal curriculum independent and free.</p>
+                        <button class="w-full bg-blue-600 py-4 rounded-xl font-bold">Donate via Card / UPI</button>
+                    </section>`;
+            }
+        }
+        window.onload = () => showPage('home');
+    </script>
+</body>
 </html>
