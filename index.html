@@ -12,29 +12,153 @@
         .active-nav { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
         .action-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
         .action-card:hover { transform: translateY(-8px); border-color: #3b82f6; background: rgba(30, 41, 59, 0.9); box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.15); }
-        .text-glow { text-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
-        .logo-img { height: 42px; width: auto; object-fit: contain; }
+        #mobile-menu { display: none; }
+        #mobile-menu.active { display: flex; }
         #legal-modal { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: #1e293b; width: 100%; max-width: 700px; max-height: 85vh; overflow-y: auto; border-radius: 2rem; border: 1px solid rgba(255,255,255,0.1); padding: 40px; position: relative; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fadeIn { animation: fadeIn 0.6s ease-out forwards; }
+        .modal-content { background: #1e293b; width: 100%; max-width: 700px; border-radius: 2rem; border: 1px solid rgba(255,255,255,0.1); padding: 40px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
+    <!-- Legal Modal -->
     <div id="legal-modal">
-        <div class="modal-content shadow-2xl">
-            <button onclick="closeLegal()" class="absolute top-6 right-6 text-slate-400 hover:text-white text-2xl transition">✕</button>
-            <div id="modal-body" class="prose prose-invert max-w-none"></div>
+        <div class="modal-content">
+            <button onclick="closeLegal()" class="float-right text-slate-400">✕</button>
+            <div id="modal-body" class="prose prose-invert mt-4"></div>
         </div>
     </div>
 
-    <header class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-2xl">
+    <!-- Navigation -->
+    <header class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
         <div class="flex items-center gap-3 cursor-pointer" onclick="showPage('home')">
-            <img src="logo.png" alt="Yertal Corp" onerror="this.src='https://placehold.co/40x40/3b82f6/white?text=Y'" class="logo-img">
-            <h1 class="text-xl font-extrabold tracking-tighter uppercase hidden sm:block">Yertal <span class="text-blue-500">Corp</span></h1>
+            <img src="logo.png" alt="Logo" onerror="this.src='https://placehold.co/40x40/3b82f6/white?text=Y'" class="h-10 w-auto">
+            <h1 class="text-xl font-extrabold uppercase tracking-tighter">Yertal <span class="text-blue-500">Corp</span></h1>
         </div>
-        <nav class="hidden md:flex gap-10 text-xs font-semibold uppercase tracking-[0.2em]">
+
+        <!-- Desktop Nav -->
+        <nav class="hidden lg:flex gap-8 text-[10px] font-bold uppercase tracking-widest">
+            <button onclick="showPage('home')" id="nav-home">Showroom</button>
+            <button onclick="showPage('curriculum')" id="nav-curriculum">Curriculum</button>
+            <button onclick="showPage('books')" id="nav-books">Books</button>
+            <button onclick="showPage('arcade')" id="nav-arcade">Arcade</button>
+            <button onclick="showPage('consulting')" id="nav-consulting">Consulting</button>
+        </nav>
+
+        <div class="flex items-center gap-4">
+            <a href="https://yertal.wordpress.com/access-pass" class="hidden sm:block bg-blue-600 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest">Access Pass</a>
+            <!-- Mobile Menu Toggle Button -->
+            <button class="lg:hidden text-2xl px-2" onclick="toggleMobileMenu()">☰</button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-slate-900 flex-col items-center justify-center gap-8 text-xl font-bold uppercase glass">
+        <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-3xl">✕</button>
+        <button onclick="showPage('home'); toggleMobileMenu()">Showroom</button>
+        <button onclick="showPage('curriculum'); toggleMobileMenu()">Curriculum</button>
+        <button onclick="showPage('books'); toggleMobileMenu()">Books</button>
+        <button onclick="showPage('arcade'); toggleMobileMenu()">Arcade</button>
+        <button onclick="showPage('consulting'); toggleMobileMenu()">Consulting</button>
+        <a href="https://yertal.wordpress.com/access-pass" class="bg-blue-600 px-8 py-3 rounded-full">Access Pass</a>
+    </div>
+
+    <main id="app" class="flex-grow p-6 lg:p-12"></main>
+
+    <footer class="glass mt-auto py-12 px-6 border-t border-white/5 text-center sm:text-left">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-10">
+            <div>
+                <h4 class="text-blue-500 font-bold uppercase text-xs mb-4">Support</h4>
+                <div class="flex flex-col gap-2 text-xs text-slate-400">
+                    <button onclick="showLegal('contact')" class="text-left">Contact</button>
+                    <button onclick="showLegal('refund')" class="text-left">Refund Policy</button>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-white font-bold uppercase text-xs mb-4">Compliance</h4>
+                <div class="flex flex-col gap-2 text-xs text-slate-400">
+                    <button onclick="showLegal('privacy')" class="text-left">Privacy</button>
+                    <button onclick="showLegal('terms')" class="text-left">Terms</button>
+                </div>
+            </div>
+            <div class="text-[10px] text-slate-500 uppercase tracking-widest self-center">
+                © 2026 Yertal Corp
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const wp = "https://yertal.wordpress.com";
+
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('active');
+        }
+
+        function showPage(page) {
+            const app = document.getElementById('app');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-nav', 'text-blue-500'));
+            const activeNav = document.getElementById('nav-' + page);
+            if(activeNav) activeNav.classList.add('active-nav', 'text-blue-500');
+
+            if (page === 'home') {
+                app.innerHTML = `
+                    <div class="max-w-6xl mx-auto py-12">
+                        <h2 class="text-5xl lg:text-7xl font-black mb-12 uppercase italic tracking-tighter">The <span class="text-blue-500">Showroom.</span></h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${card('C Programming', 'Low-level mastery.', '💎', wp+'/c')}
+                            ${card('Python Systems', 'Logic & Scalability.', '🐍', wp+'/python')}
+                            ${card('AI Tools', 'Workflow acceleration.', '🛠️', wp+'/tools')}
+                            ${card('AI Mastery', 'Agentic architecture.', '🧠', wp+'/mastery')}
+                            ${card('Web Programming', 'Modern frontend logic.', '🌐', wp+'/web')}
+                            ${card('Consulting', 'Technical advisory.', '📞', wp+'/consulting')}
+                            ${card('Book Reviews', 'Industry deep-dives.', '📖', wp+'/reviews')}
+                            ${card('Access Pass', 'Ultimate subscription.', '💳', wp+'/access-pass')}
+                            ${card('Community', 'Join the lab network.', '🤝', wp+'/community')}
+                        </div>
+                    </div>`;
+            } else if (page === 'curriculum') {
+                app.innerHTML = `<div class="text-center py-20"><h2 class="text-3xl font-bold uppercase">Curriculum Library</h2><p class='text-slate-400 mt-4'>Direct access to technical mastery paths.</p><button onclick="window.open('${wp}/curriculum', '_blank')" class="mt-8 bg-blue-600 px-8 py-3 rounded-xl font-bold uppercase text-xs">Enter WordPress Portal</button></div>`;
+            } else if (page === 'books') {
+                app.innerHTML = `
+                    <div class="max-w-6xl mx-auto py-12">
+                        <h2 class="text-4xl font-black mb-8 uppercase tracking-tighter">Yertal <span class="text-blue-500">Press.</span></h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div onclick="window.open('${wp}', '_blank')" class="glass p-8 rounded-3xl action-card">
+                                <h3 class="text-xl font-bold mb-2 text-blue-400">The AI Blueprint (2026)</h3>
+                                <p class="text-slate-400 text-sm">Strategic guide to agentic automation and logic systems.</p>
+                                <span class="inline-block mt-4 text-[10px] font-bold border-b border-white">Explore Bookshelf →</span>
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (page === 'arcade') {
+                app.innerHTML = `<div class="aspect-video glass rounded-[2rem] bg-black max-w-5xl mx-auto overflow-hidden"><iframe src="game-logic.html" class="w-full h-full border-none"></iframe></div><p class="text-center text-slate-500 text-xs mt-4 italic uppercase tracking-widest">Lab Simulation: Space Dodger v1.0</p>`;
+            } else if (page === 'consulting') {
+                app.innerHTML = `<div class="max-w-3xl mx-auto py-20 text-center"><h2 class="text-4xl font-black mb-6 uppercase">Technical Advisory</h2><p class="text-slate-400 mb-10">Struggling with architecture? Book a direct session with our engineers.</p><a href="mailto:support@yertal.com" class="bg-blue-600 px-12 py-5 rounded-2xl font-bold text-xl hover:bg-blue-500 shadow-2xl transition">Contact Support</a></div>`;
+            }
+        }
+
+        function card(t, d, i, l) {
+            return `<div onclick="window.open('${l}', '_blank')" class="glass p-8 rounded-[2rem] action-card">
+                <div class="text-4xl mb-4">${i}</div>
+                <h3 class="text-lg font-bold mb-1 uppercase tracking-tight">${t}</h3>
+                <p class="text-xs text-slate-500 mb-6 font-light">${d}</p>
+                <span class="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Launch →</span>
+            </div>`;
+        }
+
+        const legal = {
+            contact: "<h2>Contact</h2><p>For support regarding access, curriculum, or consulting: <br><strong>support@yertal.com</strong></p>",
+            refund: "<h2>Refunds</h2><p>Digital access to the Yertal Library is granted immediately upon purchase. As such, all sales are final.</p>",
+            privacy: "<h2>Privacy</h2><p>Your data is encrypted and used only for account management. We never share or sell information.</p>",
+            terms: "<h2>Terms</h2><p>Usage of Yertal Corp labs and code is for educational and strategic engineering purposes.</p>"
+        };
+
+        function showLegal(t) { document.getElementById('modal-body').innerHTML = legal[t]; document.getElementById('legal-modal').style.display = 'flex'; }
+        function closeLegal() { document.getElementById('modal-body').innerHTML = ''; document.getElementById('legal-modal').style.display = 'none'; }
+        window.onload = () => showPage('home');
+        window.onclick = (e) => { if(e.target == document.getElementById('legal-modal')) closeLegal(); }
+    </script>
+</body>
+</html>        <nav class="hidden md:flex gap-10 text-xs font-semibold uppercase tracking-[0.2em]">
             <button onclick="showPage('home')" id="nav-home">Showroom</button>
             <button onclick="showPage('curriculum')" id="nav-curriculum">Curriculum</button>
             <button onclick="showPage('arcade')" id="nav-arcade">Arcade</button>
