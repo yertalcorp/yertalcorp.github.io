@@ -2,81 +2,84 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Space Dodger 3D - Pro Edition</title>
+    <title>Space Dodger 3D - Yertal Arcade</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root { --gold: #ffd700; --silver: #c0c0c0; --bronze: #cd7f32; }
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; user-select: none; }
         
-        /* HUD - Top Left */
+        /* HUD - Top Left Rounded Box */
         #hud-left {
             position: absolute; top: 20px; left: 20px;
-            background: rgba(0, 30, 60, 0.85); padding: 20px;
-            border-radius: 20px; border: 2px solid #00aaff;
-            min-width: 250px; backdrop-filter: blur(5px);
+            background: rgba(0, 30, 70, 0.8); padding: 20px;
+            border-radius: 25px; border: 2px solid #00aaff;
+            min-width: 280px; backdrop-filter: blur(10px);
         }
         .fuel-meter {
-            width: 100%; height: 22px; border: 1.5px solid #fff;
-            display: flex; margin-top: 10px; background: #000;
+            width: 100%; height: 24px; border: 1.5px solid #fff;
+            display: flex; margin-top: 10px; background: #111; overflow: hidden;
         }
         .fuel-section { flex: 1; border-right: 1.5px solid #000; height: 100%; transition: background 0.3s; }
-        .siren-blink { animation: siren-anim 0.4s infinite; }
-        @keyframes siren-anim { 0% { opacity: 1; } 50% { opacity: 0.3; } }
+        .siren-active { animation: siren-flash 0.5s infinite; }
+        @keyframes siren-flash { 0%, 100% { background: rgba(255, 0, 0, 0.8); } 50% { background: transparent; } }
 
         /* HUD - Top Right Icons */
         #hud-right { position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; }
         .nav-icon {
-            width: 50px; height: 50px; border-radius: 50%; border: 1.5px solid #fff;
+            width: 55px; height: 55px; border-radius: 50%; border: 2px solid #fff;
             display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,0.1); cursor: pointer; font-size: 24px;
+            background: rgba(255,255,255,0.1); cursor: pointer; font-size: 26px; transition: 0.3s;
         }
+        .nav-icon:hover { transform: scale(1.1); background: rgba(255,255,255,0.2); }
 
-        /* Screens & Overlays */
+        /* Screens */
         .screen {
             position: absolute; inset: 0; background: rgba(0,0,0,0.95);
             display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000;
         }
         .hidden { display: none !important; }
-        
-        /* Hall of Fame Styling */
-        .hof-title-row { font-size: 2.5rem; margin-bottom: 10px; }
+
+        /* Tables & Typography */
+        .hof-title { font-size: 3rem; font-weight: bold; margin-bottom: 10px; font-family: 'Georgia', serif; }
         .hof-table { width: 85%; border-collapse: collapse; margin-top: 20px; }
-        .hof-table th { font-weight: bold; font-size: 1.8rem; padding: 15px; border-bottom: 2px solid #444; }
-        .hof-table td { padding: 12px; text-align: center; font-size: 1.3rem; }
+        .hof-table th { font-weight: 900; font-size: 2rem; padding: 15px; border-bottom: 3px solid #444; font-family: 'Verdana', sans-serif; }
+        .hof-table td { padding: 12px; text-align: center; font-size: 1.4rem; font-family: 'Segoe UI', sans-serif; }
         .row-gold { color: var(--gold); font-weight: bold; }
         .row-silver { color: var(--silver); }
         .row-bronze { color: var(--bronze); }
-        .instr-text { font-family: 'Garamond', serif; font-style: italic; font-size: 1.4rem; line-height: 1.6; text-align: center; max-width: 600px; }
+        
+        .instr-content { text-align: center; max-width: 700px; font-family: 'Trebuchet MS', sans-serif; line-height: 1.6; }
+        .instr-header { font-size: 2rem; font-weight: bold; color: #00aaff; margin-top: 20px; }
 
         button, select {
-            padding: 15px 30px; margin: 10px; border-radius: 10px; border: none;
+            padding: 16px 32px; margin: 12px; border-radius: 12px; border: none;
             background: #0066ff; color: white; font-weight: bold; cursor: pointer; font-size: 1.1rem;
         }
-        .flash-gameover { font-size: 6rem; color: #ff0000; font-weight: 900; animation: blink-fast 0.5s infinite; text-shadow: 0 0 20px red; }
-        @keyframes blink-fast { 0% { opacity: 1; } 50% { opacity: 0; } }
+        .game-over-text { font-size: 6rem; color: #ff0000; font-weight: 900; animation: flash 0.6s infinite; text-shadow: 0 0 30px red; }
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
     </style>
 </head>
 <body>
 
 <div id="hud-left" class="hidden">
-    <div id="ui-user">Guest</div>
+    <div id="ui-user" style="font-size: 1.4rem; margin-bottom: 5px;">Guest</div>
     <div id="ui-level">Level: 1</div>
     <div id="ui-score">Score: 0</div>
-    <div id="ui-lives-display"></div>
+    <div id="ui-lives" style="font-size: 1.5rem; margin: 5px 0;">❤️❤️❤️</div>
     <div class="fuel-meter" id="fuel-bar"></div>
 </div>
 
 <div id="hud-right" class="hidden">
-    <div class="nav-icon" onclick="togglePause()" id="btn-pause">⏸️</div>
-    <div class="nav-icon" onclick="showScreen('info')">ℹ️</div>
-    <div class="nav-icon" onclick="toggleMute()" id="btn-mute">🔊</div>
+    <div class="nav-icon" onclick="togglePause()" id="icn-pause">⏸️</div>
+    <div class="nav-icon" onclick="showInstructions()">ℹ️</div>
+    <div class="nav-icon" onclick="toggleSound()" id="icn-sound">🔊</div>
     <div class="nav-icon" onclick="viewHOF('personal')">🏆</div>
     <div class="nav-icon" onclick="viewHOF('global')">🌐</div>
 </div>
 
 <div id="screen-landing" class="screen">
-    <h1>SPACE DODGER</h1>
-    <button onclick="launchGame()">Launch Space Dodger</button>
+    <h1 style="font-size: 4rem; letter-spacing: 10px;">SPACE DODGER</h1>
+    <button onclick="launch()">Launch Space Dodger</button>
     <select id="start-level">
         <script>for(let i=1;i<=16;i++) document.write(`<option value="${i}">LEVEL=${i}</option>`);</script>
     </select>
@@ -85,11 +88,11 @@
 
 <div id="screen-overlay" class="screen hidden">
     <div id="overlay-content"></div>
-    <button onclick="closeOverlay()">Close</button>
+    <button onclick="closeOverlay()" style="background: #444;">Back</button>
 </div>
 
 <div id="screen-gameover" class="screen hidden">
-    <div class="flash-gameover">GAME OVER</div>
+    <div class="game-over-text">GAME OVER</div>
     <button onclick="location.reload()">RELAUNCH SPACE DODGER</button>
     <button onclick="viewHOF('personal')">HALL OF FAME</button>
     <select id="restart-level">
@@ -98,41 +101,45 @@
 </div>
 
 <script>
-/** * SPACE DODGER ENGINE 2026 
+/** * ENGINE BY EXPERT WEB ARCADE DEVELOPER 
  */
 let scene, camera, renderer, rocket, clock;
-let asteroids = [], stars = [], lasers = [], fragments = [];
-let score = 0, level = 1, lives = 3, fuel = 100, active = false, paused = false;
-let audioCtx, engineWhirr, soundEnabled = true, loggedIn = false;
+let asteroids = [], stars = [], lasers = [], frags = [];
+let score = 0, level = 1, lives = 3, fuel = 100, isLive = false, isPaused = false;
+let audioCtx, engineWhirr, sirenOsc, soundOn = true, isLoggedIn = false;
 
-function launchGame() {
+function launch() {
     level = parseInt(document.getElementById('start-level').value);
     document.getElementById('screen-landing').classList.add('hidden');
     document.getElementById('hud-left').classList.remove('hidden');
     document.getElementById('hud-right').classList.remove('hidden');
-    init3D();
+    
+    initGraphics();
     initAudio();
-    initFuelBar();
-    active = true;
+    createFuelBar();
+    isLive = true;
     animate();
 }
 
-function init3D() {
+function initGraphics() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Rocket: Futuristic Shiny Cone-nose
+    // Rocket: Futuristic Shiny 3D Rocket
     const rocketGrp = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.4, 1.8, 32), new THREE.MeshPhongMaterial({color: 0xcccccc, shininess: 100}));
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.5, 32), new THREE.MeshPhongMaterial({color: 0xffffff, shininess: 120}));
-    nose.position.y = 1.15;
-    rocketGrp.add(body, nose);
+    const bodyGeo = new THREE.CylinderGeometry(0.2, 0.4, 1.5, 32);
+    const bodyMat = new THREE.MeshPhongMaterial({ color: 0xcccccc, shininess: 100, specular: 0xffffff });
+    const noseGeo = new THREE.ConeGeometry(0.2, 0.6, 32);
+    const nose = new THREE.Mesh(noseGeo, bodyMat);
+    nose.position.y = 1.05;
+    rocketGrp.add(new THREE.Mesh(bodyGeo, bodyMat), nose);
+    
     rocket = rocketGrp; rocket.position.y = -4; scene.add(rocket);
 
-    scene.add(new THREE.AmbientLight(0x404040));
+    scene.add(new THREE.AmbientLight(0x333333));
     const sun = new THREE.DirectionalLight(0xffffff, 1); sun.position.set(5, 5, 10); scene.add(sun);
     camera.position.z = 8;
     clock = new THREE.Clock();
@@ -141,33 +148,50 @@ function init3D() {
 function initAudio() {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     engineWhirr = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    engineWhirr.type = 'triangle'; engineWhirr.frequency.value = 50;
-    gain.gain.value = 0.05; engineWhirr.connect(gain); gain.connect(audioCtx.destination);
+    const g = audioCtx.createGain();
+    engineWhirr.type = 'triangle'; engineWhirr.frequency.value = 55;
+    g.gain.value = 0.04; engineWhirr.connect(g); g.connect(audioCtx.destination);
     engineWhirr.start();
 }
 
 function playSfx(type) {
-    if(!soundEnabled) return;
+    if (!soundOn) return;
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     osc.connect(g); g.connect(audioCtx.destination);
-    if(type==='laser') { osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime+0.1); g.gain.value=0.1; osc.start(); osc.stop(audioCtx.currentTime+0.1); }
-    if(type==='explosion') { osc.type='sawtooth'; osc.frequency.value=40; g.gain.setValueAtTime(0.5, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0, audioCtx.currentTime+0.5); osc.start(); osc.stop(audioCtx.currentTime+0.5); }
-    if(type==='star') { osc.frequency.setValueAtTime(500, audioCtx.currentTime); osc.frequency.setValueAtTime(700, audioCtx.currentTime+0.1); g.gain.value=0.1; osc.start(); osc.stop(audioCtx.currentTime+0.2); }
-    if(type==='crash') { osc.frequency.value=120; g.gain.value=0.4; osc.start(); osc.stop(audioCtx.currentTime+0.2); }
+
+    if (type === 'laser') {
+        osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+        g.gain.value = 0.1; osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    } else if (type === 'explosion') {
+        osc.type = 'sawtooth'; osc.frequency.value = 40;
+        g.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.6);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.6);
+    } else if (type === 'star') {
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(850, audioCtx.currentTime + 0.1);
+        g.gain.value = 0.1; osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+    } else if (type === 'crash') {
+        osc.frequency.value = 100; g.gain.value = 0.5;
+        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+    }
 }
 
-function initFuelBar() {
+function createFuelBar() {
     const bar = document.getElementById('fuel-bar'); bar.innerHTML = '';
-    for(let i=0; i<25; i++) { const s = document.createElement('div'); s.className='fuel-section'; bar.appendChild(s); }
+    for(let i=0; i<25; i++) {
+        const s = document.createElement('div'); s.className = 'fuel-section';
+        bar.appendChild(s);
+    }
 }
 
 function spawnAsteroid() {
     const szs = [0.3, 0.5, 0.7, 0.9, 1.2];
     const s = szs[Math.floor(Math.random()*5)];
-    const geo = new THREE.SphereGeometry(s, 8, 8); geo.scale(1.3, 0.8, 1);
-    const ast = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color: 0x880000, flatShading: true}));
+    const geo = new THREE.SphereGeometry(s, 8, 8); geo.scale(1.4, 0.8, 1);
+    const ast = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color: 0x882222, flatShading: true}));
     ast.position.set((Math.random()-0.5)*12, 8, 0);
     ast.userData = { size: s, hp: Math.ceil(s*3) };
     asteroids.push(ast); scene.add(ast);
@@ -180,112 +204,127 @@ function spawnStar() {
     stars.push(star); scene.add(star);
 }
 
-function updateGame() {
-    if(!active || paused) return;
-    const fallSpeed = 0.05 + (level * 0.02);
+function logic() {
+    if (!isLive || isPaused) return;
+    const fallSpeed = 0.05 + (level * 0.025);
 
     asteroids.forEach((a, i) => {
         a.position.y -= fallSpeed;
-        if(a.position.distanceTo(rocket.position) < 1) { lives--; fuel -= 10; playSfx('crash'); scene.remove(a); asteroids.splice(i,1); }
-        else if(a.position.y < -6) { fuel -= 3; scene.remove(a); asteroids.splice(i,1); }
+        if (a.position.distanceTo(rocket.position) < 1) {
+            lives--; fuel -= 15; playSfx('crash'); scene.remove(a); asteroids.splice(i, 1);
+        } else if (a.position.y < -6) {
+            fuel -= 3; scene.remove(a); asteroids.splice(i, 1);
+        }
     });
 
     stars.forEach((s, i) => {
         s.position.y -= fallSpeed; s.rotation.y += 0.1;
-        if(s.position.distanceTo(rocket.position) < 0.7) { score += 25; fuel = Math.min(100, fuel+5); playSfx('star'); scene.remove(s); stars.splice(i,1); }
+        if (s.position.distanceTo(rocket.position) < 0.7) {
+            score += 25; fuel = Math.min(100, fuel + 5);
+            playSfx('star'); scene.remove(s); stars.splice(i, 1);
+            if (score >= level * 100 && level < 16) { level++; playSfx('star'); }
+        }
     });
 
     lasers.forEach((l, li) => {
         l.position.y += 0.4;
         asteroids.forEach((a, ai) => {
-            if(l.position.distanceTo(a.position) < a.userData.size) {
-                a.userData.hp--; scene.remove(l); lasers.splice(li,1);
-                if(a.userData.hp <= 0) {
+            if (l.position.distanceTo(a.position) < a.userData.size) {
+                a.userData.hp--; scene.remove(l); lasers.splice(li, 1);
+                if (a.userData.hp <= 0) {
                     let pts = a.userData.size > 0.8 ? 5 : 1;
-                    score += pts; fuel = Math.min(100, fuel + pts); playSfx('explosion'); createFrags(a.position); scene.remove(a); asteroids.splice(ai,1);
+                    score += pts; fuel = Math.min(100, fuel + pts); 
+                    playSfx('explosion'); createExplosion(a.position); scene.remove(a); asteroids.splice(ai, 1);
                 }
             }
         });
     });
 
-    if(score >= level * 100 && level < 16) { level++; playSfx('star'); }
-    if(fuel <= 0 || lives <= 0) gameOver();
-    if(Math.random() < 0.02) { spawnAsteroid(); spawnStar(); }
-    updateHUD();
+    if (fuel <= 0 || lives <= 0) endGame();
+    if (Math.random() < 0.02) { spawnAsteroid(); spawnStar(); }
+    updateUI();
 }
 
-function createFrags(p) {
-    for(let i=0; i<6; i++) {
-        const f = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.1), new THREE.MeshBasicMaterial({color: 0xff0000}));
-        f.position.copy(p); f.userData = { v: new THREE.Vector3((Math.random()-0.5)*0.2, (Math.random()-0.5)*0.2, 0) };
-        fragments.push(f); scene.add(f);
+function createExplosion(p) {
+    for(let i=0; i<8; i++) {
+        const f = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.1), new THREE.MeshBasicMaterial({color: 0xff4400}));
+        f.position.copy(p); f.userData = { v: new THREE.Vector3((Math.random()-0.5)*0.3, (Math.random()-0.5)*0.3, 0) };
+        frags.push(f); scene.add(f);
     }
 }
 
-function updateHUD() {
+function updateUI() {
     document.getElementById('ui-level').innerText = "Level: " + level;
     document.getElementById('ui-score').innerText = "Score: " + score;
-    document.getElementById('ui-lives-display').innerText = "❤️".repeat(Math.max(0, lives));
+    document.getElementById('ui-lives').innerText = "❤️".repeat(Math.max(0, lives));
+    
     const secs = document.querySelectorAll('.fuel-section');
-    const fill = Math.floor((fuel/100)*25);
-    let c = "#00ff00"; if(fuel < 67) c = "orange"; if(fuel < 34) c = "red";
-    secs.forEach((s, i) => s.style.background = i < fill ? c : "#000");
-    document.getElementById('fuel-bar').className = fuel <= 10 ? "fuel-meter siren-blink" : "fuel-meter";
+    const fill = Math.floor((fuel/100) * 25);
+    let color = "#00ff00"; if(fuel < 67) color = "orange"; if(fuel < 34) color = "red";
+    
+    secs.forEach((s, i) => s.style.background = i < fill ? color : "#000");
+    document.getElementById('fuel-bar').className = (fuel <= 10) ? 'fuel-meter siren-active' : 'fuel-meter';
 }
 
 function fire() {
-    if(!active || paused) return;
+    if(!isLive || isPaused) return;
     const l = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.5), new THREE.MeshBasicMaterial({color: 0x00ffff}));
     l.position.copy(rocket.position); lasers.push(l); scene.add(l); playSfx('laser');
 }
 
 function viewHOF(type) {
-    paused = true;
-    const cont = document.getElementById('overlay-content');
+    isPaused = true;
     const isGlobal = type === 'global';
-    if(isGlobal && !loggedIn) { window.alert("Federated Login Required (Google, Facebook, Microsoft)"); return; }
+    if(isGlobal && !isLoggedIn) { alert("Redirecting to Yertal Showroom Federated Login (Google/FB/MS)..."); return; }
     
-    let html = `<div class="hof-title-row">🏆🏆🏆🏆🏆</div><h2>${isGlobal ? 'Global' : 'Personal'} Top 10</h2><table class="hof-table"><tr><th>Rank</th><th>User</th><th>Score</th></tr>`;
-    const rows = [ {u: 'Ace', s: 1500}, {u: 'Pilot', s: 1200}, {u: 'Guest', s: score} ];
-    rows.forEach((r, i) => {
-        let cls = i===0 ? 'row-gold' : i===1 ? 'row-silver' : i===2 ? 'row-bronze' : '';
+    let html = `<div class="hof-title">🏆🏆🏆🏆🏆</div><h2>${isGlobal ? 'Global' : 'Personal'} Hall of Fame</h2><table class="hof-table"><tr><th>Rank</th><th>User</th><th>Score</th></tr>`;
+    const data = [{u:'Ace', s:2000}, {u:'Pilot', s:1500}, {u:'Guest', s:score}];
+    data.forEach((r, i) => {
+        let cls = i==0 ? 'row-gold' : i==1 ? 'row-silver' : i==2 ? 'row-bronze' : '';
         html += `<tr class="${cls}"><td>${i+1}</td><td>${r.u}</td><td>${r.s}</td></tr>`;
     });
     html += `</table>`;
-    if(!loggedIn) html += `<button onclick="alert('Redirecting to Federated Login...')">Save Scores</button>`;
-    cont.innerHTML = html;
+    if(!isLoggedIn) html += `<button onclick="alert('Saving via Federated Login...')">Save Scores</button>`;
+    
+    document.getElementById('overlay-content').innerHTML = html;
     document.getElementById('screen-overlay').classList.remove('hidden');
 }
 
-function showScreen(type) {
-    paused = true;
-    const cont = document.getElementById('overlay-content');
-    if(type==='info') {
-        cont.innerHTML = `<div class="instr-text"><h1>Levels:</h1>The game starts at Level 1. There are a total of 16 Levels in this game. The level increases with every 100 points.<h1>Movement:</h1>Move Rocket: Move mouse left/right OR Move arrow keys left/right<br>Blast asteroids: space bar, left mouse click, tap mouse pad<h1>Scoring:</h1>Blast asteroids to score points. Collect yellow stars for bonus points.</div>`;
-    }
+function showInstructions() {
+    isPaused = true;
+    document.getElementById('overlay-content').innerHTML = `
+        <div class="instr-content">
+            <div class="instr-header">Levels:</div>
+            The game starts at Level 1. There are a total of 16 Levels in this game. The level increases with every 100 points.
+            <div class="instr-header">Movement:</div>
+            Move Rocket: Move mouse left/right OR Move arrow keys left/right<br>
+            Blast asteroids: space bar, left mouse click, tap mouse pad
+            <div class="instr-header">Scoring:</div>
+            Blast asteroids to score points. Collect yellow stars for bonus points.
+        </div>`;
     document.getElementById('screen-overlay').classList.remove('hidden');
 }
 
-function gameOver() {
-    active = false; if(engineWhirr) engineWhirr.stop();
+function endGame() {
+    isLive = false; if(engineWhirr) engineWhirr.stop();
     document.getElementById('screen-gameover').classList.remove('hidden');
 }
 
-function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); paused = false; }
-function togglePause() { paused = !paused; }
-function toggleMute() { soundEnabled = !soundEnabled; }
+function togglePause() { isPaused = !isPaused; }
+function toggleSound() { soundOn = !soundOn; }
+function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); isPaused = false; }
 
-window.addEventListener('mousemove', (e) => { if(active) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
+window.addEventListener('mousemove', (e) => { if(isLive) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
 window.addEventListener('keydown', (e) => { 
     if(e.code === 'Space') fire(); 
-    if(e.code === 'ArrowLeft') rocket.position.x -= 0.5; 
-    if(e.code === 'ArrowRight') rocket.position.x += 0.5; 
+    if(e.code === 'ArrowLeft') rocket.position.x -= 0.6; 
+    if(e.code === 'ArrowRight') rocket.position.x += 0.6; 
 });
 window.addEventListener('mousedown', fire);
 
 function animate() {
-    if(!active) return; requestAnimationFrame(animate); updateGame();
-    fragments.forEach((f, i) => { f.position.add(f.userData.v); f.scale.multiplyScalar(0.95); if(f.scale.x < 0.01) { scene.remove(f); fragments.splice(i,1); } });
+    if(!isLive) return; requestAnimationFrame(animate); logic();
+    frags.forEach((f, i) => { f.position.add(f.userData.v); f.scale.multiplyScalar(0.95); if(f.scale.x < 0.01) { scene.remove(f); frags.splice(i,1); } });
     renderer.render(scene, camera);
 }
 </script>
