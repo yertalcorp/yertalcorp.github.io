@@ -13,33 +13,22 @@
         #ui-layer { position: absolute; inset: 0; pointer-events: none; padding: 25px; box-sizing: border-box; }
         .glass-box { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; pointer-events: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }
         #stats-panel { width: fit-content; min-width: 180px; border-left: 4px solid var(--accent); }
-        .user-tag { color: var(--accent); font-weight: 800; font-size: 14px; text-transform: uppercase; display: block; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; padding-bottom: 4px; }
-        .stat-label { font-size: 10px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1.5px; margin-top: 8px; }
         .stat-val { font-size: 28px; font-weight: 900; color: var(--gold); line-height: 1; }
-        .heart-3d { font-size: 20px; margin-right: 3px; filter: drop-shadow(0 0 5px var(--red)); }
-
-        #fuel-container { width: 100%; height: 20px; background: #000; border: 1px solid #334155; margin-top: 15px; border-radius: 4px; position: relative; overflow: hidden; display: flex; }
-        #fuel-bar { height: 100%; transition: width 0.3s ease, background-color 0.3s ease; width: 100%; }
+        
+        #fuel-container { width: 100%; height: 18px; background: #000; border: 1px solid #334155; margin-top: 10px; border-radius: 4px; position: relative; overflow: hidden; display: flex; }
+        #fuel-bar { height: 100%; transition: width 0.3s; width: 100%; }
         .fuel-stripe { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(0,0,0,0.9); z-index: 2; }
 
-        #icon-bar { position: absolute; top: 25px; right: 25px; display: flex; gap: 22px; pointer-events: auto; }
-        .nav-icon { font-size: 24px; cursor: pointer; transition: 0.3s; color: rgba(255,255,255,0.8); }
+        #icon-bar { position: absolute; top: 25px; right: 25px; display: flex; gap: 20px; pointer-events: auto; }
+        .nav-icon { font-size: 22px; cursor: pointer; transition: 0.3s; color: rgba(255,255,255,0.7); }
         .nav-icon:hover { color: var(--accent); transform: scale(1.2); }
 
         .overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
         .hidden { display: none !important; }
-        h1 { font-size: clamp(40px, 10vw, 80px); font-weight: 900; color: var(--accent); margin: 0; }
-        .btn { background: var(--accent); color: white; padding: 18px 45px; border-radius: 60px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 12px; width: 340px; }
+        .btn { background: var(--accent); color: white; padding: 18px 45px; border-radius: 60px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 10px; width: 320px; transition: 0.2s; }
+        .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
         
-        /* Unified Hall of Fame Styling */
-        .trophy-row { font-size: 32px; color: var(--gold); margin-bottom: 15px; }
-        .rank-item { 
-            padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.03); 
-            margin-bottom: 8px; font-family: 'Courier New', monospace; font-size: 20px; 
-            font-weight: 900; border-left: 5px solid var(--gold); text-align: left;
-            text-shadow: 1px 1px 3px black;
-        }
-        .rank-num { color: var(--accent); margin-right: 10px; }
+        .rank-item { padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.03); margin-bottom: 8px; font-family: monospace; font-size: 18px; border-left: 5px solid var(--gold); text-align: left; }
     </style>
 </head>
 <body>
@@ -48,11 +37,10 @@
 
     <div id="ui-layer">
         <div id="stats-panel" class="glass-box">
-            <span class="user-tag" id="user-display">Guest</span>
-            <div class="stat-label">Level</div> <div id="level-val" class="stat-val">01</div>
-            <div class="stat-label">Score</div> <div id="score-val" class="stat-val">0000</div>
+            <span style="color:var(--accent); font-weight:800; font-size:12px;">PILOT: GUEST</span>
+            <div style="font-size:10px; color:#94a3b8; margin-top:8px;">SCORE / LEVEL</div>
+            <div class="stat-val"><span id="score-val">0000</span> / <span id="level-val">01</span></div>
             <div id="lives-container" style="margin-top: 8px;"></div>
-            <div class="stat-label">Fuel (Misses: <span id="miss-num">0</span>/25)</div>
             <div id="fuel-container">
                 <div id="fuel-bar"></div>
                 <script>for(let i=1; i<25; i++) document.write(`<div class="fuel-stripe" style="left: ${(i/25)*100}%"></div>`);</script>
@@ -61,23 +49,22 @@
 
         <div id="icon-bar">
             <i class="fas fa-pause nav-icon" onclick="togglePause()"></i>
-            <i class="fas fa-info-circle nav-icon" onclick="showModal('manual')"></i>
-            <i class="fas fa-volume-up nav-icon" onclick="toggleSound()"></i>
-            <i class="fas fa-trophy nav-icon" onclick="showModal('hall', 'Personal')"></i>
+            <i class="fas fa-trophy nav-icon" onclick="showModal('hall')"></i>
             <i class="fas fa-globe-americas nav-icon" onclick="showModal('hall', 'Global')"></i>
         </div>
     </div>
 
     <div id="landing-screen" class="overlay">
-        <h1>SPACE<br>DODGER</h1>
-        <p style="margin: 20px 0; font-weight: 800; color: var(--gold);">YERTAL ARCADE</p>
-        <button class="btn" onclick="startGame()">Launch Space Dodger</button>
-        <div style="margin: 10px;"><select id="level-select" style="background: #1e293b; color: white; padding: 14px; border-radius: 15px; width: 340px; font-weight: bold;"></select></div>
+        <h1 style="font-size:60px; margin:0; color:var(--accent);">SPACE DODGER</h1>
+        <p style="color:var(--gold); letter-spacing:4px; font-weight:800;">YERTAL ARCADE</p>
+        <button class="btn" onclick="startGame()">Launch Mission</button>
+        <button class="btn" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2);" onclick="showModal('hall')">Hall of Fame</button>
+        <select id="level-select" style="background:#1e293b; color:white; padding:12px; border-radius:10px; width:320px; margin-top:10px; border:1px solid var(--accent);"></select>
     </div>
 
     <div id="modal-overlay" class="overlay hidden">
-        <div id="modal-content" class="glass-box" style="width: 90%; max-width: 550px;"></div>
-        <button class="btn" style="margin-top:20px; width:200px" onclick="closeModal()">Close</button>
+        <div id="modal-content" class="glass-box" style="width: 85%; max-width: 500px;"></div>
+        <button class="btn" style="width:180px; margin-top:20px;" onclick="closeModal()">Back</button>
     </div>
 
     <script>
@@ -85,7 +72,7 @@
         const ctx = canvas.getContext('2d');
         const levelDropdown = document.getElementById('level-select');
         for(let i=1; i<=16; i++) {
-            let opt = document.createElement('option'); opt.value = i; opt.innerText = `LEVEL = ${i}`; levelDropdown.appendChild(opt);
+            let opt = document.createElement('option'); opt.value = i; opt.innerText = `START LEVEL: ${i}`; levelDropdown.appendChild(opt);
         }
 
         let isPlaying = false, isPaused = false, isSoundOn = true;
@@ -97,156 +84,164 @@
         let keys = {};
 
         const AudioSys = {
-            ctx: null, whirrOsc: null, whirrGain: null, alarmOsc: null, alarmGain: null,
+            ctx: null, whirrOsc: null, whirrGain: null,
             init() {
                 if(this.ctx) return;
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                 this.whirrOsc = this.ctx.createOscillator(); this.whirrGain = this.ctx.createGain();
-                this.whirrOsc.type = 'triangle'; this.whirrOsc.frequency.value = 45;
+                this.whirrOsc.type = 'triangle'; this.whirrOsc.frequency.value = 40;
                 this.whirrOsc.connect(this.whirrGain).connect(this.ctx.destination);
-                this.whirrGain.gain.value = 0; this.whirrOsc.start();
-                this.alarmGain = this.ctx.createGain(); this.alarmGain.connect(this.ctx.destination);
+                this.whirrGain.gain.value = 0.1; this.whirrOsc.start();
+            },
+            playDoubleBomb() {
+                if(!isSoundOn || !this.ctx) return;
+                [60, 40].forEach((freq, i) => {
+                    setTimeout(() => {
+                        const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+                        o.type = 'sawtooth'; o.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                        o.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 0.4);
+                        g.gain.setValueAtTime(0.6, this.ctx.currentTime);
+                        g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.4);
+                        o.connect(g).connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.4);
+                    }, i * 100);
+                });
             },
             playThud() {
                 if(!isSoundOn || !this.ctx) return;
                 const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
-                o.type = 'sine'; o.frequency.setValueAtTime(120, this.ctx.currentTime);
-                o.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.2);
-                g.gain.setValueAtTime(0.8, this.ctx.currentTime); g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3);
-                o.connect(g).connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.3);
-            },
-            playExplosion() {
-                if(!isSoundOn || !this.ctx) return;
-                const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
-                o.frequency.setValueAtTime(150, this.ctx.currentTime); o.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 0.4);
-                g.gain.setValueAtTime(0.3, this.ctx.currentTime); g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.4);
-                o.connect(g).connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.4);
-            },
-            play(f, t, d, v) {
-                if(!isSoundOn || !this.ctx) return;
-                const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
-                o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
-                g.gain.setValueAtTime(v, this.ctx.currentTime); g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + d);
-                o.connect(g).connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + d);
-            },
-            triggerWarning(active) {
-                if(!this.ctx || !isSoundOn) return;
-                if(active && !this.alarmOsc) {
-                    this.alarmOsc = this.ctx.createOscillator(); this.alarmOsc.type = 'sine';
-                    this.alarmOsc.frequency.value = 440; this.alarmOsc.connect(this.alarmGain);
-                    this.alarmOsc.start(); this.pulseAlarm();
-                } else if(!active && this.alarmOsc) {
-                    this.alarmOsc.stop(); this.alarmOsc = null;
-                }
-            },
-            pulseAlarm() {
-                if(!this.alarmOsc) return;
-                this.alarmGain.gain.setValueAtTime(0, this.ctx.currentTime);
-                this.alarmGain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + 0.1);
-                this.alarmGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.5);
-                setTimeout(() => this.pulseAlarm(), 800);
+                o.frequency.setValueAtTime(100, this.ctx.currentTime);
+                o.frequency.linearRampToValueAtTime(30, this.ctx.currentTime + 0.2);
+                g.gain.setValueAtTime(0.8, this.ctx.currentTime);
+                g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.2);
+                o.connect(g).connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.2);
             }
         };
 
+        function drawStylishRocket() {
+            player.x += (player.targetX - player.x) * 0.15;
+            ctx.save(); ctx.translate(player.x, canvas.height - 130);
+            ctx.scale(0.6, 0.6);
+            
+            let color = (flashTimer > 0) ? '#fff' : '#3b82f6';
+            if(flashTimer > 0) flashTimer--;
+
+            // Wings / Stabilizers
+            ctx.fillStyle = '#1d4ed8';
+            ctx.beginPath(); ctx.moveTo(-40, 20); ctx.lineTo(0, -20); ctx.lineTo(40, 20); ctx.lineTo(0, 10); ctx.fill();
+            
+            // Main Body
+            const grad = ctx.createLinearGradient(-15, 0, 15, 0);
+            grad.addColorStop(0, '#1e3a8a'); grad.addColorStop(0.5, color); grad.addColorStop(1, '#1e3a8a');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.ellipse(0, 0, 18, 55, 0, 0, Math.PI*2); ctx.fill();
+            
+            // Cockpit
+            ctx.fillStyle = '#93c5fd';
+            ctx.beginPath(); ctx.ellipse(0, -20, 8, 15, 0, 0, Math.PI*2); ctx.fill();
+
+            // Thruster Fire
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath(); ctx.moveTo(-10, 45); ctx.lineTo(10, 45); ctx.lineTo(0, 60+Math.random()*20); ctx.fill();
+            ctx.restore();
+        }
+
+        function drawLumpyAsteroid(a) {
+            ctx.save(); ctx.translate(a.x, a.y);
+            const g = ctx.createRadialGradient(-a.r*0.3, -a.r*0.3, 2, 0, 0, a.r);
+            g.addColorStop(0, '#ff4444'); g.addColorStop(1, '#440000');
+            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, a.r, 0, Math.PI*2); ctx.fill();
+            // Lumps
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            for(let i=0; i<3; i++) { ctx.beginPath(); ctx.arc(Math.cos(i*2)*a.r*0.4, Math.sin(i*2)*a.r*0.4, a.r*0.3, 0, Math.PI*2); ctx.fill(); }
+            ctx.restore();
+        }
+
         function updateFuelUI() {
-            let percentage = ((25 - missedCount) / 25) * 100;
-            document.getElementById('miss-num').innerText = Math.floor(missedCount);
-            const fb = document.getElementById('fuel-bar');
-            fb.style.width = Math.max(0, percentage) + "%";
-            if(percentage > 67) { fb.style.backgroundColor = "var(--green)"; AudioSys.triggerWarning(false); }
-            else if(percentage > 33) { fb.style.backgroundColor = "var(--orange)"; AudioSys.triggerWarning(false); }
-            else { fb.style.backgroundColor = "var(--red)"; AudioSys.triggerWarning(true); }
+            const perc = ((25 - missedCount) / 25) * 100;
+            const bar = document.getElementById('fuel-bar');
+            bar.style.width = Math.max(0, perc) + "%";
+            bar.style.backgroundColor = perc > 67 ? "var(--green)" : (perc > 33 ? "var(--orange)" : "var(--red)");
         }
 
         function showModal(type, title="Personal") {
             const box = document.getElementById('modal-content');
             document.getElementById('modal-overlay').classList.remove('hidden');
-            if(type==='manual') box.innerHTML = `<h2>Mission Brief</h2><p>Dodge the red lumps. Don't miss 25. Collect stars for 5% fuel.</p>`;
-            else if(type==='hall') {
-                const data = (title === 'Global') ? [...sessionScores, {lvl: 16, pts: 9999}] : sessionScores;
-                const sorted = [...data].sort((a,b) => b.pts - a.pts).slice(0, 10);
-                let list = sorted.map((s, i) => `<div class="rank-item"><span class="rank-num">Rank#${i+1}</span> Level ${s.lvl} : Score ${s.pts}</div>`).join('') || "NO DATA";
-                box.innerHTML = `<div class="trophy-row"><i class="fas fa-${title==='Global'?'globe':'trophy'}"></i></div><h2>${title} Hall of Fame</h2><div>${list}</div>`;
-            }
+            const data = (title === 'Global') ? [...sessionScores, {lvl: 16, pts: 5000}] : sessionScores;
+            const sorted = [...data].sort((a,b) => b.pts - a.pts);
+            let list = sorted.map((s, i) => `<div class="rank-item"><span style="color:var(--accent)">Rank#${i+1}</span> Level ${s.lvl} : Score ${s.pts}</div>`).join('') || "NO MISSIONS YET";
+            box.innerHTML = `<h2 style="color:var(--gold)">${title} Hall of Fame</h2><div style="max-height:300px; overflow-y:auto">${list}</div>`;
         }
 
         function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
-        function togglePause() { if(!isPlaying) return; isPaused = !isPaused; AudioSys.triggerWarning(false); }
-        function toggleSound() { isSoundOn = !isSoundOn; AudioSys.triggerWarning(false); }
-
-        function drawAsteroid(a) {
-            ctx.save(); ctx.translate(a.x, a.y);
-            const g = ctx.createRadialGradient(-a.r*0.3, -a.r*0.3, a.r*0.1, 0, 0, a.r);
-            g.addColorStop(0, '#ff4d4d'); g.addColorStop(1, '#660000');
-            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, a.r, 0, Math.PI*2); ctx.fill();
-            // Lumps/Craters
-            ctx.fillStyle = 'rgba(0,0,0,0.2)';
-            for(let i=0; i<3; i++) {
-                ctx.beginPath(); ctx.arc(Math.cos(i)*a.r*0.5, Math.sin(i)*a.r*0.5, a.r*0.25, 0, Math.PI*2); ctx.fill();
-            }
-            ctx.restore();
-        }
+        function togglePause() { if(isPlaying) isPaused = !isPaused; }
+        function toggleSound() { isSoundOn = !isSoundOn; }
 
         function loop() {
             if(!isPlaying || isPaused) { if(isPlaying) requestId = requestAnimationFrame(loop); return; }
             ctx.clearRect(0,0,canvas.width, canvas.height);
-            let calcLvl = Math.floor(score / 100) + startLevel;
-            if(calcLvl > level) { level = calcLvl; document.getElementById('level-val').innerText = level.toString().padStart(2, '0'); }
-
             bgStars.forEach(s => { s.y += s.v; if(s.y > canvas.height) s.y = 0; ctx.fillStyle = `rgba(255,255,255,${s.o})`; ctx.fillRect(s.x, s.y, 2, 2); });
 
-            player.x += (player.targetX - player.x) * 0.15;
-            ctx.save(); ctx.translate(player.x, canvas.height - 130);
-            let hull = (flashTimer > 0) ? '#fff' : '#1e3a8a'; if(flashTimer > 0) flashTimer--;
-            // Smaller Rocket (Scaled down to 0.7)
-            ctx.scale(0.7, 0.7);
-            ctx.fillStyle = hull; ctx.beginPath(); ctx.moveTo(0, -65); ctx.lineTo(35, 40); ctx.lineTo(-35, 40); ctx.fill();
-            ctx.fillStyle = '#f59e0b'; ctx.fillRect(-8, 40, 16, 15 + Math.random()*20);
-            ctx.restore();
+            drawStylishRocket();
 
-            if(frames % Math.max(7, 60 - level*3) === 0) asteroids.push({ x: Math.random()*canvas.width, y: -70, r: 20+Math.random()*40, v: 2.5 + level*0.8 });
-            if(frames % 180 === 0) stars.push({ x: Math.random()*canvas.width, y: -70, r: 18, v: 3 + level });
+            fragments.forEach((f, i) => {
+                f.x += f.vx; f.y += f.vy; f.life -= 0.02;
+                ctx.fillStyle = '#ff4444'; ctx.globalAlpha = f.life; ctx.fillRect(f.x, f.y, 3, 3);
+                if(f.life <= 0) fragments.splice(i, 1);
+            });
+            ctx.globalAlpha = 1;
 
-            bullets.forEach((b, i) => { b.y -= 18; ctx.fillStyle = '#22d3ee'; ctx.fillRect(b.x-2, b.y, 4, 25); if(b.y < 0) bullets.splice(i,1); });
+            if(frames % Math.max(8, 60 - level*4) === 0) {
+                let r = 20 + Math.random()*45;
+                asteroids.push({ x: Math.random()*canvas.width, y: -70, r, v: 2.5 + level*0.7, hp: Math.ceil(r/15) });
+            }
+            if(frames % 200 === 0) stars.push({ x: Math.random()*canvas.width, y: -70, r: 18, v: 4 });
+
+            bullets.forEach((b, i) => { b.y -= 15; ctx.fillStyle = '#0ff'; ctx.fillRect(b.x-2, b.y, 4, 15); if(b.y < 0) bullets.splice(i,1); });
 
             asteroids.forEach((a, i) => {
-                a.y += a.v; drawAsteroid(a);
-                if(Math.hypot(player.x - a.x, (canvas.height-130) - a.y) < a.r + 25) {
+                a.y += a.v; drawLumpyAsteroid(a);
+                if(Math.hypot(player.x - a.x, (canvas.height-130) - a.y) < a.r + 20) {
                     lives--; updateLives(); AudioSys.playThud(); asteroids.splice(i,1); if(lives <= 0) endGame();
                 }
                 bullets.forEach((b, bi) => {
-                    if(Math.hypot(b.x - a.x, b.y - a.y) < a.r) { score += 5; AudioSys.playExplosion(); asteroids.splice(i,1); bullets.splice(bi,1); }
+                    if(Math.hypot(b.x - a.x, b.y - a.y) < a.r) {
+                        a.hp--; bullets.splice(bi, 1);
+                        if(a.hp <= 0) {
+                            score += 10; AudioSys.playDoubleBomb();
+                            for(let j=0; j<12; j++) fragments.push({ x: a.x, y: a.y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1 });
+                            asteroids.splice(i,1);
+                        }
+                    }
                 });
-                if(a.y > canvas.height + 100) { asteroids.splice(i, 1); missedCount++; updateFuelUI(); if(missedCount >= 25) endGame(); }
+                if(a.y > canvas.height + 100) { asteroids.splice(i,1); missedCount++; updateFuelUI(); if(missedCount >= 25) endGame(); }
             });
 
             stars.forEach((s, i) => {
-                s.y += s.v;
-                ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(frames*0.05); ctx.fillStyle = '#facc15';
-                ctx.beginPath(); for(let j=0; j<5; j++){ ctx.rotate(Math.PI/5); ctx.lineTo(0, -s.r*0.5); ctx.rotate(Math.PI/5); ctx.lineTo(0, -s.r); }
-                ctx.fill(); ctx.restore();
-                if(Math.hypot(player.x - s.x, (canvas.height-130) - s.y) < 40) { score += 25; stars.splice(i,1); flashTimer = 10; missedCount = Math.max(0, missedCount - 1.25); updateFuelUI(); AudioSys.play(800, 'sine', 0.2, 0.2); }
+                s.y += s.v; ctx.fillStyle = '#ff0'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 7); ctx.fill();
+                if(Math.hypot(player.x - s.x, (canvas.height-130) - s.y) < 40) {
+                    score += 50; stars.splice(i,1); flashTimer = 10; missedCount = Math.max(0, missedCount-1.25); updateFuelUI();
+                }
             });
 
             frames++; document.getElementById('score-val').innerText = score.toString().padStart(4, '0');
             requestId = requestAnimationFrame(loop);
         }
 
-        function updateLives() { document.getElementById('lives-container').innerHTML = '<span class="heart-3d">❤️</span>'.repeat(lives); }
-        function fire() { if(isPlaying && !isPaused) { bullets.push({x: player.x, y: canvas.height-170}); AudioSys.play(1200, 'sine', 0.05, 0.1); } }
+        function updateLives() { document.getElementById('lives-container').innerHTML = '<i class="fas fa-heart" style="color:red; margin-right:5px"></i>'.repeat(lives); }
+        function fire() { if(isPlaying && !isPaused) bullets.push({x: player.x, y: canvas.height-160}); }
         function startGame() {
-            if(requestId) cancelAnimationFrame(requestId);
-            startLevel = parseInt(levelDropdown.value); level = startLevel; score = 0; lives = 3; missedCount = 0; frames = 0;
+            startLevel = parseInt(levelDropdown.value); level = startLevel; score = 0; lives = 3; missedCount = 0;
             isPlaying = true; isPaused = false; document.getElementById('landing-screen').classList.add('hidden');
-            updateLives(); updateFuelUI(); AudioSys.init(); player.x = canvas.width/2; asteroids = []; stars = []; loop();
+            updateLives(); updateFuelUI(); AudioSys.init(); player.x = canvas.width/2; asteroids = []; stars = [];
+            bgStars = Array.from({length: 60}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, v: Math.random()*2+1, o: Math.random()}));
+            loop();
         }
-        function endGame() { isPlaying = false; AudioSys.triggerWarning(false); sessionScores.push({ lvl: level, pts: score }); document.getElementById('landing-screen').classList.remove('hidden'); }
+        function endGame() { isPlaying = false; sessionScores.push({ lvl: level, pts: score }); document.getElementById('landing-screen').classList.remove('hidden'); }
 
-        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
         window.addEventListener('mousemove', e => player.targetX = e.clientX);
         window.addEventListener('mousedown', fire);
-        window.addEventListener('keydown', e => { if(e.code === 'Space') fire(); });
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
     </script>
 </body>
 </html>
