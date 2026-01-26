@@ -6,33 +6,33 @@
     <title>Space Dodger 3D | Yertal Arcade</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { margin: 0; overflow: hidden; background-color: #020617; font-family: 'Inter', sans-serif; touch-action: none; user-select: none; color: white; }
-        canvas { display: block; }
+        :root { --accent: #3b82f6; --glass: rgba(15, 23, 42, 0.8); }
+        body { margin: 0; overflow: hidden; background-color: #020617; font-family: 'Segoe UI', system-ui, sans-serif; color: white; user-select: none; }
+        canvas { display: block; touch-action: none; }
         
-        /* UI Components */
+        /* UI Overlays */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 20px; box-sizing: border-box; }
-        .glass-box { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; padding: 1.25rem; pointer-events: auto; }
+        .glass-box { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 15px; pointer-events: auto; }
         
-        /* Stats (Top Left) */
-        #stats-panel { width: fit-content; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
-        .stat-line { font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; font-size: 14px; }
-        #score-val { color: #fbbf24; font-size: 24px; display: block; margin-bottom: 5px; }
-        .heart-3d { filter: drop-shadow(0 4px 6px rgba(239, 68, 68, 0.4)); font-size: 20px; margin-right: 5px; display: inline-block; }
+        /* Stats Panel (Top Left) */
+        #stats-panel { width: fit-content; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; }
+        .stat-value { font-size: 22px; font-weight: 900; color: #fbbf24; margin-bottom: 4px; }
+        .heart-3d { font-size: 18px; filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.5)); margin-right: 4px; }
 
-        /* Icons (Top Right) */
-        #icon-bar { position: absolute; top: 20px; right: 20px; display: flex; gap: 1.5rem; pointer-events: auto; }
-        .nav-icon { font-size: 24px; cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: rgba(255,255,255,0.8); }
-        .nav-icon:hover { color: #3b82f6; transform: scale(1.2); }
+        /* Icon Bar (Top Right) */
+        #icon-bar { position: absolute; top: 20px; right: 20px; display: flex; gap: 20px; pointer-events: auto; }
+        .nav-icon { font-size: 24px; cursor: pointer; transition: 0.2s; color: rgba(255,255,255,0.7); }
+        .nav-icon:hover { color: var(--accent); transform: scale(1.1); }
 
-        /* Overlays */
-        .overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; pointer-events: auto; backdrop-filter: blur(8px); text-align: center; padding: 20px; }
+        /* Screens & Modals */
+        .overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; backdrop-filter: blur(5px); }
         .hidden { display: none !important; }
-        h1 { font-size: clamp(32px, 8vw, 60px); font-weight: 900; letter-spacing: -0.05em; color: #3b82f6; margin-bottom: 1rem; }
-        .btn { background: #3b82f6; color: white; padding: 1rem 2.5rem; border-radius: 9999px; font-weight: 800; border: none; cursor: pointer; text-transform: uppercase; margin: 0.5rem; transition: 0.3s; width: 280px; }
-        .btn:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3); }
+        h1 { font-size: 50px; font-weight: 900; color: var(--accent); margin-bottom: 20px; line-height: 0.9; }
+        .btn { background: var(--accent); color: white; padding: 14px 40px; border-radius: 50px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 8px; transition: 0.3s; width: 280px; }
+        .btn:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(37,99,235,0.4); }
+        .btn-ghost { background: transparent; border: 2px solid rgba(255,255,255,0.2); }
         .btn-save { background: #10b981; }
-        .btn-save:hover { background: #059669; }
-        .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
@@ -41,41 +41,44 @@
 
     <div id="ui-layer">
         <div id="stats-panel" class="glass-box">
-            <div class="stat-line">Level: <span id="level-val">1</span></div>
-            <div id="score-val">0000</div>
+            <div class="stat-label">System Level</div>
+            <div id="level-val" class="stat-value">01</div>
+            <div class="stat-label">Core Score</div>
+            <div id="score-val" class="stat-value">0000</div>
             <div id="lives-container"></div>
         </div>
 
         <div id="icon-bar">
-            <i class="fas fa-globe-americas nav-icon" title="Global Hall of Fame" onclick="handleGlobe()"></i>
-            <i class="fas fa-trophy nav-icon" title="Personal Scores" onclick="showPersonalHall()"></i>
+            <i class="fas fa-globe-americas nav-icon" title="Global Hall of Fame" onclick="handleAuth('Global')"></i>
+            <i class="fas fa-trophy nav-icon" title="Personal History" onclick="showPersonalHall()"></i>
             <i class="fas fa-question-circle nav-icon" title="Instructions" onclick="showInstructions()"></i>
             <i id="sound-btn" class="fas fa-volume-up nav-icon" title="Toggle Sound" onclick="toggleSound()"></i>
         </div>
     </div>
 
-    <div id="menu-screen" class="overlay">
-        <h1>SPACE DODGER<br><span style="color:white; font-size: 20px; opacity: 0.6;">YERTAL LABORATORY</span></h1>
+    <div id="landing-screen" class="overlay">
+        <h1>SPACE<br>DODGER 3D</h1>
+        <p style="margin-bottom: 30px; opacity: 0.6;">Yertal Lab Experimental Build</p>
         <button class="btn" onclick="startGame()">Launch Space Dodger</button>
         <button class="btn btn-ghost" onclick="showPersonalHall()">Hall of Fame</button>
     </div>
 
     <div id="modal-screen" class="overlay hidden">
-        <div id="modal-content" class="glass-box" style="max-width: 500px;"></div>
-        <button class="btn" style="margin-top: 2rem;" onclick="closeModal()">Back</button>
+        <div id="modal-content" class="glass-box" style="width: 80%; max-width: 400px;"></div>
+        <button class="btn btn-ghost" onclick="closeModal()">Close</button>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        let isPlaying = false, isSoundOn = true, isLoggedIn = false; 
+        let isPlaying = false, isSoundOn = true, isLoggedIn = false;
         let score = 0, level = 1, lives = 3, frames = 0, sessionScores = [];
         
-        let player = { x: 0, y: 0, targetX: 0, tilt: 0, w: 50, h: 75 };
-        let asteroids = [], stars = [], bullets = [], bgStars = [];
+        let player = { x: 0, y: 0, targetX: 0, tilt: 0, w: 50, h: 80 };
+        let asteroids = [], stars = [], bullets = [], particles = [], bgStars = [];
         let keys = {};
 
-        // --- Audio Context ---
+        // --- Audio Context (Procedural) ---
         const AudioSys = {
             ctx: null, whirr: null,
             init() {
@@ -83,181 +86,184 @@
                 this.whirr = this.ctx.createOscillator();
                 this.gain = this.ctx.createGain();
                 this.whirr.type = 'sawtooth';
-                this.whirr.frequency.value = 40;
-                this.gain.gain.value = 0.02;
+                this.whirr.frequency.value = 45;
+                this.gain.gain.value = 0.03;
                 this.whirr.connect(this.gain).connect(this.ctx.destination);
                 this.whirr.start();
             },
-            playLaser() { if(isSoundOn && this.ctx) {
-                const osc = this.ctx.createOscillator();
+            playLaser() { this.tone(800, 100, 0.1, 'square'); },
+            playBlast() { this.tone(150, 10, 0.4, 'sawtooth', 0.2); },
+            playLevel() { this.tone(440, 880, 0.6, 'sine'); },
+            tone(start, end, dur, type, vol = 0.1) {
+                if(!isSoundOn || !this.ctx) return;
+                const o = this.ctx.createOscillator();
                 const g = this.ctx.createGain();
-                osc.type = 'square'; osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.1);
-                g.gain.setValueAtTime(0.05, this.ctx.currentTime);
-                osc.connect(g).connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.1);
-            }},
-            playLevel() { if(isSoundOn && this.ctx) {
-                const osc = this.ctx.createOscillator();
-                osc.type = 'sine'; osc.frequency.setValueAtTime(440, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.5);
-                const g = this.ctx.createGain(); g.gain.value = 0.1;
-                osc.connect(g).connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.5);
-            }}
+                o.type = type; o.frequency.setValueAtTime(start, this.ctx.currentTime);
+                o.frequency.exponentialRampToValueAtTime(end, this.ctx.currentTime + dur);
+                g.gain.setValueAtTime(vol, this.ctx.currentTime);
+                g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + dur);
+                o.connect(g).connect(this.ctx.destination);
+                o.start(); o.stop(this.ctx.currentTime + dur);
+            }
         };
 
-        // --- UI & Auth ---
-        function toggleSound() {
-            isSoundOn = !isSoundOn;
-            if(AudioSys.gain) AudioSys.gain.gain.value = isSoundOn ? 0.02 : 0;
-            document.getElementById('sound-btn').className = isSoundOn ? 'fas fa-volume-up nav-icon' : 'fas fa-volume-mute nav-icon';
+        // --- Auth & Navigation ---
+        function handleAuth(mode) {
+            if(!isLoggedIn) {
+                document.getElementById('modal-screen').classList.remove('hidden');
+                document.getElementById('modal-content').innerHTML = `
+                    <h3>Federated Login</h3>
+                    <p>Login to Yertal to access ${mode} features.</p>
+                    <button class="btn" style="background:#db4437" onclick="doLogin()">Google</button>
+                    <button class="btn" style="background:#1877f2" onclick="doLogin()">Facebook</button>
+                    <button class="btn" style="background:#00a4ef" onclick="doLogin()">Microsoft</button>
+                `;
+            } else { alert(`${mode} Hall of Fame Connected.`); }
         }
 
-        function handleGlobe() {
-            if(!isLoggedIn) showLogin();
-            else alert("Connecting to Global Hall of Fame...");
-        }
-
-        function showLogin() {
-            document.getElementById('modal-screen').classList.remove('hidden');
-            document.getElementById('modal-content').innerHTML = `
-                <h2 style="color:#3b82f6">Federated Access</h2>
-                <p>Login to Yertal via Secure Gateway</p>
-                <div style="display:flex; flex-direction:column; gap:10px; margin-top:1rem;">
-                    <button class="btn" style="background:#db4437" onclick="doLogin()">Google Login</button>
-                    <button class="btn" style="background:#1877f2" onclick="doLogin()">Facebook Login</button>
-                    <button class="btn" style="background:#00a4ef" onclick="doLogin()">Microsoft Login</button>
-                </div>
-            `;
-        }
-
-        function doLogin() { isLoggedIn = true; closeModal(); alert("Successfully Authenticated."); }
+        function doLogin() { isLoggedIn = true; closeModal(); alert("Federated Login Success!"); }
 
         function showPersonalHall() {
             document.getElementById('modal-screen').classList.remove('hidden');
-            let list = sessionScores.length ? sessionScores.slice(-10).reverse().map(s => `<li>Score: ${s}</li>`).join('') : "<li>No flights recorded this session.</li>";
-            let loginBtn = !isLoggedIn ? `<button class="btn btn-save" onclick="showLogin()">Save Scores Across Sessions</button>` : "";
-            
+            let history = sessionScores.length ? sessionScores.slice(-10).reverse().map(s => `<div>Score: ${s}</div>`).join('') : "No flights recorded.";
+            let saveBtn = !isLoggedIn ? `<button class="btn btn-save" onclick="handleAuth('Cloud Sync')">Save Scores Across Sessions</button>` : "";
             document.getElementById('modal-content').innerHTML = `
                 <h2 style="color:#fbbf24">Session History</h2>
-                <ul style="list-style:none; padding:0; margin:1.5rem 0; font-family:monospace;">${list}</ul>
-                ${loginBtn}
+                <div style="margin:20px 0; font-family:monospace;">${history}</div>
+                ${saveBtn}
             `;
         }
 
         function showInstructions() {
             document.getElementById('modal-screen').classList.remove('hidden');
             document.getElementById('modal-content').innerHTML = `
-                <h2 style="color:#3b82f6">Flight Manual</h2>
-                <p><b>Move:</b> Mouse or Arrow Keys</p>
-                <p><b>Shoot:</b> Space / Left Click / Tap</p>
-                <p><b>Goal:</b> Collect yellow stars. Dodge or blast red asteroids. Every 100 points level up!</p>
+                <h2>Manual</h2>
+                <p>Move: Mouse / Arrows<br>Shoot: Space / Click<br>Red: Blast or Dodge<br>Yellow: +25 Points</p>
             `;
+        }
+
+        function toggleSound() {
+            isSoundOn = !isSoundOn;
+            if(AudioSys.gain) AudioSys.gain.gain.value = isSoundOn ? 0.03 : 0;
+            document.getElementById('sound-btn').className = isSoundOn ? 'fas fa-volume-up nav-icon' : 'fas fa-volume-mute nav-icon';
         }
 
         function closeModal() { document.getElementById('modal-screen').classList.add('hidden'); }
 
-        // --- Core Engine ---
+        // --- Particles System ---
+        function createExplosion(x, y, color) {
+            for(let i=0; i<15; i++) {
+                particles.push({
+                    x, y, 
+                    vx: (Math.random()-0.5)*10, 
+                    vy: (Math.random()-0.5)*10, 
+                    life: 1.0, 
+                    color
+                });
+            }
+        }
+
+        // --- Render Loops ---
         function drawRocket() {
             player.x += (player.targetX - player.x) * 0.15;
-            let moveDiff = (player.targetX - player.x);
-            player.tilt = moveDiff * 0.05; // Brief leaning
+            player.tilt = (player.targetX - player.x) * 0.08;
             
             ctx.save();
             ctx.translate(player.x, canvas.height - 120);
-            ctx.rotate(Math.max(-0.3, Math.min(0.3, player.tilt * 0.02)));
+            ctx.rotate(Math.max(-0.4, Math.min(0.4, player.tilt * 0.02)));
 
-            // 3D Body
-            const grad = ctx.createLinearGradient(-15, 0, 15, 0);
-            grad.addColorStop(0, '#1e3a8a'); grad.addColorStop(0.5, '#3b82f6'); grad.addColorStop(1, '#1e3a8a');
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.moveTo(0, -40); ctx.lineTo(20, 30); ctx.lineTo(-20, 30); ctx.fill();
+            // Rocket 3D Body
+            const g = ctx.createLinearGradient(-15, 0, 15, 0);
+            g.addColorStop(0, '#1e3a8a'); g.addColorStop(0.5, '#3b82f6'); g.addColorStop(1, '#1e3a8a');
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.moveTo(0, -45); ctx.lineTo(25, 30); ctx.lineTo(-25, 30); ctx.fill();
             // Window
             ctx.fillStyle = '#93c5fd';
-            ctx.beginPath(); ctx.ellipse(0, -5, 6, 10, 0, 0, Math.PI*2); ctx.fill();
-            // Flame
+            ctx.beginPath(); ctx.ellipse(0, -10, 6, 12, 0, 0, Math.PI*2); ctx.fill();
+            // Engine
             ctx.fillStyle = '#fbbf24';
-            ctx.beginPath(); ctx.moveTo(-8, 30); ctx.lineTo(8, 30); ctx.lineTo(0, 40 + Math.random()*15); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(-10, 30); ctx.lineTo(10, 30); ctx.lineTo(0, 45 + Math.random()*15); ctx.fill();
             ctx.restore();
-        }
-
-        function drawAsteroid(a) {
-            const g = ctx.createRadialGradient(a.x - a.r*0.3, a.y - a.r*0.3, a.r*0.1, a.x, a.y, a.r);
-            g.addColorStop(0, '#fca5a5'); g.addColorStop(1, '#991b1b');
-            ctx.fillStyle = g;
-            ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI*2); ctx.fill();
-            // 3D Depth shading
-            ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 2; ctx.stroke();
-        }
-
-        function drawStar(s) {
-            const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r);
-            g.addColorStop(0, '#fef08a'); g.addColorStop(1, '#ca8a04');
-            ctx.fillStyle = g;
-            ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
-            ctx.shadowBlur = 10; ctx.shadowColor = '#fbbf24'; ctx.stroke(); ctx.shadowBlur = 0;
         }
 
         function loop() {
             if(!isPlaying) return;
             ctx.clearRect(0,0,canvas.width, canvas.height);
 
-            // Parallax Background
+            // BG
             bgStars.forEach(s => {
                 s.y += s.v; if(s.y > canvas.height) s.y = 0;
                 ctx.fillStyle = `rgba(255,255,255,${s.o})`;
                 ctx.fillRect(s.x, s.y, 2, 2);
             });
 
-            // Input Handling
+            // Particles
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+                ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
+                ctx.fillRect(p.x, p.y, 4, 4);
+                if(p.life <= 0) particles.splice(i, 1);
+            });
+            ctx.globalAlpha = 1.0;
+
             if(keys['ArrowLeft'] && player.x > 50) player.targetX = player.x - 20;
-            if(keys['ArrowRight'] && player.x < canvas.width - 50) player.targetX = player.x + 20;
+            if(keys['ArrowRight'] && player.x < canvas.width-50) player.targetX = player.x + 20;
 
             drawRocket();
 
-            // Spawn Logic
-            if(frames % Math.max(10, 60 - (level*5)) === 0) {
-                let r = 15 + Math.random()*35;
-                asteroids.push({x: Math.random()*canvas.width, y: -50, r: r, v: 2 + level, hp: Math.ceil(r/15)});
+            // Spawn Asteroids & Stars
+            if(frames % Math.max(10, 60 - level*4) === 0) {
+                let r = 15 + Math.random()*40;
+                asteroids.push({x: Math.random()*canvas.width, y: -50, r, v: 2 + level, hp: Math.ceil(r/15), maxHp: Math.ceil(r/15)});
             }
-            if(frames % 120 === 0) stars.push({x: Math.random()*canvas.width, y: -20, r: 8, v: 3 + level});
+            if(frames % 120 === 0) stars.push({x: Math.random()*canvas.width, y: -20, r: 10, v: 3+level});
 
-            // Process Bullets
+            // Logic: Bullets
             bullets.forEach((b, i) => {
-                b.y -= 12; ctx.fillStyle = '#22d3ee'; ctx.fillRect(b.x-2, b.y, 4, 15);
+                b.y -= 15; ctx.fillStyle = '#22d3ee'; ctx.fillRect(b.x-2, b.y, 4, 15);
                 if(b.y < 0) bullets.splice(i, 1);
             });
 
-            // Process Asteroids
+            // Logic: Asteroids
             asteroids.forEach((a, i) => {
-                a.y += a.v; drawAsteroid(a);
-                // Ship Collision
-                if(Math.hypot(player.x - a.x, (canvas.height - 120) - a.y) < a.r + 20) {
+                a.y += a.v;
+                const g = ctx.createRadialGradient(a.x-a.r*0.3, a.y-a.r*0.3, a.r*0.1, a.x, a.y, a.r);
+                g.addColorStop(0, '#fca5a5'); g.addColorStop(1, '#991b1b');
+                ctx.fillStyle = g; ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI*2); ctx.fill();
+
+                // Collision Player
+                if(Math.hypot(player.x - a.x, (canvas.height-120) - a.y) < a.r + 20) {
                     lives--; updateLives(); asteroids.splice(i, 1);
+                    createExplosion(a.x, a.y, '#ef4444'); AudioSys.playBlast();
                     if(lives <= 0) endGame();
                 }
-                // Laser Hit
+
+                // Collision Bullets
                 bullets.forEach((b, bi) => {
                     if(Math.hypot(b.x - a.x, b.y - a.y) < a.r) {
                         a.hp--; bullets.splice(bi, 1);
                         if(a.hp <= 0) {
-                            score += (a.r > 30) ? 5 : 1;
-                            asteroids.splice(i, 1); checkLevel();
+                            score += (a.maxHp > 2) ? 5 : 1;
+                            createExplosion(a.x, a.y, '#ef4444');
+                            AudioSys.playBlast();
+                            asteroids.splice(i, 1);
+                            checkLevel();
                         }
                     }
                 });
-                if(a.y > canvas.height + 50) asteroids.splice(i, 1);
+                if(a.y > canvas.height + 50) { asteroids.splice(i, 1); score += (a.maxHp > 2) ? 2 : 1; checkLevel(); }
             });
 
-            // Process Stars
+            // Logic: Stars
             stars.forEach((s, i) => {
-                s.y += s.v; drawStar(s);
-                if(Math.hypot(player.x - s.x, (canvas.height - 120) - s.y) < 30) {
-                    score += 10; stars.splice(i, 1); checkLevel();
+                s.y += s.v;
+                const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r);
+                g.addColorStop(0, '#fef08a'); g.addColorStop(1, '#ca8a04');
+                ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+                if(Math.hypot(player.x - s.x, (canvas.height-120) - s.y) < 30) {
+                    score += 25; stars.splice(i, 1); checkLevel();
                 }
-                if(s.y > canvas.height + 20) stars.splice(i, 1);
+                if(s.y > canvas.height + 50) stars.splice(i, 1);
             });
 
             frames++;
@@ -266,23 +272,18 @@
         }
 
         function checkLevel() {
-            let nextLvl = Math.floor(score / 100) + 1;
-            if(nextLvl > level) {
-                level = nextLvl; AudioSys.playLevel();
-                document.getElementById('level-val').innerText = level;
-            }
+            let nL = Math.floor(score / 100) + 1;
+            if(nL > level) { level = nL; AudioSys.playLevel(); document.getElementById('level-val').innerText = level; }
         }
 
-        function updateLives() {
-            document.getElementById('lives-container').innerHTML = '<span class="heart-3d">❤️</span>'.repeat(lives);
-        }
+        function updateLives() { document.getElementById('lives-container').innerHTML = '<span class="heart-3d">❤️</span>'.repeat(lives); }
 
-        function fire() { if(isPlaying) { bullets.push({x: player.x, y: canvas.height - 150}); AudioSys.playLaser(); }}
+        function fire() { if(isPlaying) { bullets.push({x: player.x, y: canvas.height-150}); AudioSys.playLaser(); } }
 
         function startGame() {
             if(!AudioSys.ctx) AudioSys.init();
-            document.querySelectorAll('.overlay').forEach(s => s.classList.add('hidden'));
-            score = 0; level = 1; lives = 3; asteroids = []; stars = []; bullets = []; frames = 0;
+            document.getElementById('landing-screen').classList.add('hidden');
+            score = 0; level = 1; lives = 3; asteroids = []; stars = []; bullets = []; particles = []; frames = 0;
             bgStars = Array.from({length: 80}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, v: Math.random()*2+1, o: Math.random()}));
             player.x = canvas.width/2; player.targetX = player.x;
             updateLives(); isPlaying = true; loop();
@@ -291,11 +292,11 @@
         function endGame() {
             isPlaying = false;
             sessionScores.push(score);
-            document.getElementById('menu-screen').classList.remove('hidden');
-            document.getElementById('menu-screen').querySelector('h1').innerHTML = `MISSION FAILED<br><span style="color:white; font-size: 20px;">FINAL SCORE: ${score}</span>`;
+            document.getElementById('landing-screen').classList.remove('hidden');
+            document.getElementById('landing-screen').querySelector('h1').innerHTML = `MISSION FAILED<br><span style="color:white; font-size: 20px;">Score: ${score}</span>`;
         }
 
-        // --- Events ---
+        // --- Listeners ---
         window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
         window.addEventListener('mousemove', e => player.targetX = e.clientX);
