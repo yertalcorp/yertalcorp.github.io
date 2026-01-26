@@ -26,7 +26,6 @@
         .overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
         .hidden { display: none !important; }
         .btn { background: var(--accent); color: white; padding: 18px 45px; border-radius: 60px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 10px; width: 320px; transition: 0.2s; }
-        .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
         
         .rank-item { padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.03); margin-bottom: 8px; font-family: monospace; font-size: 18px; border-left: 5px solid var(--gold); text-align: left; }
     </style>
@@ -84,82 +83,91 @@
         let keys = {};
 
         const AudioSys = {
-            ctx: null, whirrOsc: null, whirrGain: null,
+            ctx: null, whirrOsc: null, whirrFilter: null, whirrGain: null,
             init() {
                 if(this.ctx) return;
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                this.whirrOsc = this.ctx.createOscillator(); this.whirrGain = this.ctx.createGain();
-                this.whirrOsc.type = 'triangle'; this.whirrOsc.frequency.value = 40;
-                this.whirrOsc.connect(this.whirrGain).connect(this.ctx.destination);
-                this.whirrGain.gain.value = 0.1; this.whirrOsc.start();
+                
+                // Soft Engine Whirr
+                this.whirrOsc = this.ctx.createOscillator();
+                this.whirrFilter = this.ctx.createBiquadFilter();
+                this.whirrGain = this.ctx.createGain();
+                
+                this.whirrOsc.type = 'sawtooth';
+                this.whirrOsc.frequency.value = 55;
+                this.whirrFilter.type = 'lowpass';
+                this.whirrFilter.frequency.value = 400;
+                
+                this.whirrOsc.connect(this.whirrFilter).connect(this.whirrGain).connect(this.ctx.destination);
+                this.whirrGain.gain.value = 0;
+                this.whirrOsc.start();
+            },
+            setWhirr(active) {
+                if(!this.whirrGain) return;
+                this.whirrGain.gain.setTargetAtTime(active ? 0.08 : 0, this.ctx.currentTime, 0.5);
             },
             playDoubleBomb() {
                 if(!isSoundOn || !this.ctx) return;
-                [60, 40].forEach((freq, i) => {
+                [70, 45].forEach((freq, i) => {
                     setTimeout(() => {
                         const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
-                        o.type = 'sawtooth'; o.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                        o.type = 'square'; o.frequency.setValueAtTime(freq, this.ctx.currentTime);
                         o.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 0.4);
-                        g.gain.setValueAtTime(0.6, this.ctx.currentTime);
+                        g.gain.setValueAtTime(0.4, this.ctx.currentTime);
                         g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.4);
                         o.connect(g).connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.4);
-                    }, i * 100);
+                    }, i * 120);
                 });
             },
             playThud() {
                 if(!isSoundOn || !this.ctx) return;
                 const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
                 o.frequency.setValueAtTime(100, this.ctx.currentTime);
-                o.frequency.linearRampToValueAtTime(30, this.ctx.currentTime + 0.2);
-                g.gain.setValueAtTime(0.8, this.ctx.currentTime);
-                g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.2);
-                o.connect(g).connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.2);
+                o.frequency.linearRampToValueAtTime(20, this.ctx.currentTime + 0.3);
+                g.gain.setValueAtTime(0.6, this.ctx.currentTime);
+                g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3);
+                o.connect(g).connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.3);
             }
         };
+
+        function draw3DStar(s) {
+            ctx.save(); ctx.translate(s.x, s.y);
+            ctx.rotate(frames * 0.05); // Spin
+            const g = ctx.createRadialGradient(0, 0, 0, 0, 0, s.r);
+            g.addColorStop(0, '#fff9c4'); g.addColorStop(1, '#facc15');
+            ctx.fillStyle = g; ctx.beginPath();
+            for(let i=0; i<5; i++){
+                ctx.rotate(Math.PI/5); ctx.lineTo(0, -s.r*0.5);
+                ctx.rotate(Math.PI/5); ctx.lineTo(0, -s.r);
+            }
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 1; ctx.stroke();
+            ctx.restore();
+        }
 
         function drawStylishRocket() {
             player.x += (player.targetX - player.x) * 0.15;
             ctx.save(); ctx.translate(player.x, canvas.height - 130);
             ctx.scale(0.6, 0.6);
-            
             let color = (flashTimer > 0) ? '#fff' : '#3b82f6';
             if(flashTimer > 0) flashTimer--;
-
-            // Wings / Stabilizers
-            ctx.fillStyle = '#1d4ed8';
-            ctx.beginPath(); ctx.moveTo(-40, 20); ctx.lineTo(0, -20); ctx.lineTo(40, 20); ctx.lineTo(0, 10); ctx.fill();
-            
-            // Main Body
+            ctx.fillStyle = '#1d4ed8'; // Fins
+            ctx.beginPath(); ctx.moveTo(-45, 25); ctx.lineTo(0, -10); ctx.lineTo(45, 25); ctx.lineTo(0, 15); ctx.fill();
             const grad = ctx.createLinearGradient(-15, 0, 15, 0);
             grad.addColorStop(0, '#1e3a8a'); grad.addColorStop(0.5, color); grad.addColorStop(1, '#1e3a8a');
-            ctx.fillStyle = grad;
+            ctx.fillStyle = grad; // Hull
             ctx.beginPath(); ctx.ellipse(0, 0, 18, 55, 0, 0, Math.PI*2); ctx.fill();
-            
-            // Cockpit
-            ctx.fillStyle = '#93c5fd';
+            ctx.fillStyle = '#93c5fd'; // Cockpit
             ctx.beginPath(); ctx.ellipse(0, -20, 8, 15, 0, 0, Math.PI*2); ctx.fill();
-
-            // Thruster Fire
-            ctx.fillStyle = '#fbbf24';
+            ctx.fillStyle = '#fbbf24'; // Thruster
             ctx.beginPath(); ctx.moveTo(-10, 45); ctx.lineTo(10, 45); ctx.lineTo(0, 60+Math.random()*20); ctx.fill();
-            ctx.restore();
-        }
-
-        function drawLumpyAsteroid(a) {
-            ctx.save(); ctx.translate(a.x, a.y);
-            const g = ctx.createRadialGradient(-a.r*0.3, -a.r*0.3, 2, 0, 0, a.r);
-            g.addColorStop(0, '#ff4444'); g.addColorStop(1, '#440000');
-            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, a.r, 0, Math.PI*2); ctx.fill();
-            // Lumps
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            for(let i=0; i<3; i++) { ctx.beginPath(); ctx.arc(Math.cos(i*2)*a.r*0.4, Math.sin(i*2)*a.r*0.4, a.r*0.3, 0, Math.PI*2); ctx.fill(); }
             ctx.restore();
         }
 
         function updateFuelUI() {
             const perc = ((25 - missedCount) / 25) * 100;
             const bar = document.getElementById('fuel-bar');
-            bar.style.width = Math.max(0, perc) + "%";
+            bar.style.width = Math.max(0, Math.min(100, perc)) + "%";
             bar.style.backgroundColor = perc > 67 ? "var(--green)" : (perc > 33 ? "var(--orange)" : "var(--red)");
         }
 
@@ -173,8 +181,7 @@
         }
 
         function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
-        function togglePause() { if(isPlaying) isPaused = !isPaused; }
-        function toggleSound() { isSoundOn = !isSoundOn; }
+        function togglePause() { if(isPlaying) { isPaused = !isPaused; AudioSys.setWhirr(!isPaused); } }
 
         function loop() {
             if(!isPlaying || isPaused) { if(isPlaying) requestId = requestAnimationFrame(loop); return; }
@@ -192,14 +199,15 @@
 
             if(frames % Math.max(8, 60 - level*4) === 0) {
                 let r = 20 + Math.random()*45;
-                asteroids.push({ x: Math.random()*canvas.width, y: -70, r, v: 2.5 + level*0.7, hp: Math.ceil(r/15) });
+                asteroids.push({ x: Math.random()*canvas.width, y: -70, r, v: 2.5 + level*0.7, hp: Math.ceil(r/15), mHp: Math.ceil(r/15) });
             }
-            if(frames % 200 === 0) stars.push({ x: Math.random()*canvas.width, y: -70, r: 18, v: 4 });
+            if(frames % 200 === 0) stars.push({ x: Math.random()*canvas.width, y: -70, r: 20, v: 4 });
 
             bullets.forEach((b, i) => { b.y -= 15; ctx.fillStyle = '#0ff'; ctx.fillRect(b.x-2, b.y, 4, 15); if(b.y < 0) bullets.splice(i,1); });
 
             asteroids.forEach((a, i) => {
-                a.y += a.v; drawLumpyAsteroid(a);
+                a.y += a.v; 
+                ctx.fillStyle = '#ff4444'; ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI*2); ctx.fill(); // Simple render for speed
                 if(Math.hypot(player.x - a.x, (canvas.height-130) - a.y) < a.r + 20) {
                     lives--; updateLives(); AudioSys.playThud(); asteroids.splice(i,1); if(lives <= 0) endGame();
                 }
@@ -208,6 +216,10 @@
                         a.hp--; bullets.splice(bi, 1);
                         if(a.hp <= 0) {
                             score += 10; AudioSys.playDoubleBomb();
+                            // Refuel logic: 1% for small, up to 5% for large (25 misses * 0.05 = 1.25 units)
+                            let fuelGain = (a.mHp / 5) * 1.25; 
+                            missedCount = Math.max(0, missedCount - fuelGain);
+                            updateFuelUI();
                             for(let j=0; j<12; j++) fragments.push({ x: a.x, y: a.y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1 });
                             asteroids.splice(i,1);
                         }
@@ -217,9 +229,10 @@
             });
 
             stars.forEach((s, i) => {
-                s.y += s.v; ctx.fillStyle = '#ff0'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 7); ctx.fill();
+                s.y += s.v; draw3DStar(s);
                 if(Math.hypot(player.x - s.x, (canvas.height-130) - s.y) < 40) {
-                    score += 50; stars.splice(i,1); flashTimer = 10; missedCount = Math.max(0, missedCount-1.25); updateFuelUI();
+                    score += 50; stars.splice(i,1); flashTimer = 10; 
+                    missedCount = Math.max(0, missedCount-1.25); updateFuelUI();
                 }
             });
 
@@ -232,12 +245,10 @@
         function startGame() {
             startLevel = parseInt(levelDropdown.value); level = startLevel; score = 0; lives = 3; missedCount = 0;
             isPlaying = true; isPaused = false; document.getElementById('landing-screen').classList.add('hidden');
-            updateLives(); updateFuelUI(); AudioSys.init(); player.x = canvas.width/2; asteroids = []; stars = [];
-            bgStars = Array.from({length: 60}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, v: Math.random()*2+1, o: Math.random()}));
-            loop();
+            updateLives(); updateFuelUI(); AudioSys.init(); AudioSys.setWhirr(true);
+            player.x = canvas.width/2; asteroids = []; stars = []; loop();
         }
-        function endGame() { isPlaying = false; sessionScores.push({ lvl: level, pts: score }); document.getElementById('landing-screen').classList.remove('hidden'); }
-
+        function endGame() { isPlaying = false; AudioSys.setWhirr(false); sessionScores.push({ lvl: level, pts: score }); document.getElementById('landing-screen').classList.remove('hidden'); }
         window.addEventListener('mousemove', e => player.targetX = e.clientX);
         window.addEventListener('mousedown', fire);
         window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
