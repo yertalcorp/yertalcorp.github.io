@@ -2,230 +2,246 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Space Dodger 3D - Final Pro Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Dodger 3D - Pro Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root { --gold: #ffd700; --silver: #c0c0c0; --bronze: #cd7f32; }
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans-serif; color: white; user-select: none; }
         
-        /* HUD - Top Left Rounded Box */
+        /* HUD - Top Left */
         #hud-left {
-            position: absolute; top: 20px; left: 20px;
-            background: rgba(0, 30, 60, 0.85); padding: 20px;
-            border-radius: 20px; border: 2px solid #00aaff;
-            min-width: 240px; box-shadow: 0 0 15px rgba(0,170,255,0.3);
+            position: absolute; top: 15px; left: 15px;
+            background: rgba(0, 20, 50, 0.85); padding: 15px;
+            border-radius: 18px; border: 2px solid #00aaff;
+            min-width: 250px; box-shadow: 0 0 15px rgba(0,170,255,0.4);
         }
+        .stat-label { font-weight: bold; margin-bottom: 3px; font-size: 0.9rem; color: #aaa; }
+        .stat-value { font-size: 1.1rem; margin-bottom: 8px; }
+        
+        /* Fuel Meter - 25 Sections */
         .fuel-meter {
-            width: 100%; height: 22px; background: #111;
-            display: flex; margin-top: 10px; border: 1.5px solid #fff;
+            width: 100%; height: 20px; border: 1px solid #fff;
+            display: flex; background: #000; margin-top: 5px;
         }
         .fuel-section {
             flex: 1; border-right: 1px solid #000; height: 100%;
-            transition: background 0.3s;
+            transition: background 0.2s;
         }
-        .siren-flash { animation: siren 0.5s infinite; }
-        @keyframes siren { 0%, 100% { background: rgba(255,0,0,0.8); } 50% { background: transparent; } }
+        .siren-active { animation: siren-flash 0.4s infinite; }
+        @keyframes siren-flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
 
         /* HUD - Top Right Icons */
-        #hud-right { position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; }
-        .nav-icon {
+        #hud-right { position: absolute; top: 15px; right: 15px; display: flex; gap: 12px; }
+        .icon-btn {
             width: 45px; height: 45px; border-radius: 50%; border: 1.5px solid #fff;
             display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,0.1); cursor: pointer; font-size: 22px;
+            background: rgba(255,255,255,0.1); cursor: pointer; font-size: 20px; transition: 0.2s;
         }
+        .icon-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
 
-        /* Screens */
-        .screen {
+        /* Overlays */
+        .overlay {
             position: absolute; inset: 0; background: rgba(0,0,0,0.95);
             display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000;
         }
         .hidden { display: none !important; }
 
         /* Hall of Fame */
-        .hof-table { width: 85%; margin-top: 20px; border-collapse: collapse; }
-        .hof-table th { font-weight: bold; font-size: 1.4rem; padding: 12px; border-bottom: 2px solid #444; }
-        .hof-table td { padding: 10px; text-align: center; font-size: 1.2rem; }
+        .hof-table { width: 80%; margin-top: 20px; border-collapse: collapse; }
+        .hof-table th { font-weight: bold; font-size: 1.3rem; padding: 10px; border-bottom: 2px solid #444; }
+        .hof-table td { padding: 8px; text-align: center; font-family: 'Segoe UI', serif; }
+        .bold-header { font-weight: bold; font-size: 1.1rem; }
         .row-gold { color: var(--gold); font-weight: bold; }
         .row-silver { color: var(--silver); }
         .row-bronze { color: var(--bronze); }
-
+        
         button, select {
-            padding: 14px 28px; margin: 10px; border-radius: 10px; border: none;
+            padding: 12px 25px; margin: 8px; border-radius: 8px; border: none;
             background: #0066ff; color: white; font-weight: bold; cursor: pointer; font-size: 1rem;
         }
-        .game-over-text { font-size: 5rem; color: #ff0000; font-weight: 900; text-shadow: 0 0 20px #ff0000; margin-bottom: 30px; }
+        .game-over-title { font-size: 5rem; color: #ff0000; font-weight: 900; animation: flash 0.6s infinite; }
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
 
 <div id="hud-left" class="hidden">
-    <div id="disp-user">Guest</div>
-    <div id="disp-level">Level: 1</div>
-    <div id="disp-score">Score: 0</div>
-    <div id="disp-lives">❤️❤️❤️</div>
-    <div class="fuel-meter" id="fuel-container"></div>
+    <div class="stat-value" id="ui-user">Guest</div>
+    <div class="stat-label">LEVEL</div> <div class="stat-value" id="ui-level">1</div>
+    <div class="stat-label">SCORE</div> <div class="stat-value" id="ui-score">0</div>
+    <div class="stat-label">LIVES</div> <div class="stat-value" id="ui-lives">❤️❤️❤️</div>
+    <div class="fuel-meter" id="fuel-bar"></div>
 </div>
 
 <div id="hud-right" class="hidden">
-    <div class="nav-icon" onclick="togglePause()" id="icn-pause">⏸️</div>
-    <div class="nav-icon" onclick="showHelp()">ℹ️</div>
-    <div class="nav-icon" onclick="toggleSound()" id="icn-sound">🔊</div>
-    <div class="nav-icon" onclick="viewHOF('personal')">🏆</div>
-    <div class="nav-icon" onclick="viewHOF('global')">🌐</div>
+    <div class="icon-btn" onclick="togglePause()" id="btn-pause">⏸️</div>
+    <div class="icon-btn" onclick="showScreen('info')">ℹ️</div>
+    <div class="icon-btn" onclick="toggleMute()" id="btn-mute">🔊</div>
+    <div class="icon-btn" onclick="viewHOF('personal')">🏆</div>
+    <div class="icon-btn" onclick="viewHOF('global')">🌐</div>
 </div>
 
-<div id="screen-start" class="screen">
+<div id="screen-landing" class="overlay">
     <h1>SPACE DODGER</h1>
-    <button onclick="launch()">Launch Space Dodger</button>
-    <select id="level-input">
-        <script>for(let i=1;i<=16;i++) document.write(`<option value="${i}">Level ${i}</option>`);</script>
+    <button onclick="initGame()">Launch Space Dodger</button>
+    <select id="start-level-select">
+        <script>for(let i=1;i<=16;i++) document.write(`<option value="${i}">LEVEL=${i}</option>`);</script>
     </select>
     <button onclick="viewHOF('personal')">Hall of Fame</button>
 </div>
 
-<div id="screen-info" class="screen hidden">
+<div id="screen-info" class="overlay hidden">
     <h2>Instructions</h2>
-    <p>Move: Mouse or Arrow Keys</p>
-    <p>Blast: Spacebar or Mouse Click</p>
-    <button onclick="closeScreens()">Close</button>
+    <p>Move Rocket: Mouse side-to-side OR Arrow Keys</p>
+    <p>Blast Asteroids: Space Bar, Left Click, or Tap</p>
+    <p>Scoring: Blast asteroids & collect Yellow Stars</p>
+    <button onclick="hideScreens()">Back</button>
 </div>
 
-<div id="screen-hof" class="screen hidden">
-    <div id="trophy-row">🏆🏆🏆🏆🏆</div>
-    <h2 id="hof-head">Hall of Fame</h2>
+<div id="screen-hof" class="overlay hidden">
+    <div id="trophy-display" style="font-size: 2rem; margin-bottom: 10px;">🏆🏆🏆</div>
+    <h2 id="hof-title">Hall of Fame</h2>
     <table id="hof-table" class="hof-table"></table>
-    <div id="login-area"></div>
-    <button onclick="closeScreens()">Back</button>
+    <div id="auth-box" style="margin-top:20px;"></div>
+    <button onclick="hideScreens()">Back</button>
 </div>
 
-<div id="screen-over" class="screen hidden">
-    <div class="game-over-text">GAME OVER</div>
+<div id="screen-over" class="overlay hidden">
+    <div class="game-over-title">GAME OVER</div>
     <button onclick="location.reload()">RELAUNCH SPACE DODGER</button>
     <button onclick="viewHOF('personal')">HALL OF FAME</button>
 </div>
 
 <script>
-/** * SPACE DODGER ENGINE - THREE.JS & WEB AUDIO 
+/** * SPACE DODGER CORE ENGINE 
  */
 let scene, camera, renderer, rocket, clock;
-let asteroids = [], stars = [], lasers = [];
-let score = 0, level = 1, lives = 3, fuel = 100, isPaused = false, isLive = false;
-let audioCtx, engineWhirr, soundOn = true, userLoggedIn = false;
+let asteroids = [], stars = [], lasers = [], frags = [];
+let score = 0, level = 1, lives = 3, fuel = 100, isLive = false, isPaused = false;
+let audioCtx, engineWhirr, sirenSound, soundOn = true, user = { name: "Guest", loggedIn: false };
 
-// Tools used
-const THREE_URL = "https://threejs.org/";
-
-function launch() {
-    level = parseInt(document.getElementById('level-input').value);
-    document.getElementById('screen-start').classList.add('hidden');
+// --- INITIALIZATION ---
+function initGame() {
+    level = parseInt(document.getElementById('start-level-select').value);
+    document.getElementById('screen-landing').classList.add('hidden');
     document.getElementById('hud-left').classList.remove('hidden');
     document.getElementById('hud-right').classList.remove('hidden');
     
-    initGraphics();
-    initAudio();
-    buildFuelBar();
+    setup3D();
+    setupAudio();
+    createFuelUI();
     isLive = true;
-    renderLoop();
+    animate();
 }
 
-function initGraphics() {
+function setup3D() {
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Rocket: Navy Blue "Stingray" Look
-    const rocketBody = new THREE.Group();
-    const mainGeo = new THREE.SphereGeometry(0.5, 32, 16);
-    mainGeo.scale(2, 0.2, 1.3); // Flat and wide stingray shape
-    const material = new THREE.MeshPhongMaterial({ color: 0x000080, shininess: 100, specular: 0x3333ff });
-    rocketBody.add(new THREE.Mesh(mainGeo, material));
+    // Rocket: Shiny Navy Stingray (3D)
+    const rocketGrp = new THREE.Group();
+    const bodyGeo = new THREE.SphereGeometry(0.6, 32, 16);
+    bodyGeo.scale(1.8, 0.2, 1.2); 
+    const mat = new THREE.MeshPhongMaterial({ color: 0x000080, shininess: 120, specular: 0x6666ff });
+    rocketGrp.add(new THREE.Mesh(bodyGeo, mat));
     
-    rocket = rocketBody;
+    rocket = rocketGrp;
     rocket.position.y = -4;
     scene.add(rocket);
 
-    const light = new THREE.DirectionalLight(0xffffff, 1.2);
+    const light = new THREE.PointLight(0xffffff, 1, 100);
     light.position.set(0, 5, 10);
     scene.add(light);
-    scene.add(new THREE.AmbientLight(0x222222));
+    scene.add(new THREE.AmbientLight(0x444444));
     camera.position.z = 8;
     clock = new THREE.Clock();
 }
 
-function initAudio() {
+// --- AUDIO SYNTHESIS ---
+function setupAudio() {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    // Continuous Rocket Engine Whirr
     engineWhirr = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    engineWhirr.type = 'triangle'; 
-    engineWhirr.frequency.value = 50; 
-    gain.gain.value = 0.05;
-    engineWhirr.connect(gain); gain.connect(audioCtx.destination);
+    const g = audioCtx.createGain();
+    engineWhirr.type = 'triangle';
+    engineWhirr.frequency.value = 55;
+    g.gain.value = 0.05;
+    engineWhirr.connect(g); g.connect(audioCtx.destination);
     engineWhirr.start();
 }
 
-function playSfx(name) {
+function playSfx(type) {
     if (!soundOn) return;
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     osc.connect(g); g.connect(audioCtx.destination);
 
-    if (name === 'laser') {
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-        g.gain.value = 0.1; osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-    } else if (name === 'explosion') {
-        osc.type = 'sawtooth'; osc.frequency.value = 40;
-        g.gain.setValueAtTime(0.4, audioCtx.currentTime);
-        g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.6);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.6);
-    } else if (name === 'star') {
-        osc.frequency.setValueAtTime(500, audioCtx.currentTime);
-        osc.frequency.setValueAtTime(700, audioCtx.currentTime + 0.1);
-        g.gain.value = 0.1; osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-    } else if (name === 'thud') {
-        osc.frequency.value = 80; g.gain.value = 0.5;
-        osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+    switch(type) {
+        case 'laser': 
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+            g.gain.value = 0.1; osc.start(); osc.stop(audioCtx.currentTime + 0.1); 
+            break;
+        case 'explosion': 
+            osc.type = 'sawtooth'; osc.frequency.value = 40;
+            g.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+            break;
+        case 'star': 
+            osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(750, audioCtx.currentTime + 0.1);
+            g.gain.value = 0.1; osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+            break;
+        case 'thud':
+            osc.frequency.value = 100; g.gain.value = 0.5;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+            break;
     }
 }
 
-function buildFuelBar() {
-    const container = document.getElementById('fuel-container');
-    container.innerHTML = '';
+// --- CORE LOOP ---
+function createFuelUI() {
+    const bar = document.getElementById('fuel-bar');
+    bar.innerHTML = '';
     for(let i=0; i<25; i++) {
-        const seg = document.createElement('div');
-        seg.className = 'fuel-section';
-        container.appendChild(seg);
+        const d = document.createElement('div');
+        d.className = 'fuel-section';
+        bar.appendChild(d);
     }
 }
 
-function logic() {
+function updateGame() {
     if (!isLive || isPaused) return;
-    const speed = 0.04 + (level * 0.02);
+    const speed = 0.04 + (level * 0.025);
 
-    // Obstacle Logic
+    // Obstacles
     asteroids.forEach((a, i) => {
         a.position.y -= speed;
-        if (a.position.distanceTo(rocket.position) < 1.0) {
-            lives--; fuel -= 10; playSfx('thud'); scene.remove(a); asteroids.splice(i, 1);
+        if (a.position.distanceTo(rocket.position) < 0.9) {
+            lives--; fuel -= 15; playSfx('thud'); scene.remove(a); asteroids.splice(i, 1);
         } else if (a.position.y < -6) {
             fuel -= 3; scene.remove(a); asteroids.splice(i, 1);
         }
     });
 
-    // Bonus Logic
+    // Bonuses
     stars.forEach((s, i) => {
         s.position.y -= speed;
         if (s.position.distanceTo(rocket.position) < 0.7) {
             score += 25; fuel = Math.min(100, fuel + 5);
             playSfx('star'); scene.remove(s); stars.splice(i, 1);
-            if (score >= level * 100) { level++; playSfx('star'); }
+            if (score >= level * 100 && level < 16) { 
+                level++; 
+                playSfx('star'); // Level up euphoria
+            }
         }
     });
 
-    // Laser Collision
+    // Weapons
     lasers.forEach((l, li) => {
         l.position.y += 0.35;
         asteroids.forEach((a, ai) => {
@@ -241,88 +257,87 @@ function logic() {
         });
     });
 
-    if (fuel <= 0 || lives <= 0) gameOver();
-
-    if (Math.random() < 0.02) spawnAsteroid();
+    if (fuel <= 0 || lives <= 0) endGame();
+    if (Math.random() < 0.02 + (level * 0.002)) spawnAsteroid();
     if (Math.random() < 0.01) spawnStar();
-    updateHUD();
+    refreshHUD();
 }
 
 function spawnAsteroid() {
-    const sz = Math.random() * 0.7 + 0.3;
-    const a = new THREE.Mesh(new THREE.DodecahedronGeometry(sz, 1), new THREE.MeshPhongMaterial({color: 0xff4444}));
+    const sz = Math.random() * 0.8 + 0.2;
+    const a = new THREE.Mesh(new THREE.DodecahedronGeometry(sz), new THREE.MeshPhongMaterial({color: 0xff0000}));
     a.position.set((Math.random()-0.5)*12, 7, 0);
     a.userData = { size: sz, hp: Math.ceil(sz * 3) };
     asteroids.push(a); scene.add(a);
 }
 
 function spawnStar() {
-    const s = new THREE.Mesh(new THREE.OctahedronGeometry(0.25, 0), new THREE.MeshPhongMaterial({color: 0xffff00}));
+    const s = new THREE.Mesh(new THREE.OctahedronGeometry(0.2), new THREE.MeshPhongMaterial({color: 0xffff00}));
     s.position.set((Math.random()-0.5)*12, 7, 0);
     stars.push(s); scene.add(s);
 }
 
-function updateHUD() {
-    document.getElementById('disp-level').innerText = "Level: " + level;
-    document.getElementById('disp-score').innerText = "Score: " + score;
-    document.getElementById('disp-lives').innerText = "❤️".repeat(lives);
+function refreshHUD() {
+    document.getElementById('ui-level').innerText = level;
+    document.getElementById('ui-score').innerText = score;
+    document.getElementById('ui-lives').innerText = "❤️".repeat(lives);
     
-    const sections = document.querySelectorAll('.fuel-section');
-    const activeSegs = Math.floor((fuel/100) * 25);
-    let color = "#00ff00";
-    if (fuel < 67) color = "orange";
-    if (fuel < 34) color = "red";
+    const secs = document.querySelectorAll('.fuel-section');
+    const fill = Math.floor((fuel/100) * 25);
+    let c = "#00ff00";
+    if (fuel < 67) c = "orange";
+    if (fuel < 34) c = "red";
     
-    sections.forEach((s, i) => s.style.background = i < activeSegs ? color : "#111");
-    document.getElementById('fuel-container').className = (fuel <= 10) ? 'fuel-meter siren-flash' : 'fuel-meter';
+    secs.forEach((s, i) => s.style.background = i < fill ? c : "#000");
+    document.getElementById('fuel-bar').className = (fuel <= 10) ? 'fuel-meter siren-active' : 'fuel-meter';
 }
 
-function fire() {
-    if(!isLive || isPaused) return;
-    const l = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6), new THREE.MeshBasicMaterial({color: 0x00ffff}));
+function fireLaser() {
+    if (!isLive || isPaused) return;
+    const l = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 0.1), new THREE.MeshBasicMaterial({color: 0x00ffff}));
     l.position.copy(rocket.position);
     lasers.push(l); scene.add(l); playSfx('laser');
 }
 
-function gameOver() {
+function endGame() {
     isLive = false;
-    if(engineWhirr) engineWhirr.stop();
+    if (engineWhirr) engineWhirr.stop();
     document.getElementById('screen-over').classList.remove('hidden');
 }
 
-// Input Handlers
-window.addEventListener('mousemove', (e) => { if(isLive) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
-window.addEventListener('keydown', (e) => {
-    if(e.code === 'Space') fire();
-    if(e.code === 'ArrowLeft') rocket.position.x -= 0.6;
-    if(e.code === 'ArrowRight') rocket.position.x += 0.6;
-});
-window.addEventListener('mousedown', fire);
-
-function renderLoop() { if(!isLive) return; requestAnimationFrame(renderLoop); logic(); renderer.render(scene, camera); }
-
-// UI Helpers
+// --- INTERFACES ---
 function togglePause() { isPaused = !isPaused; }
-function toggleSound() { soundOn = !soundOn; }
-function showHelp() { isPaused = true; document.getElementById('screen-info').classList.remove('hidden'); }
-function closeScreens() { 
-    document.querySelectorAll('.screen').forEach(s => { if(s.id !== 'screen-start') s.classList.add('hidden'); }); 
+function toggleMute() { soundOn = !soundOn; }
+function showScreen(id) { isPaused = true; document.getElementById('screen-'+id).classList.remove('hidden'); }
+function hideScreens() { 
+    document.querySelectorAll('.overlay').forEach(o => { if(o.id !== 'screen-landing' && o.id !== 'screen-over') o.classList.add('hidden'); }); 
     isPaused = false; 
 }
+
 function viewHOF(type) {
     isPaused = true;
     const screen = document.getElementById('screen-hof');
     const table = document.getElementById('hof-table');
-    document.getElementById('hof-head').innerText = type === 'global' ? "Global Hall of Fame" : "Personal Hall of Fame";
+    document.getElementById('hof-title').innerText = (type === 'global' ? "Global" : "Personal") + " Hall of Fame";
     
-    table.innerHTML = `<tr><th>Rank</th><th>User</th><th>Score</th></tr>
-    <tr class="row-gold"><td>1</td><td>Ace_Pilot</td><td>1500</td></tr>
-    <tr class="row-silver"><td>2</td><td>Star_Lord</td><td>1200</td></tr>
+    table.innerHTML = `<tr class="bold-header"><td>Rank</td><td>User</td><td>Score</td></tr>
+    <tr class="row-gold"><td>1</td><td>Top_Ace</td><td>1200</td></tr>
+    <tr class="row-silver"><td>2</td><td>Pilot</td><td>900</td></tr>
     <tr class="row-bronze"><td>3</td><td>Guest</td><td>${score}</td></tr>`;
     
-    document.getElementById('login-area').innerHTML = !userLoggedIn ? '<button onclick="alert(\'Federated Login: Google/MS/FB\')">Save Scores</button>' : '';
+    document.getElementById('auth-box').innerHTML = !user.loggedIn ? '<button onclick="alert(\'Federated Login...\')">Save Scores</button>' : '';
     screen.classList.remove('hidden');
 }
+
+window.addEventListener('mousemove', (e) => { if(isLive) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
+window.addEventListener('keydown', (e) => {
+    if(e.code === 'Space') fireLaser();
+    if(e.code === 'ArrowLeft') rocket.position.x -= 0.6;
+    if(e.code === 'ArrowRight') rocket.position.x += 0.6;
+});
+window.addEventListener('mousedown', fireLaser);
+
+function animate() { if(!isLive) return; requestAnimationFrame(animate); updateGame(); renderer.render(scene, camera); }
 </script>
 </body>
 </html>
