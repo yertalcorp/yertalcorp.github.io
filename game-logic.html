@@ -6,33 +6,36 @@
     <title>Space Dodger 3D | Yertal Arcade</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --glass: rgba(15, 23, 42, 0.9); --accent: #3b82f6; }
-        body { margin: 0; overflow: hidden; background: #010409; font-family: 'Inter', system-ui, sans-serif; color: white; user-select: none; }
+        :root { --glass: rgba(15, 23, 42, 0.93); --accent: #3b82f6; --gold: #fbbf24; }
+        body { margin: 0; overflow: hidden; background: #010409; font-family: 'Segoe UI', system-ui, sans-serif; color: white; user-select: none; }
         canvas { display: block; touch-action: none; }
 
-        /* UI Containers */
-        #ui-layer { position: absolute; inset: 0; pointer-events: none; padding: 20px; }
-        .glass-box { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 18px; pointer-events: auto; }
+        /* UI Layer */
+        #ui-layer { position: absolute; inset: 0; pointer-events: none; padding: 20px; box-sizing: border-box; }
+        .glass-box { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 18px; pointer-events: auto; }
         
         /* Stats (Top Left) */
-        #stats-panel { width: fit-content; box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
-        .user-label { color: var(--accent); font-weight: 800; font-size: 13px; text-transform: uppercase; margin-bottom: 8px; display: block; }
-        .stat-item { font-size: 11px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; margin-top: 5px; }
-        .stat-val { font-size: 22px; font-weight: 900; color: #fbbf24; margin-bottom: 4px; }
-        .heart-3d { font-size: 18px; margin-right: 4px; filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.4)); }
+        #stats-panel { width: fit-content; box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
+        .user-tag { color: var(--accent); font-weight: 800; font-size: 14px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+        .stat-label { font-size: 10px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; }
+        .stat-val { font-size: 24px; font-weight: 900; color: var(--gold); margin-bottom: 4px; }
+        .heart-3d { font-size: 20px; margin-right: 5px; filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.5)); }
 
         /* Icon Bar (Top Right) */
         #icon-bar { position: absolute; top: 20px; right: 20px; display: flex; gap: 18px; pointer-events: auto; }
-        .nav-icon { font-size: 22px; cursor: pointer; transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: rgba(255,255,255,0.7); }
+        .nav-icon { font-size: 24px; cursor: pointer; transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: rgba(255,255,255,0.8); }
         .nav-icon:hover { color: var(--accent); transform: scale(1.15); }
 
         /* Overlays */
-        .overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
+        .overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
         .hidden { display: none !important; }
-        h1 { font-size: clamp(40px, 10vw, 65px); font-weight: 900; color: var(--accent); margin: 0; line-height: 0.9; }
-        .btn { background: var(--accent); color: white; padding: 16px 45px; border-radius: 50px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 10px; width: 280px; transition: 0.3s; }
+        h1 { font-size: clamp(40px, 10vw, 75px); font-weight: 900; color: var(--accent); margin: 0; line-height: 0.9; }
+        
+        /* Controls */
+        .btn { background: var(--accent); color: white; padding: 16px 45px; border-radius: 50px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 10px; width: 300px; transition: 0.3s; }
         .btn:hover { background: #2563eb; transform: translateY(-3px); box-shadow: 0 10px 25px rgba(37,99,235,0.4); }
         .btn-ghost { background: transparent; border: 2px solid rgba(255,255,255,0.2); }
+        select { background: #1e293b; color: white; border: 2px solid var(--accent); padding: 12px; border-radius: 12px; width: 300px; margin: 10px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -41,161 +44,165 @@
 
     <div id="ui-layer">
         <div id="stats-panel" class="glass-box">
-            <span class="user-label" id="user-display">Guest</span>
-            <div class="stat-item">Level</div> <div id="level-val" class="stat-val">01</div>
-            <div class="stat-item">Score</div> <div id="score-val" class="stat-val">0000</div>
+            <span class="user-tag" id="user-display">Guest</span>
+            <div class="stat-label">Level</div> <div id="level-val" class="stat-val">01</div>
+            <div class="stat-label">Score</div> <div id="score-val" class="stat-val">0000</div>
             <div id="lives-container"></div>
         </div>
 
         <div id="icon-bar">
-            <i id="play-pause-icon" class="fas fa-pause nav-icon" title="Play/Pause" onclick="togglePause()"></i>
-            <i class="fas fa-question-circle nav-icon" title="Instructions" onclick="showModal('manual')"></i>
-            <i id="sound-icon" class="fas fa-volume-up nav-icon" title="Sound Toggle" onclick="toggleSound()"></i>
-            <i class="fas fa-trophy nav-icon" title="Personal Hall" onclick="showModal('personal')"></i>
-            <i class="fas fa-globe-americas nav-icon" title="Global Hall" onclick="handleAuthFlow('Global Hall of Fame')"></i>
+            <i id="pause-icon" class="fas fa-pause nav-icon" title="Play/Pause" onclick="togglePause()"></i>
+            <i class="fas fa-info-circle nav-icon" title="Instructions" onclick="showModal('manual')"></i>
+            <i id="sound-icon" class="fas fa-volume-up nav-icon" title="Mute Toggle" onclick="toggleSound()"></i>
+            <i class="fas fa-trophy nav-icon" title="Personal Records" onclick="showModal('personal')"></i>
+            <i class="fas fa-globe-americas nav-icon" title="Global Hall" onclick="handleAuthFlow('Global Rankings')"></i>
         </div>
     </div>
 
-    <div id="start-screen" class="overlay">
-        <h1>SPACE<br>DODGER 3D</h1>
-        <p style="margin: 20px 0 30px; opacity: 0.6; font-weight: 500;">YERTAL ARCADE SYSTEM</p>
-        <button class="btn" onclick="initGame()">Launch Space Dodger</button>
+    <div id="landing-screen" class="overlay">
+        <h1>SPACE<br>DODGER</h1>
+        <p style="margin: 15px 0; opacity: 0.6; font-weight: 600;">YERTAL ADVANCED ARCADE</p>
+        
+        <button class="btn" onclick="startGame()">Launch Space Dodger</button>
+        
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent);">Starting Level</label>
+            <select id="start-level-select">
+                ${Array.from({length: 16}, (_, i) => `<option value="${i+1}">Level ${i+1}</option>`).join('')}
+            </select>
+        </div>
+        
         <button class="btn btn-ghost" onclick="showModal('personal')">Hall of Fame</button>
     </div>
 
-    <div id="modal-screen" class="overlay hidden" style="background: rgba(1, 4, 9, 0.85); backdrop-filter: blur(15px);">
-        <div id="modal-content" class="glass-box" style="width: 80%; max-width: 450px;"></div>
-        <button class="btn btn-ghost" style="margin-top: 20px;" onclick="closeModal()">Return to Flight</button>
+    <div id="modal-screen" class="overlay hidden" style="background: rgba(1, 4, 9, 0.9); backdrop-filter: blur(20px);">
+        <div id="modal-content" class="glass-box" style="width: 85%; max-width: 450px;"></div>
+        <button class="btn btn-ghost" style="margin-top: 25px;" onclick="closeModal()">Return</button>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const startLevelSelect = document.getElementById('start-level-select');
+
+        // Initializing select options manually for compatibility
+        for(let i=1; i<=16; i++) {
+            let opt = document.createElement('option');
+            opt.value = i; opt.innerHTML = "Level " + i;
+            startLevelSelect.appendChild(opt);
+        }
+
         let isPlaying = false, isPaused = false, isSoundOn = true, isLoggedIn = false;
-        let score = 0, level = 1, lives = 3, frames = 0, sessionHistory = [];
+        let score = 0, level = 1, lives = 3, frames = 0, sessionScores = [];
         
-        let player = { x: 0, targetX: 0, tilt: 0, curRotation: 0, w: 50, h: 80 };
+        let player = { x: 0, targetX: 0, rotation: 0, w: 65, h: 95 }; // Shiny bigger rocket
         let asteroids = [], stars = [], bullets = [], fragments = [], bgStars = [];
         let keys = {};
 
-        // --- Audio Context Engine ---
-        const AudioEngine = {
-            ctx: null, whirrOsc: null, whirrGain: null,
+        // --- Audio Engine ---
+        const SoundBox = {
+            ctx: null, engineOsc: null, engineGain: null,
             init() {
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                this.whirrOsc = this.ctx.createOscillator();
-                this.whirrGain = this.ctx.createGain();
-                this.whirrOsc.type = 'sawtooth';
-                this.whirrOsc.frequency.value = 50;
-                this.whirrGain.gain.value = 0;
-                this.whirrOsc.connect(this.whirrGain).connect(this.ctx.destination);
-                this.whirrOsc.start();
+                this.engineOsc = this.ctx.createOscillator();
+                this.engineGain = this.ctx.createGain();
+                this.engineOsc.type = 'sawtooth';
+                this.engineOsc.frequency.value = 45;
+                this.engineGain.gain.value = 0;
+                this.engineOsc.connect(this.engineGain).connect(this.ctx.destination);
+                this.engineOsc.start();
             },
-            play(freq, type, dur, vol) {
+            play(f, t, d, v) {
                 if(!isSoundOn || !this.ctx) return;
                 const o = this.ctx.createOscillator();
                 const g = this.ctx.createGain();
-                o.type = type; o.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                if(type==='square') o.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + dur);
-                g.gain.setValueAtTime(vol, this.ctx.currentTime);
-                g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + dur);
+                o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
+                if(t==='square') o.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + d);
+                g.gain.setValueAtTime(v, this.ctx.currentTime);
+                g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + d);
                 o.connect(g).connect(this.ctx.destination);
-                o.start(); o.stop(this.ctx.currentTime + dur);
+                o.start(); o.stop(this.ctx.currentTime + d);
             },
-            setWhirr(active) {
-                if(!this.whirrGain) return;
-                const v = (active && isSoundOn) ? 0.04 : 0;
-                this.whirrGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.1);
+            setEngine(active) {
+                if(!this.engineGain) return;
+                const val = (active && isSoundOn) ? 0.04 : 0;
+                this.engineGain.gain.setTargetAtTime(val, this.ctx.currentTime, 0.15);
             }
         };
 
-        // --- Authentication & Modals ---
-        function handleAuthFlow(context) {
-            if(!isLoggedIn) showModal('login', context);
-            else alert("Connecting to " + context + "...");
+        // --- Auth & Modals ---
+        function handleAuthFlow(title) {
+            if(!isLoggedIn) showModal('login', title);
+            else alert("Accessing " + title);
         }
 
-        function showModal(type, title) {
-            const content = document.getElementById('modal-content');
+        function showModal(type) {
+            const box = document.getElementById('modal-content');
             document.getElementById('modal-screen').classList.remove('hidden');
             if(type === 'manual') {
-                content.innerHTML = `<h2>Manual</h2><p>Move: Mouse or Arrows<br>Fire: Space / Click / Tap<br>Capture stars for Bonus!</p>`;
+                box.innerHTML = `<h2>Manual</h2><p>Move: Mouse or Arrow Keys<br>Shoot: Space, Click or Tap<br>Red: Blast or Dodge<br>Stars: Bonus Points</p>`;
             } else if(type === 'personal') {
-                let list = sessionHistory.sort((a,b)=>b-a).slice(0,10).map(s=>`<div>Score: ${s}</div>`).join('') || "No flights today.";
-                content.innerHTML = `<h2>Session Top 10</h2><div style="margin:20px 0">${list}</div>` + 
+                let list = sessionScores.sort((a,b)=>b-a).slice(0,10).map(s=>`<div>Rank: ${s}</div>`).join('') || "No flights yet.";
+                box.innerHTML = `<h2>Session Top 10</h2><div style="margin:20px 0">${list}</div>` + 
                     (!isLoggedIn ? `<button class="btn" style="background:#10b981" onclick="showModal('login')">Save Across Sessions</button>` : "");
             } else if(type === 'login') {
-                content.innerHTML = `<h2>YERTAL LOGIN</h2><p>Select Federated Provider</p>
+                box.innerHTML = `<h2>Yertal Federated Login</h2><p>Choose your provider</p>
                     <button class="btn" style="background:#db4437" onclick="completeLogin()">Google</button>
                     <button class="btn" style="background:#1877f2" onclick="completeLogin()">Facebook</button>
                     <button class="btn" style="background:#00a4ef" onclick="completeLogin()">Microsoft</button>`;
             }
         }
 
-        function completeLogin() {
-            isLoggedIn = true;
-            document.getElementById('user-display').innerText = "Pilot 01";
-            closeModal();
-        }
-
+        function completeLogin() { isLoggedIn = true; document.getElementById('user-display').innerText = "Pilot Commander"; closeModal(); }
         function closeModal() { document.getElementById('modal-screen').classList.add('hidden'); }
-
-        function togglePause() {
-            if(!isPlaying) return;
-            isPaused = !isPaused;
-            document.getElementById('play-pause-icon').className = isPaused ? "fas fa-play nav-icon" : "fas fa-pause nav-icon";
-            AudioEngine.setWhirr(!isPaused);
+        function togglePause() { 
+            if(!isPlaying) return; 
+            isPaused = !isPaused; 
+            document.getElementById('pause-icon').className = isPaused ? "fas fa-play nav-icon" : "fas fa-pause nav-icon";
+            SoundBox.setEngine(!isPaused); 
         }
-
-        function toggleSound() {
-            isSoundOn = !isSoundOn;
+        function toggleSound() { 
+            isSoundOn = !isSoundOn; 
             document.getElementById('sound-icon').className = isSoundOn ? "fas fa-volume-up nav-icon" : "fas fa-volume-mute nav-icon";
-            AudioEngine.setWhirr(isPlaying && !isPaused);
+            SoundBox.setEngine(isPlaying && !isPaused);
         }
 
-        // --- Fragmentation & Graphics ---
-        function createExplosion(x, y, count) {
-            AudioEngine.play(140, 'sawtooth', 0.4, 0.2); // Blast sound
-            for(let i=0; i<count; i++) {
-                fragments.push({ x, y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, life: 1, color: '#f87171' });
-            }
-        }
-
+        // --- Graphics ---
         function drawRocket() {
-            // Physics: Tilt and direction
             let diff = (player.targetX - player.x);
             player.x += diff * 0.12;
             
-            // Momentary pointing logic
-            let targetRotation = Math.max(-0.5, Math.min(0.5, diff * 0.05));
-            player.curRotation += (targetRotation - player.curRotation) * 0.2;
+            // Momentary Pointing
+            let targetRot = Math.max(-0.5, Math.min(0.5, diff * 0.05));
+            player.rotation += (targetRot - player.rotation) * 0.15;
 
             ctx.save();
-            ctx.translate(player.x, canvas.height - 110);
-            ctx.rotate(player.curRotation);
+            ctx.translate(player.x, canvas.height - 120);
+            ctx.rotate(player.rotation);
 
-            // 3D Metallic Body
-            const g = ctx.createLinearGradient(-18, 0, 18, 0);
-            g.addColorStop(0, '#1e3a8a'); g.addColorStop(0.5, '#3b82f6'); g.addColorStop(1, '#1e3a8a');
+            // 3D Grand Shiny Body
+            const g = ctx.createLinearGradient(-25, 0, 25, 0);
+            g.addColorStop(0, '#1e40af'); g.addColorStop(0.3, '#60a5fa'); 
+            g.addColorStop(0.5, '#ffffff'); g.addColorStop(0.7, '#60a5fa'); g.addColorStop(1, '#1e40af');
             ctx.fillStyle = g;
-            ctx.beginPath(); ctx.moveTo(0, -45); ctx.lineTo(25, 30); ctx.lineTo(-25, 30); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(0, -60); ctx.lineTo(30, 40); ctx.lineTo(-30, 40); ctx.fill();
             
             // Cockpit
-            ctx.fillStyle = 'rgba(255,255,255,0.75)';
-            ctx.beginPath(); ctx.ellipse(0, -10, 7, 12, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#93c5fd';
+            ctx.beginPath(); ctx.ellipse(0, -15, 8, 15, 0, 0, Math.PI*2); ctx.fill();
             
-            // Thruster
-            ctx.fillStyle = '#f59e0b';
-            ctx.beginPath(); ctx.moveTo(-10, 30); ctx.lineTo(10, 30); ctx.lineTo(0, 40+Math.random()*15); ctx.fill();
+            // Flame
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath(); ctx.moveTo(-12, 40); ctx.lineTo(12, 40); ctx.lineTo(0, 55 + Math.random()*20); ctx.fill();
             ctx.restore();
         }
 
-        // --- Main Loop ---
+        // --- Core Loop ---
         function loop() {
             if(!isPlaying || isPaused) return requestAnimationFrame(loop);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Starfield
+            // BG
             bgStars.forEach(s => {
                 s.y += s.v; if(s.y > canvas.height) s.y = 0;
                 ctx.fillStyle = `rgba(255,255,255,${s.o})`;
@@ -205,8 +212,8 @@
             // Particles
             fragments.forEach((f, i) => {
                 f.x += f.vx; f.y += f.vy; f.life -= 0.02;
-                ctx.fillStyle = f.color; ctx.globalAlpha = f.life;
-                ctx.fillRect(f.x, f.y, 3, 3);
+                ctx.fillStyle = '#ef4444'; ctx.globalAlpha = f.life;
+                ctx.fillRect(f.x, f.y, 4, 4);
                 if(f.life <= 0) fragments.splice(i, 1);
             });
             ctx.globalAlpha = 1;
@@ -216,12 +223,13 @@
 
             drawRocket();
 
-            // Spawning
-            if(frames % Math.max(10, 60 - level*5) === 0) {
-                let r = 15 + Math.random()*40;
+            // Spawning Logic
+            if(frames % Math.max(10, 60 - level*4) === 0) {
+                let r = 15 + Math.random()*45;
+                // Speed strictly dependent on level
                 asteroids.push({ x: Math.random()*canvas.width, y: -50, r, v: 2.5 + level*0.8, hp: Math.ceil(r/15), mHp: Math.ceil(r/15) });
             }
-            if(frames % 120 === 0) stars.push({ x: Math.random()*canvas.width, y: -50, r: 10, v: 4+level });
+            if(frames % 120 === 0) stars.push({ x: Math.random()*canvas.width, y: -50, r: 12, v: 3 + level });
 
             // Bullets
             bullets.forEach((b, i) => {
@@ -229,16 +237,16 @@
                 if(b.y < 0) bullets.splice(i, 1);
             });
 
-            // Asteroids
+            // Collisions Asteroids
             asteroids.forEach((a, i) => {
                 a.y += a.v;
                 const g = ctx.createRadialGradient(a.x-a.r*0.3, a.y-a.r*0.3, a.r*0.1, a.x, a.y, a.r);
-                g.addColorStop(0, '#fca5a5'); g.addColorStop(1, '#991b1b');
+                g.addColorStop(0, '#f87171'); g.addColorStop(1, '#7f1d1d');
                 ctx.fillStyle = g; ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI*2); ctx.fill();
 
-                if(Math.hypot(player.x - a.x, (canvas.height-110) - a.y) < a.r + 25) {
-                    lives--; updateLives(); createExplosion(a.x, a.y, 10); asteroids.splice(i, 1);
-                    if(lives <= 0) endGame();
+                if(Math.hypot(player.x - a.x, (canvas.height-120) - a.y) < a.r + 35) {
+                    lives--; updateLives(); SoundBox.play(120, 'sawtooth', 0.4, 0.3);
+                    asteroids.splice(i, 1); if(lives <= 0) endGame();
                 }
 
                 bullets.forEach((b, bi) => {
@@ -246,22 +254,24 @@
                         a.hp--; bullets.splice(bi, 1);
                         if(a.hp <= 0) {
                             score += (a.mHp > 2) ? 5 : 1;
-                            createExplosion(a.x, a.y, 15); asteroids.splice(i, 1); checkLevel();
+                            SoundBox.play(180, 'sawtooth', 0.4, 0.2); // Blast
+                            for(let j=0; j<10; j++) fragments.push({ x: a.x, y: a.y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, life: 1 });
+                            asteroids.splice(i, 1); checkLevel();
                         }
                     }
                 });
                 if(a.y > canvas.height + 50) asteroids.splice(i, 1);
             });
 
-            // Bonus Stars
+            // Stars
             stars.forEach((s, i) => {
                 s.y += s.v;
                 const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r);
                 g.addColorStop(0, '#fef08a'); g.addColorStop(1, '#ca8a04');
                 ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
-                if(Math.hypot(player.x - s.x, (canvas.height-110) - s.y) < 35) {
+                if(Math.hypot(player.x - s.x, (canvas.height-120) - s.y) < 40) {
                     score += 25; stars.splice(i, 1); 
-                    AudioEngine.play(1100, 'sine', 0.15, 0.15); // Revelation blip
+                    SoundBox.play(1100, 'sine', 0.15, 0.15); // Revelation Blip
                     checkLevel();
                 }
             });
@@ -273,31 +283,55 @@
 
         function checkLevel() {
             let nL = Math.floor(score / 100) + 1;
-            if(nL > level) { level = nL; AudioEngine.play(520, 'sine', 0.7, 0.2); document.getElementById('level-val').innerText = level.toString().padStart(2,'0'); }
+            // Since level select can start us at Level 10, we only increment if score passes current bracket
+            if(score > 0 && score % 100 === 0) {
+                level++;
+                SoundBox.play(600, 'sine', 0.7, 0.2); // Level up
+                document.getElementById('level-val').innerText = level.toString().padStart(2, '0');
+            }
         }
 
         function updateLives() { document.getElementById('lives-container').innerHTML = '<span class="heart-3d">❤️</span>'.repeat(lives); }
-        function fire() { if(isPlaying && !isPaused) { bullets.push({x: player.x, y: canvas.height-140}); AudioEngine.play(900, 'square', 0.1, 0.1); } }
+        function fire() { if(isPlaying && !isPaused) { bullets.push({x: player.x, y: canvas.height-150}); SoundBox.play(800, 'square', 0.1, 0.1); } }
 
-        function initGame() {
-            if(!AudioEngine.ctx) AudioEngine.init();
-            document.getElementById('start-screen').classList.add('hidden');
-            score = 0; level = 1; lives = 3; asteroids = []; stars = []; bullets = []; fragments = []; frames = 0;
+        function startGame() {
+            // Explicitly Reset State to fix the speed persistence bug
+            level = parseInt(startLevelSelect.value);
+            score = 0;
+            lives = 3;
+            frames = 0;
+            asteroids = [];
+            stars = [];
+            bullets = [];
+            fragments = [];
+            player.rotation = 0;
+            
+            if(!SoundBox.ctx) SoundBox.init();
+            document.getElementById('landing-screen').classList.add('hidden');
+            document.getElementById('level-val').innerText = level.toString().padStart(2, '0');
+            
             bgStars = Array.from({length: 80}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, v: Math.random()*2+1, o: Math.random()}));
             player.x = canvas.width/2; player.targetX = player.x;
-            updateLives(); isPlaying = true; isPaused = false;
-            AudioEngine.setWhirr(true); loop();
+            
+            updateLives();
+            isPlaying = true;
+            isPaused = false;
+            SoundBox.setEngine(true);
+            loop();
         }
 
         function endGame() {
             isPlaying = false;
-            AudioEngine.setWhirr(false);
-            sessionHistory.push(score);
-            document.getElementById('start-screen').classList.remove('hidden');
-            document.getElementById('start-screen').querySelector('h1').innerHTML = `MISSION OVER<br><span style="color:white; font-size:20px">SCORE: ${score}</span>`;
+            SoundBox.setEngine(false);
+            sessionScores.push(score);
+            document.getElementById('landing-screen').classList.remove('hidden');
+            document.getElementById('landing-screen').querySelector('h1').innerHTML = `MISSION OVER<br><span style="color:white; font-size:22px">PILOT SCORE: ${score}</span>`;
+            
+            // Reset to default visually for next start
+            level = 1; 
         }
 
-        // --- Controls ---
+        // --- Listeners ---
         window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
         window.addEventListener('mousemove', e => player.targetX = e.clientX);
