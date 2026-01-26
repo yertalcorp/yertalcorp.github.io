@@ -3,105 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Dodger 3D</title>
+    <title>Space Dodger 3D - Yertal Arcade</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root { --glass: rgba(255, 255, 255, 0.1); --neon-blue: #00d4ff; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; }
         canvas { display: block; }
-        
-        /* UI Overlays */
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        
-        /* Top Left: Stats Box */
-        .stats-box {
+
+        /* UI Containers */
+        #game-ui, #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .pointer { pointer-events: auto; cursor: pointer; }
+
+        /* Top Left: Status Box */
+        .status-box {
             position: absolute; top: 20px; left: 20px;
-            background: rgba(0, 40, 80, 0.7);
-            border: 2px solid #00d4ff; border-radius: 15px;
-            padding: 15px; color: white; min-width: 120px;
-            backdrop-filter: blur(5px); pointer-events: auto;
+            background: rgba(0, 20, 40, 0.8);
+            border: 2px solid var(--neon-blue); border-radius: 20px;
+            padding: 15px; min-width: 140px; backdrop-filter: blur(10px);
         }
-        .heart { color: #ff4d4d; font-size: 20px; margin-right: 5px; }
+        .status-box div { margin: 5px 0; font-weight: bold; }
+        .hearts { color: #ff4d4d; font-size: 1.2rem; }
 
         /* Top Right: Icons */
-        .icon-bar {
-            position: absolute; top: 20px; right: 20px;
-            display: flex; gap: 15px; pointer-events: auto;
-        }
+        .icon-bar { position: absolute; top: 20px; right: 20px; display: flex; gap: 12px; }
         .icon-btn {
-            width: 45px; height: 45px; background: rgba(255,255,255,0.1);
-            border-radius: 50%; display: flex; align-items: center;
-            justify-content: center; color: white; cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.3); transition: 0.3s;
+            width: 45px; height: 45px; background: var(--glass);
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; transition: 0.3s;
         }
-        .icon-btn:hover { background: rgba(0, 212, 255, 0.4); transform: scale(1.1); }
+        .icon-btn:hover { background: var(--neon-blue); transform: scale(1.1); }
 
-        /* Landing Screen */
-        #menu {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: center; background: radial-gradient(circle, #1b2735 0%, #090a0f 100%);
-            z-index: 10; color: white; text-align: center;
+        /* Menus */
+        .menu-screen {
+            position: absolute; inset: 0; background: radial-gradient(circle, #102a43, #000);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; pointer-events: auto;
         }
-        button {
-            padding: 15px 40px; margin: 10px; font-size: 1.2rem;
-            cursor: pointer; border-radius: 30px; border: none;
-            background: linear-gradient(45deg, #00d4ff, #0055ff);
-            color: white; font-weight: bold; transition: 0.3s;
+        .btn {
+            padding: 15px 40px; margin: 10px; border-radius: 30px; border: none;
+            background: linear-gradient(45deg, var(--neon-blue), #0055ff);
+            color: white; font-weight: bold; text-transform: uppercase; transition: 0.3s;
         }
-        button:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4); }
-        .secondary-btn { background: #333; }
+        .btn:hover { box-shadow: 0 0 20px var(--neon-blue); transform: translateY(-2px); }
+        .btn-alt { background: #334e68; }
+
+        /* Modal Styles */
+        .modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+            z-index: 200; align-items: center; justify-content: center; pointer-events: auto;
+        }
+        .modal-content { background: #102a43; padding: 40px; border-radius: 20px; text-align: center; border: 1px solid var(--neon-blue); }
+        .login-options button { display: block; width: 100%; margin: 10px 0; padding: 10px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-<div id="menu">
-    <h1 style="font-size: 4rem; margin-bottom: 0;">SPACE DODGER</h1>
-    <p style="margin-bottom: 30px; color: #00d4ff;">Master of the Cosmos</p>
-    <button onclick="startGame()">Launch Space Dodger</button>
-    <button class="secondary-btn" onclick="alert('Hall of Fame coming soon!')">Hall of Fame</button>
+<div id="landing-screen" class="menu-screen">
+    <h1 style="font-size: 3.5rem; letter-spacing: 5px; text-shadow: 0 0 20px var(--neon-blue);">SPACE DODGER</h1>
+    <button class="btn pointer" onclick="startGame()">Launch Space Dodger</button>
+    <button class="btn btn-alt pointer" onclick="showHallOfFame()">Hall of Fame</button>
 </div>
 
-<div id="ui-layer" style="display: none;">
-    <div class="stats-box">
-        <div id="level-display">Level: 1</div>
-        <div id="score-display" style="font-size: 1.5rem; font-weight: bold;">0</div>
-        <div id="lives-display"></div>
+<div id="game-ui" class="hidden">
+    <div class="status-box">
+        <div id="lvl-txt">Level: 1</div>
+        <div id="score-txt" style="font-size: 1.4rem; color: var(--neon-blue);">0000</div>
+        <div id="hearts-txt" class="hearts">❤️❤️❤️</div>
     </div>
 
     <div class="icon-bar">
-        <div class="icon-btn" title="Global Hall of Fame">🌐</div>
-        <div class="icon-btn" title="Personal Trophy">🏆</div>
-        <div class="icon-btn" title="Instructions" onclick="alert('Move: Mouse or Arrows\nShoot: Space/Click\nGoal: Dodge Red, Catch Yellow!')">ⓘ</div>
-        <div id="sound-toggle" class="icon-btn" onclick="toggleSound()">🔊</div>
+        <div class="icon-btn pointer" onclick="handleGlobalHall()">🌐</div>
+        <div class="icon-btn pointer" onclick="showPersonalHall()">🏆</div>
+        <div class="icon-btn pointer" onclick="showInstructions()">ⓘ</div>
+        <div id="mute-btn" class="icon-btn pointer" onclick="toggleSound()">🔊</div>
+    </div>
+</div>
+
+<div id="modal" class="modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h2 id="modal-title"></h2>
+        <div id="modal-body"></div>
+        <button class="btn-alt pointer" style="margin-top:20px" onclick="closeModal()">Close</button>
     </div>
 </div>
 
 <script>
-/**
- * GAME CONSTANTS & STATE
+/** * GAME CONFIG & STATE 
  */
 let scene, camera, renderer, rocket, clock;
 let asteroids = [], stars = [], lasers = [];
 let score = 0, level = 1, lives = 3, gameActive = false;
-let speedMult = 1;
-let soundEnabled = true;
-
-// Audio Contexts (Synthetic)
+let isLoggedIn = false; // Simulated state
+let soundOn = true;
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-function createTone(freq, type, duration, volume = 0.1) {
-    if(!soundEnabled) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + duration);
-}
+let whirrNode = null;
 
 function init() {
     scene = new THREE.Scene();
@@ -110,183 +107,232 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0x404040, 2);
-    scene.add(ambientLight);
-    const sun = new THREE.DirectionalLight(0xffffff, 2);
-    sun.position.set(5, 5, 5);
-    scene.add(sun);
+    // Light
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(5, 10, 7);
+    scene.add(dirLight);
 
-    // Rocket (Grand 3D Design)
-    const bodyGeo = new THREE.CylinderGeometry(0.5, 0.8, 3, 12);
-    const bodyMat = new THREE.MeshPhongMaterial({ color: 0xcccccc, shininess: 100 });
-    rocket = new THREE.Mesh(bodyGeo, bodyMat);
+    // Rocket (Grand 3D)
+    const rocketGroup = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 2.5, 16), new THREE.MeshPhongMaterial({color: 0xdddddd}));
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.8, 16), new THREE.MeshPhongMaterial({color: 0xff0000}));
+    nose.position.y = 1.6;
+    rocketGroup.add(body, nose);
     
-    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1, 12), new THREE.MeshPhongMaterial({ color: 0xff0000 }));
-    tip.position.y = 2;
-    rocket.add(tip);
-
-    const finGeo = new THREE.BoxGeometry(2, 0.5, 0.1);
-    const fin = new THREE.Mesh(finGeo, bodyMat);
-    rocket.add(fin);
+    // Fins
+    for(let i=0; i<3; i++) {
+        const fin = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 0.5), new THREE.MeshPhongMaterial({color: 0xff0000}));
+        fin.position.y = -0.8;
+        fin.rotation.y = (Math.PI * 2 / 3) * i;
+        fin.position.x = Math.cos(fin.rotation.y) * 0.5;
+        fin.position.z = Math.sin(fin.rotation.y) * 0.5;
+        rocketGroup.add(fin);
+    }
     
-    rocket.rotation.x = Math.PI / 2;
+    rocket = rocketGroup;
+    rocket.rotation.x = 0; // Always point up
     scene.add(rocket);
 
-    camera.position.z = 10;
-    camera.position.y = -5;
-    camera.lookAt(0,0,0);
+    camera.position.z = 12;
+    camera.position.y = -4;
+    camera.lookAt(0, 2, 0);
 
     clock = new THREE.Clock();
-    window.addEventListener('resize', onWindowResize);
-    document.addEventListener('keydown', handleInput);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mousedown', () => shootLaser());
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 }
 
-function startGame() {
-    document.getElementById('menu').style.display = 'none';
-    document.getElementById('ui-layer').style.display = 'block';
-    gameActive = true;
-    updateHearts();
-    animate();
-    // Rocket Whirr
-    setInterval(() => { if(gameActive) createTone(100, 'sawtooth', 0.1, 0.02); }, 150);
+/** * SOUND SYSTEM 
+ */
+function playSound(freq, type, dur, vol) {
+    if(!soundOn) return;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    g.gain.setValueAtTime(vol, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + dur);
 }
 
-function createAsteroid() {
-    const size = Math.random() * 0.8 + 0.4;
+function startWhirr() {
+    if(!soundOn) return;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = 60;
+    g.gain.value = 0.02;
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start();
+    whirrNode = { osc, g };
+}
+
+/** * LOGIN & HALL OF FAME LOGIC 
+ */
+function showLogin() {
+    const body = `
+        <p>Log in via Yertal Federation to save scores:</p>
+        <div class="login-options">
+            <button style="background:#db4437; color:white" onclick="doLogin()">Google</button>
+            <button style="background:#4267B2; color:white" onclick="doLogin()">Facebook</button>
+            <button style="background:#00a4ef; color:white" onclick="doLogin()">Microsoft</button>
+        </div>`;
+    openModal("Federated Login", body);
+}
+
+function doLogin() { 
+    isLoggedIn = true; 
+    closeModal(); 
+    alert("Logged in successfully!"); 
+}
+
+function handleGlobalHall() {
+    if(!isLoggedIn) showLogin();
+    else openModal("Global Hall of Fame", "1. GalacticAce - 50,000<br>2. StarLord - 42,300...");
+}
+
+function showPersonalHall() {
+    let content = "Your Top Scores:<br>1. 1200<br>2. 850<br>...";
+    if(!isLoggedIn) content += `<br><button class="btn pointer" onclick="showLogin()">Save Scores</button>`;
+    openModal("Personal Hall of Fame", content);
+}
+
+function showHallOfFame() { showPersonalHall(); }
+
+function showInstructions() {
+    openModal("Instructions", "Dodge Red Asteroids<br>Collect Yellow Stars<br>Move: Mouse or Arrows<br>Fire: Space / Click");
+}
+
+function openModal(title, body) {
+    document.getElementById('modal-title').innerText = title;
+    document.getElementById('modal-body').innerHTML = body;
+    document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+function toggleSound() {
+    soundOn = !soundOn;
+    document.getElementById('mute-btn').innerText = soundOn ? '🔊' : '🔇';
+    if(whirrNode && !soundOn) { whirrNode.osc.stop(); whirrNode = null; }
+    else if(gameActive && soundOn) { startWhirr(); }
+}
+
+/** * GAMEPLAY MECHANICS 
+ */
+function spawnAsteroid() {
+    const size = Math.random() * 0.8 + 0.3;
     const geo = new THREE.DodecahedronGeometry(size, 1);
-    const mat = new THREE.MeshStandardMaterial({ color: 0xff3333, flatShading: true });
+    const mat = new THREE.MeshStandardMaterial({color: 0xff3333, flatShading: true});
     const ast = new THREE.Mesh(geo, mat);
-    ast.position.set((Math.random() - 0.5) * 15, 15, 0);
-    ast.userData = { hp: Math.ceil(size * 3), size: size };
+    ast.position.set((Math.random()-0.5)*18, 15, 0);
+    ast.userData = { hp: Math.ceil(size * 3), pts: Math.ceil(size * 5) };
     asteroids.push(ast);
     scene.add(ast);
 }
 
-function createStar() {
+function spawnStar() {
     const geo = new THREE.OctahedronGeometry(0.3, 0);
-    const mat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffff00 });
-    const star = new THREE.Mesh(geo, mat);
-    star.position.set((Math.random() - 0.5) * 15, 15, 0);
+    const star = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color: 0xffff00, emissive: 0xffff00}));
+    star.position.set((Math.random()-0.5)*18, 15, 0);
     stars.push(star);
     scene.add(star);
 }
 
-function shootLaser() {
+function fireLaser() {
     if(!gameActive) return;
-    const geo = new THREE.CylinderGeometry(0.1, 0.1, 1);
-    const mat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-    const laser = new THREE.Mesh(geo, mat);
+    const laser = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1), new THREE.MeshBasicMaterial({color:0xff0000}));
     laser.position.copy(rocket.position);
-    laser.position.y += 2;
+    laser.position.y += 1.5;
     lasers.push(laser);
     scene.add(laser);
-    createTone(800, 'sine', 0.1, 0.1);
+    playSound(400, 'square', 0.1, 0.1); // Laser Blip
 }
 
-function updateHearts() {
-    const container = document.getElementById('lives-display');
-    container.innerHTML = '❤️'.repeat(lives);
+function startGame() {
+    document.getElementById('landing-screen').classList.add('hidden');
+    document.getElementById('game-ui').classList.remove('hidden');
+    gameActive = true;
+    startWhirr();
+    animate();
 }
 
-function handleInput(e) {
-    if(e.code === 'ArrowLeft') rocket.position.x -= 0.5;
-    if(e.code === 'ArrowRight') rocket.position.x += 0.5;
-    if(e.code === 'Space') shootLaser();
-}
-
-function handleMouseMove(e) {
-    const x = (e.clientX / window.innerWidth) * 2 - 1;
-    rocket.position.x = x * 8;
-}
-
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-function toggleSound() {
-    soundEnabled = !soundEnabled;
-    document.getElementById('sound-toggle').innerText = soundEnabled ? '🔊' : '🔇';
-}
-
+/** * ENGINE LOOP 
+ */
 function animate() {
     if(!gameActive) return;
     requestAnimationFrame(animate);
-    const delta = clock.getDelta();
+    const dt = clock.getDelta();
+    const speed = 0.1 + (level * 0.02);
 
-    // Spawn logic
-    if(Math.random() < 0.03 * speedMult) createAsteroid();
-    if(Math.random() < 0.01) createStar();
+    // Spawning
+    if(Math.random() < 0.03) spawnAsteroid();
+    if(Math.random() < 0.01) spawnStar();
 
-    // Movement & Collision
-    asteroids.forEach((ast, index) => {
-        ast.position.y -= 0.1 * speedMult;
-        ast.rotation.x += 0.01;
-        
-        // Dodge/Miss Score
-        if(ast.position.y < -10) {
-            score += Math.floor(ast.userData.size * 10);
-            scene.remove(ast);
-            asteroids.splice(index, 1);
+    // Logic
+    asteroids.forEach((a, i) => {
+        a.position.y -= speed;
+        a.rotation.x += 0.02;
+        if(a.position.y < -10) { 
+            score += a.userData.pts; 
+            scene.remove(a); asteroids.splice(i,1); 
         }
-
-        // Collision with Rocket
-        if(ast.position.distanceTo(rocket.position) < 1.2) {
+        if(a.position.distanceTo(rocket.position) < 1.2) {
             lives--;
-            updateHearts();
-            scene.remove(ast);
-            asteroids.splice(index, 1);
-            createTone(150, 'square', 0.3, 0.2);
-            if(lives <= 0) {
-                alert("Game Over! Score: " + score);
-                location.reload();
-            }
+            document.getElementById('hearts-txt').innerText = "❤️".repeat(lives);
+            scene.remove(a); asteroids.splice(i,1);
+            if(lives <= 0) { alert("Game Over!"); location.reload(); }
         }
     });
 
-    stars.forEach((star, index) => {
-        star.position.y -= 0.08 * speedMult;
-        star.rotation.y += 0.05;
-        if(star.position.distanceTo(rocket.position) < 1) {
-            score += 50;
-            scene.remove(star);
-            stars.splice(index, 1);
-            createTone(1200, 'sine', 0.1, 0.1);
+    stars.forEach((s, i) => {
+        s.position.y -= speed * 0.8;
+        s.rotation.y += 0.05;
+        if(s.position.distanceTo(rocket.position) < 1) {
+            score += 20;
+            scene.remove(s); stars.splice(i,1);
+            playSound(1000, 'sine', 0.2, 0.1);
         }
     });
 
     lasers.forEach((l, li) => {
-        l.position.y += 0.5;
-        asteroids.forEach((ast, ai) => {
-            if(l.position.distanceTo(ast.position) < 1) {
-                ast.userData.hp--;
-                scene.remove(l);
-                lasers.splice(li, 1);
-                if(ast.userData.hp <= 0) {
-                    score += 100;
-                    scene.remove(ast);
-                    asteroids.splice(ai, 1);
-                }
+        l.position.y += 0.4;
+        asteroids.forEach((a, ai) => {
+            if(l.position.distanceTo(a.position) < 1) {
+                a.userData.hp--;
+                scene.remove(l); lasers.splice(li, 1);
+                if(a.userData.hp <= 0) { score += 10; scene.remove(a); asteroids.splice(ai, 1); }
             }
         });
     });
 
-    // Level up logic
-    if(score > level * 1000) {
+    // Leveling
+    if(score >= level * 100) {
         level++;
-        speedMult += 0.2;
-        document.getElementById('level-display').innerText = "Level: " + level;
-        createTone(600, 'triangle', 0.5, 0.2); // Euphoric level up
-        setTimeout(() => createTone(800, 'triangle', 0.5, 0.2), 100);
+        document.getElementById('lvl-txt').innerText = "Level: " + level;
+        playSound(600, 'triangle', 0.5, 0.2); // Euphoric sound
     }
 
-    document.getElementById('score-display').innerText = score;
+    document.getElementById('score-txt').innerText = score.toString().padStart(4, '0');
     renderer.render(scene, camera);
 }
+
+// Controls
+document.addEventListener('keydown', e => {
+    if(e.key === 'ArrowLeft') rocket.position.x -= 0.6;
+    if(e.key === 'ArrowRight') rocket.position.x += 0.6;
+    if(e.key === ' ') fireLaser();
+});
+document.addEventListener('mousemove', e => {
+    const x = (e.clientX / window.innerWidth) * 2 - 1;
+    rocket.position.x = x * 10;
+});
+document.addEventListener('mousedown', fireLaser);
 
 init();
 </script>
