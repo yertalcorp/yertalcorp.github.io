@@ -2,225 +2,293 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Space Dodger Logic</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Dodger 3D</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #0f172a; font-family: 'Segoe UI', sans-serif; touch-action: none; user-select: none; }
-        canvas { display: block; width: 100vw; height: 100vh; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        canvas { display: block; }
         
-        /* UI Overlay Layout */
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; box-sizing: border-box; }
-        .ui-bar { display: flex; justify-content: space-between; width: 100%; pointer-events: auto; }
+        /* UI Overlays */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         
-        /* Left UI: Stats */
-        .stats-left { color: #fbbf24; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5); font-size: 18px; }
-        #lives-display { color: #ef4444; font-size: 20px; letter-spacing: 2px; margin-top: 5px; }
+        /* Top Left: Stats Box */
+        .stats-box {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(0, 40, 80, 0.7);
+            border: 2px solid #00d4ff; border-radius: 15px;
+            padding: 15px; color: white; min-width: 120px;
+            backdrop-filter: blur(5px); pointer-events: auto;
+        }
+        .heart { color: #ff4d4d; font-size: 20px; margin-right: 5px; }
 
-        /* Right UI: Icons */
-        .icon-bar { display: flex; gap: 15px; color: white; font-size: 22px; cursor: pointer; }
-        .icon-bar i:hover { color: #3b82f6; transform: scale(1.1); }
-        .hidden { display: none !important; }
+        /* Top Right: Icons */
+        .icon-bar {
+            position: absolute; top: 20px; right: 20px;
+            display: flex; gap: 15px; pointer-events: auto;
+        }
+        .icon-btn {
+            width: 45px; height: 45px; background: rgba(255,255,255,0.1);
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; color: white; cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.3); transition: 0.3s;
+        }
+        .icon-btn:hover { background: rgba(0, 212, 255, 0.4); transform: scale(1.1); }
 
-        /* Screens */
-        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; backdrop-filter: blur(5px); z-index: 100; color: white; }
-        button { background: #3b82f6; color: white; border: none; padding: 15px 40px; font-size: 20px; border-radius: 50px; cursor: pointer; font-weight: bold; text-transform: uppercase; margin-top: 20px; }
-        
-        #fire-btn { pointer-events: auto; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.6); border: 2px solid white; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; align-self: flex-end; }
+        /* Landing Screen */
+        #menu {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; background: radial-gradient(circle, #1b2735 0%, #090a0f 100%);
+            z-index: 10; color: white; text-align: center;
+        }
+        button {
+            padding: 15px 40px; margin: 10px; font-size: 1.2rem;
+            cursor: pointer; border-radius: 30px; border: none;
+            background: linear-gradient(45deg, #00d4ff, #0055ff);
+            color: white; font-weight: bold; transition: 0.3s;
+        }
+        button:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4); }
+        .secondary-btn { background: #333; }
     </style>
 </head>
 <body>
 
-    <canvas id="gameCanvas"></canvas>
+<div id="menu">
+    <h1 style="font-size: 4rem; margin-bottom: 0;">SPACE DODGER</h1>
+    <p style="margin-bottom: 30px; color: #00d4ff;">Master of the Cosmos</p>
+    <button onclick="startGame()">Launch Space Dodger</button>
+    <button class="secondary-btn" onclick="alert('Hall of Fame coming soon!')">Hall of Fame</button>
+</div>
 
-    <div id="ui-layer">
-        <div class="ui-bar">
-            <div class="stats-left">
-                <div>LEVEL: <span id="level-val">1</span></div>
-                <div>SCORE: <span id="score-val">0000</span></div>
-                <div id="lives-display">❤️❤️❤️</div>
-            </div>
+<div id="ui-layer" style="display: none;">
+    <div class="stats-box">
+        <div id="level-display">Level: 1</div>
+        <div id="score-display" style="font-size: 1.5rem; font-weight: bold;">0</div>
+        <div id="lives-display"></div>
+    </div>
 
-            <div class="icon-bar">
-                <i id="earth-icon" class="fas fa-globe-americas hidden" title="Global High Scores" onclick="alert('Global Scores coming soon!')"></i>
-                <i class="fas fa-trophy" title="Hall of Fame" onclick="alert('Hall of Fame: No scores yet!')"></i>
-                <i class="fas fa-question-circle" title="Instructions" onclick="alert('Move mouse/touch to dodge. Click/Space to fire lasers. Collect yellow stars!')"></i>
-                <i id="sound-toggle" class="fas fa-volume-up" title="Toggle Sound" onclick="toggleAudio()"></i>
-            </div>
-        </div>
+    <div class="icon-bar">
+        <div class="icon-btn" title="Global Hall of Fame">🌐</div>
+        <div class="icon-btn" title="Personal Trophy">🏆</div>
+        <div class="icon-btn" title="Instructions" onclick="alert('Move: Mouse or Arrows\nShoot: Space/Click\nGoal: Dodge Red, Catch Yellow!')">ⓘ</div>
+        <div id="sound-toggle" class="icon-btn" onclick="toggleSound()">🔊</div>
+    </div>
+</div>
+
+<script>
+/**
+ * GAME CONSTANTS & STATE
+ */
+let scene, camera, renderer, rocket, clock;
+let asteroids = [], stars = [], lasers = [];
+let score = 0, level = 1, lives = 3, gameActive = false;
+let speedMult = 1;
+let soundEnabled = true;
+
+// Audio Contexts (Synthetic)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function createTone(freq, type, duration, volume = 0.1) {
+    if(!soundEnabled) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+
+function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 2);
+    scene.add(ambientLight);
+    const sun = new THREE.DirectionalLight(0xffffff, 2);
+    sun.position.set(5, 5, 5);
+    scene.add(sun);
+
+    // Rocket (Grand 3D Design)
+    const bodyGeo = new THREE.CylinderGeometry(0.5, 0.8, 3, 12);
+    const bodyMat = new THREE.MeshPhongMaterial({ color: 0xcccccc, shininess: 100 });
+    rocket = new THREE.Mesh(bodyGeo, bodyMat);
+    
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1, 12), new THREE.MeshPhongMaterial({ color: 0xff0000 }));
+    tip.position.y = 2;
+    rocket.add(tip);
+
+    const finGeo = new THREE.BoxGeometry(2, 0.5, 0.1);
+    const fin = new THREE.Mesh(finGeo, bodyMat);
+    rocket.add(fin);
+    
+    rocket.rotation.x = Math.PI / 2;
+    scene.add(rocket);
+
+    camera.position.z = 10;
+    camera.position.y = -5;
+    camera.lookAt(0,0,0);
+
+    clock = new THREE.Clock();
+    window.addEventListener('resize', onWindowResize);
+    document.addEventListener('keydown', handleInput);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mousedown', () => shootLaser());
+}
+
+function startGame() {
+    document.getElementById('menu').style.display = 'none';
+    document.getElementById('ui-layer').style.display = 'block';
+    gameActive = true;
+    updateHearts();
+    animate();
+    // Rocket Whirr
+    setInterval(() => { if(gameActive) createTone(100, 'sawtooth', 0.1, 0.02); }, 150);
+}
+
+function createAsteroid() {
+    const size = Math.random() * 0.8 + 0.4;
+    const geo = new THREE.DodecahedronGeometry(size, 1);
+    const mat = new THREE.MeshStandardMaterial({ color: 0xff3333, flatShading: true });
+    const ast = new THREE.Mesh(geo, mat);
+    ast.position.set((Math.random() - 0.5) * 15, 15, 0);
+    ast.userData = { hp: Math.ceil(size * 3), size: size };
+    asteroids.push(ast);
+    scene.add(ast);
+}
+
+function createStar() {
+    const geo = new THREE.OctahedronGeometry(0.3, 0);
+    const mat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffff00 });
+    const star = new THREE.Mesh(geo, mat);
+    star.position.set((Math.random() - 0.5) * 15, 15, 0);
+    stars.push(star);
+    scene.add(star);
+}
+
+function shootLaser() {
+    if(!gameActive) return;
+    const geo = new THREE.CylinderGeometry(0.1, 0.1, 1);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+    const laser = new THREE.Mesh(geo, mat);
+    laser.position.copy(rocket.position);
+    laser.position.y += 2;
+    lasers.push(laser);
+    scene.add(laser);
+    createTone(800, 'sine', 0.1, 0.1);
+}
+
+function updateHearts() {
+    const container = document.getElementById('lives-display');
+    container.innerHTML = '❤️'.repeat(lives);
+}
+
+function handleInput(e) {
+    if(e.code === 'ArrowLeft') rocket.position.x -= 0.5;
+    if(e.code === 'ArrowRight') rocket.position.x += 0.5;
+    if(e.code === 'Space') shootLaser();
+}
+
+function handleMouseMove(e) {
+    const x = (e.clientX / window.innerWidth) * 2 - 1;
+    rocket.position.x = x * 8;
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    document.getElementById('sound-toggle').innerText = soundEnabled ? '🔊' : '🔇';
+}
+
+function animate() {
+    if(!gameActive) return;
+    requestAnimationFrame(animate);
+    const delta = clock.getDelta();
+
+    // Spawn logic
+    if(Math.random() < 0.03 * speedMult) createAsteroid();
+    if(Math.random() < 0.01) createStar();
+
+    // Movement & Collision
+    asteroids.forEach((ast, index) => {
+        ast.position.y -= 0.1 * speedMult;
+        ast.rotation.x += 0.01;
         
-        <div id="fire-btn" onmousedown="startFiring(event)" onmouseup="stopFiring(event)" ontouchstart="startFiring(event)" ontouchend="stopFiring(event)">FIRE</div>
-    </div>
-
-    <div id="start-screen" class="screen">
-        <h1 style="color: #60a5fa; font-size: 48px; text-align: center;">YERTAL LAB<br><span style="font-size: 18px; color: #94a3b8;">SPACE DODGER PRO</span></h1>
-        <button onclick="startGame()">Initialize System</button>
-    </div>
-
-    <div id="game-over-screen" class="screen hidden">
-        <h1 style="color: #ef4444;">MISSION FAILED</h1>
-        <p id="final-stats" style="font-size: 20px;"></p>
-        <p id="login-msg" style="color: #94a3b8; font-size: 14px; margin-top: 20px;">Want to save this score? Log in to Yertal.</p>
-        <button onclick="startGame()">Re-Launch</button>
-    </div>
-
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        let isPlaying = false, score = 0, lives = 3, level = 1, dodgedCount = 0;
-        let isAudioOn = true, isLoggedIn = false; // Set isLoggedIn to true to see the Earth icon
-        let player = { x: 0, y: 0, width: 50, height: 75, targetX: 0, tilt: 0, cooldown: 0 };
-        let enemies = [], bullets = [], bgStars = [], bonusStars = [];
-        let isFiring = false;
-
-        // --- Improved Audio System ---
-        const AudioSys = {
-            ctx: null,
-            init() { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
-            playLevelUp() {
-                if(!isAudioOn || !this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine'; osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                osc.connect(gain).connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.2);
-            },
-            playShoot() { /* ... similar to previous ... */ },
-            playExplosion() { /* ... similar to previous ... */ }
-        };
-
-        function toggleAudio() {
-            isAudioOn = !isAudioOn;
-            document.getElementById('sound-toggle').className = isAudioOn ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+        // Dodge/Miss Score
+        if(ast.position.y < -10) {
+            score += Math.floor(ast.userData.size * 10);
+            scene.remove(ast);
+            asteroids.splice(index, 1);
         }
 
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resize);
-        resize();
-
-        // Mouse/Click Firing
-        window.addEventListener('mousemove', e => { if(isPlaying) player.targetX = e.clientX; });
-        window.addEventListener('mousedown', () => { if(isPlaying) isFiring = true; });
-        window.addEventListener('mouseup', () => isFiring = false);
-        window.addEventListener('keydown', e => { if(e.code === 'Space') isFiring = true; });
-        window.addEventListener('keyup', e => { if(e.code === 'Space') isFiring = false; });
-
-        function startFiring(e) { e.stopPropagation(); isFiring = true; }
-        function stopFiring(e) { e.stopPropagation(); isFiring = false; }
-
-        function drawPlayer() {
-            player.x += (player.targetX - player.x) * 0.15;
-            player.tilt = (player.targetX - player.x) * 0.05;
-            ctx.save();
-            ctx.translate(player.x, player.y);
-            ctx.rotate(Math.max(-0.2, Math.min(0.2, player.tilt * 0.01)));
-            
-            // 3D-ish Rocket Body
-            ctx.fillStyle = '#1e40af'; // Dark Blue Side
-            ctx.beginPath(); ctx.moveTo(-25, 30); ctx.lineTo(0, -45); ctx.lineTo(0, 20); ctx.fill();
-            ctx.fillStyle = '#3b82f6'; // Light Blue Side
-            ctx.beginPath(); ctx.moveTo(25, 30); ctx.lineTo(0, -45); ctx.lineTo(0, 20); ctx.fill();
-            
-            // Cockpit
-            ctx.fillStyle = '#e2e8f0';
-            ctx.beginPath(); ctx.ellipse(0, -10, 8, 15, 0, 0, Math.PI*2); ctx.fill();
-            
-            // Engine Flame
-            ctx.fillStyle = '#f97316';
-            ctx.beginPath(); ctx.moveTo(-10, 25); ctx.lineTo(10, 25); ctx.lineTo(0, 45 + Math.random()*15); ctx.fill();
-            ctx.restore();
-        }
-
-        function loop() {
-            if(!isPlaying) return;
-            ctx.fillStyle = '#0f172a'; ctx.fillRect(0,0,canvas.width, canvas.height);
-
-            // Background Stars
-            ctx.fillStyle = 'white';
-            bgStars.forEach(s => {
-                s.y += s.s; if(s.y > canvas.height) s.y = 0;
-                ctx.globalAlpha = s.a; ctx.fillRect(s.x, s.y, 2, 2);
-            });
-            ctx.globalAlpha = 1;
-
-            drawPlayer();
-
-            // Handling Bonus Yellow Stars
-            if(Math.random() < 0.01) bonusStars.push({x: Math.random()*canvas.width, y: -20, s: 2});
-            bonusStars.forEach((s, i) => {
-                s.y += s.s;
-                ctx.fillStyle = '#fbbf24';
-                ctx.beginPath(); ctx.arc(s.x, s.y, 5, 0, Math.PI*2); ctx.fill();
-                // Collection
-                if(Math.hypot(player.x - s.x, player.y - s.y) < 40) {
-                    score += 50; bonusStars.splice(i, 1);
-                }
-            });
-
-            // Enemy Logic (Level scaling speed)
-            if(frames % Math.max(20, 60 - level*5) === 0) {
-                enemies.push({x: Math.random()*canvas.width, y: -50, r: 20, s: 3 + (level*0.5)});
+        // Collision with Rocket
+        if(ast.position.distanceTo(rocket.position) < 1.2) {
+            lives--;
+            updateHearts();
+            scene.remove(ast);
+            asteroids.splice(index, 1);
+            createTone(150, 'square', 0.3, 0.2);
+            if(lives <= 0) {
+                alert("Game Over! Score: " + score);
+                location.reload();
             }
+        }
+    });
 
-            enemies.forEach((e, i) => {
-                e.y += e.s;
-                ctx.fillStyle = '#ef4444';
-                ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI*2); ctx.fill();
+    stars.forEach((star, index) => {
+        star.position.y -= 0.08 * speedMult;
+        star.rotation.y += 0.05;
+        if(star.position.distanceTo(rocket.position) < 1) {
+            score += 50;
+            scene.remove(star);
+            stars.splice(index, 1);
+            createTone(1200, 'sine', 0.1, 0.1);
+        }
+    });
 
-                if(Math.hypot(player.x - e.x, player.y - e.y) < e.r + 25) {
-                    lives--; enemies.splice(i, 1);
-                    document.getElementById('lives-display').innerText = "❤️".repeat(lives);
-                    if(lives <= 0) endGame();
+    lasers.forEach((l, li) => {
+        l.position.y += 0.5;
+        asteroids.forEach((ast, ai) => {
+            if(l.position.distanceTo(ast.position) < 1) {
+                ast.userData.hp--;
+                scene.remove(l);
+                lasers.splice(li, 1);
+                if(ast.userData.hp <= 0) {
+                    score += 100;
+                    scene.remove(ast);
+                    asteroids.splice(ai, 1);
                 }
-
-                if(e.y > canvas.height) {
-                    enemies.splice(i, 1);
-                    dodgedCount++;
-                    if(dodgedCount >= 20) {
-                        level++; dodgedCount = 0;
-                        AudioSys.playLevelUp();
-                        document.getElementById('level-val').innerText = level;
-                    }
-                }
-            });
-
-            // Firing Logic
-            if(isFiring && player.cooldown <= 0) {
-                bullets.push({x: player.x, y: player.y - 40});
-                player.cooldown = 15;
             }
-            if(player.cooldown > 0) player.cooldown--;
+        });
+    });
 
-            bullets.forEach((b, i) => {
-                b.y -= 10;
-                ctx.fillStyle = '#22d3ee';
-                ctx.fillRect(b.x-2, b.y, 4, 15);
-                if(b.y < 0) bullets.splice(i, 1);
-            });
+    // Level up logic
+    if(score > level * 1000) {
+        level++;
+        speedMult += 0.2;
+        document.getElementById('level-display').innerText = "Level: " + level;
+        createTone(600, 'triangle', 0.5, 0.2); // Euphoric level up
+        setTimeout(() => createTone(800, 'triangle', 0.5, 0.2), 100);
+    }
 
-            frames++;
-            score++;
-            document.getElementById('score-val').innerText = score.toString().padStart(4, '0');
-            requestAnimationFrame(loop);
-        }
+    document.getElementById('score-display').innerText = score;
+    renderer.render(scene, camera);
+}
 
-        function startGame() {
-            AudioSys.init();
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            score = 0; lives = 3; level = 1; dodgedCount = 0; enemies = []; bullets = []; bonusStars = []; frames = 0;
-            bgStars = Array.from({length:50}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2+0.5, a: Math.random()}));
-            player.x = canvas.width/2; player.y = canvas.height - 120;
-            document.getElementById('earth-icon').classList.toggle('hidden', !isLoggedIn);
-            isPlaying = true; loop();
-        }
-
-        function endGame() {
-            isPlaying = false;
-            document.getElementById('final-stats').innerText = `Final Score: ${score} | Level: ${level}`;
-            document.getElementById('game-over-screen').classList.remove('hidden');
-        }
-    </script>
+init();
+</script>
 </body>
 </html>
