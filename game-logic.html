@@ -8,7 +8,7 @@
         :root { --neon-blue: #00f2ff; --neon-green: #39ff14; --neon-red: #ff3131; --gold: #ffd700; }
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Arial, sans-serif; color: white; user-select: none; }
         
-        /* HUD - Top Left Box */
+        /* HUD - Top Left */
         #hud-left {
             position: absolute; top: 20px; left: 20px;
             background: rgba(10, 20, 40, 0.9); padding: 20px;
@@ -36,12 +36,10 @@
         .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
         .hidden { display: none !important; }
 
-        /* Impact Table & Neon Box */
         .neon-box { border: 4px solid var(--neon-blue); border-radius: 25px; padding: 40px; background: rgba(0,0,0,0.8); box-shadow: 0 0 30px var(--neon-blue); text-align: center; max-width: 80%; }
-        .impact-table { width: 90%; border-collapse: collapse; margin: 20px 0; font-size: 1.5rem; }
-        .impact-table th { font-weight: 900; font-size: 2rem; color: var(--neon-blue); padding: 15px; border-bottom: 3px solid var(--neon-blue); }
+        .impact-table { width: 95%; border-collapse: collapse; margin: 20px 0; font-size: 1.5rem; }
+        .impact-table th { font-weight: 900; font-size: 2rem; color: var(--neon-blue); padding: 15px; border-bottom: 3px solid var(--neon-blue); text-transform: uppercase; }
         .impact-table td { padding: 12px; border-bottom: 1px solid #333; font-weight: 400; }
-        .row-top { font-weight: bold; color: var(--gold); }
 
         button {
             padding: 18px 45px; margin: 15px; border-radius: 12px; border: none;
@@ -56,8 +54,8 @@
 
 <div id="hud-left" class="hidden">
     <div id="ui-user" style="font-size: 1.5rem; color: var(--neon-blue);">Guest</div>
-    <div id="ui-lvl" style="font-size: 1.2rem;">Level: 1</div>
-    <div id="ui-score" style="font-size: 1.2rem;">Score: 0</div>
+    <div id="ui-lvl">Level: 1</div>
+    <div id="ui-score">Score: 0</div>
     <div id="ui-lives" style="margin: 10px 0;"></div>
     <div class="fuel-meter" id="fuel-bar"></div>
 </div>
@@ -88,8 +86,6 @@
 </div>
 
 <script>
-/** * EXPERT ARCADE DEVELOPER ENGINE - THREE.JS + WEB AUDIO 
- */
 let scene, camera, renderer, rocket, flame, clock;
 let asteroids = [], stars = [], lasers = [], fragments = [];
 let score = 0, level = 1, lives = 3, fuel = 100, active = false, paused = false;
@@ -98,8 +94,7 @@ let sessionScores = [];
 
 function launchMission() {
     score = 0; level = 1; lives = 3; fuel = 100;
-    document.getElementById('screen-landing').classList.add('hidden');
-    document.getElementById('screen-gameover').classList.add('hidden');
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
     document.getElementById('hud-left').classList.remove('hidden');
     document.getElementById('hud-right').classList.remove('hidden');
     if(!renderer) init3D();
@@ -116,36 +111,40 @@ function init3D() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // --- REALISTIC ROCKET MODEL ---
+    // --- NEW SHORTENED ROCKET MODEL (30% SHORTER) ---
     const rocketGrp = new THREE.Group();
     const shinyBlue = new THREE.MeshPhongMaterial({ color: 0x0044ff, shininess: 100, specular: 0x00ffff });
+    const glassMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, shininess: 100, opacity: 0.8, transparent: true });
     
-    // Main Hull
-    const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.4, 1.8, 32), shinyBlue);
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.6, 32), shinyBlue);
-    nose.position.y = 1.2;
+    // Hull (Shortened to 1.2 from 1.8)
+    const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.45, 1.2, 32), shinyBlue);
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 32), shinyBlue);
+    nose.position.y = 0.85;
     
-    // Wings
-    const wingGeo = new THREE.BoxGeometry(0.05, 0.7, 0.8);
-    const wingL = new THREE.Mesh(wingGeo, shinyBlue); wingL.position.set(-0.4, -0.4, 0); wingL.rotation.z = 0.2;
-    const wingR = new THREE.Mesh(wingGeo, shinyBlue); wingR.position.set(0.4, -0.4, 0); wingR.rotation.z = -0.2;
-    
-    // Throttle / Engine
-    const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.2, 0.3, 16), new THREE.MeshPhongMaterial({color:0x333333}));
-    engine.position.y = -1.0;
-    
-    // Flame
-    const flameGeo = new THREE.ConeGeometry(0.15, 0.6, 12);
-    flame = new THREE.Mesh(flameGeo, new THREE.MeshBasicMaterial({color: 0xffaa00, transparent: true, opacity: 0.8}));
-    flame.position.y = -1.4; flame.rotation.x = Math.PI;
+    // Windows
+    const win1 = new THREE.Mesh(new THREE.CircleGeometry(0.08, 16), glassMat);
+    win1.position.set(0, 0.3, 0.25);
+    const win2 = new THREE.Mesh(new THREE.CircleGeometry(0.08, 16), glassMat);
+    win2.position.set(0, -0.1, 0.35);
 
-    rocketGrp.add(hull, nose, wingL, wingR, engine, flame);
+    // Wings
+    const wingGeo = new THREE.BoxGeometry(0.05, 0.6, 0.7);
+    const wingL = new THREE.Mesh(wingGeo, shinyBlue); wingL.position.set(-0.45, -0.3, 0); wingL.rotation.z = 0.3;
+    const wingR = new THREE.Mesh(wingGeo, shinyBlue); wingR.position.set(0.45, -0.3, 0); wingR.rotation.z = -0.3;
+    
+    // Throttle
+    const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.3, 16), new THREE.MeshPhongMaterial({color:0x222222}));
+    engine.position.y = -0.75;
+    
+    flame = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 12), new THREE.MeshBasicMaterial({color: 0xff4400}));
+    flame.position.y = -1.2; flame.rotation.x = Math.PI;
+
+    rocketGrp.add(hull, nose, win1, win2, wingL, wingR, engine, flame);
     rocket = rocketGrp; rocket.position.y = -4; scene.add(rocket);
 
     scene.add(new THREE.AmbientLight(0x404040));
     const sun = new THREE.DirectionalLight(0xffffff, 1); sun.position.set(5, 5, 10); scene.add(sun);
     camera.position.z = 8;
-    clock = new THREE.Clock();
 }
 
 function initAudio() {
@@ -164,10 +163,25 @@ function playSfx(type) {
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     osc.connect(g); g.connect(audioCtx.destination);
-    if(type==='laser') { osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime+0.1); g.gain.value=0.1; osc.start(); osc.stop(audioCtx.currentTime+0.1); }
-    if(type==='explode') { osc.type='sawtooth'; osc.frequency.value=40; g.gain.linearRampToValueAtTime(0, audioCtx.currentTime+0.6); osc.start(); osc.stop(audioCtx.currentTime+0.6); }
-    if(type==='star') { osc.frequency.setValueAtTime(500, audioCtx.currentTime); osc.frequency.setValueAtTime(750, audioCtx.currentTime+0.1); g.gain.value=0.1; osc.start(); osc.stop(audioCtx.currentTime+0.2); }
-    if(type==='whoosh') { osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime+0.3); g.gain.value=0.2; osc.start(); osc.stop(audioCtx.currentTime+0.4); }
+
+    if(type==='explode') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        g.gain.setValueAtTime(0.6, audioCtx.currentTime);
+        g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+    } else if(type==='crash') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.8, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    } else {
+        osc.frequency.setValueAtTime(type === 'laser' ? 800 : 500, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1);
+        g.gain.value = 0.1; osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    }
 }
 
 function initFuelUI() {
@@ -175,46 +189,47 @@ function initFuelUI() {
     for(let i=0; i<25; i++) { const s = document.createElement('div'); s.className='fuel-section'; bar.appendChild(s); }
 }
 
-function spawnAsteroid() {
-    const s = 0.4 + Math.random() * 0.8;
-    // Check Spacing
+function spawnObject() {
+    const isStar = Math.random() < 0.1;
     const x = (Math.random()-0.5)*12;
-    for(let a of asteroids) { if(Math.abs(a.position.x - x) < 1.5 && a.position.y > 6) return; }
-
-    const geo = new THREE.DodecahedronGeometry(s, 1);
-    const pos = geo.attributes.position;
-    for(let i=0; i<pos.count; i++) {
-        const v = new THREE.Vector3().fromBufferAttribute(pos, i);
-        v.multiplyScalar(1 + Math.random() * 0.2); pos.setXYZ(i, v.x, v.y, v.z);
+    
+    // SPATIAL AWARENESS: Prevent clumping
+    const allObjects = [...asteroids, ...stars];
+    for(let obj of allObjects) {
+        if(Math.abs(obj.position.x - x) < 1.8 && obj.position.y > 6) return;
     }
-    geo.scale(1.3, 0.8, 1);
-    const ast = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color: 0x882222, flatShading: true}));
-    ast.position.set(x, 8, 0);
-    ast.userData = { size: s, hp: Math.ceil(s*4) };
-    asteroids.push(ast); scene.add(ast);
-}
 
-function spawnStar() {
-    if(Math.random() > 0.1) return;
-    const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.25), new THREE.MeshPhongMaterial({color: 0xffff00, shininess: 100}));
-    star.position.set((Math.random()-0.5)*12, 8, 0);
-    stars.push(star); scene.add(star);
+    if(isStar) {
+        const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.25), new THREE.MeshPhongMaterial({color: 0xffff00}));
+        star.position.set(x, 8, 0); stars.push(star); scene.add(star);
+    } else {
+        const s = 0.4 + Math.random() * 0.8;
+        const geo = new THREE.DodecahedronGeometry(s, 1);
+        const ast = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color: 0x882222, flatShading: true}));
+        ast.position.set(x, 8, 0); ast.userData = { size: s, hp: Math.ceil(s*4) };
+        asteroids.push(ast); scene.add(ast);
+    }
 }
 
 function update() {
     if(!active || paused) return;
     const fallSpeed = 0.05 + (level * 0.02);
-    flame.scale.setScalar(0.8 + Math.random() * 0.5); // Animate flame
+    flame.scale.setScalar(0.7 + Math.random() * 0.5);
 
     asteroids.forEach((a, i) => {
-        a.position.y -= fallSpeed; a.rotation.x += 0.01;
-        if(a.position.distanceTo(rocket.position) < 1.0) { lives--; fuel -= 15; playSfx('explode'); scene.remove(a); asteroids.splice(i,1); }
-        else if(a.position.y < -6) { fuel -= 3; scene.remove(a); asteroids.splice(i,1); }
+        a.position.y -= fallSpeed;
+        if(a.position.distanceTo(rocket.position) < 1.0) {
+            lives--; fuel -= 15; playSfx('crash'); scene.remove(a); asteroids.splice(i,1);
+        } else if(a.position.y < -6) {
+            fuel -= 3; scene.remove(a); asteroids.splice(i,1);
+        }
     });
 
     stars.forEach((s, i) => {
         s.position.y -= fallSpeed; s.rotation.y += 0.1;
-        if(s.position.distanceTo(rocket.position) < 0.8) { score += 25; fuel = Math.min(100, fuel+5); playSfx('star'); scene.remove(s); stars.splice(i,1); }
+        if(s.position.distanceTo(rocket.position) < 0.8) {
+            score += 25; fuel = Math.min(100, fuel+5); playSfx('star'); scene.remove(s); stars.splice(i,1);
+        }
     });
 
     lasers.forEach((l, li) => {
@@ -223,16 +238,16 @@ function update() {
             if(l.position.distanceTo(a.position) < a.userData.size) {
                 a.userData.hp--; scene.remove(l); lasers.splice(li,1);
                 if(a.userData.hp <= 0) {
-                    let p = a.userData.size > 0.8 ? 5 : 1; score += p; fuel = Math.min(100, fuel + p);
+                    score += a.userData.size > 0.8 ? 5 : 1; fuel = Math.min(100, fuel + 2);
                     playSfx('explode'); createFrags(a.position); scene.remove(a); asteroids.splice(ai,1);
-                    if(score >= level * 100) { level++; playSfx('whoosh'); }
+                    if(score >= level * 100) level++;
                 }
             }
         });
     });
 
     if(fuel <= 0 || lives <= 0) gameOver();
-    if(Math.random() < 0.03) { spawnAsteroid(); spawnStar(); }
+    if(Math.random() < 0.03) spawnObject();
     updateUI();
 }
 
@@ -248,56 +263,54 @@ function updateUI() {
     document.getElementById('ui-lvl').innerText = "Level: " + level;
     document.getElementById('ui-score').innerText = "Score: " + score;
     document.getElementById('ui-lives').innerHTML = "<span style='font-size:1.8rem'>❤️</span>".repeat(lives);
-    
     const fill = Math.floor((fuel/100)*25);
     const secs = document.querySelectorAll('.fuel-section');
-    let c = varName('--neon-green'); if(fuel < 67) c = "orange"; if(fuel < 34) c = varName('--neon-red');
+    let c = "#39ff14"; if(fuel < 67) c = "orange"; if(fuel < 34) c = "#ff3131";
     secs.forEach((s, i) => s.style.background = i < fill ? c : "#000");
     document.getElementById('fuel-bar').className = fuel <= 10 ? 'fuel-meter siren-active' : 'fuel-meter';
 }
 
-function varName(n) { return getComputedStyle(document.documentElement).getPropertyValue(n); }
-
 function gameOver() {
     active = false; if(engineWhirr) engineWhirr.stop();
-    sessionScores.push({u: 'Guest', r: '-', l: level, s: score});
+    sessionScores.push({u: 'Guest', l: level, s: score});
     sessionScores.sort((a,b)=>b.s-a.s);
     document.getElementById('screen-gameover').classList.remove('hidden');
 }
 
 function viewHOF(type) {
-    paused = true;
+    paused = true; // Auto-pause game logic
     const isGlobal = type === 'global';
-    let html = `<h2 style="font-size:3rem; color:var(--neon-blue)">${isGlobal?'GLOBAL':'PERSONAL'} TOP 10</h2>`;
-    html += `<table class="impact-table"><tr><th>User</th><th>Rank</th><th>Level</th><th>Score</th></tr>`;
-    const data = isGlobal ? [{u:'Dev_X', r:1, l:16, s:9999}] : sessionScores.slice(0,10);
-    data.forEach((d, i) => {
-        html += `<tr class="${i==0?'row-top':''}"><td>${d.u}</td><td>${isGlobal?d.r:i+1}</td><td>${d.l}</td><td>${d.s}</td></tr>`;
-    });
-    html += `</table>`;
-    if(!isLoggedIn) html += `<button onclick="alert('Federated Login: Google/FB/MS')">Save Scores</button>`;
-    document.getElementById('overlay-content').innerHTML = html;
+    
+    if (isGlobal && !isLoggedIn) {
+        document.getElementById('overlay-content').innerHTML = `<h2 style="color:var(--neon-red)">ACCESS DENIED</h2><p style="font-size:1.5rem">Global Best Scores are only available to logged-in users.</p><button onclick="alert('Federated Login Initiated...')">Login to View</button>`;
+    } else {
+        let html = `<h2 style="font-size:3rem; color:var(--neon-blue)">${type.toUpperCase()} BEST SCORES</h2>`;
+        html += `<table class="impact-table"><tr><th>User</th><th>Rank</th><th>Level</th><th>Score</th></tr>`;
+        const data = sessionScores.slice(0,10);
+        data.forEach((d, i) => { html += `<tr><td>${d.u}</td><td>${i+1}</td><td>${d.l}</td><td>${d.s}</td></tr>`; });
+        html += `</table>`;
+        if(!isLoggedIn) html += `<button onclick="alert('Federated Login Initiated...')">Save Scores Across Sessions</button>`;
+        document.getElementById('overlay-content').innerHTML = html;
+    }
     document.getElementById('screen-overlay').classList.remove('hidden');
 }
 
 function showScreen(type) {
     paused = true;
     if(type==='info') {
-        document.getElementById('overlay-content').innerHTML = `
-        <div style="font-size:1.8rem; line-height:1.6; text-align:left;">
-            <p><b style="color:var(--neon-blue)">MOVEMENT:</b> Mouse or Arrow Keys</p>
-            <p><b style="color:var(--neon-blue)">SCORING:</b> Blast asteroids (1-5pts) and catch Golden Stars (Bonus).</p>
-            <p><b style="color:var(--neon-blue)">REFUELING:</b> Blasting asteroids and stars replenishes fuel. Don't let asteroids pass!</p>
-        </div>`;
+        document.getElementById('overlay-content').innerHTML = `<div style="font-size:1.8rem; text-align:left;"><h3>MISSION BRIEFING</h3><p><b>MOVE:</b> Mouse/Arrows<br><b>FIRE:</b> Space/Click<br><b>GOAL:</b> Blast asteroids, catch stars, survive!</p></div>`;
     }
     document.getElementById('screen-overlay').classList.remove('hidden');
 }
 
-function togglePause() { paused = !paused; document.getElementById('pause-btn').innerText = paused?'▶️':'⏸️'; }
+function togglePause() { 
+    paused = !paused; 
+    document.getElementById('pause-btn').innerText = paused ? "▶️" : "⏸️"; 
+}
 function toggleMute() { soundOn = !soundOn; document.getElementById('mute-btn').innerText = soundOn?'🔊':'🔇'; }
 function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); paused = false; }
 
-window.addEventListener('mousemove', (e) => { if(active) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
+window.addEventListener('mousemove', (e) => { if(active && !paused) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
 window.addEventListener('keydown', (e) => { 
     if(e.code==='Space') fire(); 
     if(e.code==='ArrowLeft') rocket.position.x-=0.7; 
@@ -312,7 +325,8 @@ function fire() {
 }
 
 function animate() {
-    if(!active) return; requestAnimationFrame(animate); update();
+    if(!active) return; requestAnimationFrame(animate); 
+    update();
     fragments.forEach((f, i) => { f.position.add(f.userData.v); f.scale.multiplyScalar(0.96); if(f.scale.x<0.01) { scene.remove(f); fragments.splice(i,1); } });
     renderer.render(scene, camera);
 }
