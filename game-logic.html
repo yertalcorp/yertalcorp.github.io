@@ -1,202 +1,295 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Space Dodger 3D</title>
-  <style>
-    body { margin:0; overflow:hidden; background:black; font-family:Arial, sans-serif; }
-    #hud {
-      position: absolute; top: 10px; left: 10px;
-      background: rgba(255,255,255,0.1); border-radius: 15px;
-      padding: 15px; color: white; font-size: 14px;
-    }
-    #fuelMeter {
-      display: flex; margin-top: 5px;
-    }
-    .fuelSection {
-      width: 8px; height: 15px; border-right: 1px solid black;
-    }
-    #icons {
-      position: absolute; top: 10px; right: 10px;
-      display: flex; gap: 10px;
-    }
-    .icon {
-      width: 32px; height: 32px; background: white; border-radius: 50%;
-      display:flex; align-items:center; justify-content:center; cursor:pointer;
-    }
-    #landing {
-      position:absolute; top:0; left:0; width:100%; height:100%;
-      background:black; color:white; display:flex; flex-direction:column;
-      align-items:center; justify-content:center; z-index:10;
-    }
-    #hallOfFame {
-      position:absolute; top:0; left:0; width:100%; height:100%;
-      background:rgba(0,0,0,0.9); color:white; display:none;
-      flex-direction:column; align-items:center; justify-content:center; z-index:20;
-    }
-    table { border-collapse: collapse; margin-top:20px; }
-    th { font-weight:bold; font-size:18px; }
-    td, th { padding:8px 12px; }
-    .gold { color:gold; }
-    .silver { color:silver; }
-    .bronze { color:#cd7f32; }
-    #gameOver {
-      position:absolute; top:40%; left:50%; transform:translate(-50%,-50%);
-      font-size:48px; color:red; font-weight:bold; display:none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Space Dodger 3D | Yertal Arcade</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --glass: rgba(15, 23, 42, 0.98); --accent: #3b82f6; --gold: #fbbf24; --silver: #e2e8f0; --bronze: #cd7f32; --red: #ef4444; --green: #22c55e; --orange: #f97316; }
+        body { margin: 0; overflow: hidden; background: #010409; font-family: 'Segoe UI', sans-serif; color: white; user-select: none; }
+        canvas { display: block; touch-action: none; }
+
+        /* UI Overlays */
+        #ui-layer { position: absolute; inset: 0; pointer-events: none; padding: 25px; box-sizing: border-box; }
+        .glass-box { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; pointer-events: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }
+        
+        /* Stats Panel */
+        #stats-panel { width: 220px; border-left: 5px solid var(--accent); }
+        .user-tag { color: var(--accent); font-weight: 800; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #334155; margin-bottom: 10px; display: block; }
+        .stat-line { display: flex; justify-content: space-between; align-items: baseline; margin: 4px 0; }
+        .stat-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-val { font-size: 24px; font-weight: 900; color: var(--gold); }
+        .heart-3d { color: var(--red); filter: drop-shadow(0 0 5px var(--red)); font-size: 18px; margin-right: 4px; }
+
+        /* Fuel Meter */
+        #fuel-container { width: 100%; height: 22px; background: #000; border: 1px solid #334155; margin-top: 12px; border-radius: 6px; position: relative; overflow: hidden; display: flex; }
+        #fuel-bar { height: 100%; transition: width 0.3s; width: 100%; }
+        .fuel-stripe { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.8); z-index: 2; }
+
+        /* Navigation Icons */
+        #icon-bar { position: absolute; top: 25px; right: 25px; display: flex; gap: 20px; pointer-events: auto; }
+        .nav-icon { font-size: 24px; cursor: pointer; transition: 0.3s; color: rgba(255,255,255,0.7); }
+        .nav-icon:hover { color: var(--accent); transform: scale(1.2); }
+
+        /* Modal & Landing */
+        .overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; padding: 20px; }
+        .hidden { display: none !important; }
+        .game-over-text { font-size: 80px; color: var(--red); animation: flash 0.5s infinite; font-weight: 900; }
+        
+        .btn { background: var(--accent); color: white; padding: 18px 45px; border-radius: 60px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 8px; width: 320px; transition: 0.3s; }
+        .btn:hover { transform: scale(1.05); filter: brightness(1.2); }
+        select { background: #1e293b; color: white; border: 2px solid var(--accent); padding: 14px; border-radius: 15px; width: 320px; font-weight: bold; margin: 10px; }
+
+        /* HOF Styles */
+        .hof-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .hof-table th { font-weight: 900; font-size: 18px; padding: 10px; border-bottom: 2px solid #334155; }
+        .hof-table td { padding: 12px; font-size: 16px; border-bottom: 1px solid #1e293b; }
+        .row-gold { color: var(--gold); font-weight: bold; }
+        .row-silver { color: var(--silver); font-weight: bold; }
+        .row-bronze { color: var(--bronze); font-weight: bold; }
+        
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .fuel-warning { animation: flash 0.2s infinite; }
+    </style>
 </head>
 <body>
-  <div id="hud">
-    <div id="username">User: Guest</div>
-    <div id="level">Level: 1</div>
-    <div id="score">Score: 0</div>
-    <div id="lives">Lives: ❤️❤️❤️</div>
-    <div id="fuelMeter"></div>
-  </div>
-  <div id="icons">
-    <div class="icon" id="playPause">▶️</div>
-    <div class="icon" id="instructions">ℹ️</div>
-    <div class="icon" id="sound">🔊</div>
-    <div class="icon" id="trophy">🏆</div>
-    <div class="icon" id="globe">🌐</div>
-  </div>
-  <div id="landing">
-    <h1>🚀 Space Dodger 3D 🚀</h1>
-    <button id="launchBtn">Launch Space Dodger</button>
-    <select id="levelSelect">
-      <option value="1">LEVEL=1</option>
-      <option value="2">LEVEL=2</option>
-      <option value="3">LEVEL=3</option>
-      <!-- add up to 16 -->
-    </select>
-    <button id="hallBtn">Hall of Fame</button>
-  </div>
-  <div id="hallOfFame">
-    <h2>🏆 Hall of Fame 🏆</h2>
-    <table id="hallTable">
-      <tr class="gold"><th>Rank</th><th>Score</th></tr>
-      <tr class="silver"><td>2</td><td>90</td></tr>
-      <tr class="bronze"><td>3</td><td>80</td></tr>
-    </table>
-    <button id="closeHall">Close</button>
-  </div>
-  <div id="gameOver">GAME OVER</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-  <script>
-    let scene, camera, renderer, rocket, asteroids=[], stars=[];
-    let score=0, level=1, lives=3, fuel=100, playing=false;
-    let keys={};
+    <canvas id="gameCanvas"></canvas>
 
-    init();
-    function init(){
-      scene=new THREE.Scene();
-      camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);
-      renderer=new THREE.WebGLRenderer();
-      renderer.setSize(window.innerWidth,window.innerHeight);
-      document.body.appendChild(renderer.domElement);
+    <div id="ui-layer">
+        <div id="stats-panel" class="glass-box">
+            <span class="user-tag" id="user-display">Guest Pilot</span>
+            <div class="stat-line"><span class="stat-label">Level</span><span id="level-val" class="stat-val">01</span></div>
+            <div class="stat-line"><span class="stat-label">Score</span><span id="score-val" class="stat-val">0000</span></div>
+            <div id="lives-container" style="margin: 8px 0;"></div>
+            <div id="fuel-container">
+                <div id="fuel-bar"></div>
+                <script>for(let i=1; i<25; i++) document.write(`<div class="fuel-stripe" style="left: ${(i/25)*100}%"></div>`);</script>
+            </div>
+        </div>
 
-      // Rocket
-      let rocketGeo=new THREE.ConeGeometry(1,3,32);
-      let rocketMat=new THREE.MeshPhongMaterial({color:0x000080, shininess:100});
-      rocket=new THREE.Mesh(rocketGeo,rocketMat);
-      rocket.position.y=-5;
-      scene.add(rocket);
+        <div id="icon-bar">
+            <i id="pause-btn" class="fas fa-pause nav-icon" onclick="togglePause()"></i>
+            <i class="fas fa-info-circle nav-icon" onclick="showModal('manual')"></i>
+            <i id="sound-btn" class="fas fa-volume-up nav-icon" onclick="toggleSound()"></i>
+            <i class="fas fa-trophy nav-icon" onclick="showModal('hall', 'Personal')"></i>
+            <i class="fas fa-globe nav-icon" onclick="showModal('hall', 'Global')"></i>
+        </div>
+    </div>
 
-      // Lights
-      let light=new THREE.PointLight(0xffffff,1,100);
-      light.position.set(10,10,10);
-      scene.add(light);
+    <div id="landing-screen" class="overlay">
+        <h1 id="main-title">SPACE DODGER</h1>
+        <p style="color:var(--gold); font-weight:800; letter-spacing:4px;">YERTAL ARCADE</p>
+        <button class="btn" onclick="startGame()">Launch Space Dodger</button>
+        <select id="level-select"></select>
+        <button class="btn" style="background:rgba(255,255,255,0.1)" onclick="showModal('hall', 'Personal')">Hall of Fame</button>
+    </div>
 
-      camera.position.z=10;
+    <div id="modal-overlay" class="overlay hidden">
+        <div id="modal-content" class="glass-box" style="width: 90%; max-width: 600px;"></div>
+        <button class="btn" style="width:200px; margin-top:20px" onclick="closeModal()">Back</button>
+    </div>
 
-      // Fuel meter
-      let fm=document.getElementById("fuelMeter");
-      for(let i=0;i<25;i++){
-        let sec=document.createElement("div");
-        sec.className="fuelSection";
-        sec.style.background="green";
-        fm.appendChild(sec);
-      }
-
-      animate();
-    }
-
-    function animate(){
-      requestAnimationFrame(animate);
-      if(playing){
-        updateObjects();
-        checkCollisions();
-        updateHUD();
-      }
-      renderer.render(scene,camera);
-    }
-
-    function spawnAsteroid(){
-      let size=Math.random()*1.5+0.5;
-      let geo=new THREE.SphereGeometry(size,16,16);
-      let mat=new THREE.MeshPhongMaterial({color:0xff0000});
-      let asteroid=new THREE.Mesh(geo,mat);
-      asteroid.position.set((Math.random()-0.5)*10,10,0);
-      asteroid.userData={size:size,hits:0};
-      scene.add(asteroid);
-      asteroids.push(asteroid);
-    }
-
-    function spawnStar(){
-      let geo=new THREE.SphereGeometry(0.3,8,8);
-      let mat=new THREE.MeshPhongMaterial({color:0xffff00});
-      let star=new THREE.Mesh(geo,mat);
-      star.position.set((Math.random()-0.5)*10,10,0);
-      scene.add(star);
-      stars.push(star);
-    }
-
-    function updateObjects(){
-      if(Math.random()<0.02) spawnAsteroid();
-      if(Math.random()<0.01) spawnStar();
-      asteroids.forEach(a=>{a.position.y-=0.05*level;});
-      stars.forEach(s=>{s.position.y-=0.05*level;});
-    }
-
-    function checkCollisions(){
-      asteroids.forEach((a,i)=>{
-        if(Math.abs(a.position.x-rocket.position.x)<1 && Math.abs(a.position.y-rocket.position.y)<1){
-          lives--; fuel-=10;
-          scene.remove(a); asteroids.splice(i,1);
-          if(lives<=0 || fuel<=0) endGame();
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const levelSelect = document.getElementById('level-select');
+        for(let i=1; i<=16; i++) {
+            let opt = document.createElement('option'); opt.value = i; opt.innerText = `LEVEL = ${i}`; levelSelect.appendChild(opt);
         }
-      });
-      stars.forEach((s,i)=>{
-        if(Math.abs(s.position.x-rocket.position.x)<1 && Math.abs(s.position.y-rocket.position.y)<1){
-          score+=10; fuel+=5;
-          scene.remove(s); stars.splice(i,1);
+
+        let isPlaying = false, isPaused = false, isSoundOn = true, isLoggedIn = false;
+        let score = 0, level = 1, lives = 3, fuel = 100, frames = 0;
+        let sessionScores = [];
+        let player = { x: 0, targetX: 0 };
+        let asteroids = [], stars = [], bullets = [], fragments = [], bgStars = [];
+        let requestId = null;
+
+        const AudioSys = {
+            ctx: null, whirr: null, whirrG: null, siren: null,
+            init() {
+                if(this.ctx) return;
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.whirr = this.ctx.createOscillator();
+                this.whirrG = this.ctx.createGain();
+                this.whirr.type = 'sawtooth'; this.whirr.frequency.value = 55;
+                let filter = this.ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 300;
+                this.whirr.connect(filter).connect(this.whirrG).connect(this.ctx.destination);
+                this.whirrG.gain.value = 0; this.whirr.start();
+            },
+            setWhirr(on) { if(this.whirrG) this.whirrG.gain.setTargetAtTime(on && isSoundOn ? 0.08 : 0, this.ctx.currentTime, 0.2); },
+            play(f, t, d, v) {
+                if(!isSoundOn || !this.ctx) return;
+                const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+                o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
+                g.gain.setValueAtTime(v, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d);
+                o.connect(g).connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + d);
+            },
+            triggerSiren(active) {
+                if(active && !this.siren && isSoundOn) {
+                    this.siren = setInterval(() => this.play(880, 'sine', 0.2, 0.1), 400);
+                } else if(!active && this.siren) { clearInterval(this.siren); this.siren = null; }
+            }
+        };
+
+        function draw3DStar(s) {
+            ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(frames * 0.05);
+            const g = ctx.createRadialGradient(0,0,0,0,0,s.r);
+            g.addColorStop(0, '#fff'); g.addColorStop(1, '#fbbf24');
+            ctx.fillStyle = g; ctx.beginPath();
+            for(let i=0; i<5; i++){ ctx.rotate(Math.PI/5); ctx.lineTo(0, -s.r*0.5); ctx.rotate(Math.PI/5); ctx.lineTo(0, -s.r); }
+            ctx.fill(); ctx.restore();
         }
-      });
-    }
 
-    function updateHUD(){
-      document.getElementById("score").innerText="Score: "+score;
-      document.getElementById("level").innerText="Level: "+level;
-      document.getElementById("lives").innerText="Lives: "+"❤️".repeat(lives);
-      let fm=document.getElementById("fuelMeter").children;
-      for(let i=0;i<25;i++){
-        let pct=fuel/100*25;
-        fm[i].style.background=i<pct?(fuel>67?"green":fuel>34?"orange":"red"):"transparent";
-      }
-    }
+        function drawAsteroid(a) {
+            ctx.save(); ctx.translate(a.x, a.y);
+            const g = ctx.createRadialGradient(-a.r*0.3, -a.r*0.3, a.r*0.1, 0, 0, a.r);
+            g.addColorStop(0, '#ff4d4d'); g.addColorStop(1, '#440000');
+            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, a.r, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'rgba(0,0,0,0.2)'; // Craters
+            for(let i=0; i<3; i++) { ctx.beginPath(); ctx.arc(Math.cos(i)*a.r*0.5, Math.sin(i)*a.r*0.5, a.r*0.2, 0, Math.PI*2); ctx.fill(); }
+            ctx.restore();
+        }
 
-    function endGame(){
-      playing=false;
-      document.getElementById("gameOver").style.display="block";
-      score=0; level=1; lives=3; fuel=100;
-    }
+        function drawRocket() {
+            player.x += (player.targetX - player.x) * 0.15;
+            ctx.save(); ctx.translate(player.x, canvas.height - 120);
+            ctx.scale(0.8, 0.8);
+            // Stingray Fins
+            ctx.fillStyle = '#1e3a8a'; ctx.beginPath(); ctx.moveTo(-50, 25); ctx.lineTo(0, -25); ctx.lineTo(50, 25); ctx.lineTo(0, 15); ctx.fill();
+            // Shiny Hull
+            const hG = ctx.createLinearGradient(-15, 0, 15, 0);
+            hG.addColorStop(0, '#1e3a8a'); hG.addColorStop(0.5, '#60a5fa'); hG.addColorStop(1, '#1e3a8a');
+            ctx.fillStyle = hG; ctx.beginPath(); ctx.ellipse(0, 0, 18, 55, 0, 0, Math.PI*2); ctx.fill();
+            // Engine Glow
+            ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(-8, 45); ctx.lineTo(8, 45); ctx.lineTo(0, 60+Math.random()*15); ctx.fill();
+            ctx.restore();
+        }
 
-    // Controls
-    document.addEventListener("keydown",e=>{keys[e.key]=true;});
-    document.addEventListener("keyup",e=>{keys[e.key]=false;});
-    setInterval(()=>{
-      if(keys["ArrowLeft"]) rocket.position.x-=0.2;
-      if(keys["ArrowRight"]) rocket.position.x+=0.2;
-    },
+        function updateFuelUI() {
+            const bar = document.getElementById('fuel-bar');
+            bar.style.width = fuel + "%";
+            bar.classList.remove('fuel-warning');
+            if(fuel > 67) bar.style.backgroundColor = "var(--green)";
+            else if(fuel > 33) bar.style.backgroundColor = "var(--orange)";
+            else { 
+                bar.style.backgroundColor = "var(--red)";
+                if(fuel <= 10) { bar.classList.add('fuel-warning'); AudioSys.triggerSiren(true); }
+                else { AudioSys.triggerSiren(false); }
+            }
+            if(fuel <= 0) endGame();
+        }
+
+        function showModal(type, context) {
+            const box = document.getElementById('modal-content');
+            document.getElementById('modal-overlay').classList.remove('hidden');
+            if(type === 'manual') {
+                box.innerHTML = `<h2>Space Dodger Manual</h2><p><b>Movement:</b> Mouse or Arrow Keys</p><p><b>Combat:</b> Space or Click to fire Laser</p><p><b>Survival:</b> Collect Stars (+5% Fuel) and blast asteroids (+1-5% Fuel). Don't let asteroids escape!</p>`;
+            } else if(type === 'hall') {
+                if(context === 'Global' && !isLoggedIn) {
+                    box.innerHTML = `<h2>Global Hall of Fame</h2><p>Please login to view global rankings.</p>
+                    <button class="btn" style="background:#4285F4" onclick="handleLogin()">Google Login</button>
+                    <button class="btn" style="background:#3b5998" onclick="handleLogin()">Facebook Login</button>`;
+                    return;
+                }
+                const scores = context === 'Global' ? [{s:1200, l:16, n:'Ace'}, {s:950, l:10, n:'Pilot'}] : sessionScores;
+                let rows = scores.sort((a,b)=>b.s - a.s).map((s, i) => {
+                    let cls = i===0?'row-gold':(i===1?'row-silver':(i===2?'row-bronze':''));
+                    return `<tr class="${cls}"><td>🏆</td><td>${s.n || 'Guest'}</td><td>Lvl ${s.l}</td><td>${s.s} pts</td></tr>`;
+                }).join('');
+                box.innerHTML = `<h2>${context} Hall of Fame</h2><table class="hof-table">${rows}</table>
+                ${!isLoggedIn ? '<button class="btn" style="width:100%; margin-top:20px" onclick="handleLogin()">Save Scores Across Sessions</button>' : ''}`;
+            }
+        }
+
+        function handleLogin() { alert("Federating Auth..."); isLoggedIn = true; document.getElementById('user-display').innerText = "Pilot: StarBound"; closeModal(); }
+        function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+        function togglePause() { isPaused = !isPaused; AudioSys.setWhirr(!isPaused); document.getElementById('pause-btn').className = isPaused ? 'fas fa-play nav-icon' : 'fas fa-pause nav-icon'; }
+        function toggleSound() { isSoundOn = !isSoundOn; AudioSys.setWhirr(isPlaying && !isPaused); }
+
+        function loop() {
+            if(!isPlaying || isPaused) { if(isPlaying) requestId = requestAnimationFrame(loop); return; }
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            let sMul = 1 + (level * 0.15);
+            bgStars.forEach(s => { s.y += s.v * sMul; if(s.y > canvas.height) s.y = 0; ctx.fillStyle = `rgba(255,255,255,${s.o})`; ctx.fillRect(s.x, s.y, 2, 2); });
+
+            drawRocket();
+
+            if(frames % Math.max(10, 60 - level*3) === 0) {
+                let r = 15 + Math.random()*45;
+                asteroids.push({ x: Math.random()*canvas.width, y: -50, r, v: 2.5 * sMul, hp: Math.ceil(r/15), mHp: Math.ceil(r/15) });
+            }
+            if(frames % 200 === 0) stars.push({ x: Math.random()*canvas.width, y: -50, r: 15, v: 3.5 * sMul });
+
+            bullets.forEach((b, i) => { b.y -= 15; ctx.fillStyle = '#0ff'; ctx.fillRect(b.x-2, b.y, 4, 18); if(b.y < 0) bullets.splice(i,1); });
+
+            asteroids.forEach((a, i) => {
+                a.y += a.v; drawAsteroid(a);
+                if(Math.hypot(player.x - a.x, (canvas.height-120) - a.y) < a.r + 25) {
+                    lives--; updateLives(); AudioSys.play(150, 'sine', 0.3, 0.6); asteroids.splice(i,1); if(lives <= 0) endGame();
+                }
+                bullets.forEach((b, bi) => {
+                    if(Math.hypot(b.x-a.x, b.y-a.y) < a.r) {
+                        a.hp--; bullets.splice(bi,1);
+                        if(a.hp <= 0) {
+                            score += Math.ceil(a.r/10); AudioSys.play(80, 'square', 0.2, 0.4); 
+                            setTimeout(()=>AudioSys.play(40, 'square', 0.2, 0.4), 100);
+                            fuel = Math.min(100, fuel + (a.mHp)); updateFuelUI();
+                            for(let j=0; j<8; j++) fragments.push({x: a.x, y: a.y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, l: 1});
+                            asteroids.splice(i,1);
+                            if(score >= level * 100 && level < 16) { level++; AudioSys.play(600, 'sine', 0.5, 0.3); document.getElementById('level-val').innerText = level.toString().padStart(2,'0'); }
+                        }
+                    }
+                });
+                if(a.y > canvas.height + 50) { asteroids.splice(i,1); fuel -= 4; updateFuelUI(); }
+            });
+
+            fragments.forEach((f, i) => { f.x += f.vx; f.y += f.vy; f.l -= 0.03; ctx.fillStyle = `rgba(255,100,0,${f.l})`; ctx.fillRect(f.x, f.y, 3,3); if(f.l <= 0) fragments.splice(i,1); });
+
+            stars.forEach((s, i) => {
+                s.y += s.v; draw3DStar(s);
+                if(Math.hypot(player.x - s.x, (canvas.height-120) - s.y) < 40) {
+                    score += 25; fuel = Math.min(100, fuel + 5); updateFuelUI();
+                    AudioSys.play(1000, 'sine', 0.1, 0.2); setTimeout(()=>AudioSys.play(800, 'sine', 0.2, 0.2), 60);
+                    stars.splice(i,1);
+                }
+            });
+
+            frames++; document.getElementById('score-val').innerText = score.toString().padStart(4,'0');
+            requestId = requestAnimationFrame(loop);
+        }
+
+        function updateLives() { document.getElementById('lives-container').innerHTML = '<i class="fas fa-heart heart-3d"></i>'.repeat(lives); }
+        function fire() { if(isPlaying && !isPaused) { bullets.push({x: player.x, y: canvas.height-140}); AudioSys.play(1200, 'sine', 0.05, 0.1); } }
+        
+        function startGame() {
+            level = parseInt(levelSelect.value); score = 0; lives = 3; fuel = 100; frames = 0;
+            isPlaying = true; isPaused = false; document.getElementById('landing-screen').classList.add('hidden');
+            document.getElementById('main-title').innerText = "SPACE DODGER"; document.getElementById('main-title').className = "";
+            AudioSys.init(); AudioSys.setWhirr(true); updateLives(); updateFuelUI();
+            asteroids = []; stars = []; fragments = [];
+            bgStars = Array.from({length: 60}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, v: Math.random()*2+1, o: Math.random()}));
+            loop();
+        }
+
+        function endGame() {
+            isPlaying = false; AudioSys.setWhirr(false); AudioSys.triggerSiren(false);
+            sessionScores.push({s: score, l: level, n: isLoggedIn ? "StarBound" : "Guest"});
+            document.getElementById('landing-screen').classList.remove('hidden');
+            document.getElementById('main-title').innerText = "GAME OVER";
+            document.getElementById('main-title').className = "game-over-text";
+        }
+
+        window.addEventListener('mousemove', e => player.targetX = e.clientX);
+        window.addEventListener('mousedown', fire);
+        window.addEventListener('keydown', e => {
+            if(e.code === 'ArrowLeft') player.targetX -= 40;
+            if(e.code === 'ArrowRight') player.targetX += 40;
+            if(e.code === 'Space') fire();
+        });
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    </script>
+</body>
+</html>
