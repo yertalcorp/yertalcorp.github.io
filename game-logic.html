@@ -6,33 +6,33 @@
     <title>Space Dodger 3D | Yertal Arcade</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --glass: rgba(15, 23, 42, 0.97); --accent: #3b82f6; --gold: #fbbf24; }
+        :root { --glass: rgba(15, 23, 42, 0.98); --accent: #3b82f6; --gold: #fbbf24; }
         body { margin: 0; overflow: hidden; background: #010409; font-family: 'Segoe UI', sans-serif; color: white; user-select: none; }
         canvas { display: block; touch-action: none; }
 
-        /* Indicators (Top Left) */
+        /* Top Left Indicators */
         #ui-layer { position: absolute; inset: 0; pointer-events: none; padding: 25px; box-sizing: border-box; }
-        .glass-box { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; pointer-events: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        #stats-panel { width: fit-content; min-width: 150px; }
-        .user-tag { color: var(--accent); font-weight: 800; font-size: 14px; text-transform: uppercase; display: block; margin-bottom: 5px; }
-        .stat-label { font-size: 10px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; margin-top: 5px; }
-        .stat-val { font-size: 26px; font-weight: 900; color: var(--gold); line-height: 1.1; }
-        .heart-3d { font-size: 22px; margin-right: 4px; filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.6)); }
+        .glass-box { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; pointer-events: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }
+        #stats-panel { width: fit-content; min-width: 160px; }
+        .user-tag { color: var(--accent); font-weight: 800; font-size: 14px; text-transform: uppercase; display: block; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; padding-bottom: 4px; }
+        .stat-label { font-size: 10px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1.5px; margin-top: 8px; }
+        .stat-val { font-size: 28px; font-weight: 900; color: var(--gold); line-height: 1; }
+        .heart-3d { font-size: 24px; margin-right: 5px; filter: drop-shadow(0 0 8px #ef4444); }
 
-        /* Icon Bar (Top Right) */
-        #icon-bar { position: absolute; top: 25px; right: 25px; display: flex; gap: 20px; pointer-events: auto; }
-        .nav-icon { font-size: 24px; cursor: pointer; transition: 0.2s; color: rgba(255,255,255,0.8); }
-        .nav-icon:hover { color: var(--accent); transform: scale(1.15); }
+        /* Top Right Icons */
+        #icon-bar { position: absolute; top: 25px; right: 25px; display: flex; gap: 22px; pointer-events: auto; }
+        .nav-icon { font-size: 24px; cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: rgba(255,255,255,0.8); }
+        .nav-icon:hover { color: var(--accent); transform: scale(1.25); }
 
-        /* Screens */
+        /* Overlays */
         .overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
         .hidden { display: none !important; }
-        h1 { font-size: clamp(40px, 10vw, 80px); font-weight: 900; color: var(--accent); margin: 0; line-height: 1; }
+        h1 { font-size: clamp(45px, 12vw, 90px); font-weight: 900; color: var(--accent); margin: 0; line-height: 0.8; text-shadow: 0 0 20px rgba(59,130,246,0.3); }
         
-        .btn { background: var(--accent); color: white; padding: 18px 45px; border-radius: 50px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 10px; width: 320px; transition: 0.3s; }
-        .btn:hover { background: #2563eb; transform: translateY(-3px); }
-        .btn-ghost { background: transparent; border: 2px solid rgba(255,255,255,0.2); }
-        select { background: #1e293b; color: white; border: 2px solid var(--accent); padding: 14px; border-radius: 12px; width: 320px; margin: 10px; font-weight: bold; font-size: 16px; outline: none; }
+        .btn { background: var(--accent); color: white; padding: 18px 45px; border-radius: 60px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 12px; width: 340px; transition: 0.3s; }
+        .btn:hover { background: #2563eb; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(37,99,235,0.4); }
+        .btn-ghost { background: transparent; border: 2px solid rgba(255,255,255,0.25); }
+        select { background: #1e293b; color: white; border: 2px solid var(--accent); padding: 14px; border-radius: 15px; width: 340px; margin: 12px; font-weight: bold; font-size: 16px; outline: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -44,35 +44,35 @@
             <span class="user-tag" id="user-display">Guest</span>
             <div class="stat-label">Level</div> <div id="level-val" class="stat-val">01</div>
             <div class="stat-label">Score</div> <div id="score-val" class="stat-val">0000</div>
-            <div class="stat-label">Lives</div> <div id="lives-container"></div>
+            <div id="lives-container" style="margin-top: 10px;"></div>
         </div>
 
         <div id="icon-bar">
-            <i id="pause-icon" class="fas fa-pause nav-icon" onclick="togglePause()"></i>
-            <i class="fas fa-info-circle nav-icon" onclick="showModal('manual')"></i>
-            <i id="sound-icon" class="fas fa-volume-up nav-icon" onclick="toggleSound()"></i>
-            <i class="fas fa-trophy nav-icon" onclick="showModal('hall')"></i>
-            <i class="fas fa-globe-americas nav-icon" onclick="handleAuth('Global')"></i>
+            <i id="pause-icon" class="fas fa-pause nav-icon" title="Play/Pause" onclick="togglePause()"></i>
+            <i class="fas fa-info-circle nav-icon" title="Instructions" onclick="showModal('manual')"></i>
+            <i id="sound-icon" class="fas fa-volume-up nav-icon" title="Sound" onclick="toggleSound()"></i>
+            <i class="fas fa-trophy nav-icon" title="Personal Best" onclick="showModal('hall')"></i>
+            <i class="fas fa-globe-americas nav-icon" title="Global" onclick="handleAuth('Global')"></i>
         </div>
     </div>
 
     <div id="landing-screen" class="overlay">
         <h1>SPACE<br>DODGER</h1>
-        <p style="margin: 20px 0; opacity: 0.5; font-weight: 800; letter-spacing: 2px;">YERTAL ARCADE ENGINE</p>
+        <p style="margin: 25px 0; opacity: 0.6; font-weight: 800; letter-spacing: 4px;">YERTAL ARCADE</p>
         
         <button class="btn" onclick="startGame()">Launch Space Dodger</button>
         
-        <div>
-            <label style="font-size: 11px; text-transform: uppercase; color: var(--accent); font-weight: 900;">Choose Start Level</label><br>
+        <div style="margin: 10px;">
+            <label style="font-size: 11px; text-transform: uppercase; color: var(--accent); font-weight: 900;">Set Mission Difficulty</label><br>
             <select id="level-select"></select>
         </div>
         
         <button class="btn btn-ghost" onclick="showModal('hall')">Hall of Fame</button>
     </div>
 
-    <div id="modal-overlay" class="overlay hidden" style="background: rgba(1, 4, 9, 0.92); backdrop-filter: blur(15px);">
-        <div id="modal-content" class="glass-box" style="width: 85%; max-width: 420px;"></div>
-        <button class="btn btn-ghost" style="margin-top: 30px;" onclick="closeModal()">Close</button>
+    <div id="modal-overlay" class="overlay hidden" style="background: rgba(1, 4, 9, 0.94); backdrop-filter: blur(20px);">
+        <div id="modal-content" class="glass-box" style="width: 85%; max-width: 440px;"></div>
+        <button class="btn btn-ghost" style="margin-top: 30px;" onclick="closeModal()">Return to Command</button>
     </div>
 
     <script>
@@ -80,7 +80,7 @@
         const ctx = canvas.getContext('2d');
         const levelDropdown = document.getElementById('level-select');
 
-        // Populate Dropdown - LEVEL 1 selected by default
+        // Populate Level Select - Level 1 Default
         for(let i=1; i<=16; i++) {
             let opt = document.createElement('option');
             opt.value = i; opt.innerText = `LEVEL = ${i}`;
@@ -89,12 +89,12 @@
         levelDropdown.selectedIndex = 0;
 
         let isPlaying = false, isPaused = false, isSoundOn = true, isLoggedIn = false;
-        let score = 0, level = 1, startLevel = 1, lives = 3, frames = 0, sessionScores = [];
-        let player = { x: 0, targetX: 0, w: 75, h: 105 };
+        let score = 0, level = 1, currentBaseSpeed = 1, lives = 3, frames = 0, sessionScores = [];
+        let player = { x: 0, targetX: 0, w: 80, h: 110 };
         let asteroids = [], stars = [], bullets = [], fragments = [], bgStars = [];
         let keys = {};
 
-        // Audio System
+        // --- Audio Context ---
         const AudioSys = {
             ctx: null, whirr: null, gain: null,
             init() {
@@ -102,7 +102,7 @@
                 this.whirr = this.ctx.createOscillator();
                 this.gain = this.ctx.createGain();
                 this.whirr.type = 'sawtooth';
-                this.whirr.frequency.value = 55;
+                this.whirr.frequency.value = 54;
                 this.gain.gain.value = 0;
                 this.whirr.connect(this.gain).connect(this.ctx.destination);
                 this.whirr.start();
@@ -120,24 +120,24 @@
             setWhirr(on) { if(this.gain) this.gain.gain.setTargetAtTime((on && isSoundOn) ? 0.04 : 0, this.ctx.currentTime, 0.1); }
         };
 
-        // Modals & Auth
-        function handleAuth(t) { if(!isLoggedIn) showModal('login'); else alert("Syncing "+t+"..."); }
+        // --- UI & Federated Auth ---
+        function handleAuth(t) { if(!isLoggedIn) showModal('login'); else alert("Connecting to "+t+"..."); }
         function showModal(type) {
             const box = document.getElementById('modal-content');
             document.getElementById('modal-overlay').classList.remove('hidden');
-            if(type==='manual') box.innerHTML = `<h2>Instructions</h2><p>Move: Mouse or Arrow Keys<br>Laser: Space Bar / Click / Tap<br><br>Destroy red asteroids and catch yellow stars to level up!</p>`;
+            if(type==='manual') box.innerHTML = `<h2>Instructions</h2><p>Horizontal Movement: Mouse or Arrows<br>Firing Laser: Space / Left Click / Tap<br><br>Destroy asteroids for 1-5 pts.<br>Collect Yellow Stars for bonus pts.<br>Level increases every 100 pts.</p>`;
             else if(type==='hall') {
-                let list = sessionScores.sort((a,b)=>b-a).slice(0,10).map(s=>`<div>Rank Score: ${s} pts</div>`).join('') || "No flights recorded.";
-                box.innerHTML = `<h2>Hall of Fame</h2><div style="margin:20px 0">${list}</div>` + (!isLoggedIn ? `<button class="btn" onclick="showModal('login')">Save Scores Across Sessions</button>` : "");
+                let list = sessionScores.sort((a,b)=>b-a).slice(0,10).map(s=>`<div>Mission Result: ${s} pts</div>`).join('') || "No flight history.";
+                box.innerHTML = `<h2>Personal Records</h2><div style="margin:20px 0">${list}</div>` + (!isLoggedIn ? `<button class="btn" onclick="showModal('login')">Save Scores Across Sessions</button>` : "");
             }
-            else if(type==='login') box.innerHTML = `<h2>Federated Login</h2><p>Log in with Yertal Partners</p><button class="btn" style="background:#db4437" onclick="doLogin()">Google</button><button class="btn" style="background:#1877f2" onclick="doLogin()">Facebook</button><button class="btn" style="background:#00a4ef" onclick="doLogin()">Microsoft</button>`;
+            else if(type==='login') box.innerHTML = `<h2>Federated Login</h2><p>Access your global profile</p><button class="btn" style="background:#db4437" onclick="doLogin()">Google</button><button class="btn" style="background:#1877f2" onclick="doLogin()">Facebook</button><button class="btn" style="background:#00a4ef" onclick="doLogin()">Microsoft</button>`;
         }
-        function doLogin() { isLoggedIn = true; document.getElementById('user-display').innerText = "Pilot Commander"; closeModal(); }
+        function doLogin() { isLoggedIn = true; document.getElementById('user-display').innerText = "Elite Pilot"; closeModal(); }
         function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
-        function togglePause() { isPaused = !isPaused; document.getElementById('pause-icon').className = isPaused ? "fas fa-play nav-icon" : "fas fa-pause nav-icon"; AudioSys.setWhirr(!isPaused && isPlaying); }
-        function toggleSound() { isSoundOn = !isSoundOn; document.getElementById('sound-icon').className = isSoundOn ? "fas fa-volume-up nav-icon" : "fas fa-volume-mute nav-icon"; AudioSys.setWhirr(isSoundOn && isPlaying && !isPaused); }
+        function togglePause() { if(!isPlaying) return; isPaused = !isPaused; document.getElementById('pause-icon').className = isPaused ? "fas fa-play nav-icon" : "fas fa-pause nav-icon"; AudioSys.setWhirr(!isPaused); }
+        function toggleSound() { isSoundOn = !isSoundOn; document.getElementById('sound-icon').className = isSoundOn ? "fas fa-volume-up nav-icon" : "fas fa-volume-mute nav-icon"; AudioSys.setWhirr(isPlaying && !isPaused); }
 
-        // Graphics
+        // --- Visual Engine ---
         function drawRocket() {
             player.x += (player.targetX - player.x) * 0.15;
             ctx.save();
@@ -145,22 +145,23 @@
             const g = ctx.createLinearGradient(-35, 0, 35, 0);
             g.addColorStop(0, '#1e3a8a'); g.addColorStop(0.5, '#ffffff'); g.addColorStop(1, '#1e3a8a');
             ctx.fillStyle = g;
-            ctx.beginPath(); ctx.moveTo(0, -70); ctx.lineTo(40, 45); ctx.lineTo(-40, 45); ctx.fill();
-            ctx.fillStyle = '#93c5fd'; ctx.beginPath(); ctx.ellipse(0, -18, 10, 18, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.moveTo(-15, 45); ctx.lineTo(15, 45); ctx.lineTo(0, 65+Math.random()*20); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(0, -75); ctx.lineTo(40, 45); ctx.lineTo(-40, 45); ctx.fill();
+            ctx.fillStyle = '#93c5fd'; ctx.beginPath(); ctx.ellipse(0, -20, 10, 20, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.moveTo(-15, 45); ctx.lineTo(15, 45); ctx.lineTo(0, 65+Math.random()*25); ctx.fill();
             ctx.restore();
         }
 
-        // Main Loop
+        // --- Core Game Loop ---
         function loop() {
             if(!isPlaying || isPaused) return requestAnimationFrame(loop);
             ctx.clearRect(0,0,canvas.width, canvas.height);
 
-            // SYNCED LEVEL LOGIC: Every 100 points, level increases during gameplay.
-            let currentLevel = Math.floor(score / 100) + startLevel;
-            if(currentLevel > level) {
-                level = currentLevel;
-                AudioSys.play(600, 'sine', 0.8, 0.2); // Euphoric leveling sound
+            // REAL-TIME LEVEL & SPEED CALCULATION
+            // This ensures speed is strictly tied to score + initial dropdown value
+            let newLevel = Math.floor(score / 100) + currentBaseSpeed;
+            if(newLevel > level) {
+                level = newLevel;
+                AudioSys.play(600, 'sine', 0.8, 0.2); // Level Up Sound
                 document.getElementById('level-val').innerText = level.toString().padStart(2, '0');
             }
 
@@ -177,13 +178,13 @@
             });
             ctx.globalAlpha = 1;
 
-            if(keys['ArrowLeft'] && player.x > 50) player.targetX = player.x - 22;
-            if(keys['ArrowRight'] && player.x < canvas.width - 50) player.targetX = player.x + 22;
+            if(keys['ArrowLeft'] && player.x > 50) player.targetX = player.x - 24;
+            if(keys['ArrowRight'] && player.x < canvas.width - 50) player.targetX = player.x + 24;
 
             drawRocket();
 
-            // Spawning: Speed/Freq scaled by Level
-            if(frames % Math.max(10, 65 - level*4) === 0) {
+            // Spawn rates scaled by Level
+            if(frames % Math.max(8, 65 - level*4) === 0) {
                 let r = 18 + Math.random()*45;
                 asteroids.push({ x: Math.random()*canvas.width, y: -60, r, v: 2.5 + level*0.8, hp: Math.ceil(r/18), mHp: Math.ceil(r/18) });
             }
@@ -194,7 +195,6 @@
                 if(b.y < 0) bullets.splice(i, 1);
             });
 
-            // Asteroid Logic (3D Balls)
             asteroids.forEach((a, i) => {
                 a.y += a.v;
                 const g = ctx.createRadialGradient(a.x-a.r*0.3, a.y-a.r*0.3, a.r*0.1, a.x, a.y, a.r);
@@ -202,7 +202,7 @@
                 ctx.fillStyle = g; ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI*2); ctx.fill();
 
                 if(Math.hypot(player.x - a.x, (canvas.height-130) - a.y) < a.r + 40) {
-                    lives--; updateLives(); AudioSys.play(140, 'sawtooth', 0.4, 0.3);
+                    lives--; updateLives(); AudioSys.play(130, 'sawtooth', 0.5, 0.3);
                     asteroids.splice(i, 1); if(lives <= 0) endGame();
                 }
 
@@ -211,7 +211,7 @@
                         a.hp--; bullets.splice(bi, 1);
                         if(a.hp <= 0) {
                             score += (a.mHp > 2) ? 5 : 1;
-                            AudioSys.play(180, 'sawtooth', 0.4, 0.2); // Blast sound
+                            AudioSys.play(180, 'sawtooth', 0.4, 0.2); // Blast
                             for(let j=0; j<15; j++) fragments.push({ x: a.x, y: a.y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1 });
                             asteroids.splice(i, 1);
                         }
@@ -220,14 +220,13 @@
                 if(a.y > canvas.height + 60) asteroids.splice(i, 1);
             });
 
-            // Star Logic (Bonus)
             stars.forEach((s, i) => {
                 s.y += s.v;
                 const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r);
                 g.addColorStop(0, '#fef08a'); g.addColorStop(1, '#ca8a04');
                 ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
                 if(Math.hypot(player.x - s.x, (canvas.height-130) - s.y) < 45) {
-                    score += 25; stars.splice(i, 1); AudioSys.play(1200, 'sine', 0.2, 0.2); // Revelation blip
+                    score += 25; stars.splice(i, 1); AudioSys.play(1200, 'sine', 0.2, 0.2); // Star Collected
                 }
             });
 
@@ -239,28 +238,42 @@
         function updateLives() { document.getElementById('lives-container').innerHTML = '<span class="heart-3d">❤️</span>'.repeat(lives); }
         function fire() { if(isPlaying && !isPaused) { bullets.push({x: player.x, y: canvas.height-170}); AudioSys.play(900, 'square', 0.1, 0.1); } }
 
+        // --- Mission Controls ---
         function startGame() {
-            startLevel = parseInt(levelDropdown.value);
-            level = startLevel;
-            score = 0; lives = 3; frames = 0;
+            // FIX: Hard reset logic for speed and state
+            currentBaseSpeed = parseInt(levelDropdown.value); // Lock current level to dropdown choice
+            level = currentBaseSpeed;
+            score = 0; 
+            lives = 3; 
+            frames = 0;
+            
             asteroids = []; stars = []; bullets = []; fragments = [];
+            
             if(!AudioSys.ctx) AudioSys.init();
             document.getElementById('landing-screen').classList.add('hidden');
             document.getElementById('level-val').innerText = level.toString().padStart(2, '0');
             document.getElementById('score-val').innerText = "0000";
+            
             bgStars = Array.from({length: 80}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, v: Math.random()*2+1, o: Math.random()}));
             player.x = canvas.width/2; player.targetX = player.x;
-            updateLives(); isPlaying = true; isPaused = false;
-            AudioSys.setWhirr(true); loop();
+            
+            updateLives();
+            isPlaying = true;
+            isPaused = false;
+            AudioSys.setWhirr(true);
+            loop();
         }
 
         function endGame() {
-            isPlaying = false; AudioSys.setWhirr(false);
+            isPlaying = false;
+            AudioSys.setWhirr(false); // Stop whirring
             sessionScores.push(score);
             document.getElementById('landing-screen').classList.remove('hidden');
-            document.getElementById('landing-screen').querySelector('h1').innerHTML = `MISSION OVER<br><span style="color:white; font-size:24px">FINAL SCORE: ${score}</span>`;
-            // RESET
-            level = 1; score = 0; startLevel = 1;
+            document.getElementById('landing-screen').querySelector('h1').innerHTML = `MISSION OVER<br><span style="color:white; font-size:24px">COMMAND SCORE: ${score}</span>`;
+            
+            // RESET DROPDOWN AND INDICATORS FOR NEXT LAUNCH
+            level = 1;
+            score = 0;
             levelDropdown.selectedIndex = 0;
         }
 
