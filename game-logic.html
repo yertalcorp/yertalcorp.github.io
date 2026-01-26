@@ -10,7 +10,7 @@
         body { margin: 0; overflow: hidden; background: #010409; font-family: 'Segoe UI', sans-serif; color: white; user-select: none; }
         canvas { display: block; touch-action: none; }
 
-        /* Top Left Indicators */
+        /* Indicators */
         #ui-layer { position: absolute; inset: 0; pointer-events: none; padding: 25px; box-sizing: border-box; }
         .glass-box { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; pointer-events: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }
         #stats-panel { width: fit-content; min-width: 160px; }
@@ -19,7 +19,7 @@
         .stat-val { font-size: 28px; font-weight: 900; color: var(--gold); line-height: 1; }
         .heart-3d { font-size: 24px; margin-right: 5px; filter: drop-shadow(0 0 8px #ef4444); }
 
-        /* Top Right Icons */
+        /* Icons */
         #icon-bar { position: absolute; top: 25px; right: 25px; display: flex; gap: 22px; pointer-events: auto; }
         .nav-icon { font-size: 24px; cursor: pointer; transition: 0.3s; color: rgba(255,255,255,0.8); }
         .nav-icon:hover { color: var(--accent); transform: scale(1.2); }
@@ -28,10 +28,7 @@
         .overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
         .hidden { display: none !important; }
         h1 { font-size: clamp(45px, 12vw, 90px); font-weight: 900; color: var(--accent); margin: 0; line-height: 0.8; }
-        
         .btn { background: var(--accent); color: white; padding: 18px 45px; border-radius: 60px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 12px; width: 340px; transition: 0.3s; }
-        .btn:hover { background: #2563eb; transform: translateY(-3px); }
-        .btn-ghost { background: transparent; border: 2px solid rgba(255,255,255,0.25); }
         select { background: #1e293b; color: white; border: 2px solid var(--accent); padding: 14px; border-radius: 15px; width: 340px; margin: 12px; font-weight: bold; font-size: 16px; outline: none; }
     </style>
 </head>
@@ -59,20 +56,17 @@
     <div id="landing-screen" class="overlay">
         <h1>SPACE<br>DODGER</h1>
         <p style="margin: 25px 0; opacity: 0.6; font-weight: 800; letter-spacing: 4px;">YERTAL ARCADE</p>
-        
         <button class="btn" onclick="startGame()">Launch Space Dodger</button>
-        
         <div style="margin: 10px;">
             <label style="font-size: 11px; text-transform: uppercase; color: var(--accent); font-weight: 900;">Set Start Level</label><br>
             <select id="level-select"></select>
         </div>
-        
-        <button class="btn btn-ghost" onclick="showModal('hall')">Hall of Fame</button>
+        <button class="btn btn-ghost" style="background:transparent; border:2px solid rgba(255,255,255,0.2); color:white; padding:15px; width:340px; border-radius:60px; cursor:pointer;" onclick="showModal('hall')">Hall of Fame</button>
     </div>
 
     <div id="modal-overlay" class="overlay hidden" style="background: rgba(1, 4, 9, 0.94); backdrop-filter: blur(20px);">
         <div id="modal-content" class="glass-box" style="width: 85%; max-width: 440px;"></div>
-        <button class="btn btn-ghost" style="margin-top: 30px;" onclick="closeModal()">Back to Hangar</button>
+        <button class="btn" style="margin-top:30px; width:200px" onclick="closeModal()">Close</button>
     </div>
 
     <script>
@@ -85,54 +79,86 @@
             opt.value = i; opt.innerText = `LEVEL = ${i}`;
             levelDropdown.appendChild(opt);
         }
-        levelDropdown.selectedIndex = 0;
 
-        // Global State Variables
         let isPlaying = false, isPaused = false, isSoundOn = true, isLoggedIn = false;
         let score = 0, level = 1, startLevel = 1, lives = 3, frames = 0, sessionScores = [];
-        let requestId = null; // Key for killing old loops
-        
+        let requestId = null;
         let player = { x: 0, targetX: 0 };
         let asteroids = [], stars = [], bullets = [], fragments = [], bgStars = [];
         let keys = {};
 
+        // --- Advanced Web Audio Engine ---
         const AudioSys = {
-            ctx: null, whirr: null, gain: null,
+            ctx: null, whirrOsc: null, whirrLFO: null, whirrGain: null,
             init() {
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                this.whirr = this.ctx.createOscillator();
-                this.gain = this.ctx.createGain();
-                this.whirr.type = 'sawtooth';
-                this.whirr.frequency.value = 54;
-                this.gain.gain.value = 0;
-                this.whirr.connect(this.gain).connect(this.ctx.destination);
-                this.whirr.start();
+                
+                // Pleasant Engine Whirr Setup
+                this.whirrOsc = this.ctx.createOscillator();
+                this.whirrLFO = this.ctx.createOscillator();
+                this.whirrGain = this.ctx.createGain();
+                const lfoGain = this.ctx.createGain();
+
+                this.whirrOsc.type = 'triangle';
+                this.whirrOsc.frequency.value = 80;
+                this.whirrLFO.frequency.value = 2; // Slow pulse
+                lfoGain.gain.value = 15; // Modulation depth
+
+                this.whirrLFO.connect(lfoGain);
+                lfoGain.connect(this.whirrOsc.frequency);
+                this.whirrOsc.connect(this.whirrGain).connect(this.ctx.destination);
+                
+                this.whirrGain.gain.value = 0;
+                this.whirrOsc.start();
+                this.whirrLFO.start();
             },
-            play(f, t, d, v) {
+            playExplosion() {
+                if(!isSoundOn || !this.ctx) return;
+                const bufferSize = this.ctx.sampleRate * 0.5;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, this.ctx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.5);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
+
+                noise.connect(filter).connect(gain).connect(this.ctx.destination);
+                noise.start();
+            },
+            play(f, t, d, v, slide=false) {
                 if(!isSoundOn || !this.ctx) return;
                 const o = this.ctx.createOscillator();
                 const g = this.ctx.createGain();
                 o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
+                if(slide) o.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + d);
                 g.gain.setValueAtTime(v, this.ctx.currentTime);
                 g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + d);
                 o.connect(g).connect(this.ctx.destination);
                 o.start(); o.stop(this.ctx.currentTime + d);
             },
-            setWhirr(on) { if(this.gain) this.gain.gain.setTargetAtTime((on && isSoundOn) ? 0.04 : 0, this.ctx.currentTime, 0.1); }
+            setWhirr(on) { if(this.whirrGain) this.whirrGain.gain.setTargetAtTime((on && isSoundOn) ? 0.1 : 0, this.ctx.currentTime, 0.2); }
         };
 
         function handleAuth(t) { if(!isLoggedIn) showModal('login'); else alert("Connecting to "+t+"..."); }
         function showModal(type) {
             const box = document.getElementById('modal-content');
             document.getElementById('modal-overlay').classList.remove('hidden');
-            if(type==='manual') box.innerHTML = `<h2>Manual</h2><p>Move: Mouse/Arrows<br>Laser: Space/Click/Tap<br><br>Level up every 100 points!</p>`;
+            if(type==='manual') box.innerHTML = `<h2>Manual</h2><p>Move: Mouse/Arrows<br>Laser: Space/Click/Tap<br><br>Destroy red asteroids.<br>Collect yellow stars.</p>`;
             else if(type==='hall') {
-                let list = sessionScores.sort((a,b)=>b-a).slice(0,10).map(s=>`<div>Mission Result: ${s} pts</div>`).join('') || "No flights.";
-                box.innerHTML = `<h2>Hall of Fame</h2><div style="margin:20px 0">${list}</div>` + (!isLoggedIn ? `<button class="btn" onclick="showModal('login')">Save Scores</button>` : "");
+                let list = sessionScores.sort((a,b)=>b-a).slice(0,10).map(s=>`<div>Mission Result: ${s} pts</div>`).join('') || "No history.";
+                box.innerHTML = `<h2>Personal Top 10</h2><div style="margin:20px 0">${list}</div>` + (!isLoggedIn ? `<button class="btn" onclick="showModal('login')">Save Scores</button>` : "");
             }
-            else if(type==='login') box.innerHTML = `<h2>Login</h2><button class="btn" style="background:#db4437" onclick="doLogin()">Google</button><button class="btn" style="background:#1877f2" onclick="doLogin()">Facebook</button><button class="btn" style="background:#00a4ef" onclick="doLogin()">Microsoft</button>`;
+            else if(type==='login') box.innerHTML = `<h2>Federated Login</h2><button class="btn" style="background:#db4437" onclick="doLogin()">Google</button><button class="btn" style="background:#1877f2" onclick="doLogin()">Facebook</button><button class="btn" style="background:#00a4ef" onclick="doLogin()">Microsoft</button>`;
         }
-        function doLogin() { isLoggedIn = true; document.getElementById('user-display').innerText = "Elite Pilot"; closeModal(); }
+        function doLogin() { isLoggedIn = true; document.getElementById('user-display').innerText = "Pilot Alpha"; closeModal(); }
         function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
         function togglePause() { if(!isPlaying) return; isPaused = !isPaused; document.getElementById('pause-icon').className = isPaused ? "fas fa-play nav-icon" : "fas fa-pause nav-icon"; AudioSys.setWhirr(!isPaused); }
         function toggleSound() { isSoundOn = !isSoundOn; document.getElementById('sound-icon').className = isSoundOn ? "fas fa-volume-up nav-icon" : "fas fa-volume-mute nav-icon"; AudioSys.setWhirr(isPlaying && !isPaused); }
@@ -150,18 +176,15 @@
             ctx.restore();
         }
 
-        // --- Core Loop ---
         function loop() {
             if(!isPlaying) return; 
             if(isPaused) { requestId = requestAnimationFrame(loop); return; }
-
             ctx.clearRect(0,0,canvas.width, canvas.height);
 
-            // DYNAMIC LEVEL SCALING DURING PLAY
             let calculatedLevel = Math.floor(score / 100) + startLevel;
             if(calculatedLevel > level) {
                 level = calculatedLevel;
-                AudioSys.play(600, 'sine', 0.8, 0.2); 
+                AudioSys.play(600, 'sine', 0.8, 0.2); // Level Up Sound
                 document.getElementById('level-val').innerText = level.toString().padStart(2, '0');
             }
 
@@ -183,7 +206,6 @@
 
             drawRocket();
 
-            // Object Spawning
             if(frames % Math.max(8, 65 - level*4) === 0) {
                 let r = 18 + Math.random()*45;
                 asteroids.push({ x: Math.random()*canvas.width, y: -60, r, v: 2.5 + level*0.8, hp: Math.ceil(r/18), mHp: Math.ceil(r/18) });
@@ -202,7 +224,7 @@
                 ctx.fillStyle = g; ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI*2); ctx.fill();
 
                 if(Math.hypot(player.x - a.x, (canvas.height-130) - a.y) < a.r + 40) {
-                    lives--; updateLives(); AudioSys.play(130, 'sawtooth', 0.5, 0.3);
+                    lives--; updateLives(); AudioSys.play(100, 'sawtooth', 0.5, 0.3, true); // Hurt sound
                     asteroids.splice(i, 1); if(lives <= 0) endGame();
                 }
 
@@ -211,7 +233,7 @@
                         a.hp--; bullets.splice(bi, 1);
                         if(a.hp <= 0) {
                             score += (a.mHp > 2) ? 5 : 1;
-                            AudioSys.play(180, 'sawtooth', 0.4, 0.2); 
+                            AudioSys.playExplosion(); // Mini-bomb blast sound
                             for(let j=0; j<15; j++) fragments.push({ x: a.x, y: a.y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1 });
                             asteroids.splice(i, 1);
                         }
@@ -226,7 +248,7 @@
                 g.addColorStop(0, '#fef08a'); g.addColorStop(1, '#ca8a04');
                 ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
                 if(Math.hypot(player.x - s.x, (canvas.height-130) - s.y) < 45) {
-                    score += 25; stars.splice(i, 1); AudioSys.play(1200, 'sine', 0.2, 0.2);
+                    score += 25; stars.splice(i, 1); AudioSys.play(1200, 'sine', 0.2, 0.2); // Revelation blip
                 }
             });
 
@@ -236,38 +258,23 @@
         }
 
         function updateLives() { document.getElementById('lives-container').innerHTML = '<span class="heart-3d">❤️</span>'.repeat(lives); }
-        function fire() { if(isPlaying && !isPaused) { bullets.push({x: player.x, y: canvas.height-170}); AudioSys.play(900, 'square', 0.1, 0.1); } }
+        function fire() { if(isPlaying && !isPaused) { bullets.push({x: player.x, y: canvas.height-170}); AudioSys.play(800, 'square', 0.1, 0.1, true); } }
 
-        // --- Critical Reset Launch ---
         function startGame() {
-            // 1. Kill any existing loop immediately
             if(requestId) cancelAnimationFrame(requestId);
-            
-            // 2. Clear all object arrays
             asteroids = []; stars = []; bullets = []; fragments = [];
-            
-            // 3. Hard Reset Variables
             startLevel = parseInt(levelDropdown.value);
             level = startLevel;
-            score = 0; 
-            lives = 3; 
-            frames = 0;
-            isPlaying = true;
-            isPaused = false;
-            
-            // 4. Update UI Indicators
+            score = 0; lives = 3; frames = 0;
+            isPlaying = true; isPaused = false;
             document.getElementById('landing-screen').classList.add('hidden');
             document.getElementById('level-val').innerText = level.toString().padStart(2, '0');
             document.getElementById('score-val').innerText = "0000";
             updateLives();
-
-            // 5. Initialize Sound & Stars
             if(!AudioSys.ctx) AudioSys.init();
             bgStars = Array.from({length: 80}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, v: Math.random()*2+1, o: Math.random()}));
             player.x = canvas.width/2; player.targetX = player.x;
             AudioSys.setWhirr(true);
-            
-            // 6. Start Fresh Loop
             loop();
         }
 
@@ -278,8 +285,6 @@
             sessionScores.push(score);
             document.getElementById('landing-screen').classList.remove('hidden');
             document.getElementById('landing-screen').querySelector('h1').innerHTML = `MISSION OVER<br><span style="color:white; font-size:24px">COMMAND SCORE: ${score}</span>`;
-            
-            // UI Visual Reset
             levelDropdown.selectedIndex = 0;
         }
 
