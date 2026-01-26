@@ -87,7 +87,7 @@
     </div>
 
     <div id="modal-overlay" class="overlay hidden">
-        <div id="modal-content" class="glass-box" style="width: 90%; max-width: 600px;"></div>
+        <div id="modal-content" class="glass-box" style="width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;"></div>
         <button class="btn" style="width:200px; margin-top:20px" onclick="closeModal()">Back</button>
     </div>
 
@@ -185,12 +185,12 @@
             const box = document.getElementById('modal-content');
             document.getElementById('modal-overlay').classList.remove('hidden');
             if(type === 'manual') {
-                box.innerHTML = `<h2>Space Dodger Manual</h2><p><b>Movement:</b> Mouse or Arrow Keys</p><p><b>Combat:</b> Space or Click to fire Laser</p><p><b>Survival:</b> Collect Stars (+5% Fuel) and blast asteroids (+1-5% Fuel). Don't let asteroids escape!</p>`;
+                box.innerHTML = `<h2>Space Dodger Manual</h2><p><b>Movement:</b> Mouse or Arrow Keys</p><p><b>Combat:</b> Space, Left Click, or Tap to fire Laser</p><p><b>Survival:</b> Collect Stars (+5% Fuel) and blast asteroids (+1-5% Fuel). Don't let asteroids escape!</p>`;
             } else if(type === 'hall') {
                 if(context === 'Global' && !isLoggedIn) {
-                    box.innerHTML = `<h2>Global Hall of Fame</h2><p>Please login to view global rankings.</p>
-                    <button class="btn" style="background:#4285F4" onclick="handleLogin()">Google Login</button>
-                    <button class="btn" style="background:#3b5998" onclick="handleLogin()">Facebook Login</button>`;
+                    box.innerHTML = `<h2>Global Hall of Fame</h2><p>Please login to view global rankings via Federated Yertal Auth.</p>
+                    <button class="btn" style="background:#4285F4" onclick="handleLogin()"><i class="fab fa-google"></i> Google Login</button>
+                    <button class="btn" style="background:#3b5998" onclick="handleLogin()"><i class="fab fa-facebook"></i> Facebook Login</button>`;
                     return;
                 }
                 const scores = context === 'Global' ? [{s:1200, l:16, n:'Ace'}, {s:950, l:10, n:'Pilot'}] : sessionScores;
@@ -203,7 +203,7 @@
             }
         }
 
-        function handleLogin() { alert("Federating Auth..."); isLoggedIn = true; document.getElementById('user-display').innerText = "Pilot: StarBound"; closeModal(); }
+        function handleLogin() { alert("Federating with Yertal Auth... Redirecting to Secure Provider."); isLoggedIn = true; document.getElementById('user-display').innerText = "Pilot: StarBound"; closeModal(); }
         function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
         function togglePause() { isPaused = !isPaused; AudioSys.setWhirr(!isPaused); document.getElementById('pause-btn').className = isPaused ? 'fas fa-play nav-icon' : 'fas fa-pause nav-icon'; }
         function toggleSound() { isSoundOn = !isSoundOn; AudioSys.setWhirr(isPlaying && !isPaused); }
@@ -233,8 +233,7 @@
                     if(Math.hypot(b.x-a.x, b.y-a.y) < a.r) {
                         a.hp--; bullets.splice(bi,1);
                         if(a.hp <= 0) {
-                            score += Math.ceil(a.r/10); AudioSys.play(80, 'square', 0.2, 0.4); 
-                            setTimeout(()=>AudioSys.play(40, 'square', 0.2, 0.4), 100);
+                            score += Math.ceil(a.r/10); AudioSys.play(80, 'square', 0.4, 0.8); // Explosion
                             fuel = Math.min(100, fuel + (a.mHp)); updateFuelUI();
                             for(let j=0; j<8; j++) fragments.push({x: a.x, y: a.y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, l: 1});
                             asteroids.splice(i,1);
