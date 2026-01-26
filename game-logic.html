@@ -2,339 +2,320 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Dodger 3D - Yertal Arcade</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Space Dodger 3D | Yertal Arcade</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --glass: rgba(255, 255, 255, 0.1); --neon-blue: #00d4ff; }
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; }
-        canvas { display: block; }
+        body { margin: 0; overflow: hidden; background-color: #020617; font-family: 'Inter', sans-serif; touch-action: none; user-select: none; color: white; }
+        canvas { display: block; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3)); }
+        
+        /* UI Components */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 25px; box-sizing: border-box; }
+        .glass-box { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 15px; pointer-events: auto; }
+        
+        /* Stats Panel (Top Left) */
+        #stats-panel { width: fit-content; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4); }
+        .stat-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.1em; }
+        .stat-value { font-size: 22px; font-weight: 900; color: #fbbf24; margin-bottom: 5px; }
+        .heart-3d { filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.5)); font-size: 18px; margin-right: 4px; }
 
-        /* UI Containers */
-        #game-ui, #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .pointer { pointer-events: auto; cursor: pointer; }
+        /* Icon Bar (Top Right) */
+        #icon-bar { position: absolute; top: 25px; right: 25px; display: flex; gap: 20px; pointer-events: auto; }
+        .nav-icon { font-size: 24px; cursor: pointer; transition: all 0.3s ease; color: rgba(255,255,255,0.8); }
+        .nav-icon:hover { color: #3b82f6; transform: scale(1.2) rotate(5deg); }
 
-        /* Top Left: Status Box */
-        .status-box {
-            position: absolute; top: 20px; left: 20px;
-            background: rgba(0, 20, 40, 0.8);
-            border: 2px solid var(--neon-blue); border-radius: 20px;
-            padding: 15px; min-width: 140px; backdrop-filter: blur(10px);
-        }
-        .status-box div { margin: 5px 0; font-weight: bold; }
-        .hearts { color: #ff4d4d; font-size: 1.2rem; }
-
-        /* Top Right: Icons */
-        .icon-bar { position: absolute; top: 20px; right: 20px; display: flex; gap: 12px; }
-        .icon-btn {
-            width: 45px; height: 45px; background: var(--glass);
-            border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; transition: 0.3s;
-        }
-        .icon-btn:hover { background: var(--neon-blue); transform: scale(1.1); }
-
-        /* Menus */
-        .menu-screen {
-            position: absolute; inset: 0; background: radial-gradient(circle, #102a43, #000);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 100; pointer-events: auto;
-        }
-        .btn {
-            padding: 15px 40px; margin: 10px; border-radius: 30px; border: none;
-            background: linear-gradient(45deg, var(--neon-blue), #0055ff);
-            color: white; font-weight: bold; text-transform: uppercase; transition: 0.3s;
-        }
-        .btn:hover { box-shadow: 0 0 20px var(--neon-blue); transform: translateY(-2px); }
-        .btn-alt { background: #334e68; }
-
-        /* Modal Styles */
-        .modal {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-            z-index: 200; align-items: center; justify-content: center; pointer-events: auto;
-        }
-        .modal-content { background: #102a43; padding: 40px; border-radius: 20px; text-align: center; border: 1px solid var(--neon-blue); }
-        .login-options button { display: block; width: 100%; margin: 10px 0; padding: 10px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; }
+        /* Overlays */
+        .overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; pointer-events: auto; backdrop-filter: blur(10px); text-align: center; }
         .hidden { display: none !important; }
+        h1 { font-size: 50px; font-weight: 900; letter-spacing: -2px; margin-bottom: 30px; color: #3b82f6; }
+        .btn { background: #3b82f6; color: white; padding: 18px 45px; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin: 10px; transition: 0.3s; }
+        .btn:hover { background: #2563eb; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(37, 99, 235, 0.4); }
+        .btn-alt { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+
+        #fire-indicator { position: absolute; bottom: 40px; right: 40px; width: 80px; height: 80px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid #ef4444; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; opacity: 0.5; }
     </style>
 </head>
 <body>
 
-<div id="landing-screen" class="menu-screen">
-    <h1 style="font-size: 3.5rem; letter-spacing: 5px; text-shadow: 0 0 20px var(--neon-blue);">SPACE DODGER</h1>
-    <button class="btn pointer" onclick="startGame()">Launch Space Dodger</button>
-    <button class="btn btn-alt pointer" onclick="showHallOfFame()">Hall of Fame</button>
-</div>
+    <canvas id="gameCanvas"></canvas>
 
-<div id="game-ui" class="hidden">
-    <div class="status-box">
-        <div id="lvl-txt">Level: 1</div>
-        <div id="score-txt" style="font-size: 1.4rem; color: var(--neon-blue);">0000</div>
-        <div id="hearts-txt" class="hearts">❤️❤️❤️</div>
+    <div id="ui-layer">
+        <div id="stats-panel" class="glass-box">
+            <div class="stat-label">System Level</div>
+            <div id="level-val" class="stat-value">01</div>
+            <div class="stat-label">Core Score</div>
+            <div id="score-val" class="stat-value">0000</div>
+            <div id="lives-container">
+                <span class="heart-3d">❤️</span><span class="heart-3d">❤️</span><span class="heart-3d">❤️</span>
+            </div>
+        </div>
+
+        <div id="icon-bar">
+            <i class="fas fa-globe-americas nav-icon" onclick="handleAuth('Global Hall of Fame')"></i>
+            <i class="fas fa-trophy nav-icon" onclick="showPersonalHall()"></i>
+            <i class="fas fa-question-circle nav-icon" onclick="showInstructions()"></i>
+            <i id="sound-btn" class="fas fa-volume-up nav-icon" onclick="toggleSound()"></i>
+        </div>
+
+        <div id="fire-indicator">TAP / SPACE</div>
     </div>
 
-    <div class="icon-bar">
-        <div class="icon-btn pointer" onclick="handleGlobalHall()">🌐</div>
-        <div class="icon-btn pointer" onclick="showPersonalHall()">🏆</div>
-        <div class="icon-btn pointer" onclick="showInstructions()">ⓘ</div>
-        <div id="mute-btn" class="icon-btn pointer" onclick="toggleSound()">🔊</div>
+    <div id="landing-screen" class="overlay">
+        <h1>SPACE DODGER<br><span style="color:white; font-size: 20px;">ENGINEERING EXPERIMENT</span></h1>
+        <button class="btn" onclick="startGame()">Launch Space Dodger</button>
+        <button class="btn btn-alt" onclick="showPersonalHall()">Hall of Fame</button>
     </div>
-</div>
 
-<div id="modal" class="modal" onclick="closeModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <h2 id="modal-title"></h2>
-        <div id="modal-body"></div>
-        <button class="btn-alt pointer" style="margin-top:20px" onclick="closeModal()">Close</button>
+    <div id="game-over-screen" class="overlay hidden">
+        <h1 style="color:#ef4444">MISSION FAILED</h1>
+        <p id="final-stats" style="font-size: 24px; margin-bottom: 30px;"></p>
+        <div id="save-score-container"></div>
+        <button class="btn" onclick="startGame()">Re-Launch</button>
     </div>
-</div>
 
-<script>
-/** * GAME CONFIG & STATE 
- */
-let scene, camera, renderer, rocket, clock;
-let asteroids = [], stars = [], lasers = [];
-let score = 0, level = 1, lives = 3, gameActive = false;
-let isLoggedIn = false; // Simulated state
-let soundOn = true;
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-let whirrNode = null;
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let isPlaying = false, isSoundOn = true, isLoggedIn = false; // Toggle isLoggedIn for testing
+        let score = 0, level = 1, lives = 3, frames = 0;
+        let player = { x: 0, y: 0, w: 60, h: 90, targetX: 0 };
+        let asteroids = [], stars = [], bullets = [], bgStars = [];
+        let keys = {};
 
-function init() {
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    // Light
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    dirLight.position.set(5, 10, 7);
-    scene.add(dirLight);
-
-    // Rocket (Grand 3D)
-    const rocketGroup = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 2.5, 16), new THREE.MeshPhongMaterial({color: 0xdddddd}));
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.8, 16), new THREE.MeshPhongMaterial({color: 0xff0000}));
-    nose.position.y = 1.6;
-    rocketGroup.add(body, nose);
-    
-    // Fins
-    for(let i=0; i<3; i++) {
-        const fin = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 0.5), new THREE.MeshPhongMaterial({color: 0xff0000}));
-        fin.position.y = -0.8;
-        fin.rotation.y = (Math.PI * 2 / 3) * i;
-        fin.position.x = Math.cos(fin.rotation.y) * 0.5;
-        fin.position.z = Math.sin(fin.rotation.y) * 0.5;
-        rocketGroup.add(fin);
-    }
-    
-    rocket = rocketGroup;
-    rocket.rotation.x = 0; // Always point up
-    scene.add(rocket);
-
-    camera.position.z = 12;
-    camera.position.y = -4;
-    camera.lookAt(0, 2, 0);
-
-    clock = new THREE.Clock();
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-}
-
-/** * SOUND SYSTEM 
- */
-function playSound(freq, type, dur, vol) {
-    if(!soundOn) return;
-    const osc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    g.gain.setValueAtTime(vol, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
-    osc.connect(g); g.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + dur);
-}
-
-function startWhirr() {
-    if(!soundOn) return;
-    const osc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.value = 60;
-    g.gain.value = 0.02;
-    osc.connect(g); g.connect(audioCtx.destination);
-    osc.start();
-    whirrNode = { osc, g };
-}
-
-/** * LOGIN & HALL OF FAME LOGIC 
- */
-function showLogin() {
-    const body = `
-        <p>Log in via Yertal Federation to save scores:</p>
-        <div class="login-options">
-            <button style="background:#db4437; color:white" onclick="doLogin()">Google</button>
-            <button style="background:#4267B2; color:white" onclick="doLogin()">Facebook</button>
-            <button style="background:#00a4ef; color:white" onclick="doLogin()">Microsoft</button>
-        </div>`;
-    openModal("Federated Login", body);
-}
-
-function doLogin() { 
-    isLoggedIn = true; 
-    closeModal(); 
-    alert("Logged in successfully!"); 
-}
-
-function handleGlobalHall() {
-    if(!isLoggedIn) showLogin();
-    else openModal("Global Hall of Fame", "1. GalacticAce - 50,000<br>2. StarLord - 42,300...");
-}
-
-function showPersonalHall() {
-    let content = "Your Top Scores:<br>1. 1200<br>2. 850<br>...";
-    if(!isLoggedIn) content += `<br><button class="btn pointer" onclick="showLogin()">Save Scores</button>`;
-    openModal("Personal Hall of Fame", content);
-}
-
-function showHallOfFame() { showPersonalHall(); }
-
-function showInstructions() {
-    openModal("Instructions", "Dodge Red Asteroids<br>Collect Yellow Stars<br>Move: Mouse or Arrows<br>Fire: Space / Click");
-}
-
-function openModal(title, body) {
-    document.getElementById('modal-title').innerText = title;
-    document.getElementById('modal-body').innerHTML = body;
-    document.getElementById('modal').style.display = 'flex';
-}
-
-function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
-function toggleSound() {
-    soundOn = !soundOn;
-    document.getElementById('mute-btn').innerText = soundOn ? '🔊' : '🔇';
-    if(whirrNode && !soundOn) { whirrNode.osc.stop(); whirrNode = null; }
-    else if(gameActive && soundOn) { startWhirr(); }
-}
-
-/** * GAMEPLAY MECHANICS 
- */
-function spawnAsteroid() {
-    const size = Math.random() * 0.8 + 0.3;
-    const geo = new THREE.DodecahedronGeometry(size, 1);
-    const mat = new THREE.MeshStandardMaterial({color: 0xff3333, flatShading: true});
-    const ast = new THREE.Mesh(geo, mat);
-    ast.position.set((Math.random()-0.5)*18, 15, 0);
-    ast.userData = { hp: Math.ceil(size * 3), pts: Math.ceil(size * 5) };
-    asteroids.push(ast);
-    scene.add(ast);
-}
-
-function spawnStar() {
-    const geo = new THREE.OctahedronGeometry(0.3, 0);
-    const star = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color: 0xffff00, emissive: 0xffff00}));
-    star.position.set((Math.random()-0.5)*18, 15, 0);
-    stars.push(star);
-    scene.add(star);
-}
-
-function fireLaser() {
-    if(!gameActive) return;
-    const laser = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1), new THREE.MeshBasicMaterial({color:0xff0000}));
-    laser.position.copy(rocket.position);
-    laser.position.y += 1.5;
-    lasers.push(laser);
-    scene.add(laser);
-    playSound(400, 'square', 0.1, 0.1); // Laser Blip
-}
-
-function startGame() {
-    document.getElementById('landing-screen').classList.add('hidden');
-    document.getElementById('game-ui').classList.remove('hidden');
-    gameActive = true;
-    startWhirr();
-    animate();
-}
-
-/** * ENGINE LOOP 
- */
-function animate() {
-    if(!gameActive) return;
-    requestAnimationFrame(animate);
-    const dt = clock.getDelta();
-    const speed = 0.1 + (level * 0.02);
-
-    // Spawning
-    if(Math.random() < 0.03) spawnAsteroid();
-    if(Math.random() < 0.01) spawnStar();
-
-    // Logic
-    asteroids.forEach((a, i) => {
-        a.position.y -= speed;
-        a.rotation.x += 0.02;
-        if(a.position.y < -10) { 
-            score += a.userData.pts; 
-            scene.remove(a); asteroids.splice(i,1); 
-        }
-        if(a.position.distanceTo(rocket.position) < 1.2) {
-            lives--;
-            document.getElementById('hearts-txt').innerText = "❤️".repeat(lives);
-            scene.remove(a); asteroids.splice(i,1);
-            if(lives <= 0) { alert("Game Over!"); location.reload(); }
-        }
-    });
-
-    stars.forEach((s, i) => {
-        s.position.y -= speed * 0.8;
-        s.rotation.y += 0.05;
-        if(s.position.distanceTo(rocket.position) < 1) {
-            score += 20;
-            scene.remove(s); stars.splice(i,1);
-            playSound(1000, 'sine', 0.2, 0.1);
-        }
-    });
-
-    lasers.forEach((l, li) => {
-        l.position.y += 0.4;
-        asteroids.forEach((a, ai) => {
-            if(l.position.distanceTo(a.position) < 1) {
-                a.userData.hp--;
-                scene.remove(l); lasers.splice(li, 1);
-                if(a.userData.hp <= 0) { score += 10; scene.remove(a); asteroids.splice(ai, 1); }
+        // --- Audio Engine ---
+        const AudioEngine = {
+            ctx: null, whirr: null,
+            init() { 
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.whirr = this.ctx.createOscillator();
+                this.whirrGain = this.ctx.createGain();
+                this.whirr.type = 'lowpass';
+                this.whirr.frequency.value = 60;
+                this.whirrGain.gain.value = 0.05;
+                this.whirr.connect(this.whirrGain).connect(this.ctx.destination);
+                this.whirr.start();
+            },
+            playLaser() {
+                if(!isSoundOn) return;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                osc.type = 'square'; osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.1);
+                g.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                osc.connect(g).connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.1);
+            },
+            playLevelUp() {
+                if(!isSoundOn) return;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1000, this.ctx.currentTime + 0.3);
+                g.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                osc.connect(g).connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.4);
             }
-        });
-    });
+        };
 
-    // Leveling
-    if(score >= level * 100) {
-        level++;
-        document.getElementById('lvl-txt').innerText = "Level: " + level;
-        playSound(600, 'triangle', 0.5, 0.2); // Euphoric sound
-    }
+        // --- Auth Logic ---
+        function handleAuth(context) {
+            if(!isLoggedIn) {
+                alert(`Login Required for ${context}. Redirecting to Federated Login (Google/Facebook/MS)...`);
+                // window.location.href = "/login";
+            } else {
+                alert(`Accessing ${context}...`);
+            }
+        }
 
-    document.getElementById('score-txt').innerText = score.toString().padStart(4, '0');
-    renderer.render(scene, camera);
-}
+        function showPersonalHall() {
+            if(!isLoggedIn) {
+                const saveBtn = `<button class="btn" style="background:#10b981" onclick="handleAuth('Saving Scores')">Save Scores</button>`;
+                document.getElementById('final-stats').innerHTML = "Personal Top 10: Log in to view history.";
+                document.getElementById('save-score-container').innerHTML = saveBtn;
+            } else {
+                document.getElementById('final-stats').innerHTML = "Welcome back, Pilot! Top Score: 2450";
+                document.getElementById('save-score-container').innerHTML = "";
+            }
+            document.getElementById('game-over-screen').classList.remove('hidden');
+        }
 
-// Controls
-document.addEventListener('keydown', e => {
-    if(e.key === 'ArrowLeft') rocket.position.x -= 0.6;
-    if(e.key === 'ArrowRight') rocket.position.x += 0.6;
-    if(e.key === ' ') fireLaser();
-});
-document.addEventListener('mousemove', e => {
-    const x = (e.clientX / window.innerWidth) * 2 - 1;
-    rocket.position.x = x * 10;
-});
-document.addEventListener('mousedown', fireLaser);
+        function showInstructions() {
+            alert("INSTRUCTIONS:\n1. Move: Mouse or Arrow Keys\n2. Fire: Space, Left Click, or Tap\n3. Dodge Red Asteroids\n4. Collect Gold Stars\n5. Level up every 100 points!");
+        }
 
-init();
-</script>
+        function toggleSound() {
+            isSoundOn = !isSoundOn;
+            document.getElementById('sound-btn').className = isSoundOn ? 'fas fa-volume-up nav-icon' : 'fas fa-volume-mute nav-icon';
+        }
+
+        // --- Game Rendering ---
+        function drawRocket(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            
+            // 3D Body Gradients
+            const bodyGrad = ctx.createLinearGradient(-20, 0, 20, 0);
+            bodyGrad.addColorStop(0, '#1e3a8a');
+            bodyGrad.addColorStop(0.5, '#3b82f6');
+            bodyGrad.addColorStop(1, '#1e3a8a');
+            
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.moveTo(0, -50);
+            ctx.quadraticCurveTo(25, 10, 20, 40);
+            ctx.lineTo(-20, 40);
+            ctx.quadraticCurveTo(-25, 10, 0, -50);
+            ctx.fill();
+
+            // Cockpit Window
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.beginPath(); ctx.ellipse(0, -15, 8, 12, 0, 0, Math.PI*2); ctx.fill();
+            
+            // Thrusters
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(-15, 35, 8, 10); ctx.fillRect(7, 35, 8, 10);
+            
+            // Engine Whirr / Flame
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath(); ctx.moveTo(-10, 45); ctx.lineTo(10, 45); ctx.lineTo(0, 55 + Math.random()*15); ctx.fill();
+            ctx.restore();
+        }
+
+        function drawAsteroid(e) {
+            const grad = ctx.createRadialGradient(e.x - e.r*0.3, e.y - e.r*0.3, e.r*0.1, e.x, e.y, e.r);
+            grad.addColorStop(0, '#fca5a5');
+            grad.addColorStop(1, '#7f1d1d');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI*2); ctx.fill();
+            // Craters
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.beginPath(); ctx.arc(e.x+e.r*0.4, e.y-e.r*0.2, e.r*0.2, 0, Math.PI*2); ctx.fill();
+        }
+
+        function drawStar(s) {
+            const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r);
+            grad.addColorStop(0, '#fef08a');
+            grad.addColorStop(1, '#eab308');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 10; ctx.shadowColor = '#eab308';
+            ctx.stroke(); ctx.shadowBlur = 0;
+        }
+
+        function loop() {
+            if(!isPlaying) return;
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+
+            // Stars Background
+            bgStars.forEach(s => {
+                s.y += s.v; if(s.y > canvas.height) s.y = 0;
+                ctx.fillStyle = `rgba(255,255,255,${s.o})`;
+                ctx.fillRect(s.x, s.y, 2, 2);
+            });
+
+            // Input Logic
+            if(keys['ArrowLeft'] && player.x > 50) player.x -= 8;
+            if(keys['ArrowRight'] && player.x < canvas.width - 50) player.x += 8;
+            if(!keys['ArrowLeft'] && !keys['ArrowRight']) {
+                player.x += (player.targetX - player.x) * 0.1;
+            }
+
+            drawRocket(player.x, canvas.height - 120);
+
+            // Spawning
+            if(frames % Math.max(10, 60 - level*5) === 0) {
+                asteroids.push({x: Math.random()*canvas.width, y: -50, r: 15 + Math.random()*40, v: 3 + level, hp: 0});
+                asteroids[asteroids.length-1].hp = Math.ceil(asteroids[asteroids.length-1].r / 15);
+            }
+            if(frames % 120 === 0) stars.push({x: Math.random()*canvas.width, y: -20, r: 8, v: 4 + level});
+
+            // Asteroid Processing
+            asteroids.forEach((a, i) => {
+                a.y += a.v; drawAsteroid(a);
+                // Collision
+                if(Math.hypot(player.x - a.x, (canvas.height - 120) - a.y) < a.r + 20) {
+                    lives--; asteroids.splice(i, 1);
+                    updateLivesUI();
+                    if(lives <= 0) endGame();
+                }
+                // Bullet hit
+                bullets.forEach((b, bi) => {
+                    if(Math.hypot(b.x - a.x, b.y - a.y) < a.r) {
+                        a.hp--; bullets.splice(bi, 1);
+                        if(a.hp <= 0) {
+                            score += Math.floor(a.r / 10);
+                            asteroids.splice(i, 1);
+                            checkLevel();
+                        }
+                    }
+                });
+                if(a.y > canvas.height + 50) asteroids.splice(i, 1);
+            });
+
+            // Star Processing
+            stars.forEach((s, i) => {
+                s.y += s.v; drawStar(s);
+                if(Math.hypot(player.x - s.x, (canvas.height - 120) - s.y) < 30) {
+                    score += 25; stars.splice(i, 1); checkLevel();
+                }
+                if(s.y > canvas.height + 20) stars.splice(i, 1);
+            });
+
+            // Bullets
+            bullets.forEach((b, i) => {
+                b.y -= 12; ctx.fillStyle = '#22d3ee'; ctx.fillRect(b.x-2, b.y, 4, 15);
+                if(b.y < 0) bullets.splice(i, 1);
+            });
+
+            frames++;
+            document.getElementById('score-val').innerText = score.toString().padStart(4, '0');
+            requestAnimationFrame(loop);
+        }
+
+        function checkLevel() {
+            let newLevel = Math.floor(score / 100) + 1;
+            if(newLevel > level) {
+                level = newLevel;
+                AudioEngine.playLevelUp();
+                document.getElementById('level-val').innerText = level.toString().padStart(2, '0');
+            }
+        }
+
+        function updateLivesUI() {
+            document.getElementById('lives-container').innerHTML = '<span class="heart-3d">❤️</span>'.repeat(lives);
+        }
+
+        function fire() {
+            if(!isPlaying) return;
+            bullets.push({x: player.x, y: canvas.height - 150});
+            AudioEngine.playLaser();
+        }
+
+        function startGame() {
+            if(!AudioEngine.ctx) AudioEngine.init();
+            document.querySelectorAll('.overlay').forEach(s => s.classList.add('hidden'));
+            score = 0; level = 1; lives = 3; asteroids = []; stars = []; bullets = []; frames = 0;
+            bgStars = Array.from({length: 100}, () => ({ x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, v: Math.random()*2+1, o: Math.random() }));
+            updateLivesUI();
+            isPlaying = true;
+            loop();
+        }
+
+        function endGame() {
+            isPlaying = false;
+            document.getElementById('final-stats').innerText = `SCORE: ${score} | LEVEL: ${level}`;
+            document.getElementById('game-over-screen').classList.remove('hidden');
+        }
+
+        // --- Event Listeners ---
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+        window.addEventListener('mousemove', e => player.targetX = e.clientX);
+        window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code === 'Space') fire(); });
+        window.addEventListener('keyup', e => keys[e.code] = false);
+        window.addEventListener('mousedown', fire);
+        window.addEventListener('touchstart', (e) => { player.targetX = e.touches[0].clientX; fire(); });
+        
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    </script>
 </body>
 </html>
