@@ -23,12 +23,17 @@
         .nav-icon { font-size: 24px; cursor: pointer; transition: 0.3s; color: rgba(255,255,255,0.8); }
         .nav-icon:hover { color: var(--accent); transform: scale(1.2); }
 
-        /* Screens */
+        /* Overlays */
         .overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
         .hidden { display: none !important; }
         h1 { font-size: clamp(45px, 12vw, 90px); font-weight: 900; color: var(--accent); margin: 0; line-height: 0.8; }
         .btn { background: var(--accent); color: white; padding: 18px 45px; border-radius: 60px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 12px; width: 340px; transition: 0.3s; }
         select { background: #1e293b; color: white; border: 2px solid var(--accent); padding: 14px; border-radius: 15px; width: 340px; margin: 12px; font-weight: bold; font-size: 16px; outline: none; }
+        
+        /* Manual Styling */
+        #manual-box { text-align: left; max-height: 60vh; overflow-y: auto; padding-right: 10px; font-size: 14px; line-height: 1.6; }
+        #manual-box h3 { color: var(--accent); margin: 15px 0 5px; text-transform: uppercase; border-bottom: 1px solid rgba(59,130,246,0.3); }
+        #manual-box ul { padding-left: 20px; margin: 5px 0; }
     </style>
 </head>
 <body>
@@ -60,12 +65,12 @@
             <label style="font-size: 11px; text-transform: uppercase; color: var(--accent); font-weight: 900;">Set Mission Difficulty</label><br>
             <select id="level-select"></select>
         </div>
-        <button class="btn btn-ghost" style="background:transparent; border:2px solid rgba(255,255,255,0.2); color:white; padding:15px; width:340px; border-radius:60px; cursor:pointer;" onclick="showModal('hall')">Hall of Fame</button>
+        <button class="btn" style="background:transparent; border:2px solid rgba(255,255,255,0.2); color:white; width:340px; border-radius:60px; cursor:pointer;" onclick="showModal('hall')">Hall of Fame</button>
     </div>
 
     <div id="modal-overlay" class="overlay hidden" style="background: rgba(1, 4, 9, 0.94); backdrop-filter: blur(20px);">
-        <div id="modal-content" class="glass-box" style="width: 85%; max-width: 440px;"></div>
-        <button class="btn" style="margin-top:30px; width:200px" onclick="closeModal()">Close</button>
+        <div id="modal-content" class="glass-box" style="width: 90%; max-width: 500px;"></div>
+        <button class="btn" style="margin-top:20px; width:200px" onclick="closeModal()">Close</button>
     </div>
 
     <script>
@@ -82,33 +87,45 @@
         let isPlaying = false, isPaused = false, isSoundOn = true, isLoggedIn = false;
         let score = 0, level = 1, startLevel = 1, lives = 3, frames = 0, sessionScores = [];
         let requestId = null, flashTimer = 0;
-        
         let player = { x: 0, targetX: 0 };
         let asteroids = [], stars = [], bullets = [], fragments = [], bgStars = [];
         let keys = {};
 
-        // --- Audio Engine ---
+        // --- Cinematic Audio Engine ---
         const AudioSys = {
-            ctx: null, whirrOsc: null, whirrLFO: null, whirrGain: null,
+            ctx: null, whirrOsc: null, whirrFilter: null, whirrGain: null,
             init() {
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // SOFTER SPACE RUMBLE
                 this.whirrOsc = this.ctx.createOscillator();
-                this.whirrLFO = this.ctx.createOscillator();
+                this.whirrFilter = this.ctx.createBiquadFilter();
                 this.whirrGain = this.ctx.createGain();
-                const lfoGain = this.ctx.createGain();
+
                 this.whirrOsc.type = 'triangle';
-                this.whirrOsc.frequency.value = 80;
-                this.whirrLFO.frequency.value = 2; 
-                lfoGain.gain.value = 15; 
-                this.whirrLFO.connect(lfoGain);
-                lfoGain.connect(this.whirrOsc.frequency);
-                this.whirrOsc.connect(this.whirrGain).connect(this.ctx.destination);
+                this.whirrOsc.frequency.value = 45; // Deep rumble
+                this.whirrFilter.type = 'lowpass';
+                this.whirrFilter.frequency.value = 150; // Muffles the harshness
+
+                this.whirrOsc.connect(this.whirrFilter).connect(this.whirrGain).connect(this.ctx.destination);
                 this.whirrGain.gain.value = 0;
                 this.whirrOsc.start();
-                this.whirrLFO.start();
             },
             playExplosion() {
                 if(!isSoundOn || !this.ctx) return;
+                
+                // Layer 1: The Deep Boom
+                const boomO = this.ctx.createOscillator();
+                const boomG = this.ctx.createGain();
+                boomO.type = 'sine';
+                boomO.frequency.setValueAtTime(100, this.ctx.currentTime);
+                boomO.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.5);
+                boomG.gain.setValueAtTime(0.8, this.ctx.currentTime); // LOUDER
+                boomG.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.6);
+                boomO.connect(boomG).connect(this.ctx.destination);
+                boomO.start(); boomO.stop(this.ctx.currentTime + 0.6);
+
+                // Layer 2: The Fire/Crunch (Noise)
                 const bufferSize = this.ctx.sampleRate * 0.4;
                 const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
                 const data = buffer.getChannelData(0);
@@ -117,12 +134,11 @@
                 noise.buffer = buffer;
                 const filter = this.ctx.createBiquadFilter();
                 filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(800, this.ctx.currentTime);
-                filter.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.4);
-                const gain = this.ctx.createGain();
-                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
-                noise.connect(filter).connect(gain).connect(this.ctx.destination);
+                filter.frequency.value = 600;
+                const noiseG = this.ctx.createGain();
+                noiseG.gain.setValueAtTime(0.6, this.ctx.currentTime);
+                noiseG.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+                noise.connect(filter).connect(noiseG).connect(this.ctx.destination);
                 noise.start();
             },
             play(f, t, d, v, slide=false) {
@@ -136,20 +152,41 @@
                 o.connect(g).connect(this.ctx.destination);
                 o.start(); o.stop(this.ctx.currentTime + d);
             },
-            setWhirr(on) { if(this.whirrGain) this.whirrGain.gain.setTargetAtTime((on && isSoundOn) ? 0.08 : 0, this.ctx.currentTime, 0.2); }
+            setWhirr(on) { if(this.whirrGain) this.whirrGain.gain.setTargetAtTime((on && isSoundOn) ? 0.15 : 0, this.ctx.currentTime, 0.4); }
         };
 
-        function handleAuth(t) { if(!isLoggedIn) showModal('login'); else alert("Connecting to "+t+"..."); }
         function showModal(type) {
             const box = document.getElementById('modal-content');
             document.getElementById('modal-overlay').classList.remove('hidden');
-            if(type==='manual') box.innerHTML = `<h2>Manual</h2><p>Move: Mouse/Arrows<br>Laser: Space/Click/Tap<br><br>Level up every 100 points!</p>`;
+            if(type==='manual') box.innerHTML = `
+                <h2><i class="fas fa-book"></i> Flight Manual</h2>
+                <div id="manual-box">
+                    <h3>1. Difficulty Levels</h3>
+                    <p>Select from <b>Level 1 to 16</b> at launch. Higher levels increase asteroid velocity and spawn frequency immediately. The game dynamically levels up every <b>100 points</b> scored.</p>
+                    <h3>2. Rocket Movement</h3>
+                    <ul>
+                        <li><b>Mouse/Touch:</b> The rocket follows your horizontal cursor/finger position with smooth inertia.</li>
+                        <li><b>Keyboard:</b> Use <b>Left and Right Arrow Keys</b> for precision navigation.</li>
+                    </ul>
+                    <h3>3. Weaponry (Laser)</h3>
+                    <ul>
+                        <li><b>Fire:</b> Press <b>Space Bar</b>, <b>Left-Click</b>, or <b>Tap</b> anywhere on the screen.</li>
+                        <li><b>Blast:</b> Lasers travel vertically. Larger asteroids require multiple hits to detonate.</li>
+                    </ul>
+                    <h3>4. Scoring & Bonuses</h3>
+                    <ul>
+                        <li><b>Small Asteroids:</b> 1 Point.</li>
+                        <li><b>Large Asteroids:</b> 5 Points (requires more hits).</li>
+                        <li><b>Gold Stars:</b> 25 Bonus Points + Visual Surge Flash.</li>
+                    </ul>
+                </div>`;
             else if(type==='hall') {
-                let list = sessionScores.sort((a,b)=>b-a).slice(0,10).map(s=>`<div>Rank: ${s} pts</div>`).join('') || "No flights.";
-                box.innerHTML = `<h2>Hall of Fame</h2><div style="margin:20px 0">${list}</div>`;
+                let list = sessionScores.sort((a,b)=>b-a).slice(0,5).map((s,i)=>`<div>#${i+1} MISSION: ${s} pts</div>`).join('') || "No flights recorded.";
+                box.innerHTML = `<h2><i class="fas fa-trophy"></i> Hall of Fame</h2><div style="margin:20px 0">${list}</div>`;
             }
-            else if(type==='login') box.innerHTML = `<h2>Login</h2><button class="btn" style="background:#db4437" onclick="doLogin()">Google</button><button class="btn" style="background:#1877f2" onclick="doLogin()">Facebook</button><button class="btn" style="background:#00a4ef" onclick="doLogin()">Microsoft</button>`;
+            else if(type==='login') box.innerHTML = `<h2>Sync Profile</h2><button class="btn" style="background:#db4437" onclick="doLogin()">Google</button><button class="btn" style="background:#1877f2" onclick="doLogin()">Facebook</button>`;
         }
+        function handleAuth() { if(!isLoggedIn) showModal('login'); }
         function doLogin() { isLoggedIn = true; document.getElementById('user-display').innerText = "Pilot Commander"; closeModal(); }
         function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
         function togglePause() { if(!isPlaying) return; isPaused = !isPaused; document.getElementById('pause-icon').className = isPaused ? "fas fa-play nav-icon" : "fas fa-pause nav-icon"; AudioSys.setWhirr(!isPaused); }
@@ -159,16 +196,10 @@
             player.x += (player.targetX - player.x) * 0.15;
             ctx.save();
             ctx.translate(player.x, canvas.height - 130);
-            
-            // Visual Flash Logic
-            let hullColor1 = '#1e3a8a', hullColor2 = '#ffffff';
-            if(flashTimer > 0) {
-                hullColor1 = '#ffffff'; hullColor2 = '#3b82f6';
-                flashTimer--;
-            }
-
+            let hull1 = '#1e3a8a', hull2 = '#ffffff';
+            if(flashTimer > 0) { hull1 = '#ffffff'; hull2 = '#3b82f6'; flashTimer--; }
             const g = ctx.createLinearGradient(-35, 0, 35, 0);
-            g.addColorStop(0, hullColor1); g.addColorStop(0.5, hullColor2); g.addColorStop(1, hullColor1);
+            g.addColorStop(0, hull1); g.addColorStop(0.5, hull2); g.addColorStop(1, hull1);
             ctx.fillStyle = g;
             ctx.beginPath(); ctx.moveTo(0, -75); ctx.lineTo(40, 45); ctx.lineTo(-40, 45); ctx.fill();
             ctx.fillStyle = '#93c5fd'; ctx.beginPath(); ctx.ellipse(0, -20, 10, 20, 0, 0, Math.PI*2); ctx.fill();
@@ -224,7 +255,7 @@
                 ctx.fillStyle = g; ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI*2); ctx.fill();
 
                 if(Math.hypot(player.x - a.x, (canvas.height-130) - a.y) < a.r + 40) {
-                    lives--; updateLives(); AudioSys.play(100, 'sawtooth', 0.5, 0.3, true); 
+                    lives--; updateLives(); AudioSys.play(80, 'sawtooth', 0.5, 0.4, true); 
                     asteroids.splice(i, 1); if(lives <= 0) endGame();
                 }
 
@@ -234,7 +265,7 @@
                         if(a.hp <= 0) {
                             score += (a.mHp > 2) ? 5 : 1;
                             AudioSys.playExplosion(); 
-                            for(let j=0; j<15; j++) fragments.push({ x: a.x, y: a.y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1 });
+                            for(let j=0; j<15; j++) fragments.push({ x: a.x, y: a.y, vx: (Math.random()-0.5)*18, vy: (Math.random()-0.5)*18, life: 1 });
                             asteroids.splice(i, 1);
                         }
                     }
@@ -249,8 +280,7 @@
                 ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
                 if(Math.hypot(player.x - s.x, (canvas.height-130) - s.y) < 45) {
                     score += 25; stars.splice(i, 1); 
-                    AudioSys.play(1200, 'sine', 0.2, 0.2); 
-                    flashTimer = 8; // Trigger 8-frame white flash
+                    AudioSys.play(1200, 'sine', 0.2, 0.2); flashTimer = 10;
                 }
             });
 
@@ -260,14 +290,14 @@
         }
 
         function updateLives() { document.getElementById('lives-container').innerHTML = '<span class="heart-3d">❤️</span>'.repeat(lives); }
-        function fire() { if(isPlaying && !isPaused) { bullets.push({x: player.x, y: canvas.height-170}); AudioSys.play(800, 'square', 0.1, 0.1, true); } }
+        function fire() { if(isPlaying && !isPaused) { bullets.push({x: player.x, y: canvas.height-170}); AudioSys.play(700, 'square', 0.1, 0.1, true); } }
 
         function startGame() {
             if(requestId) cancelAnimationFrame(requestId);
             asteroids = []; stars = []; bullets = []; fragments = [];
             startLevel = parseInt(levelDropdown.value);
             level = startLevel;
-            score = 0; lives = 3; frames = 0; flashTimer = 0;
+            score = 0; lives = 3; frames = 0;
             isPlaying = true; isPaused = false;
             document.getElementById('landing-screen').classList.add('hidden');
             document.getElementById('level-val').innerText = level.toString().padStart(2, '0');
@@ -281,12 +311,11 @@
         }
 
         function endGame() {
-            isPlaying = false;
-            AudioSys.setWhirr(false);
+            isPlaying = false; AudioSys.setWhirr(false);
             if(requestId) cancelAnimationFrame(requestId);
             sessionScores.push(score);
             document.getElementById('landing-screen').classList.remove('hidden');
-            document.getElementById('landing-screen').querySelector('h1').innerHTML = `MISSION OVER<br><span style="color:white; font-size:24px">FINAL SCORE: ${score}</span>`;
+            document.getElementById('landing-screen').querySelector('h1').innerHTML = `MISSION OVER<br><span style="color:white; font-size:24px">COMMAND SCORE: ${score}</span>`;
             levelDropdown.selectedIndex = 0;
         }
 
