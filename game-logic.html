@@ -6,45 +6,35 @@
     <title>Space Dodger 3D | Yertal Arcade</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --glass: rgba(15, 23, 42, 0.98); --accent: #3b82f6; --gold: #fbbf24; }
+        :root { --glass: rgba(15, 23, 42, 0.98); --accent: #3b82f6; --gold: #fbbf24; --green: #22c55e; --orange: #f97316; --red: #ef4444; }
         body { margin: 0; overflow: hidden; background: #010409; font-family: 'Segoe UI', sans-serif; color: white; user-select: none; }
         canvas { display: block; touch-action: none; }
 
-        /* UI Layer */
         #ui-layer { position: absolute; inset: 0; pointer-events: none; padding: 25px; box-sizing: border-box; }
         .glass-box { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; pointer-events: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }
-        #stats-panel { width: fit-content; min-width: 160px; }
+        #stats-panel { width: fit-content; min-width: 180px; }
         .user-tag { color: var(--accent); font-weight: 800; font-size: 14px; text-transform: uppercase; display: block; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; padding-bottom: 4px; }
         .stat-label { font-size: 10px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1.5px; margin-top: 8px; }
         .stat-val { font-size: 28px; font-weight: 900; color: var(--gold); line-height: 1; }
-        .heart-3d { font-size: 24px; margin-right: 5px; filter: drop-shadow(0 0 8px #ef4444); }
+        .heart-3d { font-size: 20px; margin-right: 3px; filter: drop-shadow(0 0 5px var(--red)); }
+
+        /* Fuel Meter Styles */
+        #fuel-container { width: 100%; height: 18px; background: #000; border: 1px solid #334155; margin-top: 15px; border-radius: 4px; position: relative; overflow: hidden; display: flex; }
+        #fuel-bar { height: 100%; transition: width 0.3s ease, background-color 0.3s ease; width: 100%; }
+        .fuel-stripe { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(0,0,0,0.8); z-index: 2; }
 
         #icon-bar { position: absolute; top: 25px; right: 25px; display: flex; gap: 22px; pointer-events: auto; }
         .nav-icon { font-size: 24px; cursor: pointer; transition: 0.3s; color: rgba(255,255,255,0.8); }
         .nav-icon:hover { color: var(--accent); transform: scale(1.2); }
 
-        /* Overlays */
         .overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
         .hidden { display: none !important; }
         h1 { font-size: clamp(45px, 12vw, 90px); font-weight: 900; color: var(--accent); margin: 0; line-height: 0.8; }
         .btn { background: var(--accent); color: white; padding: 18px 45px; border-radius: 60px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 12px; width: 340px; transition: 0.3s; }
         select { background: #1e293b; color: white; border: 2px solid var(--accent); padding: 14px; border-radius: 15px; width: 340px; margin: 12px; font-weight: bold; font-size: 16px; outline: none; }
         
-        /* Hall of Fame Styling */
-        .trophy-row { font-size: 32px; color: var(--gold); margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.5)); }
-        .rank-item { 
-            padding: 12px; 
-            border-radius: 10px;
-            background: rgba(255,255,255,0.03);
-            margin-bottom: 8px;
-            font-family: 'Courier New', Courier, monospace; 
-            font-size: 20px; 
-            font-weight: 900;
-            color: #f8fafc;
-            border-left: 5px solid var(--gold);
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        .rank-number { color: var(--accent); margin-right: 10px; }
+        .trophy-row { font-size: 32px; color: var(--gold); margin-bottom: 15px; }
+        .rank-item { padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.03); margin-bottom: 6px; font-family: monospace; font-size: 18px; border-left: 4px solid var(--gold); }
     </style>
 </head>
 <body>
@@ -56,7 +46,17 @@
             <span class="user-tag" id="user-display">Guest</span>
             <div class="stat-label">Level</div> <div id="level-val" class="stat-val">01</div>
             <div class="stat-label">Score</div> <div id="score-val" class="stat-val">0000</div>
-            <div id="lives-container" style="margin-top: 10px;"></div>
+            <div id="lives-container" style="margin-top: 8px;"></div>
+            
+            <div class="stat-label">Fuel Reserves</div>
+            <div id="fuel-container">
+                <div id="fuel-bar"></div>
+                <script>
+                    for(let i=1; i<25; i++) {
+                        document.write(`<div class="fuel-stripe" style="left: ${(i/25)*100}%"></div>`);
+                    }
+                </script>
+            </div>
         </div>
 
         <div id="icon-bar">
@@ -72,9 +72,7 @@
         <h1>SPACE<br>DODGER</h1>
         <p style="margin: 20px 0; opacity: 0.6; font-weight: 800; letter-spacing: 5px; color: var(--gold);">YERTAL ARCADE</p>
         <button class="btn" onclick="startGame()">Launch Space Dodger</button>
-        <div style="margin: 10px;">
-            <select id="level-select"></select>
-        </div>
+        <div style="margin: 10px;"><select id="level-select"></select></div>
         <button class="btn" style="background:transparent; border:2px solid rgba(255,255,255,0.2);" onclick="showModal('hall')">Hall of Fame</button>
     </div>
 
@@ -96,6 +94,7 @@
 
         let isPlaying = false, isPaused = false, isSoundOn = true, isLoggedIn = false;
         let score = 0, level = 1, startLevel = 1, lives = 3, frames = 0, sessionScores = [];
+        let missedCount = 0; // Out of 25
         let requestId = null, flashTimer = 0;
         let player = { x: 0, targetX: 0 };
         let asteroids = [], stars = [], bullets = [], fragments = [], bgStars = [];
@@ -127,20 +126,12 @@
                 boomG.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.6);
                 boomO.connect(boomG).connect(this.ctx.destination);
                 boomO.start(); boomO.stop(this.ctx.currentTime + 0.6);
-                const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.4, this.ctx.sampleRate);
-                const data = buf.getChannelData(0);
-                for (let i = 0; i < buf.length; i++) data[i] = Math.random() * 2 - 1;
-                const noise = this.ctx.createBufferSource(); noise.buffer = buf;
-                const nG = this.ctx.createGain(); nG.gain.setValueAtTime(0.7, this.ctx.currentTime);
-                nG.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
-                noise.connect(nG).connect(this.ctx.destination); noise.start();
             },
-            play(f, t, d, v, slide=false) {
+            play(f, t, d, v) {
                 if(!isSoundOn || !this.ctx) return;
                 const o = this.ctx.createOscillator();
                 const g = this.ctx.createGain();
                 o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
-                if(slide) o.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + d);
                 g.gain.setValueAtTime(v, this.ctx.currentTime);
                 g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + d);
                 o.connect(g).connect(this.ctx.destination);
@@ -149,129 +140,125 @@
             setWhirr(on) { if(this.whirrGain) this.whirrGain.gain.setTargetAtTime((on && isSoundOn) ? 0.2 : 0, this.ctx.currentTime, 0.4); }
         };
 
+        function updateFuelUI() {
+            const fuelBar = document.getElementById('fuel-bar');
+            let percentage = ((25 - missedCount) / 25) * 100;
+            fuelBar.style.width = percentage + "%";
+            
+            if(percentage > 67) fuelBar.style.backgroundColor = "var(--green)";
+            else if(percentage > 33) fuelBar.style.backgroundColor = "var(--orange)";
+            else fuelBar.style.backgroundColor = "var(--red)";
+        }
+
         function showModal(type) {
             const box = document.getElementById('modal-content');
             document.getElementById('modal-overlay').classList.remove('hidden');
-            if(type==='manual') {
-                box.innerHTML = `<h2>Manual</h2><div style="text-align:left"><h3>Levels</h3><p>Total 16. Score 100 to advance.</p><h3>Movement</h3><p>Mouse/Arrows. Space/Click to fire.</p></div>`;
-            } else if(type==='hall') {
+            if(type==='manual') box.innerHTML = `<h2>Manual</h2><p>Don't miss more than 25 asteroids or fuel runs out!</p><p>Stars restore 5% fuel.</p>`;
+            else if(type==='hall') {
                 const sorted = [...sessionScores].sort((a,b) => b.pts - a.pts).slice(0, 10);
-                let list = sorted.map((s, i) => `<div class="rank-item"><span class="rank-number">Rank#${i+1}</span> Level ${s.lvl} : Score ${s.pts}</div>`).join('') || "NO MISSIONS LOGGED.";
-                box.innerHTML = `
-                    <div class="trophy-row"><i class="fas fa-trophy"></i> <i class="fas fa-trophy"></i> <i class="fas fa-trophy"></i></div>
-                    <h2>Elite Hall of Fame</h2>
-                    <div style="margin:20px 0">${list}</div>
-                    ${!isLoggedIn ? `<button class="btn" onclick="showModal('login')">Save Across Sessions</button>` : ""}`;
-            } else if(type==='login') {
-                box.innerHTML = `<h2>Federated Login</h2><button class="btn" style="background:#db4437" onclick="doLogin()">Google</button><button class="btn" style="background:#1877f2" onclick="doLogin()">Facebook</button>`;
+                let list = sorted.map((s, i) => `<div class="rank-item">Rank#${i+1} Level ${s.lvl} : Score ${s.pts}</div>`).join('') || "EMPTY";
+                box.innerHTML = `<div class="trophy-row"><i class="fas fa-trophy"></i></div><h2>Hall of Fame</h2><div>${list}</div>`;
             }
         }
 
-        function handleAuth() { if(!isLoggedIn) showModal('login'); }
-        function doLogin() { isLoggedIn = true; document.getElementById('user-display').innerText = "Elite Pilot"; closeModal(); }
         function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
-        function togglePause() { if(!isPlaying) return; isPaused = !isPaused; document.getElementById('pause-icon').className = isPaused ? "fas fa-play nav-icon" : "fas fa-pause nav-icon"; AudioSys.setWhirr(!isPaused); }
-        function toggleSound() { isSoundOn = !isSoundOn; document.getElementById('sound-icon').className = isSoundOn ? "fas fa-volume-up nav-icon" : "fas fa-volume-mute nav-icon"; AudioSys.setWhirr(isPlaying && !isPaused); }
-
-        function drawRocket() {
-            player.x += (player.targetX - player.x) * 0.15;
-            ctx.save(); ctx.translate(player.x, canvas.height - 130);
-            let hull = (flashTimer > 0) ? '#ffffff' : '#1e3a8a';
-            if(flashTimer > 0) flashTimer--;
-            const g = ctx.createLinearGradient(-30, 0, 30, 0);
-            g.addColorStop(0, '#001a33'); g.addColorStop(0.5, hull); g.addColorStop(1, '#001a33');
-            ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -65); ctx.lineTo(35, 40); ctx.lineTo(-35, 40); ctx.closePath(); ctx.fill();
-            ctx.fillStyle = '#93c5fd'; ctx.beginPath(); ctx.ellipse(0, -20, 8, 16, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.moveTo(-10, 40); ctx.lineTo(10, 40); ctx.lineTo(0, 55+Math.random()*25); ctx.fill();
-            ctx.restore();
-        }
+        function togglePause() { if(!isPlaying) return; isPaused = !isPaused; AudioSys.setWhirr(!isPaused); }
+        function toggleSound() { isSoundOn = !isSoundOn; AudioSys.setWhirr(isPlaying && !isPaused); }
 
         function draw3DStar(s) {
-            ctx.save(); ctx.translate(s.x, s.y);
-            ctx.rotate(frames * 0.05); // Spin
+            ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(frames * 0.05);
             const g = ctx.createRadialGradient(0,0,0,0,0,s.r);
             g.addColorStop(0, '#fff9c4'); g.addColorStop(1, '#facc15');
             ctx.fillStyle = g; ctx.beginPath();
-            for(let i=0; i<5; i++){
-                ctx.rotate(Math.PI/5); ctx.lineTo(0, 0-s.r*0.5);
-                ctx.rotate(Math.PI/5); ctx.lineTo(0, 0-s.r);
-            }
-            ctx.closePath(); ctx.fill();
-            ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 2; ctx.stroke();
-            ctx.restore();
+            for(let i=0; i<5; i++){ ctx.rotate(Math.PI/5); ctx.lineTo(0, 0-s.r*0.5); ctx.rotate(Math.PI/5); ctx.lineTo(0, 0-s.r); }
+            ctx.closePath(); ctx.fill(); ctx.restore();
         }
 
         function loop() {
             if(!isPlaying || isPaused) { if(isPlaying) requestId = requestAnimationFrame(loop); return; }
             ctx.clearRect(0,0,canvas.width, canvas.height);
+            
             let calcLvl = Math.floor(score / 100) + startLevel;
             if(calcLvl > level) { level = calcLvl; AudioSys.play(600, 'sine', 0.8, 0.2); document.getElementById('level-val').innerText = level.toString().padStart(2, '0'); }
+
             bgStars.forEach(s => { s.y += s.v; if(s.y > canvas.height) s.y = 0; ctx.fillStyle = `rgba(255,255,255,${s.o})`; ctx.fillRect(s.x, s.y, 2, 2); });
-            fragments.forEach((f, i) => { f.x += f.vx; f.y += f.vy; f.life -= 0.02; ctx.fillStyle = '#ef4444'; ctx.globalAlpha = f.life; ctx.fillRect(f.x, f.y, 4, 4); if(f.life <= 0) fragments.splice(i,1); });
-            ctx.globalAlpha = 1;
+
             if(keys['ArrowLeft'] && player.x > 50) player.targetX = player.x - 22;
             if(keys['ArrowRight'] && player.x < canvas.width - 50) player.targetX = player.x + 22;
-            drawRocket();
+
+            // Rocket Drawing
+            player.x += (player.targetX - player.x) * 0.15;
+            ctx.save(); ctx.translate(player.x, canvas.height - 130);
+            let hull = (flashTimer > 0) ? '#ffffff' : '#1e3a8a'; if(flashTimer > 0) flashTimer--;
+            ctx.fillStyle = hull; ctx.beginPath(); ctx.moveTo(0, -65); ctx.lineTo(35, 40); ctx.lineTo(-35, 40); ctx.fill();
+            ctx.fillStyle = '#f59e0b'; ctx.fillRect(-10, 40, 20, 15 + Math.random()*20);
+            ctx.restore();
+
             if(frames % Math.max(7, 60 - level*3) === 0) {
                 let r = 18 + Math.random()*45;
-                asteroids.push({ x: Math.random()*canvas.width, y: -70, r, v: 2.5 + level*0.8, hp: Math.ceil(r/18), mHp: Math.ceil(r/18) });
+                asteroids.push({ x: Math.random()*canvas.width, y: -70, r, v: 2.5 + level*0.8, hp: Math.ceil(r/18) });
             }
             if(frames % 160 === 0) stars.push({ x: Math.random()*canvas.width, y: -70, r: 18, v: 3 + level });
+
             bullets.forEach((b, i) => { b.y -= 18; ctx.fillStyle = '#22d3ee'; ctx.fillRect(b.x-2, b.y, 4, 25); if(b.y < 0) bullets.splice(i,1); });
+
             asteroids.forEach((a, i) => {
                 a.y += a.v;
-                const g = ctx.createRadialGradient(a.x-a.r*0.3, a.y-a.r*0.3, a.r*0.1, a.x, a.y, a.r);
-                g.addColorStop(0, '#f87171'); g.addColorStop(1, '#450a0a');
-                ctx.fillStyle = g; ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#7f1d1d'; ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI*2); ctx.fill();
+
                 if(Math.hypot(player.x - a.x, (canvas.height-130) - a.y) < a.r + 35) {
-                    lives--; updateLives(); AudioSys.play(80, 'sawtooth', 0.5, 0.4, true); asteroids.splice(i,1); if(lives <= 0) endGame();
+                    lives--; updateLives(); asteroids.splice(i,1); if(lives <= 0) endGame();
                 }
                 bullets.forEach((b, bi) => {
                     if(Math.hypot(b.x - a.x, b.y - a.y) < a.r) {
                         a.hp--; bullets.splice(bi, 1);
-                        if(a.hp <= 0) {
-                            score += (a.mHp > 2) ? 5 : 1; AudioSys.playExplosion();
-                            for(let j=0; j<15; j++) fragments.push({ x: a.x, y: a.y, vx: (Math.random()-0.5)*18, vy: (Math.random()-0.5)*18, life: 1 });
-                            asteroids.splice(i,1);
-                        }
+                        if(a.hp <= 0) { score += 5; AudioSys.playExplosion(); asteroids.splice(i,1); }
                     }
                 });
-                if(a.y > canvas.height + 100) asteroids.splice(i,1);
+                
+                // Missed Asteroid Logic
+                if(a.y > canvas.height + 100) {
+                    asteroids.splice(i, 1);
+                    missedCount++;
+                    updateFuelUI();
+                    if(missedCount >= 25) endGame();
+                }
             });
+
             stars.forEach((s, i) => {
                 s.y += s.v; draw3DStar(s);
                 if(Math.hypot(player.x - s.x, (canvas.height-130) - s.y) < 45) { 
-                    score += 25; stars.splice(i,1); 
-                    AudioSys.play(800, 'sine', 0.2, 0.2); flashTimer = 10;
-                    setTimeout(() => AudioSys.play(1200, 'sine', 0.3, 0.15), 100);
+                    score += 25; stars.splice(i,1); flashTimer = 10;
+                    missedCount = Math.max(0, missedCount - 1.25); // Gain 5% fuel (1.25 units out of 25)
+                    updateFuelUI();
+                    AudioSys.play(800, 'sine', 0.2, 0.2);
                 }
             });
+
             frames++;
             document.getElementById('score-val').innerText = score.toString().padStart(4, '0');
             requestId = requestAnimationFrame(loop);
         }
 
         function updateLives() { document.getElementById('lives-container').innerHTML = '<span class="heart-3d">❤️</span>'.repeat(lives); }
-        function fire() { if(isPlaying && !isPaused) { bullets.push({x: player.x, y: canvas.height-170}); AudioSys.play(700, 'square', 0.1, 0.1, true); } }
+        function fire() { if(isPlaying && !isPaused) bullets.push({x: player.x, y: canvas.height-170}); }
+
         function startGame() {
-            if(requestId) cancelAnimationFrame(requestId);
-            asteroids = []; stars = []; bullets = []; fragments = [];
-            startLevel = parseInt(levelDropdown.value); level = startLevel; score = 0; lives = 3; frames = 0;
-            isPlaying = true; isPaused = false; document.getElementById('landing-screen').classList.add('hidden');
-            document.getElementById('level-val').innerText = level.toString().padStart(2, '0');
-            document.getElementById('score-val').innerText = "0000"; updateLives();
-            AudioSys.init();
+            startLevel = parseInt(levelDropdown.value);
+            level = startLevel; score = 0; lives = 3; missedCount = 0; frames = 0;
+            isPlaying = true; isPaused = false;
+            document.getElementById('landing-screen').classList.add('hidden');
+            updateLives(); updateFuelUI(); AudioSys.init(); AudioSys.setWhirr(true);
             bgStars = Array.from({length: 80}, () => ({x: Math.random()*canvas.width, y: Math.random()*canvas.height, v: Math.random()*2+1, o: Math.random()}));
-            player.x = canvas.width/2; player.targetX = player.x;
-            AudioSys.setWhirr(true); loop();
+            player.x = canvas.width/2; asteroids = []; stars = [];
+            loop();
         }
+
         function endGame() {
             isPlaying = false; AudioSys.setWhirr(false);
             if(requestId) cancelAnimationFrame(requestId);
             sessionScores.push({ lvl: level, pts: score });
             document.getElementById('landing-screen').classList.remove('hidden');
-            document.getElementById('landing-screen').querySelector('h1').innerHTML = `MISSION OVER<br><span style="color:var(--gold); font-size:24px">FINAL SCORE: ${score}</span>`;
-            levelDropdown.selectedIndex = 0;
         }
 
         window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
