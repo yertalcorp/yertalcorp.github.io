@@ -32,7 +32,6 @@
         }
         .nav-icon:hover { transform: scale(1.1); box-shadow: 0 0 15px #fff; }
 
-        /* Impact Screens */
         .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
         .hidden { display: none !important; }
 
@@ -61,7 +60,7 @@
 </div>
 
 <div id="hud-right" class="hidden">
-    <div class="nav-icon" onclick="togglePause()" id="pause-btn">⏸️</div>
+    <div class="nav-icon" onclick="manualTogglePause()" id="pause-btn">⏸️</div>
     <div class="nav-icon" onclick="showScreen('info')">ℹ️</div>
     <div class="nav-icon" onclick="toggleMute()" id="mute-btn">🔊</div>
     <div class="nav-icon" onclick="viewHOF('personal')">🏆</div>
@@ -86,7 +85,7 @@
 </div>
 
 <script>
-let scene, camera, renderer, rocket, flame, clock;
+let scene, camera, renderer, rocket, flame;
 let asteroids = [], stars = [], lasers = [], fragments = [];
 let score = 0, level = 1, lives = 3, fuel = 100, active = false, paused = false;
 let audioCtx, engineWhirr, soundOn = true, isLoggedIn = false;
@@ -101,6 +100,8 @@ function launchMission() {
     initAudio();
     initFuelUI();
     active = true;
+    paused = false;
+    updatePauseButtonUI();
     animate();
 }
 
@@ -111,35 +112,23 @@ function init3D() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // --- NEW SHORTENED ROCKET MODEL (30% SHORTER) ---
     const rocketGrp = new THREE.Group();
     const shinyBlue = new THREE.MeshPhongMaterial({ color: 0x0044ff, shininess: 100, specular: 0x00ffff });
     const glassMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, shininess: 100, opacity: 0.8, transparent: true });
     
-    // Hull (Shortened to 1.2 from 1.8)
     const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.45, 1.2, 32), shinyBlue);
     const nose = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 32), shinyBlue);
     nose.position.y = 0.85;
     
-    // Windows
-    const win1 = new THREE.Mesh(new THREE.CircleGeometry(0.08, 16), glassMat);
-    win1.position.set(0, 0.3, 0.25);
-    const win2 = new THREE.Mesh(new THREE.CircleGeometry(0.08, 16), glassMat);
-    win2.position.set(0, -0.1, 0.35);
-
-    // Wings
-    const wingGeo = new THREE.BoxGeometry(0.05, 0.6, 0.7);
-    const wingL = new THREE.Mesh(wingGeo, shinyBlue); wingL.position.set(-0.45, -0.3, 0); wingL.rotation.z = 0.3;
-    const wingR = new THREE.Mesh(wingGeo, shinyBlue); wingR.position.set(0.45, -0.3, 0); wingR.rotation.z = -0.3;
+    const win1 = new THREE.Mesh(new THREE.CircleGeometry(0.08, 16), glassMat); win1.position.set(0, 0.3, 0.3);
+    const wingL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.6, 0.7), shinyBlue); wingL.position.set(-0.45, -0.3, 0); wingL.rotation.z = 0.3;
+    const wingR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.6, 0.7), shinyBlue); wingR.position.set(0.45, -0.3, 0); wingR.rotation.z = -0.3;
     
-    // Throttle
-    const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.3, 16), new THREE.MeshPhongMaterial({color:0x222222}));
-    engine.position.y = -0.75;
-    
+    const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.3, 16), new THREE.MeshPhongMaterial({color:0x222222})); engine.position.y = -0.75;
     flame = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 12), new THREE.MeshBasicMaterial({color: 0xff4400}));
     flame.position.y = -1.2; flame.rotation.x = Math.PI;
 
-    rocketGrp.add(hull, nose, win1, win2, wingL, wingR, engine, flame);
+    rocketGrp.add(hull, nose, win1, wingL, wingR, engine, flame);
     rocket = rocketGrp; rocket.position.y = -4; scene.add(rocket);
 
     scene.add(new THREE.AmbientLight(0x404040));
@@ -164,24 +153,49 @@ function playSfx(type) {
     const g = audioCtx.createGain();
     osc.connect(g); g.connect(audioCtx.destination);
 
-    if(type==='explode') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-        g.gain.setValueAtTime(0.6, audioCtx.currentTime);
-        g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-    } else if(type==='crash') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        g.gain.setValueAtTime(0.8, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-    } else {
-        osc.frequency.setValueAtTime(type === 'laser' ? 800 : 500, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1);
-        g.gain.value = 0.1; osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    switch(type) {
+        case 'bomb': // Ricocheting explosion
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.8);
+            g.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.8);
+            // Ricochet effect
+            const r = audioCtx.createOscillator(); r.type = 'sine'; r.frequency.value = 400;
+            const rg = audioCtx.createGain(); rg.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            rg.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+            r.connect(rg); rg.connect(audioCtx.destination); r.start(); r.stop(audioCtx.currentTime + 1.2);
+            break;
+        case 'crash': // Thud and Crash
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+            g.gain.setValueAtTime(1, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            // White noise for "crunch"
+            const n = audioCtx.createBufferSource();
+            const b = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
+            const d = b.getChannelData(0); for(let i=0; i<d.length; i++) d[i] = Math.random() * 2 - 1;
+            n.buffer = b; const ng = audioCtx.createGain(); ng.gain.value = 0.3;
+            n.connect(ng); ng.connect(audioCtx.destination); n.start();
+            break;
+        case 'bling': // Star collection
+            osc.type = 'sine'; osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            break;
+        case 'whoop': // Level change
+            osc.type = 'square'; osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.4);
+            g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            break;
+        case 'laser':
+            osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+            g.gain.value = 0.1;
+            break;
     }
+    osc.start(); osc.stop(audioCtx.currentTime + 1.2);
 }
 
 function initFuelUI() {
@@ -190,14 +204,11 @@ function initFuelUI() {
 }
 
 function spawnObject() {
+    if(paused) return;
     const isStar = Math.random() < 0.1;
     const x = (Math.random()-0.5)*12;
-    
-    // SPATIAL AWARENESS: Prevent clumping
     const allObjects = [...asteroids, ...stars];
-    for(let obj of allObjects) {
-        if(Math.abs(obj.position.x - x) < 1.8 && obj.position.y > 6) return;
-    }
+    for(let obj of allObjects) { if(Math.abs(obj.position.x - x) < 2.0 && obj.position.y > 6) return; }
 
     if(isStar) {
         const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.25), new THREE.MeshPhongMaterial({color: 0xffff00}));
@@ -211,6 +222,11 @@ function spawnObject() {
     }
 }
 
+function checkCollision(objA, objB, threshold) {
+    // Precise center-to-center distance minus radii
+    return objA.position.distanceTo(objB.position) < threshold;
+}
+
 function update() {
     if(!active || paused) return;
     const fallSpeed = 0.05 + (level * 0.02);
@@ -218,7 +234,7 @@ function update() {
 
     asteroids.forEach((a, i) => {
         a.position.y -= fallSpeed;
-        if(a.position.distanceTo(rocket.position) < 1.0) {
+        if(checkCollision(rocket, a, 1.1)) { // Threshold for tip-to-tip
             lives--; fuel -= 15; playSfx('crash'); scene.remove(a); asteroids.splice(i,1);
         } else if(a.position.y < -6) {
             fuel -= 3; scene.remove(a); asteroids.splice(i,1);
@@ -227,20 +243,20 @@ function update() {
 
     stars.forEach((s, i) => {
         s.position.y -= fallSpeed; s.rotation.y += 0.1;
-        if(s.position.distanceTo(rocket.position) < 0.8) {
-            score += 25; fuel = Math.min(100, fuel+5); playSfx('star'); scene.remove(s); stars.splice(i,1);
+        if(checkCollision(rocket, s, 0.9)) {
+            score += 25; fuel = Math.min(100, fuel+5); playSfx('bling'); scene.remove(s); stars.splice(i,1);
         }
     });
 
     lasers.forEach((l, li) => {
         l.position.y += 0.4;
         asteroids.forEach((a, ai) => {
-            if(l.position.distanceTo(a.position) < a.userData.size) {
+            if(checkCollision(l, a, a.userData.size + 0.1)) {
                 a.userData.hp--; scene.remove(l); lasers.splice(li,1);
                 if(a.userData.hp <= 0) {
                     score += a.userData.size > 0.8 ? 5 : 1; fuel = Math.min(100, fuel + 2);
-                    playSfx('explode'); createFrags(a.position); scene.remove(a); asteroids.splice(ai,1);
-                    if(score >= level * 100) level++;
+                    playSfx('bomb'); createFrags(a.position); scene.remove(a); asteroids.splice(ai,1);
+                    if(score >= level * 100) { level++; playSfx('whoop'); }
                 }
             }
         });
@@ -278,18 +294,15 @@ function gameOver() {
 }
 
 function viewHOF(type) {
-    paused = true; // Auto-pause game logic
+    paused = true;
+    updatePauseButtonUI();
     const isGlobal = type === 'global';
-    
     if (isGlobal && !isLoggedIn) {
-        document.getElementById('overlay-content').innerHTML = `<h2 style="color:var(--neon-red)">ACCESS DENIED</h2><p style="font-size:1.5rem">Global Best Scores are only available to logged-in users.</p><button onclick="alert('Federated Login Initiated...')">Login to View</button>`;
+        document.getElementById('overlay-content').innerHTML = `<h2 style="color:var(--neon-red)">ACCESS DENIED</h2><p style="font-size:1.5rem">Log in to see global rankings.</p>`;
     } else {
-        let html = `<h2 style="font-size:3rem; color:var(--neon-blue)">${type.toUpperCase()} BEST SCORES</h2>`;
-        html += `<table class="impact-table"><tr><th>User</th><th>Rank</th><th>Level</th><th>Score</th></tr>`;
-        const data = sessionScores.slice(0,10);
-        data.forEach((d, i) => { html += `<tr><td>${d.u}</td><td>${i+1}</td><td>${d.l}</td><td>${d.s}</td></tr>`; });
-        html += `</table>`;
-        if(!isLoggedIn) html += `<button onclick="alert('Federated Login Initiated...')">Save Scores Across Sessions</button>`;
+        let html = `<h2 style="font-size:3rem; color:var(--neon-blue)">${type.toUpperCase()} SCORES</h2><table class="impact-table"><tr><th>User</th><th>Level</th><th>Score</th></tr>`;
+        sessionScores.slice(0,10).forEach(d => { html += `<tr><td>${d.u}</td><td>${d.l}</td><td>${d.s}</td></tr>`; });
+        html += `</table><button onclick="alert('Login Redirect...')">Save Scores</button>`;
         document.getElementById('overlay-content').innerHTML = html;
     }
     document.getElementById('screen-overlay').classList.remove('hidden');
@@ -297,37 +310,45 @@ function viewHOF(type) {
 
 function showScreen(type) {
     paused = true;
-    if(type==='info') {
-        document.getElementById('overlay-content').innerHTML = `<div style="font-size:1.8rem; text-align:left;"><h3>MISSION BRIEFING</h3><p><b>MOVE:</b> Mouse/Arrows<br><b>FIRE:</b> Space/Click<br><b>GOAL:</b> Blast asteroids, catch stars, survive!</p></div>`;
-    }
+    updatePauseButtonUI();
+    document.getElementById('overlay-content').innerHTML = `<h3>MISSION BRIEFING</h3><p>MOVE: Mouse/Arrows<br>FIRE: Space/Click</p>`;
     document.getElementById('screen-overlay').classList.remove('hidden');
 }
 
-function togglePause() { 
+function manualTogglePause() { 
     paused = !paused; 
+    updatePauseButtonUI();
+}
+
+function updatePauseButtonUI() {
     document.getElementById('pause-btn').innerText = paused ? "▶️" : "⏸️"; 
 }
-function toggleMute() { soundOn = !soundOn; document.getElementById('mute-btn').innerText = soundOn?'🔊':'🔇'; }
-function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); paused = false; }
+
+function closeOverlay() { 
+    document.getElementById('screen-overlay').classList.add('hidden');
+    // NOTE: We do NOT automatically unpause here. 
+    // This respects the user's manual pause state.
+}
 
 window.addEventListener('mousemove', (e) => { if(active && !paused) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
 window.addEventListener('keydown', (e) => { 
     if(e.code==='Space') fire(); 
-    if(e.code==='ArrowLeft') rocket.position.x-=0.7; 
-    if(e.code==='ArrowRight') rocket.position.x+=0.7; 
+    if(e.code==='ArrowLeft' && !paused) rocket.position.x-=0.7; 
+    if(e.code==='ArrowRight' && !paused) rocket.position.x+=0.7; 
 });
 window.addEventListener('mousedown', fire);
 
-function fire() {
-    if(!active || paused) return;
+function fire() { if(active && !paused) {
     const l = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6), new THREE.MeshBasicMaterial({color: 0x00ffff}));
     l.position.copy(rocket.position); lasers.push(l); scene.add(l); playSfx('laser');
-}
+}}
 
 function animate() {
     if(!active) return; requestAnimationFrame(animate); 
     update();
-    fragments.forEach((f, i) => { f.position.add(f.userData.v); f.scale.multiplyScalar(0.96); if(f.scale.x<0.01) { scene.remove(f); fragments.splice(i,1); } });
+    if(!paused) {
+        fragments.forEach((f, i) => { f.position.add(f.userData.v); f.scale.multiplyScalar(0.96); if(f.scale.x<0.01) { scene.remove(f); fragments.splice(i,1); } });
+    }
     renderer.render(scene, camera);
 }
 </script>
