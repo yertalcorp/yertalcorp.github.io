@@ -270,11 +270,11 @@ function init3D() {
     // Steel Rim (A Torus/Donut shape)
     // Parameters: radius, tube diameter, radialSegments, tubularSegments
     const rimGeo = new THREE.TorusGeometry(0.12, 0.02, 16, 32);
-    const rimMat = new THREE.MeshPhongMaterial({color: 0xaaaaaa, shininess: 100});
+    const rimMat = new THREE.MeshPhongMaterial({color: 0xdddddd, shininess: 150, specular: 0xffffff});
 
     // Glass (A slightly flattened sphere/disc)
     const glassGeo = new THREE.SphereGeometry(0.11, 16, 16);
-    const glassMat = new THREE.MeshPhongMaterial({color: 0x22aaff, transparent: true, opacity: 0.7, shininess: 200, specular: 0xffffff});
+    const glassMat = new THREE.MeshPhongMaterial({color: 0x111111, transparent: true, opacity: 0.8, shininess: 500, specular: 0xffffff, reflectivity: 1.0});
 
     // Assembly of Left Window
     const leftRim = new THREE.Mesh(rimGeo, rimMat);
@@ -282,14 +282,16 @@ function init3D() {
     leftGlass.scale.z = 0.2; // Flatten the sphere into an oval disc
     const leftWindow = new THREE.Group();
     leftWindow.add(leftRim, leftGlass);
-    leftWindow.position.set(-0.25, 0.2, 0.1); // Placed on the side/front
-    leftWindow.rotation.y = -Math.PI / 3;
+    leftWindow.position.set(-0.31, 0.2, 0.1); // Placed on the side/front
+    leftWindow.rotation.y = -Math.PI / 2;
+    leftWindow.rotation.z = -Math.atan2(0.2, 0.8);
 
     // Assembly of Right Window
     const rightWindow = leftWindow.clone(); // Java-style cloning
-    rightWindow.position.set(0.25, 0.2, 0.1);
-    rightWindow.rotation.y = Math.PI / 3;
-   
+    rightWindow.position.set(0.31, 0.2, 0.1);
+    rightWindow.rotation.y = Math.PI / 2;
+    rightWindow.rotation.z = Math.atan2(0.2, 0.8);
+    
     // MAIN AMBIENT LIGHT (General visibility - the "Base" light)
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
     scene.add(ambientLight);
