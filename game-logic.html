@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Space Dodger 3D - Pro Edition</title>
+    <title>Space Dodger 3D - Final Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root { --neon-blue: #00f2ff; --neon-green: #39ff14; --neon-red: #ff3131; --gold: #ffd700; }
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; color: white; user-select: none; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', Gadget, sans-serif; color: white; user-select: none; }
         
-        /* HUD */
+        /* HUD - Top Left */
         #hud-left {
             position: absolute; top: 20px; left: 20px;
             background: rgba(10, 20, 40, 0.9); padding: 20px;
@@ -19,39 +19,49 @@
             width: 100%; height: 28px; border: 2px solid #fff;
             display: flex; margin-top: 10px; background: #000; overflow: hidden;
         }
-        .fuel-section { flex: 1; border-right: 2px solid #000; height: 100%; transition: background 0.2s; }
-        
-        /* SIREN FLASHING LOGIC */
-        .siren-active .fuel-section { 
-            animation: fuel-flash 0.3s infinite alternate; 
-        }
-        @keyframes fuel-flash { 
-            0% { background: var(--neon-red); opacity: 1; } 
-            100% { background: #000; opacity: 0.5; } 
-        }
+        .fuel-section { flex: 1; border-right: 2.5px solid #000; height: 100%; transition: background 0.3s; }
+        .siren-active { animation: siren-flash 0.3s infinite; }
+        @keyframes siren-flash { 0%, 100% { background: var(--neon-red); } 50% { background: transparent; } }
 
+        /* HUD - Top Right Icons */
         #hud-right { position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; }
         .nav-icon {
             width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fff;
             display: flex; align-items: center; justify-content: center;
             background: rgba(0,0,0,0.6); cursor: pointer; font-size: 30px; transition: 0.3s;
         }
-        .nav-icon:hover { transform: scale(1.1); box-shadow: 0 0 20px var(--neon-blue); }
+        .nav-icon:hover { transform: scale(1.15); box-shadow: 0 0 20px var(--neon-blue); }
 
         .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
         .hidden { display: none !important; }
-        .neon-box { border: 5px solid var(--neon-blue); border-radius: 30px; padding: 50px; background: rgba(0,0,0,0.9); box-shadow: 0 0 40px var(--neon-blue); text-align: center; max-width: 85%; }
-        button { padding: 22px 50px; margin: 15px; border-radius: 15px; border: none; background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; font-size: 1.5rem; text-transform: uppercase; }
+
+        /* Impactful UI Sections */
+        .neon-box { border: 5px solid var(--neon-blue); border-radius: 30px; padding: 50px; background: rgba(0,0,0,0.9); box-shadow: 0 0 40px var(--neon-blue); text-align: center; max-width: 85%; max-height: 80vh; overflow-y: auto; }
+        .instr-header { font-size: 3.5rem; color: var(--neon-blue); margin-bottom: 20px; text-transform: uppercase; border-bottom: 3px solid var(--neon-blue); }
+        .instr-section { font-size: 1.8rem; text-align: left; margin: 20px 0; line-height: 1.4; }
+        .instr-section b { color: var(--gold); }
+
+        .impact-table { width: 100%; border-collapse: collapse; margin: 25px 0; font-size: 1.8rem; }
+        .impact-table th { font-weight: 900; font-size: 2.2rem; color: var(--neon-blue); padding: 15px; border-bottom: 4px solid var(--neon-blue); }
+        .impact-table td { padding: 15px; border-bottom: 1px solid #444; }
+
+        button {
+            padding: 22px 50px; margin: 15px; border-radius: 15px; border: none;
+            background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; font-size: 1.5rem;
+            text-transform: uppercase; transition: 0.2s; box-shadow: 0 5px 0 #0088cc;
+        }
+        button:hover { filter: brightness(1.2); transform: translateY(-3px); }
+        .game-over-text { font-size: 8rem; color: var(--neon-red); font-weight: 900; text-shadow: 0 0 30px var(--neon-red); }
     </style>
 </head>
 <body>
 
 <div id="hud-left" class="hidden">
     <div id="ui-user" style="font-size: 1.8rem; color: var(--neon-blue);">Guest</div>
-    <div id="ui-lvl">Level: 1</div>
-    <div id="ui-score">Score: 0</div>
-    <div id="ui-lives"></div>
-    <div class="fuel-meter" id="fuel-bar-container"></div>
+    <div id="ui-lvl" style="font-size: 1.4rem;">Level: 1</div>
+    <div id="ui-score" style="font-size: 1.4rem;">Score: 0</div>
+    <div id="ui-lives" style="margin: 10px 0;"></div>
+    <div class="fuel-meter" id="fuel-bar"></div>
 </div>
 
 <div id="hud-right" class="hidden">
@@ -65,23 +75,26 @@
 <div id="screen-landing" class="screen">
     <h1 style="font-size: 6rem; text-shadow: 0 0 30px var(--neon-blue);">SPACE DODGER</h1>
     <button onclick="launchMission()">Launch Mission</button>
+    <button onclick="viewHOF('personal')">Hall of Fame</button>
 </div>
 
 <div id="screen-gameover" class="screen hidden">
-    <h1 style="font-size: 8rem; color: var(--neon-red);">GAME OVER</h1>
+    <div class="game-over-text">GAME OVER</div>
     <button onclick="launchMission()">RELAUNCH MISSION</button>
+    <button onclick="viewHOF('personal')">HALL OF FAME</button>
 </div>
 
 <div id="screen-overlay" class="screen hidden">
     <div id="overlay-content" class="neon-box"></div>
-    <button onclick="closeOverlay()">BACK</button>
+    <button onclick="closeOverlay()" style="background:#444; color:white; border:2px solid #fff;">BACK TO MISSION</button>
 </div>
 
 <script>
 let scene, camera, renderer, rocket, flame;
 let asteroids = [], stars = [], lasers = [], fragments = [];
 let score = 0, level = 1, lives = 3, fuel = 100, active = false, paused = false;
-let audioCtx, engineWhirr, sirenOsc, soundOn = true;
+let audioCtx, engineWhirr, soundOn = true, isLoggedIn = false;
+let sessionScores = [];
 
 function launchMission() {
     score = 0; level = 1; lives = 3; fuel = 100;
@@ -93,6 +106,7 @@ function launchMission() {
     initFuelUI();
     active = true;
     paused = false;
+    updatePauseButtonUI();
     animate();
 }
 
@@ -103,31 +117,37 @@ function init3D() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    // Rocket (30% Shorter)
     const rocketGrp = new THREE.Group();
-    const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.45, 1.2, 32), new THREE.MeshPhongMaterial({color: 0x0044ff, shininess: 100}));
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 32), new THREE.MeshPhongMaterial({color: 0x0044ff}));
+    const shinyBlue = new THREE.MeshPhongMaterial({ color: 0x0044ff, shininess: 100, specular: 0x00ffff });
+    const glassMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, shininess: 100, opacity: 0.8, transparent: true });
+    
+    const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.45, 1.2, 32), shinyBlue);
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 32), shinyBlue);
     nose.position.y = 0.85;
-    const win = new THREE.Mesh(new THREE.CircleGeometry(0.08, 16), new THREE.MeshPhongMaterial({color: 0x88ccff})); win.position.set(0, 0.3, 0.3);
-    const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.3, 16), new THREE.MeshPhongMaterial({color: 0x222222})); engine.position.y = -0.75;
-    flame = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 12), new THREE.MeshBasicMaterial({color: 0xff4400})); flame.position.y = -1.2; flame.rotation.x = Math.PI;
+    
+    const win1 = new THREE.Mesh(new THREE.CircleGeometry(0.08, 16), glassMat); win1.position.set(0, 0.3, 0.3);
+    const wingL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.6, 0.7), shinyBlue); wingL.position.set(-0.45, -0.3, 0); wingL.rotation.z = 0.3;
+    const wingR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.6, 0.7), shinyBlue); wingR.position.set(0.45, -0.3, 0); wingR.rotation.z = -0.3;
+    const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.3, 16), new THREE.MeshPhongMaterial({color:0x222222})); engine.position.y = -0.75;
+    flame = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 12), new THREE.MeshBasicMaterial({color: 0xff4400}));
+    flame.position.y = -1.2; flame.rotation.x = Math.PI;
 
-    rocketGrp.add(hull, nose, win, engine, flame);
-    rocket = rocketGrp; scene.add(rocket); rocket.position.y = -4;
+    rocketGrp.add(hull, nose, win1, wingL, wingR, engine, flame);
+    rocket = rocketGrp; rocket.position.y = -4; scene.add(rocket);
 
-    scene.add(new THREE.AmbientLight(0x606060));
-    const sun = new THREE.DirectionalLight(0xffffff, 1); sun.position.set(5, 5, 10); scene.add(sun);
+    scene.add(new THREE.AmbientLight(0x505050));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.2); sun.position.set(5, 5, 10); scene.add(sun);
     camera.position.z = 8;
 }
 
 function initAudio() {
     if(audioCtx) audioCtx.close();
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-    // Soft Whirr
     engineWhirr = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    engineWhirr.type = 'sine'; engineWhirr.frequency.value = 80;
-    gain.gain.value = soundOn ? 0.03 : 0;
+    engineWhirr.type = 'triangle'; engineWhirr.frequency.value = 55;
+    gain.gain.value = soundOn ? 0.05 : 0;
     engineWhirr.connect(gain); gain.connect(audioCtx.destination);
     engineWhirr.start();
 }
@@ -139,70 +159,79 @@ function playSfx(type) {
     osc.connect(g); g.connect(audioCtx.destination);
 
     switch(type) {
-        case 'kaboom': // KAA BOOM PHUT!
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.8);
-            g.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        case 'bomb':
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 1.0);
+            g.gain.setValueAtTime(0.6, audioCtx.currentTime);
             g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.0);
-            // The "PHUT" tail
-            const phut = audioCtx.createOscillator(); phut.type = 'square'; phut.frequency.value = 40;
-            const pg = audioCtx.createGain(); pg.gain.setValueAtTime(0.1, audioCtx.currentTime + 0.7);
-            pg.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.0);
-            phut.connect(pg); pg.connect(audioCtx.destination); phut.start(); phut.stop(audioCtx.currentTime+1);
             break;
-        case 'crash': // THUD BOOM CRASH
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(50, audioCtx.currentTime);
-            g.gain.setValueAtTime(0.8, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+        case 'car-crash':
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+            g.gain.setValueAtTime(1, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            const noise = audioCtx.createBufferSource();
+            const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.4, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0); for(let i=0; i<data.length; i++) data[i] = Math.random() * 2 - 1;
+            noise.buffer = buffer; const ng = audioCtx.createGain(); ng.gain.value = 0.4;
+            noise.connect(ng); ng.connect(audioCtx.destination); noise.start();
             break;
-        case 'bling': // BLINGING
-            osc.type = 'sine'; osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.1);
+        case 'bling':
+            osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1600, audioCtx.currentTime + 0.1);
             g.gain.setValueAtTime(0.2, audioCtx.currentTime);
             g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
             break;
-        case 'whooop': // WHOOOOP WHOOOOP
-            osc.type = 'square'; osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.4);
-            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        case 'whooop':
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.6);
+            g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
             break;
         case 'laser':
-            osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(900, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-            g.gain.value = 0.05;
+            g.gain.value = 0.1;
             break;
     }
-    osc.start(); osc.stop(audioCtx.currentTime + 1.5);
+    osc.start(); osc.stop(audioCtx.currentTime + 1.2);
 }
 
 function initFuelUI() {
-    const container = document.getElementById('fuel-bar-container');
-    container.innerHTML = '';
-    for(let i=0; i<25; i++) {
-        const s = document.createElement('div');
-        s.className = 'fuel-section';
-        container.appendChild(s);
-    }
+    const bar = document.getElementById('fuel-bar'); bar.innerHTML = '';
+    for(let i=0; i<25; i++) { const s = document.createElement('div'); s.className='fuel-section'; bar.appendChild(s); }
 }
 
-function createStar() {
+function createStarGeometry() {
     const shape = new THREE.Shape();
-    const spikes = 5, outer = 0.3, inner = 0.12;
+    const spikes = 5, outer = 0.3, inner = 0.15;
     for(let i=0; i<spikes*2; i++) {
         let r = i%2===0 ? outer : inner;
         let a = (i/spikes) * Math.PI;
         if(i===0) shape.moveTo(Math.cos(a)*r, Math.sin(a)*r);
         else shape.lineTo(Math.cos(a)*r, Math.sin(a)*r);
     }
-    const star = new THREE.Mesh(
-        new THREE.ExtrudeGeometry(shape, {depth: 0.1, bevelEnabled: false}),
-        new THREE.MeshPhongMaterial({color: 0xffd700, shininess: 100})
-    );
-    // FORCE STAR TO FACE THE SCREEN
-    star.rotation.x = 0; 
-    star.position.set((Math.random()-0.5)*12, 8, 0);
-    stars.push(star); scene.add(star);
+    return new THREE.ExtrudeGeometry(shape, {depth: 0.1, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05});
+}
+
+function spawnObject() {
+    if(paused) return;
+    const isStar = Math.random() < 0.1;
+    const x = (Math.random()-0.5)*12;
+    const all = [...asteroids, ...stars];
+    for(let o of all) { if(Math.abs(o.position.x - x) < 2.0 && o.position.y > 6) return; }
+
+    if(isStar) {
+        const star = new THREE.Mesh(createStarGeometry(), new THREE.MeshPhongMaterial({color: 0xffd700, shininess: 100}));
+        star.position.set(x, 8, 0); star.rotation.x = Math.PI/2;
+        stars.push(star); scene.add(star);
+    } else {
+        const s = 0.4 + Math.random() * 0.8;
+        const ast = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 1), new THREE.MeshPhongMaterial({color: 0x882222, flatShading: true}));
+        ast.position.set(x, 8, 0); ast.userData = { size: s, hp: Math.ceil(s*4) };
+        asteroids.push(ast); scene.add(ast);
+    }
 }
 
 function update() {
@@ -213,15 +242,14 @@ function update() {
     asteroids.forEach((a, i) => {
         a.position.y -= fallSpeed;
         if(a.position.distanceTo(rocket.position) < 1.1) {
-            lives--; fuel -= 15; playSfx('crash'); scene.remove(a); asteroids.splice(i,1);
+            lives--; fuel -= 15; playSfx('car-crash'); scene.remove(a); asteroids.splice(i,1);
         } else if(a.position.y < -6) {
-            fuel -= 4; scene.remove(a); asteroids.splice(i,1);
+            fuel -= 3; scene.remove(a); asteroids.splice(i,1);
         }
     });
 
     stars.forEach((s, i) => {
-        s.position.y -= fallSpeed;
-        s.rotation.z += 0.05; // Spin on Z so it stays facing screen
+        s.position.y -= fallSpeed; s.rotation.z += 0.05;
         if(s.position.distanceTo(rocket.position) < 0.9) {
             score += 25; fuel = Math.min(100, fuel+5); playSfx('bling'); scene.remove(s); stars.splice(i,1);
         }
@@ -230,75 +258,96 @@ function update() {
     lasers.forEach((l, li) => {
         l.position.y += 0.4;
         asteroids.forEach((a, ai) => {
-            if(l.position.distanceTo(a.position) < a.userData.size + 0.2) {
+            if(l.position.distanceTo(a.position) < a.userData.size + 0.1) {
                 a.userData.hp--; scene.remove(l); lasers.splice(li,1);
                 if(a.userData.hp <= 0) {
-                    score += a.userData.size > 0.8 ? 5 : 1; fuel = Math.min(100, fuel+2);
-                    playSfx('kaboom'); scene.remove(a); asteroids.splice(ai,1);
-                    if(score >= level * 100) { level++; playSfx('whooop'); playSfx('whooop'); }
+                    score += a.userData.size > 0.8 ? 5 : 1; fuel = Math.min(100, fuel + 2);
+                    playSfx('bomb'); createFrags(a.position); scene.remove(a); asteroids.splice(ai,1);
+                    if(score >= level * 100) { level++; playSfx('whooop'); }
                 }
             }
         });
     });
 
-    if(fuel <= 0 || lives <= 0) { active = false; if(engineWhirr) engineWhirr.stop(); document.getElementById('screen-gameover').classList.remove('hidden'); }
-    if(Math.random() < 0.03) {
-        if(Math.random() < 0.1) createStar();
-        else {
-            const s = 0.4 + Math.random() * 0.8;
-            const ast = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 1), new THREE.MeshPhongMaterial({color: 0x882222, flatShading: true}));
-            ast.position.set((Math.random()-0.5)*12, 8, 0); ast.userData = { size: s, hp: Math.ceil(s*4) };
-            asteroids.push(ast); scene.add(ast);
-        }
-    }
+    if(fuel <= 0 || lives <= 0) gameOver();
+    if(Math.random() < 0.03) spawnObject();
     updateUI();
+}
+
+function createFrags(p) {
+    for(let i=0; i<8; i++) {
+        const f = new THREE.Mesh(new THREE.BoxGeometry(0.15,0.15,0.15), new THREE.MeshBasicMaterial({color: 0xff3300}));
+        f.position.copy(p); f.userData = {v: new THREE.Vector3((Math.random()-0.5)*0.3,(Math.random()-0.5)*0.3,0)};
+        fragments.push(f); scene.add(f);
+    }
 }
 
 function updateUI() {
     document.getElementById('ui-lvl').innerText = "Level: " + level;
     document.getElementById('ui-score').innerText = "Score: " + score;
-    document.getElementById('ui-lives').innerHTML = "❤️".repeat(lives);
-    
+    document.getElementById('ui-lives').innerHTML = "<span style='font-size:2rem'>❤️</span>".repeat(lives);
     const fill = Math.floor((fuel/100)*25);
     const secs = document.querySelectorAll('.fuel-section');
-    const container = document.getElementById('fuel-bar-container');
-    
-    let color = "#39ff14"; if(fuel < 67) color = "orange"; if(fuel < 34) color = "#ff3131";
-    
-    secs.forEach((s, i) => {
-        s.style.background = i < fill ? color : "#000";
-    });
+    let c = "#39ff14"; if(fuel < 67) c = "orange"; if(fuel < 34) c = "#ff3131";
+    secs.forEach((s, i) => s.style.background = i < fill ? c : "#000");
+    document.getElementById('fuel-bar').className = fuel <= 10 ? 'fuel-meter siren-active' : 'fuel-meter';
+}
 
-    // SIREN & FLASHING
-    if(fuel <= 10) {
-        container.classList.add('siren-active');
-        if(!sirenOsc && soundOn) {
-            sirenOsc = audioCtx.createOscillator();
-            const sg = audioCtx.createGain();
-            sirenOsc.frequency.value = 440;
-            sg.gain.value = 0.05;
-            sirenOsc.connect(sg); sg.connect(audioCtx.destination);
-            sirenOsc.start();
-        }
-    } else {
-        container.classList.remove('siren-active');
-        if(sirenOsc) { sirenOsc.stop(); sirenOsc = null; }
-    }
+function gameOver() {
+    active = false; if(engineWhirr) engineWhirr.stop();
+    sessionScores.push({u: 'Guest', l: level, s: score});
+    sessionScores.sort((a,b)=>b.s-a.s);
+    document.getElementById('screen-gameover').classList.remove('hidden');
 }
 
 function showScreen(type) {
-    paused = true;
+    paused = true; updatePauseButtonUI();
     const content = document.getElementById('overlay-content');
-    content.innerHTML = type==='info' ? `<h2>INSTRUCTIONS</h2><p style="font-size:1.5rem">MOVE: Mouse / Arrows<br>FIRE: Space / Click<br>COLLECT STARS to refuel!</p>` : `<h2>HALL OF FAME</h2><p>Login tomorrow to save scores!</p>`;
+    if(type==='info') {
+        content.innerHTML = `
+            <div class="instr-header">Mission Manual</div>
+            <div class="instr-section">
+                <h3>🚀 MOVEMENT</h3>
+                <p>Use your <b>MOUSE</b> or <b>ARROW KEYS</b> to move side-to-side.</p>
+                <h3>🔫 COMBAT</h3>
+                <p>Press <b>SPACE</b> or <b>LEFT CLICK</b> to fire lasers. Larger asteroids require multiple hits to explode!</p>
+                <h3>⭐ SCORING & FUEL</h3>
+                <p>Collect <b>SHINY STARS</b> for bonus points and fuel. Blasting asteroids also restores fuel. Do not let asteroids pass the rocket or your fuel will drain!</p>
+            </div>`;
+    }
     document.getElementById('screen-overlay').classList.remove('hidden');
 }
 
-function manualTogglePause() { paused = !paused; document.getElementById('pause-btn').innerText = paused ? "▶️" : "⏸️"; }
+function viewHOF(type) {
+    paused = true; updatePauseButtonUI();
+    const content = document.getElementById('overlay-content');
+    if(type === 'global' && !isLoggedIn) {
+        content.innerHTML = `
+            <div class="instr-header" style="color:var(--neon-red)">AUTHENTICATION REQUIRED</div>
+            <p style="font-size:2rem; margin:30px 0;">Global leaderboards are restricted to registered pilots.</p>
+            <button onclick="alert('Redirecting to Google/FB/MS Login...')">LOGIN TO VIEW GLOBAL SCORES</button>`;
+    } else {
+        let html = `<div class="instr-header">${type.toUpperCase()} TOP 10</div><table class="impact-table"><tr><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
+        const data = type === 'global' ? [{u:'Ace_Pilot', l:25, s:12000}, {u:'StarLord', l:20, s:8500}] : sessionScores.slice(0,10);
+        data.forEach(d => { html += `<tr><td>${d.u}</td><td>${d.l}</td><td>${d.s}</td></tr>`; });
+        html += `</table>`;
+        if(!isLoggedIn) html += `<button onclick="alert('Login to save your scores!')">SAVE MY SCORES</button>`;
+        content.innerHTML = html;
+    }
+    document.getElementById('screen-overlay').classList.remove('hidden');
+}
+
+function manualTogglePause() { paused = !paused; updatePauseButtonUI(); }
+function updatePauseButtonUI() { document.getElementById('pause-btn').innerText = paused ? "▶️" : "⏸️"; }
 function toggleMute() { soundOn = !soundOn; document.getElementById('mute-btn').innerText = soundOn?'🔊':'🔇'; }
-function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); paused = false; }
+function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); }
 
 window.addEventListener('mousemove', (e) => { if(active && !paused) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
-window.addEventListener('keydown', (e) => { if(e.code==='Space') fire(); });
+window.addEventListener('keydown', (e) => { 
+    if(e.code==='Space') fire(); 
+    if(!paused && e.code==='ArrowLeft') rocket.position.x-=0.7; 
+    if(!paused && e.code==='ArrowRight') rocket.position.x+=0.7; 
+});
 window.addEventListener('mousedown', fire);
 
 function fire() { if(active && !paused) {
@@ -309,6 +358,9 @@ function fire() { if(active && !paused) {
 function animate() {
     if(!active) return; requestAnimationFrame(animate); 
     update();
+    if(!paused) {
+        fragments.forEach((f, i) => { f.position.add(f.userData.v); f.scale.multiplyScalar(0.96); if(f.scale.x<0.01) { scene.remove(f); fragments.splice(i,1); } });
+    }
     renderer.render(scene, camera);
 }
 </script>
