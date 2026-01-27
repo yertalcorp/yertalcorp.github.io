@@ -604,8 +604,15 @@ function showLoginOptions() {
     const backBtn = document.createElement('button');
     backBtn.className = "grand-btn btn-back";
     backBtn.style.background = "var(--neon-red)";
-    backBtn.innerText = "⬅️ BACK";
+    if (type === 'personal') {
+       backBtn.innerText = "⬅️ BACK TO PERSONAL SCORES";
+       backBtn.onclick = () => viewHOF('personal'); 
+    } else {
+        backBtn.innerText = "⬅️ BACK TO GLOBAL SCORES";
+        backBtn.onclick = () => viewHOF('global'); 
+    }
     backBtn.onclick = () => viewHOF('global'); 
+
     btns.appendChild(backBtn);
 }
 </script>
