@@ -205,6 +205,7 @@ let scene, camera, renderer, rocket, flame, nose;
 let asteroids = [], stars = [], lasers = [];
 let score = 0, level = 1, lives = 3, fuel = 100, active = false, paused = false;
 let audioCtx, engineOsc, engineGain, soundOn = true;
+let sirenInterval = null;
 let localHOF = JSON.parse(localStorage.getItem('spaceDodgerHOF')) || [];
 
 function launchMission() {
@@ -390,7 +391,7 @@ function playSfx(type) {
             g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.0);
             break;
     }
-    osc.start(); osc.stop(audioCtx.currentTime + 0.8);
+    osc.start(); osc.stop(audioCtx.currentTime + 1.0);
 }
 
 function initFuelUI() {
