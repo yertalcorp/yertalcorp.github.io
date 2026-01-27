@@ -95,7 +95,7 @@
     cursor: pointer;
     position: relative;
     transition: transform 0.1s, box-shadow 0.1s;
-    
+    z-index:10;
     /* Restore the 3D 'Ledge' */
     box-shadow: 0 8px 0 rgba(0,0,0,0.5); 
     margin: 10px;
@@ -172,7 +172,7 @@
 <div id="screen-landing" class="screen">
     <h1 id="main-title">SPACE DODGER 3D</h1>
     <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 30px;">
-        <button class="grand-btn" style="background: var(--neon-blue); box-shadow: 0 10px 0 #8a6d00;" onclick="launchMission()">🚀 LAUNCH MISSION</button>
+        <button class="grand-btn" style="background: var(--neon-blue); box-shadow: 0 10px 0 #001188;" onclick="launchMission()">🚀 LAUNCH MISSION</button>
         <br>
         <button class="grand-btn" style="background: var(--gold); box-shadow: 0 10px 0 #8a6d00;" onclick="viewHOF('personal')">🏆 HALL OF FAME</button>
     </div>
@@ -390,6 +390,7 @@ function updateUI() {
 }
 
 function viewHOF(type) {
+    if (!window.localHOF) window.localHOF = [];
     paused = true;
     const content = document.getElementById('overlay-content');
     const btns = document.getElementById('overlay-btns');
