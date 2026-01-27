@@ -20,7 +20,23 @@
 
         .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
         .hidden { display: none !important; }
-        .neon-box { border: 5px solid var(--neon-blue); border-radius: 30px; padding: 40px; background: rgba(0,0,0,0.9); box-shadow: 0 0 40px var(--neon-blue); text-align: center; min-width: 500px; }
+        /* Ensure the neon box fits the screen */
+.neon-box { 
+    border: 5px solid var(--neon-blue); 
+    border-radius: 30px; 
+    padding: 20px; 
+    background: rgba(0,0,0,0.95); 
+    box-shadow: 0 0 40px var(--neon-blue); 
+    text-align: center; 
+    
+    /* Layout Magic */
+    display: flex;
+    flex-direction: column;
+    max-width: 90vw;
+    max-height: 90vh; /* Never taller than 90% of screen */
+    width: 600px;
+    box-sizing: border-box;
+}
         
         .impact-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 1.4rem; }
         .impact-table th { color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); padding: 12px; }
@@ -58,19 +74,17 @@
     margin: 0;
 }
 
-/* 2. THE TACTILE 3D BUTTONS */
+/* Make buttons scale based on screen width */
 .grand-btn {
-    padding: 25px 50px;
-    font-size: 1.5rem;
-    border: none;
+    padding: clamp(10px, 2vh, 20px) clamp(20px, 4vw, 40px);
+    font-size: clamp(0.9rem, 1.5vw, 1.3rem);
     border-radius: 50px;
     font-weight: 900;
     cursor: pointer;
-    text-transform: uppercase;
     transition: all 0.1s;
-    /* This creates the bottom 'ledge' of the button */
-    box-shadow: 0 10px 0 #005f66, 0 15px 25px rgba(0, 242, 255, 0.3);
-    margin: 15px;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+    margin: 5px;
+    flex-shrink: 0; /* Prevents button from squishing */
 }
 
 .grand-btn:active {
@@ -84,25 +98,24 @@
     from { transform: perspective(600px) rotateX(15deg) translateY(0); }
     to { transform: perspective(600px) rotateX(20deg) translateY(-20px); }
 }
-        /* 3D HOF Title */
+/* Ensure the title shrinks to fit narrow screens */
 .hof-title {
-    font-size: clamp(2.5rem, 7vw, 5rem);
-    color: var(--gold);
-    font-style: italic;
-    text-shadow: 2px 2px 0px #8a6d00, 4px 4px 0px #5e4a00, 0 0 20px rgba(255, 215, 0, 0.3);
-    margin: 5px 0;
+    font-size: clamp(1.5rem, 6vw, 4rem);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin: 10px 0;
 }
 
 /* Trophy Row */
 .trophy-row { font-size: 2.5rem; margin: 10px 0; filter: drop-shadow(0 0 10px var(--gold)); }
 
-/* Table Container & Tiered Rows */
+/* The List Container */
 .hof-scroll-box {
-    max-height: 55vh; /* Responsive height for small screens */
+    flex-grow: 1; /* Takes up remaining space */
+    min-height: 0; /* CRITICAL: allows flex child to scroll */
     overflow-y: auto;
     width: 100%;
     margin: 10px 0;
-    border: 1px solid rgba(255,255,255,0.1);
 }
 
 .hof-table { width: 100%; border-collapse: collapse; }
@@ -358,62 +371,71 @@ function viewHOF(type) {
     paused = true;
     const content = document.getElementById('overlay-content');
     const btns = document.getElementById('overlay-btns');
+    
+    // Clear previous state
     btns.innerHTML = ''; 
+    content.innerHTML = '';
 
-    // Assume user is Guest if no global 'userToken' exists
-    const isLoggedIn = (window.userProfile && window.userProfile.loggedIn);
+    // Status Check
+    const isGuest = !(window.userProfile && window.userProfile.loggedIn);
+
+    // 1. Build Title and Trophies
+    const title = document.createElement('h1');
+    title.className = 'hof-title';
+    title.innerText = 'HALL OF FAME';
     
-    let html = `
-        <h1 class="hof-title">HALL OF FAME</h1>
-        <div class="trophy-row">🏆 🏆 🏆 🏆 🏆</div>
-        <div class="hof-scroll-box">
-            <table class="hof-table">
-                <tr><th>RANK</th><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
+    const trophies = document.createElement('div');
+    trophies.className = 'trophy-row';
+    trophies.innerText = '🏆 🏆 🏆 🏆 🏆';
 
-    // Fetch the correct data: Global (if logged in) or Personal (Local/Session)
-    let displayScores = (type === 'global' && isLoggedIn) ? globalHOF : localHOF;
+    // 2. Build Scrollable Table
+    const scrollBox = document.createElement('div');
+    scrollBox.className = 'hof-scroll-box';
     
-    if (displayScores.length === 0) {
-        html += `<tr><td colspan="4" style="color:gray;">No missions recorded yet.</td></tr>`;
-    } else {
-        displayScores.slice(0, 10).forEach((entry, i) => {
-            let rowColor = (i === 0) ? 'rank-gold' : (i === 1) ? 'rank-silver' : (i === 2) ? 'rank-bronze' : 'rank-white';
-            html += `
-                <tr class="${rowColor}">
-                    <td>#${i + 1}</td>
-                    <td>${entry.u || 'GUEST'}</td>
-                    <td>${entry.l}</td>
-                    <td>${entry.s.toLocaleString()}</td>
-                </tr>`;
-        });
-    }
+    let tableHtml = `
+        <table class="hof-table">
+            <tr><th>RANK</th><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
+    
+    // Use session scores for Guest (localHOF)
+    let displayScores = localHOF.slice(0, 10);
+    
+    displayScores.forEach((entry, i) => {
+        let rowColor = (i === 0) ? 'rank-gold' : (i === 1) ? 'rank-silver' : (i === 2) ? 'rank-bronze' : 'rank-white';
+        tableHtml += `
+            <tr class="${rowColor}">
+                <td>#${i + 1}</td>
+                <td>${entry.u || 'GUEST'}</td>
+                <td>${entry.l}</td>
+                <td>${entry.s.toLocaleString()}</td>
+            </tr>`;
+    });
+    tableHtml += `</table>`;
+    scrollBox.innerHTML = tableHtml;
 
-    html += `</table></div>`;
-    content.innerHTML = html;
+    // 3. Assemble Overlay
+    content.appendChild(title);
+    content.appendChild(trophies);
+    content.appendChild(scrollBox);
 
-    // --- BUTTON LOGIC ---
-    if (!isLoggedIn) {
-        // GUEST BUTTONS
+    // 4. Conditional Buttons
+    if (isGuest) {
         const saveBtn = document.createElement('button');
         saveBtn.className = "grand-btn";
         saveBtn.style.background = "var(--neon-blue)";
         saveBtn.innerText = "💾 SAVE SCORES";
-        saveBtn.onclick = () => alert("Login required to save scores permanently!");
+        saveBtn.onclick = () => alert("Login tomorrow to save!");
         btns.appendChild(saveBtn);
     }
 
-    // SHARED BACK BUTTON
     const backBtn = document.createElement('button');
     backBtn.className = "grand-btn";
     backBtn.style.background = "var(--neon-red)";
-    backBtn.style.boxShadow = "0 10px 0 #8b0000"; // Red 3D ledge
     backBtn.innerText = "🚀 BACK TO MISSION";
     backBtn.onclick = closeOverlay;
     btns.appendChild(backBtn);
 
     document.getElementById('screen-overlay').classList.remove('hidden');
 }
-
 function manualTogglePause() { paused = !paused; document.getElementById('pause-btn').innerText = paused ? "▶️" : "⏸️"; }
 function toggleMute() { 
     soundOn = !soundOn; 
