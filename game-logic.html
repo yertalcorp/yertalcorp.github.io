@@ -462,7 +462,7 @@ function viewHOF(type) {
         let tableHtml = `<table class="hof-table"><tr><th>RANK</th><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
 
         // Use global data if type is global, otherwise local
-        let data = (type === 'global') ? (window.globalHOF || []) : window.localHOF;
+        let data = (type === 'global') ? (window.globalHOF || []) : (window.localHOF || []);
         
         let displayScores = data.slice(0, 10);
     
