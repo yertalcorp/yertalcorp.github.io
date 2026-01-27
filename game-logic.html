@@ -426,12 +426,12 @@ function viewHOF(type) {
     btns.innerHTML = ''; 
     content.innerHTML = '';
 
-    const isGuest = !(window.userProfile && window.userProfile.loggedIn);
-
+    const isLoggedIn = !(window.userProfile && window.userProfile.loggedIn);
+    const isGuest = !isLoggedIn;
+    
     const title = document.createElement('h1');
     title.className = 'hof-title';
     title.innerText = (type === 'global') ? 'GLOBAL RANKINGS' : 'PERSONAL BESTS';
-    title.innerText = 'HALL OF FAME';
     
     const trophies = document.createElement('div');
     trophies.className = 'trophy-row';
@@ -453,7 +453,7 @@ function viewHOF(type) {
         loginBtn.style.background = "linear-gradient(to bottom, #444, #222)";
         loginBtn.style.boxShadow = "0 8px 0 #000";
         loginBtn.innerText = "🔑 MEMBER LOGIN";
-        loginBtn.onclick = showLoginOptions; // Links to the new function below
+        loginBtn.onclick = showLoginOptions('global'); // Links to the new function below
         btns.appendChild(loginBtn);
     } else {
         let tableHtml = `<table class="hof-table"><tr><th>RANK</th><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
@@ -474,13 +474,13 @@ function viewHOF(type) {
     content.appendChild(trophies);
     content.appendChild(scrollBox);
 
-    if (isGuest) {
+    if (isGuest && type !== 'global') {
         const saveBtn = document.createElement('button');
         saveBtn.className = "grand-btn btn-launch";
         saveBtn.style.background = "var(--neon-blue)";
         saveBtn.style.boxShadow = "0 8px 0 #008a91"; // Added 3D depth
         saveBtn.innerText = "💾 SAVE SCORES";
-        saveBtn.onclick = showLoginOptions;
+        saveBtn.onclick = showLoginOptions('personal');
         btns.appendChild(saveBtn);
     }
 
