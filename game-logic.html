@@ -15,7 +15,7 @@
         @keyframes fuel-flash { 0% { background: var(--neon-red); } 100% { background: #000; } }
 
         #hud-right { position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; }
-        .nav-icon { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); cursor: pointer; font-size: 30px; transition: 0.3s; }
+        .nav-icon { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; text-align: center; background: rgba(0,0,0,0.6); cursor: pointer; font-size: 30px; transition: 0.3s; }
         .nav-icon:hover { transform: scale(1.1); box-shadow: 0 0 20px var(--neon-blue); }
 
         .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
@@ -105,11 +105,11 @@
 </div>
 
 <div id="screen-landing" class="screen">
-    <h1 id="main-title"><center>SPACE DODGER 3D</center></h1>
-    <div style="margin-top: 30px;">
-        <button class="grand-btn" onclick="launchMission()">🚀 LAUNCH MISSION</button>
+    <h1 id="main-title">SPACE DODGER 3D</h1>
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 30px;">
+        <button class="grand-btn" style="background: var(--neon-blue);" onclick="launchMission()">🚀 LAUNCH MISSION</button>
         <br>
-        <button class="grand-btn" style="background: linear-gradient(145deg, #ffd700, #b8860b); box-shadow: 0 10px 0 #7a5c00;" onclick="viewHOF('personal')">🏆 HALL OF FAME</button>
+        <button class="grand-btn" style="background: var(--gold); box-shadow: 0 10px 0 #8a6d00;" onclick="viewHOF('personal')">🏆 HALL OF FAME</button>
     </div>
 </div>
 
