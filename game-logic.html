@@ -126,6 +126,7 @@
 }
 /* Ensure the title shrinks to fit narrow screens */
 .hof-title {
+    text-align: center;
     font-size: clamp(1.5rem, 6vw, 4rem);
     white-space: nowrap;
     flex-shrink: 0;
@@ -133,7 +134,7 @@
 }
 
 /* Trophy Row */
-.trophy-row { font-size: 2.5rem; margin: 10px 0; filter: drop-shadow(0 0 10px var(--gold)); }
+.trophy-row { width: 100%; display: flex; justify-content: center; text-align: center; font-size: 2.5rem; letter-spacing: 5px; margin: 10px 0; filter: drop-shadow(0 0 10px var(--gold)); }
 
 .hof-scroll-box {
     width: 100%;
