@@ -450,7 +450,7 @@ function viewHOF(type) {
         const saveBtn = document.createElement('button');
         saveBtn.className = "grand-btn btn-launch";
         saveBtn.style.background = "var(--neon-blue)";
-        **saveBtn.style.boxShadow = "0 8px 0 #008a91";**
+        saveBtn.style.boxShadow = "0 8px 0 #008a91";
         saveBtn.innerText = "💾 SAVE SCORES";
         saveBtn.onclick = () => alert("Login tomorrow to save!");
         btns.appendChild(saveBtn);
@@ -459,7 +459,7 @@ function viewHOF(type) {
     const backBtn = document.createElement('button');
     backBtn.className = "grand-btn btn-back";
     backBtn.style.background = "var(--neon-red)";
-    **backBtn.style.boxShadow = "0 8px 0 #8b0000";**
+    backBtn.style.boxShadow = "0 8px 0 #8b0000";
     backBtn.innerText = "🚀 BACK TO MISSION";
     backBtn.onclick = closeOverlay;
     btns.appendChild(backBtn);
