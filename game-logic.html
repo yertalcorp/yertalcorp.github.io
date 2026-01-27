@@ -301,7 +301,51 @@ function toggleMute() {
     if(engineGain) engineGain.gain.setValueAtTime(soundOn ? 0.05 : 0, audioCtx.currentTime);
 }
 function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); paused = false; }
-function showScreen(type) { paused = true; document.getElementById('overlay-content').innerHTML = `<h2>MISSION INFO</h2><p>Dodge: Mouse<br>Shoot: Click<br>Spacing: 15% Gap Enforced</p>`; document.getElementById('overlay-btns').innerHTML = '<button onclick="closeOverlay()">UNDERSTOOD</button>'; document.getElementById('screen-overlay').classList.remove('hidden'); }
+function showScreen(type) {
+    paused = true;
+    const content = document.getElementById('overlay-content');
+    const btns = document.getElementById('overlay-btns');
+    btns.innerHTML = ''; 
+
+    // Custom HTML with inline styles for high-impact colors
+    let html = `
+        <h1 style="color: var(--neon-blue); font-size: 3rem; margin-bottom: 20px; text-shadow: 0 0 20px var(--neon-blue);">PILOT MANUAL</h1>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left;">
+            
+            <div style="border: 2px solid #ff00ff; padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px #ff00ff;">
+                <h3 style="color: #ff00ff; margin: 0; font-size: 1.5rem;">🚀 MOVEMENT</h3>
+                <p style="font-weight: bold; color: #fff; margin: 10px 0;">Slide your <span style="color: #ff00ff;">MOUSE</span> to navigate the debris field. Your ship follows your lead.</p>
+            </div>
+
+            <div style="border: 2px solid var(--gold); padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px var(--gold);">
+                <h3 style="color: var(--gold); margin: 0; font-size: 1.5rem;">⭐ SCORING</h3>
+                <p style="font-weight: bold; color: #fff; margin: 10px 0;">Blast asteroids for points. Collecting <span style="color: var(--gold);">GOLD STARS</span> adds +25 to your score.</p>
+            </div>
+
+            <div style="border: 2px solid #39ff14; padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px #39ff14;">
+                <h3 style="color: #39ff14; margin: 0; font-size: 1.5rem;">⛽ FUEL TANK</h3>
+                <p style="font-weight: bold; color: #fff; margin: 10px 0;">Stars refuel your tank. If it hits <span style="color: var(--neon-red);">ZERO</span>, the mission ends instantly!</p>
+            </div>
+
+            <div style="border: 2px solid var(--neon-blue); padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px var(--neon-blue);">
+                <h3 style="color: var(--neon-blue); margin: 0; font-size: 1.5rem;">📈 LEVELS</h3>
+                <p style="font-weight: bold; color: #fff; margin: 10px 0;">Difficulty <span style="color: var(--neon-blue);">SCALES</span>. Asteroids increase & stars decrease as you advance.</p>
+            </div>
+
+        </div>
+    `;
+    
+    content.innerHTML = html;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.innerText = "RETURN TO COCKPIT";
+    closeBtn.style.marginTop = "30px";
+    closeBtn.onclick = closeOverlay;
+    btns.appendChild(closeBtn);
+
+    document.getElementById('screen-overlay').classList.remove('hidden');
+}
 
 window.addEventListener('mousedown', (e) => { 
     if(active && !paused && e.button === 0) { 
