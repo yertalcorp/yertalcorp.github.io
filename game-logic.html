@@ -443,7 +443,7 @@ function viewHOF(type) {
     const scrollBox = document.createElement('div');
     scrollBox.className = 'hof-scroll-box';
 
-    if (type === 'global' && !isLoggedIn) {
+    if (type === 'global' && isLoggedIn === false) {
         scrollBox.innerHTML = `
             <div style="text-align:center; padding:20px; color:var(--neon-red);">
                 <p>⚠️ ACCESS DENIED</p>
@@ -462,9 +462,9 @@ function viewHOF(type) {
         let tableHtml = `<table class="hof-table"><tr><th>RANK</th><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
 
         // Use global data if type is global, otherwise local
-        let data = (type === 'global') ? (window.globalHOF || []) : localHOF;
+        let data = (type === 'global') ? (window.globalHOF || []) : window.localHOF;
         
-        let displayScores = localHOF.slice(0, 10);
+        let displayScores = data.slice(0, 10);
     
         displayScores.forEach((entry, i) => {
             let rowColor = (i === 0) ? 'rank-gold' : (i === 1) ? 'rank-silver' : (i === 2) ? 'rank-bronze' : 'rank-white';
@@ -477,7 +477,7 @@ function viewHOF(type) {
     content.appendChild(trophies);
     content.appendChild(scrollBox);
 
-    if (isGuest && type !== 'global') {
+    if (isGuest && type === 'personal') {
         const saveBtn = document.createElement('button');
         saveBtn.className = "grand-btn btn-launch";
         saveBtn.style.background = "var(--neon-blue)";
