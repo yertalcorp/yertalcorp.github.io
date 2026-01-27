@@ -601,6 +601,10 @@ function toggleMute() {
 function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); }
 function showScreen(type) {
     paused = true;
+    // INDICATE: Sync the UI button icon to show 'Play' since game is now paused
+    const pauseBtn = document.getElementById('pause-btn');
+    if (pauseBtn) pauseBtn.innerText = '▶️';
+    
     const content = document.getElementById('overlay-content');
     const btns = document.getElementById('overlay-btns');
     btns.innerHTML = ''; 
