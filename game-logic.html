@@ -38,6 +38,14 @@
     overflow: hidden; /* Clips any loose children */
     position: relative;
 }
+#overlay-btns {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-shrink: 0;
+  padding-top: 10px;
+  width: 100%;
+}
         
         .impact-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 1.4rem; }
         .impact-table th { color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); padding: 12px; }
@@ -436,6 +444,7 @@ function viewHOF(type) {
         const saveBtn = document.createElement('button');
         saveBtn.className = "grand-btn btn-launch";
         saveBtn.style.background = "var(--neon-blue)";
+        **saveBtn.style.boxShadow = "0 8px 0 #008a91";**
         saveBtn.innerText = "💾 SAVE SCORES";
         saveBtn.onclick = () => alert("Login tomorrow to save!");
         btns.appendChild(saveBtn);
@@ -444,6 +453,7 @@ function viewHOF(type) {
     const backBtn = document.createElement('button');
     backBtn.className = "grand-btn btn-back";
     backBtn.style.background = "var(--neon-red)";
+    **backBtn.style.boxShadow = "0 8px 0 #8b0000";**
     backBtn.innerText = "🚀 BACK TO MISSION";
     backBtn.onclick = closeOverlay;
     btns.appendChild(backBtn);
