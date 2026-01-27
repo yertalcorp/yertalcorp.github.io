@@ -20,14 +20,16 @@
 
         .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
         .hidden { display: none !important; }
-        .neon-box { border: 5px solid var(--neon-blue); border-radius: 30px; padding: 50px; background: rgba(0,0,0,0.9); box-shadow: 0 0 40px var(--neon-blue); text-align: center; min-width: 500px; max-width: 85%; }
+        .neon-box { border: 5px solid var(--neon-blue); border-radius: 30px; padding: 40px; background: rgba(0,0,0,0.9); box-shadow: 0 0 40px var(--neon-blue); text-align: center; min-width: 500px; }
         
         .impact-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 1.4rem; }
         .impact-table th { color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); padding: 12px; }
         .impact-table td { padding: 12px; border-bottom: 1px solid #333; }
 
-        button { padding: 20px 40px; margin: 15px; border-radius: 15px; border: none; background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; font-size: 1.3rem; text-transform: uppercase; }
+        .btn-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; }
+        button { padding: 18px 35px; border-radius: 12px; border: none; background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; font-size: 1.1rem; text-transform: uppercase; }
         button:hover { filter: brightness(1.2); }
+        .btn-alt { background: transparent; border: 2px solid var(--neon-blue); color: var(--neon-blue); }
     </style>
 </head>
 <body>
@@ -51,26 +53,31 @@
 <div id="screen-landing" class="screen">
     <h1 style="font-size: 6rem; text-shadow: 0 0 30px var(--neon-blue);">SPACE DODGER</h1>
     <button onclick="launchMission()">Launch Mission</button>
-    <button onclick="viewHOF('personal')">Hall of Fame</button>
+    <button onclick="viewHOF('personal')" class="btn-alt">Hall of Fame</button>
 </div>
 
 <div id="screen-gameover" class="screen hidden">
     <h1 style="font-size: 8rem; color: var(--neon-red);">GAME OVER</h1>
-    <button onclick="launchMission()">RELAUNCH MISSION</button>
-    <button onclick="viewHOF('personal')">HALL OF FAME</button>
+    <div class="btn-container">
+        <button onclick="launchMission()">Relaunch Mission</button>
+        <button onclick="viewHOF('personal')" class="btn-alt">View High Scores</button>
+    </div>
 </div>
 
 <div id="screen-overlay" class="screen hidden">
-    <div id="overlay-content" class="neon-box"></div>
-    <button onclick="closeOverlay()">BACK</button>
+    <div id="overlay-wrapper" class="neon-box">
+        <div id="overlay-content"></div>
+        <div class="btn-container" id="overlay-btns">
+            </div>
+    </div>
 </div>
 
 <script>
 let scene, camera, renderer, rocket, flame, nose;
 let asteroids = [], stars = [], lasers = [];
 let score = 0, level = 1, lives = 3, fuel = 100, active = false, paused = false;
-let audioCtx, engineWhirr, sirenOsc, soundOn = true;
-let localHOF = JSON.parse(localStorage.getItem('spaceDodgerHOF')) || [{u: 'Ace', l: 5, s: 1200}];
+let audioCtx, engineOsc, engineGain, soundOn = true;
+let localHOF = JSON.parse(localStorage.getItem('spaceDodgerHOF')) || [];
 
 function launchMission() {
     score = 0; level = 1; lives = 3; fuel = 100;
@@ -94,7 +101,7 @@ function init3D() {
     const rocketGrp = new THREE.Group();
     const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.45, 1.2, 32), new THREE.MeshPhongMaterial({color: 0x0044ff}));
     nose = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 32), new THREE.MeshPhongMaterial({color: 0x0044ff})); 
-    nose.position.y = 0.75; // Lowered as requested
+    nose.position.y = 0.75;
     const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.3, 16), new THREE.MeshPhongMaterial({color: 0x222222})); engine.position.y = -0.75;
     flame = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 12), new THREE.MeshBasicMaterial({color: 0xff4400})); flame.position.y = -1.2; flame.rotation.x = Math.PI;
     rocketGrp.add(hull, nose, engine, flame);
@@ -108,12 +115,16 @@ function init3D() {
 function initAudio() {
     if(audioCtx) audioCtx.close();
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    engineWhirr = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    engineWhirr.type = 'sine'; engineWhirr.frequency.value = 80;
-    gain.gain.value = soundOn ? 0.02 : 0;
-    engineWhirr.connect(gain); gain.connect(audioCtx.destination);
-    engineWhirr.start();
+    
+    // Constant Low Frequency Rocket Whirr
+    engineOsc = audioCtx.createOscillator();
+    engineGain = audioCtx.createGain();
+    engineOsc.type = 'sine';
+    engineOsc.frequency.setValueAtTime(60, audioCtx.currentTime); // Low frequency hum
+    engineGain.gain.setValueAtTime(soundOn ? 0.05 : 0, audioCtx.currentTime);
+    engineOsc.connect(engineGain);
+    engineGain.connect(audioCtx.destination);
+    engineOsc.start();
 }
 
 function playSfx(type) {
@@ -123,33 +134,35 @@ function playSfx(type) {
     osc.connect(g); g.connect(audioCtx.destination);
 
     switch(type) {
-        case 'blast': // POWERFUL LOW BLAST
+        case 'blast': // The powerful "BLAST" logic
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(60, audioCtx.currentTime); 
-            g.gain.setValueAtTime(0.8, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); // Quick trail off
+            osc.frequency.setValueAtTime(55, audioCtx.currentTime); 
+            g.gain.setValueAtTime(0.7, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
             break;
-        case 'booom': // IMPACT BOOM
+        case 'booom':
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(40, audioCtx.currentTime);
-            g.gain.setValueAtTime(1, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(45, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.9, audioCtx.currentTime);
             g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
             break;
         case 'bling':
             osc.type = 'sine'; osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-            g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.15, audioCtx.currentTime);
             g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
             break;
         case 'whooop':
             osc.type = 'square'; osc.frequency.setValueAtTime(200, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.5);
-            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.08, audioCtx.currentTime);
             g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
             break;
         case 'laser':
-            osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.1);
-            g.gain.value = 0.05;
+            osc.type = 'sine'; // Removed sawtooth to prevent high-freq click
+            osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+            g.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
             break;
     }
     osc.start(); osc.stop(audioCtx.currentTime + 0.8);
@@ -161,33 +174,16 @@ function initFuelUI() {
     for(let i=0; i<25; i++) { const s = document.createElement('div'); s.className = 'fuel-section'; container.appendChild(s); }
 }
 
-function createStar(x) {
-    const shape = new THREE.Shape();
-    const spikes = 5, outer = 0.3, inner = 0.12;
-    for(let i=0; i<spikes*2; i++) {
-        let r = i%2===0 ? outer : inner;
-        let a = (i/spikes) * Math.PI;
-        if(i===0) shape.moveTo(Math.cos(a)*r, Math.sin(a)*r); else shape.lineTo(Math.cos(a)*r, Math.sin(a)*r);
-    }
-    const star = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, {depth: 0.1, bevelEnabled: false}), new THREE.MeshPhongMaterial({color: 0xffd700}));
-    star.position.set(x, 8, 0); stars.push(star); scene.add(star);
-}
-
 function spawnLogic() {
-    // Reduced Density Check (0.02)
     if(Math.random() > 0.02) return;
-
-    const minGap = 2.1; // ~15% of 14-unit width
+    const minGap = 2.1; 
     let spawnX = (Math.random() - 0.5) * 12;
-    
-    // Check Spacing Gap
     const existing = [...asteroids, ...stars].filter(o => o.position.y > 5);
-    for(let o of existing) {
-        if(Math.abs(o.position.x - spawnX) < minGap) return; // Too close, cancel spawn
-    }
+    for(let o of existing) { if(Math.abs(o.position.x - spawnX) < minGap) return; }
 
     if(Math.random() < 0.2) {
-        createStar(spawnX);
+        const star = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2, 0), new THREE.MeshPhongMaterial({color: 0xffd700}));
+        star.position.set(spawnX, 8, 0); stars.push(star); scene.add(star);
     } else {
         const s = 0.4 + Math.random() * 0.8;
         const ast = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 1), new THREE.MeshPhongMaterial({color: 0x882222, flatShading: true}));
@@ -223,14 +219,14 @@ function update() {
                 if(a.userData.hp <= 0) {
                     score += a.userData.size > 0.8 ? 5 : 1; fuel = Math.min(100, fuel+2);
                     playSfx('blast'); scene.remove(a); asteroids.splice(ai,1);
-                    if(score >= level * 100) { level++; playSfx('whooop'); playSfx('whooop'); }
+                    if(score >= level * 100) { level++; playSfx('whooop'); }
                 }
             }
         });
     });
 
     if(fuel <= 0 || lives <= 0) {
-        active = false; if(engineWhirr) engineWhirr.stop();
+        active = false; if(engineOsc) engineOsc.stop();
         localHOF.push({u: 'Guest', l: level, s: score});
         localHOF.sort((a,b)=>b.s-a.s);
         localStorage.setItem('spaceDodgerHOF', JSON.stringify(localHOF));
@@ -255,19 +251,45 @@ function updateUI() {
 function viewHOF(type) {
     paused = true;
     const content = document.getElementById('overlay-content');
-    let html = `<h2>${type === 'global' ? 'Global Top 10' : 'Personal Best'}</h2><table class="impact-table"><tr><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
-    localHOF.slice(0, 10).forEach(h => { html += `<tr><td>${h.u}</td><td>${h.l}</td><td>${h.s}</td></tr>`; });
-    html += `</table>`;
-    if(type === 'global') html += `<button onclick="alert('Federated Login tomorrow!')">LOGIN TO JOIN GLOBAL</button>`;
-    content.innerHTML = html;
+    const btns = document.getElementById('overlay-btns');
+    btns.innerHTML = ''; 
+
+    if(type === 'global') {
+        content.innerHTML = `<h2>GLOBAL LEADERBOARD</h2><p style="margin:20px 0;">Connecting to Global Servers...</p><table class="impact-table"><tr><th>PILOT</th><th>LVL</th><th>SCORE</th></tr><tr><td colspan="3">Login Tomorrow to see Global Ranks!</td></tr></table>`;
+        const logBtn = document.createElement('button'); logBtn.innerText = "LOGIN NOW"; logBtn.onclick = () => alert('Federated Login tomorrow!');
+        btns.appendChild(logBtn);
+    } else {
+        let html = `<h2>PERSONAL HIGH SCORES</h2><table class="impact-table"><tr><th>DATE</th><th>LVL</th><th>SCORE</th></tr>`;
+        localHOF.slice(0, 10).forEach(h => { html += `<tr><td>GUEST</td><td>${h.l}</td><td>${h.s}</td></tr>`; });
+        html += `</table>`;
+        content.innerHTML = html;
+        
+        // BACK TO MISSION / SAVE SCORE BUTTONS
+        const saveBtn = document.createElement('button'); saveBtn.innerText = "SAVE SCORES"; saveBtn.onclick = () => alert('Sign in tomorrow to save permanently!');
+        btns.appendChild(saveBtn);
+    }
+    
+    const backBtn = document.createElement('button'); backBtn.innerText = "BACK TO MISSION"; backBtn.className = "btn-alt"; backBtn.onclick = closeOverlay;
+    btns.appendChild(backBtn);
+
     document.getElementById('screen-overlay').classList.remove('hidden');
 }
 
-function showScreen(type) { paused = true; document.getElementById('overlay-content').innerHTML = `<h2>INFO</h2><p>Dodge asteroids and collect stars!<br>Nose position lowered for aerodynamics.</p>`; document.getElementById('screen-overlay').classList.remove('hidden'); }
 function manualTogglePause() { paused = !paused; document.getElementById('pause-btn').innerText = paused ? "▶️" : "⏸️"; }
-function toggleMute() { soundOn = !soundOn; document.getElementById('mute-btn').innerText = soundOn?'🔊':'🔇'; }
+function toggleMute() { 
+    soundOn = !soundOn; 
+    document.getElementById('mute-btn').innerText = soundOn?'🔊':'🔇'; 
+    if(engineGain) engineGain.gain.setValueAtTime(soundOn ? 0.05 : 0, audioCtx.currentTime);
+}
 function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); paused = false; }
-window.addEventListener('mousedown', () => { if(active && !paused) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6), new THREE.MeshBasicMaterial({color: 0x00ffff})); l.position.copy(rocket.position); lasers.push(l); scene.add(l); playSfx('laser'); }});
+function showScreen(type) { paused = true; document.getElementById('overlay-content').innerHTML = `<h2>MISSION INFO</h2><p>Dodge: Mouse<br>Shoot: Click<br>Spacing: 15% Gap Enforced</p>`; document.getElementById('overlay-btns').innerHTML = '<button onclick="closeOverlay()">UNDERSTOOD</button>'; document.getElementById('screen-overlay').classList.remove('hidden'); }
+
+window.addEventListener('mousedown', (e) => { 
+    if(active && !paused && e.button === 0) { 
+        const l = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6), new THREE.MeshBasicMaterial({color: 0x00ffff})); 
+        l.position.copy(rocket.position); lasers.push(l); scene.add(l); playSfx('laser'); 
+    }
+});
 window.addEventListener('mousemove', (e) => { if(active && !paused) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
 function animate() { if(!active) return; requestAnimationFrame(animate); update(); renderer.render(scene, camera); }
 </script>
