@@ -27,15 +27,16 @@
     padding: 20px; 
     background: rgba(0,0,0,0.95); 
     box-shadow: 0 0 40px var(--neon-blue); 
-    text-align: center; 
     
-    /* Layout Magic */
+    /* FIX: Force everything to stay inside */
     display: flex;
     flex-direction: column;
-    max-width: 90vw;
-    max-height: 90vh; /* Never taller than 90% of screen */
-    width: 600px;
-    box-sizing: border-box;
+    width: 90vw;
+    max-width: 600px;
+    height: auto;
+    max-height: 85vh; /* Prevents spilling off screen */
+    overflow: hidden; /* Clips any loose children */
+    position: relative;
 }
         
         .impact-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 1.4rem; }
@@ -76,22 +77,32 @@
 
 /* Make buttons scale based on screen width */
 .grand-btn {
-    padding: clamp(10px, 2vh, 20px) clamp(20px, 4vw, 40px);
-    font-size: clamp(0.9rem, 1.5vw, 1.3rem);
-    border-radius: 50px;
+    display: inline-block;
+    padding: 15px 35px;
+    font-size: 1.2rem;
     font-weight: 900;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 50px;
     cursor: pointer;
-    transition: all 0.1s;
-    box-shadow: 0 6px 0 rgba(0,0,0,0.3);
-    margin: 5px;
+    position: relative;
+    transition: transform 0.1s, box-shadow 0.1s;
+    
+    /* Restore the 3D 'Ledge' */
+    box-shadow: 0 8px 0 rgba(0,0,0,0.5); 
+    margin: 10px;
     flex-shrink: 0; /* Prevents button from squishing */
 }
+/* Specific 3D colors for buttons */
+.btn-launch { background: var(--neon-blue); box-shadow: 0 8px 0 #008891; }
+.btn-hof { background: var(--gold); box-shadow: 0 8px 0 #8a6d00; }
+.btn-back { background: var(--neon-red); box-shadow: 0 8px 0 #8b0000; }
 
 .grand-btn:active {
-    /* Moves down to 'press' onto the shadow */
-    transform: translateY(6px);
-    box-shadow: 0 4px 0 #005f66, 0 5px 10px rgba(0, 242, 255, 0.3);
+    transform: translateY(4px);
+    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
 }
+        
 
 /* 3. FLOATING ANIMATION */
 @keyframes grandFloat {
@@ -109,13 +120,14 @@
 /* Trophy Row */
 .trophy-row { font-size: 2.5rem; margin: 10px 0; filter: drop-shadow(0 0 10px var(--gold)); }
 
-/* The List Container */
 .hof-scroll-box {
-    flex-grow: 1; /* Takes up remaining space */
-    min-height: 0; /* CRITICAL: allows flex child to scroll */
-    overflow-y: auto;
     width: 100%;
-    margin: 10px 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 15px 0;
+    /* This allows the table to scroll while the box stays fixed */
+    flex: 1 1 auto; 
+    min-height: 0; 
 }
 
 .hof-table { width: 100%; border-collapse: collapse; }
@@ -420,7 +432,7 @@ function viewHOF(type) {
     // 4. Conditional Buttons
     if (isGuest) {
         const saveBtn = document.createElement('button');
-        saveBtn.className = "grand-btn";
+        saveBtn.className = "grand-btn btn-launch";
         saveBtn.style.background = "var(--neon-blue)";
         saveBtn.innerText = "💾 SAVE SCORES";
         saveBtn.onclick = () => alert("Login tomorrow to save!");
@@ -428,7 +440,7 @@ function viewHOF(type) {
     }
 
     const backBtn = document.createElement('button');
-    backBtn.className = "grand-btn";
+    backBtn.className = "grand-btn btn-back";
     backBtn.style.background = "var(--neon-red)";
     backBtn.innerText = "🚀 BACK TO MISSION";
     backBtn.onclick = closeOverlay;
