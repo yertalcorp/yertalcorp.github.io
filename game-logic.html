@@ -430,6 +430,7 @@ function viewHOF(type) {
 
     const title = document.createElement('h1');
     title.className = 'hof-title';
+    title.innerText = (type === 'global') ? 'GLOBAL RANKINGS' : 'PERSONAL BESTS';
     title.innerText = 'HALL OF FAME';
     
     const trophies = document.createElement('div');
@@ -438,17 +439,37 @@ function viewHOF(type) {
 
     const scrollBox = document.createElement('div');
     scrollBox.className = 'hof-scroll-box';
-    
-    let tableHtml = `<table class="hof-table"><tr><th>RANK</th><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
-    let displayScores = localHOF.slice(0, 10);
-    
-    displayScores.forEach((entry, i) => {
-        let rowColor = (i === 0) ? 'rank-gold' : (i === 1) ? 'rank-silver' : (i === 2) ? 'rank-bronze' : 'rank-white';
-        tableHtml += `<tr class="${rowColor}"><td>#${i + 1}</td><td>${entry.u || 'GUEST'}</td><td>${entry.l}</td><td>${entry.s.toLocaleString()}</td></tr>`;
-    });
-    tableHtml += `</table>`;
-    scrollBox.innerHTML = tableHtml;
 
+    if (type === 'global' && !isLoggedIn) {
+        scrollBox.innerHTML = `
+            <div style="text-align:center; padding:20px; color:var(--neon-red);">
+                <p>⚠️ ACCESS DENIED</p>
+                <p>You must be logged in to view Global Rankings.</p>
+            </div>`;
+        
+        // Create the Login Button
+        const loginBtn = document.createElement('button');
+        loginBtn.className = "grand-btn";
+        loginBtn.style.background = "linear-gradient(to bottom, #444, #222)";
+        loginBtn.style.boxShadow = "0 8px 0 #000";
+        loginBtn.innerText = "🔑 MEMBER LOGIN";
+        loginBtn.onclick = showLoginOptions; // Links to the new function below
+        btns.appendChild(loginBtn);
+    } else {
+        let tableHtml = `<table class="hof-table"><tr><th>RANK</th><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
+
+        // Use global data if type is global, otherwise local
+        let data = (type === 'global') ? (window.globalHOF || []) : localHOF;
+        
+        let displayScores = localHOF.slice(0, 10);
+    
+        displayScores.forEach((entry, i) => {
+            let rowColor = (i === 0) ? 'rank-gold' : (i === 1) ? 'rank-silver' : (i === 2) ? 'rank-bronze' : 'rank-white';
+            tableHtml += `<tr class="${rowColor}"><td>#${i + 1}</td><td>${entry.u || 'GUEST'}</td><td>${entry.l}</td><td>${entry.s.toLocaleString()}</td></tr>`;
+        });
+        tableHtml += `</table>`;
+        scrollBox.innerHTML = tableHtml;
+    }
     content.appendChild(title);
     content.appendChild(trophies);
     content.appendChild(scrollBox);
@@ -459,7 +480,7 @@ function viewHOF(type) {
         saveBtn.style.background = "var(--neon-blue)";
         saveBtn.style.boxShadow = "0 8px 0 #008a91"; // Added 3D depth
         saveBtn.innerText = "💾 SAVE SCORES";
-        saveBtn.onclick = () => alert("Login tomorrow to save!");
+        saveBtn.onclick = showLoginOptions;
         btns.appendChild(saveBtn);
     }
 
@@ -534,6 +555,57 @@ window.addEventListener('mousedown', (e) => {
 });
 window.addEventListener('mousemove', (e) => { if(active && !paused) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
 function animate() { if(!active) return; requestAnimationFrame(animate); update(); renderer.render(scene, camera); }
+function showLoginOptions() {
+    const content = document.getElementById('overlay-content');
+    const btns = document.getElementById('overlay-btns');
+    
+    // Clear previous view
+    content.innerHTML = '';
+    btns.innerHTML = '';
+
+    const title = document.createElement('h1');
+    title.className = 'hof-title';
+    title.innerText = 'SELECT PROVIDER';
+    content.appendChild(title);
+
+    // Container for social buttons
+    const loginContainer = document.createElement('div');
+    loginContainer.style.display = "flex";
+    loginContainer.style.flexDirection = "column";
+    loginContainer.style.gap = "15px";
+    loginContainer.style.width = "100%";
+    loginContainer.style.alignItems = "center";
+
+    // Helper to create provider buttons
+    const createProviderBtn = (name, color, icon) => {
+        const btn = document.createElement('button');
+        btn.className = "grand-btn";
+        btn.style.width = "80%";
+        btn.style.background = color;
+        btn.style.boxShadow = `0 6px 0 ${color}99`; // Slightly darker version of color
+        btn.innerHTML = `${icon} LOGIN WITH ${name}`;
+        btn.onclick = () => {
+            console.log(`Initiating ${name} Federated Login...`);
+            // Here you would link to your Firebase/Auth0/Passport.js endpoint
+            // window.location.href = `/auth/${name.toLowerCase()}`;
+        };
+        return btn;
+    };
+
+    loginContainer.appendChild(createProviderBtn('GOOGLE', '#db4437', '🌐'));
+    loginContainer.appendChild(createProviderBtn('MICROSOFT', '#00a1f1', '🏁'));
+    loginContainer.appendChild(createProviderBtn('FACEBOOK', '#4267B2', '👥'));
+
+    content.appendChild(loginContainer);
+
+    // Add a Back button to return to the HOF view
+    const backBtn = document.createElement('button');
+    backBtn.className = "grand-btn btn-back";
+    backBtn.style.background = "var(--neon-red)";
+    backBtn.innerText = "⬅️ BACK";
+    backBtn.onclick = () => viewHOF('global'); 
+    btns.appendChild(backBtn);
+}
 </script>
 </body>
 </html>
