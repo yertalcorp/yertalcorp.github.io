@@ -97,6 +97,8 @@
     transition: transform 0.1s, box-shadow 0.1s;
     z-index:9999;
     pointer-events: auto;
+    /* Ensure the button doesn't 'lose' the mouse while pressing */
+    touch-action: manipulation;
     /* Restore the 3D 'Ledge' */
     box-shadow: 0 8px 0 rgba(0,0,0,0.5); 
     margin: 10px;
@@ -175,7 +177,7 @@
 <div id="screen-landing" class="screen">
     <h1 id="main-title">SPACE DODGER 3D</h1>
     <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 30px;">
-    <button class="grand-btn btn-launch" style="background: var(--neon-blue); box-shadow: 0 8px 0 #008a91;" onclick="launchMission()">🚀 LAUNCH MISSION</button>
+    <button class="grand-btn btn-launch" style="background: var(--neon-blue); box-shadow: 0 8px 0 #008a91;" onclick="console.log('CLICKED'); launchMission()">🚀 LAUNCH MISSION</button>
     <br>
     <button class="grand-btn btn-hof" style="background: var(--gold); box-shadow: 0 8px 0 #8a6d00;" onclick="viewHOF('personal')">🏆 HALL OF FAME</button>
     </div>
