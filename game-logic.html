@@ -557,7 +557,7 @@ window.addEventListener('mousedown', (e) => {
 window.addEventListener('mousemove', (e) => { if(active && !paused) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
 function animate() { if(!active) return; requestAnimationFrame(animate); update(); renderer.render(scene, camera); }
     
-function showLoginOptions() {
+function showLoginOptions(returnType) {
     const content = document.getElementById('overlay-content');
     const btns = document.getElementById('overlay-btns');
     
@@ -604,15 +604,13 @@ function showLoginOptions() {
     const backBtn = document.createElement('button');
     backBtn.className = "grand-btn btn-back";
     backBtn.style.background = "var(--neon-red)";
-    if (type === 'personal') {
+    if (returnType === 'personal') {
        backBtn.innerText = "⬅️ BACK TO PERSONAL SCORES";
        backBtn.onclick = () => viewHOF('personal'); 
     } else {
         backBtn.innerText = "⬅️ BACK TO GLOBAL SCORES";
         backBtn.onclick = () => viewHOF('global'); 
     }
-    backBtn.onclick = () => viewHOF('global'); 
-
     btns.appendChild(backBtn);
 }
 </script>
