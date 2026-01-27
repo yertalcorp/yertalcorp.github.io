@@ -282,12 +282,12 @@ function init3D() {
     leftGlass.scale.z = 0.2; // Flatten the sphere into an oval disc
     const leftWindow = new THREE.Group();
     leftWindow.add(leftRim, leftGlass);
-    leftWindow.position.set(-0.35, 0.2, 0.15); // Placed on the side/front
+    leftWindow.position.set(-0.25, 0.2, 0.1); // Placed on the side/front
     leftWindow.rotation.y = -Math.PI / 3;
 
     // Assembly of Right Window
     const rightWindow = leftWindow.clone(); // Java-style cloning
-    rightWindow.position.set(0.35, 0.2, 0.15);
+    rightWindow.position.set(0.25, 0.2, 0.1);
     rightWindow.rotation.y = Math.PI / 3;
    
     // MAIN AMBIENT LIGHT (General visibility - the "Base" light)
