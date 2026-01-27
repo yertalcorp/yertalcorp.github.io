@@ -127,10 +127,10 @@ function playSfx(type) {
     switch(type) {
         case 'blast': // "BLAAAST" - Aggressive Sawtooth sweep
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.2);
             g.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            g.gain.exponentialRampToValueAtTime(0.02, audioCtx.currentTime + 0.2);
             break;
         case 'booom': // "BOOOM" - Deep Triangle Impact
             osc.type = 'triangle';
