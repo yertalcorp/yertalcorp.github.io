@@ -127,17 +127,17 @@ function playSfx(type) {
     switch(type) {
         case 'blast': // "BLAAAST" - Aggressive Sawtooth sweep
             osc.type = 'square';
-            osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.6);
+            osc.frequency.setValueAtTime(70, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1);
             g.gain.setValueAtTime(1, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.7);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
             break;
         case 'booom': // "BOOOM" - Deep Triangle Impact
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(80, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.6);
             g.gain.setValueAtTime(1, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.7);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
             break;
         case 'bling':
             osc.type = 'sine'; osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
