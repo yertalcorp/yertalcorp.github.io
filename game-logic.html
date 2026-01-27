@@ -526,10 +526,19 @@ function viewHOF(type) {
         let data = (type === 'global') ? (window.globalHOF || []) : (window.localHOF || []);
         
         let displayScores = data.slice(0, 10);
+
+        // INDICATE: Added a check for empty data to provide feedback
+        if (displayScores.length === 0) {
+            tableHtml += `<tr><td colspan="4" style="text-align:center; padding:20px;">NO DATA FOUND</td></tr>`;
+        }
     
         displayScores.forEach((entry, i) => {
             let rowColor = (i === 0) ? 'rank-gold' : (i === 1) ? 'rank-silver' : (i === 2) ? 'rank-bronze' : 'rank-white';
-            tableHtml += `<tr class="${rowColor}"><td>#${i + 1}</td><td>${entry.u || 'GUEST'}</td><td>${entry.l}</td><td>${entry.s.toLocaleString()}</td></tr>`;
+            // INDICATE: Added fallbacks (0 and 'N/A') and safe string conversion
+            const scoreDisplay = (entry.s !== undefined && entry.s !== null) ? entry.s.toLocaleString() : "0";
+            const levelDisplay = (entry.l !== undefined) ? entry.l : "—";
+            const userDisplay = entry.u || 'GUEST';
+            tableHtml += `<tr class="${rowColor}"><td>#${i + 1}</td><td>${userDisplay}</td><td>${levelDisplay}</td><td>${scoreDisplay}</td></tr>`;
         });
         tableHtml += `</table>`;
         scrollBox.innerHTML = tableHtml;
