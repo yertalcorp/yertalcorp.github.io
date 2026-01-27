@@ -210,6 +210,13 @@ let localHOF = JSON.parse(localStorage.getItem('spaceDodgerHOF')) || [];
 function launchMission() {
     // Reset core game stats
     score = 0; level = 1; lives = 3; fuel = 100;
+    // INDICATE: Reset logical state to NOT paused
+    paused = false;
+    active = true;
+
+    // INDICATE: Reset the button icon to show the 'Pause' symbol
+    const pauseBtn = document.getElementById('pause-btn');
+    if (pauseBtn) pauseBtn.innerText = '⏸️';
     
     // Hide all menu overlays
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
