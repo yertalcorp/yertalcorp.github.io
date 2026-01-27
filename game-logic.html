@@ -472,22 +472,13 @@ function viewHOF(type) {
 
     document.getElementById('screen-overlay').classList.remove('hidden');
 }
-function closeOverlay() {
-    // Hide the overlay screen
-    const overlay = document.getElementById('screen-overlay');
-    if (overlay) {
-        overlay.classList.add('hidden');
-    }
-    // Note: We do NOT set paused = false here.
-    // The user must click the Play button manually to resume.
-}
 function manualTogglePause() { paused = !paused; document.getElementById('pause-btn').innerText = paused ? "▶️" : "⏸️"; }
 function toggleMute() { 
     soundOn = !soundOn; 
     document.getElementById('mute-btn').innerText = soundOn?'🔊':'🔇'; 
     if(engineGain) engineGain.gain.setValueAtTime(soundOn ? 0.05 : 0, audioCtx.currentTime);
 }
-function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); paused = false; }
+function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); }
 function showScreen(type) {
     paused = true;
     const content = document.getElementById('overlay-content');
