@@ -427,7 +427,7 @@ function viewHOF(type) {
     btns.innerHTML = ''; 
     content.innerHTML = '';
 
-    const isLoggedIn = (window.userProfile && window.userProfile.loggedIn);
+    const isLoggedIn = !!(window.userProfile && window.userProfile.loggedIn);
     const isGuest = !isLoggedIn;
     
     const title = document.createElement('h1');
