@@ -416,6 +416,8 @@ function updateUI() {
 function viewHOF(type) {
     if (!window.localHOF) window.localHOF = []; // Safety check for data
     paused = true;
+    const pauseBtn = document.getElementById('pause-btn');
+    if (pauseBtn) pauseBtn.innerText = '▶️';
     
     const content = document.getElementById('overlay-content');
     const btns = document.getElementById('overlay-btns');
@@ -469,6 +471,15 @@ function viewHOF(type) {
     btns.appendChild(backBtn);
 
     document.getElementById('screen-overlay').classList.remove('hidden');
+}
+function closeOverlay() {
+    // Hide the overlay screen
+    const overlay = document.getElementById('screen-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+    }
+    // Note: We do NOT set paused = false here.
+    // The user must click the Play button manually to resume.
 }
 function manualTogglePause() { paused = !paused; document.getElementById('pause-btn').innerText = paused ? "▶️" : "⏸️"; }
 function toggleMute() { 
