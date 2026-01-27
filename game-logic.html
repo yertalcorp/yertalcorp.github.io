@@ -247,12 +247,69 @@ function init3D() {
     document.body.appendChild(renderer.domElement);
 
     const rocketGrp = new THREE.Group();
-    const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.45, 1.2, 32), new THREE.MeshPhongMaterial({color: 0x0044ff}));
+    const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.45, 0.8, 32), new THREE.MeshPhongMaterial({color: 0x0044ff}));
     nose = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 32), new THREE.MeshPhongMaterial({color: 0x0044ff})); 
-    nose.position.y = 0.75;
-    const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.3, 16), new THREE.MeshPhongMaterial({color: 0x222222})); engine.position.y = -0.75;
-    flame = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 12), new THREE.MeshBasicMaterial({color: 0xff4400})); flame.position.y = -1.2; flame.rotation.x = Math.PI;
-    rocketGrp.add(hull, nose, engine, flame);
+    nose.position.y = 0.65;
+    const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.3, 16), new THREE.MeshPhongMaterial({color: 0x222222})); engine.position.y = -0.55;
+    flame = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 12), new THREE.MeshBasicMaterial({color: 0xff4400})); flame.position.y = -1.0; flame.rotation.x = Math.PI;
+    // --- 1. THE WINGS ---
+    const wingGeo = new THREE.BoxGeometry(0.8, 0.2, 0.1); // Width, Height, Depth
+    const wingMat = new THREE.MeshPhongMaterial({color: 0x0044ff});
+    
+    const leftWing = new THREE.Mesh(wingGeo, wingMat);
+    leftWing.position.set(-0.4, -0.1, 0); // Positioned on the side of the hull
+    leftWing.rotation.z = Math.PI / 4; // Angled down slightly
+    
+    const rightWing = new THREE.Mesh(wingGeo, wingMat);
+    rightWing.position.set(0.4, -0.1, 0);
+    rightWing.rotation.z = -Math.PI / 4;
+    
+    // --- 2. THE WINDOWS (Oval Reflective Glass with Steel Rim) ---
+    const windowGrp = new THREE.Group();
+
+    // Steel Rim (A Torus/Donut shape)
+    // Parameters: radius, tube diameter, radialSegments, tubularSegments
+    const rimGeo = new THREE.TorusGeometry(0.12, 0.02, 16, 32);
+    const rimMat = new THREE.MeshPhongMaterial({color: 0xaaaaaa, shininess: 100});
+
+    // Glass (A slightly flattened sphere/disc)
+    const glassGeo = new THREE.SphereGeometry(0.11, 16, 16);
+    const glassMat = new THREE.MeshPhongMaterial({color: 0x22aaff, transparent: true, opacity: 0.7, shininess: 200, specular: 0xffffff});
+
+    // Assembly of Left Window
+    const leftRim = new THREE.Mesh(rimGeo, rimMat);
+    const leftGlass = new THREE.Mesh(glassGeo, glassMat);
+    leftGlass.scale.z = 0.2; // Flatten the sphere into an oval disc
+    const leftWindow = new THREE.Group();
+    leftWindow.add(leftRim, leftGlass);
+    leftWindow.position.set(-0.35, 0.2, 0.15); // Placed on the side/front
+    leftWindow.rotation.y = -Math.PI / 3;
+
+    // Assembly of Right Window
+    const rightWindow = leftWindow.clone(); // Java-style cloning
+    rightWindow.position.set(0.35, 0.2, 0.15);
+    rightWindow.rotation.y = Math.PI / 3;
+   
+    // MAIN AMBIENT LIGHT (General visibility - the "Base" light)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+
+    // DIRECTIONAL LIGHT (Like the Sun - creates shadows and depth)
+    const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    sunLight.position.set(5, 10, 7); // Coming from top-right-front
+    scene.add(sunLight);
+
+    // THE "GLINT" LIGHT (A PointLight that follows the rocket)
+    // This specifically makes the steel rims and glass shine
+    const glintLight = new THREE.PointLight(0x00aaff, 1.5, 10); 
+    glintLight.position.set(2, 2, 2); // Positioned to hit the windows
+   
+    // OPTIONAL: ENGINE GLOW (A red light at the bottom)
+    const engineLight = new THREE.PointLight(0xff4400, 2, 3);
+    engineLight.position.y = -1.2;
+    
+    // INDICATE: Add all new parts to the main group
+    rocketGrp.add(hull, nose, engine, flame, leftWing, rightWing, leftWindow, rightWindow, glintLight, engineLight);
     rocket = rocketGrp; scene.add(rocket); rocket.position.y = -4;
 
     scene.add(new THREE.AmbientLight(0x606060));
