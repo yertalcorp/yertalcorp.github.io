@@ -175,20 +175,39 @@ function initFuelUI() {
 }
 
 function spawnLogic() {
-    if(Math.random() > 0.02) return;
+    // 1. Asteroid Density: Increases with Level
+    // Level 1 starts at 0.015, adding 0.005 per level
+    let asteroidSpawnChance = 0.01 + (level * 0.005);
+    if (Math.random() > asteroidSpawnChance) return;
+
     const minGap = 2.1; 
     let spawnX = (Math.random() - 0.5) * 12;
+    
+    // Spatial Gap Validation
     const existing = [...asteroids, ...stars].filter(o => o.position.y > 5);
-    for(let o of existing) { if(Math.abs(o.position.x - spawnX) < minGap) return; }
+    for(let o of existing) { 
+        if(Math.abs(o.position.x - spawnX) < minGap) return; 
+    }
 
-    if(Math.random() < 0.2) {
+    // 2. Star Frequency: Decreases with Level
+    // Stars appear as a subset of successful spawns
+    // Level 1 starts at 30% chance, Level 10 drops to 10%
+    let starChance = Math.max(0.1, 0.3 - (level * 0.02));
+
+    if(Math.random() < starChance) {
+        // Create Star logic
         const star = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2, 0), new THREE.MeshPhongMaterial({color: 0xffd700}));
-        star.position.set(spawnX, 8, 0); stars.push(star); scene.add(star);
+        star.position.set(spawnX, 8, 0); 
+        stars.push(star); 
+        scene.add(star);
     } else {
+        // Create Asteroid logic
         const s = 0.4 + Math.random() * 0.8;
         const ast = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 1), new THREE.MeshPhongMaterial({color: 0x882222, flatShading: true}));
-        ast.position.set(spawnX, 8, 0); ast.userData = { size: s, hp: Math.ceil(s*4) };
-        asteroids.push(ast); scene.add(ast);
+        ast.position.set(spawnX, 8, 0); 
+        ast.userData = { size: s, hp: Math.ceil(s * 4) };
+        asteroids.push(ast); 
+        scene.add(ast);
     }
 }
 
