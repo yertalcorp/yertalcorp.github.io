@@ -457,9 +457,23 @@ function update() {
 
     if(fuel <= 0 || lives <= 0) {
         active = false; if(engineOsc) engineOsc.stop();
-        localHOF.push({u: 'Guest', l: level, s: score});
-        localHOF.sort((a,b)=>b.s-a.s);
-        localStorage.setItem('spaceDodgerHOF', JSON.stringify(localHOF));
+        
+        // Check authentication state
+        const isLoggedIn = !!(window.userProfile && window.userProfile.loggedIn);
+        
+        // 1. Identify which storage to use
+        const storage = isLoggedIn ? localStorage : sessionStorage;
+        const storageKey = 'spaceDodgerHOF';
+
+        // 2. Load existing data from the chosen storage
+        window.localHOF = JSON.parse(storage.getItem(storageKey)) || [];
+
+        // 3. Push current run
+        window.localHOF.push({u: 'Guest', l: level, s: score});
+        window.localHOF.sort((a,b) => b.s - a.s);
+
+        // 4. Save back to the specific storage engine
+        storage.setItem(storageKey, JSON.stringify(window.localHOF));
         document.getElementById('screen-gameover').classList.remove('hidden');
     }
     spawnLogic();
@@ -479,7 +493,14 @@ function updateUI() {
 }
 
 function viewHOF(type) {
+    // INDICATE: Sync memory with storage before rendering table
+    const storage = (window.userProfile && window.userProfile.loggedIn) ? localStorage : sessionStorage;
+    window.localHOF = JSON.parse(storage.getItem('spaceDodgerHOF')) || [];
+    
     if (!window.localHOF) window.localHOF = []; // Safety check for data
+    // INDICATE: Also sync Global Data reference if it doesn't exist to prevent 'undefined' crashes
+    if (!window.globalHOF) window.globalHOF = [];
+    
     paused = true;
     const pauseBtn = document.getElementById('pause-btn');
     if (pauseBtn) pauseBtn.innerText = '▶️';
@@ -524,22 +545,20 @@ function viewHOF(type) {
 
         // Use global data if type is global, otherwise local
         let data = (type === 'global') ? (window.globalHOF || []) : (window.localHOF || []);
-        
-        let displayScores = data.slice(0, 10);
 
-        // INDICATE: Added a check for empty data to provide feedback
-        if (displayScores.length === 0) {
-            tableHtml += `<tr><td colspan="4" style="text-align:center; padding:20px;">NO DATA FOUND</td></tr>`;
+        // INDICATE: Check for empty data before slicing
+        if (data.length === 0) {
+            tableHtml += `<tr><td colspan="4" style="text-align:center; padding:20px;">NO MISSION DATA RECORDED</td></tr>`;
+        } else {
+            let displayScores = data.slice(0, 10);
+            displayScores.forEach((entry, i) => {
+                let rowColor = (i === 0) ? 'rank-gold' : (i === 1) ? 'rank-silver' : (i === 2) ? 'rank-bronze' : 'rank-white';
+                const scoreDisplay = (entry.s !== undefined && entry.s !== null) ? entry.s.toLocaleString() : "0";
+                const levelDisplay = (entry.l !== undefined) ? entry.l : "—";
+                const userDisplay = entry.u || 'GUEST';
+                tableHtml += `<tr class="${rowColor}"><td>#${i + 1}</td><td>${userDisplay}</td><td>${levelDisplay}</td><td>${scoreDisplay}</td></tr>`;
+            });
         }
-    
-        displayScores.forEach((entry, i) => {
-            let rowColor = (i === 0) ? 'rank-gold' : (i === 1) ? 'rank-silver' : (i === 2) ? 'rank-bronze' : 'rank-white';
-            // INDICATE: Added fallbacks (0 and 'N/A') and safe string conversion
-            const scoreDisplay = (entry.s !== undefined && entry.s !== null) ? entry.s.toLocaleString() : "0";
-            const levelDisplay = (entry.l !== undefined) ? entry.l : "—";
-            const userDisplay = entry.u || 'GUEST';
-            tableHtml += `<tr class="${rowColor}"><td>#${i + 1}</td><td>${userDisplay}</td><td>${levelDisplay}</td><td>${scoreDisplay}</td></tr>`;
-        });
         tableHtml += `</table>`;
         scrollBox.innerHTML = tableHtml;
     }
