@@ -210,9 +210,6 @@ let localHOF = JSON.parse(localStorage.getItem('spaceDodgerHOF')) || [];
 function launchMission() {
     // Reset core game stats
     score = 0; level = 1; lives = 3; fuel = 100;
-    // INDICATE: Reset logical state to NOT paused
-    paused = false;
-    active = true;
 
     // INDICATE: Reset the button icon to show the 'Pause' symbol
     const pauseBtn = document.getElementById('pause-btn');
@@ -244,6 +241,7 @@ function launchMission() {
         animate();
     }
 }
+    
 // Move these OUTSIDE the init3D function (Pre-define them) to save load time
 const SHARED_BLUE_MAT = new THREE.MeshPhongMaterial({color: 0x0044ff});
 const SHARED_RIM_MAT = new THREE.MeshPhongMaterial({color: 0xdddddd, shininess: 150, specular: 0xffffff});
