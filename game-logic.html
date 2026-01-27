@@ -30,6 +30,49 @@
         button { padding: 18px 35px; border-radius: 12px; border: none; background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; font-size: 1.1rem; text-transform: uppercase; }
         button:hover { filter: brightness(1.2); }
         .btn-alt { background: transparent; border: 2px solid var(--neon-blue); color: var(--neon-blue); }
+        /* 1. THE 3D TITLE EFFECT */
+#screen-landing h1 {
+    font-size: 7rem;
+    color: var(--neon-blue);
+    font-style: italic;
+    letter-spacing: 5px;
+    /* Layered shadows create the 'thick' 3D look */
+    text-shadow: 
+        1px 1px 0px #00a8b3, 
+        2px 2px 0px #00a8b3, 
+        3px 3px 0px #00a8b3, 
+        4px 4px 0px #00a8b3, 
+        0px 10px 30px rgba(0, 242, 255, 0.6);
+    transform: perspective(600px) rotateX(15deg);
+    animation: grandFloat 3s ease-in-out infinite alternate;
+}
+
+/* 2. THE TACTILE 3D BUTTONS */
+.grand-btn {
+    padding: 25px 50px;
+    font-size: 1.5rem;
+    border: none;
+    border-radius: 50px;
+    font-weight: 900;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.1s;
+    /* This creates the bottom 'ledge' of the button */
+    box-shadow: 0 10px 0 #005f66, 0 15px 25px rgba(0, 242, 255, 0.3);
+    margin: 15px;
+}
+
+.grand-btn:active {
+    /* Moves down to 'press' onto the shadow */
+    transform: translateY(6px);
+    box-shadow: 0 4px 0 #005f66, 0 5px 10px rgba(0, 242, 255, 0.3);
+}
+
+/* 3. FLOATING ANIMATION */
+@keyframes grandFloat {
+    from { transform: perspective(600px) rotateX(15deg) translateY(0); }
+    to { transform: perspective(600px) rotateX(20deg) translateY(-20px); }
+}
     </style>
 </head>
 <body>
@@ -51,9 +94,12 @@
 </div>
 
 <div id="screen-landing" class="screen">
-    <h1 style="font-size: 6rem; text-shadow: 0 0 30px var(--neon-blue);">SPACE DODGER</h1>
-    <button onclick="launchMission()">Launch Mission</button>
-    <button onclick="viewHOF('personal')" class="btn-alt">Hall of Fame</button>
+    <h1 id="main-title">SPACE DODGER 3D</h1>
+    <div style="margin-top: 50px;">
+        <button class="grand-btn" onclick="launchMission()">🚀 LAUNCH MISSION</button>
+        <br>
+        <button class="grand-btn" style="background: linear-gradient(145deg, #ffd700, #b8860b); box-shadow: 0 10px 0 #7a5c00;" onclick="viewHOF('personal')">🏆 HALL OF FAME</button>
+    </div>
 </div>
 
 <div id="screen-gameover" class="screen hidden">
