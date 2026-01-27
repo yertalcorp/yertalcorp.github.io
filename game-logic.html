@@ -188,7 +188,8 @@
     <h1 style="font-size: 8rem; color: var(--neon-red);">GAME OVER</h1>
     <div class="btn-container">
         <button onclick="launchMission()">Relaunch Mission</button>
-        <button onclick="viewHOF('personal')" class="btn-alt">View High Scores</button>
+        <button onclick="viewHOF('personal')" class="btn-alt">View Personal High Scores</button>
+        <button onclick="viewHOF('global')" class="btn-alt">View Global High Scores</button>
     </div>
 </div>
 
@@ -555,6 +556,7 @@ window.addEventListener('mousedown', (e) => {
 });
 window.addEventListener('mousemove', (e) => { if(active && !paused) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
 function animate() { if(!active) return; requestAnimationFrame(animate); update(); renderer.render(scene, camera); }
+    
 function showLoginOptions() {
     const content = document.getElementById('overlay-content');
     const btns = document.getElementById('overlay-btns');
