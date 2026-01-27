@@ -207,15 +207,34 @@ let audioCtx, engineOsc, engineGain, soundOn = true;
 let localHOF = JSON.parse(localStorage.getItem('spaceDodgerHOF')) || [];
 
 function launchMission() {
+    // Reset core game stats
     score = 0; level = 1; lives = 3; fuel = 100;
+    
+    // Hide all menu overlays
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-    document.getElementById('hud-left').classList.remove('hidden');
-    document.getElementById('hud-right').classList.remove('hidden');
-    if(!renderer) init3D();
+    
+    // Display the game HUD
+    const hudL = document.getElementById('hud-left');
+    const hudR = document.getElementById('hud-right');
+    if (hudL) hudL.classList.remove('hidden');
+    if (hudR) hudR.classList.remove('hidden');
+    
+    // Start 3D Engine if not already running
+    if (!renderer) {
+        init3D();
+    }
+    
     initAudio();
     initFuelUI();
-    active = true; paused = false;
-    animate();
+    
+    // State control to prevent "Double Speed" animation bug
+    const wasAlreadyActive = active;
+    active = true; 
+    paused = false;
+
+    if (!wasAlreadyActive) {
+        animate();
+    }
 }
 
 function init3D() {
@@ -395,19 +414,17 @@ function updateUI() {
 }
 
 function viewHOF(type) {
-    if (!window.localHOF) window.localHOF = [];
+    if (!window.localHOF) window.localHOF = []; // Safety check for data
     paused = true;
+    
     const content = document.getElementById('overlay-content');
     const btns = document.getElementById('overlay-btns');
     
-    // Clear previous state
     btns.innerHTML = ''; 
     content.innerHTML = '';
 
-    // Status Check
     const isGuest = !(window.userProfile && window.userProfile.loggedIn);
 
-    // 1. Build Title and Trophies
     const title = document.createElement('h1');
     title.className = 'hof-title';
     title.innerText = 'HALL OF FAME';
@@ -416,41 +433,28 @@ function viewHOF(type) {
     trophies.className = 'trophy-row';
     trophies.innerText = '🏆 🏆 🏆 🏆 🏆';
 
-    // 2. Build Scrollable Table
     const scrollBox = document.createElement('div');
     scrollBox.className = 'hof-scroll-box';
     
-    let tableHtml = `
-        <table class="hof-table">
-            <tr><th>RANK</th><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
-    
-    // Use session scores for Guest (localHOF)
+    let tableHtml = `<table class="hof-table"><tr><th>RANK</th><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
     let displayScores = localHOF.slice(0, 10);
     
     displayScores.forEach((entry, i) => {
         let rowColor = (i === 0) ? 'rank-gold' : (i === 1) ? 'rank-silver' : (i === 2) ? 'rank-bronze' : 'rank-white';
-        tableHtml += `
-            <tr class="${rowColor}">
-                <td>#${i + 1}</td>
-                <td>${entry.u || 'GUEST'}</td>
-                <td>${entry.l}</td>
-                <td>${entry.s.toLocaleString()}</td>
-            </tr>`;
+        tableHtml += `<tr class="${rowColor}"><td>#${i + 1}</td><td>${entry.u || 'GUEST'}</td><td>${entry.l}</td><td>${entry.s.toLocaleString()}</td></tr>`;
     });
     tableHtml += `</table>`;
     scrollBox.innerHTML = tableHtml;
 
-    // 3. Assemble Overlay
     content.appendChild(title);
     content.appendChild(trophies);
     content.appendChild(scrollBox);
 
-    // 4. Conditional Buttons
     if (isGuest) {
         const saveBtn = document.createElement('button');
         saveBtn.className = "grand-btn btn-launch";
         saveBtn.style.background = "var(--neon-blue)";
-        saveBtn.style.boxShadow = "0 8px 0 #008a91";
+        saveBtn.style.boxShadow = "0 8px 0 #008a91"; // Added 3D depth
         saveBtn.innerText = "💾 SAVE SCORES";
         saveBtn.onclick = () => alert("Login tomorrow to save!");
         btns.appendChild(saveBtn);
@@ -459,7 +463,7 @@ function viewHOF(type) {
     const backBtn = document.createElement('button');
     backBtn.className = "grand-btn btn-back";
     backBtn.style.background = "var(--neon-red)";
-    backBtn.style.boxShadow = "0 8px 0 #8b0000";
+    backBtn.style.boxShadow = "0 8px 0 #8b0000"; // Added 3D depth
     backBtn.innerText = "🚀 BACK TO MISSION";
     backBtn.onclick = closeOverlay;
     btns.appendChild(backBtn);
