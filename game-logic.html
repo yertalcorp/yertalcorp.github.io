@@ -454,7 +454,7 @@ function viewHOF(type) {
         loginBtn.style.background = "linear-gradient(to bottom, #444, #222)";
         loginBtn.style.boxShadow = "0 8px 0 #000";
         loginBtn.innerText = "🔑 MEMBER LOGIN";
-        loginBtn.onclick = showLoginOptions('global'); // Links to the new function below
+        loginBtn.onclick = () => showLoginOptions('global'); // Links to the new function below
         btns.appendChild(loginBtn);
     } else {
         let tableHtml = `<table class="hof-table"><tr><th>RANK</th><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
@@ -481,7 +481,7 @@ function viewHOF(type) {
         saveBtn.style.background = "var(--neon-blue)";
         saveBtn.style.boxShadow = "0 8px 0 #008a91"; // Added 3D depth
         saveBtn.innerText = "💾 SAVE SCORES";
-        saveBtn.onclick = showLoginOptions('personal');
+        saveBtn.onclick = () => showLoginOptions('personal');
         btns.appendChild(saveBtn);
     }
 
