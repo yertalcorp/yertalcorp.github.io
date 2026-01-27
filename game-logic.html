@@ -30,28 +30,32 @@
         button { padding: 18px 35px; border-radius: 12px; border: none; background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; font-size: 1.1rem; text-transform: uppercase; }
         button:hover { filter: brightness(1.2); }
         .btn-alt { background: transparent; border: 2px solid var(--neon-blue); color: var(--neon-blue); }
-        /* 1. THE 3D TITLE EFFECT */
+        
+/* 1. THE 3D TITLE EFFECT */
 #screen-landing h1 {
-    font-size: 6.5rem;
-    white-space: nowrap;
-    margin-top: 30px;
-    margin-bottom: 20px;
-    justify-content: center; /* Keeps everything centered */
-    padding: 20px;
-    box-sizing: border-box;
-    overflow: hidden; /* Prevents scrollbars from appearing */
+    /* 9vw means the font size is exactly 9% of the screen width */
+    font-size: 9vw; 
+    
+    /* Prevents the text from getting TOO big on massive monitors 
+       and TOO small on tiny phones */
+    font-size: clamp(3rem, 9vw, 8rem); 
+    
+    white-space: nowrap; 
     color: var(--neon-blue);
     font-style: italic;
-    letter-spacing: 5px;
-    /* Layered shadows create the 'thick' 3D look */
+    letter-spacing: 2px;
+    
+    /* We use 'em' for shadows so the 3D depth scales with the font size */
     text-shadow: 
-        1px 1px 0px #00a8b3, 
-        2px 2px 0px #00a8b3, 
-        3px 3px 0px #00a8b3, 
-        4px 4px 0px #00a8b3, 
-        0px 10px 30px rgba(0, 242, 255, 0.6);
+        0.01em 0.01em 0px #00a8b3, 
+        0.02em 0.02em 0px #00a8b3, 
+        0.03em 0.03em 0px #00a8b3, 
+        0.04em 0.04em 0px #00a8b3, 
+        0px 0.1em 0.3em rgba(0, 242, 255, 0.6);
+        
     transform: perspective(600px) rotateX(15deg);
     animation: grandFloat 3s ease-in-out infinite alternate;
+    margin: 0;
 }
 
 /* 2. THE TACTILE 3D BUTTONS */
