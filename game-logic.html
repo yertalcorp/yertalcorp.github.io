@@ -238,7 +238,11 @@ function launchMission() {
         animate();
     }
 }
-
+// Move these OUTSIDE the init3D function (Pre-define them) to save load time
+const SHARED_BLUE_MAT = new THREE.MeshPhongMaterial({color: 0x0044ff});
+const SHARED_RIM_MAT = new THREE.MeshPhongMaterial({color: 0xdddddd, shininess: 150, specular: 0xffffff});
+const SHARED_GLASS_MAT = new THREE.MeshPhongMaterial({color: 0x111111, transparent: true, opacity: 0.8, shininess: 500, specular: 0xffffff});
+    
 function init3D() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -247,14 +251,14 @@ function init3D() {
     document.body.appendChild(renderer.domElement);
 
     const rocketGrp = new THREE.Group();
-    const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.45, 0.8, 32), new THREE.MeshPhongMaterial({color: 0x0044ff}));
-    nose = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 32), new THREE.MeshPhongMaterial({color: 0x0044ff})); 
+    const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.45, 0.8, 32), SHARED_BLUE_MAT);
+    nose = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 32), SHARED_BLUE_MAT); 
     nose.position.y = 0.65;
     const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.3, 16), new THREE.MeshPhongMaterial({color: 0x222222})); engine.position.y = -0.55;
     flame = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 12), new THREE.MeshBasicMaterial({color: 0xff4400})); flame.position.y = -1.0; flame.rotation.x = Math.PI;
     // --- 1. THE WINGS ---
     const wingGeo = new THREE.BoxGeometry(0.8, 0.2, 0.1); // Width, Height, Depth
-    const wingMat = new THREE.MeshPhongMaterial({color: 0x0044ff});
+    const wingMat = SHARED_BLUE_MAT;
     
     const leftWing = new THREE.Mesh(wingGeo, wingMat);
     leftWing.position.set(-0.4, -0.1, 0); // Positioned on the side of the hull
