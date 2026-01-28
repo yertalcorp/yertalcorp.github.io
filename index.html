@@ -139,19 +139,22 @@
                 title: "Space Dodger 3D",
                 desc: "In-House Collision Logic Experiment",
                 path: "arcade/games/space-dodger-3d/index.html",
-                icon: "fa-rocket"
+                icon: "fa-rocket",
+                img: "assets/thumbnails/SpaceDodger3D.jpg"
             },
             'showcasedApp': {
                 title: "Bio-Tracker v2",
                 desc: "Neural Interface & Health Protocol",
                 path: "arcade/apps/bio-tracker/index.html",
                 icon: "fa-microchip"
+                img: "assets/thumbnails/bio-tracker-v2.jpg"
             },
             'showcasedVideo': {
                 title: "Retro Video",
                 desc: "Engineering Workflow Briefing",
                 path: "https://www.youtube.com/embed/dQw4w9WgXcQ", 
                 icon: "fa-video"
+                img: "assets/thumbnails/never-give-you-up.jpg"
             }
         };
 
@@ -219,17 +222,57 @@
                         </div>
 
                         <div class="flex flex-wrap gap-6 mb-20">
-                            <div onclick="showPage('showcasedGame')" class="featured-card p-8 rounded-[2.5rem] cursor-pointer min-h-[220px]">
-                                <div class="flex justify-between items-start"><span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">Showcased: Game</span><i class="fas fa-rocket text-blue-500 text-2xl"></i></div>
-                                <div><h3 class="font-black uppercase tracking-tighter text-white">Space Dodger 3D</h3><span class="block mt-2 text-[9px] text-slate-500 uppercase font-bold">Initialize Simulation →</span></div>
+                            // Repeat this structure for Game, App, and Video inside the home block:
+                            <div onclick="showPage('showcasedGame')" 
+                                 class="featured-card p-8 rounded-[2.5rem] cursor-pointer min-h-[250px] relative overflow-hidden group"
+                                 style="background: url('${showcaseData.showcasedGame.img}') center/cover no-repeat;">
+    
+                                <div class="absolute inset-0 bg-slate-950/70 group-hover:bg-slate-950/50 transition-colors duration-500"></div>
+
+                                <div class="relative z-10 flex flex-col h-full justify-between">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">System: Game</span>
+                                        <i class="fas fa-rocket text-blue-500 text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-black uppercase tracking-tighter text-white text-xl">Space Dodger 3D</h3>
+                                        <span class="block mt-2 text-[9px] text-blue-400 uppercase font-bold tracking-[0.2em]">Initialize Simulation →</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div onclick="showPage('showcasedApp')" class="featured-card p-8 rounded-[2.5rem] cursor-pointer min-h-[220px]">
-                                <div class="flex justify-between items-start"><span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">Showcased: App</span><i class="fas fa-microchip text-blue-500 text-2xl"></i></div>
-                                <div><h3 class="font-black uppercase tracking-tighter text-white">Bio-Tracker</h3><span class="block mt-2 text-[9px] text-slate-500 uppercase font-bold">Launch Protocol →</span></div>
+                            <div onclick="showPage('showcasedApp')" 
+                                 class="featured-card p-8 rounded-[2.5rem] cursor-pointer min-h-[250px] relative overflow-hidden group"
+                                 style="background: url('${showcaseData.showcasedApp.img}') center/cover no-repeat;">
+    
+                                <div class="absolute inset-0 bg-slate-950/70 group-hover:bg-slate-950/50 transition-colors duration-500"></div>
+
+                                <div class="relative z-10 flex flex-col h-full justify-between">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">System: Game</span>
+                                        <i class="fas fa-rocket text-blue-500 text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-black uppercase tracking-tighter text-white text-xl">Space Dodger 3D</h3>
+                                        <span class="block mt-2 text-[9px] text-blue-400 uppercase font-bold tracking-[0.2em]">Initialize Simulation →</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div onclick="showPage('showcasedVideo')" class="featured-card p-8 rounded-[2.5rem] cursor-pointer min-h-[220px]">
-                                <div class="flex justify-between items-start"><span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">Showcased: Video</span><i class="fas fa-video text-blue-500 text-2xl"></i></div>
-                                <div><h3 class="font-black uppercase tracking-tighter text-white">Lab Tour</h3><span class="block mt-2 text-[9px] text-slate-500 uppercase font-bold">Watch Briefing →</span></div>
+                            <div onclick="showPage('showcasedVideo')" 
+                                 class="featured-card p-8 rounded-[2.5rem] cursor-pointer min-h-[250px] relative overflow-hidden group"
+                                 style="background: url('${showcaseData.showcasedVideo.img}') center/cover no-repeat;">
+    
+                                <div class="absolute inset-0 bg-slate-950/70 group-hover:bg-slate-950/50 transition-colors duration-500"></div>
+
+                                <div class="relative z-10 flex flex-col h-full justify-between">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">System: Game</span>
+                                        <i class="fas fa-rocket text-blue-500 text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-black uppercase tracking-tighter text-white text-xl">Space Dodger 3D</h3>
+                                        <span class="block mt-2 text-[9px] text-blue-400 uppercase font-bold tracking-[0.2em]">Initialize Simulation →</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
