@@ -1,1 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yertal Arcade | Showroom</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #080808;
+            --accent: #00ffcc;
+            --card-bg: #151515;
+            --text: #ffffff;
+        }
+
+        body { margin: 0; background-color: var(--bg-color); color: var(--text); font-family: 'Roboto', sans-serif; overflow-x: hidden; }
+
+        /* --- Loading Overlay --- */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 1000; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .loader-bar-container {
+            width: 300px; height: 2px; background: rgba(255,255,255,0.1);
+            margin-top: 20px; position: relative; overflow: hidden;
+        }
+
+        .loader-bar-fill {
+            position: absolute; width: 0%; height: 100%; background: var(--accent);
+            box-shadow: 0 0 15px var(--accent); animation: loadProgress 1.5s ease-in-out forwards;
+        }
+
+        @keyframes loadProgress { 0% { width: 0%; } 100% { width: 100%; } }
+
+        .loading-text { font-family: 'Orbitron', sans-serif; color: var(--accent); letter-spacing: 5px; font-size: 0.8rem; }
+
+        /* --- Header & Layout --- */
+        header { padding: 50px 5% 20px; display: flex; justify-content: space-between; align-items: center; }
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 2rem; letter-spacing: 4px; margin: 0; }
+        .back-btn { text-decoration: none; color: var(--accent); font-family: 'Orbitron', sans-serif; font-size: 0.8rem; border: 1px solid var(--accent); padding: 10px 20px; border-radius: 4px; transition: 0.3s; }
+        .back-btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
+
+        .arcade-container { padding: 20px 0 100px 5%; }
+        .row-title { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: rgba(255,255,255,0.6); margin-top: 40px; margin-bottom: 10px; border-left: 3px solid var(--accent); padding-left: 15px; }
+        .arcade-row { display: flex; overflow-x: auto; gap: 25px; padding: 20px 0; scroll-behavior: smooth; mask-image: linear-gradient(to right, black 85%, transparent 100%); }
+        .arcade-row::-webkit-scrollbar { display: none; }
+
+        .action-card { flex: 0 0 320px; height: 180px; background: var(--card-bg); border-radius: 10px; position: relative; cursor: pointer; transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+        .action-card:hover { transform: scale(1.08); box-shadow: 0 10px 30px rgba(0, 255, 204, 0.2); z-index: 5; border-color: var(--accent); }
+        .action-card img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; transition: 0.3s; }
+        .action-card:hover img { opacity: 1; }
+        .card-label { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); font-family: 'Orbitron', sans-serif; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="loading-text">INITIALIZING SYSTEM</div>
+        <div class="loader-bar-container">
+            <div class="loader-bar-fill"></div>
+        </div>
+    </div>
+
+    <header>
+        <h1>YERTAL <span style="color:var(--accent)">ARCADE</span></h1>
+        <a href="index.html" class="back-btn">RETURN TO SHOWROOM</a>
+    </header>
+
+    <div class="arcade-container">
+        <h2 class="row-title">GAMES</h2>
+        <div class="arcade-row" id="games-row"></div>
+
+        <h2 class="row-title">APPS</h2>
+        <div class="arcade-row" id="apps-row"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+
+    <script>
+        const arcadeContent = {
+            games: [
+                { name: "Space Dodger 3D", path: "arcade/games/space-dodger-3d/index.html", img: "assets/thumbnails/space-dodger.jpg" },
+                { name: "Alpha Protocol", path: "#", img: "https://via.placeholder.com/320x180/111/00ffcc?text=ALPHA+PROTOCOL" },
+                { name: "Z-Sector", path: "#", img: "https://via.placeholder.com/320x180/111/00ffcc?text=Z-SECTOR" }
+            ],
+            apps: [
+                { name: "Bio-Tracker", path: "#", img: "https://via.placeholder.com/320x180/111/fff?text=BIO-TRACKER" },
+                { name: "Data-Vault", path: "#", img: "https://via.placeholder.com/320x180/111/fff?text=DATA-VAULT" }
+            ]
+        };
+
+        const hoverClick = new Howl({
+            src: ['https://actions.google.com/sounds/v1/foley/mechanical_button_click.ogg'],
+            volume: 0.15
+        });
+
+        // Intercepts click to show loader before navigating
+        function launchProject(path) {
+            if (path === "#") return;
+            
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.display = 'flex';
+
+            // Hold for 1.5 seconds to let animation play, then redirect
+            setTimeout(() => {
+                window.location.href = path;
+            }, 1500);
+        }
+
+        function renderSection(id, data) {
+            const row = document.getElementById(id);
+            const sorted = data.sort((a, b) => a.name.localeCompare(b.name));
+
+            row.innerHTML = sorted.map(item => `
+                <div class="action-card" onclick="launchProject('${item.path}')">
+                    <img src="${item.img}" alt="${item.name}">
+                    <div class="card-label">${item.name}</div>
+                </div>
+            `).join('');
+
+            const cards = row.querySelectorAll('.action-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => hoverClick.play());
+            });
+        }
+
+        window.onload = () => {
+            renderSection('games-row', arcadeContent.games);
+            renderSection('apps-row', arcadeContent.apps);
+        };
+    </script>
+</body>
+</html>
 
