@@ -208,6 +208,16 @@ let audioCtx, engineOsc, engineGain, soundOn = true;
 let sirenInterval = null;
 let localHOF = JSON.parse(localStorage.getItem('spaceDodgerHOF')) || [];
 
+function setEngineState(isPlay) {
+    if (!audioCtx || !engineGain) return;
+    const targetVol = (isPlay && soundOn) ? 0.04 : 0;
+    const whirrVol = (isPlay && soundOn) ? 0.015 : 0;
+    
+    engineGain.gain.setTargetAtTime(targetVol, audioCtx.currentTime, 0.1);
+    if (window.textureGain) {
+        window.textureGain.gain.setTargetAtTime(whirrVol, audioCtx.currentTime, 0.1);
+    }
+}    
 function launchMission() {
     // INDICATE: Capture the state at the VERY TOP
     const needsToStartLoop = !active;
@@ -234,6 +244,7 @@ function launchMission() {
     
     initAudio();
     initFuelUI();
+    setEngineState(true);
     
     // INDICATE: Explicitly set states
     active = true;
@@ -556,8 +567,9 @@ function viewHOF(type) {
     if (!window.globalHOF) window.globalHOF = [];
     
     paused = true;
-    const pauseBtn = document.getElementById('pause-btn');
-    if (pauseBtn) pauseBtn.innerText = '▶️';
+    document.getElementById('pause-btn').innerText = '▶️';
+    setEngineState(false);
+    
     
     const content = document.getElementById('overlay-content');
     const btns = document.getElementById('overlay-btns');
@@ -640,18 +652,19 @@ function viewHOF(type) {
 
     document.getElementById('screen-overlay').classList.remove('hidden');
 }
-function manualTogglePause() { paused = !paused; document.getElementById('pause-btn').innerText = paused ? "▶️" : "⏸️"; }
+function manualTogglePause() { paused = !paused; document.getElementById('pause-btn').innerText = paused ? "▶️" : "⏸️"; setEngineState(!paused);}
 function toggleMute() { 
     soundOn = !soundOn; 
     document.getElementById('mute-btn').innerText = soundOn?'🔊':'🔇'; 
+    setEngineState(!paused && active);
     if(engineGain) engineGain.gain.setValueAtTime(soundOn ? 0.05 : 0, audioCtx.currentTime);
 }
-function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); }
+function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden');}
 function showScreen(type) {
     paused = true;
     // INDICATE: Sync the UI button icon to show 'Play' since game is now paused
-    const pauseBtn = document.getElementById('pause-btn');
-    if (pauseBtn) pauseBtn.innerText = '▶️';
+    document.getElementById('pause-btn').innerText = '▶️';
+    setEngineState(false);
     
     const content = document.getElementById('overlay-content');
     const btns = document.getElementById('overlay-btns');
