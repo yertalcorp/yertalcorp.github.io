@@ -453,6 +453,16 @@ function spawnLogic() {
 
 function update() {
     if(!active || paused) return;
+    // DYNAMIC WHIRR LOGIC
+    if (audioCtx && engineOsc && soundOn) {
+        let targetPosX = rocket.position.x;
+        // We calculate velocity by seeing how far the rocket is from its target
+        let vel = Math.abs(targetPosX - (rocket.position.x || 0));
+        let pitchShift = vel * 50; // How much the pitch reacts to speed
+        
+        engineOsc.frequency.setTargetAtTime(50 + pitchShift, audioCtx.currentTime, 0.1);
+        if(window.whirrOsc) window.whirrOsc.frequency.setTargetAtTime(110 + (pitchShift * 2), audioCtx.currentTime, 0.1);
+    }
     const fallSpeed = 0.05 + (level * 0.02);
     flame.scale.setScalar(0.7 + Math.random() * 0.5);
 
