@@ -1,1 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>spacedodger3d.html</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root { --neon-blue: #00f2ff; --neon-red: #ff3131; --gold: #ffd700; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; color: white; user-select: none; }
+        
+        #hud-left { position: absolute; top: 20px; left: 20px; background: rgba(10, 20, 40, 0.9); padding: 20px; border-radius: 20px; border: 2px solid var(--neon-blue); min-width: 320px; box-shadow: 0 0 20px var(--neon-blue); }
+        .fuel-meter { width: 100%; height: 28px; border: 2px solid #fff; display: flex; margin-top: 10px; background: #000; overflow: hidden; }
+        .fuel-section { flex: 1; border-right: 2.5px solid #000; height: 100%; transition: background 0.2s; }
+        .siren-active .fuel-section { animation: fuel-flash 0.3s infinite alternate; }
+        @keyframes fuel-flash { 0% { background: var(--neon-red); } 100% { background: #000; } }
 
+        #hud-right { position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; }
+        .nav-icon { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; text-align: center; background: rgba(0,0,0,0.6); cursor: pointer; font-size: 30px; transition: 0.3s; }
+        .nav-icon:hover { transform: scale(1.1); box-shadow: 0 0 20px var(--neon-blue); }
+
+        .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; pointer-events: auto; }
+        .hidden { display: none !important; }
+        /* Ensure the neon box fits the screen */
+.neon-box { 
+    border: 5px solid var(--neon-blue); 
+    border-radius: 30px; 
+    padding: 20px; 
+    background: rgba(0,0,0,0.95); 
+    box-shadow: 0 0 40px var(--neon-blue); 
+    
+    /* FIX: Force everything to stay inside */
+    display: flex;
+    flex-direction: column;
+    width: 90vw;
+    max-width: 600px;
+    height: auto;
+    max-height: 85vh; /* Prevents spilling off screen */
+    overflow: hidden; /* Clips any loose children */
+    position: relative;
+}
+#overlay-btns {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-shrink: 0;
+  padding-top: 10px;
+  width: 100%;
+}
+        
+        .impact-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 1.4rem; }
+        .impact-table th { color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); padding: 12px; }
+        .impact-table td { padding: 12px; border-bottom: 1px solid #333; }
+
+        .btn-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; }
+        button { padding: 18px 35px; border-radius: 12px; border: none; background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; font-size: 1.1rem; text-transform: uppercase; }
+        button:hover { filter: brightness(1.2); }
+        .btn-alt { background: transparent; border: 2px solid var(--neon-blue); color: var(--neon-blue); }
+        
+/* 1. THE 3D TITLE EFFECT */
+#screen-landing h1 {
+    /* 9vw means the font size is exactly 9% of the screen width */
+    font-size: 9vw; 
+    
+    /* Prevents the text from getting TOO big on massive monitors 
+       and TOO small on tiny phones */
+    font-size: clamp(3rem, 9vw, 8rem); 
+    
+    white-space: nowrap; 
+    color: var(--neon-blue);
+    font-style: italic;
+    letter-spacing: 2px;
+    
+    /* We use 'em' for shadows so the 3D depth scales with the font size */
+    text-shadow: 
+        0.01em 0.01em 0px #00a8b3, 
+        0.02em 0.02em 0px #00a8b3, 
+        0.03em 0.03em 0px #00a8b3, 
+        0.04em 0.04em 0px #00a8b3, 
+        0px 0.1em 0.3em rgba(0, 242, 255, 0.6);
+        
+    transform: perspective(600px) rotateX(15deg);
+    animation: grandFloat 3s ease-in-out infinite alternate;
+    margin: 0;
+}
+
+/* Make buttons scale based on screen width */
+.grand-btn {
+    display: inline-block;
+    padding: 15px 35px;
+    font-size: 1.2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.1s, box-shadow 0.1s;
+    z-index:9999;
+    pointer-events: auto;
+    /* Ensure the button doesn't 'lose' the mouse while pressing */
+    touch-action: manipulation;
+    /* Restore the 3D 'Ledge' */
+    box-shadow: 0 8px 0 rgba(0,0,0,0.5); 
+    margin: 10px;
+    flex-shrink: 0; /* Prevents button from squishing */
+}
+/* Specific 3D colors for buttons */
+.btn-launch { background: var(--neon-blue); box-shadow: 0 8px 0 #008891; }
+.btn-hof { background: var(--gold); box-shadow: 0 8px 0 #8a6d00; }
+.btn-back { background: var(--neon-red); box-shadow: 0 8px 0 #8b0000; }
+
+.grand-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+}
+        
+.grand-btn:hover {
+    /* DELETE: filter: brightness(1.1); */
+      opacity: 0.9;
+    cursor: pointer;
+}
+/* 3. FLOATING ANIMATION */
+@keyframes grandFloat {
+    from { transform: perspective(600px) rotateX(15deg) translateY(0); }
+    to { transform: perspective(600px) rotateX(20deg) translateY(-20px); }
+}
+/* Ensure the title shrinks to fit narrow screens */
+.hof-title {
+    text-align: center;
+    font-size: clamp(1.5rem, 6vw, 4rem);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin: 10px 0;
+}
+
+/* Trophy Row */
+.trophy-row { width: 100%; display: flex; justify-content: center; text-align: center; font-size: 2.5rem; letter-spacing: 5px; margin: 10px 0; filter: drop-shadow(0 0 10px var(--gold)); }
+
+.hof-scroll-box {
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 15px 0;
+    /* This allows the table to scroll while the box stays fixed */
+    flex: 1 1 auto; 
+    min-height: 0; 
+}
+
+.hof-table { width: 100%; border-collapse: collapse; }
+.hof-table th { font-size: 1.6rem; color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); padding: 12px; }
+.hof-table td { padding: 10px; font-weight: bold; font-size: 1.2rem; }
+
+/* Ranking Colors */
+.rank-gold { color: var(--gold); }
+.rank-silver { color: #C0C0C0; }
+.rank-bronze { color: #CD7F32; }
+.rank-white { color: #FFFFFF; }
+    </style>
+</head>
+<body>
+
+<div id="hud-left" class="hidden">
+    <div id="ui-user" style="font-size: 1.8rem; color: var(--neon-blue);">Guest</div>
+    <div id="ui-lvl">Level: 1</div>
+    <div id="ui-score">Score: 0</div>
+    <div id="ui-lives"></div>
+    <div class="fuel-meter" id="fuel-bar-container"></div>
+</div>
+
+<div id="hud-right" class="hidden">
+    <div class="nav-icon" onclick="manualTogglePause()" id="pause-btn">⏸️</div>
+    <div class="nav-icon" onclick="showScreen('info')">ℹ️</div>
+    <div class="nav-icon" onclick="toggleMute()" id="mute-btn">🔊</div>
+    <div class="nav-icon" onclick="viewHOF('personal')">🏆</div>
+    <div class="nav-icon" onclick="viewHOF('global')">🌐</div>
+</div>
+
+<div id="screen-landing" class="screen">
+    <h1 id="main-title">SPACE DODGER 3D</h1>
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 30px;">
+    <button class="grand-btn btn-launch" style="background: var(--neon-blue); box-shadow: 0 8px 0 #008a91;" onclick="console.log('CLICKED'); launchMission()">🚀 LAUNCH MISSION</button>
+    <br>
+    <button class="grand-btn btn-hof" style="background: var(--gold); box-shadow: 0 8px 0 #8a6d00;" onclick="viewHOF('personal')">🏆 PERSONAL HALL OF FAME</button>
+    </div>
+</div>
+
+<div id="screen-gameover" class="screen hidden">
+    <h1 style="font-size: 8rem; color: var(--neon-red);">GAME OVER</h1>
+    <div class="btn-container">
+        <button onclick="launchMission()">Relaunch Mission</button>
+        <button onclick="viewHOF('personal')" class="btn-alt">View Personal High Scores</button>
+    </div>
+</div>
+
+<div id="screen-overlay" class="screen hidden">
+    <div id="overlay-wrapper" class="neon-box">
+        <div id="overlay-content"></div>
+        <div class="btn-container" id="overlay-btns">
+            </div>
+    </div>
+</div>
+
+<script>
+let scene, camera, renderer, rocket, flame, nose;
+let asteroids = [], stars = [], lasers = [];
+let score = 0, level = 1, lives = 3, fuel = 100, active = false, paused = false;
+let audioCtx, engineOsc, engineGain, soundOn = true;
+let sirenInterval = null;
+let localHOF = JSON.parse(localStorage.getItem('spaceDodgerHOF')) || [];
+
+function launchMission() {
+    // INDICATE: Capture the state at the VERY TOP
+    const needsToStartLoop = !active;
+
+    // Reset core game stats
+    score = 0; level = 1; lives = 3; fuel = 100;
+
+    // Reset the button icon
+    const pauseBtn = document.getElementById('pause-btn');
+    if (pauseBtn) pauseBtn.innerText = '⏸️';
+    
+    // Hide all menu overlays
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    
+    // Display the game HUD
+    const hudL = document.getElementById('hud-left');
+    const hudR = document.getElementById('hud-right');
+    if (hudL) hudL.classList.remove('hidden');
+    if (hudR) hudR.classList.remove('hidden');
+    
+    if (!renderer) {
+        init3D();
+    }
+    
+    initAudio();
+    initFuelUI();
+    
+    // INDICATE: Explicitly set states
+    active = true;
+    paused = false;
+
+    // INDICATE: Start loop if it was dead
+    if (needsToStartLoop) {
+        animate();
+    }
+}
+    
+// Move these OUTSIDE the init3D function (Pre-define them) to save load time
+const SHARED_BLUE_MAT = new THREE.MeshPhongMaterial({color: 0x0044ff});
+const SHARED_RIM_MAT = new THREE.MeshPhongMaterial({color: 0xdddddd, shininess: 150, specular: 0xffffff});
+const SHARED_GLASS_MAT = new THREE.MeshPhongMaterial({color: 0x111111, transparent: true, opacity: 0.8, shininess: 500, specular: 0xffffff});
+    
+function init3D() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const rocketGrp = new THREE.Group();
+    const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.45, 0.8, 32), SHARED_BLUE_MAT);
+    nose = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 32), SHARED_BLUE_MAT); 
+    nose.position.y = 0.65;
+    const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.3, 16), new THREE.MeshPhongMaterial({color: 0x222222})); engine.position.y = -0.55;
+    flame = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 12), new THREE.MeshBasicMaterial({color: 0xff4400})); flame.position.y = -1.0; flame.rotation.x = Math.PI;
+    // --- 1. THE WINGS ---
+    const wingGeo = new THREE.BoxGeometry(0.8, 0.2, 0.1); // Width, Height, Depth
+    const wingMat = SHARED_BLUE_MAT;
+    
+    const leftWing = new THREE.Mesh(wingGeo, wingMat);
+    leftWing.position.set(-0.4, -0.1, 0); // Positioned on the side of the hull
+    leftWing.rotation.z = Math.PI / 4; // Angled down slightly
+    
+    const rightWing = new THREE.Mesh(wingGeo, wingMat);
+    rightWing.position.set(0.4, -0.1, 0);
+    rightWing.rotation.z = -Math.PI / 4;
+    
+    // --- 2. THE WINDOWS (Oval Reflective Glass with Steel Rim) ---
+    const windowGrp = new THREE.Group();
+
+    // Steel Rim (A Torus/Donut shape)
+    // Parameters: radius, tube diameter, radialSegments, tubularSegments
+    const rimGeo = new THREE.TorusGeometry(0.12, 0.02, 16, 32);
+    const rimMat = new THREE.MeshPhongMaterial({color: 0xdddddd, shininess: 150, specular: 0xffffff});
+
+    // Glass (A slightly flattened sphere/disc)
+    const glassGeo = new THREE.SphereGeometry(0.11, 16, 16);
+    const glassMat = new THREE.MeshPhongMaterial({color: 0x111111, transparent: true, opacity: 0.8, shininess: 500, specular: 0xffffff, reflectivity: 1.0});
+
+    // Assembly of Left Window
+    const leftRim = new THREE.Mesh(rimGeo, rimMat);
+    const leftGlass = new THREE.Mesh(glassGeo, glassMat);
+    leftGlass.scale.z = 0.2; // Flatten the sphere into an oval disc
+    const leftWindow = new THREE.Group();
+    leftWindow.add(leftRim, leftGlass);
+    leftWindow.position.set(-0.25, 0.2, 0.1); // Placed on the side/front
+    leftWindow.rotation.y = -Math.PI / 2;
+    leftWindow.rotation.z = -0.35;
+
+    // Assembly of Right Window
+    const rightWindow = leftWindow.clone(); // Java-style cloning
+    rightWindow.position.set(0.25, 0.2, 0.1);
+    rightWindow.rotation.y = Math.PI / 2;
+    rightWindow.rotation.z = 0.35;
+    
+    // MAIN AMBIENT LIGHT (General visibility - the "Base" light)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+
+    // DIRECTIONAL LIGHT (Like the Sun - creates shadows and depth)
+    const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    sunLight.position.set(5, 10, 7); // Coming from top-right-front
+    scene.add(sunLight);
+
+    // THE "GLINT" LIGHT (A PointLight that follows the rocket)
+    // This specifically makes the steel rims and glass shine
+    const glintLight = new THREE.PointLight(0x00aaff, 1.5, 10); 
+    glintLight.position.set(2, 2, 2); // Positioned to hit the windows
+   
+    // OPTIONAL: ENGINE GLOW (A red light at the bottom)
+    const engineLight = new THREE.PointLight(0xff4400, 2, 3);
+    engineLight.position.y = -1.2;
+    
+    // INDICATE: Add all new parts to the main group
+    rocketGrp.add(hull, nose, engine, flame, leftWing, rightWing, leftWindow, rightWindow, glintLight, engineLight);
+    rocket = rocketGrp; scene.add(rocket); rocket.position.y = -4;
+
+    scene.add(new THREE.AmbientLight(0x606060));
+    const sun = new THREE.DirectionalLight(0xffffff, 1); sun.position.set(5, 5, 10); scene.add(sun);
+    camera.position.z = 8;
+}
+
+function initAudio() {
+    if(audioCtx) audioCtx.close();
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Constant Low Frequency Rocket Whirr
+    engineOsc = audioCtx.createOscillator();
+    engineGain = audioCtx.createGain();
+    engineOsc.type = 'sine';
+    engineOsc.frequency.setValueAtTime(60, audioCtx.currentTime); // Low frequency hum
+    engineGain.gain.setValueAtTime(soundOn ? 0.05 : 0, audioCtx.currentTime);
+    engineOsc.connect(engineGain);
+    engineGain.connect(audioCtx.destination);
+    engineOsc.start();
+}
+
+function playSfx(type) {
+    if(!soundOn || !audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+
+    switch(type) {
+        case 'blast': // The powerful "BLAST" logic
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(55, audioCtx.currentTime); 
+            g.gain.setValueAtTime(0.7, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            break;
+        case 'booom':
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(45, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.9, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+            break;
+        case 'bling':
+            osc.type = 'sine'; osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            break;
+        case 'whooop':
+            osc.type = 'square'; osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.5);
+            g.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            break;
+        case 'laser':
+            osc.type = 'sine'; // Removed sawtooth to prevent high-freq click
+            osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+            g.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            break;
+        case 'siren':
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.5);
+            osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 1.0);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.0);
+            break;
+    }
+    osc.start(); osc.stop(audioCtx.currentTime + 1.0);
+}
+
+function initFuelUI() {
+    const container = document.getElementById('fuel-bar-container');
+    container.innerHTML = '';
+    for(let i=0; i<25; i++) { const s = document.createElement('div'); s.className = 'fuel-section'; container.appendChild(s); }
+}
+
+function spawnLogic() {
+    // 1. Asteroid Density: Increases with Level
+    // Level 1 starts at 0.015, adding 0.005 per level
+    let asteroidSpawnChance = 0.01 + (level * 0.005);
+    if (Math.random() > asteroidSpawnChance) return;
+
+    const minGap = 2.1; 
+    let spawnX = (Math.random() - 0.5) * 12;
+    
+    // Spatial Gap Validation
+    const existing = [...asteroids, ...stars].filter(o => o.position.y > 5);
+    for(let o of existing) { 
+        if(Math.abs(o.position.x - spawnX) < minGap) return; 
+    }
+
+    // 2. Star Frequency: Decreases with Level
+    // Stars appear as a subset of successful spawns
+    // Level 1 starts at 30% chance, Level 10 drops to 10%
+    let starChance = Math.max(0.1, 0.3 - (level * 0.02));
+
+    if(Math.random() < starChance) {
+        // Create Star logic
+        const star = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2, 0), new THREE.MeshPhongMaterial({color: 0xffd700}));
+        star.position.set(spawnX, 8, 0); 
+        stars.push(star); 
+        scene.add(star);
+    } else {
+        // Create Asteroid logic
+        const s = 0.4 + Math.random() * 0.8;
+        const ast = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 1), new THREE.MeshPhongMaterial({color: 0x882222, flatShading: true}));
+        ast.position.set(spawnX, 8, 0); 
+        ast.userData = { size: s, hp: Math.ceil(s * 4) };
+        asteroids.push(ast); 
+        scene.add(ast);
+    }
+}
+
+function update() {
+    if(!active || paused) return;
+    const fallSpeed = 0.05 + (level * 0.02);
+    flame.scale.setScalar(0.7 + Math.random() * 0.5);
+
+    asteroids.forEach((a, i) => {
+        a.position.y -= fallSpeed;
+        if(a.position.distanceTo(rocket.position) < 1.1) {
+            lives--; fuel -= 15; playSfx('booom'); scene.remove(a); asteroids.splice(i,1);
+        } else if(a.position.y < -6) { fuel -= 4; scene.remove(a); asteroids.splice(i,1); }
+    });
+
+    stars.forEach((s, i) => {
+        s.position.y -= fallSpeed; s.rotation.z += 0.05;
+        if(s.position.distanceTo(rocket.position) < 0.9) {
+            score += 25; fuel = Math.min(100, fuel+5); playSfx('bling'); scene.remove(s); stars.splice(i,1);
+        }
+    });
+
+    lasers.forEach((l, li) => {
+        l.position.y += 0.4;
+        asteroids.forEach((a, ai) => {
+            if(l.position.distanceTo(a.position) < a.userData.size + 0.2) {
+                a.userData.hp--; scene.remove(l); lasers.splice(li,1);
+                if(a.userData.hp <= 0) {
+                    score += a.userData.size > 0.8 ? 5 : 1; fuel = Math.min(100, fuel+2);
+                    playSfx('blast'); scene.remove(a); asteroids.splice(ai,1);
+                    if(score >= level * 100) { level++; playSfx('whooop'); }
+                }
+            }
+        });
+    });
+
+    if(fuel <= 0 || lives <= 0) {
+        active = false; if(engineOsc) engineOsc.stop();
+        
+        // Check authentication state
+        const isLoggedIn = !!(window.userProfile && window.userProfile.loggedIn);
+        
+        // 1. Identify which storage to use
+        const storage = isLoggedIn ? localStorage : sessionStorage;
+        const storageKey = 'spaceDodgerHOF';
+
+        // 2. Load existing data from the chosen storage
+        window.localHOF = JSON.parse(storage.getItem(storageKey)) || [];
+
+        // 3. Push current run
+        window.localHOF.push({u: 'Guest', l: level, s: score});
+        window.localHOF.sort((a,b) => b.s - a.s);
+
+        // 4. Save back to the specific storage engine
+        storage.setItem(storageKey, JSON.stringify(window.localHOF));
+        document.getElementById('screen-gameover').classList.remove('hidden');
+    }
+    spawnLogic();
+    updateUI();
+}
+
+function updateUI() {
+    document.getElementById('ui-lvl').innerText = "Level: " + level;
+    document.getElementById('ui-score').innerText = "Score: " + score;
+    document.getElementById('ui-lives').innerHTML = "❤️".repeat(lives);
+    const fill = Math.floor((fuel/100)*25);
+    const secs = document.querySelectorAll('.fuel-section');
+    let color = (fuel < 34) ? "#ff3131" : (fuel < 67) ? "orange" : "#39ff14";
+    secs.forEach((s, i) => s.style.background = i < fill ? color : "#000");
+    if(fuel <= 15 && active && !paused) {
+       document.getElementById('fuel-bar-container').classList.add('siren-active');
+       // INDICATE: Trigger audio every 1.2 seconds if not already playing
+       if (!sirenInterval) {
+           playSfx('siren');
+            sirenInterval = setInterval(() => {
+                if (fuel <= 15 && active && !paused) playSfx('siren');
+                else { clearInterval(sirenInterval); sirenInterval = null; }
+            }, 1200);
+        }
+    }
+    else {
+        document.getElementById('fuel-bar-container').classList.remove('siren-active');
+        if (sirenInterval) { clearInterval(sirenInterval); sirenInterval = null; }
+    }
+}
+
+function viewHOF(type) {
+    // INDICATE: Sync memory with storage before rendering table
+    const storage = (window.userProfile && window.userProfile.loggedIn) ? localStorage : sessionStorage;
+    window.localHOF = JSON.parse(storage.getItem('spaceDodgerHOF')) || [];
+    
+    if (!window.localHOF) window.localHOF = []; // Safety check for data
+    // INDICATE: Also sync Global Data reference if it doesn't exist to prevent 'undefined' crashes
+    if (!window.globalHOF) window.globalHOF = [];
+    
+    paused = true;
+    const pauseBtn = document.getElementById('pause-btn');
+    if (pauseBtn) pauseBtn.innerText = '▶️';
+    
+    const content = document.getElementById('overlay-content');
+    const btns = document.getElementById('overlay-btns');
+    
+    btns.innerHTML = ''; 
+    content.innerHTML = '';
+
+    const isLoggedIn = !!(window.userProfile && window.userProfile.loggedIn);
+    const isGuest = !isLoggedIn;
+    
+    const title = document.createElement('h1');
+    title.className = 'hof-title';
+    title.innerText = (type === 'global') ? 'GLOBAL RANKINGS' : 'PERSONAL BESTS';
+    
+    const trophies = document.createElement('div');
+    trophies.className = 'trophy-row';
+    trophies.innerText = '🏆 🏆 🏆 🏆 🏆';
+
+    const scrollBox = document.createElement('div');
+    scrollBox.className = 'hof-scroll-box';
+
+    if (type === 'global' && !isLoggedIn) {
+        scrollBox.innerHTML = `
+            <div style="text-align:center; padding:20px; color:var(--neon-red);">
+                <p>⚠️ ACCESS DENIED</p>
+                <p>You must be logged in to view Global Rankings.</p>
+            </div>`;
+        
+        // Create the Login Button
+        const loginBtn = document.createElement('button');
+        loginBtn.className = "grand-btn";
+        loginBtn.style.background = "linear-gradient(to bottom, #444, #222)";
+        loginBtn.style.boxShadow = "0 8px 0 #000";
+        loginBtn.innerText = "🔑 MEMBER LOGIN";
+        loginBtn.onclick = () => showLoginOptions('global'); // Links to the new function below
+        btns.appendChild(loginBtn);
+    } else {
+        let tableHtml = `<table class="hof-table"><tr><th>RANK</th><th>PILOT</th><th>LVL</th><th>SCORE</th></tr>`;
+
+        // Use global data if type is global, otherwise local
+        let data = (type === 'global') ? (window.globalHOF || []) : (window.localHOF || []);
+
+        // INDICATE: Check for empty data before slicing
+        if (data.length === 0) {
+            tableHtml += `<tr><td colspan="4" style="text-align:center; padding:20px;">NO MISSION DATA RECORDED</td></tr>`;
+        } else {
+            let displayScores = data.slice(0, 10);
+            displayScores.forEach((entry, i) => {
+                let rowColor = (i === 0) ? 'rank-gold' : (i === 1) ? 'rank-silver' : (i === 2) ? 'rank-bronze' : 'rank-white';
+                const scoreDisplay = (entry.s !== undefined && entry.s !== null) ? entry.s.toLocaleString() : "0";
+                const levelDisplay = (entry.l !== undefined) ? entry.l : "—";
+                const userDisplay = entry.u || 'GUEST';
+                tableHtml += `<tr class="${rowColor}"><td>#${i + 1}</td><td>${userDisplay}</td><td>${levelDisplay}</td><td>${scoreDisplay}</td></tr>`;
+            });
+        }
+        tableHtml += `</table>`;
+        scrollBox.innerHTML = tableHtml;
+    }
+    content.appendChild(title);
+    content.appendChild(trophies);
+    content.appendChild(scrollBox);
+
+    if (isGuest && type === 'personal') {
+        const saveBtn = document.createElement('button');
+        saveBtn.className = "grand-btn btn-launch";
+        saveBtn.style.background = "var(--neon-blue)";
+        saveBtn.style.boxShadow = "0 8px 0 #008a91"; // Added 3D depth
+        saveBtn.innerText = "💾 SAVE SCORES";
+        saveBtn.onclick = () => showLoginOptions('personal');
+        btns.appendChild(saveBtn);
+    }
+
+    const backBtn = document.createElement('button');
+    backBtn.className = "grand-btn btn-back";
+    backBtn.style.background = "var(--neon-red)";
+    backBtn.style.boxShadow = "0 8px 0 #8b0000"; // Added 3D depth
+    backBtn.innerText = "🚀 BACK TO MISSION";
+    backBtn.onclick = closeOverlay;
+    btns.appendChild(backBtn);
+
+    document.getElementById('screen-overlay').classList.remove('hidden');
+}
+function manualTogglePause() { paused = !paused; document.getElementById('pause-btn').innerText = paused ? "▶️" : "⏸️"; }
+function toggleMute() { 
+    soundOn = !soundOn; 
+    document.getElementById('mute-btn').innerText = soundOn?'🔊':'🔇'; 
+    if(engineGain) engineGain.gain.setValueAtTime(soundOn ? 0.05 : 0, audioCtx.currentTime);
+}
+function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); }
+function showScreen(type) {
+    paused = true;
+    // INDICATE: Sync the UI button icon to show 'Play' since game is now paused
+    const pauseBtn = document.getElementById('pause-btn');
+    if (pauseBtn) pauseBtn.innerText = '▶️';
+    
+    const content = document.getElementById('overlay-content');
+    const btns = document.getElementById('overlay-btns');
+    btns.innerHTML = ''; 
+
+    // Custom HTML with inline styles for high-impact colors
+    let html = `
+        <h1 style="color: var(--neon-blue); font-size: 3rem; margin-bottom: 20px; text-shadow: 0 0 20px var(--neon-blue);">PILOT MANUAL</h1>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left;">
+            
+            <div style="border: 2px solid #ff00ff; padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px #ff00ff;">
+                <h3 style="color: #ff00ff; margin: 0; font-size: 1.5rem;">🚀 MOVEMENT</h3>
+                <p style="font-weight: bold; color: #fff; margin: 10px 0;">Slide your <span style="color: #ff00ff;">MOUSE</span> to navigate the debris field. Your ship follows your lead.</p>
+            </div>
+
+            <div style="border: 2px solid var(--gold); padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px var(--gold);">
+                <h3 style="color: var(--gold); margin: 0; font-size: 1.5rem;">⭐ SCORING</h3>
+                <p style="font-weight: bold; color: #fff; margin: 10px 0;">Blast asteroids for points. Collecting <span style="color: var(--gold);">GOLD STARS</span> adds +25 to your score.</p>
+            </div>
+
+            <div style="border: 2px solid #39ff14; padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px #39ff14;">
+                <h3 style="color: #39ff14; margin: 0; font-size: 1.5rem;">⛽ FUEL TANK</h3>
+                <p style="font-weight: bold; color: #fff; margin: 10px 0;">Stars refuel your tank. If it hits <span style="color: var(--neon-red);">ZERO</span>, the mission ends instantly!</p>
+            </div>
+
+            <div style="border: 2px solid var(--neon-blue); padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px var(--neon-blue);">
+                <h3 style="color: var(--neon-blue); margin: 0; font-size: 1.5rem;">📈 LEVELS</h3>
+                <p style="font-weight: bold; color: #fff; margin: 10px 0;">Difficulty <span style="color: var(--neon-blue);">SCALES</span>. Asteroids increase & stars decrease as you advance.</p>
+            </div>
+
+        </div>
+    `;
+    
+    content.innerHTML = html;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.innerText = "RETURN TO MISSION";
+    closeBtn.style.marginTop = "30px";
+    closeBtn.onclick = closeOverlay;
+    btns.appendChild(closeBtn);
+
+    document.getElementById('screen-overlay').classList.remove('hidden');
+}
+
+window.addEventListener('mousedown', (e) => { 
+    if(active && !paused && e.button === 0) { 
+        const l = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6), new THREE.MeshBasicMaterial({color: 0x00ffff})); 
+        l.position.copy(rocket.position); lasers.push(l); scene.add(l); playSfx('laser'); 
+    }
+});
+window.addEventListener('mousemove', (e) => { if(active && !paused) rocket.position.x = (e.clientX/window.innerWidth)*14 - 7; });
+function animate() { if(!active) return; requestAnimationFrame(animate); update(); renderer.render(scene, camera); }
+    
+function showLoginOptions(returnType) {
+    const content = document.getElementById('overlay-content');
+    const btns = document.getElementById('overlay-btns');
+    
+    // Clear previous view
+    content.innerHTML = '';
+    btns.innerHTML = '';
+
+    const title = document.createElement('h1');
+    title.className = 'hof-title';
+    title.innerText = 'SELECT PROVIDER';
+    content.appendChild(title);
+
+    // Container for social buttons
+    const loginContainer = document.createElement('div');
+    loginContainer.style.display = "flex";
+    loginContainer.style.flexDirection = "column";
+    loginContainer.style.gap = "15px";
+    loginContainer.style.width = "100%";
+    loginContainer.style.alignItems = "center";
+
+    // Helper to create provider buttons
+    const createProviderBtn = (name, color, icon) => {
+        const btn = document.createElement('button');
+        btn.className = "grand-btn";
+        btn.style.width = "80%";
+        btn.style.background = color;
+        btn.style.boxShadow = `0 6px 0 ${color}99`; // Slightly darker version of color
+        btn.innerHTML = `${icon} LOGIN WITH ${name}`;
+        btn.onclick = () => {
+            console.log(`Initiating ${name} Federated Login...`);
+            // Here you would link to your Firebase/Auth0/Passport.js endpoint
+            // window.location.href = `/auth/${name.toLowerCase()}`;
+        };
+        return btn;
+    };
+
+    loginContainer.appendChild(createProviderBtn('GOOGLE', '#db4437', '🌐'));
+    loginContainer.appendChild(createProviderBtn('MICROSOFT', '#00a1f1', '🏁'));
+    loginContainer.appendChild(createProviderBtn('FACEBOOK', '#4267B2', '👥'));
+
+    content.appendChild(loginContainer);
+
+    // Add a Back button to return to the HOF view
+    const backBtn = document.createElement('button');
+    backBtn.className = "grand-btn btn-back";
+    backBtn.style.background = "var(--neon-red)";
+    if (returnType === 'personal') {
+       backBtn.innerText = "⬅️ BACK TO PERSONAL SCORES";
+       backBtn.onclick = () => viewHOF('personal'); 
+    } else {
+        backBtn.innerText = "⬅️ BACK TO GLOBAL SCORES";
+        backBtn.onclick = () => viewHOF('global'); 
+    }
+    btns.appendChild(backBtn);
+}
+</script>
+</body>
+</html>
