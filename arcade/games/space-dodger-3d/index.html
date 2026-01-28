@@ -205,6 +205,7 @@ let scene, camera, renderer, rocket, flame, nose;
 let asteroids = [], stars = [], lasers = [], explosions = [], shakeIntensity = 0;
 let score = 0, level = 1, lives = 3, fuel = 100, active = false, paused = false;
 let audioCtx, engineOsc, engineGain, soundOn = true;
+let whirrOsc, whirrGain;
 let textureGain, prevX = 0;
 let sirenInterval = null;
 let localHOF = JSON.parse(localStorage.getItem('spaceDodgerHOF')) || [];
@@ -215,8 +216,8 @@ function setEngineState(isPlay) {
     const whirrVol = (isPlay && soundOn) ? 0.015 : 0;
     
     engineGain.gain.setTargetAtTime(targetVol, audioCtx.currentTime, 0.1);
-    if (window.textureGain) {
-        window.textureGain.gain.setTargetAtTime(whirrVol, audioCtx.currentTime, 0.1);
+    if (textureGain) {
+        textureGain.gain.setTargetAtTime(whirrVol, audioCtx.currentTime, 0.1);
     }
 }    
 function launchMission() {
@@ -347,25 +348,32 @@ function initAudio() {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
     // Constant Low Frequency Rocket Whirr
-    window.engineOsc = audioCtx.createOscillator();
+    engineOsc = audioCtx.createOscillator();
     engineGain = audioCtx.createGain();
-    window.engineOsc.type = 'sawtooth';
-    window.engineOsc.frequency.setValueAtTime(50, audioCtx.currentTime); // Low frequency hum
+    engineOsc.type = 'sawtooth';
+    engineOsc.frequency.setValueAtTime(50, audioCtx.currentTime); // Low frequency hum
     engineGain.gain.setValueAtTime(soundOn ? 0.04 : 0, audioCtx.currentTime);
+    
     // Secondary Harmonic (The "Whirr")
-    let whirrOsc = audioCtx.createOscillator();
-    let whirrGain = audioCtx.createGain();
-    window.whirrOsc.type = 'triangle';
-    window.whirrOsc.frequency.setValueAtTime(110, audioCtx.currentTime);
+    whirrOsc = audioCtx.createOscillator();
+    whirrGain = audioCtx.createGain();
+    
+    // ADDED: Initialize the missing textureGain node
+    textureGain = audioCtx.createGain();
+    textureGain.gain.setValueAtTime(0, audioCtx.currentTime);
+    textureGain.connect(audioCtx.destination);
+        
+    whirrOsc.type = 'triangle';
+    whirrOsc.frequency.setValueAtTime(110, audioCtx.currentTime);
     whirrGain.gain.setValueAtTime(soundOn ? 0.02 : 0, audioCtx.currentTime);
     
-    window.engineOsc.connect(engineGain);
+    engineOsc.connect(engineGain);
     engineGain.connect(audioCtx.destination);
-    window.whirrOsc.connect(whirrGain);
+    whirrOsc.connect(whirrGain);
     whirrGain.connect(audioCtx.destination);
     
-    window.engineOsc.start();
-    window.whirrOsc.start();
+    engineOsc.start();
+    whirrOsc.start();
 }
 
 function playSfx(type) {
@@ -545,14 +553,14 @@ function update() {
     });
     
     // DYNAMIC WHIRR LOGIC
-    if (audioCtx && window.engineOsc && soundOn) {
+    if (audioCtx && engineOsc && soundOn) {
         let targetPosX = rocket.position.x;
         // We calculate velocity by seeing how far the rocket is from its target
         let vel = Math.abs(targetPosX - (rocket.position.x || 0));
         let pitchShift = vel * 300; // How much the pitch reacts to speed
         
-        window.engineOsc.frequency.setTargetAtTime(40 + pitchShift, audioCtx.currentTime, 0.05);
-        window.whirrOsc.frequency.setTargetAtTime(100 + (pitchShift * 3), audioCtx.currentTime, 0.1);
+        engineOsc.frequency.setTargetAtTime(40 + pitchShift, audioCtx.currentTime, 0.05);
+        whirrOsc.frequency.setTargetAtTime(100 + (pitchShift * 3), audioCtx.currentTime, 0.1);
     }
     const fallSpeed = 0.05 + (level * 0.02);
     flame.scale.setScalar(0.7 + Math.random() * 0.5);
@@ -606,7 +614,7 @@ function update() {
         if(fuel <= 0 || lives <= 0) {
         active = false; 
         if(engineOsc) engineOsc.stop();
-        if (window.whirrOsc) window.whirrOsc.stop();
+        if (whirrOsc) whirrOsc.stop();
         
         // Check authentication state
         const isLoggedIn = !!(window.userProfile && window.userProfile.loggedIn);
