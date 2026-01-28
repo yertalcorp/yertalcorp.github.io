@@ -35,6 +35,37 @@
         .text-glow { text-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fadeIn { animation: fadeIn 0.6s ease-out forwards; }
+        @keyframes holo-shimmer {0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; }}
+
+  .surreal-3d-btn {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    background: linear-gradient(-45deg, #1e293b, #3b82f6, #1e293b, #60a5fa);
+    background-size: 400% 400%;
+    animation: holo-shimmer 10s ease infinite;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 20px rgba(59,130,246,0.3);
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease;
+    }
+
+    .surreal-3d-btn:hover {box-shadow: 0 25px 50px rgba(0,0,0,0.6), 0 0 40px rgba(59,130,246,0.6);}
+
+    .inner-content { transform: translateZ(30px);}
+        
+    @keyframes glitch {
+        0% { transform: translate(0) rotateX(0) rotateY(0); text-shadow: -2px 0 red, 2px 0 blue; }
+        20% { transform: translate(-2px, 2px); }
+        40% { transform: translate(-2px, -2px); text-shadow: 2px 0 red, -2px 0 blue; }
+        60% { transform: translate(2px, 2px); }
+        80% { transform: translate(2px, -2px); }
+       100% { transform: translate(0); }
+    }
+
+    .glitch-active {
+        animation: glitch 0.3s cubic-bezier(.25,.46,.45,.94) both;
+        border-color: rgba(255, 255, 255, 0.8) !important;
+    }
+        
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -127,8 +158,13 @@
         function toggleMobileMenu() {
             document.getElementById('mobile-menu').classList.toggle('active');
         }
-
+        function playInitSound() {
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
+            audio.volume = 0.2;
+            audio.play();
+        }
         function showPage(page) {
+            if (page === 'arcade') playInitSound();
             const app = document.getElementById('app');
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-nav', 'text-blue-500'));
             const activeNav = document.getElementById('nav-' + page);
@@ -160,6 +196,16 @@
                             </h2>
                             <p class="text-slate-400 mt-4 text-lg italic font-light tracking-wide max-w-3xl">
                                 Experience the future of technical systems. Explore our curated showcases or enter the full arcade.
+                               <div class="flex justify-center lg:justify-start mb-24" style="perspective: 1000px;">
+                                    <button id="arcade-trigger" onclick="showPage('arcade')" class="surreal-3d-btn group relative px-16 py-6 rounded-2xl font-black uppercase text-xs tracking-[0.5em] text-white">
+                                        <div class="inner-content flex items-center gap-6">
+                                            <i class="fas fa-terminal text-blue-400 opacity-70 group-hover:animate-pulse"></i>
+                                                Enter the Arcade
+                                            <i class="fas fa-microchip text-blue-400 opacity-70 group-hover:rotate-180 transition-transform duration-1000"></i>
+                                        </div>
+                                        <div class="absolute inset-0 bg-blue-500/10 blur-2xl rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    </button>
+                                </div>                         
                             </p>
                         </div>
 
@@ -224,6 +270,23 @@
 
         function showLegal(t) { document.getElementById('modal-body').innerHTML = legal[t]; document.getElementById('legal-modal').style.display = 'flex'; }
         function closeLegal() { document.getElementById('legal-modal').style.display = 'none'; }
+        // --- 3D TILT & GLITCH ENGINE ---
+        document.addEventListener('mousemove', (e) => {
+            const btn = document.getElementById('arcade-trigger');
+            if (!btn) return;
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            btn.style.transform = `rotateX(${-y / 8}deg) rotateY(${x / 12}deg)`;
+        });
+
+        document.addEventListener('mouseover', (e) => {
+            const btn = e.target.closest('#arcade-trigger');
+            if (btn && !btn.classList.contains('glitch-active')) {
+                btn.classList.add('glitch-active');
+                setTimeout(() => btn.classList.remove('glitch-active'), 300);
+            }
+        });
         window.onload = () => showPage('home');
         window.onclick = (e) => { if(e.target == document.getElementById('legal-modal')) closeLegal(); }
     </script>
