@@ -575,32 +575,34 @@ function update() {
     });
 
     lasers.forEach((l, li) => {
-        l.position.y += 0.4;
-        asteroids.forEach((a, ai) => {
-            if(l.position.distanceTo(a.position) < a.userData.size + 0.2) {
-                a.userData.hp--; scene.remove(l); lasers.splice(li,1);
-                // The spark: flash at asteroid impact point
-                createSpark(l.position);
-                
-                if(a.userData.hp <= 0) {
-                    // Create fireball
-                    createFireball(a.position, a.userData.size);
-        
-                    // THE SHATTER: Break into smithereens after a tiny delay
-                    setTimeout(() => {
+    l.position.y += 0.4;
+    asteroids.forEach((a, ai) => {
+        if(l.position.distanceTo(a.position) < a.userData.size + 0.2) {
+            a.userData.hp--; 
+            scene.remove(l); 
+            lasers.splice(li,1);
+            createSpark(l.position);
+            
+            if(a.userData.hp <= 0) {
+                createFireball(a.position, a.userData.size);
+                setTimeout(() => {
                     createDebris(a.position, a.userData.size);
-                    playSfx('booom'); // Loud explosion sound
+                    playSfx('booom');
+                    shakeIntensity = 0.15 + (a.userData.size * 0.1);
                     scene.remove(a);
                     asteroids.splice(ai,1);
-                    }, 100); }
-                    score += a.userData.size > 0.8 ? 5 : 1; fuel = Math.min(100, fuel+2);
-                    playSfx('blast'); scene.remove(a); asteroids.splice(ai,1);
-                    if(score >= level * 100) { level++; playSfx('whooop'); }
+                }, 100);
+                
+                score += a.userData.size > 0.8 ? 5 : 1; 
+                fuel = Math.min(100, fuel+2);
+                if(score >= level * 100) { level++; playSfx('whooop'); }
+            } else {
+                // If it didn't die yet, just play the hit sound
+                playSfx('blast');
                 }
             }
-        });
-    });
-
+        }); //asteroids.forEach
+    }); //lasers.forEach
     if(fuel <= 0 || lives <= 0) {
         active = false; 
         if(engineOsc) engineOsc.stop();
