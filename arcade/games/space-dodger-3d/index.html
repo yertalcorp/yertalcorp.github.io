@@ -346,28 +346,25 @@ function initAudio() {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
     // Constant Low Frequency Rocket Whirr
-    engineOsc = audioCtx.createOscillator();
+    window.engineOsc = audioCtx.createOscillator();
     engineGain = audioCtx.createGain();
-    engineOsc.type = 'sawtooth';
-    engineOsc.frequency.setValueAtTime(50, audioCtx.currentTime); // Low frequency hum
+    window.engineOsc.type = 'sawtooth';
+    window.engineOsc.frequency.setValueAtTime(50, audioCtx.currentTime); // Low frequency hum
     engineGain.gain.setValueAtTime(soundOn ? 0.04 : 0, audioCtx.currentTime);
     // Secondary Harmonic (The "Whirr")
     let whirrOsc = audioCtx.createOscillator();
     let whirrGain = audioCtx.createGain();
-    whirrOsc.type = 'triangle';
-    whirrOsc.frequency.setValueAtTime(110, audioCtx.currentTime);
+    window.whirrOsc.type = 'triangle';
+    window.whirrOsc.frequency.setValueAtTime(110, audioCtx.currentTime);
     whirrGain.gain.setValueAtTime(soundOn ? 0.02 : 0, audioCtx.currentTime);
     
-    engineOsc.connect(engineGain);
+    window.engineOsc.connect(engineGain);
     engineGain.connect(audioCtx.destination);
-    whirrOsc.connect(whirrGain);
+    window.whirrOsc.connect(whirrGain);
     whirrGain.connect(audioCtx.destination);
     
-    engineOsc.start();
-    whirrOsc.start();
-    
-    // Store reference for dynamic updates
-    window.whirrOsc = whirrOsc;
+    window.engineOsc.start();
+    window.whirrOsc.start();
 }
 
 function playSfx(type) {
@@ -547,14 +544,14 @@ function update() {
     });
     
     // DYNAMIC WHIRR LOGIC
-    if (audioCtx && engineOsc && soundOn) {
+    if (audioCtx && window.engineOsc && soundOn) {
         let targetPosX = rocket.position.x;
         // We calculate velocity by seeing how far the rocket is from its target
         let vel = Math.abs(targetPosX - (rocket.position.x || 0));
-        let pitchShift = vel * 50; // How much the pitch reacts to speed
+        let pitchShift = vel * 300; // How much the pitch reacts to speed
         
-        engineOsc.frequency.setTargetAtTime(50 + pitchShift, audioCtx.currentTime, 0.1);
-        if(window.whirrOsc) window.whirrOsc.frequency.setTargetAtTime(110 + (pitchShift * 2), audioCtx.currentTime, 0.1);
+        window.engineOsc.frequency.setTargetAtTime(40 + pitchShift, audioCtx.currentTime, 0.05);
+        window.whirrOsc.frequency.setTargetAtTime(100 + (pitchShift * 3), audioCtx.currentTime, 0.1);
     }
     const fallSpeed = 0.05 + (level * 0.02);
     flame.scale.setScalar(0.7 + Math.random() * 0.5);
@@ -873,6 +870,24 @@ function showLoginOptions(returnType) {
         backBtn.onclick = () => viewHOF('global'); 
     }
     btns.appendChild(backBtn);
+}
+
+function createSpark(pos) {
+    const spark = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshBasicMaterial({color: 0xffffff}));
+    spark.position.copy(pos);
+    scene.add(spark);
+    setTimeout(() => scene.remove(spark), 40);
+}
+
+function createFireball(pos, size) {
+    const fire = new THREE.Mesh(new THREE.SphereGeometry(size * 0.5, 12, 12), new THREE.MeshBasicMaterial({color: 0xff6600, transparent: true, opacity: 0.8}));
+    fire.position.copy(pos);
+    scene.add(fire);
+    let s = 1;
+    const fInterval = setInterval(() => {
+        s += 0.15; fire.scale.setScalar(s); fire.material.opacity -= 0.08;
+        if(fire.material.opacity <= 0) { clearInterval(fInterval); scene.remove(fire); }
+    }, 20);
 }
 </script>
 </body>
