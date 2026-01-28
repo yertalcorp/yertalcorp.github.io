@@ -171,6 +171,7 @@
                 setTimeout(() => {
                     window.location.href = 'arcade/index.html';
                 }, 400);
+                setTimeout(() => { if(btn) btn.style.filter = "none"; }, 1000);
                 return;
             }
             const app = document.getElementById('app');
@@ -244,6 +245,8 @@
                             ${card('Access Pass', 'Unlock all Yertal mastery paths.', 'fas fa-id-card-clip', wp+'/signup')}
                         </div>
                     </div>`;
+                    const btn = document.getElementById('arcade-trigger');
+                    if (btn) btn.style.filter = "none";
             } else if (page === 'curriculum') {
                 app.innerHTML = `<div class="text-center py-20 animate-fadeIn"><h2 class="text-3xl font-bold uppercase tracking-tight">Curriculum Library</h2><p class='text-slate-400 mt-4'>Direct access to technical mastery paths.</p><button onclick="window.open('${wp}/curriculum', '_blank')" class="mt-8 bg-blue-600 px-8 py-3 rounded-xl font-bold uppercase text-xs hover:bg-blue-500 transition">Enter WordPress Portal</button></div>`;
             } else if (page === 'books') {
