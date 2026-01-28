@@ -205,6 +205,7 @@ let scene, camera, renderer, rocket, flame, nose;
 let asteroids = [], stars = [], lasers = [], explosions = [], shakeIntensity = 0;
 let score = 0, level = 1, lives = 3, fuel = 100, active = false, paused = false;
 let audioCtx, engineOsc, engineGain, soundOn = true;
+let textureGain, prevX = 0;
 let sirenInterval = null;
 let localHOF = JSON.parse(localStorage.getItem('spaceDodgerHOF')) || [];
 
@@ -575,35 +576,34 @@ function update() {
     });
 
     lasers.forEach((l, li) => {
-    l.position.y += 0.4;
-    asteroids.forEach((a, ai) => {
-        if(l.position.distanceTo(a.position) < a.userData.size + 0.2) {
-            a.userData.hp--; 
-            scene.remove(l); 
-            lasers.splice(li,1);
-            createSpark(l.position);
-            
-            if(a.userData.hp <= 0) {
-                createFireball(a.position, a.userData.size);
-                setTimeout(() => {
-                    createDebris(a.position, a.userData.size);
-                    playSfx('booom');
-                    shakeIntensity = 0.15 + (a.userData.size * 0.1);
-                    scene.remove(a);
-                    asteroids.splice(ai,1);
-                }, 100);
+        l.position.y += 0.4;
+        asteroids.forEach((a, ai) => {
+            if(l.position.distanceTo(a.position) < a.userData.size + 0.2) {
+                a.userData.hp--; 
+                scene.remove(l); 
+                lasers.splice(li,1);
+                createSpark(l.position);
                 
-                score += a.userData.size > 0.8 ? 5 : 1; 
-                fuel = Math.min(100, fuel+2);
-                if(score >= level * 100) { level++; playSfx('whooop'); }
-            } else {
-                // If it didn't die yet, just play the hit sound
-                playSfx('blast');
+                if(a.userData.hp <= 0) {
+                    createFireball(a.position, a.userData.size);
+                    setTimeout(() => {
+                        createDebris(a.position, a.userData.size);
+                        playSfx('booom');
+                        shakeIntensity = 0.15 + (a.userData.size * 0.1);
+                        scene.remove(a);
+                        asteroids.splice(ai,1);
+                    }, 100);
+                    
+                    score += a.userData.size > 0.8 ? 5 : 1; 
+                    fuel = Math.min(100, fuel+2);
+                    if(score >= level * 100) { level++; playSfx('whooop'); }
+                } else {
+                    playSfx('blast');
                 }
             }
-        }); //asteroids.forEach
-    }); //lasers.forEach
-    if(fuel <= 0 || lives <= 0) {
+        }); // Correctly closing the asteroid loop
+    }); // Correctly closing the laser loop
+        if(fuel <= 0 || lives <= 0) {
         active = false; 
         if(engineOsc) engineOsc.stop();
         if (window.whirrOsc) window.whirrOsc.stop();
@@ -757,7 +757,7 @@ function toggleMute() {
     setEngineState(!paused && active);
     if(engineGain) engineGain.gain.setValueAtTime(soundOn ? 0.05 : 0, audioCtx.currentTime);
 }
-function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden');}
+function closeOverlay() { document.getElementById('screen-overlay').classList.add('hidden'); }
 function showScreen(type) {
     paused = true;
     // INDICATE: Sync the UI button icon to show 'Play' since game is now paused
