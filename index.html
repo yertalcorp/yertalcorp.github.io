@@ -12,23 +12,22 @@
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
         .active-nav { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
         
-        /* Highlighted Arcade Card Styles */
+        /* Dynamic Featured Card Logic */
         .featured-card { 
             background: linear-gradient(145deg, #1e293b, #0f172a);
             border: 2px solid #3b82f6;
             box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
             transition: all 0.5s ease;
+            flex: 1 1 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .featured-card:hover { transform: scale(1.02) translateY(-10px); box-shadow: 0 0 50px rgba(59, 130, 246, 0.5); }
         
         .action-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
         .action-card:hover { transform: translateY(-8px); border-color: #3b82f6; background: rgba(30, 41, 59, 0.9); box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.15); }
         
-        /* Metric Icon Grid */
-        .metric-grid { display: grid; gap: 4px; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
-        .metric-item { display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; }
-        .metric-item i { color: #3b82f6; }
-
         #mobile-menu { display: none; }
         #mobile-menu.active { display: flex; }
         #legal-modal { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px; }
@@ -72,7 +71,6 @@
         <button onclick="showPage('books'); toggleMobileMenu()">Books</button>
         <button onclick="showPage('arcade'); toggleMobileMenu()">Arcade</button>
         <button onclick="showPage('consulting'); toggleMobileMenu()">Consulting</button>
-        <a href="https://yertal.wordpress.com/signup" target="_blank" class="bg-blue-600 px-10 py-4 rounded-full">Signup</a>
     </div>
 
     <main id="app" class="flex-grow p-6 lg:p-12 w-full max-w-7xl mx-auto"></main>
@@ -83,7 +81,8 @@
                 <h4 class="text-blue-500 font-bold uppercase text-xs mb-4">Laboratory Support</h4>
                 <div class="flex flex-col gap-2 text-xs text-slate-400">
                     <button onclick="showLegal('contact')" class="text-left hover:text-white transition">Engineering Contact</button>
-                    <button onclick="showLegal('refund')" class="text-left hover:text-white transition">Refund & Delivery Policy</button>
+                    <button onclick="showLegal('shipping')" class="text-left hover:text-white transition">Shipping & Delivery</button>
+                    <button onclick="showLegal('refund')" class="text-left hover:text-white transition">Refund Policy</button>
                 </div>
             </div>
             <div>
@@ -91,6 +90,7 @@
                 <div class="flex flex-col gap-2 text-xs text-slate-400">
                     <button onclick="showLegal('privacy')" class="text-left hover:text-white transition">Privacy Protocol</button>
                     <button onclick="showLegal('terms')" class="text-left hover:text-white transition">Terms of Service</button>
+                    <button onclick="showLegal('reviews')" class="text-left hover:text-white transition">Book Review Policy</button>
                 </div>
             </div>
             <div class="text-[10px] text-slate-500 uppercase tracking-widest flex flex-col justify-center md:items-end">
@@ -103,6 +103,27 @@
     <script>
         const wp = "https://yertal.wordpress.com";
 
+        const showcaseData = {
+            'showcasedGame': {
+                title: "Space Dodger 3D",
+                desc: "In-House Collision Logic Experiment",
+                path: "arcade/games/space-dodger-3d/index.html",
+                icon: "fa-rocket"
+            },
+            'showcasedApp': {
+                title: "Bio-Tracker v2",
+                desc: "Neural Interface & Health Protocol",
+                path: "arcade/apps/bio-tracker/index.html",
+                icon: "fa-microchip"
+            },
+            'showcasedVideo': {
+                title: "Lab Tour",
+                desc: "Engineering Workflow Briefing",
+                path: "https://www.youtube.com/embed/dQw4w9WgXcQ", 
+                icon: "fa-video"
+            }
+        };
+
         function toggleMobileMenu() {
             document.getElementById('mobile-menu').classList.toggle('active');
         }
@@ -114,63 +135,58 @@
             if(activeNav) activeNav.classList.add('active-nav', 'text-blue-500');
             window.scrollTo(0, 0);
 
-            if (page === 'home') {
+            if (showcaseData[page]) {
+                const item = showcaseData[page];
                 app.innerHTML = `
-                    <div class="py-8 animate-fadeIn">
-                        <div class="flex flex-col lg:flex-row gap-12 mb-20 items-center">
-                            <div class="lg:w-2/3">
-                                <h2 class="text-5xl lg:text-7xl font-black uppercase tracking-tighter text-glow">
-                                    THE YERTAL <span class="text-blue-500 italic">SHOWROOM.</span>
-                                </h2>
-                                <p class="text-slate-400 mt-4 text-lg italic font-light tracking-wide max-w-2xl">
-                                    Experience the future of technical systems. Learn to build interactive portals, 
-                                    collision logic, and scalable web architectures at the Yertal Lab.
-                                </p>
-                                <div class="mt-8 flex gap-4">
-                                    <button onclick="showPage('arcade')" class="bg-blue-600 hover:bg-blue-500 px-8 py-4 rounded-2xl font-bold uppercase text-xs transition shadow-xl shadow-blue-900/40">Enter the Arcade</button>
-                                    <a href="${wp}/signup" target="_blank" class="border border-slate-700 hover:border-blue-500 px-8 py-4 rounded-2xl font-bold uppercase text-xs transition">Join the Curriculum</a>
-                                </div>
-                            </div>
-
-                            <div class="lg:w-1/3 w-full">
-                                <div onclick="showPage('arcade')" class="featured-card p-6 rounded-[2.5rem] cursor-pointer">
-                                    <div class="flex justify-between items-start mb-4">
-                                        <span class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase">Global Rank #1</span>
-                                        <div class="text-yellow-500 text-xs"><i class="fas fa-star"></i> 4.9</div>
-                                    </div>
-                                    <div class="aspect-square bg-slate-900 rounded-2xl mb-4 flex items-center justify-center overflow-hidden border border-white/5">
-                                         <i class="fas fa-rocket text-6xl text-blue-500 opacity-80"></i>
-                                    </div>
-                                    <h3 class="font-black text-xl uppercase tracking-tighter mb-1 text-white">Space Dodger 3D</h3>
-                                    <p class="text-[10px] text-slate-500 mb-6 uppercase tracking-widest italic">Featured Arcade Experiment</p>
-                                    
-                                    <div class="metric-grid mb-4">
-                                        <div class="grid grid-cols-4 gap-1">
-                                            <div class="metric-item"><i class="fas fa-eye"></i> 12k</div>
-                                            <div class="metric-item"><i class="fas fa-heart"></i> 8k</div>
-                                            <div class="metric-item"><i class="fas fa-thumbs-down"></i> 42</div>
-                                            <div class="metric-item"><i class="fas fa-share"></i> 2.1k</div>
-                                        </div>
-                                        <div class="grid grid-cols-3 gap-1 mt-1">
-                                            <div class="metric-item"><i class="fas fa-trophy"></i> Rank #1</div>
-                                            <div class="metric-item"><i class="fas fa-star"></i> 4.9/5</div>
-                                            <div class="metric-item font-bold text-green-400"><i class="fas fa-wallet"></i> ₹4,200</div>
-                                        </div>
-                                    </div>
-                                    <span class="w-full block text-center py-3 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-bold uppercase tracking-widest transition">Initialize Simulation →</span>
-                                </div>
+                    <div class="animate-fadeIn max-w-5xl mx-auto">
+                        <div class="aspect-video glass rounded-[2.5rem] bg-black overflow-hidden shadow-2xl border-4 border-white/5 relative">
+                            <iframe src="${item.path}" class="w-full h-full border-none" allowfullscreen></iframe>
+                        </div>
+                        <div class="mt-8 text-center">
+                            <h3 class="text-2xl font-black uppercase tracking-tighter text-white">${item.title}</h3>
+                            <p class="text-slate-500 text-sm italic uppercase tracking-widest">${item.desc}</p>
+                            <div class="mt-6 flex justify-center gap-4">
+                                <button onclick="showPage('home')" class="bg-white/5 hover:bg-white/10 text-slate-300 px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-white/10 transition">✕ Close Viewer</button>
+                                <button onclick="showPage('arcade')" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-blue-500/30 transition">Arcade Menu</button>
                             </div>
                         </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            ${card('C Programming', 'Low-level systems architecture and memory management mastery.', '💎', wp+'/c')}
-                            ${card('Python Systems', 'Logic engineering, scalability, and backend automation protocols.', '🐍', wp+'/python')}
-                            ${card('AI Tools', 'Strategic workflow acceleration and advanced prompt engineering.', '🛠️', wp+'/tools')}
-                            ${card('AI Mastery', 'Agentic architecture and strategic automation frameworks.', '🧠', wp+'/mastery')}
-                            ${card('Web Programming', 'Modern frontend logic, React architectures, and UI engineering.', '🌐', wp+'/web')}
-                            ${card('Consulting', 'Technical advisory, code review, and project debugging sessions.', '📞', wp+'/consulting')}
-                            ${card('Book Reviews', 'Industry deep-dives and technical literature analysis.', '📖', wp+'/reviews')}
-                            ${card('Signup Access', 'Join the Yertal network and unlock all mastery paths.', '🤝', wp+'/signup')}
+                    </div>`;
+            } else if (page === 'home') {
+                app.innerHTML = `
+                    <div class="py-8 animate-fadeIn">
+                        <div class="mb-16 text-center lg:text-left">
+                            <h2 class="text-5xl lg:text-7xl font-black uppercase tracking-tighter text-glow">
+                                THE YERTAL <span class="text-blue-500 italic">SHOWROOM.</span>
+                            </h2>
+                            <p class="text-slate-400 mt-4 text-lg italic font-light tracking-wide max-w-3xl">
+                                Experience the future of technical systems. Explore our curated showcases or enter the full arcade.
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap gap-6 mb-20">
+                            <div onclick="showPage('showcasedGame')" class="featured-card p-8 rounded-[2.5rem] cursor-pointer min-h-[220px]">
+                                <div class="flex justify-between items-start"><span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">System: Game</span><i class="fas fa-rocket text-blue-500 text-2xl"></i></div>
+                                <div><h3 class="font-black uppercase tracking-tighter text-white">Space Dodger 3D</h3><span class="block mt-2 text-[9px] text-slate-500 uppercase font-bold">Initialize Simulation →</span></div>
+                            </div>
+                            <div onclick="showPage('showcasedApp')" class="featured-card p-8 rounded-[2.5rem] cursor-pointer min-h-[220px]">
+                                <div class="flex justify-between items-start"><span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">System: App</span><i class="fas fa-microchip text-blue-500 text-2xl"></i></div>
+                                <div><h3 class="font-black uppercase tracking-tighter text-white">Bio-Tracker</h3><span class="block mt-2 text-[9px] text-slate-500 uppercase font-bold">Launch Protocol →</span></div>
+                            </div>
+                            <div onclick="showPage('showcasedVideo')" class="featured-card p-8 rounded-[2.5rem] cursor-pointer min-h-[220px]">
+                                <div class="flex justify-between items-start"><span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">System: Video</span><i class="fas fa-video text-blue-500 text-2xl"></i></div>
+                                <div><h3 class="font-black uppercase tracking-tighter text-white">Lab Tour</h3><span class="block mt-2 text-[9px] text-slate-500 uppercase font-bold">Watch Briefing →</span></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            ${card('C Programming', 'Low-level systems architecture.', 'fas fa-microchip', wp+'/c')}
+                            ${card('Python Systems', 'Logic engineering & automation.', 'fab fa-python', wp+'/python')}
+                            ${card('AI Tools', 'Strategic workflow acceleration.', 'fas fa-screwdriver-wrench', wp+'/tools')}
+                            ${card('AI Mastery', 'Agentic architecture frameworks.', 'fas fa-brain', wp+'/mastery')}
+                            ${card('Web Programming', 'Modern frontend logic & UI.', 'fas fa-code', wp+'/web')}
+                            ${card('Consulting', 'Technical advisory & debugging.', 'fas fa-user-gear', wp+'/consulting')}
+                            ${card('Book Reviews', 'Technical literature analysis.', 'fas fa-book-open', wp+'/reviews')}
+                            ${card('Access Pass', 'Unlock all Yertal mastery paths.', 'fas fa-id-card-clip', wp+'/signup')}
                         </div>
                     </div>`;
             } else if (page === 'curriculum') {
@@ -178,7 +194,7 @@
             } else if (page === 'books') {
                 app.innerHTML = `<div class="py-12 animate-fadeIn"><h2 class="text-4xl font-black mb-8 uppercase tracking-tighter text-glow">YERTAL PRESS</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div onclick="window.open('${wp}', '_blank')" class="glass p-8 rounded-3xl action-card"><h3 class="text-xl font-bold mb-2 text-blue-400 italic">The AI Blueprint (2026)</h3><p class="text-slate-400 text-sm">Strategic guide to agentic automation and logic systems.</p><span class="inline-block mt-4 text-[10px] font-bold border-b border-white">Explore Bookshelf →</span></div></div></div>`;
             } else if (page === 'arcade') {
-                app.innerHTML = `<div class="animate-fadeIn"><div class="aspect-video glass rounded-[2rem] bg-black overflow-hidden shadow-2xl border-4 border-white/5"><iframe src="arcade/index.html" class="w-full h-full border-none"></iframe></div><div class="mt-8 text-center"><h3 class="text-xl font-bold uppercase tracking-widest text-blue-500">Space Dodger v1.0</h3><p class="text-slate-500 text-xs italic mt-2 uppercase tracking-widest">In-House Collision Logic Experiment</p></div></div>`;
+                app.innerHTML = `<div class="animate-fadeIn"><div class="aspect-video glass rounded-[2rem] bg-black overflow-hidden shadow-2xl border-4 border-white/5"><iframe src="arcade/" class="w-full h-full border-none"></iframe></div><div class="mt-8 text-center"><h3 class="text-xl font-bold uppercase tracking-widest text-blue-500">Yertal Arcade</h3><p class="text-slate-500 text-xs italic mt-2 uppercase tracking-widest">In-House Laboratory Experiments</p></div></div>`;
             } else if (page === 'consulting') {
                 app.innerHTML = `<div class="max-w-3xl mx-auto py-20 text-center animate-fadeIn"><h2 class="text-4xl font-black mb-6 uppercase tracking-tighter text-glow">Technical Advisory</h2><p class="text-slate-400 mb-10">Struggling with architecture? Book a direct session with our engineers.</p><a href="mailto:support@yertal.com" class="bg-blue-600 px-12 py-5 rounded-2xl font-bold text-xl hover:bg-blue-500 shadow-2xl transition">Contact Support</a></div>`;
             }
@@ -186,19 +202,24 @@
 
         function card(t, d, i, l, isInternal = false) {
             const action = isInternal ? `showPage('${l}')` : `window.open('${l}', '_blank')`;
-            return `<div onclick="${action}" class="glass p-8 rounded-[2rem] action-card flex flex-col h-full">
-                <div class="text-4xl mb-4">${i}</div>
-                <h3 class="text-lg font-bold mb-1 uppercase tracking-tight">${t}</h3>
-                <p class="text-xs text-slate-500 mb-6 font-light leading-relaxed flex-grow">${d}</p>
-                <span class="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Execute →</span>
+            return `<div onclick="${action}" class="glass p-8 rounded-[2rem] action-card flex flex-col h-full group">
+                <div class="mb-6 relative h-10 w-10 flex items-center">
+                    <i class="${i} text-3xl text-blue-500 absolute z-10 transition-transform duration-300 group-hover:-translate-y-1"></i>
+                    <i class="${i} text-3xl text-blue-900/30 absolute translate-y-1 translate-x-1 blur-[1px]"></i>
+                </div>
+                <h3 class="font-black mb-1 uppercase tracking-tighter text-white" style="font-size: clamp(1rem, 1.2vh + 0.5vw, 1.2rem)">${t}</h3>
+                <p class="text-[11px] text-slate-500 mb-6 font-light leading-relaxed flex-grow">${d}</p>
+                <div class="flex items-center gap-2"><span class="text-[9px] font-bold text-blue-500 uppercase tracking-widest">Execute →</span></div>
             </div>`;
         }
 
         const legal = {
             contact: "<h2>Engineering Contact</h2><p>For support regarding access or technical consulting:<br><strong class='text-blue-400'>yertalcorp@yahoo.com</strong></p>",
-            refund: "<h2>Fulfillment Policy</h2><p>Digital access is immediate. All laboratory memberships and digital press sales are final...</p>",
-            privacy: "<h2>Privacy Protocol</h2><p>User data is used strictly for technical account management. No data sharing, ever.</p>",
-            terms: "<h2>Terms of Service</h2><p>Access to Yertal Corp systems is provided for educational and engineering advancement.</p>"
+            refund: "<h2>Fulfillment Policy</h2><p>Digital access is immediate. All laboratory memberships and digital press sales are final once content has been accessed.</p>",
+            shipping: "<h2>Shipping & Delivery</h2><p>Digital fulfillment is instantaneous. Physical press materials are dispatched within 48 hours of order verification via global courier protocols.</p>",
+            privacy: "<h2>Privacy Protocol</h2><p>User data is used strictly for technical account management and secure access control. No data sharing, ever.</p>",
+            terms: "<h2>Terms of Service</h2><p>Access to Yertal Corp systems is provided for educational and engineering advancement. All logic systems remain the property of Yertal Corp.</p>",
+            reviews: "<h2>Book Review Policy</h2><p>Yertal Press reviews are conducted with engineering objectivity. We prioritize technical accuracy, logical flow, and agentic utility in all literature analysis.</p>"
         };
 
         function showLegal(t) { document.getElementById('modal-body').innerHTML = legal[t]; document.getElementById('legal-modal').style.display = 'flex'; }
