@@ -337,12 +337,26 @@ function initAudio() {
     // Constant Low Frequency Rocket Whirr
     engineOsc = audioCtx.createOscillator();
     engineGain = audioCtx.createGain();
-    engineOsc.type = 'sine';
-    engineOsc.frequency.setValueAtTime(60, audioCtx.currentTime); // Low frequency hum
-    engineGain.gain.setValueAtTime(soundOn ? 0.05 : 0, audioCtx.currentTime);
+    engineOsc.type = 'sawtooth';
+    engineOsc.frequency.setValueAtTime(50, audioCtx.currentTime); // Low frequency hum
+    engineGain.gain.setValueAtTime(soundOn ? 0.04 : 0, audioCtx.currentTime);
+    // Secondary Harmonic (The "Whirr")
+    let whirrOsc = audioCtx.createOscillator();
+    let whirrGain = audioCtx.createGain();
+    whirrOsc.type = 'triangle';
+    whirrOsc.frequency.setValueAtTime(110, audioCtx.currentTime);
+    whirrGain.gain.setValueAtTime(soundOn ? 0.02 : 0, audioCtx.currentTime);
+    
     engineOsc.connect(engineGain);
     engineGain.connect(audioCtx.destination);
+    whirrOsc.connect(whirrGain);
+    whirrGain.connect(audioCtx.destination);
+    
     engineOsc.start();
+    whirrOsc.start();
+    
+    // Store reference for dynamic updates
+    window.whirrOsc = whirrOsc;
 }
 
 function playSfx(type) {
@@ -471,7 +485,9 @@ function update() {
     });
 
     if(fuel <= 0 || lives <= 0) {
-        active = false; if(engineOsc) engineOsc.stop();
+        active = false; 
+        if(engineOsc) engineOsc.stop();
+        if (window.whirrOsc) window.whirrOsc.stop();
         
         // Check authentication state
         const isLoggedIn = !!(window.userProfile && window.userProfile.loggedIn);
