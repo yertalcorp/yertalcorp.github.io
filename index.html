@@ -164,7 +164,15 @@
             audio.play();
         }
         function showPage(page) {
-            if (page === 'arcade') playInitSound();
+            if (page === 'arcade') {
+                playInitSound();
+                const btn = document.getElementById('arcade-trigger');
+                if(btn) btn.style.filter = "brightness(2) blur(2px)";
+                setTimeout(() => {
+                    window.location.href = 'arcade/index.html';
+                }, 400);
+                return;
+            }
             const app = document.getElementById('app');
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-nav', 'text-blue-500'));
             const activeNav = document.getElementById('nav-' + page);
