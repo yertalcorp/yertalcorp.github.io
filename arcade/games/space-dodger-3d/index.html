@@ -206,7 +206,6 @@ let asteroids = [], stars = [], lasers = [], explosions = [], shakeIntensity = 0
 let score = 0, level = 1, lives = 3, fuel = 100, active = false, paused = false;
 let audioCtx, engineOsc, engineGain, soundOn = true;
 let whirrOsc, whirrGain;
-let textureGain, prevX = 0;
 let sirenInterval = null;
 let localHOF = JSON.parse(localStorage.getItem('spaceDodgerHOF')) || [];
 
@@ -216,9 +215,6 @@ function setEngineState(isPlay) {
     const whirrVol = (isPlay && soundOn) ? 0.015 : 0;
     
     engineGain.gain.setTargetAtTime(targetVol, audioCtx.currentTime, 0.1);
-    if (textureGain) {
-        textureGain.gain.setTargetAtTime(whirrVol, audioCtx.currentTime, 0.1);
-    }
 }    
 function launchMission() {
     // INDICATE: Capture the state at the VERY TOP
@@ -358,11 +354,6 @@ function initAudio() {
     whirrOsc = audioCtx.createOscillator();
     whirrGain = audioCtx.createGain();
     
-    // ADDED: Initialize the missing textureGain node
-    textureGain = audioCtx.createGain();
-    textureGain.gain.setValueAtTime(0, audioCtx.currentTime);
-    textureGain.connect(audioCtx.destination);
-        
     whirrOsc.type = 'triangle';
     whirrOsc.frequency.setValueAtTime(110, audioCtx.currentTime);
     whirrGain.gain.setValueAtTime(soundOn ? 0.02 : 0, audioCtx.currentTime);
@@ -383,6 +374,13 @@ function playSfx(type) {
     osc.connect(g); g.connect(audioCtx.destination);
 
     switch(type) {
+        case 'impact': // A dissonant metallic crunch
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.2);
+            g.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            break;
         case 'blast': // The powerful "BLAST" logic
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(55, audioCtx.currentTime); 
@@ -568,7 +566,8 @@ function update() {
     asteroids.forEach((a, i) => {
         a.position.y -= fallSpeed;
         if(a.position.distanceTo(rocket.position) < 1.1) {
-            lives--; fuel -= 15; playSfx('booom'); 
+            //collision
+            lives--; fuel -= 15; playSfx('impact'); 
             // TRIGGER SHAKE: Larger asteroids cause more trauma
             shakeIntensity = 0.15 + (a.userData.size * 0.1);
             
