@@ -220,6 +220,17 @@ function launchMission() {
     // INDICATE: Capture the state at the VERY TOP
     const needsToStartLoop = !active;
 
+    // 1. WIPE OLD 3D OBJECTS
+    if (scene) {
+        asteroids.forEach(a => scene.remove(a));
+        stars.forEach(s => scene.remove(s));
+        lasers.forEach(l => scene.remove(l));
+        explosions.forEach(e => scene.remove(e));
+    }
+
+    // 2. EMPTY THE ARRAYS
+    asteroids = []; stars = []; lasers = []; explosions = [];
+    
     // Reset core game stats
     score = 0; level = 1; lives = 3; fuel = 100;
 
@@ -592,13 +603,18 @@ function update() {
                 createSpark(l.position);
                 
                 if(a.userData.hp <= 0) {
+                    // 1. Remove from logic array IMMEDIATELY
+                    const index = asteroids.indexOf(a);
+                    if (index > -1) asteroids.splice(index, 1);   
                     createFireball(a.position, a.userData.size);
                     setTimeout(() => {
                         createDebris(a.position, a.userData.size);
                         playSfx('booom');
                         shakeIntensity = 0.15 + (a.userData.size * 0.1);
                         scene.remove(a);
-                        asteroids.splice(ai,1);
+                        if(a.geometry) a.geometry.dispose();
+                        if(a.material) a.material.dispose();
+                        
                     }, 100);
                     
                     score += a.userData.size > 0.8 ? 5 : 1; 
