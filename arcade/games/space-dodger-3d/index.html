@@ -18,7 +18,7 @@
             padding: 0.8vh 0.5vw;
             background: rgba(10, 20, 40, 0.7);
             border: 1px solid var(--neon-blue);
-            border-radius: 0.5vw;
+            border-radius: 0.05vw;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -52,7 +52,7 @@
             gap: 1vw;
             z-index: 1000;
         }
-        .nav-icon { width: clamp(25px, 6vw, 45px); height: clamp(25px, 6vh, 45px); border-radius: 50%; border: 1px solid #fff; display: flex; align-items: center; justify-content: center; text-align: center; background: rgba(0,0,0,0.6); cursor: pointer; font-size: clamp(12px, 3vh, 22px); transition: 0.3s; }
+        .nav-icon { width: clamp(25px, 6vh, 45px); height: clamp(25px, 6vh, 45px); border-radius: 50%; border: 1px solid #fff; display: flex; align-items: center; justify-content: center; text-align: center; background: rgba(0,0,0,0.6); cursor: pointer; font-size: clamp(12px, 3vh, 22px); transition: 0.3s; }
         .nav-icon:hover { transform: scale(1.1); box-shadow: 0 0 1vw var(--neon-blue); }
 
         .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; z-index: 1000; text-align: center; pointer-events: auto; }
@@ -70,10 +70,10 @@
 /* Ensure the neon box fits the screen */
 .neon-box { 
     border: 2px solid var(--neon-blue); 
-    border-radius: 15px; 
-    padding: 20px; 
+    border-radius: 1.5vw; 
+    padding: 5vh; 
     background: rgba(10,10,15,0.98); 
-    box-shadow: 0 0 40px var(--neon-blue); 
+    box-shadow: 0 0 4vh var(--neon-blue); 
     width: 90%;
     max-width: 450px;
     height: auto;
@@ -99,7 +99,7 @@
         .impact-table td { padding: 12px; border-bottom: 1px solid #333; }
 
         .btn-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; }
-        button { padding: 18px 35px; border-radius: 12px; border: none; background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; font-size: 1.1rem; text-transform: uppercase; }
+        button { padding: 1.8vh 3.5vw; border-radius: 1.2vh; border: none; background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; font-size: 1.5vh; text-transform: uppercase; }
         button:hover { filter: brightness(1.2); }
         .btn-alt { background: transparent; border: 2px solid var(--neon-blue); color: var(--neon-blue); }
         
@@ -255,10 +255,10 @@
 
 <div id="screen-landing" class="screen">
     <h1 id="main-title">SPACE DODGER 3D</h1>
-    <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 30px;">
-    <button class="grand-btn btn-launch" style="background: var(--neon-blue); box-shadow: 0 8px 0 #008a91;" onclick="console.log('CLICKED'); launchMission()">🚀 LAUNCH MISSION</button>
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 15vh;">
+    <button class="grand-btn btn-launch" style="background: var(--neon-blue); box-shadow: 0 2vh 0 #008a91;" onclick="console.log('CLICKED'); launchMission()">🚀 LAUNCH MISSION</button>
     <br>
-    <button class="grand-btn btn-hof" style="background: var(--gold); box-shadow: 0 8px 0 #8a6d00;" onclick="viewHOF('personal')">🏆 PERSONAL HALL OF FAME</button>
+    <button class="grand-btn btn-hof" style="background: var(--gold); box-shadow: 0 2vh 0 #8a6d00;" onclick="viewHOF('personal')">🏆 PERSONAL HALL OF FAME</button>
     </div>
 </div>
 
