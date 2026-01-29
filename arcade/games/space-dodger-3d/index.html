@@ -96,12 +96,12 @@
 /* Make buttons scale based on screen width */
 .grand-btn {
     display: inline-block;
-    padding: 15px 35px;
-    font-size: 1.2rem;
+    padding: clamp(10px, 1.5vw, 20px) clamp(20px, 4vw, 40px);
+    font-size: clamp(0.8rem, 1.8vw, 1.2rem);
     font-weight: 900;
     text-transform: uppercase;
     border: none;
-    border-radius: 50px;
+    border-radius: 1vw;
     cursor: pointer;
     position: relative;
     transition: transform 0.1s, box-shadow 0.1s;
@@ -110,8 +110,8 @@
     /* Ensure the button doesn't 'lose' the mouse while pressing */
     touch-action: manipulation;
     /* Restore the 3D 'Ledge' */
-    box-shadow: 0 8px 0 rgba(0,0,0,0.5); 
-    margin: 10px;
+    box-shadow: 0 0.6vw 0 rgba(0,0,0,0.5);
+    margin: 1vw;
     flex-shrink: 0; /* Prevents button from squishing */
 }
 /* Specific 3D colors for buttons */
@@ -761,7 +761,6 @@ function viewHOF(type) {
         const loginBtn = document.createElement('button');
         loginBtn.className = "grand-btn";
         loginBtn.style.background = "linear-gradient(to bottom, #444, #222)";
-        loginBtn.style.boxShadow = "0 8px 0 #000";
         loginBtn.innerText = "🔑 MEMBER LOGIN";
         loginBtn.onclick = () => showLoginOptions('global'); // Links to the new function below
         btns.appendChild(loginBtn);
@@ -799,8 +798,6 @@ function viewHOF(type) {
     if (isGuest && type === 'personal') {
         const saveBtn = document.createElement('button');
         saveBtn.className = "grand-btn btn-launch";
-        saveBtn.style.background = "var(--neon-blue)";
-        saveBtn.style.boxShadow = "0 8px 0 #008a91"; // Added 3D depth
         saveBtn.innerText = "💾 SAVE SCORES";
         saveBtn.onclick = () => showLoginOptions('personal');
         btns.appendChild(saveBtn);
@@ -808,8 +805,6 @@ function viewHOF(type) {
 
     const backBtn = document.createElement('button');
     backBtn.className = "grand-btn btn-back";
-    backBtn.style.background = "var(--neon-red)";
-    backBtn.style.boxShadow = "0 8px 0 #8b0000"; // Added 3D depth
     backBtn.innerText = "🚀 BACK TO MISSION";
     backBtn.onclick = closeOverlay;
     btns.appendChild(backBtn);
@@ -867,8 +862,6 @@ function showScreen(type) {
 
     const closeBtn = document.createElement('button');
     closeBtn.className = "grand-btn btn-back";
-    closeBtn.style.background = "var(--neon-red)";
-    closeBtn.style.boxShadow = "0 8px 0 #8b0000"; // Added 3D depth
     closeBtn.innerText = "🚀 BACK TO MISSION";
     closeBtn.onclick = closeOverlay;
     btns.appendChild(closeBtn);
@@ -930,7 +923,6 @@ function showLoginOptions(returnType) {
     // Add a Back button to return to the HOF view
     const backBtn = document.createElement('button');
     backBtn.className = "grand-btn btn-back";
-    backBtn.style.background = "var(--neon-red)";
     if (returnType === 'personal') {
        backBtn.innerText = "⬅️ BACK TO PERSONAL SCORES";
        backBtn.onclick = () => viewHOF('personal'); 
