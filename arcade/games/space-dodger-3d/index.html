@@ -823,11 +823,12 @@ function showScreen(type) {
     content.innerHTML = html;
 
     const closeBtn = document.createElement('button');
-    closeBtn.innerText = "RETURN TO MISSION";
-    closeBtn.style.marginTop = "30px";
+    closeBtn.className = "grand-btn btn-back";
+    closeBtn.style.background = "var(--neon-red)";
+    closeBtn.style.boxShadow = "0 8px 0 #8b0000"; // Added 3D depth
+    closeBtn.innerText = "🚀 BACK TO MISSION";
     closeBtn.onclick = closeOverlay;
     btns.appendChild(closeBtn);
-
     document.getElementById('screen-overlay').classList.remove('hidden');
 }
 
