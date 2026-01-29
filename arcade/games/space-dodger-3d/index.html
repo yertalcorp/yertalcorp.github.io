@@ -149,6 +149,20 @@
     letter-spacing: 2px;
 }
 
+.manual-text {
+    text-align: left;
+    font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+    line-height: 1.6;
+    color: #ccc;
+    margin: 2vw 0;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.manual-highlight {
+    color: var(--neon-blue);
+    font-weight: bold;
+    text-shadow: 0 0 0.5vw var(--neon-blue);
+}
 /* Trophy Row */
 .trophy-row { width: 100%; display: flex; justify-content: center; text-align: center; font-size: 2.5rem; letter-spacing: 5px; margin: 10px 0; filter: drop-shadow(0 0 10px var(--gold)); }
 
@@ -161,6 +175,9 @@
 }
 /* Cleaner, neater typography */
 #overlay-content {
+    width: 100%
+    display: flex;
+    flex-direction: column;
     font-family: 'Segoe UI', sans-serif;
     font-size: 0.9rem;
     color: #eee;
@@ -825,47 +842,38 @@ function showScreen(type) {
     document.getElementById('pause-btn').innerText = '▶️';
     setEngineState(false);
     
+function showManual() {
     const content = document.getElementById('overlay-content');
     const btns = document.getElementById('overlay-btns');
-    btns.innerHTML = ''; 
+    content.innerHTML = '';
+    btns.innerHTML = '';
 
-    // Custom HTML with inline styles for high-impact colors
-    let html = `
-        <h1 style="color: var(--neon-blue); font-size: 3rem; margin-bottom: 20px; text-shadow: 0 0 20px var(--neon-blue);">PILOT MANUAL</h1>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left;">
-            
-            <div style="border: 2px solid #ff00ff; padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px #ff00ff;">
-                <h3 style="color: #ff00ff; margin: 0; font-size: 1.5rem;">🚀 MOVEMENT</h3>
-                <p style="font-weight: bold; color: #fff; margin: 10px 0;">Slide your <span style="color: #ff00ff;">MOUSE</span> to navigate the debris field. Your ship follows your lead.</p>
-            </div>
+    // Title using the fluid class we already built
+    const title = document.createElement('h1');
+    title.className = 'hof-title';
+    title.innerText = "PILOT MANUAL";
 
-            <div style="border: 2px solid var(--gold); padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px var(--gold);">
-                <h3 style="color: var(--gold); margin: 0; font-size: 1.5rem;">⭐ SCORING</h3>
-                <p style="font-weight: bold; color: #fff; margin: 10px 0;">Blast asteroids for points. Collecting <span style="color: var(--gold);">GOLD STARS</span> adds +25 to your score.</p>
-            </div>
-
-            <div style="border: 2px solid #39ff14; padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px #39ff14;">
-                <h3 style="color: #39ff14; margin: 0; font-size: 1.5rem;">⛽ FUEL TANK</h3>
-                <p style="font-weight: bold; color: #fff; margin: 10px 0;">Stars refuel your tank. If it hits <span style="color: var(--neon-red);">ZERO</span>, the mission ends instantly!</p>
-            </div>
-
-            <div style="border: 2px solid var(--neon-blue); padding: 15px; border-radius: 15px; box-shadow: inset 0 0 10px var(--neon-blue);">
-                <h3 style="color: var(--neon-blue); margin: 0; font-size: 1.5rem;">📈 LEVELS</h3>
-                <p style="font-weight: bold; color: #fff; margin: 10px 0;">Difficulty <span style="color: var(--neon-blue);">SCALES</span>. Asteroids increase & stars decrease as you advance.</p>
-            </div>
-
-        </div>
+    // Fluid Manual Body
+    const textDiv = document.createElement('div');
+    textDiv.className = 'manual-text';
+    textDiv.innerHTML = `
+        <p><span class="manual-highlight">CONTROLS:</span> Use MOUSE or TOUCH to navigate your ship.</p>
+        <p><span class="manual-highlight">MISSION:</span> Avoid asteroids and collect <span style="color:var(--gold)">FUEL CELLS</span> to stay powered.</p>
+        <p><span class="manual-highlight">RANKING:</span> Survival time and distance determine your place in the HOF.</p>
     `;
-    
-    content.innerHTML = html;
 
-    const closeBtn = document.createElement('button');
-    closeBtn.className = "grand-btn btn-back";
-    closeBtn.innerText = "🚀 BACK TO MISSION";
-    closeBtn.onclick = closeOverlay;
-    btns.appendChild(closeBtn);
+    content.appendChild(title);
+    content.appendChild(textDiv);
+
+    // Fluid Back Button - No hard-coded shadows/sizes!
+    const backBtn = document.createElement('button');
+    **backBtn.className = "grand-btn btn-back";**
+    backBtn.innerText = "🚀 BACK TO MISSION";
+    backBtn.onclick = closeOverlay;
+    btns.appendChild(backBtn);
+
     document.getElementById('screen-overlay').classList.remove('hidden');
+}
 }
 
 window.addEventListener('mousedown', (e) => { 
