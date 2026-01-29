@@ -759,9 +759,9 @@ function updateUI() {
     
     let color = (fuel < 34) ? "#ff3131" : (fuel < 67) ? "orange" : "#39ff14";
     secs.forEach((s, i) => {
-        s.style.background = i < fill ? color : "#000");
+        s.style.background = i < fill ? color : "#000";
         s.style.opacity = i < fill ? "1" : "0.2";
-    }
+    });
     if(fuel <= 15 && active && !paused) {
        document.getElementById('fuel-bar-container').classList.add('siren-active');
        // INDICATE: Trigger audio every 1.2 seconds if not already playing
