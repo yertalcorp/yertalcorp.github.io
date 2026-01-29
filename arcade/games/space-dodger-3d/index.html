@@ -210,6 +210,13 @@
     font-size: 0.9rem;
     color: #eee;
 }
+#ui-lives {
+    font-size: clamp(10px, 1.5vh, 16px);
+    display: flex;
+    gap: 2px;
+    line-height: 1;
+}
+      
 .hof-table { width: 100%; border-collapse: collapse; }
 .hof-table th { font-size: 0.75rem; color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); padding: 12px; }
 .hof-table td { padding: 8px; font-weight: bold; font-size: 0.8rem; }
@@ -229,13 +236,6 @@
     <div id="ui-lives"></div>
     <div class="fuel-meter" id="fuel-bar-container"></div>
 </div>
-#ui-lives {
-    /* INDICATE: Scaling based on viewport height to match the HUD container */
-    font-size: clamp(10px, 1.5vh, 16px);
-    display: flex;
-    gap: 2px;
-    line-height: 1;
-}
 <div id="hud-right" class="hidden">
     <div class="nav-icon" onclick="manualTogglePause()" id="pause-btn">⏸️</div>
     <div class="nav-icon" onclick="showScreen('info')">ℹ️</div>
