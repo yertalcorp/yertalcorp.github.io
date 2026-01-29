@@ -16,7 +16,7 @@
             height: 10vh;
             min-width: 80px;
             min-width: 60px;
-            padding: 0.5vh 0.5vw;
+            padding: 0.4vh 0.4vw;
             background: rgba(10, 20, 40, 0.7);
             border: 1px solid var(--neon-blue);
             border-radius: 0.05vw;
@@ -29,7 +29,7 @@
         }
         /* Scaling the text inside HUD */
         #hud-left div {
-            font-size: clamp(0.5rem, 1.8vh, 0.85rem);
+            font-size: clamp(0.5rem, 1.4vh, 0.8rem);
             line-height: 1.1;
             white-space: nowrap;
             margin:0;
@@ -40,8 +40,9 @@
             text-overflow: ellipsis;
             overflow: hidden;
         }
-        .fuel-meter { width: 100%; height: 1.5vh !important; min-height: 6px; border: 1px solid rgba(255, 255, 255, 0.3); display: flex; margin-top: 2px; background: #000; overflow: hidden; }
-        .fuel-section { flex: 1; border-right: 2.5px solid #000; height: 100%; transition: background 0.2s; }
+        .fuel-meter { width: 100%; height: 1.5vh !important; min-height: 8px; border: 1px solid rgba(255, 255, 255, 0.3); display: flex; margin-top: 2px; background: #000; overflow: hidden; }
+        .fuel-section { flex: 1; border-right: 1px solid #000; background-color: rgba(255, 255, 255, 0.05); height: 100%; box-sizing: border-box; transition: background 0.2s; }
+        .fuel-section:last-child {border-right: none;}
         .siren-active .fuel-section { animation: fuel-flash 0.3s infinite alternate; }
         @keyframes fuel-flash { 0% { background: var(--neon-red); } 100% { background: #000; } }
         #hud-right {
@@ -574,12 +575,14 @@ function initFuelUI() {
     container.innerHTML = '';
     
     // FIX: Match segments to updateUI (40) for precision**
-    const segments = 40; for(let i=0; i < segments; i++) { 
+    const segments = 40;
+    for(let i=0; i < segments; i++) { 
         const s = document.createElement('div'); 
         s.className = 'fuel-section'; 
         s.style.flex = "1"; 
         s.style.height = "100%"; 
         // FIX: Add a dark base color so the empty tank is visible**
+        s.style.borderRight = "1px solid #000";
         s.style.backgroundColor = "rgba(255,255,255,0.1)";
         container.appendChild(s); 
     }
@@ -761,11 +764,14 @@ function updateUI() {
     document.getElementById('ui-lvl').innerText = "Level: " + level;
     document.getElementById('ui-score').innerText = "Score: " + score;
     document.getElementById('ui-lives').innerHTML = "❤️".repeat(lives);
-    const fill = Math.floor((fuel/100)*25);
+
     const secs = document.querySelectorAll('.fuel-section');
-    
     // Safety check: if segments don't exist, re-init them
-    if (secs.length === 0) initFuelUI();
+    if (secs.length === 0) {
+        initFuelUI();
+        secs = document.querySelectorAll('.fuel-section');
+    }
+    const fill = Math.floor((fuel/100) * secs.length);
     
     let color = (fuel < 34) ? "#ff3131" : (fuel < 67) ? "orange" : "#39ff14";
     secs.forEach((s, i) => {
