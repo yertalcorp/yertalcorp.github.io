@@ -20,7 +20,17 @@
 
         .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; pointer-events: auto; }
         .hidden { display: none !important; }
-        /* Ensure the neon box fits the screen */
+#screen-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85); 
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Changed from center so it grows downward */
+    overflow-y: auto; /* The whole screen scrolls if the box is long */
+    padding: 40px 0; /* Gives breathing room at top and bottom */
+}
+/* Ensure the neon box fits the screen */
 .neon-box { 
     border: 5px solid var(--neon-blue); 
     border-radius: 30px; 
@@ -32,10 +42,10 @@
     display: flex;
     flex-direction: column;
     width: 90vw;
-    max-width: 600px;
-    height: auto;
-    max-height: 85vh; /* Prevents spilling off screen */
-    overflow: hidden; /* Clips any loose children */
+    max-width: 500px;
+    height: auto;  /*
+    max-height: none; /* Allows expansion */
+    overflow: visible; /* Allows expansion */
     position: relative;
 }
 #overlay-btns {
@@ -46,7 +56,7 @@
   padding-top: 10px;
   width: 100%;
 }
-        
+    
         .impact-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 1.4rem; }
         .impact-table th { color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); padding: 12px; }
         .impact-table td { padding: 12px; border-bottom: 1px solid #333; }
@@ -138,14 +148,17 @@
 
 .hof-scroll-box {
     width: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: visible; /* No internal scrollbar */
+    height: auto;
     margin: 15px 0;
-    /* This allows the table to scroll while the box stays fixed */
-    flex: 1 1 auto; 
-    min-height: 0; 
+    flex: none; /* Box doesn't need to 'fill' space anymore */
 }
-
+/* Cleaner, neater typography */
+#overlay-content {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 0.9rem;
+    color: #eee;
+}
 .hof-table { width: 100%; border-collapse: collapse; }
 .hof-table th { font-size: 1.6rem; color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); padding: 12px; }
 .hof-table td { padding: 10px; font-weight: bold; font-size: 1.2rem; }
@@ -759,7 +772,7 @@ function viewHOF(type) {
                 const scoreDisplay = (entry.s !== undefined && entry.s !== null) ? entry.s.toLocaleString() : "0";
                 const levelDisplay = (entry.l !== undefined) ? entry.l : "—";
                 const userDisplay = entry.u || 'GUEST';
-                tableHtml += `<tr class="${rowColor}"><td>#${i + 1}</td><td>${userDisplay}</td><td>${levelDisplay}</td><td>${scoreDisplay}</td></tr>`;
+                tableHtml += `<tr class="${rowColor}" style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="padding: 8px; opacity: 0.5; font-size: 0.8rem;"><center>#${i + 1}</center></td><td style="padding: 8px; letter-spacing: 1px;"><center>${userDisplay}</center></td><td style="padding: 8px; color: var(--neon-blue);"><center>${levelDisplay}</center></td><td style="padding: 8px; font-family: monospace;"><center>${scoreDisplay}</center></td></tr>`;
             });
         }
         tableHtml += `</table>`;
