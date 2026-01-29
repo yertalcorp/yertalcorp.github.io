@@ -387,8 +387,8 @@ function playSfx(type) {
     switch(type) {
         case 'impact': // A dissonant metallic crunch
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.linearRampToValueAtTime(70, audioCtx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(50, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(150, audioCtx.currentTime + 0.1);
             g.gain.setValueAtTime(0.5, audioCtx.currentTime);
             g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
             break;
