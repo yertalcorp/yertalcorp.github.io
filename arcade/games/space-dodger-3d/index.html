@@ -387,10 +387,10 @@ function playSfx(type) {
     switch(type) {
         case 'impact': // A dissonant metallic crunch
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(80, audioCtx.currentTime);
-            osc.frequency.linearRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(70, audioCtx.currentTime + 0.1);
             g.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.1, audioCtx.currentTime + 0.3);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
             break;
         case 'blast': // The powerful "BLAST" logic
             osc.type = 'triangle';
@@ -578,7 +578,7 @@ function update() {
         a.position.y -= fallSpeed;
         if(a.position.distanceTo(rocket.position) < 1.1) {
             //collision
-            lives--; fuel -= 15; playSfx('impact'); 
+            lives--; fuel -= 15; playSfx('impact'); playSfx('blast');
             // TRIGGER SHAKE: Larger asteroids cause more trauma
             shakeIntensity = 0.15 + (a.userData.size * 0.1);
             
