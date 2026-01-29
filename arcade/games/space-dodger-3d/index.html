@@ -572,9 +572,19 @@ function initFuelUI() {
     const container = document.getElementById('fuel-bar-container');
     if (!container) return;
     container.innerHTML = '';
-    for(let i=0; i<25; i++) { const s = document.createElement('div'); s.className = 'fuel-section'; s.style.flex = "1"; s.style.height = "100%"; container.appendChild(s); }
+    
+    // FIX: Match segments to updateUI (40) for precision**
+    const segments = 40; for(let i=0; i < segments; i++) { 
+        const s = document.createElement('div'); 
+        s.className = 'fuel-section'; 
+        s.style.flex = "1"; 
+        s.style.height = "100%"; 
+        // FIX: Add a dark base color so the empty tank is visible**
+        s.style.backgroundColor = "rgba(255,255,255,0.1)";
+        container.appendChild(s); 
+    }
 }
-
+    
 function spawnLogic() {
     // 1. Asteroid Density: Increases with Level
     // Level 1 starts at 0.015, adding 0.005 per level
