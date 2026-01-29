@@ -18,7 +18,7 @@
         .nav-icon { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; text-align: center; background: rgba(0,0,0,0.6); cursor: pointer; font-size: 30px; transition: 0.3s; }
         .nav-icon:hover { transform: scale(1.1); box-shadow: 0 0 20px var(--neon-blue); }
 
-        .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; pointer-events: auto; }
+        .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow-y: auto; padding-top: 5vh; z-index: 1000; pointer-events: auto; }
         .hidden { display: none !important; }
 #screen-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -34,13 +34,13 @@
 .neon-box { 
     border: 2px solid var(--neon-blue); 
     border-radius: 15px; 
-    padding: 25px; 
+    padding: 20px; 
     background: rgba(10,10,15,0.98); 
     box-shadow: 0 0 40px var(--neon-blue); 
     width: 85vw;
     max-width: 450px;
     height: auto;  /*
-    display: flex;
+    display: inline-block;
     flex-direction: column;
     max-height: none; /* Allows expansion */
     overflow: visible; /* Allows expansion */
@@ -764,7 +764,7 @@ function viewHOF(type) {
 
         // INDICATE: Check for empty data before slicing
         if (data.length === 0) {
-            tableHtml += `<tr><td colspan="4" style="text-align:center; padding:20px;">NO MISSION DATA RECORDED</td></tr>`;
+            tableHtml += `<tr><td colspan="4" style="text-align:center; padding:20px; font-size:0.8rem; color:rgba(255,255, 255, 0.4); letter-spacing: 1px;">NO MISSION DATA RECORDED</td></tr>`;
         } else {
             let displayScores = data.sort((a, b) => b.s - a.s).slice(0, 10);
             displayScores.forEach((entry, i) => {
