@@ -37,7 +37,7 @@
             text-overflow: ellipsis;
             overflow: hidden;
         }
-        .fuel-meter { width: 100%; height: 2.5vh; border: 1px solid #fff; display: flex; margin-top: 2px; background: #000; overflow: hidden; }
+        .fuel-meter { width: 100%; height: 1.2vh; border: 1px solid rgba(255, 255, 255, 0.3); display: flex; margin-top: auto; background: #000; overflow: hidden; }
         .fuel-section { flex: 1; border-right: 2.5px solid #000; height: 100%; transition: background 0.2s; }
         .siren-active .fuel-section { animation: fuel-flash 0.3s infinite alternate; }
         @keyframes fuel-flash { 0% { background: var(--neon-red); } 100% { background: #000; } }
@@ -55,7 +55,7 @@
         .nav-icon { width: clamp(25px, 6vh, 45px); height: clamp(25px, 6vh, 45px); border-radius: 50%; border: 1px solid #fff; display: flex; align-items: center; justify-content: center; text-align: center; background: rgba(0,0,0,0.6); cursor: pointer; font-size: clamp(12px, 3vh, 22px); transition: 0.3s; }
         .nav-icon:hover { transform: scale(1.1); box-shadow: 0 0 1vw var(--neon-blue); }
 
-        .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; z-index: 1000; text-align: center; pointer-events: auto; }
+        .screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 5vh 5vw; z-index: 9999; text-align: center; pointer-events: auto; }
         .hidden { display: none !important; }
 #screen-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -106,10 +106,6 @@
 /* 1. THE 3D TITLE EFFECT */
 #screen-landing h1 {
     /* 9vw means the font size is exactly 9% of the screen width */
-    font-size: 9vw; 
-    
-    /* Prevents the text from getting TOO big on massive monitors 
-       and TOO small on tiny phones */
     font-size: clamp(3rem, 9vw, 8rem); 
     
     white-space: nowrap; 
@@ -133,12 +129,12 @@
 /* Make buttons scale based on screen width */
 .grand-btn {
     display: inline-block;
-    padding: clamp(10px, 0.8vw, 20px) clamp(10px, 0.9vw, 20px);
-    font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+    padding: clamp(10px, 2vh, 25px) clamp(20px, 4vw, 40px);
+    font-size: clamp(0.9rem, 2.5vw, 1.5rem);
     font-weight: 900;
     text-transform: uppercase;
     border: none;
-    border-radius: 1vw;
+    border-radius: 1.5vw;
     cursor: pointer;
     position: relative;
     transition: transform 0.1s, box-shadow 0.1s;
@@ -148,17 +144,17 @@
     touch-action: manipulation;
     /* Restore the 3D 'Ledge' */
     box-shadow: 0 0.6vw 0 rgba(0,0,0,0.5);
-    margin: 1vw;
+    margin: 2vw;
     flex-shrink: 0; /* Prevents button from squishing */
 }
 /* Specific 3D colors for buttons */
-.btn-launch { background: var(--neon-blue); box-shadow: 0 8px 0 #008891; }
-.btn-hof { background: var(--gold); box-shadow: 0 8px 0 #8a6d00; }
-.btn-back { background: var(--neon-red); box-shadow: 0 8px 0 #8b0000; }
+.btn-launch { background: var(--neon-blue); box-shadow: 0 clamp(4px, 1.5vh, 12px) 0 #008a91; }
+.btn-hof { background: var(--gold); box-shadow: 0 clamp(4px, 1.5vh, 12px) 0 #8a6d00; }
+.btn-back { background: var(--neon-red); box-shadow: 0 0.6vw 0 #8b0000; }
 
 .grand-btn:active {
-    transform: translateY(4px);
-    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+    transform: translateY(clamp(2px, 0.7vh, 6px));
+    box-shadow: 0 clamp(2px, 0.7vh, 6px) 0 rgba(0,0,0,0.5);
 }
         
 .grand-btn:hover {
@@ -255,18 +251,18 @@
 
 <div id="screen-landing" class="screen">
     <h1 id="main-title">SPACE DODGER 3D</h1>
-    <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 15vh;">
-    <button class="grand-btn btn-launch" style="background: var(--neon-blue); box-shadow: 0 2vh 0 #008a91;" onclick="console.log('CLICKED'); launchMission()">🚀 LAUNCH MISSION</button>
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 10vh; gap: 4vh;">
+    <button class="grand-btn btn-launch" onclick="console.log('CLICKED'); launchMission()">🚀 LAUNCH MISSION</button>
     <br>
-    <button class="grand-btn btn-hof" style="background: var(--gold); box-shadow: 0 2vh 0 #8a6d00;" onclick="viewHOF('personal')">🏆 PERSONAL HALL OF FAME</button>
+    <button class="grand-btn btn-hof" onclick="viewHOF('personal')">🏆 PERSONAL HALL OF FAME</button>
     </div>
 </div>
 
 <div id="screen-gameover" class="screen hidden">
-    <h1 style="font-size: 8rem; color: var(--neon-red);">GAME OVER</h1>
-    <div class="btn-container">
-        <button onclick="launchMission()">Relaunch Mission</button>
-        <button onclick="viewHOF('personal')" class="btn-alt">View Personal High Scores</button>
+    <h1 style="font-size: clamp(4rem, 15vw, 12rem); text-shadow: 0 0 3vw #8b0000; color: var(--neon-red); margin-bottom: 5vh;">GAME OVER</h1>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 3vh; width: 100%;">
+        <button class="grand-btn btn-launch" onclick="launchMission()">Relaunch Mission</button>
+        <button class="grand-btn btn-hof" onclick="viewHOF('personal')" class="btn-alt">View Personal High Scores</button>
     </div>
 </div>
 
