@@ -572,7 +572,7 @@ function initFuelUI() {
     const container = document.getElementById('fuel-bar-container');
     if (!container) return;
     container.innerHTML = '';
-    for(let i=0; i<25; i++) { const s = document.createElement('div'); s.className = 'fuel-section'; s.style.flex = "1"; s.style.height = "100%" container.appendChild(s); }
+    for(let i=0; i<25; i++) { const s = document.createElement('div'); s.className = 'fuel-section'; s.style.flex = "1"; s.style.height = "100%"; container.appendChild(s); }
 }
 
 function spawnLogic() {
