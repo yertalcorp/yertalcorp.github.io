@@ -28,22 +28,20 @@
     justify-content: center;
     align-items: flex-start; /* Changed from center so it grows downward */
     overflow-y: auto; /* The whole screen scrolls if the box is long */
-    padding: 40px 0; /* Gives breathing room at top and bottom */
+    padding: 50px 0; /* Gives breathing room at top and bottom */
 }
 /* Ensure the neon box fits the screen */
 .neon-box { 
-    border: 5px solid var(--neon-blue); 
-    border-radius: 30px; 
-    padding: 20px; 
-    background: rgba(0,0,0,0.95); 
+    border: 2px solid var(--neon-blue); 
+    border-radius: 15px; 
+    padding: 25px; 
+    background: rgba(10,10,15,0.98); 
     box-shadow: 0 0 40px var(--neon-blue); 
-    
-    /* FIX: Force everything to stay inside */
+    width: 85vw;
+    max-width: 450px;
+    height: auto;  /*
     display: flex;
     flex-direction: column;
-    width: 90vw;
-    max-width: 500px;
-    height: auto;  /*
     max-height: none; /* Allows expansion */
     overflow: visible; /* Allows expansion */
     position: relative;
@@ -137,7 +135,7 @@
 /* Ensure the title shrinks to fit narrow screens */
 .hof-title {
     text-align: center;
-    font-size: clamp(1.5rem, 6vw, 4rem);
+    font-size: clamp(1.4rem, 6vw, 4rem);
     white-space: nowrap;
     flex-shrink: 0;
     margin: 10px 0;
@@ -150,7 +148,7 @@
     width: 100%;
     overflow: visible; /* No internal scrollbar */
     height: auto;
-    margin: 15px 0;
+    margin: 10px 0;
     flex: none; /* Box doesn't need to 'fill' space anymore */
 }
 /* Cleaner, neater typography */
@@ -160,8 +158,8 @@
     color: #eee;
 }
 .hof-table { width: 100%; border-collapse: collapse; }
-.hof-table th { font-size: 1.6rem; color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); padding: 12px; }
-.hof-table td { padding: 10px; font-weight: bold; font-size: 1.2rem; }
+.hof-table th { font-size: 0.75rem; color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); padding: 12px; }
+.hof-table td { padding: 8px; font-weight: bold; font-size: 10.8rem; }
 
 /* Ranking Colors */
 .rank-gold { color: var(--gold); }
@@ -736,6 +734,8 @@ function viewHOF(type) {
     
     const trophies = document.createElement('div');
     trophies.className = 'trophy-row';
+    trophies.style.fontSize = '1.2rem';
+    trophies.style.margin = '5px 0';
     trophies.innerText = '🏆 🏆 🏆 🏆 🏆';
 
     const scrollBox = document.createElement('div');
@@ -766,13 +766,18 @@ function viewHOF(type) {
         if (data.length === 0) {
             tableHtml += `<tr><td colspan="4" style="text-align:center; padding:20px;">NO MISSION DATA RECORDED</td></tr>`;
         } else {
-            let displayScores = data.slice(0, 10);
+            let displayScores = data.sort((a, b) => b.s - a.s).slice(0, 10);
             displayScores.forEach((entry, i) => {
                 let rowColor = (i === 0) ? 'rank-gold' : (i === 1) ? 'rank-silver' : (i === 2) ? 'rank-bronze' : 'rank-white';
                 const scoreDisplay = (entry.s !== undefined && entry.s !== null) ? entry.s.toLocaleString() : "0";
                 const levelDisplay = (entry.l !== undefined) ? entry.l : "—";
                 const userDisplay = entry.u || 'GUEST';
-                tableHtml += `<tr class="${rowColor}" style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="padding: 8px; opacity: 0.5; font-size: 0.8rem;"><center>#${i + 1}</center></td><td style="padding: 8px; letter-spacing: 1px;"><center>${userDisplay}</center></td><td style="padding: 8px; color: var(--neon-blue);"><center>${levelDisplay}</center></td><td style="padding: 8px; font-family: monospace;"><center>${scoreDisplay}</center></td></tr>`;
+                tableHtml += `<tr class="${rowColor}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="opacity: 0.5; font-size: 0.7rem;"><center>#${i + 1}</center></td>
+                    <td style="letter-spacing: 0.5px;"><center>${userDisplay}</center></td>
+                    <td style="color: var(--neon-blue); opacity: 0.8; font-size: 0.8rem;"><center>${levelDisplay}</center></td>
+                    <td style="font-family: monospace; font-size=0.9rem;"><center>${scoreDisplay}</center></td>
+                </tr>`;
             });
         }
         tableHtml += `</table>`;
