@@ -28,7 +28,7 @@
         /* Scaling the text inside HUD */
         #hud-left div {
             margin-bottom: 0.5vw;
-            font-size: clamp(0.8rem, 1.2vh, 0.9rem);
+            font-size: clamp(0.6rem, 2.5vh, 0.9rem);
             line-height: 1;
             white-space: nowrap;
         }
@@ -37,7 +37,7 @@
             text-overflow: ellipsis;
             overflow: hidden;
         }
-        .fuel-meter { width: 100%; height: 2.5vh; border: 0.2vw solid #fff; display: flex; margin-top: 2px; background: #000; overflow: hidden; }
+        .fuel-meter { width: 100%; height: 2.5vh; border: 1px solid #fff; display: flex; margin-top: 2px; background: #000; overflow: hidden; }
         .fuel-section { flex: 1; border-right: 2.5px solid #000; height: 100%; transition: background 0.2s; }
         .siren-active .fuel-section { animation: fuel-flash 0.3s infinite alternate; }
         @keyframes fuel-flash { 0% { background: var(--neon-red); } 100% { background: #000; } }
