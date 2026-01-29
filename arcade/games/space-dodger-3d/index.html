@@ -8,13 +8,36 @@
         :root { --neon-blue: #00f2ff; --neon-red: #ff3131; --gold: #ffd700; }
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; color: white; user-select: none; }
         
-        #hud-left { position: absolute; top: 3vw; left: 3vw; background: rgba(10, 20, 40, 0.85); padding: 2.5vw; border-radius: 2vw; border: 0.3vw solid var(--neon-blue); width: clamp(50px, 35vw, 85px); min-width: 0;  box-shadow: 0 0 1.5vw var(--neon-blue); }
+        #hud-left {
+            position: absolute;
+            top: 1vh;
+            left: 1vw;
+            width: 10vw; /* Exactly 10% of screen width */
+            height: 10vh; /* Exactly 10% of screen height */
+            min-width: 50px; /* Safety floor to prevent text vanishing on tiny phones */
+            padding: 0.5vh 0.5vw;
+            background: rgba(10, 20, 40, 0.7);
+            border: 1px solid var(--neon-blue);
+            border-radius: 0.5vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Distributes stats evenly in the 10vh */
+            overflow: hidden;
+            box-shadow: 0 0 1vw rgba(0, 242, 255, 0.3);
+        }
         /* Scaling the text inside HUD */
         #hud-left div {
-            font-size: clamp(0.7rem, 2.5vw, 1.1rem);
             margin-bottom: 0.5vw;
+            font-size: clamp(0.5rem, 0.8vw, 0.75rem);
+            line-height: 1;
+            white-space: nowrap;
         }
-        .fuel-meter { width: 100%; height: clamp(12px, 3vw, 24px); border: 0.2vw solid #fff; display: flex; margin-top: 1vw; background: #000; overflow: hidden; }
+        #ui-user {
+            font-size: clamp(0.6rem, 1vw, 0.85rem) !important;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+        .fuel-meter { width: 100%; height: 1vh; border: 0.2vw solid #fff; display: flex; margin-top: 2px; background: #000; overflow: hidden; }
         .fuel-section { flex: 1; border-right: 2.5px solid #000; height: 100%; transition: background 0.2s; }
         .siren-active .fuel-section { animation: fuel-flash 0.3s infinite alternate; }
         @keyframes fuel-flash { 0% { background: var(--neon-red); } 100% { background: #000; } }
@@ -207,7 +230,13 @@
     <div id="ui-lives"></div>
     <div class="fuel-meter" id="fuel-bar-container"></div>
 </div>
-
+#ui-lives {
+    /* INDICATE: Scaling based on viewport height to match the HUD container */
+    font-size: clamp(10px, 1.5vh, 16px);
+    display: flex;
+    gap: 2px;
+    line-height: 1;
+}
 <div id="hud-right" class="hidden">
     <div class="nav-icon" onclick="manualTogglePause()" id="pause-btn">⏸️</div>
     <div class="nav-icon" onclick="showScreen('info')">ℹ️</div>
