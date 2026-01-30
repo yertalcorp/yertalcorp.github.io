@@ -12,10 +12,8 @@
             position: absolute;
             top: 1vh;
             left: 1vw;
-            width: 10vw;
-            height: 10vh;
-            min-width: 80px;
-            min-width: 60px;
+            width: 15vw;
+            height: 15vh;
             padding: 0.2vh 0.2vw;
             background: rgba(10, 20, 40, 0.7);
             border: 1px solid var(--neon-blue);
@@ -29,18 +27,18 @@
         }
         /* Scaling the text inside HUD */
         #hud-left div {
-            font-size: 1.2vh; /*clamp(0.5rem, 1.2vh, 0.8rem);*/
+            font-size: 1.2vh;
             line-height: 1.1;
             white-space: nowrap;
             margin:0;
             flex-shrink:1;
         }
         #ui-user {
-            font-size: 1vw; /*clamp(0.6rem, 1vw, 0.85rem) !important; */
+            font-size: 1vw !important; 
             text-overflow: ellipsis;
             overflow: hidden;
         }
-        .fuel-meter { width: 100%; height: 2.5vh !important; min-height: 6px; border: 1px solid rgba(255, 255, 255, 0.3); display: flex; margin-top: 2px; background: #000; overflow: hidden; }
+        .fuel-meter { width: 100%; height: 2vh !important; min-height: 5px; border: 1px solid rgba(255, 255, 255, 0.3); display: flex; margin-top: 2px; background: #000; overflow: hidden; }
         .fuel-section { flex: 1; border-right: 1px solid #000; background-color: rgba(255, 255, 255, 0.05); height: 100%; box-sizing: border-box; transition: background 0.2s; }
         .fuel-section:last-child {border-right: none;}
         .siren-active .fuel-section { animation: fuel-flash 0.3s infinite alternate; }
@@ -56,7 +54,7 @@
             gap: 1vw;
             z-index: 1000;
         }
-        .nav-icon { width: 6vh; /*clamp(15px, 6vh, 25px);*/ height: 6vh; /*clamp(15px, 6vh, 25px);*/ border-radius: 50%; border: 1px solid #fff; display: flex; align-items: center; justify-content: center;  text-align: center; background: rgba(0,0,0,0.6); cursor: pointer; font-size: 3vh; /*clamp(12px, 3vh, 22px);*/ transition: 0.3s; }
+        .nav-icon { width: 6vh;  height: 6vh;  border-radius: 50%; border: 1px solid #fff; display: flex; align-items: center; justify-content: center;  text-align: center; background: rgba(0,0,0,0.6); cursor: pointer; font-size: 3vh; transition: 0.3s; }
         .nav-icon:hover { transform: scale(1.1); box-shadow: 0 0 1vw var(--neon-blue); }
 
         .screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; border-radius: 1.5vh; padding: 1.5vh 1.5vw; z-index: 9999; text-align: center; pointer-events: auto; }
@@ -80,7 +78,7 @@
     background: rgba(10,10,15,0.98); 
     box-shadow: 0 0 4vh var(--neon-blue); 
     width: 90%;
-    max-width: 450px;
+    max-width: 500px;
     height: auto;
     margin: auto;
     display: flex;
@@ -93,17 +91,17 @@
 #overlay-btns {
   display: flex;
   justify-content: center;
-  gap: 15px;
+  gap: 15vh;
   flex-shrink: 0;
-  padding-top: 10px;
+  padding-top: 10vh;
   width: 100%;
 }
     
-        .impact-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 1.4rem; }
-        .impact-table th { color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); padding: 12px; }
-        .impact-table td { padding: 12px; border-bottom: 1px solid #333; }
+        .impact-table { width: 100%; border-collapse: collapse; margin: 1vh 0; font-size: 4vh; }
+        .impact-table th { color: var(--neon-blue); border-bottom: 03vh solid var(--neon-blue); padding: 1.2vh; }
+        .impact-table td { padding: 1.2vh; border-bottom: 1px solid #333; }
 
-        .btn-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; }
+        .btn-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 1vh; margin-top: 2vh; }
         button { padding: 1.5vh 3.5vw; border-radius: 1.2vh; border: none; background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; font-size: 1.5vh; text-transform: uppercase; }
         button:hover { filter: brightness(1.2); }
         .btn-alt { background: transparent; border: 2px solid var(--neon-blue); color: var(--neon-blue); }
@@ -111,7 +109,7 @@
 /* 1. THE 3D TITLE EFFECT */
 #screen-landing h1 {
     /* 9vw means the font size is exactly 9% of the screen width */
-    font-size: 9vw; /*clamp(0.3rem, 9vw, 8rem); */
+    font-size: 9vw;
     
     white-space: nowrap; 
     color: var(--neon-blue);
@@ -135,8 +133,8 @@
 /* Make buttons scale based on screen width */
 .grand-btn {
     display: inline-block;
-    padding: 2vh 2vw;  /*clamp(5px, 2vh, 5px)*/ /*clamp(5px, 2vw, 5px);*/
-    font-size: 3vw; /* clamp(0.5rem, 3vw, 0.5rem);*/
+    padding: 2vh 2vw;
+    font-size: 1.8vw;
     /*font-weight: 900;*/
     text-transform: uppercase;
     border: none;
@@ -150,17 +148,16 @@
     touch-action: manipulation;
     /* Restore the 3D 'Ledge' */
     box-shadow: 0 0.6vw 0 rgba(0,0,0,0.5);
-    /*margin: 2vw;*/
     flex-shrink: 0; /* Prevents button from squishing */
 }
 /* Specific 3D colors for buttons */
-.btn-launch { background: var(--neon-blue); box-shadow: 0 1.2vh /*clamp(4px, 1.2vh, 12px)*/ 0 #008a91; }
-.btn-hof { background: var(--gold); box-shadow: 0 1.2vh /*clamp(4px, 1.2vh, 12px)*/ 0 #8a6d00; }
+.btn-launch { background: var(--neon-blue); box-shadow: 0 1.2vh 0 #008a91; }
+.btn-hof { background: var(--gold); box-shadow: 0 1.2vh 0 #8a6d00; }
 .btn-back { background: var(--neon-red); box-shadow: 0 0.6vw 0 #8b0000; }
 
 .grand-btn:active {
-    transform: translateY(0.7vh/*clamp(2px, 0.7vh, 6px*/));
-    box-shadow: 0 0.7vh /*clamp(2px, 0.7vh, 6px)*/ 0 rgba(0,0,0,0.5);
+    transform: translateY(0.7vh);
+    box-shadow: 0 0.7vh 0 rgba(0,0,0,0.5);
 }
         
 .grand-btn:hover {
@@ -175,14 +172,14 @@
 }
 /* Ensure the title shrinks to fit narrow screens */
 .hof-title {
-    font-size: 1.5rem;
+    font-size: 15vh;
     max-width: 100%;
     box-sizing: border-box;
     white-space: normal;
     overflow-wrap: break-word;
     text-align: center;
     flex-shrink: 0;
-    margin: 0 0 15px 0;
+    margin: 0 0 1.5vh 0;
     color: var(--neon-blue);
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -190,7 +187,7 @@
 
 .manual-text {
     text-align: left;
-    font-size: 1.5vw; /*clamp(0.8rem, 1.5vw, 0.9rem);*/
+    font-size: 1.5vw;
     line-height: 1.6;
     color: #ccc;
     margin: 2vw 0;
@@ -203,13 +200,13 @@
     text-shadow: 0 0 0.5vw var(--neon-blue);
 }
 /* Trophy Row */
-.trophy-row { width: 100%; display: flex; justify-content: center; text-align: center; font-size: 2.5rem; letter-spacing: 5px; margin: 10px 0; filter: drop-shadow(0 0 10px var(--gold)); }
+.trophy-row { width: 100%; display: flex; justify-content: center; text-align: center; font-size: 2.5vh; letter-spacing: 0.5vh; margin: 1vh 0; filter: drop-shadow(0 0 2vh var(--gold)); }
 
 .hof-scroll-box {
     width: 100%;
     overflow: visible; /* No internal scrollbar */
     height: auto;
-    margin: 10px 0;
+    margin: 5vh 0;
     flex: none; /* Box doesn't need to 'fill' space anymore */
 }
 /* Cleaner, neater typography */
@@ -218,19 +215,19 @@
     display: flex;
     flex-direction: column;
     font-family: 'Segoe UI', sans-serif;
-    font-size: 0.9rem;
+    font-size: 1.9vh;
     color: #eee;
 }
 #ui-lives {
-    font-size: 1.5vh; /*clamp(10px, 1.5vh, 16px);*/
+    font-size: 1.5vh; 
     display: flex;
     gap: 2px;
     line-height: 1;
 }
       
 .hof-table { width: 100%; border-collapse: collapse; }
-.hof-table th { font-size: 0.75rem; color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); padding: 12px; }
-.hof-table td { padding: 8px; font-weight: bold; font-size: 0.8rem; }
+.hof-table th { font-size: 3vh; color: var(--neon-blue); border-bottom: 2px solid var(--neon-blue); padding: 1.2vh; }
+.hof-table td { padding: 1vh; font-weight: bold; font-size: 1.8vh; }
 
 /* Ranking Colors */
 .rank-gold { color: var(--gold); }
@@ -265,7 +262,7 @@
 </div>
 
 <div id="screen-gameover" class="screen hidden">
-    <h1 style="font-size: 15vw; /*clamp(0.4rem, 15vw, 1.2rem);*/ text-shadow: 0 0 3vw #8b0000; color: var(--neon-red); margin-bottom: 5vh;">GAME OVER</h1>
+    <h1 style="font-size: 15vw; text-shadow: 0 0 3vw #8b0000; color: var(--neon-red); margin-bottom: 5vh;">GAME OVER</h1>
     <div class="btn-container" style="display: flex; flex-direction: column; align-items: center; gap: 3vh; width: 100%;">
         <button class="grand-btn btn-launch" onclick="launchMission()">Relaunch Mission</button>
         <button class="grand-btn btn-hof" onclick="viewHOF('personal')" class="btn-alt">View Personal High Scores</button>
@@ -827,8 +824,8 @@ function viewHOF(type) {
     
     const trophies = document.createElement('div');
     trophies.className = 'trophy-row';
-    trophies.style.fontSize = '1.2rem';
-    trophies.style.margin = '5px 0';
+    trophies.style.fontSize = '12vh';
+    trophies.style.margin = '1.5vh 0';
     trophies.innerText = '🏆 🏆 🏆 🏆 🏆';
 
     const scrollBox = document.createElement('div');
@@ -836,7 +833,7 @@ function viewHOF(type) {
     
     if (type === 'global' && !isLoggedIn) {
         scrollBox.innerHTML = `
-            <div style="text-align:center; padding:20px; color:var(--neon-red);">
+            <div style="text-align:center; padding:2vh; color:var(--neon-red);">
                 <p>⚠️ ACCESS DENIED</p>
                 <p>You must be logged in to view Global Rankings.</p>
             </div>`;
@@ -856,7 +853,7 @@ function viewHOF(type) {
 
         // INDICATE: Check for empty data before slicing
         if (data.length === 0) {
-            tableHtml += `<tr><td colspan="4" style="text-align:center; padding:20px; font-size:0.8rem; color:rgba(255,255, 255, 0.4); letter-spacing: 1px;">NO MISSION DATA RECORDED</td></tr>`;
+            tableHtml += `<tr><td colspan="4" style="text-align:center; padding:2vh; font-size:8vh; color:rgba(255,255, 255, 0.4); letter-spacing: 1px;">NO MISSION DATA RECORDED</td></tr>`;
         } else {
             let displayScores = data.sort((a, b) => b.s - a.s).slice(0, 10);
             displayScores.forEach((entry, i) => {
@@ -865,10 +862,10 @@ function viewHOF(type) {
                 const levelDisplay = (entry.l !== undefined) ? entry.l : "—";
                 const userDisplay = entry.u || 'GUEST';
                 tableHtml += `<tr class="${rowColor}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <td style="opacity: 0.5; font-size: 0.7rem;"><center>#${i + 1}</center></td>
-                    <td style="letter-spacing: 0.5px;"><center>${userDisplay}</center></td>
-                    <td style="color: var(--neon-blue); opacity: 0.8; font-size: 0.8rem;"><center>${levelDisplay}</center></td>
-                    <td style="font-family: monospace; font-size=0.9rem;"><center>${scoreDisplay}</center></td>
+                    <td style="opacity: 0.5; font-size: 1.7vh;"><center>#${i + 1}</center></td>
+                    <td style="letter-spacing: 0.5vh;"><center>${userDisplay}</center></td>
+                    <td style="color: var(--neon-blue); opacity: 0.8; font-size: 1.8vh;"><center>${levelDisplay}</center></td>
+                    <td style="font-family: monospace; font-size=1.9vh;"><center>${scoreDisplay}</center></td>
                 </tr>`;
             });
         }
@@ -988,7 +985,7 @@ function showLoginOptions(returnType) {
     const loginContainer = document.createElement('div');
     loginContainer.style.display = "flex";
     loginContainer.style.flexDirection = "column";
-    loginContainer.style.gap = "15px";
+    loginContainer.style.gap = "1.5vh";
     loginContainer.style.width = "100%";
     loginContainer.style.alignItems = "center";
 
@@ -998,7 +995,7 @@ function showLoginOptions(returnType) {
         btn.className = "grand-btn";
         btn.style.width = "80%";
         btn.style.background = color;
-        btn.style.boxShadow = `0 6px 0 ${color}99`; // Slightly darker version of color
+        btn.style.boxShadow = `0 6vh 0 ${color}99`; // Slightly darker version of color
         btn.innerHTML = `${icon} LOGIN WITH ${name}`;
         btn.onclick = () => {
             console.log(`Initiating ${name} Federated Login...`);
