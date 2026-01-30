@@ -59,7 +59,7 @@
         .nav-icon { width: clamp(25px, 6vh, 45px); height: clamp(25px, 6vh, 45px); border-radius: 50%; border: 1px solid #fff; display: flex; align-items: center; justify-content: center;  text-align: center; background: rgba(0,0,0,0.6); cursor: pointer; font-size: clamp(12px, 3vh, 22px); transition: 0.3s; }
         .nav-icon:hover { transform: scale(1.1); box-shadow: 0 0 1vw var(--neon-blue); }
 
-        .screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; padding: 5vh 5vw; z-index: 9999; text-align: center; pointer-events: auto; }
+        .screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; border-radius: 1.5vh; padding: 5vh 5vw; z-index: 9999; text-align: center; pointer-events: auto; }
         .hidden { display: none !important; }
 #screen-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -70,6 +70,7 @@
     align-items: flex-start; /* Changed from center so it grows downward */
     overflow-y: auto; /* The whole screen scrolls if the box is long */
     padding: 50px 0; /* Gives breathing room at top and bottom */
+    border-radius: 1.5vh
 }
 /* Ensure the neon box fits the screen */
 .neon-box { 
@@ -103,7 +104,7 @@
         .impact-table td { padding: 12px; border-bottom: 1px solid #333; }
 
         .btn-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; }
-        button { padding: 1.8vh 3.5vw; border-radius: 1.2vh; border: none; background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; font-size: 1.5vh; text-transform: uppercase; }
+        button { padding: 1.5vh 3.5vw; border-radius: 1.2vh; border: none; background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; font-size: 1.5vh; text-transform: uppercase; }
         button:hover { filter: brightness(1.2); }
         .btn-alt { background: transparent; border: 2px solid var(--neon-blue); color: var(--neon-blue); }
         
@@ -138,7 +139,7 @@
     font-weight: 900;
     text-transform: uppercase;
     border: none;
-    border-radius: 1.5vw;
+    border-radius: 1.5vh;
     cursor: pointer;
     position: relative;
     transition: transform 0.1s, box-shadow 0.1s;
