@@ -856,10 +856,10 @@ function viewHOF(type) {
                 const levelDisplay = (entry.l !== undefined) ? entry.l : "—";
                 const userDisplay = entry.u || 'GUEST';
                 tableHtml += `<tr class="${rowColor}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <td style="opacity: 0.5; font-size: 3vh;"><center>#${i + 1}</center></td>
-                    <td style="letter-spacing: 0.5vh;"><center>${userDisplay}</center></td>
-                    <td style="color: var(--neon-blue); opacity: 0.8; font-size: 3vh;"><center>${levelDisplay}</center></td>
-                    <td style="font-family: monospace; font-size=3vh;"><center>${scoreDisplay}</center></td>
+                    <td style="opacity: 0.5; font-size: 2.5vh;"><center>#${i + 1}</center></td>
+                    <td style="font-size: 2.5vh;"><center>${userDisplay}</center></td>
+                    <td style="color: var(--neon-blue); opacity: 0.8; font-size: 2.5vh;"><center>${levelDisplay}</center></td>
+                    <td style="font-family: monospace; font-size: 2.5vh;"><center>${scoreDisplay}</center></td>
                 </tr>`;
             });
         }
