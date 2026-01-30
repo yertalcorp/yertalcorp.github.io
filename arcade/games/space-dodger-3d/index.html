@@ -59,7 +59,7 @@
         .nav-icon { width: clamp(15px, 6vh, 25px); height: clamp(15px, 6vh, 25px); border-radius: 50%; border: 1px solid #fff; display: flex; align-items: center; justify-content: center;  text-align: center; background: rgba(0,0,0,0.6); cursor: pointer; font-size: clamp(12px, 3vh, 22px); transition: 0.3s; }
         .nav-icon:hover { transform: scale(1.1); box-shadow: 0 0 1vw var(--neon-blue); }
 
-        .screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; border-radius: 1.5vh; padding: 5vh 5vw; z-index: 9999; text-align: center; pointer-events: auto; }
+        .screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; border-radius: 1.5vh; padding: 1.5vh 1.5vw; z-index: 9999; text-align: center; pointer-events: auto; }
         .hidden { display: none !important; }
 #screen-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -111,7 +111,7 @@
 /* 1. THE 3D TITLE EFFECT */
 #screen-landing h1 {
     /* 9vw means the font size is exactly 9% of the screen width */
-    font-size: clamp(0.3rem, 12vw, 0.8rem); 
+    font-size: clamp(0.3rem, 18vw, 0.8rem); 
     
     white-space: nowrap; 
     color: var(--neon-blue);
@@ -135,9 +135,9 @@
 /* Make buttons scale based on screen width */
 .grand-btn {
     display: inline-block;
-    padding: clamp(5px, 2vh, 10px) clamp(5px, 4vw, 15px);
-    font-size: clamp(0.6rem, 2.1vw, 0.9rem);
-    font-weight: 900;
+    padding: clamp(5px, 2vh, 5px) clamp(5px, 2vw, 5px);
+    font-size: clamp(0.5rem, 3vw, 0.5rem);
+    /*font-weight: 900;*/
     text-transform: uppercase;
     border: none;
     border-radius: 1.5vh;
@@ -150,7 +150,7 @@
     touch-action: manipulation;
     /* Restore the 3D 'Ledge' */
     box-shadow: 0 0.6vw 0 rgba(0,0,0,0.5);
-    margin: 2vw;
+    /*margin: 2vw;*/
     flex-shrink: 0; /* Prevents button from squishing */
 }
 /* Specific 3D colors for buttons */
