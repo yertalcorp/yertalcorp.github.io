@@ -70,28 +70,27 @@
 }
 /* Ensure the neon box fits the screen */
 .neon-box { 
+    top: 10vh;
+    left: 10vw;
     border: 2px solid var(--neon-blue); 
-    border-radius: 1.5vw; 
-    padding: 5vh; 
+    border-radius: 0.5vw; 
     background: rgba(10,10,15,0.98); 
     box-shadow: 0 0 4vh var(--neon-blue); 
-    width: 90%;
-    max-width: 500px;
+    width: 80%;
     height: auto;
     margin: auto;
     display: flex;
     flex-direction: column;
     align-self: center;
-    max-height: none; /* Allows expansion */
+    max-height: 90% /* Allows expansion */
     overflow: visible; /* Allows expansion */
-    position: relative;
 }
 #overlay-btns {
   display: flex;
   justify-content: center;
-  gap: 15vh;
+  gap: 1.5vh;
   flex-shrink: 0;
-  padding-top: 10vh;
+  padding-top: 1.5vh;
   width: 100%;
 }
     
@@ -213,7 +212,6 @@
     font-family: 'Segoe UI', sans-serif;
     font-size: 1.9vh;
     color: #eee;
-    overflow: visible;
 }
 #ui-lives {
     font-size: 1.5vh; 
