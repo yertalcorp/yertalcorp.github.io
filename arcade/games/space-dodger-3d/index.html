@@ -70,12 +70,12 @@
 }
 /* Ensure the neon box fits the screen */
 .neon-box { 
-    padding: 1.5vh 1.5vw;
+    padding: 2.5vh 2.5vw;
     border: 2px solid var(--neon-blue); 
     border-radius: 0.5vh; 
     background: rgba(10,10,15,0.98); 
     box-shadow: 0 0 4vh var(--neon-blue); 
-    width: 80%;
+    width: 60%;
     height: auto;
     margin: auto;
     display: flex;
@@ -847,7 +847,7 @@ function viewHOF(type) {
 
         // INDICATE: Check for empty data before slicing
         if (data.length === 0) {
-            tableHtml += `<tr><td colspan="4" style="text-align:center; font-size:3vw; color:rgba(255,255, 255, 0.4);">NO MISSION DATA RECORDED</td></tr>`;
+            tableHtml += `<tr><td colspan="4" style="text-align:center; font-size:2.5vw; color:rgba(255,255, 255, 0.4);">NO MISSION DATA RECORDED</td></tr>`;
         } else {
             let displayScores = data.sort((a, b) => b.s - a.s).slice(0, 10);
             displayScores.forEach((entry, i) => {
