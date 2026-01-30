@@ -6,7 +6,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root { --neon-blue: #00f2ff; --neon-red: #ff3131; --gold: #ffd700; }
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; color: white; user-select: none; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; color: white; user-select: none; width: 100vw; height: 100vh; position: relative;}
+        canvas {position: fixed; top: 0; left: 0; width: 100% !important; height: 100% !important; z-index: -1; display: block;}
         
         #hud-left {
             position: absolute;
@@ -54,7 +55,7 @@
         }
         .nav-icon { width: 6vh;  height: 6vh;  border-radius: 50%; border: 1px solid #fff; display: flex; align-items: center; justify-content: center;  text-align: center; background: rgba(0,0,0,0.6); cursor: pointer; font-size: 3vh; transition: 0.3s; }
         .nav-icon:hover { transform: scale(1.1); box-shadow: 0 0 1vw var(--neon-blue); }
-        canvas {position: fixed; top: 0; left: 0; width: 100vw !important; height: 100vh !important; z-index: -1; display: block;}
+
         .screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; border-radius: 4px; z-index: 9999; text-align: center; pointer-events: auto; }
         .hidden { display: none !important; }
 #screen-overlay {
@@ -345,7 +346,14 @@ function init3D() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer({ antialias: true });
+    
+    // ADD/UPDATE THESE LINES:
+    renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.domElement.style.position = 'fixed';
+    renderer.domElement.style.top = '0';
+    renderer.domElement.style.left = '0';
+    renderer.domElement.style.zIndex = '-1';
     document.body.appendChild(renderer.domElement);
 
     const rocketGrp = new THREE.Group();
