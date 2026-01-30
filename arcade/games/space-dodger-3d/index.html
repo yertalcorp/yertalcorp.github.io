@@ -213,6 +213,7 @@
     font-family: 'Segoe UI', sans-serif;
     font-size: 1.9vh;
     color: #eee;
+    overflow: visible;
 }
 #ui-lives {
     font-size: 1.5vh; 
@@ -820,8 +821,8 @@ function viewHOF(type) {
     
     const trophies = document.createElement('div');
     trophies.className = 'trophy-row';
-    trophies.style.fontSize = '1.5vh';
-    trophies.style.margin = '0.5vh 0';
+    trophies.style.fontSize = '3vw';
+    trophies.style.margin = '0.5vw 0';
     trophies.innerText = '🏆 🏆 🏆 🏆 🏆';
 
     const scrollBox = document.createElement('div');
@@ -849,7 +850,7 @@ function viewHOF(type) {
 
         // INDICATE: Check for empty data before slicing
         if (data.length === 0) {
-            tableHtml += `<tr><td colspan="4" style="text-align:center; font-size:1.8vh; color:rgba(255,255, 255, 0.4);">NO MISSION DATA RECORDED</td></tr>`;
+            tableHtml += `<tr><td colspan="4" style="text-align:center; font-size:3vw; color:rgba(255,255, 255, 0.4);">NO MISSION DATA RECORDED</td></tr>`;
         } else {
             let displayScores = data.sort((a, b) => b.s - a.s).slice(0, 10);
             displayScores.forEach((entry, i) => {
