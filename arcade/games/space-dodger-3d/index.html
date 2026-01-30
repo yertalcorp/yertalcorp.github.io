@@ -129,7 +129,7 @@
 .grand-btn {
     display: inline-block;
     padding: 1.5vh 1.5vw;
-    font-size: 3vh;
+    font-size: 2.5vh;
     text-transform: uppercase;
     border: none;
     border-radius: 0.5vh;
@@ -166,7 +166,7 @@
 }
 /* Ensure the title shrinks to fit narrow screens */
 .hof-title {
-    font-size: 3vh;
+    font-size: 5vh;
     max-width: 100%;
     box-sizing: border-box;
     white-space: normal;
@@ -267,7 +267,7 @@
     <div id="overlay-wrapper" class="neon-box">
         <div id="overlay-content"></div>
         <div class="btn-container" id="overlay-btns">
-            </div>
+    </div>
     </div>
 </div>
 
@@ -818,7 +818,7 @@ function viewHOF(type) {
     
     const trophies = document.createElement('div');
     trophies.className = 'trophy-row';
-    trophies.style.fontSize = '3vw';
+    trophies.style.fontSize = '2.5vw';
     trophies.style.margin = '0.5vw 0';
     trophies.innerText = '🏆 🏆 🏆 🏆 🏆';
 
@@ -856,10 +856,10 @@ function viewHOF(type) {
                 const levelDisplay = (entry.l !== undefined) ? entry.l : "—";
                 const userDisplay = entry.u || 'GUEST';
                 tableHtml += `<tr class="${rowColor}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <td style="opacity: 0.5; font-size: 1.7vh;"><center>#${i + 1}</center></td>
+                    <td style="opacity: 0.5; font-size: 3vh;"><center>#${i + 1}</center></td>
                     <td style="letter-spacing: 0.5vh;"><center>${userDisplay}</center></td>
-                    <td style="color: var(--neon-blue); opacity: 0.8; font-size: 1.8vh;"><center>${levelDisplay}</center></td>
-                    <td style="font-family: monospace; font-size=1.9vh;"><center>${scoreDisplay}</center></td>
+                    <td style="color: var(--neon-blue); opacity: 0.8; font-size: 3vh;"><center>${levelDisplay}</center></td>
+                    <td style="font-family: monospace; font-size=3vh;"><center>${scoreDisplay}</center></td>
                 </tr>`;
             });
         }
