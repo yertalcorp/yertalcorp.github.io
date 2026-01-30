@@ -847,7 +847,7 @@ function viewHOF(type) {
 
         // INDICATE: Check for empty data before slicing
         if (data.length === 0) {
-            tableHtml += `<tr><td colspan="4" style="text-align:center; font-size:2.5vw; color:rgba(255,255, 255, 0.4);">NO MISSION DATA RECORDED</td></tr>`;
+            tableHtml += `<tr><td colspan="4" style="text-align:center; font-size:2.5vh; color:rgba(255,255, 255, 0.4);">NO MISSION DATA RECORDED</td></tr>`;
         } else {
             let displayScores = data.sort((a, b) => b.s - a.s).slice(0, 10);
             displayScores.forEach((entry, i) => {
