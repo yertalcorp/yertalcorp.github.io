@@ -353,13 +353,17 @@ function init3D() {
     
     // ADD/UPDATE THESE LINES:
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(w, h);
+    renderer.setSize(w, h, false);
     renderer.domElement.style.position = 'fixed';
     renderer.domElement.style.top = '0';
     renderer.domElement.style.left = '0';
     renderer.domElement.style.width = '100vw';
     renderer.domElement.style.height = '100vh';
-    
+    // Force the corner rounding directly on the canvas element
+    renderer.domElement.style.borderRadius = "0.5vh";
+    renderer.domElement.style.overflow = "hidden";
+    renderer.domElement.style.position = "fixed";
+        
     renderer.domElement.style.zIndex = '-1';
     document.body.appendChild(renderer.domElement);
 
