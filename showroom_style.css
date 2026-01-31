@@ -1,4 +1,4 @@
-/* --- 1. DYNAMIC UI TOKENS (Fallbacks Included) --- */
+/* --- DYNAMIC UI TOKENS (Fallbacks Included) --- */
 :root {
     /* These values are the "Emergency Power" if the JSON is missing */
     --neon-color: #00f2ff;       /* YERTAL Cyan */
@@ -12,7 +12,7 @@
     --text-color: #f8fafc;
 }
 
-/* --- 2. GLOBAL RESET & BASE --- */
+/* --- GLOBAL RESET & BASE --- */
  {
     margin: 0;
     padding: 0;
@@ -23,11 +23,15 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     font-family: var(--nav-font), sans-serif;
+    font-weight: var(--nav-weight);
     transition: opacity 0.5s ease-in;
     overflow-x: hidden;
     /* Removed opacity: 0 to ensure immediate fallback visibility */
 }
-
+h1, h2, h3 {
+    font-family: var(--nav-font);
+    font-weight: var(--nav-weight);
+}
 /* --- 3. GLASSMORPHISM & LAYOUT --- */
 .glass {
     background: rgba(15, 23, 42, 0.75);
