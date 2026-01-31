@@ -149,11 +149,17 @@ function renderShowcase(items) {
         const item = items[key];
         return `
             <div class="featured-card p-8 rounded-[2.5rem] cursor-pointer min-h-[250px] relative overflow-hidden group flex-1 min-w-[300px]"
-                 onclick="window.location.href='${item.path}'">
-                <div class="absolute inset-0 bg-slate-950/70 group-hover:bg-slate-950/50 transition-colors duration-500"></div>
+                 onclick="window.location.href='${item.link || '#'}'">
+                
+                **<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" 
+                     style="background-image: url('${item.img}')">
+                </div>**
+
+                **<div class="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px] group-hover:bg-slate-950/40 transition-all duration-500"></div>**
+                
                 <div class="relative z-10 flex flex-col h-full justify-between">
                     <div class="flex justify-between items-start">
-                        <span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">Showcased: ${item.category}</span>
+                        <span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">Showcased: ${item.category || 'Laboratory'}</span>
                         <i class="fas fa-rocket text-blue-500 text-2xl"></i>
                     </div>
                     <div>
@@ -164,7 +170,6 @@ function renderShowcase(items) {
             </div>`;
     }).join('');
 }
-
 function renderFooter(footer) {
     const container = document.getElementById('footer-container');
     container.innerHTML = `
