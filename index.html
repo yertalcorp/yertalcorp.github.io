@@ -3,49 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yertal Showroom</title>
-    <link rel="stylesheet" href="style.css">
+    <title>YERTAL CORP | Technical Showroom & Lab</title>
+    
+    <link rel="stylesheet" id="google-fonts-link">
+    <link rel="stylesheet" id="font-awesome-link">
+    
+    <link rel="stylesheet" href="global.css">
+    <link rel="stylesheet" href="showroom_style.css">
 </head>
-<body class="loading-state">
+<body class="min-h-screen flex flex-col bg-[#050505]">
 
-    <nav class="main-nav">
+    <header class="main-nav glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center w-full shadow-2xl">
         <div id="nav-logo" class="logo-container"></div>
-        <div id="nav-menu"></div>
-        <div id="auth-zone"></div>
-    </nav>
-
-    <header class="hero-section">
-        <div id="hero-title"></div>
-        <div id="hero-desc"></div>
-        <div id="cta-container">
+        
+        <nav id="nav-menu" class="hidden lg:flex gap-8 text-[10px] font-bold uppercase tracking-widest items-center">
+            </nav>
+        
+        <div id="auth-zone" class="flex items-center gap-4">
             </div>
+        
+        <button class="lg:hidden text-2xl px-2 text-white" onclick="toggleMobileMenu()">☰</button>
     </header>
 
-    <main class="content-wrapper">
-        <section class="section-container">
-            <h3 id="showcase-label" class="section-label"></h3>
-            <div id="showcase-grid"></div>
-        </section>
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-slate-900 hidden flex-col items-center justify-center gap-8 text-xl font-bold uppercase glass">
+        <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-3xl">✕</button>
+        <div id="mobile-links" class="flex flex-col gap-6 text-center"></div>
+    </div>
 
-        <section class="section-container">
-            <h3 id="action-label" class="section-label"></h3>
-            <div id="action-grid"></div>
-        </section>
+    <main id="app" class="flex-grow p-6 lg:p-12 w-full max-w-7xl mx-auto">
+        
+        <section id="hero-container" class="mb-16"></section>
+        
+        <section id="showcase-grid" class="flex flex-wrap gap-6 mb-20">
+            </section>
+        
+        <section id="action-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            </section>
+        
     </main>
 
-    <footer id="footer-container"></footer>
+    <footer id="footer-container" class="glass mt-auto py-12 px-6 border-t border-white/5">
+        </footer>
 
     <div id="admin-gateway"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-database.js";
-        
-        // This file will contain the render logic we've been building
-        import { initShowroom } from "./app.js"; 
-        
-        // Configuration will be passed to your init script
-        initShowroom();
-    </script>
+    <div id="legal-modal" class="hidden fixed inset-0 z-[100] bg-black/85 backdrop-blur-md items-center justify-center p-6">
+        <div class="modal-content glass p-10 max-w-2xl w-full rounded-2xl border border-white/10 relative">
+            <button onclick="closeLegal()" class="absolute top-4 right-4 text-slate-400 text-2xl hover:text-white transition">✕</button>
+            <div id="modal-body" class="prose prose-invert text-slate-300">
+                </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+
 </body>
 </html>
