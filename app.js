@@ -10,8 +10,8 @@ async function initShowroom() {
             renderBranding(data.navigation.branding);
             renderNavbar(data.navigation.menu_items, data.auth_ui, data.settings['ui-settings']);
             renderHero(data.hero_section);
-            renderShowcase(data['showcase-items']);
-            renderActionCards(data['action-cards']);
+                renderShowcase(data['showcase-items']);
+                renderActionCards(data['action-cards']);
             renderFooter(data.navigation.footer);
             renderAdminGate(data.settings['ui-settings']);
             
@@ -29,8 +29,12 @@ function applyGlobalStyles(settings) {
     const root = document.documentElement;
     
     // External Assets
-    document.getElementById('google-fonts-link').href = settings.external_assets.google_fonts_url;
-    document.getElementById('font-awesome-link').href = settings.external_assets.font_awesome_url;
+    const googleFontUrl = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;800&display=swap";
+    const fontLink = document.getElementById('google-fonts-link');
+    
+    if (fontLink) {
+        fontLink.href = googleFontUrl;
+    }
 
     //nav-font-weight is a number treat it as a number
     const dbWeight = ui['nav-font-weight'] || 800;
