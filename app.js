@@ -34,6 +34,7 @@ function applyGlobalStyles(settings) {
 
     // Direct JSON-to-CSS Mapping
     root.style.setProperty('--nav-font', ui.nav_font);
+    root.style.setProperty('--nav-weight', ui.nav_font_weight || '400');
     root.style.setProperty('--card-blur', ui.card_blur);
     root.style.setProperty('--neon-color', ui['color-neon']);
     root.style.setProperty('--accent-color', ui['color-accent']);
