@@ -21,7 +21,7 @@ async function applyGlobalSettings() {
     // This prevents the browser from showing the transition to styles
     const cachedUI = localStorage.getItem('arcade_ui_settings');
     if (cachedUI) {
-        **renderStyles(JSON.parse(cachedUI));
+        renderStyles(JSON.parse(cachedUI));
     }
 
     // Fetch the freshest data from your settings/ui-settings folder
@@ -30,7 +30,7 @@ async function applyGlobalSettings() {
         const ui = snapshot.val();
         if (ui) {
             localStorage.setItem('arcade_ui_settings', JSON.stringify(ui));
-            renderStyles(ui);**
+            renderStyles(ui);
         }
     } catch (e) { console.error("Firebase Sync Failed:", e); }
 }
