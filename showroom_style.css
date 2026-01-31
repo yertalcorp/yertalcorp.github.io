@@ -34,12 +34,17 @@ body {
 
 /* This ensures that even if Tailwind tries to set it to 400/700, the 800 wins */
 h1, h2, h3 {
-    font-family: 'Inter', sans-serif !important;
-    /* Use the variable, but default to 800 */
-    font-weight: var(--nav-weight, 800) !important;**
-    font-style: normal;
-    /* This prevents the browser from trying to "guess" the weight */
-    font-synthesis: none;
+    font-family: var(--nav-font, 'Inter'), sans-serif !important;
+    font-weight: var(--nav-weight, 800) !important;
+    
+    /* THE CRITICAL LOCK: Overrides 'normal' with your DB value */
+    font-variation-settings: "wght" var(--nav-weight, 800) !important;
+    
+    /* Prevent the browser from trying to 'fake' a bold look */
+    font-synthesis: none !important;
+    
+    letter-spacing: -0.05em;
+    -webkit-font-smoothing: antialiased;
 }
 /* --- 3. GLASSMORPHISM & LAYOUT --- */
 .glass {
