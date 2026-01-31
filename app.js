@@ -164,7 +164,7 @@ function renderShowcase(items) {
                     </div>
                     <div>
                         <h3 class="font-black uppercase tracking-tighter text-white text-xl">${item.title}</h3>
-                        <span class="block mt-2 text-[9px] text-blue-400 uppercase font-bold tracking-[0.2em]">Initialize →</span>
+                        <span class="neon-text-sync block mt-2 text-[9px] text-blue-400 uppercase font-bold tracking-[0.2em]">Initialize →</span>
                     </div>
                 </div>
             </div>`;
