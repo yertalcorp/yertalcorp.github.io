@@ -28,16 +28,18 @@ function applyGlobalStyles(settings) {
     const ui = settings['ui-settings'];
     const root = document.documentElement;
     
-    // External Assets
-    const cleanFontUrl = "https://fonts.googleapis.com/css2?family=Inter:wght@400;800&display=swap";
-    document.getElementById('google-fonts-link').href = cleanFontUrl;
-        
+    //  DYNAMIC FONT LOADING: Get the font name from DB and request all weights
+    const selectedFont = ui.nav_font ;
+    const cleanFontUrl = `https://fonts.googleapis.com/css2?family=${selectedFont.replace(' ', '+')}:wght@100..900&display=swap`;
+    
+    const fontLink = document.getElementById('google-fonts-link');
+    if (fontLink) {
+        fontLink.href = cleanFontUrl;
+    }
+    
     // Direct JSON-to-CSS Mapping
     root.style.setProperty('--nav-font', ui.nav_font);
-    
-    // Ensure this is a clean number, not a string
-    root.style.setProperty('--nav-weight', parseInt(ui['nav-font-weight']) || 800);
-    console.log("DB Weight Received:", ui['nav-font-weight'], "Type:", typeof ui['nav-font-weight']);
+    root.style.setProperty('--nav-weight', ui['nav-font-weight']);
     root.style.setProperty('--card-blur', ui.card_blur);
     root.style.setProperty('--neon-color', ui['color-neon']);
     root.style.setProperty('--accent-color', ui['color-accent']);
