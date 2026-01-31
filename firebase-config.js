@@ -1,5 +1,5 @@
 // 1. YOUR FIREBASE CONFIG (Replace with your actual keys from Firebase Console)
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "yertal-arcade.firebaseapp.com",
   databaseURL: "https://yertal-arcade-default-rtdb.firebaseio.com",
