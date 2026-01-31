@@ -3,7 +3,7 @@
     /* These values are the "Emergency Power" if the JSON is missing */
     --neon-color: #00f2ff;       /* YERTAL Cyan */
     --accent-color: #3b82f6;     /* CORP Blue */
-    --nav-font: 'intel', sans-serif;
+    --nav-font: 'Inter', sans-serif;
     --nav-weight: 800 !important;
     --card-blur: 15px;
     --btn-radius: 12px;
@@ -15,21 +15,25 @@
 
 /* --- GLOBAL RESET & BASE --- */
  {
-    margin: 0;
+margin: 0;
     padding: 0;
     box-sizing: border-box;
+    /* GLOBAL WEIGHT LOCK: applies the 800 to every single element */
+    font-family: var(--nav-font, 'Inter'), sans-serif !important;
+    font-weight: var(--nav-weight, 800) !important;
+    font-variation-settings: "wght" var(--nav-weight, 800) !important;
 }
 
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    font-family: var(--nav-font), sans-serif !important;
-    font-weight: var(--nav-weight, 800) !important;
+    /* Variation settings added to body for safety */
+    font-variation-settings: "wght" var(--nav-weight, 800) !important;
     filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.3));
     letter-spacing: -0.05em;
     transition: opacity 0.5s ease-in;
     overflow-x: hidden;
-    /* Removed opacity: 0 to ensure immediate fallback visibility */
+    font-synthesis: none !important;
 }
 
 /* This ensures that even if Tailwind tries to set it to 400/700, the 800 wins */
