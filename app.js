@@ -29,17 +29,11 @@ function applyGlobalStyles(settings) {
     const root = document.documentElement;
     
     // External Assets
-    const googleFontUrl = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;800&display=swap";
-    const fontLink = document.getElementById('google-fonts-link');
+    const cleanFontUrl = "https://fonts.googleapis.com/css2?family=Inter:wght@400;800&display=swap";
+    document.getElementById('google-fonts-link').href = cleanFontUrl;
     
-    if (fontLink) {
-        fontLink.href = googleFontUrl;
-    }
-
-    //nav-font-weight is a number treat it as a number
-    const dbWeight = ui['nav-font-weight'];
-    const cleanWeight = parseInt( dbWeight ) || 800;
-    root.style.setProperty('--nav-weight', cleanWeight);
+    // Ensure this is a clean number, not a string
+    root.style.setProperty('--nav-weight', parseInt(ui['nav-font-weight']) || 800);
     console.log("DB Weight Received:", ui['nav-font-weight'], "Type:", typeof ui['nav-font-weight']);
     
     // Direct JSON-to-CSS Mapping
