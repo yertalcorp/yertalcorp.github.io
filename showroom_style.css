@@ -33,10 +33,13 @@ body {
 }
 
 /* This ensures that even if Tailwind tries to set it to 400/700, the 800 wins */
-h1, h2, h3, .featured-card h3 {
-    font-family: var(--nav-font), sans-serif !important;
-    font-weight: var(--nav-weight, 800) !important;
-    letter-spacing: -0.05em !important;
+h1, h2, h3 {
+    font-family: 'Inter', sans-serif !important;
+    /* Use the variable, but default to 800 */
+    font-weight: var(--nav-weight, 800) !important;**
+    font-style: normal;
+    /* This prevents the browser from trying to "guess" the weight */
+    font-synthesis: none;
 }
 /* --- 3. GLASSMORPHISM & LAYOUT --- */
 .glass {
