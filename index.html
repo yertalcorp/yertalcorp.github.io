@@ -1,1 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yertal Showroom</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="loading-state">
 
+    <nav class="main-nav">
+        <div id="nav-menu"></div>
+        <div id="auth-zone"></div>
+    </nav>
+
+    <header class="hero-section">
+        <div id="hero-title"></div>
+        <div id="hero-desc"></div>
+        <div id="cta-container">
+            </div>
+    </header>
+
+    <main class="content-wrapper">
+        <section class="section-container">
+            <h3 id="showcase-label" class="section-label"></h3>
+            <div id="showcase-grid"></div>
+        </section>
+
+        <section class="section-container">
+            <h3 id="action-label" class="section-label"></h3>
+            <div id="action-grid"></div>
+        </section>
+    </main>
+
+    <footer id="footer-container"></footer>
+
+    <div id="admin-gateway"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-database.js";
+        
+        // This file will contain the render logic we've been building
+        import { initShowroom } from "./app.js"; 
+        
+        // Configuration will be passed to your init script
+        initShowroom();
+    </script>
+</body>
+</html>
