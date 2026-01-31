@@ -1,4 +1,4 @@
-import { firebaseConfig } from './firebaseconfig.js';
+import { firebaseConfig } from './firebase-config.js';
 
 async function initShowroom() {
     try {
