@@ -11,7 +11,6 @@ const firebaseConfig = {
   measurementId: "G-2VP21WZ4CG"
 };
 
-// Initialize App
 async function initShowroom() {
     try {
         const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
@@ -20,14 +19,13 @@ async function initShowroom() {
         if (data) {
             applyGlobalStyles(data.settings);
             renderBranding(data.navigation.branding);
-            renderNavbar(data.navigation.menu_items, data.auth_ui);
+            renderNavbar(data.navigation.menu_items, data.auth_ui, data.settings['ui-settings']);
             renderHero(data.hero_section);
             renderShowcase(data['showcase-items']);
             renderActionCards(data['action-cards']);
             renderFooter(data.navigation.footer);
             renderAdminGate(data.settings['ui-settings']);
             
-            // Fade in the body once data is ready
             document.body.style.opacity = '1';
         }
     } catch (error) {
@@ -41,42 +39,50 @@ function applyGlobalStyles(settings) {
     const ui = settings['ui-settings'];
     const root = document.documentElement;
     
-    // Inject Fonts & Icons
+    // External Assets
     document.getElementById('google-fonts-link').href = settings.external_assets.google_fonts_url;
     document.getElementById('font-awesome-link').href = settings.external_assets.font_awesome_url;
 
-    // Set CSS Variables
-    root.style.setProperty('--neon-color', ui['color-neon']);
-    root.style.setProperty('--accent-color', ui['color-accent']);
-    root.style.setProperty('--btn-radius', `${ui['button-radius']}px`);
-    root.style.setProperty('--card-blur', ui['card_blur']);
-    root.style.setProperty('--nav-font', ui['nav_font']);
+    // Direct JSON-to-CSS Mapping
+    **root.style.setProperty('--nav-font', ui.nav_font);**
+    **root.style.setProperty('--card-blur', ui.card_blur);**
+    **root.style.setProperty('--neon-color', ui['color-neon']);**
+    **root.style.setProperty('--accent-color', ui['color-accent']);**
+    **root.style.setProperty('--btn-radius', ui['button-radius'] + 'px');**
+    **root.style.setProperty('--nav-text-color', ui.nav_text_color);**
+    **root.style.setProperty('--nav-hover-color', ui.nav_hover_color);**
 }
 
 function renderBranding(brand) {
     const container = document.getElementById('nav-logo');
     container.innerHTML = `
-        <a href="${brand.link}" class="flex items-center gap-2 no-underline">
-            <span style="color:${brand.parts[0].color}; font-family:'${brand.parts[0].font}'; font-weight:${brand.parts[0].weight}; font-size:1.5rem;">${brand.parts[0].text}</span>
-            <span style="color:${brand.parts[1].color}; font-family:'${brand.parts[1].font}'; font-weight:${brand.parts[1].weight}; font-size:1.5rem;">${brand.parts[1].text}</span>
-        </a>
+        <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
+            <img src="Yertal_Logo_New_HR.png" alt="Logo" onerror="this.src='https://placehold.co/40x40/3b82f6/white?text=Y'" class="h-10 w-auto">
+            <h1 class="text-xl font-extrabold uppercase tracking-tighter">
+                <span style="color:${brand.parts[0].color}">${brand.parts[0].text}</span>
+                <span class="text-blue-500">${brand.parts[1].text}</span>
+            </h1>
+        </div>
     `;
 }
 
-function renderNavbar(items, auth) {
+function renderNavbar(items, auth, ui) {
     const nav = document.getElementById('nav-menu');
-    const mobileNav = document.getElementById('mobile-links');
     const authZone = document.getElementById('auth-zone');
 
-    const linksHTML = items.map(item => `
-        <a href="${item.link}" class="hover:text-[var(--neon-color)] transition-colors ${item.external ? 'target="_blank"' : ''}">${item.label}</a>
+    nav.innerHTML = items.map(item => `
+        <button onclick="window.open('${item.link}', '_blank')" 
+                class="transition-colors duration-300 uppercase tracking-widest font-bold"
+                style="color: var(--nav-text-color); font-family: var(--nav-font); font-size: ${ui.nav_font_size}">
+            ${item.label}
+        </button>
     `).join('');
 
-    nav.innerHTML = linksHTML;
-    mobileNav.innerHTML = linksHTML;
-
     authZone.innerHTML = `
-        <a href="${auth.signup_link}" class="bg-[var(--neon-color)] text-black px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition shadow-lg">${auth.signup_label}</a>
+        <a href="${auth.signup_link}" target="_blank" 
+           class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition shadow-lg shadow-blue-900/40">
+           ${auth.signup_label}
+        </a>
     `;
 }
 
@@ -85,18 +91,19 @@ function renderNavbar(items, auth) {
 function renderHero(hero) {
     const container = document.getElementById('hero-container');
     container.innerHTML = `
-        <div class="py-8 animate-fadeIn text-center lg:text-left">
-            <h2 class="text-5xl lg:text-7xl font-black uppercase tracking-tighter mb-4">
-                <span style="color:${hero.title_parts[0].color}; font-family:'${hero.title_parts[0].font}'; ${hero.title_parts[0].glow ? 'text-shadow: 0 0 20px '+hero.title_parts[0].color : ''}">${hero.title_parts[0].text}</span>
-                <span style="color:${hero.title_parts[1].color}; font-family:'${hero.title_parts[1].font}'; font-style:italic;">${hero.title_parts[1].text}</span>
+        <div class="py-8 animate-fadeIn text-center">
+            <h2 class="text-5xl lg:text-7xl font-black uppercase tracking-tighter text-glow">
+                ${hero.title_parts[0].text} <span class="text-blue-500 italic">${hero.title_parts[1].text}</span>
             </h2>
-            <p class="text-slate-400 text-lg italic font-light max-w-2xl mx-auto lg:mx-0">${hero.description}</p>
-            <div class="w-full flex justify-center mt-12 mb-12" style="perspective: 1000px;">
-                <button id="arcade-trigger" onclick="window.location.href='${hero.holographic_cta.link}'" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl font-black uppercase text-lg tracking-[0.4em] text-white">
+            <p class="text-slate-400 mt-4 text-lg italic font-light tracking-wide mx-auto max-w-2xl">
+                ${hero.description}
+            </p>
+            <div class="w-full flex justify-center mt-8 mb-9" style="perspective: 1000px;">
+                <button id="arcade-trigger" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl font-black uppercase text-lg tracking-[0.5em] text-white">
                     <div class="inner-content flex items-center gap-6">
-                        <i class="fas fa-power-off text-blue-400"></i>
+                        <i class="fas fa-power-off text-blue-400 opacity-70 group-hover:scale-125 transition-transform"></i>
                         ${hero.holographic_cta.text}
-                        <i class="fas fa-microchip text-blue-400"></i>
+                        <i class="fas fa-microchip text-blue-400 opacity-70 group-hover:rotate-180 transition-transform duration-1000"></i>
                     </div>
                 </button>
             </div>
@@ -113,39 +120,38 @@ function initTiltEngine() {
         const rect = btn.getBoundingClientRect();
         const x = e.clientX - rect.left - rect.width / 2;
         const y = e.clientY - rect.top - rect.height / 2;
-        btn.style.transform = `rotateX(${-y / 10}deg) rotateY(${x / 15}deg)`;
+        btn.style.transform = `rotateX(${-y / 8}deg) rotateY(${x / 12}deg)`;
     });
 }
 
-// --- 4. DATA RENDERING (Sequential Loading) ---
+// --- 4. CARD RENDERING (Sequential) ---
 
 async function renderActionCards(cards) {
     const grid = document.getElementById('action-grid');
     const keys = Object.keys(cards);
     grid.innerHTML = '';
 
-    for (let i = 0; i < keys.length; i++) {
-        const card = cards[keys[i]];
+    keys.forEach((key, i) => {
+        const card = cards[key];
         const cardEl = document.createElement('div');
-        cardEl.className = 'glass-card action-card opacity-0 translate-y-4 transition-all duration-500';
+        **cardEl.className = 'glass-card action-card p-8 flex flex-col h-full group opacity-0 translate-y-4 transition-all duration-500';**
         cardEl.onclick = () => window.open(card.link, '_blank');
         
         cardEl.innerHTML = `
-            <div class="flex flex-col h-full p-8">
-                <div class="mb-4"><i class="${card.icon} text-3xl text-[var(--neon-color)]"></i></div>
-                <h3 class="font-black uppercase tracking-tighter text-white mb-2">${card.title}</h3>
-                <p class="text-[11px] text-slate-500 font-light leading-relaxed flex-grow">${card.desc}</p>
-                <div class="mt-4 text-[9px] font-bold text-[var(--neon-color)] uppercase tracking-widest">Execute →</div>
+            <div class="mb-6 relative h-10 w-10 flex items-center">
+                <i class="${card.icon} text-3xl text-blue-500 absolute z-10 transition-transform duration-300 group-hover:-translate-y-1"></i>
+                <i class="${card.icon} text-3xl text-blue-900/30 absolute translate-y-1 translate-x-1 blur-[1px]"></i>
+            </div>
+            <h3 class="font-black mb-1 uppercase tracking-tighter text-white text-xl">${card.title}</h3>
+            <p class="text-[11px] text-slate-500 mb-6 font-light leading-relaxed flex-grow">${card.desc}</p>
+            <div class="flex items-center gap-2">
+                <span class="text-[9px] font-bold text-blue-500 uppercase tracking-widest">Execute →</span>
             </div>
         `;
         
         grid.appendChild(cardEl);
-        
-        // Staggered animation
-        setTimeout(() => {
-            cardEl.classList.remove('opacity-0', 'translate-y-4');
-        }, i * 100);
-    }
+        setTimeout(() => cardEl.classList.remove('opacity-0', 'translate-y-4'), i * 80);
+    });
 }
 
 function renderShowcase(items) {
@@ -153,12 +159,18 @@ function renderShowcase(items) {
     grid.innerHTML = Object.keys(items).map(key => {
         const item = items[key];
         return `
-            <div class="featured-card flex-1 min-w-[300px] h-[250px] relative rounded-[2.5rem] overflow-hidden group cursor-pointer" onclick="window.location.href='${item.path}'">
-                <img src="${item.img}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-                <div class="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-colors"></div>
-                <div class="relative z-10 p-8 flex flex-col h-full justify-between">
-                    <span class="text-[var(--neon-color)] text-[10px] font-bold tracking-widest uppercase">${item.category}</span>
-                    <h3 class="font-black uppercase tracking-tighter text-white text-xl">${item.title}</h3>
+            <div class="featured-card p-8 rounded-[2.5rem] cursor-pointer min-h-[250px] relative overflow-hidden group flex-1 min-w-[300px]"
+                 onclick="window.location.href='${item.path}'">
+                <div class="absolute inset-0 bg-slate-950/70 group-hover:bg-slate-950/50 transition-colors duration-500"></div>
+                <div class="relative z-10 flex flex-col h-full justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">Showcased: ${item.category}</span>
+                        <i class="fas fa-rocket text-blue-500 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tighter text-white text-xl">${item.title}</h3>
+                        <span class="block mt-2 text-[9px] text-blue-400 uppercase font-bold tracking-[0.2em]">Initialize →</span>
+                    </div>
                 </div>
             </div>`;
     }).join('');
@@ -170,9 +182,9 @@ function renderFooter(footer) {
         <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
             ${footer.columns.map(col => `
                 <div>
-                    <h4 class="text-[var(--neon-color)] font-bold uppercase text-xs mb-4">${col.heading}</h4>
+                    <h4 class="text-blue-500 font-bold uppercase text-xs mb-4">${col.heading}</h4>
                     <div class="flex flex-col gap-2 text-xs text-slate-400">
-                        ${col.links.map(link => `<a href="${link.url}" class="hover:text-white transition no-underline">${link.label}</a>`).join('')}
+                        ${col.links.map(link => `<button onclick="window.open('${link.url}', '_blank')" class="text-left hover:text-white transition">${link.label}</button>`).join('')}
                     </div>
                 </div>
             `).join('')}
@@ -187,16 +199,14 @@ function renderFooter(footer) {
 function renderAdminGate(ui) {
     const gate = document.getElementById('admin-gateway');
     const config = ui['admin-btn'];
-    gate.innerHTML = `<a href="${config.link}" class="fixed bottom-4 right-4 w-3 h-3 block transition-opacity duration-500 hover:opacity-100" style="background:${config.color}; opacity:${config.opacity}; border-radius:${config.shape === 'circle' ? '50%' : '2px'};"></a>`;
+    gate.innerHTML = `<a href="${config.link}" class="fixed bottom-4 right-4 w-3 h-3 block transition-opacity duration-500 hover:opacity-100" 
+                        style="background:${config.color}; opacity:${config.opacity}; border-radius:${config.shape === 'circle' ? '50%' : '2px'};"></a>`;
 }
 
-// Global Toggles
 window.toggleMobileMenu = () => {
-    document.getElementById('mobile-menu').classList.toggle('hidden');
-    document.getElementById('mobile-menu').classList.toggle('flex');
+    const menu = document.getElementById('mobile-menu');
+    menu.classList.toggle('hidden');
+    menu.classList.toggle('flex');
 };
 
-window.closeLegal = () => document.getElementById('legal-modal').classList.add('hidden');
-
-// Initialize on Load
 window.onload = initShowroom;
