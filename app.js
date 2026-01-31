@@ -32,9 +32,13 @@ function applyGlobalStyles(settings) {
     document.getElementById('google-fonts-link').href = settings.external_assets.google_fonts_url;
     document.getElementById('font-awesome-link').href = settings.external_assets.font_awesome_url;
 
+    //nav-font-weight is a number treat it as a number
+    const dbWeight = ui['nav-font-weight'] || 800;
+    root.style.setProperty('--nav-weight', Number(dbWeight));
+    console.log("DB Weight Received:", ui['nav-font-weight'], "Type:", typeof ui['nav-font-weight']);
+    
     // Direct JSON-to-CSS Mapping
     root.style.setProperty('--nav-font', ui.nav_font);
-    root.style.setProperty('--nav-weight', ui.nav_font_weight || '800'); /* Extra thick font */
     root.style.setProperty('--card-blur', ui.card_blur);
     root.style.setProperty('--neon-color', ui['color-neon']);
     root.style.setProperty('--accent-color', ui['color-accent']);
