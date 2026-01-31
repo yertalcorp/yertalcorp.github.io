@@ -147,13 +147,27 @@ body {
     .text-5xl { font-size: 2.5rem; }
 }
 .metallic-bezel {
-    /* Thicker border with a metallic gradient */
+    /* Your existing code */
     border: 1.5px solid transparent;
     background-image: linear-gradient(to bottom, #1e293b, #0f172a), 
                       linear-gradient(135deg, #ffffff50 0%, #334155 40%, #ffffff50 50%, #1e293b 70%, #ffffff50 100%);
     background-origin: border-box;
     background-clip: padding-box, border-box;
-    
-    /* Subtle outer glow to make the metal pop */
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    
+    /* Add this for a smooth transition */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* The Pulse Animation */
+@keyframes neon-glow-pulse {
+    0% { box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 5px rgba(0, 242, 255, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 242, 255, 0.6); }
+    100% { box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 5px rgba(0, 242, 255, 0.2); }
+}
+
+/* Trigger on Hover */
+.featured-card:hover.metallic-bezel {
+    animation: neon-glow-pulse 1.5s infinite;
+    transform: translateY(-2px); /* Subtle lift */
 }
