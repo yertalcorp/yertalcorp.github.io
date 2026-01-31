@@ -37,8 +37,9 @@ function applyGlobalStyles(settings) {
     }
 
     //nav-font-weight is a number treat it as a number
-    const dbWeight = ui['nav-font-weight'] || 800;
-    root.style.setProperty('--nav-weight', Number(dbWeight));
+    const dbWeight = ui['nav-font-weight'];
+    const cleanWeight = parseInt( dbWeight ) || 800;
+    root.style.setProperty('--nav-weight', cleanWeight);
     console.log("DB Weight Received:", ui['nav-font-weight'], "Type:", typeof ui['nav-font-weight']);
     
     // Direct JSON-to-CSS Mapping
