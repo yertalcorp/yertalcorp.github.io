@@ -33,13 +33,13 @@ function applyGlobalStyles(settings) {
     document.getElementById('font-awesome-link').href = settings.external_assets.font_awesome_url;
 
     // Direct JSON-to-CSS Mapping
-    **root.style.setProperty('--nav-font', ui.nav_font);**
-    **root.style.setProperty('--card-blur', ui.card_blur);**
-    **root.style.setProperty('--neon-color', ui['color-neon']);**
-    **root.style.setProperty('--accent-color', ui['color-accent']);**
-    **root.style.setProperty('--btn-radius', ui['button-radius'] + 'px');**
-    **root.style.setProperty('--nav-text-color', ui.nav_text_color);**
-    **root.style.setProperty('--nav-hover-color', ui.nav_hover_color);**
+    root.style.setProperty('--nav-font', ui.nav_font);
+    root.style.setProperty('--card-blur', ui.card_blur);
+    root.style.setProperty('--neon-color', ui['color-neon']);
+    root.style.setProperty('--accent-color', ui['color-accent']);
+    root.style.setProperty('--btn-radius', ui['button-radius'] + 'px');
+    root.style.setProperty('--nav-text-color', ui.nav_text_color);
+    root.style.setProperty('--nav-hover-color', ui.nav_hover_color);
 }
 
 function renderBranding(brand) {
@@ -123,7 +123,7 @@ async function renderActionCards(cards) {
     keys.forEach((key, i) => {
         const card = cards[key];
         const cardEl = document.createElement('div');
-        **cardEl.className = 'glass-card action-card p-8 flex flex-col h-full group opacity-0 translate-y-4 transition-all duration-500';**
+        cardEl.className = 'glass-card action-card p-8 flex flex-col h-full group opacity-0 translate-y-4 transition-all duration-500';
         cardEl.onclick = () => window.open(card.link, '_blank');
         
         cardEl.innerHTML = `
