@@ -3,7 +3,8 @@
     /* These values are the "Emergency Power" if the JSON is missing */
     --neon-color: #00f2ff;       /* YERTAL Cyan */
     --accent-color: #3b82f6;     /* CORP Blue */
-    --nav-font: 'Orbitron', sans-serif;
+    --nav-font: 'intel', sans-serif;
+    --nav-weight: 800 !important;
     --card-blur: 15px;
     --btn-radius: 12px;
     --nav-text-color: #ffffff;
@@ -22,30 +23,13 @@
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    font-family: var(--nav-font), sans-serif;
-    font-weight: var(--nav-weight);
+    font-family: var(--nav-font), sans-serif !important;
+    font-weight: var(--nav-weight, 800) !important;
+    filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.3));
+    letter-spacing: -0.05em;
     transition: opacity 0.5s ease-in;
     overflow-x: hidden;
     /* Removed opacity: 0 to ensure immediate fallback visibility */
-}
-/* Force Headers to use Database Font and Weight */
-h1, h2, h3 {
-    font-family: var(--nav-font), sans-serif !important;
-    font-weight: var(--nav-weight, 800) !important;
-    letter-spacing: -0.05em; /* This restores the tight industrial look */
-    text-transform: uppercase;
-}
-
-/* Specific fix for the Hero text to ensure it stays massive */
-h2 {
-    line-height: 0.9;
-    filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.3));
-}
-
-/* Ensure the showcased item titles also follow the weight */
-.featured-card h3 {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
 }
 
 /* --- 3. GLASSMORPHISM & LAYOUT --- */
