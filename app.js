@@ -149,7 +149,7 @@ function renderShowcase(items) {
         const item = items[key];
         return `
             <div class="featured-card metallic-bezel p-8 rounded-[2.5rem] cursor-pointer aspect-video relative overflow-hidden group flex-1 min-w-[300px]"
-                 onclick="window.location.href='${item.path || '#'}'">
+                 onclick="window.location.href='${item.path || '#'}', '_blank' ">
                 
                 <div class="absolute inset-0 bg-cover bg-no-repeat bg-center transition-transform duration-700 group-hover:scale-105 brightness-110 contrast-105" 
                      style="background-image: url('${item.img}')">
