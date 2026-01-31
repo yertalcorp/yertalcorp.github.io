@@ -158,6 +158,11 @@ body {
     
     /* Add this for a smooth transition */
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    
+    /* --- THE EXTRA CSS FOR SHARPNESS --- */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    backface-visibility: hidden; /* Prevents "jitter" during the hover zoom */
 }
 
 /* The Pulse Animation */
