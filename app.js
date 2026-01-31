@@ -151,16 +151,19 @@ function renderShowcase(items) {
             <div class="featured-card metallic-bezel p-8 rounded-[2.5rem] cursor-pointer min-h-[250px] relative overflow-hidden group flex-1 min-w-[300px]"
                  onclick="window.location.href='${item.path || '#'}'">
                 
-                **<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" 
+                <div class="absolute inset-0 bg-cover bg-no-repeat bg-center transition-transform duration-700 group-hover:scale-105 brightness-110 contrast-105" 
                      style="background-image: url('${item.img}')">
-                </div>**
+                </div>
 
-                **<div class="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px] group-hover:bg-slate-950/40 transition-all duration-500"></div>**
+                 <div class="absolute inset-0 **bg-slate-950/30** backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-500"></div>
+                
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
+
                 
                 <div class="relative z-10 flex flex-col h-full justify-between">
                     <div class="flex justify-between items-start">
                         <span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase">Showcased: ${item.category || 'Laboratory'}</span>
-                        <i class="fas fa-rocket text-blue-500 text-2xl"></i>
+                        <i class="fas fa-rocket text-blue-500 text-2xl group-hover:text-cyan-400 transition-colors"></i>
                     </div>
                     <div>
                         <h3 class="font-black uppercase tracking-tighter text-white text-xl">${item.title}</h3>
