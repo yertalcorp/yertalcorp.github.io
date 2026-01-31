@@ -148,7 +148,7 @@ function renderShowcase(items) {
     grid.innerHTML = Object.keys(items).map(key => {
         const item = items[key];
         return `
-            <div class="featured-card p-8 rounded-[2.5rem] cursor-pointer min-h-[250px] relative overflow-hidden group flex-1 min-w-[300px]"
+            <div class="featured-card metallic-bezel p-8 rounded-[2.5rem] cursor-pointer min-h-[250px] relative overflow-hidden group flex-1 min-w-[300px]"
                  onclick="window.location.href='${item.link || '#'}'">
                 
                 **<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" 
