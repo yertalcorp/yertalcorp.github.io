@@ -1,15 +1,4 @@
-// --- CONFIGURATION ---
-// These details come from your Firebase Project Settings
-const firebaseConfig = {
-  apiKey: "AIzaSyAuwxVwXTL78hPTq-7UnXWVwsG1ipXoF_0",
-  authDomain: "yertal-arcade.firebaseapp.com",
-  databaseURL: "https://yertal-arcade-default-rtdb.firebaseio.com",
-  projectId: "yertal-arcade",
-  storageBucket: "yertal-arcade.firebasestorage.app",
-  messagingSenderId: "218347522316",
-  appId: "1:218347522316:web:d0dbabeb8373a663d16129",
-  measurementId: "G-2VP21WZ4CG"
-};
+import { firebaseConfig } from './firebaseconfig.js';
 
 async function initShowroom() {
     try {
