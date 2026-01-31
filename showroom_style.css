@@ -13,7 +13,7 @@
 }
 
 /* --- 2. GLOBAL RESET & BASE --- */
-* {
+ {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -145,4 +145,15 @@ body {
     }
     
     .text-5xl { font-size: 2.5rem; }
+}
+.metallic-bezel {
+    /* Thicker border with a metallic gradient */
+    border: 1.5px solid transparent;
+    background-image: linear-gradient(to bottom, #1e293b, #0f172a), 
+                      linear-gradient(135deg, #ffffff50 0%, #334155 40%, #ffffff50 50%, #1e293b 70%, #ffffff50 100%);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    
+    /* Subtle outer glow to make the metal pop */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
