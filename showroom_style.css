@@ -149,6 +149,7 @@ body {
 .metallic-bezel {
     /* Your existing code */
     border: 1.5px solid transparent;
+    border-radius: 2.5rem;
     background-image: linear-gradient(to bottom, #1e293b, #0f172a), 
                       linear-gradient(135deg, #ffffff50 0%, #334155 40%, #ffffff50 50%, #1e293b 70%, #ffffff50 100%);
     background-origin: border-box;
@@ -170,4 +171,11 @@ body {
 .featured-card:hover.metallic-bezel {
     animation: neon-glow-pulse 1.5s infinite;
     transform: translateY(-2px); /* Subtle lift */
+}
+
+/* Adding the Sync Glow for the text */
+.featured-card:hover .neon-text-sync {
+    color: #00f2ff;
+    text-shadow: 0 0 8px rgba(0, 242, 255, 0.8);
+    transition: all 0.5s ease;
 }
