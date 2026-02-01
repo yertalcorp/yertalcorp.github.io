@@ -25,9 +25,6 @@ html,
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    font-family: 'Inter', sans-serif;
-    font-weight: 800;
-    font-variation-settings: "wght" var(--nav-weight, 800);
     filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.3));
     letter-spacing: -0.05em;
     transition: opacity 0.5s ease-in;
@@ -35,20 +32,6 @@ body {
     font-synthesis: none;
 }
 
-/* This ensures that even if Tailwind tries to set it to 400/700, the 800 wins */
-h1, h2, h3 {
-    font-family: var(--nav-font, 'Inter'), sans-serif;
-    font-weight: var(--nav-weight, 800);
-    
-    /* THE CRITICAL LOCK: Overrides 'normal' with your DB value */
-    font-variation-settings: "wght" var(--nav-weight, 800) ;
-    
-    /* Prevent the browser from trying to 'fake' a bold look */
-    font-synthesis: none ;
-    
-    letter-spacing: -0.05em;
-    -webkit-font-smoothing: antialiased;
-}
 /* --- 3. GLASSMORPHISM & LAYOUT --- */
 .glass {
     background: rgba(15, 23, 42, 0.75);
@@ -268,4 +251,20 @@ h1, h2, h3 {
     color: #00f2ff;
     text-shadow: 0 0 8px rgba(0, 242, 255, 0.8);
     transition: all 0.5s ease;
+}
+
+/* This must stay at the bottom to beat the global resets */
+i.fas, i.fab, i.far, .card-icon-badge i {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-variation-settings: "wght" 900;
+    display: inline-block;
+    visibility: visible;
+}
+
+/* Specifically for the hologram rotation, we need to ensure the transform doesn't hide them */
+.card-icon-badge i {
+    position: absolute;
+    top: 50%t;
+    left: 50%;
 }
