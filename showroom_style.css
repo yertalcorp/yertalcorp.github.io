@@ -4,7 +4,7 @@
     --neon-color: #00f2ff;       /* YERTAL Cyan */
     --accent-color: #3b82f6;     /* CORP Blue */
     --nav-font: 'Inter', sans-serif;
-    --nav-weight: 800 !important;
+    --nav-weight: 800;
     --card-blur: 15px;
     --btn-radius: 12px;
     --nav-text-color: #ffffff;
@@ -20,34 +20,34 @@ html,
     padding: 0;
     box-sizing: border-box;
     /* This kills the system-ui list you see in your console */
-    font-family: 'Inter', sans-serif !important; 
-    font-weight: 800 !important;
-    font-variation-settings: "wght" 800 !important;
+    font-family: 'Inter', sans-serif; 
+    font-weight: 800;
+    font-variation-settings: "wght" 800;
 }
 
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 800 !important;
-    font-variation-settings: "wght" var(--nav-weight, 800) !important;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-variation-settings: "wght" var(--nav-weight, 800);
     filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.3));
     letter-spacing: -0.05em;
     transition: opacity 0.5s ease-in;
     overflow-x: hidden;
-    font-synthesis: none !important;
+    font-synthesis: none;
 }
 
 /* This ensures that even if Tailwind tries to set it to 400/700, the 800 wins */
 h1, h2, h3 {
-    font-family: var(--nav-font, 'Inter'), sans-serif !important;
-    font-weight: var(--nav-weight, 800) !important;
+    font-family: var(--nav-font, 'Inter'), sans-serif;
+    font-weight: var(--nav-weight, 800);
     
     /* THE CRITICAL LOCK: Overrides 'normal' with your DB value */
-    font-variation-settings: "wght" var(--nav-weight, 800) !important;
+    font-variation-settings: "wght" var(--nav-weight, 800) ;
     
     /* Prevent the browser from trying to 'fake' a bold look */
-    font-synthesis: none !important;
+    font-synthesis: none ;
     
     letter-spacing: -0.05em;
     -webkit-font-smoothing: antialiased;
@@ -103,16 +103,16 @@ h1, h2, h3 {
 }
 /* FORCE FONT AWESOME TO LOAD */
 .action-card i {
-    font-family: "Font Awesome 6 Free" !important;
-    font-weight: 900 !important;
-    display: inline-block !important;
+    font-family: "Font Awesome 6 Free" ;
+    font-weight: 900;
+    display: inline-block;
 }
 
 /* NEW BADGE STYLES */
 .card-icon-badge {
- position: absolute;
+    position: absolute;
     top: 1rem;
-    right: 1rem;
+    left: 1rem;
     width: 32px;
     height: 32px;
     display: flex;
@@ -138,12 +138,12 @@ h1, h2, h3 {
 .action-card:hover .card-icon-badge {
     opacity: 1;
     background: var(--neon-color);
-    color: #000 !important;
-    transform: rotate(10deg) scale(1.1);
+    color: #000;
+    transform: rotate(-10deg) scale(1.1);
 }
-**/* THE FIX: Specifically target the icon inside the hovered badge */**
+/* THE FIX: Specifically target the icon inside the hovered badge */
 .action-card:hover .card-icon-badge i {
-    **color: #000 !important;**
+    color: #000;
 }
 
 .featured-card {
@@ -165,7 +165,7 @@ h1, h2, h3 {
 }
 
 #nav-menu button:hover {
-    color: var(--nav-hover-color) !important;
+    color: var(--nav-hover-color);
     filter: drop-shadow(0 0 5px var(--nav-hover-color));
 }
 
@@ -249,12 +249,12 @@ h1, h2, h3 {
 }
 /* Add this to make sure font awesome loads */
 .fas, .far, .fab, .fa {
- font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
- font-weight: 900 !important; /* Required for solid icons */
- font-style: normal !important;
- font-variant: normal !important;
- text-transform: none !important;
- line-height: 1 !important;
- -webkit-font-smoothing: antialiased !important;
+ font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands";
+ font-weight: 900; /* Required for solid icons */
+ font-style: normal;
+ font-variant: normal;
+ text-transform: none;
+ line-height: 1;
+ -webkit-font-smoothing: antialiased;
 }
 
