@@ -131,7 +131,7 @@ async function renderActionCards(cards) {
 
     
         const cardEl = document.createElement('div');
-        cardEl.className = 'glass-card action-card p-8 flex flex-col h-full group opacity-0 translate-y-4 transition-all duration-500';
+        cardEl.className = 'glass-card action-card p-8 flex flex-col h-full group opacity-0 translate-y-4 transition-all duration-500 relative overflow-hidden';
         cardEl.onclick = () => window.open(card.link, '_blank');
         
         cardEl.innerHTML = `
