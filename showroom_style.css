@@ -99,9 +99,30 @@ h1, h2, h3 {
     position: relative;
     overflow: hidden;
 }
-
-.action-card:hover {
-    transform: translateY(-8px);
+/* NEW BADGE STYLES */
+.card-icon-badge {
+ position: absolute;
+ top: 1rem;
+ right: 1rem;
+ width: 32px;
+ height: 32px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ background: rgba(255, 255, 255, 0.05);
+ border: 1px solid rgba(255, 255, 255, 0.1);
+ border-radius: 8px;
+ color: var(--neon-color);
+ font-size: 1.2rem;
+ backdrop-filter: blur(4px);
+ z-index: 10;
+ transition: all 0.3s ease;
+}
+.action-card:hover .card-icon-badge{
+    background: var(--neon-color);
+    color: #000;
+    box-shadow: 0 0 15px var(--neon-color);
+    transform: translateY(-8px) scale(1.1) rotate(5deg);
     border-color: var(--neon-color);
     background: rgba(30, 41, 59, 0.8);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 242, 255, 0.15);
