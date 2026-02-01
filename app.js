@@ -133,6 +133,10 @@ async function renderActionCards(cards) {
         cardEl.onclick = () => window.open(card.link, '_blank');
         
         cardEl.innerHTML = `
+            <div class="card-icon-badge">
+               <i class="${card.icon} text-[12px]"></i>
+            </div>
+
             <div class="mb-6 relative h-10 w-10 flex items-center">
                 <i class="${card.icon} text-3xl text-blue-500 absolute z-10 transition-transform duration-300 group-hover:-translate-y-1"></i>
                 <i class="${card.icon} text-3xl text-blue-900/30 absolute translate-y-1 translate-x-1 blur-[1px]"></i>
