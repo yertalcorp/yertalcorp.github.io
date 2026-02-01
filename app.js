@@ -95,14 +95,14 @@ function renderHero(hero) {
     const container = document.getElementById('hero-container');
     container.innerHTML = `
         <div class="py-8 animate-fadeIn text-center">
-            <h2 class="text-5xl lg:text-7xl font-black uppercase tracking-tighter text-glow">
+            <h2 class="text-5xl lg:text-7xl uppercase tracking-tighter text-glow">
                 ${hero.title_parts[0].text} <span class="text-blue-500 italic">${hero.title_parts[1].text}</span>
             </h2>
             <p class="text-slate-400 mt-4 text-lg italic font-light tracking-wide mx-auto max-w-2xl">
                 ${hero.description}
             </p>
             <div class="w-full flex justify-center mt-8 mb-9" style="perspective: 1000px;">
-                <button id="arcade-trigger" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl font-black uppercase text-lg tracking-[0.5em] text-white">
+                <button id="arcade-trigger" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl uppercase text-lg tracking-[0.5em] text-white">
                     <div class="inner-content flex items-center gap-6">
                         <i class="fas fa-power-off text-blue-400 opacity-70 group-hover:scale-125 transition-transform"></i>
                         ${hero.holographic_cta.text}
