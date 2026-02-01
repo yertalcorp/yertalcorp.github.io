@@ -109,8 +109,6 @@ h1, h2, h3 {
 .card-icon-badge {
     position: relative;
     margin-bottom: 1.5rem;
-    top: 1.2rem;
-    left: 1.2rem;
     width: 3rem;
     height: 3rem;
     display: flex;
