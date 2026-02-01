@@ -257,13 +257,14 @@ h1, h2, h3 {
     transition: all 0.5s ease;
 }
 /* Add this to make sure font awesome loads */
-.fas, .far, .fab, .fa {
+.fas, .far, .fab, .fa, .card-icon-badge i, .action-card i {
  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands";
  font-weight: 900; /* Required for solid icons */
  font-style: normal;
- font-variant: normal;
  text-transform: none;
  line-height: 1;
+ display: inline-block;
+ visibility: visible;
  -webkit-font-smoothing: antialiased;
 }
 
