@@ -95,8 +95,9 @@ function renderHero(hero) {
     const container = document.getElementById('hero-container');
     container.innerHTML = `
         <div class="py-8 animate-fadeIn text-center">
-            <h2 class="text-5xl lg:text-7xl uppercase tracking-tighter text-glow">
-                ${hero.title_parts[0].text} <span class="text-blue-500 italic">${hero.title_parts[1].text}</span>
+            <h2 class="text-5xl lg:text-7xl uppercase tracking-tighter text-glow"
+            style="font-family: var(--nav-font); font-weight: var(--nav-weight); font-variation-settings: 'wght' var(--nav-weight);">
+                ${hero.title_parts[0].text} <span class="text-blue-500 italic" style="color: var(--accent-color); font-weight: inherit;">${hero.title_parts[1].text}</span>
             </h2>
             <p class="text-slate-400 mt-4 text-lg italic font-light tracking-wide mx-auto max-w-2xl">
                 ${hero.description}
@@ -144,12 +145,12 @@ async function renderActionCards(cards) {
         
         cardEl.innerHTML = `
             <div class="card-icon-badge flex items-center justify-center transition-transform duration-500">
-                <i class="${card.icon} text-3xl text-blue-500 relative z-20"></i>
+                <i class="${card.icon} text-3xl text-blue-500 relative z-20" style="color: var(--neon-color); font-family: var(--icon-font-family); font-weight: var(--icon-font-weight);"></i>
                 <i class="${card.icon} text-3xl text-blue-400 absolute blur-[2px] opacity-0 group-hover:opacity-70 transition-opacity duration-500 z-10"></i>
                 <i class="${card.icon} text-3xl text-blue-900/30 absolute translate-y-1 translate-x-1 blur-[1px] z-0"></i>
             </div>
 
-            <h3 class="font-black mt-8 mb-1 uppercase tracking-tighter text-white text-xl">${card.title}</h3>
+            <h3 class="mt-8 mb-1 uppercase tracking-tighter text-white text-xl" style="font-family: var(--nav-font); font-weight: var(--nav-weight); font-variation-settings: 'wght' var(--nav-weight);">${card.title}</h3>
             <p class="text-[11px] text-slate-500 mb-6 font-light leading-relaxed flex-grow">${card.desc}</p>
             <div class="flex items-center gap-2">
                 <span class="text-[9px] font-bold text-blue-500 uppercase tracking-widest">Execute →</span>
