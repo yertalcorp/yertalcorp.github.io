@@ -269,14 +269,3 @@ h1, h2, h3 {
     text-shadow: 0 0 8px rgba(0, 242, 255, 0.8);
     transition: all 0.5s ease;
 }
-h1, h2, h3, .surreal-3d-btn {
-    font-family: var(--nav-font);
-    font-weight: var(--nav-weight);
-    
-    /* Variable font support for Inter */
-    font-variation-settings: "wght" var(--nav-weight);
-    
-    /* Disables browser-simulated bolding */
-    font-synthesis: none;
-    -webkit-font-smoothing: antialiased;
-}
