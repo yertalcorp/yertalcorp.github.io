@@ -98,6 +98,7 @@ body {
     align-items: center;
     justify-content: center;
     background: transparent;
+    border: 0;
     color: var(--neon-color);
     overflow: visible;
     transform-origin: center center;
