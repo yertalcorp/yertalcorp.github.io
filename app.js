@@ -128,6 +128,10 @@ async function renderActionCards(cards) {
 
     keys.forEach((key, i) => {
         const card = cards[key];
+
+        // LOG 1: Check the data coming from Firebase
+        console.log(`[Card ${i}] Title: ${card.title} | Icon: ${card.icon}`);
+        
         const cardEl = document.createElement('div');
         cardEl.className = 'glass-card action-card p-8 flex flex-col h-full group opacity-0 translate-y-4 transition-all duration-500';
         cardEl.onclick = () => window.open(card.link, '_blank');
@@ -147,7 +151,12 @@ async function renderActionCards(cards) {
                 <span class="text-[9px] font-bold text-blue-500 uppercase tracking-widest">Execute →</span>
             </div>
         `;
-        
+
+        // LOG 2: Check if the Font-Family is being hijacked by 'Inter'
+        const iconElement = cardEl.querySelector('.debug-icon');
+        const computedFont = window.getComputedStyle(iconElement).fontFamily;
+        console.log(`[Card ${i}] Computed Font: ${computedFont}`);
+                 
         grid.appendChild(cardEl);
         setTimeout(() => cardEl.classList.remove('opacity-0', 'translate-y-4'), i * 80);
     });
@@ -165,7 +174,7 @@ function renderShowcase(items) {
                      style="background-image: url('${item.img}')">
                 </div>
 
-                 <div class="absolute inset-0 **bg-slate-950/30** backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-500"></div>
+                 <div class="absolute inset-0 bg-slate-950/30 backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-500"></div>
                 
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
 
