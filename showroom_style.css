@@ -280,3 +280,22 @@ h1, h2, h3, .surreal-3d-btn {
     font-synthesis: none;
     -webkit-font-smoothing: antialiased;
 }
+html body h1, html body h2, html body h3, html body .surreal-3d-btn {
+    font-family: var(--nav-font) !important;
+    font-weight: var(--nav-weight) !important;
+    
+    /* Variable font support for Inter - MUST HAVE !IMPORTANT */
+    font-variation-settings: "wght" var(--nav-weight) !important;
+    
+    /* Disables browser-simulated bolding */
+    font-synthesis: none !important;
+    
+    letter-spacing: -0.05em;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Ensure the blue span inside the h2 also respects the weight */
+html body h2 span {
+    font-weight: inherit !important;
+    font-variation-settings: inherit !important;
+}
