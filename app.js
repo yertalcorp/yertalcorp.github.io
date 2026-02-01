@@ -136,7 +136,7 @@ async function renderActionCards(cards) {
         
         cardEl.innerHTML = `
             <div class="card-icon-badge">
-               <i class="${card.icon}"></i>
+               <i class="${card.icon} style="font-family: 'Font Awesome 6 Free' !important;"></i>
             </div>
 
             <div class="mb-6 relative h-10 w-10 flex items-center">
