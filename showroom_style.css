@@ -278,4 +278,5 @@ h1, h2, h3, .surreal-3d-btn {
     
     /* Disables browser-simulated bolding */
     font-synthesis: none;
+    -webkit-font-smoothing: antialiased;
 }
