@@ -136,13 +136,14 @@ async function renderActionCards(cards) {
         
         cardEl.innerHTML = `
             <div class="card-icon-badge">
-               <i class="${card.icon} style="font-family: 'Font Awesome 6 Free' !important;"></i>
+                <i class="${card.icon}"></i>
             </div>
 
             <div class="mb-6 relative h-10 w-10 flex items-center">
                 <i class="${card.icon} text-3xl text-blue-500 absolute z-10 transition-transform duration-300 group-hover:-translate-y-1"></i>
                 <i class="${card.icon} text-3xl text-blue-900/30 absolute translate-y-1 translate-x-1 blur-[1px]"></i>
             </div>
+    
             <h3 class="font-black mb-1 uppercase tracking-tighter text-white text-xl">${card.title}</h3>
             <p class="text-[11px] text-slate-500 mb-6 font-light leading-relaxed flex-grow">${card.desc}</p>
             <div class="flex items-center gap-2">
