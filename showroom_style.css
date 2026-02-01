@@ -25,16 +25,6 @@ html,
     font-variation-settings: "wght" 800 !important;
 }
 
-/* Add this to make sure font awesome loads */
-.fas, .far, .fab, .fa {
- font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
- font-weight: 900 !important; /* Required for solid icons */
- font-style: normal !important;
- font-variant: normal !important;
- text-transform: none !important;
- line-height: 1 !important;
- -webkit-font-smoothing: antialiased !important;
-}
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -111,6 +101,13 @@ h1, h2, h3 {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
+/* FORCE FONT AWESOME TO LOAD */
+.action-card i {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+    display: inline-block !important;
+}
+
 /* NEW BADGE STYLES */
 .card-icon-badge {
  position: absolute;
@@ -138,23 +135,17 @@ h1, h2, h3 {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 242, 255, 0.2);
     background: rgba(30, 41, 59, 0.8);
 }
-.action-card:hover .card-icon-badge{
-    opacity: 1;
-    background: var(--neon-color);
-    transform: rotate(10deg) scale(1.1);
-}
-
-/* Ensure the icon color inside flips to black on hover */
-.action-card:hover .card-icon-badge i {
-    color: #000 !important;
-}
-
 .action-card:hover .card-icon-badge {
     opacity: 1;
     background: var(--neon-color);
     color: #000 !important;
-    transform: rotate(10deg);
+    transform: rotate(10deg) scale(1.1);
 }
+**/* THE FIX: Specifically target the icon inside the hovered badge */**
+.action-card:hover .card-icon-badge i {
+    **color: #000 !important;**
+}
+
 .featured-card {
     border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.5s ease;
@@ -256,3 +247,14 @@ h1, h2, h3 {
     text-shadow: 0 0 8px rgba(0, 242, 255, 0.8);
     transition: all 0.5s ease;
 }
+/* Add this to make sure font awesome loads */
+.fas, .far, .fab, .fa {
+ font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+ font-weight: 900 !important; /* Required for solid icons */
+ font-style: normal !important;
+ font-variant: normal !important;
+ text-transform: none !important;
+ line-height: 1 !important;
+ -webkit-font-smoothing: antialiased !important;
+}
+
