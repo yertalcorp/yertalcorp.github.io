@@ -253,18 +253,14 @@ body {
     transition: all 0.5s ease;
 }
 
-/* This must stay at the bottom to beat the global resets */
-i.fas, i.fab, i.far, .card-icon-badge i {
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    font-variation-settings: "wght" 900;
-    display: inline-block;
-    visibility: visible;
-}
-
-/* Specifically for the hologram rotation, we need to ensure the transform doesn't hide them */
-.card-icon-badge i {
-    position: absolute;
-    top: 50%t;
-    left: 50%;
+/* Add this to make sure font awesome loads */
+.fas, .far, .fab, .fa, .card-icon-badge i, .action-card i {
+ font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands";
+ font-weight: 900; /* Required for solid icons */
+ font-style: normal;
+ text-transform: none;
+ line-height: 1;
+ display: inline-block;
+ visibility: visible;
+ -webkit-font-smoothing: antialiased;
 }
