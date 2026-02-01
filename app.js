@@ -129,16 +129,14 @@ async function renderActionCards(cards) {
     keys.forEach((key, i) => {
         const card = cards[key];
 
-        // LOG 1: Check the data coming from Firebase
-        console.log(`[Card ${i}] Title: ${card.title} | Icon: ${card.icon}`);
-        
+    
         const cardEl = document.createElement('div');
         cardEl.className = 'glass-card action-card p-8 flex flex-col h-full group opacity-0 translate-y-4 transition-all duration-500';
         cardEl.onclick = () => window.open(card.link, '_blank');
         
         cardEl.innerHTML = `
             <div class="card-icon-badge">
-               <i class="${card.icon} text-[12px]"></i>
+               <i class="${card.icon}"></i>
             </div>
 
             <div class="mb-6 relative h-10 w-10 flex items-center">
@@ -152,11 +150,6 @@ async function renderActionCards(cards) {
             </div>
         `;
 
-        // LOG 2: Check if the Font-Family is being hijacked by 'Inter'
-        const iconElement = cardEl.querySelector('.debug-icon');
-        const computedFont = window.getComputedStyle(iconElement).fontFamily;
-        console.log(`[Card ${i}] Computed Font: ${computedFont}`);
-                 
         grid.appendChild(cardEl);
         setTimeout(() => cardEl.classList.remove('opacity-0', 'translate-y-4'), i * 80);
     });
