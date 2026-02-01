@@ -4,7 +4,7 @@ async function initShowroom() {
     try {
         const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
         const data = await response.json();
-
+    
         if (data) {
             applyGlobalStyles(data.settings);
             renderBranding(data.navigation.branding);
@@ -97,7 +97,7 @@ function renderHero(hero) {
         <div class="py-8 animate-fadeIn text-center">
             <h2 class="text-5xl lg:text-7xl uppercase tracking-tighter text-glow"
             style="font-family: var(--nav-font); font-weight: var(--nav-weight); font-variation-settings: 'wght' var(--nav-weight);">
-                ${hero.title_parts[0].text} <span class="italic" style="color: var(--accent-color); font-weight: inherit;">${hero.title_parts[1].text}</span>
+                ${hero.title_parts[0].text} <span class="italic" style="color: var(--accent-color); font-weight: inherit; font-style: italic;">${hero.title_parts[1].text}</span>
             </h2>
             <p class="text-slate-400 mt-4 text-lg italic font-light tracking-wide mx-auto max-w-2xl">
                 ${hero.description}
