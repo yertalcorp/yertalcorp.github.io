@@ -31,7 +31,11 @@ function applyGlobalStyles(settings) {
     //  DYNAMIC FONT LOADING: Get the font name from DB and request all weights
     const selectedFont = ui.nav_font ;
     const cleanFontUrl = `https://fonts.googleapis.com/css2?family=${selectedFont.replace(' ', '+')}:wght@100..900&display=swap`;
-    
+    // Load the FA Fonts
+    const faLink = document.getElementById('font-awesome-link');
+    if (faLink) {
+        faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
+    }
     const fontLink = document.getElementById('google-fonts-link');
     if (fontLink) {
         fontLink.href = cleanFontUrl;
@@ -46,6 +50,10 @@ function applyGlobalStyles(settings) {
     root.style.setProperty('--btn-radius', ui['button-radius'] + 'px');
     root.style.setProperty('--nav-text-color', ui.nav_text_color);
     root.style.setProperty('--nav-hover-color', ui.nav_hover_color);
+
+    //set the icon font family and weight to be used as a variable
+    root.style.setProperty('--icon-font-family', ui['icon-font-family'] || '"Font Awesome 6 Free"');
+    root.style.setProperty('--icon-font-weight', ui['icon-font-weight'] || '900');
 }
 
 function renderBranding(brand) {
