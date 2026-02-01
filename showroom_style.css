@@ -146,6 +146,8 @@ h1, h2, h3 {
 .card-icon-badge i, .action-card i {
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
+    display: inline-block;
+    visibility: visible;
 }
 
 .featured-card {
