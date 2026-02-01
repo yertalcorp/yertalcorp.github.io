@@ -107,11 +107,12 @@ h1, h2, h3 {
 
 /* NEW BADGE STYLES */
 .card-icon-badge {
-    position: absolute;
+    position: relative;
+    margin-bottom: 1.5rem;
     top: 1.2rem;
     left: 1.2rem;
-    width: 32px;
-    height: 32px;
+    width: 3rem;
+    height: 3rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -119,7 +120,7 @@ h1, h2, h3 {
     border: none;
     backdrop-filter: none;
     color: var(--neon-color);
-    font-size: 1.2rem; /* Reduced slightly to fit better */
+    font-size: 3rem; /* Reduced slightly to fit better */
     z-index: 20; /* Increased to ensure it's on top */
     opacity: 0.6;
     transition: all 0.4s ease;
@@ -144,8 +145,9 @@ h1, h2, h3 {
 }
 /* ADD THIS AT THE VERY BOTTOM TO OVERRIDE THE GLOBAL SELECTOR */
 .card-icon-badge i, .action-card i {
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
+    position: absolute;
+    font-family: var(--icon-font-family);
+    font-weight: var(--icon-font-weight);
     display: inline-block;
     visibility: visible;
 }
