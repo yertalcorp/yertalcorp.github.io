@@ -144,9 +144,9 @@ async function renderActionCards(cards) {
         
         cardEl.innerHTML = `
             <div class="card-icon-badge flex items-center justify-center group-hover:rotate-12 transition-transform duration-500">
-                <i class="${card.icon} text-3xl text-blue-500 relative z-10"></i>
-                <i class="${card.icon} text-3xl text-blue-400 absolute blur-[4px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></i>
-                <i class="${card.icon} text-3xl text-blue-900/30 absolute translate-y-1 translate-x-1 blur-[1px]"></i>
+                <i class="${card.icon} text-3xl text-blue-500 relative z-20"></i>
+                <i class="${card.icon} text-3xl text-blue-400 absolute blur-[2px] opacity-0 group-hover:opacity-70 transition-opacity duration-500 z-10"></i>
+                <i class="${card.icon} text-3xl text-blue-900/30 absolute translate-y-1 translate-x-1 blur-[1px] z-0"></i>
             </div>
 
             <h3 class="font-black mt-8 mb-1 uppercase tracking-tighter text-white text-xl">${card.title}</h3>
