@@ -111,23 +111,21 @@ h1, h2, h3 {
 /* NEW BADGE STYLES */
 .card-icon-badge {
     position: absolute;
-    top: 1rem;
-    left: 1rem;
+    top: 1.2rem;
+    left: 1.2rem;
     width: 32px;
     height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    background: none;
+    border: none;
+    backdrop-filter: none;
     color: var(--neon-color);
-    font-size: 1rem; /* Reduced slightly to fit better */
-    line-height: 1;
-    backdrop-filter: blur(4px);
+    font-size: 1.2rem; /* Reduced slightly to fit better */
     z-index: 20; /* Increased to ensure it's on top */
-    opacity: 0.5;
-    transition: all 0.3s ease;
+    opacity: 0.6;
+    transition: all 0.4s ease;
 }
 .action-card:hover {
     transform: translateY(-8px);
@@ -137,10 +135,11 @@ h1, h2, h3 {
 }
 .action-card:hover .card-icon-badge {
     opacity: 1;
-    background: var(--neon-color);
-    color: #000;
-    transform: rotate(-10deg) scale(1.1);
+    color: var(--neon-color);
+    background: #000;
+    animation: icon-hologram 4s linear infinite; /* Trigger rotation on hover */
 }
+
 /* THE FIX: Specifically target the icon inside the hovered badge */
 .action-card:hover .card-icon-badge i {
     color: #000;
@@ -179,6 +178,13 @@ h1, h2, h3 {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* THE NEW ANIMATION: Smooth rotation + Breathing Glow */
+@keyframes icon-hologram {
+    0% { transform: rotate(0deg); filter: drop-shadow(0 0 2px var(--neon-color)); }
+    50% { filter: drop-shadow(0 0 8px var(--neon-color)); }
+    100% { transform: rotate(360deg); filter: drop-shadow(0 0 2px var(--neon-color)); }
 }
 
 .animate-fadeIn {
