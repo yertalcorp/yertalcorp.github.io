@@ -20,9 +20,6 @@ html,
     padding: 0;
     box-sizing: border-box;
     /* This kills the system-ui list you see in your console */
-    font-family: 'Inter', sans-serif; 
-    font-weight: 800;
-    font-variation-settings: "wght" 800;
 }
 
 body {
@@ -118,7 +115,7 @@ h1, h2, h3 {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: none;
+    background: transparent;
     border: none;
     backdrop-filter: none;
     color: var(--neon-color);
@@ -136,13 +133,19 @@ h1, h2, h3 {
 .action-card:hover .card-icon-badge {
     opacity: 1;
     color: var(--neon-color);
-    background: #000;
+    background: transparent;
     animation: icon-hologram 4s linear infinite; /* Trigger rotation on hover */
 }
 
 /* THE FIX: Specifically target the icon inside the hovered badge */
 .action-card:hover .card-icon-badge i {
-    color: #000;
+    color: var(--neon-color);
+    font-family: "Font Awesome 6 Free";
+}
+/* ADD THIS AT THE VERY BOTTOM TO OVERRIDE THE GLOBAL SELECTOR */
+.card-icon-badge i, .action-card i {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
 }
 
 .featured-card {
