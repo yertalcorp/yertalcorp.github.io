@@ -135,7 +135,7 @@ h1, h2, h3 {
     background: transparent;
     animation: icon-hologram 4s linear infinite; /* Trigger rotation on hover */
 }
-/* --- THE MASTER ICON LOCK --- */**
+/* --- THE MASTER ICON LOCK --- */
 .card-icon-badge i {
      position: absolute !important;
      top: 50% !important;
