@@ -1,4 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
+import { login, logout, watchAuthState } from './auth.js';
 
 async function initShowroom() {
     try {
