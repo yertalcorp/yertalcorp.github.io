@@ -232,4 +232,23 @@ window.toggleMobileMenu = () => {
     menu.classList.toggle('flex');
 };
 
+watchAuthState((user) => {
+    // This calls the function inside THIS file (showroom.js)
+    renderNavbar(currentItems, currentAuth, currentUi, user);
+    
+    if (user && user.email === 'yertal-arcade@gmail.com') {
+        const gateway = document.getElementById('admin-gateway');
+        if (gateway) gateway.innerHTML = '<button class="bg-red-600 p-2 rounded text-white text-xs">Admin Portal Active</button>';
+    }
+});
+
+window.handleLoginFlow = async () => {
+    const email = prompt("Email:");
+    const password = prompt("Password:");
+    if (email && password) {
+        try { await login(email, password); } catch(e) { alert(e.message); }
+    }
+};
+
+window.handleLogout = () => logout();
 window.onload = initShowroom;
