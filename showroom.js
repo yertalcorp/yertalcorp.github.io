@@ -82,12 +82,18 @@ function renderNavbar(items, auth, ui) {
         </button>
     `).join('');
 
-    authZone.innerHTML = `
-        <a href="${auth.signup_link}" target="_blank" 
-           class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition shadow-lg shadow-blue-900/40">
-           ${auth.signup_label}
-        </a>
-    `;
+    if (user) {
+        authZone.innerHTML = `
+            <button onclick="handleLogout()"
+                    class="border border-white/20 hover:bg-white/10 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition text-white">
+                Sign Out
+            </button>\`;
+    } else {
+        authZone.innerHTML = `
+            <button onclick="handleLoginFlow()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition shadow-lg shadow-blue-900/40 text-white">
+               ${auth.signup_label}
+            </button>\`;
+    }
 }
 
 // --- 3. HERO & INTERACTION ENGINE ---
