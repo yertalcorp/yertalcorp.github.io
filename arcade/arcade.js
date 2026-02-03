@@ -1,4 +1,4 @@
-import { db } from './firebase-config.js';
+import { auth, db } from '../firebase-config.js';
 
 /**
  * Objective: Initialize the arcade UI using data from Firebase.
