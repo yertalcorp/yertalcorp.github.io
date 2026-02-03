@@ -1,5 +1,5 @@
 import { firebaseConfig, auth, db } from './firebase-config.js';
-import { login, logout, watchAuthState, createUserWithEmailAndPassword } from './auth.js';
+import { login, logout, watchAuthState, signup } from './auth.js';
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user;
