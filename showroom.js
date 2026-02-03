@@ -1,5 +1,5 @@
 import { firebaseConfig, auth, db } from './firebase-config.js';
-import { login, logout, watchAuthState } from './auth.js';
+import { login, logout, watchAuthState, createUserWithEmailAndPassword } from './auth.js';
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user;
@@ -275,5 +275,15 @@ window.handleLoginFlow = async () => {
     }
 };
 
+window.handleSignupFlow = async () => {
+     const email = prompt("Enter your email to join the Lab:");
+     const password = prompt("Create a password (min 6 chars):");
+     if (email && password) {
+         try { 
+             await createUserWithEmailAndPassword(auth, email, password); 
+             alert("Welcome to the Laboratory!");
+         } catch(e) { alert(e.message); }
+     }
+};
 window.handleLogout = () => logout();
 window.onload = initShowroom;
