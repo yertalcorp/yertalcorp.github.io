@@ -1,15 +1,23 @@
 import { firebaseConfig, auth, db } from './firebase-config.js';
 import { login, logout, watchAuthState } from './auth.js';
 
+// 1. ADD these declarations at the very top of the file
+let currentItems, currentAuth, currentUi, user;
+    
 async function initShowroom() {
     try {
         const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
         const data = await response.json();
     
-        if (data) {
+        if (data && data.settings) {
+            // 2. ASSIGN values to the global variables here
+            currentItems = data.navigation.menu_items;
+            currentAuth = data.auth_ui;
+            currentUi = data.settings['ui-settings'];
+            
             applyGlobalStyles(data.settings);
             renderBranding(data.navigation.branding);
-            renderNavbar(data.navigation.menu_items, data.auth_ui, data.settings['ui-settings']);
+            renderNavbar(currentItems, currentAuth, currentUi);
             renderHero(data.hero_section);
                 renderShowcase(data['showcase-items']);
                 renderActionCards(data['action-cards']);
@@ -27,6 +35,11 @@ async function initShowroom() {
 
 function applyGlobalStyles(settings) {
     const ui = settings['ui-settings'];
+
+    if (!ui) {
+        console.error("Style Engine: 'ui-settings' missing from database.");
+        return;
+    }
     const root = document.documentElement;
     
     //  DYNAMIC FONT LOADING: Get the font name from DB and request all weights
@@ -232,9 +245,13 @@ window.toggleMobileMenu = () => {
     menu.classList.toggle('flex');
 };
 
-watchAuthState((user) => {
+watchAuthState((newUser) => {
     // This calls the function inside THIS file (showroom.js)
-    renderNavbar(currentItems, currentAuth, currentUi, user);
+    user = newUser;
+
+    if (currentItems && currentAuth && currentUi) {
+        renderNavbar(currentItems, currentAuth, currentUi, user);
+    }
     
     if (user && user.email === 'yertal-arcade@gmail.com') {
         const gateway = document.getElementById('admin-gateway');
