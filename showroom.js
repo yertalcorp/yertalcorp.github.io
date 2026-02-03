@@ -280,7 +280,7 @@ window.handleSignupFlow = async () => {
      const password = prompt("Create a password (min 6 chars):");
      if (email && password) {
          try { 
-             await createUserWithEmailAndPassword(auth, email, password); 
+             await signup(email, password); 
              alert("Welcome to the Laboratory!");
          } catch(e) { alert(e.message); }
      }
