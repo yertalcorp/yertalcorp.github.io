@@ -1,5 +1,5 @@
 import { auth } from './firebase-config.js';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // Login function
 export const login = (email, password) => {
@@ -14,4 +14,11 @@ export const logout = () => {
 // State Observer
 export const watchAuthState = (callback) => {
     return onAuthStateChanged(auth, callback);
+};
+
+/**
+ * Objective: Register a new user to the yertal-arcade database.
+*/
+export const signup = (email, password) => {
+   return createUserWithEmailAndPassword(auth, email, password);
 };
