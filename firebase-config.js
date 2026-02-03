@@ -1,3 +1,7 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 // YOUR FIREBASE CONFIG (Replace with your actual keys from Firebase Console)
 export const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
@@ -8,3 +12,10 @@ export const firebaseConfig = {
   messagingSenderId: "123456789",
   appId: "1:12345:web:abcde"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Export initialized services for your other .js files to use
+export const auth = getAuth(app);
+export const db = getFirestore(app);
