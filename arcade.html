@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YERTAL ARCADE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body id="lab-body">
+
+    <nav class="yertal-nav">
+        <div class="nav-left">
+            <div id="logo-container"></div>
+            <span id="corp-name-display"></span>
+        </div>
+        <div class="nav-center" id="main-nav-links">
+            </div>
+        <div class="nav-right">
+            <button id="auth-trigger"></button>
+        </div>
+    </nav>
+
+    <main class="arcade-main">
+        
+        <header class="arcade-hero">
+            <h1 id="hero-heading"></h1>
+            <p id="hero-subheading"></p>
+            
+            <div class="hero-actions">
+                <button id="create-arcade-btn"></button>
+                <div class="search-wrapper">
+                    <input type="text" id="global-search">
+                    <button id="search-trigger">🔍</button>
+                </div>
+            </div>
+        </header>
+
+        <div id="currents-container">
+            </div>
+
+    </main>
+
+    <footer class="lab-footer">
+        <div id="system-status">
+            <span class="status-dot"></span> 
+            <span id="engine-status-text"></span>
+        </div>
+        <div id="superuser-display"></div>
+    </footer>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
