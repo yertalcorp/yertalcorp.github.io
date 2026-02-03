@@ -21,6 +21,9 @@ export const loginWithProvider = (providerName) => {
         case 'github': 
             provider = new GithubAuthProvider(); 
             break;
+        case 'yahoo':
+            provider = new OAuthProvider('yahoo.com');
+            break;
         default: 
             throw new Error("Provider not supported on the free tier.");
     }
