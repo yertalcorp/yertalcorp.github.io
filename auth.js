@@ -3,14 +3,14 @@ import {
     getAuth, 
     signInWithPopup, 
     GoogleAuthProvider, 
-    FacebookAuthProvider, 
+    GithubAuthProvider, 
     signOut, 
     onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 /**
  * Objective: Democratic Login Switchboard (Free Tier)
- * Provides seamless entry via Google or Facebook.
+ * Provides seamless entry via Google or GitHub.
  */
 export const loginWithProvider = (providerName) => {
     let provider;
@@ -18,8 +18,8 @@ export const loginWithProvider = (providerName) => {
         case 'google': 
             provider = new GoogleAuthProvider(); 
             break;
-        case 'facebook': 
-            provider = new FacebookAuthProvider(); 
+        case 'github': 
+            provider = new GithubAuthProvider(); 
             break;
         default: 
             throw new Error("Provider not supported on the free tier.");
