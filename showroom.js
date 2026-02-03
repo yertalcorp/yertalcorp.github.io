@@ -1,5 +1,5 @@
 import { firebaseConfig, auth, db } from './firebase-config.js';
-import { login, logout, watchAuthState, signup } from './auth.js';
+import { loginWithProvider, logout, watchAuthState } from './auth.js';
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user;
@@ -105,15 +105,16 @@ function renderNavbar(items, auth, ui, user) {
                 </button>
             </div>`;
     } else {
-        authZone.innerHTML = `
-            <div class="flex items-center gap-2">
-                <button onclick="handleLoginFlow()" class="text-white/70 hover:text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition">
-                    ${auth.login_label}
-                </button>
-                <button onclick="handleSignupFlow()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition shadow-lg shadow-blue-900/40 text-white">
-                   ${auth.signup_label}
-                </button>
-            </div>`;
+    authZone.innerHTML = `
+        <div class="flex items-center gap-3">
+            <span class="text-[9px] text-slate-500 uppercase tracking-tighter">Enter via:</span>
+            <div class="flex gap-2">
+                <button onclick="handleLoginFlow('google')" class="hover:text-blue-400 transition"><i class="fab fa-google"></i></button>
+                <button onclick="handleLoginFlow('facebook')" class="hover:text-blue-600 transition"><i class="fab fa-facebook"></i></button>
+                <button onclick="handleLoginFlow('microsoft')" class="hover:text-blue-500 transition"><i class="fab fa-microsoft"></i></button>
+                <button onclick="handleLoginFlow('discord')" class="hover:text-indigo-500 transition"><i class="fab fa-discord"></i></button>
+            </div>
+        </div>`;
     }
 }
 
@@ -267,12 +268,17 @@ watchAuthState((newUser) => {
     }
 });
 
-window.handleLoginFlow = async () => {
-    const email = prompt("Email:");
-    const password = prompt("Password:");
-    if (email && password) {
-        try { await login(email, password); } catch(e) { alert(e.message); }
-    }
+window.handleLoginFlow = async (choice) => {
+     if (!choice) {
+         // Simple UI-less prompt for demo, usually replaced by a modal
+         choice = prompt("Enter Provider (google, facebook, microsoft, discord):").toLowerCase();
+     }
+     try {
+         await loginWithProvider(choice);
+     } catch (error) {
+     console.error("Identity Verification Failed:", error);
+         alert("Access Denied: " + error.message);
+     }
 };
 
 window.handleSignupFlow = async () => {
