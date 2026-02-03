@@ -17,7 +17,7 @@ async function initShowroom() {
             
             applyGlobalStyles(data.settings);
             renderBranding(data.navigation.branding);
-            renderNavbar(currentItems, currentAuth, currentUi);
+            renderNavbar(currentItems, currentAuth, currentUi, user);
             renderHero(data.hero_section);
                 renderShowcase(data['showcase-items']);
                 renderActionCards(data['action-cards']);
@@ -108,10 +108,10 @@ function renderNavbar(items, auth, ui, user) {
         authZone.innerHTML = `
             <div class="flex items-center gap-2">
                 <button onclick="handleLoginFlow()" class="text-white/70 hover:text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition">
-                    ${auth.login_label || 'Login'}
+                    ${auth.login_label}
                 </button>
                 <button onclick="handleSignupFlow()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition shadow-lg shadow-blue-900/40 text-white">
-                   ${auth.signup_label || 'Sign Up'}
+                   ${auth.signup_label}
                 </button>
             </div>`;
     }
