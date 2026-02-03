@@ -6,6 +6,21 @@ export const login = (email, password) => {
     return signInWithEmailAndPassword(auth, email, password);
 };
 
+/**
+ * Objective: Democratic Login Switchboard
+ */
+export const loginWithProvider = (providerName) => {
+     let provider;
+     switch(providerName) {
+     case 'google': provider = new GoogleAuthProvider(); break;
+     case 'facebook': provider = new FacebookAuthProvider(); break;
+     case 'microsoft': provider = new OAuthProvider('microsoft.com'); break;
+     case 'discord': provider = new OAuthProvider('oidc.discord'); break; // Requires Discord setup in Firebase Console
+     default: throw new Error("Unknown Provider");
+ }
+ return signInWithPopup(auth, provider);
+};
+
 // Logout function
 export const logout = () => {
     return signOut(auth);
