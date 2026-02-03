@@ -83,7 +83,7 @@ function renderBranding(brand) {
     `;
 }
 
-function renderNavbar(items, auth, ui) {
+function renderNavbar(items, auth, ui, user) {
     const nav = document.getElementById('nav-menu');
     const authZone = document.getElementById('auth-zone');
 
@@ -97,15 +97,23 @@ function renderNavbar(items, auth, ui) {
 
     if (user) {
         authZone.innerHTML = `
-            <button onclick="handleLogout()"
-                    class="border border-white/20 hover:bg-white/10 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition text-white">
-                Sign Out
-            </button>`;
+            <div class="flex items-center gap-4">
+                <span class="text-[10px] text-slate-400 font-bold uppercase">${user.email === 'yertal-arcade@gmail.com' ? 'ADMIN' : 'USER'}</span>
+                <button onclick="handleLogout()"
+                        class="border border-white/20 hover:bg-white/10 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition text-white">
+                    Sign Out
+                </button>
+            </div>`;
     } else {
         authZone.innerHTML = `
-            <button onclick="handleLoginFlow()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition shadow-lg shadow-blue-900/40 text-white">
-               ${auth.signup_label}
-            </button>`;
+            <div class="flex items-center gap-2">
+                <button onclick="handleLoginFlow()" class="text-white/70 hover:text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition">
+                    ${auth.login_label || 'Login'}
+                </button>
+                <button onclick="handleSignupFlow()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition shadow-lg shadow-blue-900/40 text-white">
+                   ${auth.signup_label || 'Sign Up'}
+                </button>
+            </div>`;
     }
 }
 
