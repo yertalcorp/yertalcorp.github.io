@@ -1,74 +1,4 @@
-/* --- DYNAMIC UI TOKENS (Fallbacks Included) --- */
-:root {
-    /* These values are the "Emergency Power" if the JSON is missing */
-    --neon-color: #00f2ff;       /* YERTAL Cyan */
-    --accent-color: #3b82f6;     /* CORP Blue */
-    --nav-font: 'Inter', sans-serif;
-    --nav-weight: 800;
-    --card-blur: 15px;
-    --btn-radius: 12px;
-    --nav-text-color: #ffffff;
-    --nav-hover-color: #00f2ff;
-    --bg-color: #050505;        /* Deep Lab Black */
-    --text-color: #f8fafc;
-}
-
-/* --- GLOBAL RESET & BASE --- */
-html,
- *{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    /* This kills the system-ui list you see in your console */
-}
-
-body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.3));
-    letter-spacing: -0.05em;
-    transition: opacity 0.5s ease-in;
-    overflow-x: hidden;
-    font-synthesis: none;
-}
-
-/* Added 'html body' to outrank Tailwind's reset */
-html body h1, html body h2, html body h3, html body .surreal-3d-btn {
-    font-family: var(--nav-font) !important;
-    font-weight: var(--nav-weight) !important;
-    font-variation-settings: "wght" var(--nav-weight) !important;
-    font-synthesis: none;
-    -webkit-font-smoothing: antialiased;
-}
-
-/* --- THE MASTER ICON LOCK --- */
-/* This fixes the "Blue Rectangle" by forcing weight 900 for icons only */
-.card-icon-badge i, i.fas, .action-card i {
-    font-family: "Font Awesome 6 Free" !important;
-    font-weight: 900 !important;
-    font-variation-settings: "wght" 900 !important;
-    background: transparent !important;
-    border: none !important;
-    display: inline-block !important;
-}
-/* --- 3. GLASSMORPHISM & LAYOUT --- */
-.glass {
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(var(--card-blur));
-    -webkit-backdrop-filter: blur(var(--card-blur));
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.glass-card {
-    background: rgba(30, 41, 59, 0.4);
-    backdrop-filter: blur(var(--card-blur));
-    -webkit-backdrop-filter: blur(var(--card-blur));
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: var(--btn-radius);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* --- 4. HERO SECTION & 3D BUTTON --- */
+/* --- 1. HERO SECTION & 3D BUTTONS --- */
 .text-glow {
     text-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
 }
@@ -92,7 +22,16 @@ html body h1, html body h2, html body h3, html body .surreal-3d-btn {
     transform: translateZ(40px);
 }
 
-/* --- 5. GRID & CARD BEHAVIOR --- */
+/* --- 2. GRID & CARD BEHAVIOR --- */
+.glass-card {
+    background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(var(--card-blur));
+    -webkit-backdrop-filter: blur(var(--card-blur));
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--btn-radius);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .action-card {
     cursor: pointer;
     position: relative;
@@ -100,14 +39,15 @@ html body h1, html body h2, html body h3, html body .surreal-3d-btn {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
-/* FORCE FONT AWESOME TO LOAD */
-.action-card i {
-    font-family: "Font Awesome 6 Free" ;
-    font-weight: 900;
-    display: inline-block;
+
+.action-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--neon-color);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 242, 255, 0.2);
+    background: rgba(30, 41, 59, 0.8);
 }
 
-/* NEW BADGE STYLES */
+/* --- 3. ICON BADGE & HOLOGRAM EFFECTS --- */
 .card-icon-badge {
     position: relative;
     margin-bottom: 1.5rem;
@@ -116,63 +56,59 @@ html body h1, html body h2, html body h3, html body .surreal-3d-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent !important;
-    border: 0 !important;
     color: var(--neon-color);
-    overflow: visible;
-    transform-origin: center center;
-    font-size: 3rem; /* Reduced slightly to fit better */
-    z-index: 20; /* Increased to ensure it's on top */
+    font-size: 3rem;
+    z-index: 20;
     opacity: 0.6;
     transition: all 0.4s ease;
 }
-.action-card:hover {
-    transform: translateY(-8px);
-    border-color: var(--neon-color);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 242, 255, 0.2);
-    background: rgba(30, 41, 59, 0.8);
-}
-.action-card:hover .card-icon-badge {
-    opacity: 1;
-    color: var(--neon-color);
-    background: transparent;
-    animation: icon-hologram 4s linear infinite; /* Trigger rotation on hover */
-}
-/* --- THE MASTER ICON LOCK --- */
+
 .card-icon-badge i {
      position: absolute !important;
      top: 50% !important;
      left: 50% !important;
-     transform: translate(-50%, -50%); /* Base state center */
-     font-family: var(--icon-font-family, "Font Awesome 6 Free") !important;
-     font-weight: var(--icon-font-weight, 900) !important;
-     pointer-events: none;
+     transform: translate(-50%, -50%);
      display: flex !important;
      align-items: center !important;
      justify-content: center !important;
-     text-rendering: optimizeLegibility;
-     -webkit-font-smoothing: antialiased;
-     backface-visibility: hidden;
 }
-.card-icon-badge i.relative.z-20 {
-    /* This ensures the main icon "cuts through" the glow layers */
-    filter: drop-shadow(0 0 1px rgba(0,0,0,0.5)) !important;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
+
+.action-card:hover .card-icon-badge {
+    opacity: 1;
+    animation: icon-hologram 4s linear infinite;
 }
-.card-icon-badge i:last-child {
-    margin-top: 2px;
-    margin-left: 2px;
-}
+
+/* --- 4. FEATURED CARD & METALLIC BEZEL --- */
 .featured-card {
     border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.5s ease;
-    background-color: #0f172a; /* Fallback color for image */
+    background-color: #0f172a;
     background-size: cover;
     background-position: center;
 }
 
-/* --- 6. NAVIGATION CUSTOMS --- */
+.metallic-bezel {
+    border: 1.5px solid transparent;
+    border-radius: 2.5rem;
+    background-image: linear-gradient(to bottom, #1e293b, #0f172a), 
+                      linear-gradient(135deg, #ffffff50 0%, #334155 40%, #ffffff50 50%, #1e293b 70%, #ffffff50 100%);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.featured-card:hover.metallic-bezel {
+    animation: neon-glow-pulse 1.5s infinite;
+    transform: translateY(-2px);
+}
+
+.featured-card:hover .neon-text-sync {
+    color: #00f2ff;
+    text-shadow: 0 0 8px rgba(0, 242, 255, 0.8);
+}
+
+/* --- 5. NAVIGATION --- */
 #nav-menu button {
     background: none;
     border: none;
@@ -187,7 +123,11 @@ html body h1, html body h2, html body h3, html body .surreal-3d-btn {
     filter: drop-shadow(0 0 5px var(--nav-hover-color));
 }
 
-/* --- 7. ANIMATIONS --- */
+#hero-title span {
+    font-weight: inherit !important;
+}
+
+/* --- 6. ANIMATIONS --- */
 @keyframes holo-shimmer {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -199,18 +139,23 @@ html body h1, html body h2, html body h3, html body .surreal-3d-btn {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* THE NEW ANIMATION: Smooth rotation + Breathing Glow */
 @keyframes icon-hologram {
     0% { transform: translate(-50%, -50%) rotate(0deg); filter: drop-shadow(0 0 2px var(--neon-color)); }
     50% { filter: drop-shadow(0 0 8px var(--neon-color)); }
     100% { transform: translate(-50%, -50%) rotate(360deg); filter: drop-shadow(0 0 2px var(--neon-color)); }
 }
 
+@keyframes neon-glow-pulse {
+    0% { box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 5px rgba(0, 242, 255, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 242, 255, 0.6); }
+    100% { box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 5px rgba(0, 242, 255, 0.2); }
+}
+
 .animate-fadeIn {
     animation: fadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
-/* --- 8. RESPONSIVE BREAKPOINTS (4-Column Layout) --- */
+/* --- 7. RESPONSIVE LAYOUT --- */
 @media (min-width: 1024px) {
     #action-grid {
         display: grid;
@@ -228,66 +173,6 @@ html body h1, html body h2, html body h3, html body .surreal-3d-btn {
 }
 
 @media (max-width: 640px) {
-    #action-grid {
-        grid-template-columns: 1fr;
-    }
-    
+    #action-grid { grid-template-columns: 1fr; }
     .text-5xl { font-size: 2.5rem; }
-}
-.metallic-bezel {
-    /* Your existing code */
-    border: 1.5px solid transparent;
-    border-radius: 2.5rem;
-    background-image: linear-gradient(to bottom, #1e293b, #0f172a), 
-                      linear-gradient(135deg, #ffffff50 0%, #334155 40%, #ffffff50 50%, #1e293b 70%, #ffffff50 100%);
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-    
-    /* Add this for a smooth transition */
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    
-    /* --- THE EXTRA CSS FOR SHARPNESS --- */
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-    backface-visibility: hidden; /* Prevents "jitter" during the hover zoom */
-}
-
-/* The Pulse Animation */
-@keyframes neon-glow-pulse {
-    0% { box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 5px rgba(0, 242, 255, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 242, 255, 0.6); }
-    100% { box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 5px rgba(0, 242, 255, 0.2); }
-}
-
-/* Trigger on Hover */
-.featured-card:hover.metallic-bezel {
-    animation: neon-glow-pulse 1.5s infinite;
-    transform: translateY(-2px); /* Subtle lift */
-}
-
-/* Adding the Sync Glow for the text */
-.featured-card:hover .neon-text-sync {
-    color: #00f2ff;
-    text-shadow: 0 0 8px rgba(0, 242, 255, 0.8);
-    transition: all 0.5s ease;
-}
-
-/* Add this to make sure font awesome loads */
-.fas, .far, .fab, .fa, .card-icon-badge i, .action-card i {
- font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
- font-weight: 900 !important; /* Required for solid icons */
- font-variation-settings: "wght" 900 !important;
- font-style: normal;
- text-transform: none;
- line-height: 1;
- display: inline-block;
- visibility: visible;
- -webkit-font-smoothing: antialiased;
-}
-
-/* Ensure the blue italic span in the hero title inherits the DB weight */
-#hero-title span {
- font-weight: inherit !important;
- font-variation-settings: inherit !important;
 }
