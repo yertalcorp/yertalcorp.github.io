@@ -116,10 +116,7 @@ function renderNavbar(items, auth, ui, user) {
         <div class="flex items-center gap-3">
             <span class="text-[9px] text-slate-500 uppercase tracking-tighter">Enter via:</span>
             <div class="flex gap-2">
-                <button onclick="handleLoginFlow('google')" class="hover:text-blue-400 transition"><i class="fab fa-google"></i></button>
-                <button onclick="handleLoginFlow('facebook')" class="hover:text-blue-600 transition"><i class="fab fa-facebook"></i></button>
-                <button onclick="handleLoginFlow('microsoft')" class="hover:text-blue-500 transition"><i class="fab fa-microsoft"></i></button>
-                <button onclick="handleLoginFlow('discord')" class="hover:text-indigo-500 transition"><i class="fab fa-discord"></i></button>
+                ${providerButtons}
             </div>
         </div>`;
     }
