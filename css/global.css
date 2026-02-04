@@ -1,0 +1,47 @@
+/* Objective: Centralize the YERTAL brand DNA and shared logic */
+
+:root {
+    --neon-color: #00f2ff;
+    --accent-color: #3b82f6;
+    --nav-font: 'Inter', sans-serif;
+    --nav-weight: 800;
+    --card-blur: 15px;
+    --btn-radius: 12px;
+    --nav-text-color: #ffffff;
+    --nav-hover-color: #00f2ff;
+    --bg-color: #050505;
+    --text-color: #f8fafc;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    letter-spacing: -0.05em;
+    font-synthesis: none;
+}
+
+/* Auth Bouncer Visibility */
+.auth-locked { opacity: 0; pointer-events: none; }
+.auth-cleared { opacity: 1; transition: opacity 0.5s ease-in; }
+
+/* Shared Typography */
+html body h1, html body h2, html body h3, html body .surreal-3d-btn {
+    font-family: var(--nav-font) !important;
+    font-weight: var(--nav-weight) !important;
+}
+
+/* Icon Core Logic */
+.fas, .far, .fab, .fa, .card-icon-badge i, .action-card i {
+    font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+    font-weight: 900 !important;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Shared Glassmorphism */
+.glass {
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(var(--card-blur));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
