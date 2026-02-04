@@ -302,14 +302,13 @@ window.handleArcadeEntry = () => {
         // If already logged in, warp directly to the Arcade Hub
         window.location.href = './arcade/index.html';
     } else {
-        // If not logged in, trigger the first provider in your DB list (e.g., Google)
+        // Objective: Use the first provider you listed in your DB (0, 1, or 2)
         if (currentAuth && currentAuth.enabled_providers.length > 0) {
-             const defaultProvider = currentAuth.enabled_providers[0].id;
-             handleLoginFlow(defaultProvider);
-         } else {
-             // Emergency fallback if the DB is empty
-             handleLoginFlow('google');
-         }
+            const firstChoice = currentAuth.enabled_providers[0].id;
+            handleLoginFlow(firstChoice);
+        } else {
+            handleLoginFlow('google'); // Emergency fallback
+        }
     }
 };
 
