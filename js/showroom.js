@@ -302,12 +302,20 @@ window.handleArcadeEntry = () => {
         // If already logged in, warp directly to the Arcade Hub
         window.location.href = './arcade/index.html';
     } else {
-        // Objective: Use the first provider you listed in your DB (0, 1, or 2)
-        if (currentAuth && currentAuth.enabled_providers.length > 0) {
-            const firstChoice = currentAuth.enabled_providers[0].id;
-            handleLoginFlow(firstChoice);
-        } else {
-            handleLoginFlow('google'); // Emergency fallback
+        try {
+            // 1. Identify the default provider from your DB
+            const defaultProvider = (currentAuth && currentAuth.enabled_providers.length > 0) 
+             ? currentAuth.enabled_providers[0].id 
+             : 'google';
+            
+            // 2. WAIT for the login popup to finish successfully**
+            await handleLoginFlow(defaultProvider);
+
+            // 3. Once handleLoginFlow finishes, the user is logged in—now REDIRECT
+            window.location.href = './arcade/index.html';
+        } catch (error) {
+            console.error("Entry Sequence Interrupted:", error);
+            alert("Verification failed. Please try again.");
         }
     }
 };
