@@ -136,11 +136,33 @@ window.handleCreation = async (currentId) => {
 
 // 4. GENERATION & STORAGE
 async function executeSparkGeneration(currentId, finalPrompt) {
-    console.log(`Generating code for: ${finalPrompt}`);
-    // 1. Call Gemini to get code
-    // 2. Capture screenshot
-    // 3. await saveSparkToDB(currentId, { ...data })
-    alert("Generation Started: " + finalPrompt);
+    const current = databaseCache.currents[currentId];
+    const isSourcing = current.type === 'sourcing';
+    
+    // Objective: Set default count to 6 unless user specified a number (max 48)
+    const countMatch = finalPrompt.match(/\d+/);
+    const count = countMatch ? Math.min(parseInt(countMatch[0]), 48) : 6;
+
+    try {
+        if (isSourcing) {
+            // PATH A: Sourcing (Movies, News, etc.)
+            const results = await callGeminiForLinks(finalPrompt, count);
+            // results = [{ name: 'Movie Title', url: '...', preview: '...' }, ... ]
+            for (const item of results) {
+             await saveSparkToDB(currentId, { ...item, type: 'link' });
+             }
+        } else {
+            // PATH B: Generation (Games, Apps)
+            for (let i = 0; i < count; i++) {
+             const code = await callGeminiForCode(finalPrompt, i);
+             const snapshot = await capturePreview(code);
+             await saveSparkToDB(currentId, { name: `${finalPrompt} #${i+1}`, code, screenshot: snapshot, type: 'code' });
+            }
+        }
+        initArcade();
+    } catch (e) {
+        console.error("Mass Sparking Failed", e);
+    }
 }
 
 // UTILITY: Show the Two-Choice Modal
@@ -174,3 +196,26 @@ async function geminiAnalyzePrompt(prompt, cat) {
         choiceB: `Visual focus on ${cat} effects`
     };
 }
+// Objective: Allow users to spawn their own thematic "Current" rows
+window.handleCreateCurrent = async () => {
+    const name = prompt("Enter the name of your new Current (e.g., 'Retro Horror Games' or 'Sci-Fi Movies'):");
+    if (!name) return;
+
+    const currentId = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
+    
+    // Objective: Determine if this is a "Generation" current or a "Sourcing" current
+    const type = confirm("Click OK for a Creation Current (Games/Apps) or CANCEL for a Sourcing Current (Movies/Links)?") 
+                 ? 'generation' : 'sourcing';
+
+    const newCurrent = {
+        name: name,
+        type: type,
+        ownerId: user.uid,
+        ownerName: user.email.split('@')[0],
+        sparks: {}
+    };
+
+    // Save to Firebase
+    await saveToRealtimeDB(`currents/${currentId}`, newCurrent);
+    initArcade(); // Refresh UI to show the new row
+};
