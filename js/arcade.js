@@ -1,9 +1,10 @@
 import { firebaseConfig, auth, saveToRealtimeDB } from '../config/firebase-config.js';
 import { watchAuthState, logout } from '../config/auth.js';
+import { ENV } from '../config/env.js';
 
 let user;
 let databaseCache = {};
-const GEMINI_API_KEY = "AIzaSyBm_hgTArPco_CCk__xPadS39vK6eJSAMs";
+const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
 // 1. THE BOUNCER & INITIALIZATION
 watchAuthState((newUser) => {
