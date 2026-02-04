@@ -57,3 +57,16 @@ export const getUserProfile = () => {
         uid: user.uid
     } : null;
 };
+
+
+/**
+ * Objective: Security Bouncer for protected folders (Arcade/Apps/Labs)
+ * Redirects to root if no session is detected.
+ */
+export const protectRoute = (redirectPath = "../index.html") => {
+     onAuthStateChanged(auth, (user) => {
+         if (!user) {
+             window.location.href = redirectPath;
+         }
+     });
+};
