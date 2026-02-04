@@ -127,7 +127,7 @@ async function handleCreateCurrent() {
 async function geminiGenerateCode(prompt, index) {
      // In a production environment, you would call your backend or the Google AI SDK
      // For now, we use the prompt to guide a high-level code generation request
-     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_API_KEY`, {
+     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBm_hgTArPco_CCk__xPadS39vK6eJSAMs`, {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify({
@@ -141,7 +141,7 @@ async function geminiGenerateCode(prompt, index) {
 
 // Objective: Use Gemini to "search" and return structured JSON for links
 async function geminiSourceData(prompt, count) {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_API_KEY`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBm_hgTArPco_CCk__xPadS39vK6eJSAMs`, {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify({
