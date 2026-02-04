@@ -1,70 +1,74 @@
-import { auth, db } from './config/firebase-config.js';
+import { firebaseConfig, auth } from '../config/firebase-config.js';
+import { watchAuthState, logout } from '../config/auth.js';
 
-/**
- * Objective: Initialize the arcade UI using data from Firebase.
- * This ensures no hardcoded text or fonts remain in the HTML.
- */
+let user;
+
+// 1. THE BOUNCER: Path is correct, now check the user
+watchAuthState((newUser) => {
+     user = newUser;
+     if (!user) {
+         // Kick back to root index if not logged in
+         window.location.href = '../index.html';
+     } else {
+         initArcade();
+     }
+});
+
 const initArcade = async () => {
     try {
-        // 1. Fetch the UI Configuration document
-        const uiDoc = await db.collection('arcade_settings').doc('config').get();
-        if (!uiDoc.exists) return;
-        const ui = uiDoc.data();
+       // 2. Fetch using the Config URL (Realtime DB)
+        const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
+        const data = await response.json();
+        
+        if (!data) return;
+        
+        // Inject Branding from navigation/branding
+        const brand = data.navigation.branding;
+        document.getElementById('corp-name-display').textContent = brand.parts[0].text + brand.parts[1].text;
+        
+        // Inject Hero text
+        const hero = data.arcade_hero || { title: "Arcade Hub", description: "Authorized" };
+        document.getElementById('hero-heading').textContent = hero.title;
+        document.getElementById('hero-subheading').textContent = hero.description;
 
-        // 2. Apply System-Default Font from DB
-        **document.body.style.fontFamily = ui.systemDefaultFont;**
+        // Setup logout on the auth-trigger button
+        const authBtn = document.getElementById('auth-trigger');
+        authBtn.textContent = "SIGN OUT";
+        authBtn.onclick = () => logout();
 
-        // 3. Inject Branding & Hero text
-        **document.getElementById('corp-name-display').textContent = ui.branding.corpName;**
-        **document.getElementById('hero-heading').textContent = ui.hero.title;**
-        **document.getElementById('hero-subheading').textContent = ui.hero.subTitle;**
-        **document.getElementById('create-arcade-btn').textContent = ui.buttons.createArcade;**
-        **document.getElementById('auth-trigger').textContent = ui.buttons.login;**
-
-        // 4. Pull and Render the Currents (Categories)
-        renderCurrents();
+        // 3. Render the Rows
+        renderCurrents(data.currents);
 
     } catch (error) {
-        console.error("Lab Error: Configuration failed to stream.", error);
+        console.error("Arcade System Error:", error);
     }
 };
 
-/**
- * Objective: Render the 3 rows of pre-filled categories (Currents)
- */
-const renderCurrents = async () => {
+const renderCurrents = (currentsData) => {
     const container = document.getElementById('currents-container');
-    const currentsSnap = await db.collection('currents').orderBy('displayOrder').get();
+    if (!currentsData) return;
 
     let htmlBuffer = "";
-
-    currentsSnap.forEach(doc => {
-        const current = doc.data();
+    
+    // Objective: Iterate through the Currents object from the DB
+    Object.keys(currentsData).forEach(id => {
+        const current = currentsData[id];
         htmlBuffer += `
             <section class="current-row">
                 <div class="current-header">
                     <h3>${current.name}</h3>
                     <div class="current-controls">
-                        <button class="btn-sub">${current.labels.subscribe}</button>
-                        <button class="btn-filter">Filter</button>
+                        <button class="btn-sub">Subscribe</button>
                         <div class="try-box">
-                            <span>Try it yourself:</span>
-                            <input type="text" maxlength="200" placeholder="${current.labels.examplePrompt}">
-                            <button class="btn-spark">Spark It</button>
+                            <input type="text" placeholder="Prompt the ${current.name}...">
+                            <button class="btn-spark">Spark</button>
                         </div>
                     </div>
                 </div>
-                <div class="spark-grid" id="grid-${doc.id}">
-                    </div>
+                <div class="spark-grid" id="grid-${id}"></div>
             </section>
         `;
     });
 
-    **container.innerHTML = htmlBuffer;**
-    
-    // After rendering rows, pull the Sparks for each
-    currentsSnap.forEach(doc => fetchSparksForCurrent(doc.id));
+    container.innerHTML = htmlBuffer;
 };
-
-// Start the Lab
-initArcade();
