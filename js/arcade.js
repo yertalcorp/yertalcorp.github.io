@@ -1,14 +1,14 @@
 import { firebaseConfig, auth } from '../config/firebase-config.js';
-import { watchAuthState, logout } from '../config/auth.js';
+import { watchAuthState, logout, saveToRealtimeDB } from '../config/auth.js';
 
 let user;
 let databaseCache = {};
 
-// 1. THE BOUNCER & INITIALIZATION
+// 1. BOUNCER & INITIALIZATION
 watchAuthState((newUser) => {
     user = newUser;
     if (!user) {
-        window.location.href = '../index.html'; // Kick to Showroom if not logged in
+        window.location.href = '../index.html';
     } else {
         initArcade();
     }
@@ -19,87 +19,18 @@ async function initArcade() {
         const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
         databaseCache = await response.json();
         
-        if (!databaseCache) return;
-
-        // Apply Branding & Hero from DB
-        const brand = databaseCache.navigation.branding;
-        document.getElementById('corp-name-display').textContent = brand.parts[0].text + brand.parts[1].text;
-        
-        const hero = databaseCache.arcade_hero || { title: "The Lab Hub", description: "Authorized Access" };
-        document.getElementById('hero-heading').textContent = hero.title;
-        document.getElementById('hero-subheading').textContent = hero.description;
-
-        // Auth Button Setup
-        const authBtn = document.getElementById('auth-trigger');
-        authBtn.textContent = "SIGN OUT";
-        authBtn.onclick = () => logout();
+        // Bind the "Create Current" button
+        const createCurrentBtn = document.getElementById('create-arcade-btn');
+        if (createCurrentBtn) {
+            createCurrentBtn.textContent = "Spawn New Current";
+            createCurrentBtn.onclick = handleCreateCurrent;
+        }
 
         renderCurrents(databaseCache.currents);
-
-    } catch (error) {
-        console.error("Arcade System Error:", error);
-    }
+    } catch (e) { console.error(e); }
 }
 
-// 2. RENDERING ENGINE (Currents & Sparks)
-function renderCurrents(currentsData) {
-    const container = document.getElementById('currents-container');
-    if (!currentsData) return;
-
-    container.innerHTML = Object.keys(currentsData).map(id => {
-        const current = currentsData[id];
-        return `
-            <section class="current-row">
-                <div class="current-header">
-                    <div class="header-text">
-                        <h3>${current.name}</h3>
-                        <p class="focus-text">${current.focus || 'Laboratory Research'}</p>
-                    </div>
-                    <div class="creation-hub glass">
-                        <div class="mode-selector">
-                            <label><input type="radio" name="mode-${id}" value="prompt" checked> Spark It</label>
-                            <label><input type="radio" name="mode-${id}" value="url"> URL Scout</label>
-                        </div>
-                        <div class="input-group">
-                            <input type="text" id="input-${id}" placeholder="${current.examplePrompt}" maxlength="200">
-                            <button class="btn-spark" onclick="handleCreation('${id}')">CREATE</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="spark-grid" id="grid-${id}">
-                    ${renderSparks(current.sparks || {})}
-                </div>
-            </section>
-        `;
-    }).join('');
-}
-
-function renderSparks(sparks) {
-    return Object.keys(sparks).map(key => {
-        const spark = sparks[key];
-        return `
-            <div class="action-card">
-                <div class="card-top">
-                    <span class="s-name">${spark.name}</span>
-                    <span class="s-meta">${spark.dateCreated} by ${spark.ownerName}</span>
-                </div>
-                <div class="card-preview" onclick="window.open('${spark.url}', '_blank')">
-                    <img src="${spark.screenshot || 'https://placehold.co/300x200/000/fff?text=No+Preview'}" alt="Preview">
-                </div>
-                <div class="card-stats">
-                    <span><i class="fas fa-eye"></i> ${spark.views || 0}</span>
-                    <span><i class="fas fa-coins"></i> ${spark.tips || 0}</span>
-                </div>
-                <div class="card-actions">
-                    <button><i class="fas fa-bookmark"></i> Save</button>
-                    <button><i class="fas fa-bell"></i> Sub</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// 3. THE INTENT GATE (Logic & Gemini)
+// 2. THE CREATION GATE
 window.handleCreation = async (currentId) => {
     const inputField = document.getElementById(`input-${currentId}`);
     const prompt = inputField.value;
@@ -107,115 +38,117 @@ window.handleCreation = async (currentId) => {
 
     if (!prompt) return;
 
-    if (mode === 'url') {
-        // Simple URL validation
-        if (prompt.startsWith('http')) {
-            await saveSparkToDB(currentId, { type: 'url', url: prompt, name: 'External Link' });
-        } else {
-            alert("Please provide a valid URL.");
-        }
-        return;
-    }
+    // A. PRE-SCREEN: Determine if "Creation" is even possible
+    const check = await geminiPreScreen(prompt, mode);
 
-    // Path: Prompt Creation (The Intent Gate)
-    try {
-        // Analysis call to Gemini (Fixes typos + checks logic)
-        const analysis = await geminiAnalyzePrompt(prompt, currentId);
-
-        if (analysis.isVague) {
-            showBinaryModal(analysis.choiceA, analysis.choiceB, (finalIntent) => {
-                executeSparkGeneration(currentId, finalIntent);
-            });
-        } else {
-            executeSparkGeneration(currentId, analysis.fixedPrompt);
-        }
-    } catch (e) {
-        console.error("Analysis Failed", e);
+    if (mode === 'prompt' && check.mustSource) {
+        const proceed = confirm(`Yertal Logic: "${prompt}" exceeds creation boundaries and can only be sourced from the net. Continue with Sourcing?`);
+        if (!proceed) return;
+        executeMassSpark(currentId, prompt, 'sourcing', check.count);
+    } else {
+        executeMassSpark(currentId, prompt, mode, check.count);
     }
 };
 
-// 4. GENERATION & STORAGE
-async function executeSparkGeneration(currentId, finalPrompt) {
-    const current = databaseCache.currents[currentId];
-    const isSourcing = current.type === 'sourcing';
+// 3. THE MASS SPARK ENGINE
+async function executeMassSpark(currentId, prompt, mode, requestedCount) {
+    const status = document.getElementById('engine-status-text');
+    const count = Math.min(requestedCount || 6, 48); // Cap at 48
     
-    // Objective: Set default count to 6 unless user specified a number (max 48)
-    const countMatch = finalPrompt.match(/\d+/);
-    const count = countMatch ? Math.min(parseInt(countMatch[0]), 48) : 6;
+    status.textContent = `SPARKING ${count} ITEMS...`;
 
     try {
-        if (isSourcing) {
-            // PATH A: Sourcing (Movies, News, etc.)
-            const results = await callGeminiForLinks(finalPrompt, count);
-            // results = [{ name: 'Movie Title', url: '...', preview: '...' }, ... ]
-            for (const item of results) {
-             await saveSparkToDB(currentId, { ...item, type: 'link' });
-             }
+        if (mode === 'url' || mode === 'sourcing') {
+            // Objective: Source data from the web via Gemini
+            const links = await geminiSourceData(prompt, count);
+            for (const item of links) {
+                await saveSpark(currentId, { ...item, type: 'link', dateCreated: new Date().toLocaleDateString() });
+            }
         } else {
-            // PATH B: Generation (Games, Apps)
+            // Objective: Generate Code Sparks
             for (let i = 0; i < count; i++) {
-             const code = await callGeminiForCode(finalPrompt, i);
-             const snapshot = await capturePreview(code);
-             await saveSparkToDB(currentId, { name: `${finalPrompt} #${i+1}`, code, screenshot: snapshot, type: 'code' });
+                const code = await geminiGenerateCode(prompt, i);
+                const snap = await captureScreenshot(code);
+                await saveSpark(currentId, {
+                    name: `${prompt} #${i+1}`,
+                    code: code,
+                    screenshot: snap,
+                    type: 'code',
+                    ownerName: user.email.split('@')[0],
+                    dateCreated: new Date().toLocaleDateString()
+                });
             }
         }
-        initArcade();
+        status.textContent = "ENGINE READY";
+        initArcade(); // Re-render everything
     } catch (e) {
-        console.error("Mass Sparking Failed", e);
+        status.textContent = "SPARK ERROR";
+        console.error(e);
     }
 }
 
-// UTILITY: Show the Two-Choice Modal
-function showBinaryModal(a, b, callback) {
-    const modal = document.getElementById('intent-modal');
-    const btnA = document.getElementById('choice-a');
-    const btnB = document.getElementById('choice-b');
-
-    btnA.textContent = a;
-    btnB.textContent = b;
-    modal.style.display = 'flex';
-
-    const handleSelect = (choice) => {
-        modal.style.display = 'none';
-        btnA.onclick = null;
-        btnB.onclick = null;
-        callback(choice);
-    };
-
-    btnA.onclick = () => handleSelect(a);
-    btnB.onclick = () => handleSelect(b);
+// 4. DATABASE HELPERS
+async function saveSpark(currentId, sparkData) {
+    const sparkId = `spark_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const path = `currents/${currentId}/sparks/${sparkId}`;
+    await saveToRealtimeDB(path, sparkData);
 }
 
-// Dummy Analysis (Replace with actual Gemini API call)
-async function geminiAnalyzePrompt(prompt, cat) {
-    // In reality, you'd fetch this from a Gemini endpoint
-    return {
-        isVague: prompt.length < 10,
-        fixedPrompt: prompt,
-        choiceA: `Technical focus on ${cat} logic`,
-        choiceB: `Visual focus on ${cat} effects`
-    };
-}
-// Objective: Allow users to spawn their own thematic "Current" rows
-window.handleCreateCurrent = async () => {
-    const name = prompt("Enter the name of your new Current (e.g., 'Retro Horror Games' or 'Sci-Fi Movies'):");
-    if (!name) return;
-
-    const currentId = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
+// 5. GEMINI WRAPPERS (To be linked to your API)
+async function geminiPreScreen(prompt, mode) {
+    // Logic: If prompt contains "Top 10", "Latest", "Movies", "News" -> mustSource: true
+    const sourcingKeywords = ['movie', 'latest', 'news', 'top', 'best', 'review'];
+    const mustSource = sourcingKeywords.some(k => prompt.toLowerCase().includes(k));
     
-    // Objective: Determine if this is a "Generation" current or a "Sourcing" current
-    const type = confirm("Click OK for a Creation Current (Games/Apps) or CANCEL for a Sourcing Current (Movies/Links)?") 
-                 ? 'generation' : 'sourcing';
-
-    const newCurrent = {
-        name: name,
-        type: type,
-        ownerId: user.uid,
-        ownerName: user.email.split('@')[0],
-        sparks: {}
+    const countMatch = prompt.match(/\d+/);
+    return {
+        mustSource: mustSource,
+        count: countMatch ? parseInt(countMatch[0]) : 6,
+        fixedPrompt: prompt
     };
+}
 
-    // Save to Firebase
-    await saveToRealtimeDB(`currents/${currentId}`, newCurrent);
-    initArcade(); // Refresh UI to show the new row
-};
+
+
+async function handleCreateCurrent() {
+    const name = prompt("Name your new Current:");
+    if (!name) return;
+    const id = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
+    await saveToRealtimeDB(`currents/${id}`, {
+        name: name,
+        focus: "User Defined",
+        examplePrompt: "Spark something...",
+        sparks: {}
+    });
+    initArcade();
+}
+
+// Objective: Talk to Gemini to get functional HTML/JS code
+async function geminiGenerateCode(prompt, index) {
+     // In a production environment, you would call your backend or the Google AI SDK
+     // For now, we use the prompt to guide a high-level code generation request
+     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_API_KEY`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+         contents: [{ parts: [{ text: `Create a single-file web app/game: ${prompt}. No external assets. Include <style> and <script>. Variant #${index}` }] }]
+         })
+     });
+  
+     const data = await response.json();
+     return data.candidates[0].content.parts[0].text; // Returns the raw code
+}
+
+// Objective: Use Gemini to "search" and return structured JSON for links
+async function geminiSourceData(prompt, count) {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_API_KEY`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+             contents: [{ parts: [{ text: `List ${count} real URLs and names for: ${prompt}. Return ONLY a JSON array: [{"name": "...", "url": "...", "screenshot": "..."}]` }] }]
+         })
+     });
+     const data = await response.json();
+     const jsonText = data.candidates[0].content.parts[0].text;
+     return JSON.parse(jsonText.replace(/```json|```/g, '')); // Cleans up markdown formatting
+}
