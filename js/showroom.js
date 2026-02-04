@@ -291,5 +291,17 @@ window.handleSignupFlow = async () => {
          } catch(e) { alert(e.message); }
      }
 };
+
+// Objective: Unified entry logic for the Hero button
+window.handleArcadeEntry = () => {
+     if (user) {
+     // User is verified, proceed to the Arcade Hub
+         window.location.href = './arcade/index.html';
+     } else {
+     // User is anonymous, trigger the primary login flow (Google)
+     handleLoginFlow('google');
+     }
+};
+
 window.handleLogout = () => logout();
 window.onload = initShowroom;
