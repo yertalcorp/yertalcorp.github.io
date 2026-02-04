@@ -1,6 +1,13 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// Objective: Centralize the SDK paths
+const FIREBASE_VER = "10.7.1";
+const FIREBASE_SITE = "https://www.gstatic.com/firebasejs";
+const DB_SDK = $(FIREBASE_SITE)/${FIREBASE_VER}/firebase-database.js`;
+const APP_SDK = $(FIREBASE_SITE)/${FIREBASE_VER}/firebase-app.js`;
+const AUTH_SDK = $(FIREBASE_SITE)/${FIREBASE_VER}/firebase-auth.js`;
+
+import { initializeApp } from APP_SDK;
+import { getDatabase, ref, set, push } from DB_SDK;
+import { getAuth } from AUTH_SDK;
 
 // YOUR FIREBASE CONFIG (Replace with your actual keys from Firebase Console)
 export const firebaseConfig = {
@@ -14,9 +21,8 @@ export const firebaseConfig = {
   measurementId: "G-2VP21WZ4CG"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
 
-// Export initialized services for your other .js files to use
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+export { firebaseConfig, auth, db };
