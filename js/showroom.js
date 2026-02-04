@@ -105,6 +105,13 @@ function renderNavbar(items, auth, ui, user) {
                 </button>
             </div>`;
     } else {
+        // Objective: Extract the ID and Icon directly from the new DB objects
+        const providerButtons = auth.enabled_providers.map(p => `
+             <button onclick="handleLoginFlow('${p.id}')" class="hover:text-blue-400 transition ml-2" title="Login with ${p.id}">
+         <i class="${p.icon}"></i>
+     </button>
+ `).join('');
+        
     authZone.innerHTML = `
         <div class="flex items-center gap-3">
             <span class="text-[9px] text-slate-500 uppercase tracking-tighter">Enter via:</span>
@@ -298,8 +305,14 @@ window.handleArcadeEntry = () => {
      // User is verified, proceed to the Arcade Hub
          window.location.href = './arcade/index.html';
      } else {
-     // User is anonymous, trigger the primary login flow (Google)
-     handleLoginFlow('google');
+        // If not logged in, trigger the first provider in your DB list (e.g., Google)
+        if (currentAuth && currentAuth.enabled_providers.length > 0) {
+             const defaultProvider = currentAuth.enabled_providers[0].id;
+             handleLoginFlow(defaultProvider);
+         } else {
+             // Emergency fallback if the DB is empty
+             handleLoginFlow('google');
+         }
      }
 };
 
