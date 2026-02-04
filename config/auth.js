@@ -1,7 +1,8 @@
 import { auth } from './firebase-config.js';
 import { 
     getAuth, 
-    signInWithPopup, 
+    signInWithPopup,
+    signInWithRedirect,
     GoogleAuthProvider, 
     GithubAuthProvider, 
     signOut, 
