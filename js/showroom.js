@@ -296,12 +296,12 @@ window.handleSignupFlow = async () => {
      }
 };
 
-// Objective: Unified entry logic for the Hero button
+// Objective: Update handleArcadeEntry to use the first provider in the list
 window.handleArcadeEntry = () => {
-     if (user) {
-     // User is verified, proceed to the Arcade Hub
-         window.location.href = './arcade/index.html';
-     } else {
+    if (user) {
+        // If already logged in, warp directly to the Arcade Hub
+        window.location.href = './arcade/index.html';
+    } else {
         // If not logged in, trigger the first provider in your DB list (e.g., Google)
         if (currentAuth && currentAuth.enabled_providers.length > 0) {
              const defaultProvider = currentAuth.enabled_providers[0].id;
@@ -310,7 +310,7 @@ window.handleArcadeEntry = () => {
              // Emergency fallback if the DB is empty
              handleLoginFlow('google');
          }
-     }
+    }
 };
 
 window.handleLogout = () => logout();
