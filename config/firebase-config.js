@@ -4,13 +4,14 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase
 
 // YOUR FIREBASE CONFIG (Replace with your actual keys from Firebase Console)
 export const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey : "AIzaSyAuwxVwXTL78hPTq-7UnXWVwsG1ipXoF_0" , 
   authDomain: "yertal-arcade.firebaseapp.com",
   databaseURL: "https://yertal-arcade-default-rtdb.firebaseio.com",
   projectId: "yertal-arcade",
-  storageBucket: "yertal-arcade.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:12345:web:abcde"
+  storageBucket: "yertal-arcade.firebasestorage.app",
+  messagingSenderId: "218347522316",
+  appId: "1:218347522316:web:d0dbabeb8373a663d16129",
+  measurementId: "G-2VP21WZ4CG"
 };
 
 // Initialize Firebase
