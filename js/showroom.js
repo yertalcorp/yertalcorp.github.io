@@ -17,7 +17,7 @@ async function initShowroom() {
             
             applyGlobalStyles(data.settings);
             renderBranding(data.navigation.branding);
-            renderNavbar(currentItems, currentAuth, currentUi, user);
+            renderNavbar(currentItems, currentUi);
             renderHero(data.hero_section);
                 renderShowcase(data['showcase-items']);
                 renderActionCards(data['action-cards']);
@@ -83,9 +83,9 @@ function renderBranding(brand) {
     `;
 }
 
-function renderNavbar(items, auth, ui, user) {
+function renderNavbar(items, ui) {
     const nav = document.getElementById('nav-menu');
-    const authZone = document.getElementById('auth-zone');
+    if (!nav || !items) return;
 
     nav.innerHTML = items.map(item => `
         <button onclick="window.open('${item.link}', '_blank')" 
@@ -94,31 +94,45 @@ function renderNavbar(items, auth, ui, user) {
             ${item.label}
         </button>
     `).join('');
+}
+
+function renderAuthStatus(user, auth) {
+    const authZone = document.getElementById('auth-zone');
+    if (!authZone || !auth) return;
 
     if (user) {
+        // STYLE PRESERVATION: Keeps your rounded-full border buttons + Adds Profile Pic
         authZone.innerHTML = `
-            <div class="flex items-center gap-4">
-                <span class="text-[10px] text-slate-400 font-bold uppercase">${user.email === 'yertal-arcade@gmail.com' ? 'ADMIN' : 'USER'}</span>
+            <div class="flex items-center gap-4 animate-fadeIn">
+                <div class="flex flex-col items-end">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase">
+                        ${user.email === 'yertal-arcade@gmail.com' ? 'ADMIN' : 'USER'}
+                    </span>
+                </div>
+                
+                <img src="${user.photoURL || 'https://placehold.co/32x32/3b82f6/white?text=U'}" 
+                     class="w-8 h-8 rounded-full border border-[var(--neon-color)] shadow-[0_0_10px_rgba(0,242,255,0.3)]">
+
                 <button onclick="handleLogout()"
                         class="border border-white/20 hover:bg-white/10 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition text-white">
                     Sign Out
                 </button>
             </div>`;
     } else {
-        // Objective: Extract the ID and Icon directly from the new DB objects
+        // STYLE PRESERVATION: Re-implements your "Enter via" icon logic
         const providerButtons = auth.enabled_providers.map(p => `
              <button onclick="handleLoginFlow('${p.id}')" class="hover:text-blue-400 transition ml-2" title="Login with ${p.id}">
-         <i class="${p.icon}"></i>
-     </button>
- `).join('');
+                 <i class="${p.icon}"></i>
+             </button>
+        `).join('');
         
-    authZone.innerHTML = `
-        <div class="flex items-center gap-3">
-            <span class="text-[9px] text-slate-500 uppercase tracking-tighter">Enter via:</span>
-            <div class="flex gap-2">
-                ${providerButtons}
-            </div>
-        </div>`;
+        authZone.innerHTML = `
+            <div class="flex items-center gap-3 animate-fadeIn">
+                <span class="text-[9px] text-slate-500 uppercase tracking-tighter">Enter via:</span>
+                <div class="flex gap-2">
+                    ${providerButtons}
+                </div>
+            </div>`;
     }
 }
 
@@ -259,16 +273,16 @@ window.toggleMobileMenu = () => {
 };
 
 watchAuthState((newUser) => {
-    // This calls the function inside THIS file (showroom.js)
     user = newUser;
-
-    if (currentItems && currentAuth && currentUi) {
-        renderNavbar(currentItems, currentAuth, currentUi, user);
+    
+    // Only update the Auth Zone, leaving the branding and menu untouched
+    if (currentAuth) {
+        renderAuthStatus(user, currentAuth);
     }
     
     if (user && user.email === 'yertal-arcade@gmail.com') {
         const gateway = document.getElementById('admin-gateway');
-        if (gateway) gateway.innerHTML = '<button class="bg-red-600 p-2 rounded text-white text-xs">Admin Portal Active</button>';
+        if (gateway) gateway.innerHTML = '<div class="bg-blue-600/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded text-[10px]">ADMIN_ACTIVE</div>';
     }
 });
 
