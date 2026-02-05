@@ -323,7 +323,7 @@ window.handleArcadeEntry = async () => {
     // 1. Get the most fresh auth state
     const currentUser = auth.currentUser;
 
-    if (**currentUser**) {
+    if (currentUser) {
         window.location.href = './arcade/index.html';
     } else {
         // 2. Only if truly logged out, show the login flow
