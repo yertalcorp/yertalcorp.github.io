@@ -47,3 +47,23 @@
 
 #choice-b { background: rgba(255, 255, 255, 0.1); }
 #choice-b:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* Lab Specific Overrides */
+.experiment-zone {
+ flex: 1;
+ width: 100%;
+ margin-top: 1rem;
+ padding-bottom: 5rem; /* Space for system footer */
+}
+
+#lab-body {
+ overflow-x: hidden;
+ min-height: 100vh;
+ display: flex;
+ flex-direction: column;
+}
+
+.hud-border {
+ border-bottom: 1px solid rgba(0, 242, 255, 0.2);
+ box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
