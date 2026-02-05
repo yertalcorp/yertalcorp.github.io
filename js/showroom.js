@@ -320,6 +320,9 @@ window.handleSignupFlow = async () => {
 
 // Objective: Update handleArcadeEntry to use the first provider in the list
 window.handleArcadeEntry = async () => {
+    // Wait for Firebase to be certain of the token
+    await auth.authStateReady();
+    
     // 1. Get the most fresh auth state
     const liveuser = auth.currentUser;
 
@@ -349,8 +352,11 @@ window.handleLogout = async () => {
     if (statusText) statusText.textContent = "TERMINATING...";
 
     try {
-        await logout(); // Wait for Firebase to delete the token
         user = null; // Clear the global listener variable
+        await logout(); // Wait for Firebase to delete the token
+        // Final Safeguard: Clear session storage to kill any remaining ghost tokens
+        sessionStorage.clear();
+        localStorage.removeItem(`firebase:authUser:${firebaseConfig.apiKey}:[DEFAULT]`);
         window.location.reload(); // Full browser reset to wipe any cached state
     } catch (error) {
         alert("Logout failed. System remains active.");
