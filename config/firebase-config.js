@@ -1,15 +1,6 @@
-// Objective: Centralize the SDK paths
-const FIREBASE_VER = "10.7.1";
-const FIREBASE_SITE = "https://www.gstatic.com/firebasejs";
-
-// Use backticks and ${} for proper template literals
-const DB_SDK = `${FIREBASE_SITE}/${FIREBASE_VER}/firebase-database.js`;
-const APP_SDK = `${FIREBASE_SITE}/${FIREBASE_VER}/firebase-app.js`;
-const AUTH_SDK = `${FIREBASE_SITE}/${FIREBASE_VER}/firebase-auth.js`;
-
-import { initializeApp } from APP_SDK;
-import { getDatabase, ref, set, push } from DB_SDK;
-import { getAuth } from AUTH_SDK;
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 export const firebaseConfig = {
   apiKey : "AIzaSyAuwxVwXTL78hPTq-7UnXWVwsG1ipXoF_0", 
