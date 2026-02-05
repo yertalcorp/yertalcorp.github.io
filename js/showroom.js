@@ -103,7 +103,11 @@ function renderAuthStatus(user, auth) {
 
     // Clear previous state to ensure a clean draw
     authZone.innerHTML = '';
-
+    // If we are in the split-second between page load and Firebase response
+    if (user === undefined) {
+        authZone.innerHTML = '<span class="text-[9px] text-slate-500 animate-pulse uppercase tracking-widest">Verifying...</span>';
+        return;
+    }
     if (user) {
         /* RENDER: LOGGED IN HUD */
         authZone.innerHTML = `
@@ -316,27 +320,36 @@ window.handleSignupFlow = async () => {
 
 // Objective: Update handleArcadeEntry to use the first provider in the list
 window.handleArcadeEntry = async () => {
-    if (user) {
-        // If already logged in, warp directly to the Arcade Hub
+    // 1. Get the most fresh auth state
+    const currentUser = auth.currentUser;
+
+    if (**currentUser**) {
         window.location.href = './arcade/index.html';
     } else {
+        // 2. Only if truly logged out, show the login flow
+        const defaultProvider = (currentAuth && currentAuth.enabled_providers.length > 0) 
+            ? currentAuth.enabled_providers[0].id 
+            : 'google';
+        
         try {
-            // 1. Identify the default provider from your DB
-            const defaultProvider = (currentAuth && currentAuth.enabled_providers.length > 0) 
-             ? currentAuth.enabled_providers[0].id 
-             : 'google';
-            
-            // 2. WAIT for the login popup to finish successfully**
             await handleLoginFlow(defaultProvider);
-
-            // 3. Once handleLoginFlow finishes, the user is logged in—now REDIRECT
-            window.location.href = './arcade/index.html';
+            // 3. Re-verify after popup closes
+            if (auth.currentUser) {
+                window.location.href = './arcade/index.html';
+            }
         } catch (error) {
-            console.error("Entry Sequence Interrupted:", error);
-            alert("Verification failed. Please try again.");
+            console.error("Verification failed:", error);
         }
     }
 };
 
-window.handleLogout = () => logout();
+window.handleLogout = async () => {
+    try {
+        await logout(); // The Firebase sign-out
+        user = null; // Clear local variable
+        location.reload(); // Force a clean slate
+    } catch (error) {
+        console.error("Logout failed:", error);
+    }
+};
 window.onload = initShowroom;
