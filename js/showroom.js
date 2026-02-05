@@ -5,7 +5,7 @@ import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 let currentItems, currentAuth, currentUi, user;
     
 async function initShowroom() {
-    console.log("%c System Build: Feb 05-2026 | 21:15 IST ", "background: #050505; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+    console.log("%c System Build: Feb 05-2026 | 21:55 IST ", "background: #050505; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
     try {
         const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
         const data = await response.json();
@@ -367,7 +367,6 @@ window.handleLogout = async () => {
         window.location.replace('/'); } catch (error) {
         console.error("Logout failed:", error);
         alert("Session termination incomplete.");
-        window.location.reload(); // Full browser reset to wipe any cached state
     } catch (error) {
         alert("Logout failed. System remains active.");
     }
