@@ -21,58 +21,55 @@ async function initArcade() {
         const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
         databaseCache = await response.json();
         
-        // Setup Create Current Button
+        // 1. APPLY UI GENETICS (From Showroom Style Logic)
+        const ui = databaseCache.settings['ui-settings'];
+        const root = document.documentElement;
+        
+        root.style.setProperty('--neon-color', ui['color-neon']);
+        root.style.setProperty('--accent-color', ui['color-accent']);
+        root.style.setProperty('--nav-font', ui.nav_font);
+        
+        // Load fonts dynamically as we did in showroom
+        const fontLink = document.getElementById('google-fonts-link');
+        if (fontLink) fontLink.href = `https://fonts.googleapis.com/css2?family=${ui.nav_font.replace(' ', '+')}:wght@100..900&display=swap`;
+
+        // 2. HERO HUD POPULATION
+        const hero = databaseCache.arcade_hero || { title: "Arcade Hub", subtitle: "Experimental Zone" };
+        document.getElementById('hero-heading').textContent = hero.title;
+        document.getElementById('hero-subheading').textContent = hero.subtitle;
+        
+        // Handle the 3D Button text (CTA)
         const createBtn = document.getElementById('create-arcade-btn');
         if (createBtn) {
-            createBtn.textContent = "Spawn New Current";
+            const btnSpan = createBtn.querySelector('.inner-content');
+            btnSpan.textContent = hero.cta_text || "SPAWN NEW CURRENT";
             createBtn.onclick = handleCreateCurrent;
         }
 
-        // Branding & Hero
+        // 3. BRANDING & AUTH HUD
         const brand = databaseCache.navigation.branding;
-        document.getElementById('corp-name-display').textContent = brand.parts[0].text + brand.parts[1].text;
-        document.getElementById('hero-heading').textContent = databaseCache.arcade_hero?.title || "Arcade Hub";
+        document.getElementById('corp-name-display').textContent = brand.parts[0].text + " " + brand.parts[1].text;
         
-        // Logout setup
         const authBtn = document.getElementById('auth-trigger');
-        authBtn.textContent = "LOGOUT";
+        authBtn.textContent = "TERMINATE SESSION";
         authBtn.onclick = () => logout();
 
+        // 4. SUPERUSER VERIFICATION
+        const superUserDisplay = document.getElementById('superuser-display');
+        if (user && user.email === 'yertal-arcade@gmail.com') {
+            superUserDisplay.textContent = "ACCESS: YERTAL-ARCADE-ADMIN";
+            superUserDisplay.style.color = 'var(--neon-color)';
+        }
+
         renderCurrents(databaseCache.currents);
-    } catch (e) { console.error("Arcade Init Error:", e); }
-}
+        
+        // FINALIZE: Reveal the Lab
+        document.body.style.opacity = '1';
 
-// 2. DYNAMIC RENDERING
-function renderCurrents(currentsData) {
-    const container = document.getElementById('currents-container');
-    if (!currentsData) return;
-
-    container.innerHTML = Object.keys(currentsData).map(id => {
-        const current = currentsData[id];
-        return `
-            <section class="current-row">
-                <div class="current-header">
-                    <div>
-                        <h3>${current.name}</h3>
-                        <p class="focus-tag">${current.focus || 'Active'}</p>
-                    </div>
-                    <div class="creation-hub glass">
-                        <div class="mode-toggle">
-                            <label><input type="radio" name="mode-${id}" value="prompt" checked> Spark It</label>
-                            <label><input type="radio" name="mode-${id}" value="sourcing"> Source Web</label>
-                        </div>
-                        <div class="input-row">
-                            <input type="text" id="input-${id}" placeholder="What shall we create?" maxlength="200">
-                            <button class="btn-spark" onclick="handleCreation('${id}')">CREATE</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="spark-grid" id="grid-${id}">
-                    ${renderSparks(current.sparks || {})}
-                </div>
-            </section>
-        `;
-    }).join('');
+    } catch (e) { 
+        console.error("Laboratory Initialization Failed:", e); 
+        document.getElementById('engine-status-text').textContent = "SYSTEM OFFLINE";
+    }
 }
 
 function renderSparks(sparks) {
