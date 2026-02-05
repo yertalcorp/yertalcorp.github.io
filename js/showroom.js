@@ -18,6 +18,7 @@ async function initShowroom() {
             applyGlobalStyles(data.settings);
             renderBranding(data.navigation.branding);
             renderNavbar(currentItems, currentUi);
+            renderAuthStatus(user, currentAuth);
             renderHero(data.hero_section);
                 renderShowcase(data['showcase-items']);
                 renderActionCards(data['action-cards']);
@@ -276,7 +277,7 @@ watchAuthState((newUser) => {
     user = newUser;
     
     // Only update the Auth Zone, leaving the branding and menu untouched
-    if (currentAuth) {
+    if (currentAuth && currentUi) {
         renderAuthStatus(user, currentAuth);
     }
     
