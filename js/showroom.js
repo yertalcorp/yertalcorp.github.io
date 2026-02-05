@@ -18,13 +18,13 @@ async function initShowroom() {
             applyGlobalStyles(data.settings);
             renderBranding(data.navigation.branding);
             renderNavbar(currentItems, currentUi);
-            renderAuthStatus(user, currentAuth);
             renderHero(data.hero_section);
                 renderShowcase(data['showcase-items']);
                 renderActionCards(data['action-cards']);
             renderFooter(data.navigation.footer);
             renderAdminGate(data.settings['ui-settings']);
-            
+            renderAuthStatus(user, currentAuth);
+
             document.body.style.opacity = '1';
         }
     } catch (error) {
@@ -101,36 +101,40 @@ function renderAuthStatus(user, auth) {
     const authZone = document.getElementById('auth-zone');
     if (!authZone || !auth) return;
 
+    // Clear previous state to ensure a clean draw
+    authZone.innerHTML = '';
+
     if (user) {
-        // STYLE PRESERVATION: Keeps your rounded-full border buttons + Adds Profile Pic
+        /* RENDER: LOGGED IN HUD */
         authZone.innerHTML = `
             <div class="flex items-center gap-4 animate-fadeIn">
-                <div class="flex flex-col items-end">
-                    <span class="text-[10px] text-slate-400 font-bold uppercase">
-                        ${user.email === 'yertal-arcade@gmail.com' ? 'ADMIN' : 'USER'}
+                <div class="flex flex-col items-end leading-none">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                        ${user.email === 'yertal-arcade@gmail.com' ? 'SUPERUSER' : 'RESEARCHER'}
                     </span>
+                    <span class="text-[8px] text-[var(--neon-color)] opacity-70 font-mono">STATUS: ACTIVE</span>
                 </div>
                 
-                <img src="${user.photoURL || 'https://placehold.co/32x32/3b82f6/white?text=U'}" 
-                     class="w-8 h-8 rounded-full border border-[var(--neon-color)] shadow-[0_0_10px_rgba(0,242,255,0.3)]">
+                <img src="${user.photoURL || '/assets/images/default-avatar.png'}" 
+                     class="w-9 h-9 rounded-full border-2 border-[var(--neon-color)] shadow-[0_0_15px_rgba(0,242,255,0.2)]">
 
                 <button onclick="handleLogout()"
-                        class="border border-white/20 hover:bg-white/10 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition text-white">
-                    Sign Out
+                        class="border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all duration-300 text-white/60 hover:text-white">
+                    DISCONNECT
                 </button>
             </div>`;
     } else {
-        // STYLE PRESERVATION: Re-implements your "Enter via" icon logic
+        /* RENDER: ACCESS PORTAL (LOGIN) */
         const providerButtons = auth.enabled_providers.map(p => `
-             <button onclick="handleLoginFlow('${p.id}')" class="hover:text-blue-400 transition ml-2" title="Login with ${p.id}">
-                 <i class="${p.icon}"></i>
+             <button onclick="handleLoginFlow('${p.id}')" class="hover:text-[var(--neon-color)] transition-all duration-300 transform hover:scale-110" title="Login with ${p.id}">
+                 <i class="${p.icon} text-lg"></i>
              </button>
         `).join('');
         
         authZone.innerHTML = `
-            <div class="flex items-center gap-3 animate-fadeIn">
-                <span class="text-[9px] text-slate-500 uppercase tracking-tighter">Enter via:</span>
-                <div class="flex gap-2">
+            <div class="flex items-center gap-4 animate-fadeIn">
+                <span class="text-[9px] text-slate-500 uppercase tracking-[0.2em] font-light">Identity Required</span>
+                <div class="flex gap-3 px-3 py-2 glass rounded-full border border-white/5">
                     ${providerButtons}
                 </div>
             </div>`;
@@ -138,7 +142,6 @@ function renderAuthStatus(user, auth) {
 }
 
 // --- 3. HERO & INTERACTION ENGINE ---
-
 function renderHero(hero) {
     const container = document.getElementById('hero-container');
     container.innerHTML = `
