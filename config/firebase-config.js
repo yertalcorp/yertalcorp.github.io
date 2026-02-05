@@ -2,7 +2,7 @@
 const FIREBASE_VER = "10.7.1";
 const FIREBASE_SITE = "https://www.gstatic.com/firebasejs";
 
-**// Use backticks and ${} for proper template literals**
+// Use backticks and ${} for proper template literals
 const DB_SDK = `${FIREBASE_SITE}/${FIREBASE_VER}/firebase-database.js`;
 const APP_SDK = `${FIREBASE_SITE}/${FIREBASE_VER}/firebase-app.js`;
 const AUTH_SDK = `${FIREBASE_SITE}/${FIREBASE_VER}/firebase-auth.js`;
@@ -24,7 +24,7 @@ export const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-**const db = getDatabase(app); // Define this BEFORE the helper function**
+const db = getDatabase(app); // Define this BEFORE the helper function
 
 // The helper for the Arcade
 export async function saveToRealtimeDB(path, data) {
