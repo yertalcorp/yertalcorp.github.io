@@ -321,35 +321,39 @@ window.handleSignupFlow = async () => {
 // Objective: Update handleArcadeEntry to use the first provider in the list
 window.handleArcadeEntry = async () => {
     // 1. Get the most fresh auth state
-    const currentUser = auth.currentUser;
+    const liveuser = auth.currentUser;
 
-    if (currentUser) {
+    if (liveuser) {
         window.location.href = './arcade/index.html';
     } else {
-        // 2. Only if truly logged out, show the login flow
-        const defaultProvider = (currentAuth && currentAuth.enabled_providers.length > 0) 
-            ? currentAuth.enabled_providers[0].id 
-            : 'google';
-        
+        // If the SDK says no user, then and only then trigger login
         try {
+            const defaultProvider = (currentAuth && currentAuth.enabled_providers.length > 0) 
+                ? currentAuth.enabled_providers[0].id 
+                : 'google';
+            
             await handleLoginFlow(defaultProvider);
-            // 3. Re-verify after popup closes
+            
+            // Double check after login popup
             if (auth.currentUser) {
                 window.location.href = './arcade/index.html';
             }
         } catch (error) {
-            console.error("Verification failed:", error);
+            console.error("Entry Denied:", error);
         }
     }
 };
 
 window.handleLogout = async () => {
+    const statusText = document.querySelector('#auth-zone span');
+    if (statusText) statusText.textContent = "TERMINATING...";
+
     try {
-        await logout(); // The Firebase sign-out
-        user = null; // Clear local variable
-        location.reload(); // Force a clean slate
+        await logout(); // Wait for Firebase to delete the token
+        user = null; // Clear the global listener variable
+        window.location.reload(); // Full browser reset to wipe any cached state
     } catch (error) {
-        console.error("Logout failed:", error);
+        alert("Logout failed. System remains active.");
     }
 };
 window.onload = initShowroom;
