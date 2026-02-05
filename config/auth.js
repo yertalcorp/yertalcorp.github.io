@@ -32,13 +32,22 @@ export const loginWithProvider = (providerName) => {
     return signInWithPopup(auth, provider);
 };
 
-/**
- * Objective: Logout and clear session
- */
 export const logout = async () => {
     try {
+        // 1. Identify the provider before we kill the local session
+        const providerId = auth.currentUser?.providerData[0]?.providerId;
+
+        // 2. Kill the Firebase session**
         await signOut(auth);
-        console.log("Firebase Session Terminated");
+
+        // 3. Define Global Logout Endpoints
+        const logoutUrls = {
+            'google.com': 'https://accounts.google.com/Logout',
+            'github.com': 'https://github.com/logout',
+            'microsoft.com': 'https://login.microsoftonline.com/common/oauth2/v2.0/logout'
+        };
+
+        return logoutUrls[providerId] || null;**
     } catch (error) {
         console.error("Sign out error:", error);
         throw error;
