@@ -70,7 +70,11 @@ html body h1, html body h2, html body h3, html body .surreal-3d-btn {
 }
 
 @media (max-width: 640px) {
+ .grid-container { gap: 1rem; }
  .grid-cols-4, .grid-cols-3 { grid-template-columns: 1fr; }
+ .hero-compact { padding-top: 2rem; }
+ .text-4xl { font-size: 1.75rem; }
+ .surreal-3d-btn { width: 100%; padding: 1rem; }
 }
 
 /* Spacing & Utilities */
