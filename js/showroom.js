@@ -75,7 +75,7 @@ function renderBranding(brand) {
     const container = document.getElementById('nav-logo');
     container.innerHTML = `
         <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
-            <img src="Yertal_Logo_New_HR.png" alt="Logo" onerror="this.src='https://placehold.co/40x40/3b82f6/white?text=Y'" class="h-10 w-auto">
+            <img src="/assets/images/Yertal_Logo_New_HR.png" alt="Logo" onerror="this.src='https://placehold.co/40x40/3b82f6/white?text=Y'" class="h-10 w-auto">
             <h1 class="text-xl font-extrabold uppercase tracking-tighter">
                 <span style="color:${brand.parts[0].color}">${brand.parts[0].text}</span>
                 <span class="text-blue-500">${brand.parts[1].text}</span>
