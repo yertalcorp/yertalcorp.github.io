@@ -1,6 +1,6 @@
-import { firebaseConfig, auth, saveToRealtimeDB } from '../config/firebase-config.js';
-import { watchAuthState, logout } from '../config/auth.js';
-import { ENV } from '../config/env.js';
+import { firebaseConfig, auth, saveToRealtimeDB } from '/config/firebase-config.js';
+import { watchAuthState, logout } from '/config/auth.js';
+import { ENV } from '/config/env.js';
 
 let user;
 let databaseCache = {};
