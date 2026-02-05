@@ -34,8 +34,14 @@ export const loginWithProvider = (providerName) => {
 /**
  * Objective: Logout and clear session
  */
-export const logout = () => {
-    return signOut(auth);
+export const logout = async () => {
+    try {
+        await signOut(auth);
+        console.log("Firebase Session Terminated");
+    } catch (error) {
+        console.error("Sign out error:", error);
+        throw error;
+    }
 };
 
 /**
