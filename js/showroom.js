@@ -349,26 +349,25 @@ window.handleArcadeEntry = async () => {
 };
 
 window.handleLogout = async () => {
-    const statusText = document.querySelector('#auth-zone span');
-    if (statusText) statusText.textContent = "TERMINATING...";
-
     try {
-        // 2. Kill the Firebase session (This sets auth.currentUser to null internally)
-        await logout();
+        // 1. Get the Global Logout URL from our auth helper
+        const globalLogoutUrl = await logout();
 
-        // 3. Clear the global 'user' variable in this script
+        // 2. Local Cleanup
         user = null;
-
-        // 4. Force-purge the browser's auth storage (The "Clean Slate" move)
         localStorage.clear();
         sessionStorage.clear();
 
-        // 5. Final Reset: Reload to ensure all scripts see the 'null' state
-        window.location.replace('/'); 
-    } 
-    catch (error) {
-        console.error("Logout failed:", error);
-        alert("Session termination incomplete.");
+        // 3. The Nuclear Option
+        if (globalLogoutUrl) {
+            // This sends the user to Google/GitHub to kill that session too
+            // They will need to manually navigate back or you can append a redirect param if supported
+            window.location.href = globalLogoutUrl;
+        } else {
+            window.location.replace('/');
+        }
+    } catch (error) {
+        console.error("Global Logout Failed:", error);
     }
 };
 window.onload = initShowroom;
