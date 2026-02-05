@@ -9,9 +9,10 @@ const GEMINI_API_KEY = ENV.GEMINI_KEY;
 // 1. THE BOUNCER & INITIALIZATION
 watchAuthState((newUser) => {
     user = newUser;
-    if (!user) {
-        window.location.href = '../index.html';
-    } else {
+    if (newUser === null) {
+        // If at any point the user is null, bounce them out immediately
+        window.location.replace('../index.html'); 
+    } else if (newUser) {
         initArcade();
     }
 });
