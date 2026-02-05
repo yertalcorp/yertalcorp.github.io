@@ -353,11 +353,20 @@ window.handleLogout = async () => {
     if (statusText) statusText.textContent = "TERMINATING...";
 
     try {
-        user = null; // Clear the global listener variable
-        await logout(); // Wait for Firebase to delete the token
-        // Final Safeguard: Clear session storage to kill any remaining ghost tokens
+        // 2. Kill the Firebase session (This sets auth.currentUser to null internally)
+        await logout();
+
+        // 3. Clear the global 'user' variable in this script
+        user = null;
+
+        // 4. Force-purge the browser's auth storage (The "Clean Slate" move)
+        localStorage.clear();
         sessionStorage.clear();
-        localStorage.removeItem(`firebase:authUser:${firebaseConfig.apiKey}:[DEFAULT]`);
+
+        // 5. Final Reset: Reload to ensure all scripts see the 'null' state
+        window.location.replace('/'); } catch (error) {
+        console.error("Logout failed:", error);
+        alert("Session termination incomplete.");
         window.location.reload(); // Full browser reset to wipe any cached state
     } catch (error) {
         alert("Logout failed. System remains active.");
