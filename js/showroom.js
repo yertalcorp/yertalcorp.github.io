@@ -364,11 +364,11 @@ window.handleLogout = async () => {
         sessionStorage.clear();
 
         // 5. Final Reset: Reload to ensure all scripts see the 'null' state
-        window.location.replace('/'); } catch (error) {
+        window.location.replace('/'); 
+    } 
+    catch (error) {
         console.error("Logout failed:", error);
         alert("Session termination incomplete.");
-    } catch (error) {
-        alert("Logout failed. System remains active.");
     }
 };
 window.onload = initShowroom;
