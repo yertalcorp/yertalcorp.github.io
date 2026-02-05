@@ -297,7 +297,7 @@ window.handleSignupFlow = async () => {
 };
 
 // Objective: Update handleArcadeEntry to use the first provider in the list
-window.handleArcadeEntry = () => {
+window.handleArcadeEntry = async () => {
     if (user) {
         // If already logged in, warp directly to the Arcade Hub
         window.location.href = './arcade/index.html';
