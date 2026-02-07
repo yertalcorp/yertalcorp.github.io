@@ -37,7 +37,7 @@ export const logout = async () => {
         // 1. Identify the provider before we kill the local session
         const providerId = auth.currentUser?.providerData[0]?.providerId;
 
-        // 2. Kill the Firebase session**
+        // 2. Kill the Firebase session
         await signOut(auth);
 
         // 3. Define Global Logout Endpoints
@@ -47,7 +47,7 @@ export const logout = async () => {
             'microsoft.com': 'https://login.microsoftonline.com/common/oauth2/v2.0/logout'
         };
 
-        return logoutUrls[providerId] || null;**
+        return logoutUrls[providerId] || null;
     } catch (error) {
         console.error("Sign out error:", error);
         throw error;
