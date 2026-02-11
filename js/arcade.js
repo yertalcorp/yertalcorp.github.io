@@ -82,9 +82,27 @@ function renderCurrents(currents) {
 
     container.innerHTML = currents.map(current => `
         <section class="current-block mb-12 w-full">
-            <div class="flex items-center gap-4 mb-6">
-                <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">${current.name}</h2>
-                <div class="h-[1px] flex-grow bg-gradient-to-r from-white/20 to-transparent"></div>
+            <div class="flex items-center justify-between gap-4 mb-6">
+                <div class="flex items-center gap-4 flex-grow">
+                    <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">${current.name}</h2>
+                    <div class="h-[1px] flex-grow bg-gradient-to-r from-white/20 to-transparent"></div>
+                </div>
+                
+                <div class="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/10">
+                    <input type="text" id="input-${current.id}" 
+                           placeholder="${current.example_prompt}" 
+                           class="bg-black/40 border-none text-[10px] text-white px-3 py-1 rounded w-48 focus:ring-1 focus:ring-[var(--neon-color)] outline-none">
+                    
+                    <select id="mode-${current.id}" class="bg-black/40 text-[9px] text-white border-none rounded px-2 py-1 outline-none">
+                        <option value="prompt">LOGIC</option>
+                        <option value="sourcing">SOURCE</option>
+                    </select>
+
+                    <button onclick="handleCreation('${current.id}')" 
+                            class="bg-[var(--neon-color)]/20 hover:bg-[var(--neon-color)]/40 text-[var(--neon-color)] text-[9px] font-bold px-4 py-1 rounded transition uppercase">
+                        Generate
+                    </button>
+                </div>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
