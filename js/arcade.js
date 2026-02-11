@@ -32,10 +32,10 @@ async function initArcade() {
         
         // Load fonts dynamically as we did in showroom
         const fontLink = document.getElementById('google-fonts-link');
-        if (fontLink) fontLink.href = `https://fonts.googleapis.com/css2?family=${ui.nav_font.replace(' ', '+')}:wght@100..900&display=swap`;
+        if (fontLink) fontLink.href = data.settings.external_assets.google_fonts_url;
 
         // 2. HERO HUD POPULATION
-        const hero = databaseCache.arcade_hero || { title: "Arcade Hub", subtitle: "Experimental Zone" };
+        const hero = databaseCache.arcade_infrastructure.hero;
         document.getElementById('hero-heading').textContent = hero.title;
         document.getElementById('hero-subheading').textContent = hero.subtitle;
         
@@ -43,13 +43,13 @@ async function initArcade() {
         const createBtn = document.getElementById('create-arcade-btn');
         if (createBtn) {
             const btnSpan = createBtn.querySelector('.inner-content');
-            btnSpan.textContent = hero.cta_text || "SPAWN NEW CURRENT";
+            btnSpan.textContent = hero.cta_create || "SPAWN NEW CURRENT";
             createBtn.onclick = handleCreateCurrent;
         }
 
         // 3. BRANDING & AUTH HUD
         const brand = databaseCache.navigation.branding;
-        document.getElementById('corp-name-display').textContent = brand.parts[0].text + " " + brand.parts[1].text;
+        document.getElementById('corp-name-display').innerHTML = `${brand.parts[0].text} <span style="color:${brand.parts[1].color}">${brand.parts[1].text}</span>`;
         
         const authBtn = document.getElementById('auth-trigger');
         authBtn.textContent = "TERMINATE SESSION";
@@ -62,7 +62,8 @@ async function initArcade() {
             superUserDisplay.style.color = 'var(--neon-color)';
         }
 
-        renderCurrents(databaseCache.currents);
+        // CHANGE: Pass arcade_infrastructure.currents
+        renderCurrents(databaseCache.arcade_infrastructure.currents);
         
         // FINALIZE: Reveal the Lab
         document.body.style.opacity = '1';
