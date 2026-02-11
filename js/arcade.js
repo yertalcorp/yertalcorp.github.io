@@ -48,8 +48,9 @@ async function initArcade() {
         }
 
         // 3. BRANDING & AUTH HUD
-        const brand = databaseCache.navigation.branding;
-        document.getElementById('corp-name-display').innerHTML = `${brand.parts[0].text} <span style="color:${brand.parts[1].color}">${brand.parts[1].text}</span>`;
+        const part1 = `<span style="color: ${brand.parts[0].color}">${brand.parts[0].text}</span>`;
+        const part2 = `<span style="color: ${brand.parts[1].color}">${brand.parts[1].text}</span>`;
+        document.getElementById('corp-name-display').innerHTML = `${part1} ${part2}`;
         
         const authBtn = document.getElementById('auth-trigger');
         authBtn.textContent = "TERMINATE SESSION";
@@ -75,41 +76,52 @@ async function initArcade() {
 }
 
 function renderCurrents(currents) {
- const container = document.getElementById('currents-container');
- if (!container) return;
+    const container = document.getElementById('currents-container');
+    if (!container || !currents) return;
 
- container.innerHTML = currents.map(current => `
- <div class="glass p-6 rounded-2xl border border-white/10 hover:border-[var(--neon-color)] transition">
- <h3 class="text-white font-bold uppercase tracking-widest text-sm">${current.name}</h3>
- <p class="text-[10px] text-slate-400 mt-2">${current.example_prompt}</p>
- <div class="mt-4 flex flex-col gap-3">
- <input type="text" id="input-${current.id}" placeholder="Type intent..." class="bg-black/20 border border-white/10 p-2 text-xs text-white">
- <div class="flex gap-2 text-[10px] text-white">
- <label><input type="radio" name="mode-${current.id}" value="prompt" checked> Logic</label>
- <label><input type="radio" name="mode-${current.id}" value="sourcing"> Sourcing</label>
- </div>
- <button onclick="handleCreation('${current.id}')" class="bg-white/10 hover:bg-white/20 py-2 text-[10px] font-bold uppercase">Generate</button>
- </div>
- </div>
- `).join('');
+    container.innerHTML = currents.map(current => `
+        <section class="current-block mb-12 w-full">
+            <div class="flex items-center gap-4 mb-6">
+                <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">${current.name}</h2>
+                <div class="h-[1px] flex-grow bg-gradient-to-r from-white/20 to-transparent"></div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                ${renderSparks(current.sparks)}
+            </div>
+        </section>
+    `).join('');
 }
     
 function renderSparks(sparks) {
-    return Object.keys(sparks).map(key => {
-        const spark = sparks[key];
-        return `
-            <div class="action-card">
-                <div class="card-top">${spark.name} <br> <small>${spark.dateCreated}</small></div>
-                <div class="card-preview" onclick="window.open('${spark.url}', '_blank')">
-                    <img src="${spark.screenshot || ''}" alt="Preview">
+    if (!sparks) return '<p class="text-slate-500 text-[10px] italic">No sparks generated yet.</p>';
+
+    // 1. Convert Object to Array and Sort by Timestamp (Newest First)
+    const sortedSparks = Object.values(sparks).sort((a, b) => b.created - a.created);
+
+    // 2. Map the sorted array to HTML
+    return sortedSparks.map(spark => `
+        <div class="action-card glass p-4 rounded-xl border border-white/5 hover:border-[var(--neon-color)] transition-all">
+            <div class="card-top flex justify-between items-start mb-4">
+                <div>
+                    <h4 class="text-white font-bold text-xs uppercase tracking-tighter">${spark.name}</h4>
+                    <small class="text-[9px] text-slate-500 uppercase">${formatTimeAgo(spark.created)}</small>
                 </div>
-                <div class="card-stats">
-                    <span>Views: ${spark.views || 0}</span>
-                    <span>Tips: ${spark.tips || 0}</span>
-                </div>
+                <div class="text-[10px] font-black text-[var(--neon-color)]">#${spark.internal_rank}</div>
             </div>
-        `;
-    }).join('');
+            
+            <div class="card-preview mb-4 overflow-hidden rounded-lg bg-black/40 aspect-video flex items-center justify-center cursor-pointer" 
+                 onclick="window.open('${spark.link || '#'}', '_blank')">
+                <img src="${spark.image || '../assets/sparks/default.jpg'}" alt="Preview" class="w-full h-full object-cover opacity-80 hover:opacity-100 transition">
+            </div>
+
+            <div class="card-stats grid grid-cols-3 gap-1 border-t border-white/5 pt-3">
+                <div class="text-center"><span class="block text-white text-[10px] font-bold">${spark.stats.views}</span><span class="text-[7px] text-slate-500 uppercase">Views</span></div>
+                <div class="text-center"><span class="block text-white text-[10px] font-bold">${spark.stats.likes}</span><span class="text-[7px] text-slate-500 uppercase">Likes</span></div>
+                <div class="text-center"><span class="block text-white text-[10px] font-bold">${spark.stats.tips}</span><span class="text-[7px] text-slate-500 uppercase">Tips</span></div>
+            </div>
+        </div>
+    `).join('');
 }
 
 // 3. THE INTENT GATE & GENERATION LOGIC
@@ -160,7 +172,10 @@ async function executeMassSpark(currentId, prompt, mode) {
         }
         status.textContent = "READY";
         initArcade();
-    } catch (e) { status.textContent = "ERROR"; }
+    } catch (e) { 
+        console.error("Mass Spark Failed:", e);
+        status.textContent = "ERROR"; 
+    }
 }
 
 // 4. API & DB HELPERS
@@ -180,14 +195,52 @@ async function callGeminiAPI(prompt, val, type) {
     return isCode ? result : JSON.parse(result.replace(/```json|```/g, ''));
 }
 
+// js/arcade.js
+
+function formatTimeAgo(timestamp) {
+ if (!timestamp || typeof timestamp !== 'number') return "Unknown date";
+ const seconds = Math.floor((Date.now() - timestamp) / 1000);
+ if (seconds < 60) return "Just now";
+ const minutes = Math.floor(seconds / 60);
+ if (minutes < 60) return `${minutes}m ago`;
+ const hours = Math.floor(minutes / 60);
+ if (hours < 24) return `${hours}h ago`;
+ return new Date(timestamp).toLocaleDateString();
+}
+    
 async function saveSpark(currentId, data) {
-    const id = `spark_${Date.now()}_${Math.floor(Math.random()*1000)}`;
-    await saveToRealtimeDB(`currents/${currentId}/sparks/${id}`, {
-        ...data,
-        ownerName: user.email.split('@')[0],
-        dateCreated: new Date().toLocaleDateString(),
-        views: 0,
-        tips: 0
+    const sparkId = `spark_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+    const dbPath = `arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`;
+    
+    // Get numeric index for internal_rank based on current sparks (simplified)
+    const currentSparks = databaseCache.arcade_infrastructure.currents.find(c => c.id === currentId)?.sparks || {};
+    const rank = Object.keys(currentSparks).length + 1;
+
+    await saveToRealtimeDB(dbPath, {
+        // Core Identity
+        id: sparkId,
+        name: data.name || "Unnamed Spark",
+        desc: data.desc || "AI generated atmospheric logic.",
+        owner: user ? user.email.split('@')[0] : "yertal-arcade",
+        
+        // Metadata & Visuals
+        created: Date.now(), // Or use a time-ago helper
+        image: data.image || "assets/sparks/default.jpg",
+        internal_rank: rank,
+        
+        // Data Payload (The actual code or link)
+        code: data.code || null,
+        link: data.link || null,
+
+        // Full Stats Object
+        stats: {
+            comments: 0,
+            dislikes: 0,
+            likes: 0,
+            reshares: 0,
+            tips: 0,
+            views: 0
+        }
     });
 }
 
