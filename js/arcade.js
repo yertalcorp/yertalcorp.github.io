@@ -32,7 +32,7 @@ async function initArcade() {
         
         // Load fonts dynamically as we did in showroom
         const fontLink = document.getElementById('google-fonts-link');
-        if (fontLink) fontLink.href = data.settings.external_assets.google_fonts_url;
+        if (fontLink) fontLink.href = databaseCache.settings.external_assets.google_fonts_url;
 
         // 2. HERO HUD POPULATION
         const hero = databaseCache.arcade_infrastructure.hero;
@@ -48,6 +48,7 @@ async function initArcade() {
         }
 
         // 3. BRANDING & AUTH HUD
+        const brand = databaseCache.navigation.branding;
         const part1 = `<span style="color: ${brand.parts[0].color}">${brand.parts[0].text}</span>`;
         const part2 = `<span style="color: ${brand.parts[1].color}">${brand.parts[1].text}</span>`;
         document.getElementById('corp-name-display').innerHTML = `${part1} ${part2}`;
