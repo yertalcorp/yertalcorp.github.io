@@ -74,6 +74,26 @@ async function initArcade() {
     }
 }
 
+function renderCurrents(currents) {
+ const container = document.getElementById('currents-container');
+ if (!container) return;
+
+ container.innerHTML = currents.map(current => `
+ <div class="glass p-6 rounded-2xl border border-white/10 hover:border-[var(--neon-color)] transition">
+ <h3 class="text-white font-bold uppercase tracking-widest text-sm">${current.name}</h3>
+ <p class="text-[10px] text-slate-400 mt-2">${current.example_prompt}</p>
+ <div class="mt-4 flex flex-col gap-3">
+ <input type="text" id="input-${current.id}" placeholder="Type intent..." class="bg-black/20 border border-white/10 p-2 text-xs text-white">
+ <div class="flex gap-2 text-[10px] text-white">
+ <label><input type="radio" name="mode-${current.id}" value="prompt" checked> Logic</label>
+ <label><input type="radio" name="mode-${current.id}" value="sourcing"> Sourcing</label>
+ </div>
+ <button onclick="handleCreation('${current.id}')" class="bg-white/10 hover:bg-white/20 py-2 text-[10px] font-bold uppercase">Generate</button>
+ </div>
+ </div>
+ `).join('');
+}
+    
 function renderSparks(sparks) {
     return Object.keys(sparks).map(key => {
         const spark = sparks[key];
