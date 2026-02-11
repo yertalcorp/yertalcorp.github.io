@@ -29,16 +29,20 @@ export const loginWithProvider = (providerName) => {
         default: 
             throw new Error("Provider not supported on the free tier.");
     }
-    return signInWithPopup(auth, provider);
+    return signInWithPopup(auth, provider).then((result) => {
+        localStorage.setItem('yertal_login_provider', result.providerId);
+        return result;
+    });
 };
 
 export const logout = async () => {
     try {
-        // 1. Identify the provider before we kill the local session
-        const providerId = auth.currentUser?.providerData[0]?.providerId;
+        // 1. Identify the provider from localStorage instead of the volatile currentUser object
+        const providerId = localStorage.getItem('yertal_login_provider');
 
         // 2. Kill the Firebase session
         await signOut(auth);
+        localStorage.removeItem('yertal_login_provider');
 
         // 3. Define Global Logout Endpoints
         const logoutUrls = {
@@ -47,7 +51,14 @@ export const logout = async () => {
             'microsoft.com': 'https://login.microsoftonline.com/common/oauth2/v2.0/logout'
         };
 
-        return logoutUrls[providerId] || null;
+        const targetUrl = logoutUrls[providerId];
+        if (targetUrl) {
+            window.location.href = targetUrl;
+        } else {
+            window.location.reload();
+        }
+        
+        return targetUrl || null;
     } catch (error) {
         console.error("Sign out error:", error);
         throw error;
