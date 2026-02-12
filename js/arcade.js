@@ -148,7 +148,7 @@ function renderSparks(sparks, currentId) {
                         </div>
                     ` : ''}
 
-                    <img src="${spark.image || '/assets/sparks/default.jpg'}" alt="Preview" 
+                    <img src="${spark.image || '../assets/sparks/default.jpg'}" alt="Preview" 
                          class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500">
                 </div>
                 <div class="flex justify-between items-center mb-3 px-2">
@@ -227,9 +227,17 @@ window.handleCreation = async (currentId) => {
         id: 'custom',
         name: 'Custom', 
         logic: 'hybrid', 
-        image: '/assets/thumbnails/default.jpg' 
+        image: '../assets/thumbnails/default.jpg' 
     };
 
+    // DEBUG LOGGING
+    console.log(`[ARCADE ENGINE] Detected Type: ${detectedTypeId}`);
+    console.log(`[ARCADE ENGINE] Resolved Path: ${template.image}`);
+
+    // CAPTURE VALUES FOR MODAL SCOPE
+    const finalName = template.name;
+    const finalImage = template.image;
+    
     // 3. LOGIC ENFORCEMENT & MODE SELECTION
     const isUrl = /^(http|https):\/\/[^ "]+$/.test(input);
     const isVague = input.length < 15 && !isUrl;
@@ -241,12 +249,12 @@ window.handleCreation = async (currentId) => {
     if (isVague && mode === 'prompt') {
         showBinaryModal(
             `Focus on mechanics/logic`,`Focus on visuals/vibe`,(choice) => {
-                executeMassSpark(currentId, `${input} (${choice})`, mode, template.name, template.image);
+                executeMassSpark(currentId, `${input} (${choice})`, mode, finalName, finalImage);
                 if (promptInput) promptInput.value = '';
             }
         );
     } else {
-        executeMassSpark(currentId, input, mode, template.name, template.image);
+        executeMassSpark(currentId, input, mode, finalName, finalImage);
         if (promptInput) promptInput.value = '';
     }
 };
