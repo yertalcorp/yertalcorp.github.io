@@ -27,6 +27,14 @@
 
 /* --- UI GENETICS --- */
 
+/* Map global font to Firebase variable */
+#lab-body, 
+#lab-body button, 
+#lab-body input, 
+#lab-body div {
+    font-family: var(--nav-font), sans-serif !important;
+}
+
 /* The base Glass-morphism container */
 .glass {
     background: rgba(255, 255, 255, 0.05);
@@ -105,18 +113,53 @@
 /* Intelligent Spark Grid Logic */
 .grid {
     display: grid;
-    /* Min: 160px (1/2 of small mobile) | Max: 1fr */
-    /* On a 1600px desktop, this creates 6 columns (~260px each) */
+    /* Min: 160px (1/2 mobile) | Max: 1fr */
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 1.5rem;
     width: 100%;
 }
 
+/* Spark Card stabilization */
 .action-card {
     width: 100%;
-    /* Prevents sparks from becoming too large on massive screens or heavy zoom-out */
     max-width: 320px; 
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+/* Force Stats into a rigid 1-row layout */
+.card-stats {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 4px;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 1rem;
+    margin-top: auto;
+}
+
+.card-stats div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.card-stats span.block {
+    font-size: 11px !important;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.card-stats span.uppercase {
+    font-size: 7px !important;
+    letter-spacing: 0.1em;
+    margin-top: 4px;
+    color: #64748b;
 }
 
 .current-row {
