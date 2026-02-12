@@ -80,7 +80,10 @@ function renderCurrents(currents) {
     const container = document.getElementById('currents-container');
     if (!container || !currents) return;
 
-    container.innerHTML = currents.map(current => `
+    // 1. CONVERT OBJECT TO ARRAY (The Fix)
+    const currentsArray = Object.values(currents);
+    
+    container.innerHTML = currentsArray.map(current => `
         <section class="current-block mb-12 w-full">
             <div class="flex items-center justify-between gap-4 mb-6">
                 <div class="flex items-center gap-4 flex-grow">
