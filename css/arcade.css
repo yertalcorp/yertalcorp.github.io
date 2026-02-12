@@ -1,74 +1,135 @@
-/* Objective: Fixed overlay that dims the background */
+/* --- SYSTEM OVERLAYS --- */
+
+/* Fixed overlay for the Intent Modal */
 .fixed.inset-0 {
-  position: fixed;
-  top: 0;
-   left: 0;
-   right: 0;
-   bottom: 0;
-   z-index: 9999;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* Background dimming with blur */
 .bg-black\/80 {
-   background-color: rgba(0, 0, 0, 0.85);
-   backdrop-filter: blur(8px);
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
-/* Objective: The Glass-morphism container */
+/* Utility to ensure JS toggles work correctly */
+.hidden {
+    display: none !important;
+}
+
+/* --- UI GENETICS --- */
+
+/* The base Glass-morphism container */
 .glass {
-   background: rgba(255, 255, 255, 0.05);
-   border: 1px solid rgba(255, 255, 255, 0.1);
-   border-radius: 20px;
-   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-   padding: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Objective: Layout for the choice buttons */
-.flex-col {
-   display: flex;
-   flex-direction: column;
-   gap: 1rem;
+/* Modal-specific glass override for internal spacing */
+#intent-modal .glass {
+    padding: 2.5rem;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
 }
 
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.flex { display: flex; }
+/* --- MODAL INTERFACE --- */
 
-/* Objective: Button styling for choice-a and choice-b */
 #choice-a, #choice-b {
-   cursor: pointer;
-   transition: all 0.3s ease;
-   border: none;
-   color: white;
-   font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    color: white;
+    font-family: inherit;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    width: 100%;
+    display: block;
+    margin-bottom: 0.75rem;
 }
 
-#choice-a { background: #2563eb; }
-#choice-a:hover { background: #3b82f6; transform: scale(1.02); }
-
-#choice-b { background: rgba(255, 255, 255, 0.1); }
-#choice-b:hover { background: rgba(255, 255, 255, 0.2); }
-
-/* Lab Specific Overrides */
-.experiment-zone {
- flex: 1;
- width: 100%;
- margin-top: 1rem;
- padding-bottom: 5rem; /* Space for system footer */
+/* Primary Choice (Neon) */
+#choice-a { 
+    background: var(--neon-color, #00f2ff); 
+    color: #000;
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
 }
+#choice-a:hover { 
+    filter: brightness(1.2); 
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(0, 242, 255, 0.4);
+}
+
+/* Secondary Choice (Subtle) */
+#choice-b { 
+    background: rgba(255, 255, 255, 0.05); 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+#choice-b:hover { 
+    background: rgba(255, 255, 255, 0.15); 
+    transform: translateY(-2px);
+}
+
+/* --- LAB LAYOUT & SCROLLING --- */
 
 #lab-body {
- overflow-x: hidden;
- min-height: 100vh;
- display: flex;
- flex-direction: column;
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #050505;
 }
 
-.hud-border {
- border-bottom: 1px solid rgba(0, 242, 255, 0.2);
- box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+.experiment-zone {
+    flex: 1;
+    width: 100%;
+    margin-top: 2rem;
+    padding-bottom: 10rem; /* Space for the system footer */
 }
+
 .current-row {
- margin-bottom: 3rem;
- border-top: 1px solid rgba(255, 255, 255, 0.05);
- pt-8;
+    margin-bottom: 4rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 2.5rem;
+}
+
+/* Horizontal Scrollbar for Currents (if grid is disabled) */
+.custom-scrollbar::-webkit-scrollbar {
+    height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--neon-color);
+    border-radius: 10px;
+}
+
+/* --- UTILITIES --- */
+
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+
+/* Truncation for long spark names */
+.truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
