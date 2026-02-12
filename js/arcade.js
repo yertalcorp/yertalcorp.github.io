@@ -77,8 +77,8 @@ function renderCurrents(currents) {
     const currentsArray = Object.values(currents);
     
     container.innerHTML = currentsArray.map(current => `
-        <section class="current-block mb-12 w-full">
-            <div class="flex items-center justify-between gap-4 mb-6">
+        <section class="current-block mb-16 w-full border-b border-white/5 pb-8">
+            <div class="flex items-center justify-between gap-4 mb-8">
                 <div class="flex items-center gap-4 flex-grow">
                     <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">${current.name}</h2>
                     <div class="h-[1px] flex-grow bg-gradient-to-r from-white/20 to-transparent"></div>
@@ -86,7 +86,7 @@ function renderCurrents(currents) {
                 
                 <div class="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/10">
                     <input type="text" id="input-${current.id}" 
-                           placeholder="${current.example_prompt}" 
+                           placeholder="${current.example_prompt || 'Enter prompt...'}" 
                            class="bg-black/40 border-none text-[10px] text-white px-3 py-1 rounded w-48 focus:ring-1 focus:ring-[var(--neon-color)] outline-none">
                     
                     <select id="mode-${current.id}" class="bg-black/40 text-[9px] text-white border-none rounded px-2 py-1 outline-none">
@@ -101,7 +101,7 @@ function renderCurrents(currents) {
                 </div>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="flex flex-row gap-6 overflow-x-auto pb-4 custom-scrollbar">
                 ${renderSparks(current.sparks, current.id)}
             </div>
         </section>
@@ -125,16 +125,16 @@ function renderSparks(sparks, currentId) {
         const canDelete = (currentUserPrefix === spark.owner) || (user && user.email === 'yertal-arcade@gmail.com');
 
         return `
-            <div class="action-card glass p-4 rounded-xl border border-white/5 hover:border-[var(--neon-color)] transition-all group">
+            <div class="action-card glass p-4 rounded-xl border border-white/5 hover:border-[var(--neon-color)] transition-all group min-w-[280px] max-w-[280px]">
                 <div class="card-top flex justify-between items-start mb-4">
                     <div>
-                        <h4 class="text-white font-bold text-xs uppercase tracking-tighter">${spark.name}</h4>
+                        <h4 class="text-white font-bold text-xs uppercase tracking-tighter truncate w-40">${spark.name}</h4>
                         <div class="flex items-center gap-2">
                             <small class="text-[9px] text-slate-500 uppercase">${formatTimeAgo(spark.created)}</small>
                             <span class="text-[7px] px-1.5 py-0.5 rounded-sm bg-white/5 text-[var(--neon-color)] font-black uppercase tracking-widest border border-white/5">${typeLabel}</span>
                         </div>
                     </div>
-                    <div class="text-[10px] font-black text-white/20 group-hover:text-[var(--neon-color)] transition-colors">#${spark.internal_rank}</div>
+                    <div class="text-[10px] font-black text-white/20 group-hover:text-[var(--neon-color)] transition-colors">#${spark.internal_rank || 0}</div>
                 </div>
                 
                 <div class="card-preview mb-4 overflow-hidden rounded-lg bg-black/40 aspect-video flex items-center justify-center cursor-pointer relative" 
@@ -148,8 +148,8 @@ function renderSparks(sparks, currentId) {
                         </div>
                     ` : ''}
 
-                    <img src="${spark.image || '/assets/sparks/default.jpg'}" alt="Preview" 
-                         class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500">
+                    <img src="${spark.image || '/assets/thumbnails/default.jpg'}" alt="Preview" 
+                         class="w-full h-full object-cover opacity-100 group-hover:scale-105 transition duration-500">
                 </div>
                 <div class="flex justify-between items-center mb-3 px-2">
                     <button onclick="copyLink('?current=${currentId}&spark=${spark.id}')" 
@@ -165,15 +165,14 @@ function renderSparks(sparks, currentId) {
                     ` : ''}
                 </div>
                 <div class="card-stats grid grid-cols-3 gap-1 border-t border-white/5 pt-3">
-                    <div class="text-center"><span class="block text-white text-[10px] font-bold">${spark.stats.views || 0}</span><span class="text-[7px] text-slate-500 uppercase">Views</span></div>
-                    <div class="text-center"><span class="block text-white text-[10px] font-bold">${spark.stats.likes || 0}</span><span class="text-[7px] text-slate-500 uppercase">Likes</span></div>
-                    <div class="text-center"><span class="block text-white text-[10px] font-bold">${spark.stats.tips || 0}</span><span class="text-[7px] text-slate-500 uppercase">Tips</span></div>
+                    <div class="text-center"><span class="block text-white text-[10px] font-bold">${spark.stats?.views || 0}</span><span class="text-[7px] text-slate-500 uppercase">Views</span></div>
+                    <div class="text-center"><span class="block text-white text-[10px] font-bold">${spark.stats?.likes || 0}</span><span class="text-[7px] text-slate-500 uppercase">Likes</span></div>
+                    <div class="text-center"><span class="block text-white text-[10px] font-bold">${spark.stats?.tips || 0}</span><span class="text-[7px] text-slate-500 uppercase">Tips</span></div>
                 </div>
             </div>
         `;
     }).join('');
 }
-
 window.copyLink = (params) => {
     const fullUrl = `${window.location.origin}${window.location.pathname}${params}`;
     navigator.clipboard.writeText(fullUrl).then(() => {
@@ -377,8 +376,29 @@ function showBinaryModal(a, b, callback) {
     const modal = document.getElementById('intent-modal');
     const btnA = document.getElementById('choice-a');
     const btnB = document.getElementById('choice-b');
-    btnA.textContent = a; btnB.textContent = b;
+
+    // MODIFIED: Ensure text is placed in the innermost span if your buttons use them
+    if (btnA.querySelector('.inner-content')) {
+     btnA.querySelector('.inner-content').textContent = a;
+     btnB.querySelector('.inner-content').textContent = b;
+    } else {
+     btnA.textContent = a;
+     btnB.textContent = b;
+    }
+
+    // MODIFIED: Handle both display style and Tailwind 'hidden' class
+    modal.classList.remove('hidden');
     modal.style.display = 'flex';
-    btnA.onclick = () => { modal.style.display='none'; callback(a); };
-    btnB.onclick = () => { modal.style.display='none'; callback(b); };
+
+    btnA.onclick = () => { 
+        modal.classList.add('hidden');
+        modal.style.display = 'none'; 
+        callback(a); 
+    };
+
+    btnB.onclick = () => { 
+        modal.classList.add('hidden');
+        modal.style.display = 'none'; 
+        callback(b); 
+    };
 }
