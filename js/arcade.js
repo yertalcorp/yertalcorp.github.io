@@ -109,13 +109,13 @@ function renderCurrents(currents) {
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                ${renderSparks(current.sparks)}
+                ${renderSparks(current.sparks, current.id)}
             </div>
         </section>
     `).join('');
 }
     
-function renderSparks(sparks) {
+function renderSparks(sparks, currentId) {
     // 1. IMPROVED EMPTY STATE
     if (!sparks || Object.keys(sparks).length === 0) {
         return `
