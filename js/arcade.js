@@ -148,7 +148,7 @@ function renderSparks(sparks, currentId) {
                         </div>
                     ` : ''}
 
-                    <img src="${spark.image || '../assets/sparks/default.jpg'}" alt="Preview" 
+                    <img src="${spark.image || '/assets/sparks/default.jpg'}" alt="Preview" 
                          class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500">
                 </div>
                 <div class="flex justify-between items-center mb-3 px-2">
@@ -227,7 +227,7 @@ window.handleCreation = async (currentId) => {
         id: 'custom',
         name: 'Custom', 
         logic: 'hybrid', 
-        image: '../assets/thumbnails/default.jpg' 
+        image: '/assets/thumbnails/default.jpg' 
     };
 
     // DEBUG LOGGING
@@ -312,7 +312,7 @@ function formatTimeAgo(timestamp) {
  return new Date(timestamp).toLocaleDateString();
 }
     
-async function saveSpark(currentId, data, detectedTemplate = 'Custom', templateUrl = '../assets/thumbnails/custom.jpg') {
+async function saveSpark(currentId, data, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg') {
     const sparkId = `spark_${Date.now()}_${Math.floor(Math.random()*1000)}`;
     const dbPath = `arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`;
     
