@@ -111,7 +111,7 @@ function renderCurrents(currents) {
         </section>
     `}).join('');
 }
-    
+
 function renderSparks(sparks, currentId) {
     if (!sparks || Object.keys(sparks).length === 0) {
         return `
@@ -132,13 +132,13 @@ function renderSparks(sparks, currentId) {
             <div class="action-card glass p-4 rounded-xl border border-white/5 hover:border-[var(--neon-color)] transition-all group w-full">
                 <div class="card-top flex justify-between items-start mb-4">
                     <div>
-                        <h4 class="text-white font-bold text-xs uppercase tracking-tighter truncate w-40">${spark.name}</h4>
+                        <h4 class="text-white font-bold text-[10px] uppercase tracking-tighter truncate w-32">${spark.name}</h4>
                         <div class="flex items-center gap-2">
-                            <small class="text-[9px] text-slate-500 uppercase">${formatTimeAgo(spark.created)}</small>
+                            <small class="text-[8px] text-slate-500 uppercase">${formatTimeAgo(spark.created)}</small>
                             <span class="text-[7px] px-1.5 py-0.5 rounded-sm bg-white/5 text-[var(--neon-color)] font-black uppercase tracking-widest border border-white/5">${typeLabel}</span>
                         </div>
                     </div>
-                    <div class="text-[10px] font-black text-white/20 group-hover:text-[var(--neon-color)] transition-colors">#${spark.internal_rank || 0}</div>
+                    <div class="text-[9px] font-black text-white/20 group-hover:text-[var(--neon-color)] transition-colors">#${spark.internal_rank || 0}</div>
                 </div>
                 
                 <div class="card-preview mb-4 overflow-hidden rounded-lg bg-black/40 aspect-video flex items-center justify-center cursor-pointer relative" 
