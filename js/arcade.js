@@ -10,7 +10,6 @@ const GEMINI_API_KEY = ENV.GEMINI_KEY;
 watchAuthState((newUser) => {
     user = newUser;
     if (newUser === null) {
-        // If at any point the user is null, bounce them out immediately
         window.location.replace('../index.html'); 
     } else if (newUser) {
         initArcade();
@@ -22,7 +21,7 @@ async function initArcade() {
         const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
         databaseCache = await response.json();
         
-        // 1. APPLY UI GENETICS (From Showroom Style Logic)
+        // 1. APPLY UI GENETICS
         const ui = databaseCache.settings['ui-settings'];
         const root = document.documentElement;
         
@@ -30,7 +29,6 @@ async function initArcade() {
         root.style.setProperty('--accent-color', ui['color-accent']);
         root.style.setProperty('--nav-font', ui.nav_font);
         
-        // Load fonts dynamically as we did in showroom
         const fontLink = document.getElementById('google-fonts-link');
         if (fontLink) fontLink.href = databaseCache.settings.external_assets.google_fonts_url;
 
@@ -39,7 +37,6 @@ async function initArcade() {
         document.getElementById('hero-heading').textContent = hero.title;
         document.getElementById('hero-subheading').textContent = hero.subtitle;
         
-        // Handle the 3D Button text (CTA)
         const createBtn = document.getElementById('create-arcade-btn');
         if (createBtn) {
             const btnSpan = createBtn.querySelector('.inner-content');
@@ -64,10 +61,7 @@ async function initArcade() {
             superUserDisplay.style.color = 'var(--neon-color)';
         }
 
-        // CHANGE: Pass arcade_infrastructure.currents
         renderCurrents(databaseCache.arcade_infrastructure.currents);
-        
-        // FINALIZE: Reveal the Lab
         document.body.style.opacity = '1';
 
     } catch (e) { 
@@ -80,7 +74,6 @@ function renderCurrents(currents) {
     const container = document.getElementById('currents-container');
     if (!container || !currents) return;
 
-    // 1. CONVERT OBJECT TO ARRAY (The Fix)
     const currentsArray = Object.values(currents);
     
     container.innerHTML = currentsArray.map(current => `
@@ -116,7 +109,6 @@ function renderCurrents(currents) {
 }
     
 function renderSparks(sparks, currentId) {
-    // 1. IMPROVED EMPTY STATE
     if (!sparks || Object.keys(sparks).length === 0) {
         return `
             <div class="col-span-full py-10 border border-dashed border-white/10 rounded-xl text-center">
@@ -124,12 +116,9 @@ function renderSparks(sparks, currentId) {
             </div>`;
     }
 
-    // 2. CONVERT & SORT (Newest First)
     const sortedSparks = Object.values(sparks).sort((a, b) => b.created - a.created);
 
-    // 3. MAP TO HTML
     return sortedSparks.map(spark => {
-        // DETERMINISTIC UI: Logic for icons/colors based on Template Type
         const isMedia = /video|movie|music/i.test(spark.template_type || '');
         const typeLabel = spark.template_type || 'Custom';
         const currentUserPrefix = user ? user.email.split('@')[0] : null;
@@ -170,7 +159,7 @@ function renderSparks(sparks, currentId) {
     
                     ${canDelete ? `
                         <button onclick="deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
-                            class="text-[9px] text-red-500/40 hover:text-red-500 uppercase font-black transition tracking-tighter">
+                                class="text-[9px] text-red-500/40 hover:text-red-500 uppercase font-black transition tracking-tighter">
                             [ DECOMMISSION ]
                         </button>
                     ` : ''}
@@ -185,26 +174,18 @@ function renderSparks(sparks, currentId) {
     }).join('');
 }
 
-// js/arcade.js
-
 window.copyLink = (params) => {
-    // Construct the full URL for the yertalcorp.github.io site
     const fullUrl = `${window.location.origin}${window.location.pathname}${params}`;
-
     navigator.clipboard.writeText(fullUrl).then(() => {
-        // Feedback via the existing HUD status if available
         const statusElement = document.getElementById('engine-status-text');
         if (statusElement) {
             const original = statusElement.textContent;
             statusElement.textContent = "LINK ENCRYPTED TO CLIPBOARD";
             statusElement.style.color = "var(--neon-color)";
-            
             setTimeout(() => {
                 statusElement.textContent = original;
                 statusElement.style.color = "";
             }, 2500);
-        } else {
-            alert("Link copied to clipboard!");
         }
     });
 };
@@ -214,11 +195,10 @@ window.handleCreation = async (currentId) => {
     const input = promptInput ? promptInput.value.trim() : '';
     if (!input) return;
 
-    // 1. CLASSIFICATION ENGINE (New)
+    // 1. CLASSIFICATION ENGINE
     let detectedTypeId = 'custom';
     const presets = Object.values(databaseCache.settings['arcade-current-types'] || {});
 
-    // Map input to one of your 16 Categories
     if (/youtube.com|vimeo.com|video|clip/i.test(input)) detectedTypeId = 'videos';
     else if (/imdb.com|movie|film|trailer/i.test(input)) detectedTypeId = 'movies';
     else if (/github.com|app|tool|interface/i.test(input)) detectedTypeId = 'apps';
@@ -226,31 +206,27 @@ window.handleCreation = async (currentId) => {
     else if (/game|play|level|quest/i.test(input)) detectedTypeId = 'games';
     else if (/stock|price|market|finance|money/i.test(input)) detectedTypeId = 'finance';
 
-    const template = presets.find(t => t.id === detectedTypeId) || { name: 'Custom', logic: 'hybrid' };
+    const template = presets.find(t => t.id === detectedTypeId) || { name: 'Custom', logic: 'hybrid', image: '../assets/thumbnails/custom.jpg' };
 
-    // 2. LOGIC ENFORCEMENT & MODE SELECTION
     const isUrl = /^(http|https):\/\/[^ "]+$/.test(input);
     const isVague = input.length < 15 && !isUrl;
     
-    // Automatically switch to 'sourcing' if it's a URL or a source-only template
     let mode = (template.logic === 'source' || isUrl) ? 'sourcing' : 'prompt';
 
-    // 3. VAGUE PROMPT HANDLING (Preserved)
     if (isVague && mode === 'prompt') {
         showBinaryModal(
             `Focus on mechanics/logic`,`Focus on visuals/vibe`,(choice) => {
-                executeMassSpark(currentId, `${input} (${choice})`, mode, template.name);
+                executeMassSpark(currentId, `${input} (${choice})`, mode, template.name, template.image);
                 if (promptInput) promptInput.value = '';
             }
         );
     } else {
-        // 4. DIRECT EXECUTION (For URLs, Sourcing, or Detailed Prompts)
-        executeMassSpark(currentId, input, mode, template.name);
+        executeMassSpark(currentId, input, mode, template.name, template.image);
         if (promptInput) promptInput.value = '';
     }
 };
 
-async function executeMassSpark(currentId, prompt, mode) {
+async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     const countMatch = prompt.match(/\d+/);
     const count = countMatch ? Math.min(parseInt(countMatch[0]), 48) : 6;
@@ -261,12 +237,12 @@ async function executeMassSpark(currentId, prompt, mode) {
         if (mode === 'sourcing') {
             const links = await callGeminiAPI(prompt, count, 'source');
             for (const item of links) {
-                await saveSpark(currentId, { ...item, type: 'link' });
+                await saveSpark(currentId, { ...item, type: 'link' }, templateName, templateUrl);
             }
         } else {
             for (let i = 0; i < count; i++) {
                 const code = await callGeminiAPI(prompt, i, 'code');
-                await saveSpark(currentId, { name: `${prompt} #${i+1}`, code, type: 'code' });
+                await saveSpark(currentId, { name: `${prompt} #${i+1}`, code, type: 'code' }, templateName, templateUrl);
             }
         }
         status.textContent = "READY";
@@ -277,7 +253,6 @@ async function executeMassSpark(currentId, prompt, mode) {
     }
 }
 
-// 4. API & DB HELPERS
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code';
     const systemText = isCode 
@@ -294,8 +269,6 @@ async function callGeminiAPI(prompt, val, type) {
     return isCode ? result : JSON.parse(result.replace(/```json|```/g, ''));
 }
 
-// js/arcade.js
-
 function formatTimeAgo(timestamp) {
  if (!timestamp || typeof timestamp !== 'number') return "Unknown date";
  const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -307,32 +280,27 @@ function formatTimeAgo(timestamp) {
  return new Date(timestamp).toLocaleDateString();
 }
     
-// Updated to accept the template name from handleCreation/executeMassSpark
-async function saveSpark(currentId, data, detectedTemplate = 'Custom') {
+async function saveSpark(currentId, data, detectedTemplate = 'Custom', templateUrl = '../assets/thumbnails/custom.jpg') {
     const sparkId = `spark_${Date.now()}_${Math.floor(Math.random()*1000)}`;
     const dbPath = `arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`;
     
-    // Get numeric index for internal_rank based on current sparks
-    const currentSparks = databaseCache.arcade_infrastructure.currents.find(c => c.id === currentId)?.sparks || {};
-    const rank = Object.keys(currentSparks).length + 1;
+    const currentCurrent = Object.values(databaseCache.arcade_infrastructure.currents).find(c => c.id === currentId);
+    const rank = currentCurrent && currentCurrent.sparks ? Object.keys(currentCurrent.sparks).length + 1 : 1;
 
     await saveToRealtimeDB(dbPath, {
-        // Core Identity
         id: sparkId,
         name: data.name || "Unnamed Spark",
         desc: data.desc || "AI generated atmospheric logic.",
         owner: user ? user.email.split('@')[0] : "yertal-arcade",
         
-        // Metadata & Visuals
-        created: Date.now(),template_type: detectedTemplate, // NEW: Persists the template used
-        image: data.image || "assets/sparks/default.jpg",
+        created: Date.now(),
+        template_type: detectedTemplate,
+        image: data.image || templateUrl,
         internal_rank: rank,
         
-        // Data Payload
         code: data.code || null,
         link: data.link || null,
 
-        // Full Stats Object
         stats: {
             comments: 0,
             dislikes: 0,
@@ -344,39 +312,32 @@ async function saveSpark(currentId, data, detectedTemplate = 'Custom') {
     });
 }
 
-// js/arcade.js
-
 window.deleteSpark = async (currentId, sparkId, ownerPrefix) => {
-    // 1. Permission Validation
     const currentUserPrefix = user ? user.email.split('@')[0] : null;
     const isSuperUser = user && user.email === 'yertal-arcade@gmail.com';
     const isOwner = currentUserPrefix === ownerPrefix;
 
-    if (!canDelete) {
+    if (!isOwner && !isSuperUser) {
         alert("Unauthorized: Only the Spark architect or Yertal Super-user can decommission this.");
         return;
     }
 
-    // 2. Confirmation
     if (!confirm("Are you sure you want to decommission this Spark? This action is irreversible.")) return;
 
-    // 3. Database Execution
     const dbPath = `arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`;
     try {
-        await removeFromRealtimeDB(dbPath); // Ensure this helper exists in your firebase-config.js
-        console.log(`Spark ${sparkId} decommissioned.`);
-        
-        // Refresh the local cache and UI
+        await saveToRealtimeDB(dbPath, null); 
         initArcade(); 
     } catch (error) {
         console.error("Decommission failed:", error);
     }
 };
+
 async function handleCreateCurrent() {
     const name = prompt("New Current Name:");
     if (!name) return;
     const id = name.toLowerCase().replace(/\s+/g, '_');
-    await saveToRealtimeDB(`currents/${id}`, { name, sparks: {} });
+    await saveToRealtimeDB(`arcade_infrastructure/currents/${id}`, { id, name, sparks: {} });
     initArcade();
 }
 
