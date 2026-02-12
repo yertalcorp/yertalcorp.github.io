@@ -190,6 +190,7 @@ window.copyLink = (params) => {
     });
 };
 
+
 window.handleCreation = async (currentId) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
@@ -199,20 +200,44 @@ window.handleCreation = async (currentId) => {
     let detectedTypeId = 'custom';
     const presets = Object.values(databaseCache.settings['arcade-current-types'] || {});
 
-    if (/youtube.com|vimeo.com|video|clip/i.test(input)) detectedTypeId = 'videos';
-    else if (/imdb.com|movie|film|trailer/i.test(input)) detectedTypeId = 'movies';
-    else if (/github.com|app|tool|interface/i.test(input)) detectedTypeId = 'apps';
-    else if (/physics|gravity|simulat|engine/i.test(input)) detectedTypeId = 'physics-lab';
-    else if (/game|play|level|quest/i.test(input)) detectedTypeId = 'games';
-    else if (/stock|price|market|finance|money/i.test(input)) detectedTypeId = 'finance';
+    // Regex triggers mapped to your JSON IDs
+    if (/physics|gravity|simulat|velocity/i.test(input)) detectedTypeId = 'physics-lab';
+    else if (/world|landscape|terrain|ecosystem/i.test(input)) detectedTypeId = 'world-logic';
+    else if (/imdb.com|movie|film|cinema|trailer/i.test(input)) detectedTypeId = 'movies';
+    else if (/youtube.com|vimeo.com|video|clip|veo/i.test(input)) detectedTypeId = 'videos';
+    else if (/github.com|app|tool|interface|utility/i.test(input)) detectedTypeId = 'apps';
+    else if (/game|play|level|quest|rpg/i.test(input)) detectedTypeId = 'games';
+    else if (/stock|price|market|finance|money|crypto/i.test(input)) detectedTypeId = 'finance';
+    else if (/health|medical|fit|body|doctor/i.test(input)) detectedTypeId = 'health';
+    else if (/sport|ball|match|team|athlete/i.test(input)) detectedTypeId = 'sports';
+    else if (/architecture|build|design|structure|house/i.test(input)) detectedTypeId = 'architecture';
+    else if (/robot|bot|drone|automaton/i.test(input)) detectedTypeId = 'robotics';
+    else if (/bio|tech|dna|gene|lab/i.test(input)) detectedTypeId = 'bio-tech';
+    else if (/social|chat|profile|connect|tweet/i.test(input)) detectedTypeId = 'social';
+    else if (/music|audio|sound|song|spotify/i.test(input)) detectedTypeId = 'music';
+    else if (/security|hack|protect|encrypt|firewall/i.test(input)) detectedTypeId = 'security';
+    else if (/travel|trip|flight|hotel|map/i.test(input)) detectedTypeId = 'travel';
+    else if (/food|recipe|cook|restaurant|eat/i.test(input)) detectedTypeId = 'food';
+    else if (/nature|forest|weather|earth|ocean/i.test(input)) detectedTypeId = 'nature';
+    else if (/animal|pet|wildlife|beast/i.test(input)) detectedTypeId = 'animals';
 
-    const template = presets.find(t => t.id === detectedTypeId) || { name: 'Custom', logic: 'hybrid', image: '../assets/thumbnails/custom.jpg' };
+    // 2. TEMPLATE EXTRACTION
+    // Fallback to custom if no match is found
+    const template = presets.find(t => t.id === detectedTypeId) || { 
+        id: 'custom',
+        name: 'Custom', 
+        logic: 'hybrid', 
+        image: '../assets/thumbnails/default.jpg' 
+    };
 
+    // 3. LOGIC ENFORCEMENT & MODE SELECTION
     const isUrl = /^(http|https):\/\/[^ "]+$/.test(input);
     const isVague = input.length < 15 && !isUrl;
     
+    // Automatically switch to 'sourcing' if the JSON says logic: "source" or if it's a URL
     let mode = (template.logic === 'source' || isUrl) ? 'sourcing' : 'prompt';
 
+    // 4. EXECUTION BRANCHING
     if (isVague && mode === 'prompt') {
         showBinaryModal(
             `Focus on mechanics/logic`,`Focus on visuals/vibe`,(choice) => {
@@ -225,7 +250,6 @@ window.handleCreation = async (currentId) => {
         if (promptInput) promptInput.value = '';
     }
 };
-
 async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     const countMatch = prompt.match(/\d+/);
