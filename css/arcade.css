@@ -85,7 +85,7 @@
     transform: translateY(-2px);
 }
 
-/* --- LAB LAYOUT & SCROLLING --- */
+/* --- LAB LAYOUT & INTELLIGENT GRID --- */
 
 #lab-body {
     overflow-x: hidden;
@@ -99,7 +99,24 @@
     flex: 1;
     width: 100%;
     margin-top: 2rem;
-    padding-bottom: 10rem; /* Space for the system footer */
+    padding-bottom: 10rem;
+}
+
+/* Intelligent Spark Grid Logic */
+.grid {
+    display: grid;
+    /* Min: 160px (1/2 of small mobile) | Max: 1fr */
+    /* On a 1600px desktop, this creates 6 columns (~260px each) */
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.action-card {
+    width: 100%;
+    /* Prevents sparks from becoming too large on massive screens or heavy zoom-out */
+    max-width: 320px; 
+    margin: 0 auto;
 }
 
 .current-row {
@@ -108,7 +125,8 @@
     padding-top: 2.5rem;
 }
 
-/* Horizontal Scrollbar for Currents (if grid is disabled) */
+/* --- SCROLLBARS --- */
+
 .custom-scrollbar::-webkit-scrollbar {
     height: 4px;
 }
@@ -127,7 +145,6 @@
 .items-center { align-items: center; }
 .justify-center { justify-content: center; }
 
-/* Truncation for long spark names */
 .truncate {
     white-space: nowrap;
     overflow: hidden;
