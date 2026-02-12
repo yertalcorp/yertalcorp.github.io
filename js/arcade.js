@@ -74,38 +74,42 @@ function renderCurrents(currents) {
     const container = document.getElementById('currents-container');
     if (!container || !currents) return;
 
-    const currentsArray = Object.values(currents);
+    // Pull limits from settings (default to 16/48 if DB fetch hasn't finished)
+    const limits = databaseCache.settings?.plan_limits?.free || { max_currents: 16, max_sparks_per_current: 48 };
+    const currentsArray = Object.values(currents).slice(0, limits.max_currents);
     
-    container.innerHTML = currentsArray.map(current => `
-        <section class="current-block mb-16 w-full border-b border-white/5 pb-8">
-            <div class="flex items-center justify-between gap-4 mb-8">
-                <div class="flex items-center gap-4 flex-grow">
-                    <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">${current.name}</h2>
-                    <div class="h-[1px] flex-grow bg-gradient-to-r from-white/20 to-transparent"></div>
+    container.innerHTML = currentsArray.map(current => {
+        const sparkCount = current.sparks ? Object.keys(current.sparks).length : 0;
+        
+        return `
+        <section class="current-block mb-20 w-full border-b border-white/5 pb-12">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+                <div class="flex items-center gap-4 flex-grow w-full">
+                    <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">
+                        ${current.name} 
+                        <span class="text-[10px] text-slate-500 ml-2 font-normal not-italic">[${sparkCount}/${limits.max_sparks_per_current}]</span>
+                    </h2>
+                    <div class="h-[1px] flex-grow bg-gradient-to-r from-[var(--neon-color)]/40 to-transparent"></div>
                 </div>
                 
-                <div class="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/10">
+                <div class="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/10 w-full md:w-auto">
                     <input type="text" id="input-${current.id}" 
-                           placeholder="${current.example_prompt || 'Enter prompt...'}" 
-                           class="bg-black/40 border-none text-[10px] text-white px-3 py-1 rounded w-48 focus:ring-1 focus:ring-[var(--neon-color)] outline-none">
+                           placeholder="Type to generate..." 
+                           class="bg-black/40 border-none text-[10px] text-white px-3 py-1 rounded flex-grow md:w-48 outline-none focus:ring-1 focus:ring-[var(--neon-color)]">
                     
-                    <select id="mode-${current.id}" class="bg-black/40 text-[9px] text-white border-none rounded px-2 py-1 outline-none">
-                        <option value="prompt">LOGIC</option>
-                        <option value="sourcing">SOURCE</option>
-                    </select>
-
                     <button onclick="handleCreation('${current.id}')" 
-                            class="bg-[var(--neon-color)]/20 hover:bg-[var(--neon-color)]/40 text-[var(--neon-color)] text-[9px] font-bold px-4 py-1 rounded transition uppercase">
-                        Generate
+                            ${sparkCount >= limits.max_sparks_per_current ? 'disabled' : ''}
+                            class="bg-[var(--neon-color)]/20 hover:bg-[var(--neon-color)]/40 disabled:opacity-30 disabled:cursor-not-allowed text-[var(--neon-color)] text-[9px] font-bold px-4 py-1 rounded transition uppercase">
+                        ${sparkCount >= limits.max_sparks_per_current ? 'Full' : 'Generate'}
                     </button>
                 </div>
             </div>
             
-            <div class="flex flex-row gap-6 overflow-x-auto pb-4 custom-scrollbar">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 w-full">
                 ${renderSparks(current.sparks, current.id)}
             </div>
         </section>
-    `).join('');
+    `}).join('');
 }
     
 function renderSparks(sparks, currentId) {
@@ -125,7 +129,7 @@ function renderSparks(sparks, currentId) {
         const canDelete = (currentUserPrefix === spark.owner) || (user && user.email === 'yertal-arcade@gmail.com');
 
         return `
-            <div class="action-card glass p-4 rounded-xl border border-white/5 hover:border-[var(--neon-color)] transition-all group min-w-[280px] max-w-[280px]">
+            <div class="action-card glass p-4 rounded-xl border border-white/5 hover:border-[var(--neon-color)] transition-all group w-full">
                 <div class="card-top flex justify-between items-start mb-4">
                     <div>
                         <h4 class="text-white font-bold text-xs uppercase tracking-tighter truncate w-40">${spark.name}</h4>
