@@ -4,28 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arcade Spark Viewport</title>
-    <link rel="stylesheet" href="../css/arcade.css"> <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    </head>
-<body class="bg-black m-0 p-0 overflow-hidden">
-    
-    <div id="spark-content-container" class="w-screen h-screen"></div>
+    <link rel="stylesheet" href="../css/arcade.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-black m-0 p-0 overflow-hidden font-sans">
 
-    <div id="spark-hud" class="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/80 backdrop-blur-md border border-white/10 p-3 rounded-2xl z-[9999] shadow-2xl">
-        <div class="w-24 h-14 bg-black rounded border border-white/20 overflow-hidden relative">
-            <canvas id="live-thumb-canvas" class="w-full h-full object-cover"></canvas>
-            <div class="absolute inset-0 flex items-center justify-center opacity-30">
-                <i class="fas fa-sync-alt animate-spin text-[10px] text-white"></i>
-            </div>
+    <button onclick="window.close()" class="fixed top-6 left-6 z-[10000] bg-black/50 hover:bg-black border border-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+
+    <div id="prev-zone" class="fixed left-0 top-0 w-24 h-full z-[9000] group cursor-pointer flex items-center justify-center">
+        <div class="opacity-0 group-hover:opacity-100 bg-black/40 p-4 rounded-r-xl border-y border-r border-white/10 transition-all">
+            <i class="fas fa-chevron-left text-white text-2xl"></i>
         </div>
-
-        <div class="flex flex-col gap-1">
-            <button id="set-cover-btn" class="bg-[var(--neon-color)] text-black text-[10px] font-black px-4 py-2 rounded-lg uppercase tracking-tighter hover:scale-105 transition-transform active:scale-95">
-                Set as Cover Image
-            </button>
-            <div class="text-[7px] text-white/40 uppercase tracking-widest text-center">Live Capture Active</div>
+    </div>
+    
+    <div id="next-zone" class="fixed right-0 top-0 w-24 h-full z-[9000] group cursor-pointer flex items-center justify-center">
+        <div class="opacity-0 group-hover:opacity-100 bg-black/40 p-4 rounded-l-xl border-y border-l border-white/10 transition-all">
+            <i class="fas fa-chevron-right text-white text-2xl"></i>
         </div>
     </div>
 
+    <div id="spark-content-container" class="w-screen h-screen"></div>
+
+    <div id="spark-hud" class="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/80 backdrop-blur-md border border-white/10 p-3 rounded-2xl z-[10000] shadow-2xl">
+        <div class="w-24 h-14 bg-black rounded border border-white/20 overflow-hidden relative">
+            <canvas id="live-thumb-canvas" class="w-full h-full object-cover"></canvas>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <div class="flex gap-2">
+                <button id="set-cover-btn" class="bg-[var(--neon-color)] text-black text-[10px] font-black px-4 py-2 rounded-lg uppercase tracking-tighter hover:brightness-110 transition-all">
+                    Set as Cover
+                </button>
+                <button id="fallback-url-btn" class="bg-white/10 text-white/60 hover:text-white text-[10px] font-black px-3 py-2 rounded-lg border border-white/5">
+                    <i class="fas fa-link"></i>
+                </button>
+            </div>
+            <div id="hud-status" class="text-[7px] text-white/40 uppercase tracking-widest text-center">Auto-Capture Active</div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database.js"></script>
     <script src="../config/firebase-config.js"></script>
     <script src="../js/spark.js"></script>
 </body>
