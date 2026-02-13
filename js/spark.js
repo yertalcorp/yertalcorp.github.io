@@ -1,71 +1,92 @@
-// Initialize Firebase
-const params = new URLSearchParams(window.location.search);
-const currentId = params.get('current');
-const sparkId = params.get('spark');
+let currentId, sparkId, sparkList = [];
 
-async function loadSpark() {
+const params = new URLSearchParams(window.location.search);
+currentId = params.get('current');
+sparkId = params.get('spark');
+
+async function initSparkView() {
     if (!currentId || !sparkId) return;
 
-    // Fetch the specific spark from DB
-    const snapshot = await db.ref(`arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`).once('value');
-    const spark = snapshot.val();
-
-    if (spark) {
-        const container = document.getElementById('spark-content-container');
-        // If it's a URL, use an iframe; if it's code, inject it
-        if (spark.link.startsWith('http')) {
-            container.innerHTML = `<iframe src="${spark.link}" class="w-full h-full border-none"></iframe>`;
-        } else {
-            container.innerHTML = spark.code || 'No content found.';
-        }
-        startCaptureLoop();
+    // Load full current to get navigation order
+    const snapshot = await db.ref(`arcade_infrastructure/currents/${currentId}`).once('value');
+    const currentData = snapshot.val();
+    
+    if (currentData && currentData.sparks) {
+        // Sort sparks by creation date (descending) to match main UI
+        sparkList = Object.values(currentData.sparks).sort((a, b) => b.created - a.created);
+        renderActiveSpark();
     }
 }
 
+function renderActiveSpark() {
+    const spark = sparkList.find(s => s.id === sparkId);
+    if (!spark) return;
+
+    document.title = `Spark: ${spark.name}`;
+    const container = document.getElementById('spark-content-container');
+    
+    if (spark.link.startsWith('http')) {
+        container.innerHTML = `<iframe src="${spark.link}" class="w-full h-full border-none" allow="autoplay; fullscreen"></iframe>`;
+    } else {
+        container.innerHTML = spark.code || '<div class="text-white p-20">Source Empty</div>';
+    }
+
+    startCaptureLoop();
+}
+
+function navigate(direction) {
+    const currentIndex = sparkList.findIndex(s => s.id === sparkId);
+    let nextIndex = currentIndex + direction;
+
+    if (nextIndex >= 0 && nextIndex < sparkList.length) {
+        sparkId = sparkList[nextIndex].id;
+        // Update URL without reloading page
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?current=${currentId}&spark=${sparkId}`;
+        window.history.pushState({path:newUrl},'',newUrl);
+        renderActiveSpark();
+    }
+}
+
+// --- CAPTURE LOGIC ---
 function startCaptureLoop() {
     const canvas = document.getElementById('live-thumb-canvas');
     const ctx = canvas.getContext('2d');
+    canvas.width = 400; canvas.height = 225;
 
-    // Set canvas internal resolution
-    canvas.width = 400; 
-    canvas.height = 225;
-
-    setInterval(async () => {
+    clearInterval(window.captureInterval);
+    window.captureInterval = setInterval(async () => {
         const content = document.getElementById('spark-content-container');
         try {
             const tempCanvas = await html2canvas(content, {
-                useCORS: true, // Crucial for external images/iframes
-                scale: 0.5,
-                ignoreElements: (el) => el.id === 'spark-hud'
+                useCORS: true,
+                scale: 0.4,
+                ignoreElements: (el) => el.id === 'spark-hud' || el.tagName === 'BUTTON'
             });
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
-        } catch (e) {
-            console.warn("Capture frame skipped: ", e);
-        }
+        } catch (e) { console.warn("Canvas capture blocked by CORS"); }
     }, 4000);
 }
 
-document.getElementById('set-cover-btn').addEventListener('click', async () => {
+// --- EVENT LISTENERS ---
+document.getElementById('prev-zone').onclick = () => navigate(1); // Higher index = older spark
+document.getElementById('next-zone').onclick = () => navigate(-1); // Lower index = newer spark
+
+document.getElementById('set-cover-btn').onclick = async () => {
     const btn = document.getElementById('set-cover-btn');
-    const canvas = document.getElementById('live-thumb-canvas');
-    
-    btn.textContent = "SYNCING...";
-    btn.disabled = true;
+    const dataUrl = document.getElementById('live-thumb-canvas').toDataURL('image/webp', 0.6);
+    btn.textContent = "SAVING...";
+    await db.ref(`arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`).update({ image: dataUrl });
+    btn.textContent = "COVER SET!";
+    setTimeout(() => { btn.textContent = "SET AS COVER"; }, 2000);
+};
 
-    const dataUrl = canvas.toDataURL('image/webp', 0.6); // WebP is smaller than PNG
-
-    try {
-        await db.ref(`arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`).update({
-            image: dataUrl
-        });
-        btn.textContent = "COVER SET!";
-        btn.style.background = "#39ff14";
-        setTimeout(() => window.close(), 800);
-    } catch (e) {
-        btn.textContent = "RETRY";
-        btn.disabled = false;
+document.getElementById('fallback-url-btn').onclick = async () => {
+    const url = prompt("Paste Image URL:");
+    if (url) {
+        await db.ref(`arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`).update({ image: url });
+        alert("Cover updated via link.");
     }
-});
+};
 
-loadSpark();
+initSparkView();
