@@ -172,7 +172,7 @@ function renderSparks(sparks, currentId) {
                             <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">Rank #${spark.internal_rank || 0}</span>
                             <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">${formatTimeAgo(spark.created)}</span>
                         </div>
-                    **</div>**
+                    </div>
 
                     <div class="flex flex-col items-end gap-3 pt-1">
                         <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" 
@@ -186,13 +186,12 @@ function renderSparks(sparks, currentId) {
                             [ KILL ]
                         </button>
                         ` : ''}
-                    **</div>**
+                    </div>
                 </div>
             </div>
         `;
     }).join('');
 }
-
 // --- 4. CORE LOGIC & ACTIONS ---
 window.handleCreation = async (currentId) => {
     const promptInput = document.getElementById(`input-${currentId}`);
