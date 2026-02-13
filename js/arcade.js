@@ -124,52 +124,50 @@ function renderSparks(sparks, currentId) {
 
     return sortedSparks.map(spark => {
         const isMedia = /video|movie|music/i.test(spark.template_type || '');
-        const typeLabel = spark.template_type || 'Custom';
         const currentUserPrefix = user ? user.email.split('@')[0] : null;
         const canDelete = (currentUserPrefix === spark.owner) || (user && user.email === 'yertal-arcade@gmail.com');
 
         return `
-            <div class="spark-unit flex flex-col gap-2">
-            <div class="action-card glass p-4 rounded-xl border border-white/5 hover:border-[var(--neon-color)] transition-all group w-full">
-                <div class="card-top flex justify-between items-start mb-4">
-                    <div>
-                        <h4 class="text-white font-bold text-[10px] uppercase tracking-tighter truncate w-32">${spark.name}</h4>
-                        <div class="flex items-center gap-2">
-                            <small class="text-[8px] text-slate-500 uppercase">${formatTimeAgo(spark.created)}</small>
-                            <span class="text-[7px] px-1.5 py-0.5 rounded-sm bg-white/5 text-[var(--neon-color)] font-black uppercase tracking-widest border border-white/5">${typeLabel}</span>
-                        </div>
+            <div class="spark-unit flex flex-col gap-3 w-full">
+                <div class="spark-header text-center px-2">
+                    <h4 class="text-white font-black text-[11px] uppercase tracking-tighter mb-0.5">${spark.name}</h4>
+                    <div class="text-[8px] text-slate-500 uppercase tracking-widest font-medium">
+                        ${spark.owner} • ${formatTimeAgo(spark.created)}
                     </div>
-                    <div class="text-[9px] font-black text-white/20 group-hover:text-[var(--neon-color)] transition-colors">#${spark.internal_rank || 0}</div>
                 </div>
-                
-                <div class="card-preview mb-4 overflow-hidden rounded-lg bg-black/40 aspect-video flex items-center justify-center cursor-pointer relative" 
+
+                <div class="action-card glass p-4 rounded-xl border border-white/5 hover:border-[var(--neon-color)] transition-all group w-full cursor-pointer relative"
                      onclick="window.open('${spark.link || '#'}', '_blank')">
                     
-                    ${isMedia ? `
-                        <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/0 transition-all z-10">
-                             <div class="w-8 h-8 rounded-full bg-[var(--neon-color)]/20 flex items-center justify-center border border-[var(--neon-color)]/40 shadow-[0_0_15px_rgba(var(--neon-color),0.2)]">
-                                <div class="w-0 h-0 border-t-[5px] border-t-transparent border-l-[8px] border-l-white border-b-[5px] border-b-transparent ml-1"></div>
-                             </div>
-                        </div>
-                    ` : ''}
+                    <div class="absolute top-3 right-3 text-[8px] font-black text-white/10 group-hover:text-[var(--neon-color)] transition-colors">#${spark.internal_rank || 0}</div>
+                    
+                    <div class="card-preview mb-4 overflow-hidden rounded-lg bg-black/40 aspect-video flex items-center justify-center relative">
+                        ${isMedia ? `
+                            <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/0 transition-all z-10">
+                                 <div class="w-8 h-8 rounded-full bg-[var(--neon-color)]/20 flex items-center justify-center border border-[var(--neon-color)]/40 shadow-[0_0_15px_rgba(var(--neon-color),0.2)]">
+                                    <div class="w-0 h-0 border-t-[5px] border-t-transparent border-l-[8px] border-l-white border-b-[5px] border-b-transparent ml-1"></div>
+                                 </div>
+                            </div>
+                        ` : ''}
+                        <img src="${spark.image || '/assets/thumbnails/default.jpg'}" alt="Preview" 
+                             class="w-full h-full object-cover opacity-100 group-hover:scale-105 transition duration-500">
+                    </div>
 
-                    <img src="${spark.image || '/assets/thumbnails/default.jpg'}" alt="Preview" 
-                         class="w-full h-full object-cover opacity-100 group-hover:scale-105 transition duration-500">
-                </div>
-                <div class="flex justify-between items-center mb-3 px-2">
-                    <button onclick="copyLink('?current=${currentId}&spark=${spark.id}')" 
-                            class="text-[9px] text-slate-400 hover:text-[var(--neon-color)] uppercase font-bold transition flex items-center gap-1">
-                        <span class="opacity-50">#</span> SHARE
-                    </button>
-    
-                    ${canDelete ? `
-                        <button onclick="deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
-                                class="text-[9px] text-red-500/40 hover:text-red-500 uppercase font-black transition tracking-tighter">
-                            [ DECOMMISSION ]
+                    <div class="flex justify-between items-center px-2">
+                        <button onclick="event.stopPropagation(); copyLink('?current=${currentId}&spark=${spark.id}')" 
+                                class="text-[9px] text-slate-400 hover:text-[var(--neon-color)] uppercase font-bold transition flex items-center gap-1">
+                            <span class="opacity-50">#</span> SHARE
                         </button>
-                    ` : ''}
+        
+                        ${canDelete ? `
+                            <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
+                                    class="text-[9px] text-red-500/40 hover:text-red-500 uppercase font-black transition tracking-tighter">
+                                [ DECOMMISSION ]
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
-                </div>
+
                 <div class="card-stats-row flex justify-between items-center px-2 text-[9px] uppercase tracking-widest font-bold">
                     <div class="flex gap-1 text-white"><span>${spark.stats?.views || 0}</span><span class="text-slate-500">Views</span></div>
                     <div class="flex gap-1 text-white"><span>${spark.stats?.likes || 0}</span><span class="text-slate-500">Likes</span></div>
