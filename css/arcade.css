@@ -85,6 +85,7 @@ main.max-width-limit {
     box-shadow: 
         0 20px 40px rgba(0, 0, 0, 0.6),
         0 0 20px rgba(0, 242, 255, 0.1);
+    animation: spark-pulse 2s infinite ease-in-out;
 }
 
 /* --- COMPONENTS & STATS --- */
@@ -96,20 +97,19 @@ main.max-width-limit {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.card-stats {
+.card-stats-row {
     display: flex !important;
-    justify-content: space-between;
-    align-items: center;
-    grid-template-columns: repeat(3, 1fr) !important;
-    margin-top: auto;
-    padding-top: 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    width: 100%;
+    margin-top: 4px;
 }
 
 /* --- DECORATIVE BUTTONS --- */
 
 button#auth-trigger, 
 .current-block button {
+    padding: 2px 20px !important;
     background: var(--neon-color) !important;
     color: black !important;
     font-weight: 900 !important;
