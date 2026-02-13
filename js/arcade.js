@@ -129,6 +129,7 @@ function renderSparks(sparks, currentId) {
         const canDelete = (currentUserPrefix === spark.owner) || (user && user.email === 'yertal-arcade@gmail.com');
 
         return `
+            <div class="spark-unit flex flex-col gap-2">
             <div class="action-card glass p-4 rounded-xl border border-white/5 hover:border-[var(--neon-color)] transition-all group w-full">
                 <div class="card-top flex justify-between items-start mb-4">
                     <div>
@@ -168,10 +169,11 @@ function renderSparks(sparks, currentId) {
                         </button>
                     ` : ''}
                 </div>
-                <div class="card-stats grid flex justify-around items-center gap-1 border-t border-white/5 pt-3">
-                    <div class="flex items-center gap-1"><span class="block text-white text-[10px] font-bold">${spark.stats?.views || 0}</span><span class="text-[7px] text-slate-500 uppercase">Views</span></div>
-                    <div class="flex items-center gap-1"><span class="block text-white text-[10px] font-bold">${spark.stats?.likes || 0}</span><span class="text-[7px] text-slate-500 uppercase">Likes</span></div>
-                    <div class="flex items-center gap-1"><span class="block text-white text-[10px] font-bold">${spark.stats?.tips || 0}</span><span class="text-[7px] text-slate-500 uppercase">Tips</span></div>
+                </div>
+                <div class="card-stats-row flex justify-between items-center px-2 text-[9px] uppercase tracking-widest font-bold">
+                    <div class="flex gap-1 text-white"><span>${spark.stats?.views || 0}</span><span class="text-slate-500">Views</span></div>
+                    <div class="flex gap-1 text-white"><span>${spark.stats?.likes || 0}</span><span class="text-slate-500">Likes</span></div>
+                    <div class="flex gap-1 text-white"><span>${spark.stats?.tips || 0}</span><span class="text-slate-500">Tips</span></div>
                 </div>
             </div>
         `;
