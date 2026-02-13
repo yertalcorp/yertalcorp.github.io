@@ -124,9 +124,8 @@ function renderSparks(sparks, currentId) {
     return sortedSparks.map(spark => {
         const hasRealCover = spark.image && !spark.image.includes('default.jpg');
         const viewportLink = `spark.html?current=${currentId}&spark=${spark.id}`;
-        
-        // Default stats if none exist
         const stats = spark.stats || { views: 0, likes: 0, tips: 0 };
+        const isOwner = user && (user.email.split('@')[0] === spark.owner || user.email === 'yertal-arcade@gmail.com');
 
         return `
             <div class="group relative flex flex-col gap-5">
@@ -146,6 +145,7 @@ function renderSparks(sparks, currentId) {
                 <div class="flex justify-between items-start px-2">
                     <div class="flex-grow">
                         <h4 class="text-white font-black text-sm uppercase tracking-tight leading-tight group-hover:text-[var(--neon-color)] transition-colors">${spark.name}</h4>
+                        
                         <div class="flex gap-4 mt-2 mb-1.5 items-center">
                             <div class="flex items-center gap-1.5 text-[9px] text-white/40 font-bold">
                                 <i class="fas fa-eye text-[8px]"></i> ${stats.views}
@@ -164,10 +164,19 @@ function renderSparks(sparks, currentId) {
                             <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">${formatTimeAgo(spark.created)}</span>
                         </div>
                     </div>
-                    <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
-                            class="opacity-0 group-hover:opacity-100 text-red-500/40 hover:text-red-600 transition-all text-[9px] font-black uppercase tracking-tighter ml-4">
-                        [ Kill ]
-                    </button>
+                    
+                    <div class="flex flex-col items-end gap-2">
+                        <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" class="opacity-0 group-hover:opacity-100 text-white/40 hover:text-[var(--neon-color)] transition-all text-[10px]">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                        
+                        ${isOwner ? `
+                        <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
+                                class="opacity-0 group-hover:opacity-100 text-red-500/40 hover:text-red-600 transition-all text-[9px] font-black uppercase tracking-tighter">
+                            [ Kill ]
+                        </button>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
         `;
