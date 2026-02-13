@@ -40,7 +40,7 @@ main.max-width-limit {
     text-transform: uppercase;
     letter-spacing: -0.05em;
     color: white;
-    margin-bottom: 2rem;
+    margin-bottom: 0.5rem;
     /* Decorative Gradient Text */
     background: linear-gradient(to right, #fff, rgba(255,255,255,0.3));
     -webkit-background-clip: text;
@@ -52,6 +52,20 @@ main.max-width-limit {
     display: none !important;
 }
 
+.spark-unit {
+    max-width: 100%;
+}
+
+/* New Sub-style for "Based on Type" */
+.current-type-label {
+    font-size: 0.75rem;
+    color: var(--neon-color);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.7;
+    margin-bottom: 2rem;
+    display: block;
+}
 /* --- THE SPARK GRID --- */
 
 .experiment-zone .grid {
@@ -101,8 +115,8 @@ main.max-width-limit {
     display: flex !important;
     flex-direction: row !important;
     justify-content: space-between !important;
-    width: 100%;
-    margin-top: 4px;
+    margin-top: 0.25rem;
+    border: none !important;
 }
 
 /* --- DECORATIVE BUTTONS --- */
