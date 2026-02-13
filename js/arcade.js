@@ -145,13 +145,13 @@ function renderSparks(sparks, currentId) {
         const currentUserPrefix = user ? user.email.split('@')[0] : null;
         const canDelete = (currentUserPrefix === spark.owner) || (user && user.email === 'yertal-arcade@gmail.com');
         
-        // Determine if we have a real screenshot or just the default/null
         const hasRealCover = spark.image && !spark.image.includes('default.jpg');
+        const viewportLink = `spark.html?current=${currentId}&spark=${spark.id}`;
 
         return `
             <div class="spark-unit flex flex-col gap-3 w-full">
                 <div class="action-card glass p-4 rounded-xl border border-white/5 hover:border-[var(--neon-color)] transition-all group w-full cursor-pointer relative mt-2"
-                     onclick="window.open('${spark.link || '#'}', '_blank')">
+                     onclick="window.open('${viewportLink}', '_blank')">
                     
                     <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black border border-white/20 px-4 py-0.5 rounded-sm z-20 group-hover:border-[var(--neon-color)] transition-colors">
                         <h4 class="text-white font-black text-[9px] uppercase tracking-tighter mb-0 whitespace-nowrap">
@@ -169,6 +169,7 @@ function renderSparks(sparks, currentId) {
                                  </div>
                             </div>
                         ` : ''}
+                        
                         <img src="${spark.image || '/assets/thumbnails/default.jpg'}" alt="Preview" 
                              class="w-full h-full object-cover ${hasRealCover ? 'opacity-100' : 'opacity-20 grayscale'} group-hover:scale-105 transition duration-500">
                         
@@ -181,7 +182,7 @@ function renderSparks(sparks, currentId) {
 
                     <div class="flex justify-between items-center px-2">
                         <div class="flex gap-4">
-                            <button onclick="event.stopPropagation(); handleCoverAction('${currentId}', '${spark.id}', ${hasRealCover})" 
+                            <button onclick="event.stopPropagation(); handleCoverAction('${currentId}', '${spark.id}')" 
                                     class="text-[9px] ${hasRealCover ? 'text-slate-400' : 'text-[var(--neon-color)]'} hover:text-white uppercase font-black transition flex items-center gap-1">
                                 <span class="text-[11px]">${hasRealCover ? '✎' : '📷'}</span> 
                                 ${hasRealCover ? 'Edit Cover' : 'Preview & Capture'}
@@ -211,6 +212,7 @@ function renderSparks(sparks, currentId) {
         `;
     }).join('');
 }
+
 window.copyLink = (params) => {
     const fullUrl = `${window.location.origin}${window.location.pathname}${params}`;
     navigator.clipboard.writeText(fullUrl).then(() => {
@@ -265,35 +267,13 @@ window.handleCreation = async (currentId) => {
         executeMassSpark(currentId, input, 'prompt', 'Custom', '/assets/thumbnails/default.jpg');
     }
 };
-window.handleCoverAction = async (currentId, sparkId, hasRealCover) => {
-    if (!hasRealCover) {
-        // PATH A: Initial Capture
-        // We open the spark and set a "pending_capture" flag in sessionStorage
-        sessionStorage.setItem('pending_capture_spark', JSON.stringify({ currentId, sparkId }));
-        
-        const spark = databaseCache.currents[currentId]?.sparks[sparkId];
-        if (spark?.link) {
-            window.open(spark.link, '_blank');
-            alert("Launch successful. Once you've viewed your spark, return here to confirm the visual capture.");
-        }
-    } else {
-        // PATH B: Edit Cover
-        const newImageUrl = prompt("Enter a new Image URL for this cover (or leave blank to re-capture):");
-        
-        if (newImageUrl === "") {
-            // Re-trigger capture flow
-            sessionStorage.setItem('pending_capture_spark', JSON.stringify({ currentId, sparkId }));
-            const spark = databaseCache.currents[currentId]?.sparks[sparkId];
-            window.open(spark.link, '_blank');
-        } else if (newImageUrl) {
-            // Update with provided URL
-            await updateInRealtimeDB(`arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`, {
-                image: newImageUrl
-            });
-            initArcade(); // Refresh UI
-        }
-    }
+
+window.handleCoverAction = (currentId, sparkId) => {
+    // Both capture and edit now happen within the same specialized viewport
+    const viewportUrl = `spark.html?current=${currentId}&spark=${sparkId}`;
+    window.open(viewportUrl, '_blank');
 };
+
 async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     const countMatch = prompt.match(/\d+/);
@@ -305,12 +285,14 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
         if (mode === 'sourcing') {
             const links = await callGeminiAPI(prompt, count, 'source');
             for (const item of links) {
-                await saveSpark(currentId, { ...item, type: 'link' }, templateName, templateUrl);
+                // Pass null for image to force the "Awaiting Visual" state
+                await saveSpark(currentId, { ...item, type: 'link', image: null }, templateName, '/assets/thumbnails/default.jpg');
             }
         } else {
             for (let i = 0; i < count; i++) {
                 const code = await callGeminiAPI(prompt, i, 'code');
-                await saveSpark(currentId, { name: `${prompt} #${i+1}`, code, type: 'code' }, templateName, templateUrl);
+                // Pass null for image to force the "Awaiting Visual" state
+                await saveSpark(currentId, { name: `${prompt} #${i+1}`, code, type: 'code', image: null }, templateName, '/assets/thumbnails/default.jpg');
             }
         }
         status.textContent = "READY";
@@ -453,28 +435,3 @@ function showBinaryModal(a, b, callback) {
         callback(b); 
     };
 }
-// Listen for the user returning to the tab to finalize the capture
-window.addEventListener('focus', async () => {
-    const pending = sessionStorage.getItem('pending_capture_spark');
-    if (pending) {
-        const { currentId, sparkId } = JSON.parse(pending);
-        sessionStorage.removeItem('pending_capture_spark'); // Clear it so it doesn't loop
-
-        const confirmCapture = confirm("Spark Render Complete? Would you like to finalize the current view as the cover?");
-        
-        if (confirmCapture) {
-            // In a future update, we can integrate a screenshot API here.
-            // For now, we will mark it as "Captured" using a placeholder or 
-            // the AI-generated suggestion to prove the link is active.
-            console.log(`Finalizing capture for ${sparkId}...`);
-            
-            // Temporary: We'll use a 'captured' flag or a generic success image 
-            // until you choose a screenshot provider (like ScreenshotAPI.net or similar)
-            await updateInRealtimeDB(`arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`, {
-                image_status: 'captured',
-                last_previewed: Date.now()
-            });
-            initArcade();
-        }
-    }
-});
