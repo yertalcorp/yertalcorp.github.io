@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Spark Viewport</title>
+    <link rel="stylesheet" href="../css/arcade.css"> <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    </head>
+<body class="bg-black m-0 p-0 overflow-hidden">
+    
+    <div id="spark-content-container" class="w-screen h-screen"></div>
+
+    <div id="spark-hud" class="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/80 backdrop-blur-md border border-white/10 p-3 rounded-2xl z-[9999] shadow-2xl">
+        <div class="w-24 h-14 bg-black rounded border border-white/20 overflow-hidden relative">
+            <canvas id="live-thumb-canvas" class="w-full h-full object-cover"></canvas>
+            <div class="absolute inset-0 flex items-center justify-center opacity-30">
+                <i class="fas fa-sync-alt animate-spin text-[10px] text-white"></i>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <button id="set-cover-btn" class="bg-[var(--neon-color)] text-black text-[10px] font-black px-4 py-2 rounded-lg uppercase tracking-tighter hover:scale-105 transition-transform active:scale-95">
+                Set as Cover Image
+            </button>
+            <div class="text-[7px] text-white/40 uppercase tracking-widest text-center">Live Capture Active</div>
+        </div>
+    </div>
+
+    <script src="../config/firebase-config.js"></script>
+    <script src="../js/spark.js"></script>
+</body>
+</html>
