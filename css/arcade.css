@@ -96,11 +96,12 @@ main.max-width-limit {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Decorative Stats Row (BELOW the box content) */
 .card-stats {
-    display: grid !important;
+    display: flex !important;
+    justify-content: flex-start;
+    gap: 1.5rem;
     grid-template-columns: repeat(3, 1fr) !important;
-    margin-top: auto; /* Pushes to bottom */
+    margin-top: auto;
     padding-top: 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -124,6 +125,18 @@ button#auth-trigger,
 button:hover {
     filter: brightness(1.2);
     box-shadow: 0 0 25px rgba(0, 242, 255, 0.5);
+}
+
+.spark-button {
+    padding: 4px 20px !important;
+    height: auto !important;
+    min-width: 90px;
+    transition: all 0.3s ease-in-out !important;
+}
+.spark-button:hover {
+    background: #fff !important;
+    box-shadow: 0 0 30px var(--neon-color) !important;
+    transform: scale(1.05);
 }
 
 /* --- UTILITIES --- */
