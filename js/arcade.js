@@ -81,11 +81,15 @@ function renderCurrents(currents) {
     container.innerHTML = currentsArray.map(current => {
         const sparkCount = current.sparks ? Object.keys(current.sparks).length : 0;
         
+        // Identify the template type from the first available spark
+        const firstSpark = current.sparks ? Object.values(current.sparks)[0] : null;
+        const templateName = firstSpark?.template_type || "Custom Logic";
+
         return `
         <section class="current-block mb-20 w-full border-b border-white/5 pb-12">
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-2">
                 <div class="flex items-center gap-4 flex-grow w-full">
-                    <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">
+                    <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white mb-0">
                         ${current.name} 
                         <span class="text-[10px] text-slate-500 ml-2 font-normal not-italic">[${sparkCount}/${limits.max_sparks_per_current}]</span>
                     </h2>
@@ -104,6 +108,10 @@ function renderCurrents(currents) {
                     </button>
                 </div>
             </div>
+
+            <div class="current-type-label mb-8">
+                based on <span class="text-[var(--neon-color)] font-bold italic tracking-normal">${templateName}</span>
+            </div>
             
             <div class="grid gap-6 w-full">
                 ${renderSparks(current.sparks, current.id)}
@@ -111,7 +119,6 @@ function renderCurrents(currents) {
         </section>
     `}).join('');
 }
-
 function renderSparks(sparks, currentId) {
     if (!sparks || Object.keys(sparks).length === 0) {
         return `
