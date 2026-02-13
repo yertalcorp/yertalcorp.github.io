@@ -99,7 +99,7 @@ function renderCurrents(currents) {
                     
                     <button onclick="handleCreation('${current.id}')" 
                             ${sparkCount >= limits.max_sparks_per_current ? 'disabled' : ''}
-                            class="bg-[var(--neon-color)]/20 hover:bg-[var(--neon-color)]/40 disabled:opacity-30 disabled:cursor-not-allowed text-[var(--neon-color)] text-[9px] font-bold px-4 py-1 rounded transition uppercase">
+                            class="spark-button bg-[var(--neon-color)]/20 hover:bg-[var(--neon-color)]/40 disabled:opacity-30 disabled:cursor-not-allowed text-[var(--neon-color)] text-[9px] font-bold px-4 py-1 rounded transition uppercase">
                         ${sparkCount >= limits.max_sparks_per_current ? 'Full' : 'Generate'}
                     </button>
                 </div>
@@ -168,10 +168,10 @@ function renderSparks(sparks, currentId) {
                         </button>
                     ` : ''}
                 </div>
-                <div class="card-stats grid grid-cols-3 gap-1 border-t border-white/5 pt-3">
-                    <div class="text-center"><span class="block text-white text-[10px] font-bold">${spark.stats?.views || 0}</span><span class="text-[7px] text-slate-500 uppercase">Views</span></div>
-                    <div class="text-center"><span class="block text-white text-[10px] font-bold">${spark.stats?.likes || 0}</span><span class="text-[7px] text-slate-500 uppercase">Likes</span></div>
-                    <div class="text-center"><span class="block text-white text-[10px] font-bold">${spark.stats?.tips || 0}</span><span class="text-[7px] text-slate-500 uppercase">Tips</span></div>
+                <div class="card-stats grid flex justify-around gap-1 border-t border-white/5 pt-3">
+                    <div class="flex items-center gap-1"><span class="block text-white text-[10px] font-bold">${spark.stats?.views || 0}</span><span class="text-[7px] text-slate-500 uppercase">Views</span></div>
+                    <div class="flex items-center gap-1"><span class="block text-white text-[10px] font-bold">${spark.stats?.likes || 0}</span><span class="text-[7px] text-slate-500 uppercase">Likes</span></div>
+                    <div class="flex items-center gap-1"><span class="block text-white text-[10px] font-bold">${spark.stats?.tips || 0}</span><span class="text-[7px] text-slate-500 uppercase">Tips</span></div>
                 </div>
             </div>
         `;
