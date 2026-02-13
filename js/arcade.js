@@ -119,6 +119,7 @@ function renderCurrents(currents) {
     `}).join('');
 }
 
+
 function renderSparks(sparks, currentId) {
     if (!sparks || Object.keys(sparks).length === 0) {
         return `<div class="col-span-full py-24 border border-dashed border-white/5 rounded-[2rem] text-center bg-white/[0.01]">
@@ -171,7 +172,9 @@ function renderSparks(sparks, currentId) {
                             <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">Rank #${spark.internal_rank || 0}</span>
                             <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">${formatTimeAgo(spark.created)}</span>
                         </div>
-                    </div> <div class="flex flex-col items-end gap-3 pt-1">
+                    **</div>**
+
+                    <div class="flex flex-col items-end gap-3 pt-1">
                         <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" 
                             class="text-white/20 hover:text-[var(--neon-color)] transition-all">
                             <i class="fas fa-share-alt text-xs"></i>
@@ -183,12 +186,13 @@ function renderSparks(sparks, currentId) {
                             [ KILL ]
                         </button>
                         ` : ''}
-                    </div>
+                    **</div>**
                 </div>
             </div>
         `;
     }).join('');
 }
+
 // --- 4. CORE LOGIC & ACTIONS ---
 window.handleCreation = async (currentId) => {
     const promptInput = document.getElementById(`input-${currentId}`);
