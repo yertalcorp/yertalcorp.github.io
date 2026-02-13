@@ -144,6 +144,9 @@ function renderSparks(sparks, currentId) {
         const isMedia = /video|movie|music/i.test(spark.template_type || '');
         const currentUserPrefix = user ? user.email.split('@')[0] : null;
         const canDelete = (currentUserPrefix === spark.owner) || (user && user.email === 'yertal-arcade@gmail.com');
+        
+        // Determine if we have a real screenshot or just the default/null
+        const hasRealCover = spark.image && !spark.image.includes('default.jpg');
 
         return `
             <div class="spark-unit flex flex-col gap-3 w-full">
@@ -158,7 +161,7 @@ function renderSparks(sparks, currentId) {
                     
                     <div class="absolute top-3 right-3 text-[8px] font-black text-white/10 group-hover:text-[var(--neon-color)] transition-colors">#${spark.internal_rank || 0}</div>
                     
-                    <div class="card-preview mb-4 overflow-hidden rounded-lg bg-black/40 aspect-video flex items-center justify-center relative">
+                    <div class="card-preview mb-4 overflow-hidden rounded-lg bg-black/40 aspect-video flex items-center justify-center relative border border-white/5">
                         ${isMedia ? `
                             <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/0 transition-all z-10">
                                  <div class="w-8 h-8 rounded-full bg-[var(--neon-color)]/20 flex items-center justify-center border border-[var(--neon-color)]/40 shadow-[0_0_15px_rgba(var(--neon-color),0.2)]">
@@ -167,14 +170,28 @@ function renderSparks(sparks, currentId) {
                             </div>
                         ` : ''}
                         <img src="${spark.image || '/assets/thumbnails/default.jpg'}" alt="Preview" 
-                             class="w-full h-full object-cover opacity-100 group-hover:scale-105 transition duration-500">
+                             class="w-full h-full object-cover ${hasRealCover ? 'opacity-100' : 'opacity-20 grayscale'} group-hover:scale-105 transition duration-500">
+                        
+                        ${!hasRealCover ? `
+                            <div class="absolute inset-0 flex items-center justify-center text-[7px] text-white/40 uppercase tracking-[0.4em] font-mono">
+                                Awaiting Visual
+                            </div>
+                        ` : ''}
                     </div>
 
                     <div class="flex justify-between items-center px-2">
-                        <button onclick="event.stopPropagation(); copyLink('?current=${currentId}&spark=${spark.id}')" 
-                                class="text-[9px] text-slate-400 hover:text-[var(--neon-color)] uppercase font-bold transition flex items-center gap-1">
-                            <span class="opacity-50">#</span> SHARE
-                        </button>
+                        <div class="flex gap-4">
+                            <button onclick="event.stopPropagation(); handleCoverAction('${currentId}', '${spark.id}', ${hasRealCover})" 
+                                    class="text-[9px] ${hasRealCover ? 'text-slate-400' : 'text-[var(--neon-color)]'} hover:text-white uppercase font-black transition flex items-center gap-1">
+                                <span class="text-[11px]">${hasRealCover ? '✎' : '📷'}</span> 
+                                ${hasRealCover ? 'Edit Cover' : 'Preview & Capture'}
+                            </button>
+
+                            <button onclick="event.stopPropagation(); copyLink('?current=${currentId}&spark=${spark.id}')" 
+                                    class="text-[9px] text-slate-400 hover:text-[var(--neon-color)] uppercase font-bold transition flex items-center gap-1">
+                                <span class="opacity-50">#</span> SHARE
+                            </button>
+                        </div>
         
                         ${canDelete ? `
                             <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
@@ -194,7 +211,6 @@ function renderSparks(sparks, currentId) {
         `;
     }).join('');
 }
-
 window.copyLink = (params) => {
     const fullUrl = `${window.location.origin}${window.location.pathname}${params}`;
     navigator.clipboard.writeText(fullUrl).then(() => {
@@ -211,45 +227,73 @@ window.copyLink = (params) => {
     });
 };
 
-
 window.handleCreation = async (currentId) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
     if (!input) return;
 
-    // 1. DATA-DRIVEN CLASSIFICATION ENGINE
-    const presets = Object.values(databaseCache.settings['arcade-current-types'] || {});
-    let template = presets.find(t => {
-        if (!t.regex) return false;
-        const re = new RegExp(t.regex, 'i');
-        return re.test(input);
-    });
+    const status = document.getElementById('engine-status-text');
+    status.textContent = "CLASSIFYING INTENT...";
 
-    // Fallback to "Custom" if no regex matches
-    if (!template) {
-        template = { id: 'custom', name: 'Custom Logic', logic: 'hybrid', image: '/assets/thumbnails/default.jpg' };
-    }
+    // 1. Ask Gemini to classify the intent based on your available types
+    const typeNames = databaseCache.settings['arcade-current-types'].map(t => t.name).join(', ');
+    const classificationPrompt = `Analyze this user request: "${input}". 
+    Pick the best category from this list: [${typeNames}]. 
+    If it doesn't fit any, respond with "Custom". 
+    Return ONLY the name of the category.`;
 
-    const finalName = template.name;
-    const finalImage = template.image;
-    
-    const isUrl = /^(http|https):\/\/[^ "]+$/.test(input);
-    const isVague = input.length < 15 && !isUrl;
-    let mode = (template.logic === 'source' || isUrl) ? 'sourcing' : 'prompt';
+    try {
+        const detectedCategoryName = await callGeminiAPI(classificationPrompt, 1, 'text');
+        const presets = Object.values(databaseCache.settings['arcade-current-types'] || {});
+        
+        // 2. Find the preset metadata (for the image/logic style)
+        let template = presets.find(t => t.name.toLowerCase() === detectedCategoryName.toLowerCase()) || 
+                       presets.find(t => t.id === 'custom');
 
-    if (isVague && mode === 'prompt') {
-        showBinaryModal(
-            `Focus on mechanics/logic`, `Focus on visuals/vibe`, (choice) => {
-                executeMassSpark(currentId, `${input} (${choice})`, mode, finalName, finalImage);
-                if (promptInput) promptInput.value = '';
-            }
-        );
-    } else {
+        const finalName = template.name;
+        const finalImage = template.image;
+        
+        // 3. Logic Selection
+        const isUrl = /^(http|https):\/\/[^ "]+$/.test(input);
+        let mode = (template.logic === 'source' || isUrl) ? 'sourcing' : 'prompt';
+
         executeMassSpark(currentId, input, mode, finalName, finalImage);
         if (promptInput) promptInput.value = '';
+
+    } catch (e) {
+        console.error("Classification failed, falling back to Custom:", e);
+        executeMassSpark(currentId, input, 'prompt', 'Custom', '/assets/thumbnails/default.jpg');
     }
 };
-
+window.handleCoverAction = async (currentId, sparkId, hasRealCover) => {
+    if (!hasRealCover) {
+        // PATH A: Initial Capture
+        // We open the spark and set a "pending_capture" flag in sessionStorage
+        sessionStorage.setItem('pending_capture_spark', JSON.stringify({ currentId, sparkId }));
+        
+        const spark = databaseCache.currents[currentId]?.sparks[sparkId];
+        if (spark?.link) {
+            window.open(spark.link, '_blank');
+            alert("Launch successful. Once you've viewed your spark, return here to confirm the visual capture.");
+        }
+    } else {
+        // PATH B: Edit Cover
+        const newImageUrl = prompt("Enter a new Image URL for this cover (or leave blank to re-capture):");
+        
+        if (newImageUrl === "") {
+            // Re-trigger capture flow
+            sessionStorage.setItem('pending_capture_spark', JSON.stringify({ currentId, sparkId }));
+            const spark = databaseCache.currents[currentId]?.sparks[sparkId];
+            window.open(spark.link, '_blank');
+        } else if (newImageUrl) {
+            // Update with provided URL
+            await updateInRealtimeDB(`arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`, {
+                image: newImageUrl
+            });
+            initArcade(); // Refresh UI
+        }
+    }
+};
 async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     const countMatch = prompt.match(/\d+/);
@@ -409,3 +453,28 @@ function showBinaryModal(a, b, callback) {
         callback(b); 
     };
 }
+// Listen for the user returning to the tab to finalize the capture
+window.addEventListener('focus', async () => {
+    const pending = sessionStorage.getItem('pending_capture_spark');
+    if (pending) {
+        const { currentId, sparkId } = JSON.parse(pending);
+        sessionStorage.removeItem('pending_capture_spark'); // Clear it so it doesn't loop
+
+        const confirmCapture = confirm("Spark Render Complete? Would you like to finalize the current view as the cover?");
+        
+        if (confirmCapture) {
+            // In a future update, we can integrate a screenshot API here.
+            // For now, we will mark it as "Captured" using a placeholder or 
+            // the AI-generated suggestion to prove the link is active.
+            console.log(`Finalizing capture for ${sparkId}...`);
+            
+            // Temporary: We'll use a 'captured' flag or a generic success image 
+            // until you choose a screenshot provider (like ScreenshotAPI.net or similar)
+            await updateInRealtimeDB(`arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`, {
+                image_status: 'captured',
+                last_previewed: Date.now()
+            });
+            initArcade();
+        }
+    }
+});
