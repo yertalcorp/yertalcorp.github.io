@@ -98,8 +98,8 @@ main.max-width-limit {
 
 .card-stats {
     display: flex !important;
-    justify-content: flex-start;
-    gap: 1.5rem;
+    justify-content: space-between;
+    align-items: center;
     grid-template-columns: repeat(3, 1fr) !important;
     margin-top: auto;
     padding-top: 1.5rem;
@@ -128,15 +128,23 @@ button:hover {
 }
 
 .spark-button {
-    padding: 4px 20px !important;
+    padding: 6px 20px !important;
     height: auto !important;
-    min-width: 90px;
-    transition: all 0.3s ease-in-out !important;
+    min-width: 100px;
+    transition: all 0.3s ease !important;
 }
+
 .spark-button:hover {
     background: #fff !important;
-    box-shadow: 0 0 30px var(--neon-color) !important;
-    transform: scale(1.05);
+    color: black !important;
+    box-shadow: 0 0 20px var(--neon-color) !important;
+    animation: spark-pulse 1.5s infinite;
+}
+
+@keyframes spark-pulse {
+    0% { box-shadow: 0 0 10px var(--neon-color); }
+    50% { box-shadow: 0 0 25px var(--neon-color); }
+    100% { box-shadow: 0 0 10px var(--neon-color); }
 }
 
 /* --- UTILITIES --- */
