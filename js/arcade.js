@@ -151,43 +151,44 @@ function renderSparks(sparks, currentId) {
 
                 <div class="flex justify-between items-start px-2">
                     <div class="flex-grow">
-                    <h4 class="text-white font-black text-sm uppercase tracking-tight leading-tight group-hover:text-[var(--neon-color)] transition-colors">
-                        ${spark.name}
-                    </h4>
+                        <h4 class="text-white font-black text-sm uppercase tracking-tight leading-tight group-hover:text-[var(--neon-color)] transition-colors">
+                            ${spark.name}
+                        </h4>
         
-                <div class="flex gap-4 mt-2 mb-1.5 items-center">
-                    <div class="flex items-center gap-1.5 text-[9px] text-white/40 font-bold">
-                        <i class="fas fa-eye text-[8px]"></i> ${stats.views}
-                    </div>
-                    <div class="flex items-center gap-1.5 text-[9px] text-white/40 font-bold">
-                        <i class="fas fa-heart text-[8px]"></i> ${stats.likes}
-                    </div>
-                </div>
+                        <div class="flex gap-4 mt-2 mb-1.5 items-center">
+                            <div class="flex items-center gap-1.5 text-[9px] text-white/40 font-bold">
+                                <i class="fas fa-eye text-[8px]"></i> ${stats.views}
+                            </div>
+                            <div class="flex items-center gap-1.5 text-[9px] text-white/40 font-bold">
+                                <i class="fas fa-heart text-[8px]"></i> ${stats.likes}
+                            </div>
+                        </div>
 
-                <div class="flex gap-3 items-center mt-1">
-                    <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">Rank #${spark.internal_rank || 0}</span>
-                    <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">${formatTimeAgo(spark.created)}</span>
-                </div>
-            </div>
+                        <div class="flex gap-3 items-center mt-1">
+                            <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">Rank #${spark.internal_rank || 0}</span>
+                            <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">${formatTimeAgo(spark.created)}</span>
+                        </div>
+                    </div>
     
-            <div class="flex flex-col items-end gap-3">
-                <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" 
-                    class="text-white/20 hover:text-[var(--neon-color)] transition-all">
-                    <i class="fas fa-share-alt text-xs"></i>
-                </button>
+                    <div class="flex flex-col items-end gap-3">
+                        <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" 
+                            class="text-white/20 hover:text-[var(--neon-color)] transition-all">
+                            <i class="fas fa-share-alt text-xs"></i>
+                        </button>
         
-                ${isOwner ? `
-                <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
-                    class="text-red-500/20 hover:text-red-500 transition-all text-[8px] font-black uppercase tracking-widest">
-                    [ KILL ]
-                 </button>
-                ` : ''}
+                        ${isOwner ? `
+                        <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
+                            class="text-red-500/20 hover:text-red-500 transition-all text-[8px] font-black uppercase tracking-widest">
+                            [ KILL ]
+                        </button>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
-        </div>
         `;
     }).join('');
 }
+
 // --- 4. CORE LOGIC & ACTIONS ---
 window.handleCreation = async (currentId) => {
     const promptInput = document.getElementById(`input-${currentId}`);
