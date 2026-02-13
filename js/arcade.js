@@ -168,7 +168,7 @@ function renderSparks(sparks, currentId) {
                         </button>
                     ` : ''}
                 </div>
-                <div class="card-stats grid flex justify-around gap-1 border-t border-white/5 pt-3">
+                <div class="card-stats grid flex justify-around items-center gap-1 border-t border-white/5 pt-3">
                     <div class="flex items-center gap-1"><span class="block text-white text-[10px] font-bold">${spark.stats?.views || 0}</span><span class="text-[7px] text-slate-500 uppercase">Views</span></div>
                     <div class="flex items-center gap-1"><span class="block text-white text-[10px] font-bold">${spark.stats?.likes || 0}</span><span class="text-[7px] text-slate-500 uppercase">Likes</span></div>
                     <div class="flex items-center gap-1"><span class="block text-white text-[10px] font-bold">${spark.stats?.tips || 0}</span><span class="text-[7px] text-slate-500 uppercase">Tips</span></div>
