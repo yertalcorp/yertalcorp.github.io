@@ -76,14 +76,15 @@ function renderCurrents(currents) {
 
     // Pull limits from settings (default to 16/48 if DB fetch hasn't finished)
     const limits = databaseCache.settings?.plan_limits?.free || { max_currents: 16, max_sparks_per_current: 48 };
+    const currentTypes = databaseCache.settings?.['arcade-current-types'] || [];
     const currentsArray = Object.values(currents).slice(0, limits.max_currents);
     
     container.innerHTML = currentsArray.map(current => {
         const sparkCount = current.sparks ? Object.keys(current.sparks).length : 0;
         
-        // Identify the template type from the first available spark
-        const firstSpark = current.sparks ? Object.values(current.sparks)[0] : null;
-        const templateName = firstSpark?.template_type || "Custom Logic";
+        // Resolve metadata by matching the current's type_ref to the settings list
+        const typeData = currentTypes.find(t => t.id === current.type_ref);
+        const templateName = typeData ? typeData.name : "Custom Logic";
 
         return `
         <section class="current-block mb-20 w-full border-b border-white/5 pb-12">
@@ -119,6 +120,7 @@ function renderCurrents(currents) {
         </section>
     `}).join('');
 }
+
 function renderSparks(sparks, currentId) {
     if (!sparks || Object.keys(sparks).length === 0) {
         return `
