@@ -15,7 +15,52 @@ async function initSparkView() {
         renderActiveSpark();
     }
 }
+async function initArcade() {
+    const statusText = document.getElementById('engine-status-text');
+    try {
+        statusText.textContent = "SYNCHRONIZING WITH CORE...";
+        
+        const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
+        databaseCache = await response.json();
+        
+        if (!databaseCache) throw new Error("Database Empty");
 
+        // 1. GLOBAL UI CONFIG
+        const ui = databaseCache.settings['ui-settings'];
+        const root = document.documentElement;
+        root.style.setProperty('--neon-color', ui['color-neon']);
+        root.style.setProperty('--accent-color', ui['color-accent']);
+        root.style.setProperty('--nav-font', ui.nav_font);
+        
+        // 2. HERO & BRANDING
+        const hero = databaseCache.arcade_infrastructure.hero;
+        const brand = databaseCache.navigation.branding;
+        
+        document.getElementById('hero-heading').textContent = hero.title;
+        document.getElementById('hero-subheading').textContent = hero.subtitle;
+        document.getElementById('corp-name-display').innerHTML = 
+            `<span style="color: ${brand.parts[0].color}">${brand.parts[0].text}</span> 
+             <span style="color: ${brand.parts[1].color}">${brand.parts[1].text}</span>`;
+
+        // 3. ADMIN PRIVILEGES
+        const superUserDisplay = document.getElementById('superuser-display');
+        if (user && user.email === 'yertal-arcade@gmail.com') {
+            superUserDisplay.textContent = "SYS_ADMIN: CONNECTED";
+            superUserDisplay.classList.add('pulse-neon'); // Add a subtle glow via CSS
+        }
+
+        // 4. RENDER ENGINE
+        renderCurrents(databaseCache.arcade_infrastructure.currents);
+        
+        statusText.textContent = "SYSTEM READY";
+        document.body.style.opacity = '1';
+
+    } catch (e) { 
+        console.error("Initalization Error:", e);
+        statusText.textContent = "CRITICAL ERROR: DATABASE OFFLINE";
+        statusText.style.color = "#ff0033";
+    }
+}
 function renderActiveSpark() {
     const spark = sparkList.find(s => s.id === sparkId);
     if (!spark) return;
