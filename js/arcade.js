@@ -162,15 +162,16 @@ function renderSparks(sparks, currentId) {
                             <div class="flex items-center gap-1.5 text-[9px] text-white/40 font-bold">
                                 <i class="fas fa-heart text-[8px]"></i> ${stats.likes}
                             </div>
+                            <div class="flex items-center gap-1.5 text-[9px] text-[var(--neon-color)] font-black opacity-60">
+                                <i class="fas fa-coins text-[8px]"></i> ${stats.tips || 0}
+                            </div>
                         </div>
 
                         <div class="flex gap-3 items-center mt-1">
                             <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">Rank #${spark.internal_rank || 0}</span>
                             <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">${formatTimeAgo(spark.created)}</span>
                         </div>
-                    </div>
-    
-                    <div class="flex flex-col items-end gap-3">
+                    </div> <div class="flex flex-col items-end gap-3 pt-1">
                         <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" 
                             class="text-white/20 hover:text-[var(--neon-color)] transition-all">
                             <i class="fas fa-share-alt text-xs"></i>
@@ -188,7 +189,6 @@ function renderSparks(sparks, currentId) {
         `;
     }).join('');
 }
-
 // --- 4. CORE LOGIC & ACTIONS ---
 window.handleCreation = async (currentId) => {
     const promptInput = document.getElementById(`input-${currentId}`);
