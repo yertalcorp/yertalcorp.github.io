@@ -74,7 +74,7 @@ function renderCurrents(currents) {
     const container = document.getElementById('currents-container');
     if (!container || !currents) return;
 
-    // Pull limits from settings (default to 16/48 if DB fetch hasn't finished)
+    // Pull limits and types from databaseCache
     const limits = databaseCache.settings?.plan_limits?.free || { max_currents: 16, max_sparks_per_current: 48 };
     const currentTypes = databaseCache.settings?.['arcade-current-types'] || [];
     const currentsArray = Object.values(currents).slice(0, limits.max_currents);
@@ -82,13 +82,13 @@ function renderCurrents(currents) {
     container.innerHTML = currentsArray.map(current => {
         const sparkCount = current.sparks ? Object.keys(current.sparks).length : 0;
         
-        // Resolve metadata by matching the current's type_ref to the settings list
+        // Resolve Type Metadata
         const typeData = currentTypes.find(t => t.id === current.type_ref);
         const templateName = typeData ? typeData.name : "Custom Logic";
 
         return `
-        <section class="current-block mb-20 w-full border-b border-white/5 pb-12">
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-2">
+        <section class="current-block mb-12 w-full border-b border-white/5 pb-8">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-1">
                 <div class="flex items-center gap-4 flex-grow w-full">
                     <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white mb-0">
                         ${current.name} 
@@ -110,8 +110,18 @@ function renderCurrents(currents) {
                 </div>
             </div>
 
-            <div class="current-type-label mb-8">
-                based on <span class="text-[var(--neon-color)] font-bold italic tracking-normal">${templateName}</span>
+            <div class="current-metadata-row mb-6 flex flex-col gap-0.5">
+                <div class="text-[9px] uppercase tracking-tight text-white/80">
+                    based on <span class="text-[var(--neon-color)] font-bold italic tracking-normal">${templateName}</span>
+                </div>
+                <div class="text-[8px] text-slate-500 font-mono uppercase tracking-[0.2em] flex gap-3 items-center">
+                    <span class="flex items-center gap-1">
+                        <span class="text-[var(--neon-color)] opacity-50">●</span> 
+                        ARCHITECT: ${current.owner || 'yertal-arcade'}
+                    </span>
+                    <span class="opacity-20">|</span>
+                    <span>EST: ${formatTimeAgo(current.created || Date.now())}</span>
+                </div>
             </div>
             
             <div class="grid gap-6 w-full">
@@ -120,7 +130,6 @@ function renderCurrents(currents) {
         </section>
     `}).join('');
 }
-
 function renderSparks(sparks, currentId) {
     if (!sparks || Object.keys(sparks).length === 0) {
         return `
@@ -138,15 +147,14 @@ function renderSparks(sparks, currentId) {
 
         return `
             <div class="spark-unit flex flex-col gap-3 w-full">
-                <div class="spark-header text-center px-2">
-                    <h4 class="text-white font-black text-[11px] uppercase tracking-tighter mb-0.5">${spark.name}</h4>
-                    <div class="text-[8px] text-slate-500 uppercase tracking-widest font-medium">
-                        ${spark.owner} • ${formatTimeAgo(spark.created)}
-                    </div>
-                </div>
-
-                <div class="action-card glass p-4 rounded-xl border border-white/5 hover:border-[var(--neon-color)] transition-all group w-full cursor-pointer relative"
+                <div class="action-card glass p-4 rounded-xl border border-white/5 hover:border-[var(--neon-color)] transition-all group w-full cursor-pointer relative mt-2"
                      onclick="window.open('${spark.link || '#'}', '_blank')">
+                    
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black border border-white/20 px-4 py-0.5 rounded-sm z-20 group-hover:border-[var(--neon-color)] transition-colors">
+                        <h4 class="text-white font-black text-[9px] uppercase tracking-tighter mb-0 whitespace-nowrap">
+                            ${spark.name}
+                        </h4>
+                    </div>
                     
                     <div class="absolute top-3 right-3 text-[8px] font-black text-white/10 group-hover:text-[var(--neon-color)] transition-colors">#${spark.internal_rank || 0}</div>
                     
@@ -186,6 +194,7 @@ function renderSparks(sparks, currentId) {
         `;
     }).join('');
 }
+
 window.copyLink = (params) => {
     const fullUrl = `${window.location.origin}${window.location.pathname}${params}`;
     navigator.clipboard.writeText(fullUrl).then(() => {
