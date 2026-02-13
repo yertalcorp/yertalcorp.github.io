@@ -217,59 +217,29 @@ window.handleCreation = async (currentId) => {
     const input = promptInput ? promptInput.value.trim() : '';
     if (!input) return;
 
-    // 1. CLASSIFICATION ENGINE
-    let detectedTypeId = 'custom';
+    // 1. DATA-DRIVEN CLASSIFICATION ENGINE
     const presets = Object.values(databaseCache.settings['arcade-current-types'] || {});
+    let template = presets.find(t => {
+        if (!t.regex) return false;
+        const re = new RegExp(t.regex, 'i');
+        return re.test(input);
+    });
 
-    // Regex triggers mapped to your JSON IDs
-    if (/physics|gravity|simulat|velocity/i.test(input)) detectedTypeId = 'physics-lab';
-    else if (/world|landscape|terrain|ecosystem/i.test(input)) detectedTypeId = 'world-logic';
-    else if (/imdb.com|movie|film|cinema|trailer/i.test(input)) detectedTypeId = 'movies';
-    else if (/youtube.com|vimeo.com|video|clip|veo/i.test(input)) detectedTypeId = 'videos';
-    else if (/github.com|app|tool|interface|utility/i.test(input)) detectedTypeId = 'apps';
-    else if (/game|play|level|quest|rpg/i.test(input)) detectedTypeId = 'games';
-    else if (/stock|price|market|finance|money|crypto/i.test(input)) detectedTypeId = 'finance';
-    else if (/health|medical|fit|body|doctor/i.test(input)) detectedTypeId = 'health';
-    else if (/sport|ball|match|team|athlete/i.test(input)) detectedTypeId = 'sports';
-    else if (/architecture|build|design|structure|house/i.test(input)) detectedTypeId = 'architecture';
-    else if (/robot|bot|drone|automaton/i.test(input)) detectedTypeId = 'robotics';
-    else if (/bio|tech|dna|gene|lab/i.test(input)) detectedTypeId = 'bio-tech';
-    else if (/social|chat|profile|connect|tweet/i.test(input)) detectedTypeId = 'social';
-    else if (/music|audio|sound|song|spotify/i.test(input)) detectedTypeId = 'music';
-    else if (/security|hack|protect|encrypt|firewall/i.test(input)) detectedTypeId = 'security';
-    else if (/travel|trip|flight|hotel|map/i.test(input)) detectedTypeId = 'travel';
-    else if (/food|recipe|cook|restaurant|eat/i.test(input)) detectedTypeId = 'food';
-    else if (/nature|forest|weather|earth|ocean/i.test(input)) detectedTypeId = 'nature';
-    else if (/animal|pet|wildlife|beast/i.test(input)) detectedTypeId = 'animals';
+    // Fallback to "Custom" if no regex matches
+    if (!template) {
+        template = { id: 'custom', name: 'Custom Logic', logic: 'hybrid', image: '/assets/thumbnails/default.jpg' };
+    }
 
-    // 2. TEMPLATE EXTRACTION
-    // Fallback to custom if no match is found
-    const template = presets.find(t => t.id === detectedTypeId) || { 
-        id: 'custom',
-        name: 'Custom', 
-        logic: 'hybrid', 
-        image: '/assets/thumbnails/default.jpg' 
-    };
-
-    // DEBUG LOGGING
-    console.log(`[ARCADE ENGINE] Detected Type: ${detectedTypeId}`);
-    console.log(`[ARCADE ENGINE] Resolved Path: ${template.image}`);
-
-    // CAPTURE VALUES FOR MODAL SCOPE
     const finalName = template.name;
     const finalImage = template.image;
     
-    // 3. LOGIC ENFORCEMENT & MODE SELECTION
     const isUrl = /^(http|https):\/\/[^ "]+$/.test(input);
     const isVague = input.length < 15 && !isUrl;
-    
-    // Automatically switch to 'sourcing' if the JSON says logic: "source" or if it's a URL
     let mode = (template.logic === 'source' || isUrl) ? 'sourcing' : 'prompt';
 
-    // 4. EXECUTION BRANCHING
     if (isVague && mode === 'prompt') {
         showBinaryModal(
-            `Focus on mechanics/logic`,`Focus on visuals/vibe`,(choice) => {
+            `Focus on mechanics/logic`, `Focus on visuals/vibe`, (choice) => {
                 executeMassSpark(currentId, `${input} (${choice})`, mode, finalName, finalImage);
                 if (promptInput) promptInput.value = '';
             }
@@ -279,6 +249,7 @@ window.handleCreation = async (currentId) => {
         if (promptInput) promptInput.value = '';
     }
 };
+
 async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     const countMatch = prompt.match(/\d+/);
@@ -389,8 +360,22 @@ window.deleteSpark = async (currentId, sparkId, ownerPrefix) => {
 async function handleCreateCurrent() {
     const name = prompt("New Current Name:");
     if (!name) return;
+
+    const currentTypes = databaseCache.settings?.['arcade-current-types'] || [];
+    const typeList = currentTypes.map((t, i) => `${i + 1}. ${t.name}`).join('\n');
+    const typeChoice = prompt(`Select Type (Number):\n${typeList}`, "1");
+    
+    const selectedType = currentTypes[parseInt(typeChoice) - 1] || { id: 'custom' };
     const id = name.toLowerCase().replace(/\s+/g, '_');
-    await saveToRealtimeDB(`arcade_infrastructure/currents/${id}`, { id, name, sparks: {} });
+
+    await saveToRealtimeDB(`arcade_infrastructure/currents/${id}`, { 
+        id, 
+        name, 
+        type_ref: selectedType.id,
+        owner: user ? user.email.split('@')[0] : "yertal-arcade",
+        created: Date.now(),
+        sparks: {} 
+    });
     initArcade();
 }
 
