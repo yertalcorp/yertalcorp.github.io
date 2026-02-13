@@ -112,7 +112,6 @@ function renderCurrents(currents) {
     `}).join('');
 }
 
-// --- 3. RENDER ENGINE (SPARKS) ---
 function renderSparks(sparks, currentId) {
     if (!sparks || Object.keys(sparks).length === 0) {
         return `<div class="col-span-full py-24 border border-dashed border-white/5 rounded-[2rem] text-center bg-white/[0.01]">
@@ -125,6 +124,9 @@ function renderSparks(sparks, currentId) {
     return sortedSparks.map(spark => {
         const hasRealCover = spark.image && !spark.image.includes('default.jpg');
         const viewportLink = `spark.html?current=${currentId}&spark=${spark.id}`;
+        
+        // Default stats if none exist
+        const stats = spark.stats || { views: 0, likes: 0, tips: 0 };
 
         return `
             <div class="group relative flex flex-col gap-5">
@@ -144,7 +146,19 @@ function renderSparks(sparks, currentId) {
                 <div class="flex justify-between items-start px-2">
                     <div class="flex-grow">
                         <h4 class="text-white font-black text-sm uppercase tracking-tight leading-tight group-hover:text-[var(--neon-color)] transition-colors">${spark.name}</h4>
-                        <div class="flex gap-3 mt-1.5 items-center">
+                        <div class="flex gap-4 mt-2 mb-1.5 items-center">
+                            <div class="flex items-center gap-1.5 text-[9px] text-white/40 font-bold">
+                                <i class="fas fa-eye text-[8px]"></i> ${stats.views}
+                            </div>
+                            <div class="flex items-center gap-1.5 text-[9px] text-white/40 font-bold">
+                                <i class="fas fa-heart text-[8px]"></i> ${stats.likes}
+                            </div>
+                            <div class="flex items-center gap-1.5 text-[9px] text-[var(--neon-color)] font-black opacity-60 group-hover:opacity-100 transition-opacity">
+                                <i class="fas fa-coins text-[8px]"></i> ${stats.tips}
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 items-center">
                             <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">Rank #${spark.internal_rank || 0}</span>
                             <span class="w-1 h-1 bg-white/10 rounded-full"></span>
                             <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">${formatTimeAgo(spark.created)}</span>
@@ -159,7 +173,6 @@ function renderSparks(sparks, currentId) {
         `;
     }).join('');
 }
-
 // --- 4. CORE LOGIC & ACTIONS ---
 window.handleCreation = async (currentId) => {
     const promptInput = document.getElementById(`input-${currentId}`);
