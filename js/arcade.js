@@ -17,7 +17,7 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 17:56 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 17:59 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -276,27 +276,41 @@ window.deleteSpark = async (currentId, sparkId, ownerPrefix) => {
 };
 
 function formatTimeAgo(timestamp) {
-    if (!timestamp) return 'UNKNOWN';
+    if (!timestamp) return 'RECENTLY'; // Handles local latency during creation
     
-    // Convert Firebase timestamp or ISO string to Date object
-    const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+    let date;
     
-    // If date is invalid, return placeholder
-    if (isNaN(date.getTime())) return 'INITIALIZING...';
+    // 1. Check for Firestore Timestamp object with .toDate() method
+    if (typeof timestamp.toDate === 'function') {
+        date = timestamp.toDate();
+    } 
+    // 2. Check for Firebase 'seconds' object
+    else if (timestamp.seconds) {
+        date = new Date(timestamp.seconds * 1000);
+    } 
+    // 3. Fallback for ISO strings or Date objects
+    else {
+        date = new Date(timestamp);
+    }
+    
+    if (isNaN(date.getTime())) return 'SYNCING...';
 
     const now = new Date();
     const seconds = Math.floor((now - date) / 1000);
+    
+    // Ensure we don't show negative time due to clock drift
+    if (seconds < 5) return "JUST NOW";
 
     let interval = seconds / 31536000;
-    if (interval > 1) return Math.floor(interval) + "Y";
+    if (interval > 1) return Math.floor(interval) + "Y AGO";
     interval = seconds / 2592000;
-    if (interval > 1) return Math.floor(interval) + "M";
+    if (interval > 1) return Math.floor(interval) + "MO AGO";
     interval = seconds / 86400;
-    if (interval > 1) return Math.floor(interval) + "D";
+    if (interval > 1) return Math.floor(interval) + "D AGO";
     interval = seconds / 3600;
-    if (interval > 1) return Math.floor(interval) + "H";
+    if (interval > 1) return Math.floor(interval) + "H AGO";
     interval = seconds / 60;
-    if (interval > 1) return Math.floor(interval) + "M";
+    if (interval > 1) return Math.floor(interval) + "M AGO";
     
-    return Math.floor(seconds) + "S";
+    return Math.floor(seconds) + "S AGO";
 }
