@@ -8,7 +8,7 @@
 #lab-body {
     background-color: #050505;
     color: white;
-    font-family: var(--nav-font), -apple-system, sans-serif !important;
+    font-family: var(--nav-font), -apple-system, sans-serif ;
     margin: 0;
     overflow-x: hidden;
 }
@@ -16,7 +16,7 @@
 /* --- THE LABORATORY LAYOUT --- */
 /* Compress the top area */
 main {
-    padding-top: 4rem !important;
+    padding-top: 4rem ;
 }
 
 main.max-width-limit {
@@ -29,15 +29,17 @@ main.max-width-limit {
 
 /* Industrial Heading Style */
 #hero-heading {
-    font-size: 3rem !important; /* Reduced from 4.5rem */
+    font-size: 3rem ; /* Reduced from 4.5rem */
     line-height: 1;
     letter-spacing: -0.02em;
-    margin-bottom: 0 !important;
+    margin-bottom: 0 ;
 }
 
 /* Pull the subheading closer */
 #hero-subheading {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0px;
+    margin-top: 0px ;
+    line-height: 1.2;
     opacity: 0.6;
     max-width: 600px;
     margin-left: auto;
@@ -46,43 +48,59 @@ main.max-width-limit {
 
 /* Each Current is a distinct row with breathing room */
 .current-block {
-    margin-bottom: 2rem; /* Large gap between different currents */
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem; /* Large gap between different currents */
     width: 100%;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding-top: 1.5rem;
+    padding-top: 0.5rem;
 }
 /* Increase visibility of creation controls */
 .current-block label {
-    font-size: 13px !important;
-    font-weight: 900 !important;
-    color: #ffffff !important;
-    opacity: 1 !important;
+    font-size: 13px ;
+    font-weight: 900 ;
+    color: #ffffff ;
+    opacity: 1 ;
     letter-spacing: 0.15em;
 }
 /* --- DECORATIVE HEADERS --- */
 /* Reduce space between hero and system ready line */
 header {
-    margin-bottom: 0.5rem !important;
+    margin-bottom: 0px ;
+    padding-bottom: 0px ;
 }
 
 /* Ensure the status bar (System Ready) sits tight against the header */
 #engine-status-container, 
 .status-bar {
-    margin-top: -3rem !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 0.5rem;
+    margin-top: -3rem; /* Keep your existing pull */
+    border-top: 1px solid rgba(255, 255, 255, 0.15); /* Slightly brighter line */
+    padding-top: 0.25rem; /* Reduced padding to keep it tight */
+    display: flex;
+    align-items: center;
 }
-/* Metallic/Chrome Text Effect */
-.metallic-text {
+/* Add this to give the text that bright, metallic hardware look */
+#engine-status-text, 
+#superuser-display {
     font-weight: 900 !important;
     text-transform: uppercase;
     letter-spacing: 0.2em;
     font-size: 10px;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 2px var(--neon-color);
+    filter: brightness(1.4) contrast(1.1);
+}
+
+/* Metallic/Chrome Text Effect */
+.metallic-text {
+    font-weight: 900 ;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    font-size: 10px;
     /* High brightness and contrast to simulate metal */
     color: #ffffff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 
-                 0 0 2px var(--neon-color);
-    filter: brightness(1.5) contrast(1.2);
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 
+                 0 0 3px var(--neon-color);
+    filter: brightness(1.8) contrast(1.3);
 }
 .current-block h2 {
     font-family: var(--nav-font);
@@ -100,7 +118,7 @@ header {
 
 /* Hide the 1/48 counter as requested */
 .current-block h2 span {
-    display: none !important;
+    display: none ;
 }
 
 .spark-unit {
@@ -148,11 +166,11 @@ header {
 /* --- THE SPARK GRID --- */
 
 .experiment-zone .grid {
-    display: grid !important;
+    display: grid ;
     /* Min 200px (1/2 mobile) | Max 1fr (1/6 desktop) */
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
-    gap: 1.5rem !important; /* Spacious gap between sparks */
-    width: 100% !important;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) ;
+    gap: 1.5rem ; /* Spacious gap between sparks */
+    width: 100% ;
 }
 
 /* --- SURREAL 3D SPARK BOXES --- */
@@ -191,22 +209,22 @@ header {
 }
 
 .card-stats-row {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-between !important;
+    display: flex ;
+    flex-direction: row ;
+    justify-content: space-between ;
     margin-top: 0.25rem;
-    border: none !important;
+    border: none ;
 }
 
 /* --- DECORATIVE BUTTONS --- */
 
 button#auth-trigger, 
 .current-block button {
-    padding: 12px 36px !important;
-    background: var(--neon-color) !important;
-    color: black !important;
-    font-weight: 900 !important;
-    border: none !important;
+    padding: 12px 36px ;
+    background: var(--neon-color) ;
+    color: black ;
+    font-weight: 900 ;
+    border: none ;
     box-shadow: 0 0 20px var(--neon-color);
     border-radius: 8px;
     text-transform: uppercase;
@@ -219,15 +237,15 @@ button#auth-trigger,
     transform: translateY(-1px);
 }
 .current-block input {
-    font-size: 16px !important;
-    color: #ffffff !important;
-    background: transparent !important;
+    font-size: 16px ;
+    color: #ffffff ;
+    background: transparent ;
     text-shadow: 0 0 8px rgba(255,255,255,0.2);
     font-weight: 500;
 }
 
 .current-block input::placeholder {
-    color: rgba(255, 255, 255, 0.5) !important;
+    color: rgba(255, 255, 255, 0.5) ;
     font-style: italic;
 }
 .current-block input:focus {
@@ -239,16 +257,16 @@ button:hover {
 }
 
 .spark-button {
-    padding: 6px 20px !important;
-    height: auto !important;
+    padding: 6px 20px ;
+    height: auto ;
     min-width: 100px;
-    transition: all 0.3s ease !important;
+    transition: all 0.3s ease ;
 }
 
 .spark-button:hover {
-    background: #fff !important;
-    color: black !important;
-    box-shadow: 0 0 20px var(--neon-color) !important;
+    background: #fff ;
+    color: black ;
+    box-shadow: 0 0 20px var(--neon-color) ;
     animation: spark-pulse 1.5s infinite;
 }
 
@@ -259,4 +277,4 @@ button:hover {
 }
 
 /* --- UTILITIES --- */
-.hidden { display: none !important; }
+.hidden { display: none ; }
