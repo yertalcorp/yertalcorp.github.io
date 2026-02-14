@@ -17,7 +17,7 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 15:59 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 16:15 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -135,62 +135,62 @@ function renderSparks(sparks, currentId) {
         const isOwner = user && (user.email.split('@')[0] === spark.owner || user.email === 'yertal-arcade@gmail.com');
 
         return `
-            <div class="group relative flex flex-col h-full">
-                <div class="relative aspect-video rounded-[1.5rem] overflow-hidden border border-white/5 bg-black group-hover:border-[var(--neon-color)]/40 transition-all duration-700 cursor-pointer shadow-2xl mb-4"
+            <div class="action-card group">
+                <div class="card-preview relative aspect-video cursor-pointer" 
                      onclick="window.open('${viewportLink}', '_blank')">
-                    
                     <img src="${spark.image || '/assets/thumbnails/default.jpg'}" 
-                         class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 ${hasRealCover ? '' : 'opacity-10 grayscale'}">
+                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${hasRealCover ? '' : 'opacity-20 grayscale'}">
                     
-                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
-                        <div class="text-[10px] text-[var(--neon-color)] font-black uppercase tracking-[0.2em]">Launch Viewport <i class="fas fa-external-link-alt ml-2 text-[8px]"></i></div>
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span class="text-[10px] text-[var(--neon-color)] font-black uppercase tracking-widest">Launch</span>
                     </div>
-                    ${!hasRealCover ? `<div class="absolute inset-0 flex items-center justify-center text-[7px] text-white/10 uppercase tracking-[0.4em] font-mono">Initializing...</div>` : ''}
                 </div>
 
-                <div class="flex justify-between items-start px-2 min-h-[80px]">
-                    <div class="flex-grow flex flex-col gap-1">
-                        <h4 class="text-white font-black text-sm uppercase tracking-tight leading-tight group-hover:text-[var(--neon-color)] transition-colors">
-                            ${spark.name}
-                        </h4>
-        
-                        <div class="flex gap-3 my-1 items-center flex-nowrap">
-                            <div class="flex items-center gap-1 text-[9px] text-white/40 font-bold whitespace-nowrap">
+                <div class="flex flex-col flex-grow">
+                    <h4 class="text-white font-black text-sm uppercase tracking-tighter mb-2 group-hover:text-[var(--neon-color)] transition-colors">
+                        ${spark.name}
+                    </h4>
+
+                    <div class="card-stats-row border-t border-white/5 pt-3">
+                        <div class="flex gap-3">
+                            <div class="flex items-center gap-1 text-[9px] text-white/40">
                                 <i class="fas fa-eye"></i> <span>${stats.views}</span>
                             </div>
-                            <div class="flex items-center gap-1 text-[9px] text-white/40 font-bold whitespace-nowrap">
+                            <div class="flex items-center gap-1 text-[9px] text-white/40">
                                 <i class="fas fa-heart"></i> <span>${stats.likes}</span>
                             </div>
-                            <div class="flex items-center gap-1 text-[9px] text-[var(--neon-color)] font-black opacity-60 whitespace-nowrap">
-                                <i class="fas fa-coins"></i> <span>${stats.tips || 0}</span>
-                            </div>
                         </div>
-
-                        <div class="flex gap-2 items-center opacity-30">
-                            <span class="text-[8px] text-white uppercase tracking-widest font-bold">Rank #${spark.internal_rank || 0}</span>
-                            <span class="text-[8px] text-white uppercase tracking-widest font-bold">•</span>
-                            <span class="text-[8px] text-white uppercase tracking-widest font-bold">${formatTimeAgo(spark.created)}</span>
+                        <div class="text-[9px] text-[var(--neon-color)] font-bold">
+                            <i class="fas fa-coins"></i> <span>${stats.tips || 0}</span>
                         </div>
                     </div>
 
-                    <div class="flex flex-col items-end gap-4 ml-2">
-                        <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" 
-                            class="text-white/20 hover:text-[var(--neon-color)] transition-all">
-                            <i class="fas fa-share-alt text-xs"></i>
-                        </button>
-        
-                        ${isOwner ? `
-                        <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
-                            class="text-red-500/20 hover:text-red-500 transition-all text-[8px] font-black uppercase tracking-widest">
-                            [ KILL ]
-                        </button>
-                        ` : ''}
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="flex flex-col">
+                            <span class="text-[7px] text-white/20 uppercase font-bold tracking-[0.2em]">Rank #${spark.internal_rank || 0}</span>
+                            <span class="text-[7px] text-white/20 uppercase font-bold tracking-[0.2em]">${formatTimeAgo(spark.created)}</span>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" 
+                                    class="text-white/20 hover:text-white transition-colors">
+                                <i class="fas fa-share-alt text-[10px]"></i>
+                            </button>
+                            ${isOwner ? `
+                            <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
+                                    class="text-red-500/20 hover:text-red-500 transition-colors text-[7px] font-black">
+                                KILL
+                            </button>
+                            ` : ''}
+                        </div>
                     </div>
                 </div>
             </div>
         `;
     }).join('');
 }
+
+
 // --- 4. CORE LOGIC & ACTIONS ---
 window.handleCreation = async (currentId) => {
     const promptInput = document.getElementById(`input-${currentId}`);
