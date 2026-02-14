@@ -1,7 +1,7 @@
 import { firebaseConfig, auth, saveToRealtimeDB } from '/config/firebase-config.js';
 import { watchAuthState, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
-it
+
 let user;
 let databaseCache = {};
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
