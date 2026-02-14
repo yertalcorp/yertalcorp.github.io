@@ -17,7 +17,7 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 17:44 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 17:56 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -76,9 +76,9 @@ function renderCurrents(currents) {
         const templateName = typeData ? typeData.name : "Custom Logic";
 
         return `
-        <section class="current-block w-full pt-6 border-t border-white/5">
-            <div class="flex flex-col lg:flex-row items-center gap-8 mb-4">
-                <h2 class="text-5xl font-black italic uppercase tracking-tighter leading-none" 
+        <section class="current-block w-full">
+            <div class="flex flex-col lg:flex-row items-center gap-8 mb-3">
+                <h2 class="text-4xl font-black italic uppercase tracking-tighter leading-none" 
                     style="background: linear-gradient(to right, #fff, rgba(255,255,255,0.2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                     ${current.name}
                 </h2>
@@ -96,16 +96,13 @@ function renderCurrents(currents) {
                 </div>
             </div>
 
-            <div class="mb-2">
-                <span class="text-[10px] uppercase tracking-[0.4em] font-black text-[var(--neon-color)] opacity-80 font-mono">
+            <div class="flex flex-col mb-8">
+                <span class="text-[9px] uppercase tracking-[0.4em] font-black text-[var(--neon-color)] opacity-80 font-mono">
                     BASED ON ${templateName}
                 </span>
-            </div>
-
-            <div class="flex items-center gap-3 text-[9px] uppercase tracking-widest font-bold text-white/30">
-                <span class="text-white/60">${current.owner || 'yertal-arcade-arcade'}</span> 
-                <span class="opacity-20">•</span> 
-                <span>CREATED: ${formatTimeAgo(current.created)}</span>
+                <span class="text-[8px] uppercase tracking-widest font-bold text-white/30 mt-1">
+                    ARCHITECT: <span class="text-white/60">${current.owner || 'yertal-arcade'}</span>
+                </span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -117,7 +114,7 @@ function renderCurrents(currents) {
 
 function renderSparks(sparks, currentId) {
     if (!sparks || Object.keys(sparks).length === 0) {
-        return `<div class="col-span-full py-16 border border-dashed border-white/5 rounded-[2rem] text-center bg-white/[0.01]">
+        return `<div class="col-span-full py-12 border border-dashed border-white/5 rounded-[2rem] text-center bg-white/[0.01]">
                     <p class="text-white/20 text-[9px] uppercase tracking-[0.5em] font-mono">Stream Offline</p>
                 </div>`;
     }
@@ -128,14 +125,14 @@ function renderSparks(sparks, currentId) {
         const hasRealCover = spark.image && !spark.image.includes('default.jpg');
         const viewportLink = `spark.html?current=${currentId}&spark=${spark.id}`;
         const stats = spark.stats || { views: 0, likes: 0, tips: 0 };
-        const isOwner = user && (user.email.split('@')[0] === spark.owner || user.email === 'yertal-arcade-arcade@gmail.com');
+        const isOwner = user && (user.email.split('@')[0] === spark.owner || user.email === 'yertal-arcade@gmail.com');
 
         return `
-            <div class="flex flex-col gap-4">
-                <div class="action-card group relative flex items-center justify-center overflow-hidden min-h-[190px] rounded-[1.5rem] cursor-pointer" 
+            <div class="flex flex-col gap-3">
+                <div class="action-card group relative flex items-center justify-center overflow-hidden min-h-[180px] rounded-[1.5rem] cursor-pointer" 
                      onclick="window.open('${viewportLink}', '_blank')">
                     
-                    <h4 class="relative z-20 text-white font-black text-[13px] uppercase tracking-[0.2em] text-center px-6 drop-shadow-[0_2px_15px_rgba(0,0,0,1)] group-hover:text-[var(--neon-color)] transition-colors">
+                    <h4 class="relative z-20 text-white font-black text-[12px] uppercase tracking-[0.2em] text-center px-6 drop-shadow-[0_2px_15px_rgba(0,0,0,1)] group-hover:text-[var(--neon-color)] transition-colors">
                         ${spark.name}
                     </h4>
 
@@ -146,24 +143,30 @@ function renderSparks(sparks, currentId) {
                     </div>
                 </div>
 
-                <div class="flex justify-between items-center px-1">
-                    <div class="flex gap-4 text-[10px] font-bold uppercase tracking-tight">
-                        <span class="text-white/40">${stats.views} <span class="text-[7px] opacity-40">views</span></span>
-                        <span class="text-white/40">${stats.likes} <span class="text-[7px] opacity-40">likes</span></span>
-                        <span class="text-[var(--neon-color)]">${stats.tips || 0} <span class="text-[7px] opacity-60">tips</span></span>
-                    </div>
+                <div class="flex flex-col px-1 gap-1">
+                    <div class="flex justify-between items-center">
+                        <div class="flex gap-4 text-[10px] font-bold uppercase tracking-tight">
+                            <span class="text-white/40">${stats.views} <span class="text-[7px] opacity-40">views</span></span>
+                            <span class="text-white/40">${stats.likes} <span class="text-[7px] opacity-40">likes</span></span>
+                            <span class="text-[var(--neon-color)]">${stats.tips || 0} <span class="text-[7px] opacity-60">tips</span></span>
+                        </div>
 
-                    <div class="flex gap-3">
-                        <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" 
-                                class="text-white/20 hover:text-[var(--neon-color)] transition-colors">
-                            <i class="fas fa-share-alt text-[10px]"></i>
-                        </button>
-                        ${isOwner ? `
-                        <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
-                                class="text-red-500/20 hover:text-red-500 transition-colors text-[9px] font-black">
-                            [X]
-                        </button>
-                        ` : ''}
+                        <div class="flex gap-3">
+                            <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" 
+                                    class="text-white/20 hover:text-[var(--neon-color)] transition-colors">
+                                <i class="fas fa-share-alt text-[10px]"></i>
+                            </button>
+                            ${isOwner ? `
+                            <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
+                                    class="text-red-500/20 hover:text-red-500 transition-colors text-[9px] font-black">
+                                [X]
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="text-[8px] uppercase tracking-[0.2em] font-bold text-white/10 italic">
+                        CREATED: ${formatTimeAgo(spark.created)}
                     </div>
                 </div>
             </div>
@@ -273,10 +276,27 @@ window.deleteSpark = async (currentId, sparkId, ownerPrefix) => {
 };
 
 function formatTimeAgo(timestamp) {
-    if (!timestamp) return "---";
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
-    if (seconds < 60) return "Just now";
-    if (seconds < 3600) return `${Math.floor(seconds/60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds/3600)}h ago`;
-    return new Date(timestamp).toLocaleDateString();
+    if (!timestamp) return 'UNKNOWN';
+    
+    // Convert Firebase timestamp or ISO string to Date object
+    const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+    
+    // If date is invalid, return placeholder
+    if (isNaN(date.getTime())) return 'INITIALIZING...';
+
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + "Y";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + "M";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + "D";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + "H";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + "M";
+    
+    return Math.floor(seconds) + "S";
 }
