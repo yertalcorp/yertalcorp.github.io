@@ -17,7 +17,7 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 20:25 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 20:30 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -33,8 +33,8 @@ async function initArcade() {
         root.style.setProperty('--neon-color', ui['color-neon']);
         root.style.setProperty('--accent-color', ui['color-accent']);
         root.style.setProperty('--nav-font', ui.nav_font);
-        **root.style.setProperty('--hero-pt', '3rem');** // Reduced from 4rem
-
+        root.style.setProperty('--hero-pt', '2rem'); // Tightened hero top padding
+        
         // Hero & Branding
         const hero = databaseCache.arcade_infrastructure.hero;
         const brand = databaseCache.navigation.branding;
@@ -48,10 +48,12 @@ async function initArcade() {
             <span style="color: var(--neon-color)">${titleParts[2]}</span>
         `;
 
-        // BRIGHTER SUBTITLE
-        **const subtitleEl = document.getElementById('hero-subheading');**
-        **subtitleEl.textContent = hero.subtitle;**
-        **subtitleEl.classList.add('text-slate-200', 'text-lg', 'mt-2');** // Increased size and brightness
+        // ENHANCED SUBTITLE
+        const subtitleEl = document.getElementById('hero-subheading');
+        subtitleEl.textContent = hero.subtitle;
+        subtitleEl.style.fontSize = "1.25rem"; // Larger text
+        subtitleEl.style.color = "rgba(255, 255, 255, 0.9)"; // Brighter font
+        subtitleEl.style.marginTop = "0.5rem";
 
         document.getElementById('corp-name-display').innerHTML = 
             `<span style="color: ${brand.parts[0].color}">${brand.parts[0].text}</span> 
