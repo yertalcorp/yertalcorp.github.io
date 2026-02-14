@@ -46,7 +46,7 @@ main.max-width-limit {
 
 /* Each Current is a distinct row with breathing room */
 .current-block {
-    margin-top: 0.5rem;
+    margin-top: 1rem;
     margin-bottom: 0.5rem; /* Large gap between different currents */
     width: 100%;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -70,11 +70,10 @@ header {
 /* Ensure the status bar (System Ready) sits tight against the header */
 #engine-status-container, 
 .status-bar {
-    margin-top: -0.5rem; /* Keep your existing pull */
+    margin-top: -0.25rem; /* Keep your existing pull */
     border-top: 1px solid rgba(255, 255, 255, 0.15); /* Slightly brighter line */
-    padding-top: 0.2rem; /* Reduced padding to keep it tight */
+    padding: 0.2rem 0; /* Reduced padding to keep it tight */
     display: flex;
-    align-items: center;
     justify-content: space-between;
 }
 /* Add this to give the text that bright, metallic hardware look */
@@ -86,7 +85,7 @@ header {
     font-size: 11px;
     color: #ffffff;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 2px var(--neon-color);
-    filter: brightness(1.4) contrast(1.1);
+    filter: brightness(1.5);
 }
 /* Status Dot pulse */
 .status-dot {
