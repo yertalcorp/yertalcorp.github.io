@@ -17,7 +17,7 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 18:10 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 18:15 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -76,7 +76,7 @@ function renderCurrents(currents) {
         const templateName = typeData ? typeData.name : "Custom Logic";
 
         return `
-        <section class="current-block w-full">
+        <section class="current-block items-center w-full">
             <h2 class="text-4xl font-black italic uppercase tracking-tighter leading-none mb-1" 
                 style="background: linear-gradient(to right, #fff, rgba(255,255,255,0.2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 ${current.name}
@@ -90,11 +90,9 @@ function renderCurrents(currents) {
             </div>
 
             <div class="flex flex-col lg:flex-row items-center gap-4 mb-10">
-                <div class="text-[10px] text-white/40 uppercase font-bold tracking-widest whitespace-nowrap">
-                    Create a Spark
-                </div>
-                
+          
                 <div class="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10 flex-grow max-w-2xl backdrop-blur-md">
+                    Create a Spark: 
                     <input type="text" id="input-${current.id}" 
                            placeholder="Type a prompt or paste a URL..." 
                            class="bg-transparent border-none text-[11px] text-white px-4 py-1.5 flex-grow outline-none focus:ring-0 font-mono">
