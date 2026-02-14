@@ -17,7 +17,7 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 18:03 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 18:06 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -77,13 +77,14 @@ function renderCurrents(currents) {
 
         return `
         <section class="current-block w-full">
-            <h2 class="text-4xl font-black italic uppercase tracking-tighter leading-none mb-2" 
+            <h2 class="text-4xl font-black italic uppercase tracking-tighter leading-none mb-1" 
                 style="background: linear-gradient(to right, #fff, rgba(255,255,255,0.2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 ${current.name}
             </h2>
 
             <div class="mb-6">
-                <span class="text-[9px] uppercase tracking-[0.4em] font-black text-[var(--neon-color)] opacity-80 font-mono">
+                <span class="text-[10px] uppercase tracking-[0.4em] font-black font-mono italic" 
+                      style="background: linear-gradient(to right, #00f2ff, #0066ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 8px rgba(0, 242, 255, 0.3));">
                     BASED ON ${templateName}
                 </span>
             </div>
