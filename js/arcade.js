@@ -17,7 +17,7 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 20:30 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 20:10 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -33,7 +33,7 @@ async function initArcade() {
         root.style.setProperty('--neon-color', ui['color-neon']);
         root.style.setProperty('--accent-color', ui['color-accent']);
         root.style.setProperty('--nav-font', ui.nav_font);
-        root.style.setProperty('--hero-pt', '2rem'); // Tightened hero top padding
+        root.style.setProperty('--hero-pt', '1.5rem'); // Further reduced top padding
         
         // Hero & Branding
         const hero = databaseCache.arcade_infrastructure.hero;
@@ -51,15 +51,14 @@ async function initArcade() {
         // ENHANCED SUBTITLE
         const subtitleEl = document.getElementById('hero-subheading');
         subtitleEl.textContent = hero.subtitle;
-        subtitleEl.style.fontSize = "1.25rem"; // Larger text
-        subtitleEl.style.color = "rgba(255, 255, 255, 0.9)"; // Brighter font
-        subtitleEl.style.marginTop = "0.5rem";
+        subtitleEl.style.fontSize = "1rem"; // Slightly smaller for better hierarchy
+        subtitleEl.style.color = "rgba(255, 255, 255, 0.9)"; 
+        subtitleEl.style.marginTop = "0.25rem";
 
         document.getElementById('corp-name-display').innerHTML = 
             `<span style="color: ${brand.parts[0].color}">${brand.parts[0].text}</span> 
              <span style="color: ${brand.parts[1].color}">${brand.parts[1].text}</span>`;
 
-        // Superuser Display
         const superUserDisplay = document.getElementById('superuser-display');
         if (user && user.email === 'yertal-arcade@gmail.com') {
             superUserDisplay.textContent = "SYS_ADMIN: CONNECTED";
@@ -76,6 +75,7 @@ async function initArcade() {
         statusText.textContent = "CRITICAL ERROR: DATABASE OFFLINE";
     }
 }
+
 
 function renderCurrents(currents) {
     const container = document.getElementById('currents-container');
