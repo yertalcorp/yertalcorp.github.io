@@ -106,7 +106,35 @@ header {
 .spark-unit {
     max-width: 100%;
 }
+/* High-Density Current Headings */
+.current-title {
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));
+}
 
+/* Generate Button: Metallic Glow */
+.generate-btn {
+    box-shadow: 0 0 15px var(--neon-color);
+    border: 1px solid rgba(255,255,255,0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.generate-btn:after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+    transform: rotate(45deg);
+    transition: 0.5s;
+}
+
+.generate-btn:hover:after {
+    left: 100%;
+}
 /* New Sub-style for "Based on Type" */
 .current-type-label {
     font-size: 0.75rem;
@@ -193,13 +221,17 @@ button#auth-trigger,
 .current-block input {
     font-size: 16px !important;
     color: #ffffff !important;
-    background: rgba(255, 255, 255, 0.05) !important;
+    background: transparent !important;
+    text-shadow: 0 0 8px rgba(255,255,255,0.2);
     font-weight: 500;
 }
 
 .current-block input::placeholder {
     color: rgba(255, 255, 255, 0.5) !important;
     font-style: italic;
+}
+.current-block input:focus {
+    border-bottom: 1px solid var(--neon-color);
 }
 button:hover {
     filter: brightness(1.2);
