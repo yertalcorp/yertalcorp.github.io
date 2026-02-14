@@ -76,36 +76,38 @@ function renderCurrents(currents) {
         const templateName = typeData ? typeData.name : "Custom Logic";
 
         return `
-        <section class="current-block items-center w-full">
-            <h2 class="text-4xl font-black italic uppercase tracking-tighter leading-none mb-1" 
+        <section class="current-block w-full flex flex-col items-center">
+            <h2 class="text-5xl font-black italic uppercase tracking-tighter leading-none mb-1 text-center" 
                 style="background: linear-gradient(to right, #fff, rgba(255,255,255,0.2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 ${current.name}
             </h2>
 
-            <div class="mb-6">
+            <div class="mb-8 text-center">
                 <span class="text-[10px] uppercase tracking-[0.4em] font-black font-mono italic" 
                       style="background: linear-gradient(to right, #00f2ff, #0066ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 8px rgba(0, 242, 255, 0.3));">
                     BASED ON ${templateName}
                 </span>
             </div>
 
-            <div class="flex flex-col lg:flex-row items-center gap-4 mb-10">
-          
-                <div class="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10 flex-grow max-w-2xl backdrop-blur-md">
-                    Create a Spark: 
+            <div class="flex flex-row items-center justify-center gap-6 mb-12 w-full max-w-5xl">
+                <label class="text-[10px] text-white/40 uppercase font-bold tracking-widest whitespace-nowrap">
+                    Create a Spark
+                </label>
+                
+                <div class="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10 flex-grow backdrop-blur-md">
                     <input type="text" id="input-${current.id}" 
                            placeholder="Type a prompt or paste a URL..." 
-                           class="bg-transparent border-none text-[11px] text-white px-4 py-1.5 flex-grow outline-none focus:ring-0 font-mono">
+                           class="bg-transparent border-none text-[12px] text-white px-4 py-2 w-full outline-none focus:ring-0 font-mono">
                     
                     <button onclick="handleCreation('${current.id}')" 
                             ${sparkCount >= limits.max_sparks_per_current ? 'disabled' : ''}
-                            class="bg-[var(--neon-color)] text-black text-[9px] font-black px-6 py-2 rounded-lg uppercase tracking-tight hover:scale-105 transition-transform">
+                            class="bg-[var(--neon-color)] text-black text-[10px] font-black px-8 py-2.5 rounded-lg uppercase tracking-tight hover:scale-105 transition-transform whitespace-nowrap">
                         Generate
                     </button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 w-full">
                 ${renderSparks(current.sparks, current.id)}
             </div>
         </section>
