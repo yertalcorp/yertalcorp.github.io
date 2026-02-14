@@ -158,13 +158,13 @@ function renderSparks(sparks, currentId) {
         
                         <div class="flex gap-4 mt-2 mb-1.5 items-center">
                             <div class="flex items-center gap-1.5 text-[9px] text-white/40 font-bold">
-                                <i class="fas fa-eye text-[8px]"></i> ${stats.views}
+                                <i class="fas fa-eye text-[8px]"></i> <span>${stats.views}</span>
                             </div>
                             <div class="flex items-center gap-1.5 text-[9px] text-white/40 font-bold">
-                                <i class="fas fa-heart text-[8px]"></i> ${stats.likes}
+                                <i class="fas fa-heart text-[8px]"></i> <span>${stats.likes}</span>
                             </div>
                             <div class="flex items-center gap-1.5 text-[9px] text-[var(--neon-color)] font-black opacity-60">
-                                <i class="fas fa-coins text-[8px]"></i> ${stats.tips || 0}
+                                <i class="fas fa-coins text-[8px]"></i> <span>${stats.tips || 0}</span>
                             </div>
                         </div>
 
@@ -192,6 +192,7 @@ function renderSparks(sparks, currentId) {
         `;
     }).join('');
 }
+
 // --- 4. CORE LOGIC & ACTIONS ---
 window.handleCreation = async (currentId) => {
     const promptInput = document.getElementById(`input-${currentId}`);
