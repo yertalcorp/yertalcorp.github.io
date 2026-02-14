@@ -16,8 +16,9 @@ watchAuthState((newUser) => {
     }
 });
 
+// Ensure no loose text exists above this line
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 21:38 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 20:10 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -27,20 +28,19 @@ async function initArcade() {
         
         if (!databaseCache) throw new Error("Database Empty");
 
-        // UI Genetics
         const ui = databaseCache.settings['ui-settings'];
         const root = document.documentElement;
         root.style.setProperty('--neon-color', ui['color-neon']);
         root.style.setProperty('--accent-color', ui['color-accent']);
         root.style.setProperty('--nav-font', ui.nav_font);
-        root.style.setProperty('--hero-pt', '1.5rem'); 
+        **root.style.setProperty('--hero-pt', '0.5rem');** /* Crushing top space */
         
-        // Hero & Branding
         const hero = databaseCache.arcade_infrastructure.hero;
         const brand = databaseCache.navigation.branding;
         const titleParts = hero.title.split(' ');
         
         const heroHeading = document.getElementById('hero-heading');
+        **heroHeading.style.fontSize = "2.2rem";** /* Industrial but compact */
         heroHeading.style.fontWeight = ui['nav-font-weight'] || '900';
         heroHeading.innerHTML = `
             <span style="color: ${brand.parts[0].color}">${titleParts[0]}</span> 
@@ -48,36 +48,69 @@ async function initArcade() {
             <span style="color: var(--neon-color)">${titleParts[2]}</span>
         `;
 
-        // SUBTITLE - ZERO BOTTOM MARGIN
         const subtitleEl = document.getElementById('hero-subheading');
         subtitleEl.textContent = hero.subtitle;
-        subtitleEl.style.fontSize = "1rem";
-        subtitleEl.style.color = "rgba(255, 255, 255, 0.95)";
-        subtitleEl.style.fontWeight = "600";
-        subtitleEl.style.marginBottom = "0px";
-        subtitleEl.style.display = "block";
-
-        document.getElementById('corp-name-display').innerHTML = 
-            `<span style="color: ${brand.parts[0].color}">${brand.parts[0].text}</span> 
-             <span style="color: ${brand.parts[1].color}">${brand.parts[1].text}</span>`;
+        **subtitleEl.style.fontSize = "0.75rem";**
+        **subtitleEl.style.marginTop = "-0.25rem";**
+        subtitleEl.style.color = "rgba(255, 255, 255, 0.7)";
 
         const superUserDisplay = document.getElementById('superuser-display');
         if (user && user.email === 'yertal-arcade@gmail.com') {
             superUserDisplay.textContent = "ACCESS: YERTAL-ARCADE";
             superUserDisplay.style.color = 'var(--neon-color)';
-            superUserDisplay.classList.add('metallic-text');
         }
 
         renderCurrents(databaseCache.arcade_infrastructure.currents);
         
         statusText.textContent = "SYSTEM READY";
-        statusText.classList.add('metallic-text');
         document.body.style.opacity = '1';
 
     } catch (e) { 
         console.error("Initialization Error:", e);
         statusText.textContent = "CRITICAL ERROR: DATABASE OFFLINE";
     }
+}
+
+function renderCurrents(currents) {
+    const container = document.getElementById('currents-container');
+    if (!container || !currents) return;
+
+    const currentTypes = databaseCache.settings?.['arcade-current-types'] || [];
+    const currentsArray = Object.values(currents);
+    
+    container.innerHTML = currentsArray.map(current => {
+        const typeData = currentTypes.find(t => t.id === current.type_ref);
+        const templateName = typeData ? typeData.name : "CORE LOGIC";
+
+        return `
+        <section class="current-block w-full mb-6">
+            <div class="flex flex-row items-center gap-6 mb-2 border-b border-white/5 pb-2">
+                
+                <div class="flex flex-col min-w-[200px]">
+                    <h2 class="text-2xl font-black italic uppercase tracking-tighter leading-none text-white">
+                        ${current.name}
+                    </h2>
+                    <span class="text-[9px] uppercase tracking-[0.2em] font-black italic mt-1" 
+                          **style="background: linear-gradient(to right, var(--neon-color), var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">**
+                        BASED ON ${templateName}
+                    </span>
+                </div>
+
+                <div class="flex flex-grow items-center gap-4">
+                    <label class="text-[10px] text-white/80 uppercase font-black tracking-widest whitespace-nowrap">Create Spark</label>
+                    <div class="flex-grow bg-white/5 rounded border border-white/10">
+                        <input type="text" id="input-${current.id}" placeholder="Prompt..." class="bg-transparent text-[13px] text-white px-3 py-1 w-full outline-none font-mono">
+                    </div>
+                    <button onclick="handleCreation('${current.id}')" class="bg-[var(--neon-color)] text-black text-[10px] font-black px-6 py-1.5 rounded uppercase tracking-widest shadow-[0_0_15px_var(--neon-color)]">
+                        Generate
+                    </button>
+                </div>
+            </div>
+            <div class="grid grid-cols-4 gap-4">
+                ${renderSparks(current.sparks, current.id)}
+            </div>
+        </section>
+    `}).join('');
 }
 
 function renderCurrents(currents) {
