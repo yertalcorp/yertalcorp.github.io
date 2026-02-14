@@ -18,7 +18,7 @@ watchAuthState((newUser) => {
 
 // Ensure no loose text exists above this line
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 20:10 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 21:51 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -33,14 +33,14 @@ async function initArcade() {
         root.style.setProperty('--neon-color', ui['color-neon']);
         root.style.setProperty('--accent-color', ui['color-accent']);
         root.style.setProperty('--nav-font', ui.nav_font);
-        **root.style.setProperty('--hero-pt', '0.5rem');** /* Crushing top space */
+        root.style.setProperty('--hero-pt', '0.5rem'); /* Crushing top space */
         
         const hero = databaseCache.arcade_infrastructure.hero;
         const brand = databaseCache.navigation.branding;
         const titleParts = hero.title.split(' ');
         
         const heroHeading = document.getElementById('hero-heading');
-        **heroHeading.style.fontSize = "2.2rem";** /* Industrial but compact */
+        heroHeading.style.fontSize = "2.2rem"; /* Industrial but compact */
         heroHeading.style.fontWeight = ui['nav-font-weight'] || '900';
         heroHeading.innerHTML = `
             <span style="color: ${brand.parts[0].color}">${titleParts[0]}</span> 
@@ -50,8 +50,8 @@ async function initArcade() {
 
         const subtitleEl = document.getElementById('hero-subheading');
         subtitleEl.textContent = hero.subtitle;
-        **subtitleEl.style.fontSize = "0.75rem";**
-        **subtitleEl.style.marginTop = "-0.25rem";**
+        subtitleEl.style.fontSize = "0.75rem";
+        subtitleEl.style.marginTop = "-0.25rem";
         subtitleEl.style.color = "rgba(255, 255, 255, 0.7)";
 
         const superUserDisplay = document.getElementById('superuser-display');
@@ -91,7 +91,7 @@ function renderCurrents(currents) {
                         ${current.name}
                     </h2>
                     <span class="text-[9px] uppercase tracking-[0.2em] font-black italic mt-1" 
-                          **style="background: linear-gradient(to right, var(--neon-color), var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">**
+                          style="background: linear-gradient(to right, var(--neon-color), var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                         BASED ON ${templateName}
                     </span>
                 </div>
@@ -107,55 +107,6 @@ function renderCurrents(currents) {
                 </div>
             </div>
             <div class="grid grid-cols-4 gap-4">
-                ${renderSparks(current.sparks, current.id)}
-            </div>
-        </section>
-    `}).join('');
-}
-
-function renderCurrents(currents) {
-    const container = document.getElementById('currents-container');
-    if (!container || !currents) return;
-
-    const limits = databaseCache.settings?.plan_limits?.free || { max_currents: 16, max_sparks_per_current: 48 };
-    const currentTypes = databaseCache.settings?.['arcade-current-types'] || [];
-    const currentsArray = Object.values(currents).slice(0, limits.max_currents);
-    
-    container.innerHTML = currentsArray.map(current => {
-        const typeData = currentTypes.find(t => t.id === current.type_ref);
-        const templateName = typeData ? typeData.name : "Custom Logic";
-
-        return `
-        <section class="current-block w-full mb-8">
-            <div class="flex flex-row items-center gap-8 mb-4 border-b border-white/5 pb-2">
-                
-                <div class="flex flex-col min-w-[220px]">
-                    <h2 class="text-3xl font-black italic uppercase tracking-tighter leading-none text-white">
-                        ${current.name}
-                    </h2>
-                    <span class="text-[9px] uppercase tracking-[0.2em] font-black italic mt-1" 
-                          style="background: linear-gradient(to right, var(--neon-color), var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                        BASED ON ${templateName}
-                    </span>
-                </div>
-
-                <div class="flex flex-grow items-center gap-4">
-                    <label class="text-[10px] text-white/90 uppercase font-black tracking-widest whitespace-nowrap">
-                        Create Spark
-                    </label>
-                    <div class="flex-grow bg-white/5 rounded border border-white/10">
-                        <input type="text" id="input-${current.id}" 
-                               placeholder="Prompt or URL..." 
-                               class="bg-transparent text-[14px] text-white px-3 py-1.5 w-full outline-none font-mono">
-                    </div>
-                    <button onclick="handleCreation('${current.id}')" 
-                            class="bg-[var(--neon-color)] text-black text-[10px] font-black px-6 py-2 rounded uppercase tracking-widest shadow-[0_0_15px_var(--neon-color)] hover:brightness-110">
-                        Generate
-                    </button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 ${renderSparks(current.sparks, current.id)}
             </div>
         </section>
