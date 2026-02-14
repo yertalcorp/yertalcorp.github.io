@@ -47,11 +47,6 @@ main.max-width-limit {
     margin-right: auto;
 }
 
-/* Adjust the prompt engine clearance */
-.current-block {
-    margin-top: 2rem;
-}
-
 /* Each Current is a distinct row with breathing room */
 .current-block {
     margin-bottom: 2rem; /* Large gap between different currents */
@@ -59,8 +54,16 @@ main.max-width-limit {
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     padding-top: 1.5rem;
 }
-
+/* Increase visibility of creation controls */
+.current-block label {
+    font-size: 12px !important;
+    color: rgba(255, 255, 255, 0.8) !important; /* Brighter than 40% opacity */
+}
 /* --- DECORATIVE HEADERS --- */
+/* Reduce space between hero and system ready line */
+header {
+    margin-bottom: 1rem !important;
+}
 
 .current-block h2 {
     font-family: var(--nav-font);
@@ -152,7 +155,7 @@ main.max-width-limit {
 
 button#auth-trigger, 
 .current-block button {
-    padding: 2px 20px !important;
+    padding: 12px 40px !important;
     background: var(--neon-color) !important;
     color: black !important;
     font-weight: 900 !important;
@@ -160,11 +163,18 @@ button#auth-trigger,
     box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
     border-radius: 8px;
     text-transform: uppercase;
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 1px;
     transition: all 0.3s ease;
 }
+.current-block input {
+    font-size: 14px !important;
+    color: #ffffff !important;
+}
 
+.current-block input::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
 button:hover {
     filter: brightness(1.2);
     box-shadow: 0 0 25px rgba(0, 242, 255, 0.5);
