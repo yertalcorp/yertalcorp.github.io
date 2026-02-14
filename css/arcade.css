@@ -29,13 +29,10 @@ main.max-width-limit {
 
 /* Industrial Heading Style */
 #hero-heading {
-    font-weight: 900 !important;
-    font-size: 4.5rem;
-    letter-spacing: -0.05em;
+    font-size: 3rem !important; /* Reduced from 4.5rem */
     line-height: 1;
-    display: flex;
-    justify-content: center;
-    gap: 0.25em;
+    letter-spacing: -0.02em;
+    margin-bottom: 0 !important;
 }
 
 /* Pull the subheading closer */
@@ -64,9 +61,15 @@ main.max-width-limit {
 /* --- DECORATIVE HEADERS --- */
 /* Reduce space between hero and system ready line */
 header {
-    margin-bottom: 0.5rem !important;
+    margin-bottom: -1rem !important;
 }
 
+/* Ensure the status bar (System Ready) sits tight against the header */
+#engine-status-container, 
+.status-bar {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
 .current-block h2 {
     font-family: var(--nav-font);
     font-size: 2.5rem;
@@ -157,17 +160,21 @@ header {
 
 button#auth-trigger, 
 .current-block button {
-    padding: 14px 44px !important;
+    padding: 12px 36px !important;
     background: var(--neon-color) !important;
     color: black !important;
     font-weight: 900 !important;
     border: none !important;
-    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+    box-shadow: 0 0 20px var(--neon-color);
     border-radius: 8px;
     text-transform: uppercase;
-    font-size: 12px;
+    font-size: 11px;
     letter-spacing: 1px;
     transition: all 0.3s ease;
+}
+.current-block button:hover {
+    box-shadow: 0 0 35px var(--neon-color);
+    transform: translateY(-1px);
 }
 .current-block input {
     font-size: 15px !important;
