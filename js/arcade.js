@@ -17,7 +17,7 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 18:45 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 18:58 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -91,7 +91,7 @@ function renderCurrents(currents) {
 
             <div class="flex flex-row items-center justify-center gap-10 mb-12 w-full max-w-6xl">
                 <label class="text-[10px] text-white/40 uppercase font-bold tracking-widest whitespace-nowrap">
-                    Create a Spark
+                    Create a Spark 
                 </label>
                 
                 <div class="flex items-center gap-4 bg-white/5 p-2 rounded-xl border border-white/10 flex-grow backdrop-blur-md">
@@ -139,8 +139,8 @@ function renderSparks(sparks, currentId) {
                 <div class="flex flex-col px-1 gap-2">
                     <div class="flex justify-between items-center">
                         <div class="flex gap-6 text-[8px] font-bold uppercase tracking-widest text-[#9ca3af]">
-                            <span>${stats.views} <span class="opacity-50 text-[6px]">views</span></span>
-                            <span>${stats.likes} <span class="opacity-50 text-[6px]">likes</span></span>
+                            <span>${stats.views} <span class="opacity-50 text-[6px]">views </span></span>
+                            <span>${stats.likes} <span class="opacity-50 text-[6px]">likes </span></span>
                             <span class="text-[var(--neon-color)]">${stats.tips || 0} <span class="opacity-60 text-[6px]">tips</span></span>
                         </div>
 
