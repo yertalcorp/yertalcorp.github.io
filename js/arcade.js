@@ -17,7 +17,7 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 20:55 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 21:10 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -33,7 +33,7 @@ async function initArcade() {
         root.style.setProperty('--neon-color', ui['color-neon']);
         root.style.setProperty('--accent-color', ui['color-accent']);
         root.style.setProperty('--nav-font', ui.nav_font);
-        root.style.setProperty('--hero-pt', '3rem'); 
+        root.style.setProperty('--hero-pt', '1.5rem'); 
         
         // Hero & Branding
         const hero = databaseCache.arcade_infrastructure.hero;
@@ -48,18 +48,19 @@ async function initArcade() {
             <span style="color: var(--neon-color)">${titleParts[2]}</span>
         `;
 
-        // Brighter Subtitle
+        // SUBTITLE - ZERO BOTTOM MARGIN
         const subtitleEl = document.getElementById('hero-subheading');
         subtitleEl.textContent = hero.subtitle;
         subtitleEl.style.fontSize = "1rem";
         subtitleEl.style.color = "rgba(255, 255, 255, 0.95)";
         subtitleEl.style.fontWeight = "600";
+        subtitleEl.style.marginBottom = "0px";
+        subtitleEl.style.display = "block";
 
         document.getElementById('corp-name-display').innerHTML = 
             `<span style="color: ${brand.parts[0].color}">${brand.parts[0].text}</span> 
              <span style="color: ${brand.parts[1].color}">${brand.parts[1].text}</span>`;
 
-        // Metallic Superuser Display
         const superUserDisplay = document.getElementById('superuser-display');
         if (user && user.email === 'yertal-arcade@gmail.com') {
             superUserDisplay.textContent = "ACCESS: YERTAL-ARCADE";
