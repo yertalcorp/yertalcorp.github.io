@@ -56,13 +56,15 @@ main.max-width-limit {
 }
 /* Increase visibility of creation controls */
 .current-block label {
-    font-size: 12px !important;
-    color: rgba(255, 255, 255, 0.8) !important; /* Brighter than 40% opacity */
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    color: rgba(255, 255, 255, 0.9) !important; /* Significant brightness boost */
+    letter-spacing: 0.15em;
 }
 /* --- DECORATIVE HEADERS --- */
 /* Reduce space between hero and system ready line */
 header {
-    margin-bottom: 1rem !important;
+    margin-bottom: 0.5rem !important;
 }
 
 .current-block h2 {
@@ -155,12 +157,12 @@ header {
 
 button#auth-trigger, 
 .current-block button {
-    padding: 12px 40px !important;
+    padding: 14px 44px !important;
     background: var(--neon-color) !important;
     color: black !important;
     font-weight: 900 !important;
     border: none !important;
-    box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
     border-radius: 8px;
     text-transform: uppercase;
     font-size: 12px;
@@ -168,12 +170,14 @@ button#auth-trigger,
     transition: all 0.3s ease;
 }
 .current-block input {
-    font-size: 14px !important;
+    font-size: 15px !important;
     color: #ffffff !important;
+    font-weight: 500;
 }
 
 .current-block input::placeholder {
     color: rgba(255, 255, 255, 0.5) !important;
+    font-style: italic;
 }
 button:hover {
     filter: brightness(1.2);
