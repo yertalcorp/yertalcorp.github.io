@@ -76,34 +76,33 @@ function renderCurrents(currents) {
         const templateName = typeData ? typeData.name : "Custom Logic";
 
         return `
-        <section class="current-block mb-20 w-full pt-12">
-            <div class="flex flex-col lg:flex-row items-baseline gap-8 mb-2">
-                <h2 class="text-5xl font-black italic uppercase tracking-tighter text-white">
+        <section class="current-block mb-16 w-full pt-8 border-t border-white/5">
+            <div class="flex flex-col lg:flex-row items-baseline gap-6 mb-4">
+                <h2 class="text-4xl font-black italic uppercase tracking-tighter text-white whitespace-nowrap">
                     ${current.name}
                 </h2>
                 
-                <div class="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10 flex-grow max-w-2xl backdrop-blur-md">
+                <div class="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10 flex-grow max-w-3xl backdrop-blur-sm">
                     <input type="text" id="input-${current.id}" 
                            placeholder="Type your Prompt or URL here..." 
                            class="bg-transparent border-none text-[11px] text-white px-4 py-1.5 flex-grow outline-none focus:ring-0 font-mono">
                     
                     <button onclick="handleCreation('${current.id}')" 
                             ${sparkCount >= limits.max_sparks_per_current ? 'disabled' : ''}
-                            class="bg-[var(--neon-color)] text-black text-[9px] font-black px-6 py-2 rounded-lg uppercase tracking-tight whitespace-nowrap">
+                            class="bg-[var(--neon-color)] text-black text-[9px] font-bold px-6 py-2 rounded-lg uppercase tracking-tight hover:brightness-110 transition-all whitespace-nowrap">
                         Generate New Card
                     </button>
                 </div>
             </div>
 
-            <div class="flex gap-4 items-center mb-12">
-                <div class="text-[11px] uppercase tracking-[0.2em] font-mono text-[var(--neon-color)] font-bold">
+            <div class="flex flex-wrap gap-x-6 gap-y-2 mb-10 items-center opacity-60">
+                <div class="text-[10px] uppercase tracking-widest font-mono text-[var(--neon-color)] font-black">
                     BASED ON ${templateName}
                 </div>
-                <div class="h-px w-8 bg-white/10"></div>
-                <div class="text-[9px] uppercase tracking-widest text-white/40">
-                    <span class="text-white/70">${current.owner || 'yertal-arcade'}</span> 
-                    <span class="mx-3 opacity-20">|</span> 
-                    CREATED: ${formatTimeAgo(current.created)}
+                <div class="text-[9px] uppercase tracking-tighter font-bold text-white/50 flex gap-2">
+                    <span class="text-white/80">${current.owner || 'yertal-arcade'}</span>
+                    <span class="opacity-30">|</span>
+                    <span>CREATED: ${formatTimeAgo(current.created)}</span>
                 </div>
             </div>
 
@@ -117,7 +116,7 @@ function renderCurrents(currents) {
 function renderSparks(sparks, currentId) {
     if (!sparks || Object.keys(sparks).length === 0) {
         return `<div class="col-span-full py-16 border border-dashed border-white/5 rounded-[2rem] text-center bg-white/[0.01]">
-                    <p class="text-white/20 text-[9px] uppercase tracking-[0.5em] font-mono">Empty Stream</p>
+                    <p class="text-white/20 text-[9px] uppercase tracking-[0.5em] font-mono">Stream Offline</p>
                 </div>`;
     }
 
@@ -131,25 +130,34 @@ function renderSparks(sparks, currentId) {
 
         return `
             <div class="flex flex-col gap-4">
-                <div class="action-card group relative flex items-center justify-center overflow-hidden min-h-[180px]" 
+                <div class="action-card group relative flex items-center justify-center overflow-hidden min-h-[180px] rounded-[1.5rem] border border-white/10 bg-black shadow-2xl transition-all" 
                      onclick="window.open('${viewportLink}', '_blank')" style="cursor: pointer;">
                     
-                    <h4 class="relative z-20 text-white font-black text-[13px] uppercase tracking-[0.2em] text-center px-6 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] group-hover:text-[var(--neon-color)] transition-colors">
+                    <h4 class="relative z-20 text-white font-black text-[12px] uppercase tracking-[0.2em] text-center px-6 drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] group-hover:text-[var(--neon-color)] transition-colors">
                         ${spark.name}
                     </h4>
 
                     <div class="absolute inset-0 z-0">
                         <img src="${spark.image || '/assets/thumbnails/default.jpg'}" 
                              class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${hasRealCover ? 'opacity-40' : 'opacity-10 grayscale'}">
-                        <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 group-hover:from-[var(--neon-color)]/10 transition-colors"></div>
                     </div>
                 </div>
 
                 <div class="flex justify-between items-center px-1">
                     <div class="flex items-center gap-4 text-[10px] font-bold uppercase tracking-tight">
-                        <div class="text-white/40">${stats.views} <span class="text-[8px] opacity-50">views</span></div>
-                        <div class="text-white/40">${stats.likes} <span class="text-[8px] opacity-50">likes</span></div>
-                        <div class="text-[var(--neon-color)]">${stats.tips || 0} <span class="text-[8px] opacity-70">tips</span></div>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-white">${stats.views}</span>
+                            <span class="text-[8px] text-white/30 font-black">VIEWS</span>
+                        </div>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-white">${stats.likes}</span>
+                            <span class="text-[8px] text-white/30 font-black">LIKES</span>
+                        </div>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-[var(--neon-color)]">${stats.tips || 0}</span>
+                            <span class="text-[8px] text-[var(--neon-color)]/40 font-black">TIPS</span>
+                        </div>
                     </div>
 
                     <div class="flex gap-4">
@@ -159,8 +167,8 @@ function renderSparks(sparks, currentId) {
                         </button>
                         ${isOwner ? `
                         <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
-                                class="text-red-500/20 hover:text-red-500 transition-all text-[10px]">
-                            <i class="fas fa-times"></i>
+                                class="text-red-500/20 hover:text-red-500 transition-all">
+                            <i class="fas fa-times text-[10px]"></i>
                         </button>
                         ` : ''}
                     </div>
