@@ -76,7 +76,7 @@ function renderCurrents(currents) {
         const templateName = typeData ? typeData.name : "Custom Logic";
 
         return `
-        <section class="current-block mb-16 w-full pt-10 border-t border-white/5">
+        <section class="current-block mb-8 w-full pt-6 border-t border-white/5">
             <div class="flex flex-col lg:flex-row items-center gap-8 mb-4">
                 <h2 class="text-5xl font-black italic uppercase tracking-tighter leading-none" 
                     style="background: linear-gradient(to right, #fff, rgba(255,255,255,0.2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
@@ -102,13 +102,13 @@ function renderCurrents(currents) {
                 </span>
             </div>
 
-            <div class="flex items-center gap-3 text-[9px] uppercase tracking-widest font-bold text-white/30 mb-10">
+            <div class="flex items-center gap-3 text-[9px] uppercase tracking-widest font-bold text-white/30 mb-8">
                 <span class="text-white/60">${current.owner || 'yertal-arcade-arcade'}</span> 
                 <span class="opacity-20">•</span> 
                 <span>CREATED: ${formatTimeAgo(current.created)}</span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 ${renderSparks(current.sparks, current.id)}
             </div>
         </section>
