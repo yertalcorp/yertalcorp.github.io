@@ -17,7 +17,7 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 21:24 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 21:30 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -89,43 +89,43 @@ function renderCurrents(currents) {
     const currentsArray = Object.values(currents).slice(0, limits.max_currents);
     
     container.innerHTML = currentsArray.map(current => {
-        const sparkCount = current.sparks ? Object.keys(current.sparks).length : 0;
         const typeData = currentTypes.find(t => t.id === current.type_ref);
         const templateName = typeData ? typeData.name : "Custom Logic";
 
         return `
-<section class="current-block w-full mb-10">
-    <div class="flex flex-col md:flex-row items-center gap-6 mb-4 border-b border-white/5 pb-2">
-        
-        <div class="flex flex-col min-w-[280px] text-left">
-            <h2 class="text-3xl font-black italic uppercase tracking-tighter leading-none text-white">
-                ${current.name}
-            </h2>
-            <span class="text-[8px] uppercase tracking-[0.3em] font-bold opacity-60 mt-0.5">
-                BASED ON ${templateName}
-            </span>
-        </div>
+        <section class="current-block w-full mb-8">
+            <div class="flex flex-row items-center gap-8 mb-4 border-b border-white/5 pb-2">
+                
+                <div class="flex flex-col min-w-[220px]">
+                    <h2 class="text-3xl font-black italic uppercase tracking-tighter leading-none text-white">
+                        ${current.name}
+                    </h2>
+                    <span class="text-[9px] uppercase tracking-[0.2em] font-black italic mt-1" 
+                          style="background: linear-gradient(to right, var(--neon-color), var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        BASED ON ${templateName}
+                    </span>
+                </div>
 
-        <div class="flex flex-grow items-center gap-4">
-            <label class="text-[11px] text-white font-black uppercase tracking-widest whitespace-nowrap">
-                Create Spark
-            </label>
-            <div class="flex-grow bg-white/5 rounded-lg border border-white/10">
-                <input type="text" id="input-${current.id}" 
-                       placeholder="Prompt or URL..." 
-                       class="bg-transparent text-[14px] text-white px-4 py-2 w-full outline-none font-mono">
+                <div class="flex flex-grow items-center gap-4">
+                    <label class="text-[10px] text-white/90 uppercase font-black tracking-widest whitespace-nowrap">
+                        Create Spark
+                    </label>
+                    <div class="flex-grow bg-white/5 rounded border border-white/10">
+                        <input type="text" id="input-${current.id}" 
+                               placeholder="Prompt or URL..." 
+                               class="bg-transparent text-[14px] text-white px-3 py-1.5 w-full outline-none font-mono">
+                    </div>
+                    <button onclick="handleCreation('${current.id}')" 
+                            class="bg-[var(--neon-color)] text-black text-[10px] font-black px-6 py-2 rounded uppercase tracking-widest shadow-[0_0_15px_var(--neon-color)] hover:brightness-110">
+                        Generate
+                    </button>
+                </div>
             </div>
-            <button onclick="handleCreation('${current.id}')" 
-                    class="generate-btn bg-[var(--neon-color)] text-black text-[10px] font-black px-8 py-2.5 rounded-md uppercase tracking-widest hover:scale-105 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)]">
-                Generate
-            </button>
-        </div>
-    </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        ${renderSparks(current.sparks, current.id)}
-    </div>
-</section>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                ${renderSparks(current.sparks, current.id)}
+            </div>
+        </section>
     `}).join('');
 }
 
