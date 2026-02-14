@@ -68,7 +68,7 @@ header {
 /* Ensure the status bar (System Ready) sits tight against the header */
 #engine-status-container, 
 .status-bar {
-    margin-top: -1.5rem !important;
+    margin-top: -3rem !important;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding-top: 0.5rem;
 }
