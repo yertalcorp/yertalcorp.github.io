@@ -19,7 +19,7 @@ main.max-width-limit {
     width: 100%;
     max-width: 1600px;
     margin: 0 auto;
-    padding: 10rem 4rem 5rem 4rem; /* Massive top padding for fixed nav */
+    padding: 6rem 4rem 2rem 4rem; /* Massive top padding for fixed nav */
     box-sizing: border-box;
 }
 
