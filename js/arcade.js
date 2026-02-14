@@ -94,43 +94,38 @@ function renderCurrents(currents) {
         const templateName = typeData ? typeData.name : "Custom Logic";
 
         return `
-        <section class="current-block w-full mb-12">
-            <div class="flex flex-col md:flex-row items-end md:items-center gap-6 mb-4 border-b border-white/5 pb-4">
-                
-                <div class="flex flex-col min-w-[250px]">
-                    <h2 class="current-title text-4xl font-black italic uppercase tracking-tighter leading-none" 
-                        style="background: linear-gradient(to right, #fff, rgba(255,255,255,0.3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                        ${current.name}
-                    </h2>
-                    <span class="text-[9px] uppercase tracking-[0.3em] font-black font-mono italic mt-1 opacity-70" 
-                          style="color: var(--neon-color)">
-                        BASED ON ${templateName}
-                    </span>
-                </div>
+<section class="current-block w-full mb-10">
+    <div class="flex flex-col md:flex-row items-center gap-6 mb-4 border-b border-white/5 pb-2">
+        
+        <div class="flex flex-col min-w-[280px] text-left">
+            <h2 class="text-3xl font-black italic uppercase tracking-tighter leading-none text-white">
+                ${current.name}
+            </h2>
+            <span class="text-[8px] uppercase tracking-[0.3em] font-bold opacity-60 mt-0.5">
+                BASED ON ${templateName}
+            </span>
+        </div>
 
-                <div class="flex flex-grow items-center gap-4 w-full">
-                    <label class="text-[10px] text-white uppercase font-black tracking-widest whitespace-nowrap opacity-90">
-                        Create Spark 
-                    </label>
-                    
-                    <div class="flex items-center gap-2 bg-white/5 p-1 rounded-lg border border-white/10 flex-grow backdrop-blur-md">
-                        <input type="text" id="input-${current.id}" 
-                               placeholder="Prompt or URL..." 
-                               class="bg-transparent border-none text-[13px] text-white px-3 py-1.5 w-full outline-none focus:ring-0 font-mono">
-                    </div>
-
-                    <button onclick="handleCreation('${current.id}')" 
-                            ${sparkCount >= limits.max_sparks_per_current ? 'disabled' : ''}
-                            class="generate-btn bg-[var(--neon-color)] text-black text-[10px] font-black px-8 py-2.5 rounded-md uppercase tracking-widest hover:scale-105 transition-all whitespace-nowrap">
-                        Generate
-                    </button>
-                </div>
+        <div class="flex flex-grow items-center gap-4">
+            <label class="text-[11px] text-white font-black uppercase tracking-widest whitespace-nowrap">
+                Create Spark
+            </label>
+            <div class="flex-grow bg-white/5 rounded-lg border border-white/10">
+                <input type="text" id="input-${current.id}" 
+                       placeholder="Prompt or URL..." 
+                       class="bg-transparent text-[14px] text-white px-4 py-2 w-full outline-none font-mono">
             </div>
+            <button onclick="handleCreation('${current.id}')" 
+                    class="generate-btn bg-[var(--neon-color)] text-black text-[10px] font-black px-8 py-2.5 rounded-md uppercase tracking-widest hover:scale-105 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)]">
+                Generate
+            </button>
+        </div>
+    </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
-                ${renderSparks(current.sparks, current.id)}
-            </div>
-        </section>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        ${renderSparks(current.sparks, current.id)}
+    </div>
+</section>
     `}).join('');
 }
 
