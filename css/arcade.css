@@ -14,6 +14,10 @@
 }
 
 /* --- THE LABORATORY LAYOUT --- */
+/* Compress the top area */
+main {
+    padding-top: 4rem !important;
+}
 
 main.max-width-limit {
     width: 100%;
@@ -21,6 +25,31 @@ main.max-width-limit {
     margin: 0 auto;
     padding: 6rem 4rem 2rem 4rem; /* Massive top padding for fixed nav */
     box-sizing: border-box;
+}
+
+/* Industrial Heading Style */
+#hero-heading {
+    font-weight: 900 !important;
+    font-size: 4.5rem;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    display: flex;
+    justify-content: center;
+    gap: 0.25em;
+}
+
+/* Pull the subheading closer */
+#hero-subheading {
+    margin-bottom: 0.5rem;
+    opacity: 0.6;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Adjust the prompt engine clearance */
+.current-block {
+    margin-top: 2rem;
 }
 
 /* Each Current is a distinct row with breathing room */
