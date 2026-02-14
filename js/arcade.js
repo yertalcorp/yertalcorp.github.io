@@ -119,7 +119,6 @@ function renderCurrents(currents) {
     `}).join('');
 }
 
-
 function renderSparks(sparks, currentId) {
     if (!sparks || Object.keys(sparks).length === 0) {
         return `<div class="col-span-full py-24 border border-dashed border-white/5 rounded-[2rem] text-center bg-white/[0.01]">
@@ -136,8 +135,8 @@ function renderSparks(sparks, currentId) {
         const isOwner = user && (user.email.split('@')[0] === spark.owner || user.email === 'yertal-arcade@gmail.com');
 
         return `
-            <div class="group relative flex flex-col gap-5">
-                <div class="relative aspect-video rounded-[1.5rem] overflow-hidden border border-white/5 bg-black group-hover:border-[var(--neon-color)]/40 transition-all duration-700 cursor-pointer shadow-2xl"
+            <div class="group relative flex flex-col h-full">
+                <div class="relative aspect-video rounded-[1.5rem] overflow-hidden border border-white/5 bg-black group-hover:border-[var(--neon-color)]/40 transition-all duration-700 cursor-pointer shadow-2xl mb-4"
                      onclick="window.open('${viewportLink}', '_blank')">
                     
                     <img src="${spark.image || '/assets/thumbnails/default.jpg'}" 
@@ -146,35 +145,35 @@ function renderSparks(sparks, currentId) {
                     <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
                         <div class="text-[10px] text-[var(--neon-color)] font-black uppercase tracking-[0.2em]">Launch Viewport <i class="fas fa-external-link-alt ml-2 text-[8px]"></i></div>
                     </div>
-
-                    ${!hasRealCover ? `<div class="absolute inset-0 flex items-center justify-center text-[7px] text-white/10 uppercase tracking-[0.4em] font-mono">Initializing Visual...</div>` : ''}
+                    ${!hasRealCover ? `<div class="absolute inset-0 flex items-center justify-center text-[7px] text-white/10 uppercase tracking-[0.4em] font-mono">Initializing...</div>` : ''}
                 </div>
 
-                <div class="flex justify-between items-start px-2">
-                    <div class="flex-grow">
+                <div class="flex justify-between items-start px-2 min-h-[80px]">
+                    <div class="flex-grow flex flex-col gap-1">
                         <h4 class="text-white font-black text-sm uppercase tracking-tight leading-tight group-hover:text-[var(--neon-color)] transition-colors">
                             ${spark.name}
                         </h4>
         
-                        <div class="flex gap-4 mt-2 mb-1.5 items-center">
-                            <div class="flex items-center gap-1.5 text-[9px] text-white/40 font-bold">
-                                <i class="fas fa-eye text-[8px]"></i> <span>${stats.views}</span>
+                        <div class="flex gap-3 my-1 items-center flex-nowrap">
+                            <div class="flex items-center gap-1 text-[9px] text-white/40 font-bold whitespace-nowrap">
+                                <i class="fas fa-eye"></i> <span>${stats.views}</span>
                             </div>
-                            <div class="flex items-center gap-1.5 text-[9px] text-white/40 font-bold">
-                                <i class="fas fa-heart text-[8px]"></i> <span>${stats.likes}</span>
+                            <div class="flex items-center gap-1 text-[9px] text-white/40 font-bold whitespace-nowrap">
+                                <i class="fas fa-heart"></i> <span>${stats.likes}</span>
                             </div>
-                            <div class="flex items-center gap-1.5 text-[9px] text-[var(--neon-color)] font-black opacity-60">
-                                <i class="fas fa-coins text-[8px]"></i> <span>${stats.tips || 0}</span>
+                            <div class="flex items-center gap-1 text-[9px] text-[var(--neon-color)] font-black opacity-60 whitespace-nowrap">
+                                <i class="fas fa-coins"></i> <span>${stats.tips || 0}</span>
                             </div>
                         </div>
 
-                        <div class="flex gap-3 items-center mt-1">
-                            <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">Rank #${spark.internal_rank || 0}</span>
-                            <span class="text-[8px] text-white/20 uppercase tracking-widest font-bold">${formatTimeAgo(spark.created)}</span>
+                        <div class="flex gap-2 items-center opacity-30">
+                            <span class="text-[8px] text-white uppercase tracking-widest font-bold">Rank #${spark.internal_rank || 0}</span>
+                            <span class="text-[8px] text-white uppercase tracking-widest font-bold">•</span>
+                            <span class="text-[8px] text-white uppercase tracking-widest font-bold">${formatTimeAgo(spark.created)}</span>
                         </div>
                     </div>
 
-                    <div class="flex flex-col items-end gap-3 pt-1">
+                    <div class="flex flex-col items-end gap-4 ml-2">
                         <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" 
                             class="text-white/20 hover:text-[var(--neon-color)] transition-all">
                             <i class="fas fa-share-alt text-xs"></i>
@@ -192,7 +191,6 @@ function renderSparks(sparks, currentId) {
         `;
     }).join('');
 }
-
 // --- 4. CORE LOGIC & ACTIONS ---
 window.handleCreation = async (currentId) => {
     const promptInput = document.getElementById(`input-${currentId}`);
