@@ -63,6 +63,7 @@ async function initArcade() {
 }
 
 // --- 2. RENDER ENGINE (CURRENTS) ---
+// --- 2. RENDER ENGINE (CURRENTS) ---
 function renderCurrents(currents) {
     const container = document.getElementById('currents-container');
     if (!container || !currents) return;
@@ -78,13 +79,18 @@ function renderCurrents(currents) {
 
         return `
         <section class="current-block mb-32 w-full">
-            <div class="flex flex-col md:flex-row items-end justify-between gap-6 mb-10 border-b border-white/5 pb-8">
+            <div class="flex flex-col md:flex-row items-end justify-between gap-6 mb-6">
                 <div class="flex-grow">
                     <div class="text-[10px] text-[var(--neon-color)] font-black tracking-[0.4em] uppercase mb-3">Active Stream</div>
-                    <h2 class="text-5xl font-black italic uppercase tracking-tighter text-white leading-none">
+                    <h2 class="text-5xl font-black italic uppercase tracking-tighter text-white leading-none mb-4">
                         ${current.name} 
-                        <span class="text-sm text-white/20 ml-4 font-normal not-italic tracking-normal">${sparkCount}/${limits.max_sparks_per_current}</span>
                     </h2>
+                    
+                    <div class="flex flex-wrap gap-x-6 gap-y-2 opacity-50 text-[10px] uppercase tracking-[0.2em] font-bold">
+                        <div class="text-[var(--neon-color)]">Based on ${templateName}</div>
+                        <div class="text-white/40">Architect: <span class="text-white">${current.owner || 'yertal-arcade'}</span></div>
+                        <div class="text-white/40">Uptime: <span class="text-white">${formatTimeAgo(current.created)}</span></div>
+                    </div>
                 </div>
                 
                 <div class="flex items-center gap-2 bg-white/5 p-2 rounded-2xl border border-white/10 w-full md:w-auto backdrop-blur-md">
@@ -94,25 +100,13 @@ function renderCurrents(currents) {
                     
                     <button onclick="handleCreation('${current.id}')" 
                             ${sparkCount >= limits.max_sparks_per_current ? 'disabled' : ''}
-                            class="bg-[var(--neon-color)] hover:brightness-110 active:scale-95 text-black text-[10px] font-black px-8 py-3 rounded-xl transition-all uppercase tracking-tighter">
+                            class="bg-[var(--neon-color)] text-black text-[10px] font-black px-8 py-3 rounded-xl uppercase tracking-tighter">
                         ${sparkCount >= limits.max_sparks_per_current ? 'Full' : 'Generate'}
                     </button>
                 </div>
             </div>
 
-            <div class="flex flex-wrap gap-x-8 gap-y-2 mt-4 opacity-40 hover:opacity-100 transition-opacity duration-500">
-                <div class="text-[9px] uppercase tracking-[0.2em] text-white">
-                    <span class="text-white/40">Class:</span> ${templateName}
-                </div>
-                <div class="text-[9px] uppercase tracking-[0.2em] text-white">
-                    <span class="text-white/40">Architect:</span> ${current.owner || 'yertal-arcade'}
-                </div>
-                <div class="text-[9px] uppercase tracking-[0.2em] text-white">
-                    <span class="text-white/40">Uptime:</span> ${formatTimeAgo(current.created)}
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12 mt-12">
                 ${renderSparks(current.sparks, current.id)}
             </div>
         </section>
@@ -135,51 +129,49 @@ function renderSparks(sparks, currentId) {
         const isOwner = user && (user.email.split('@')[0] === spark.owner || user.email === 'yertal-arcade@gmail.com');
 
         return `
-            <div class="action-card group">
-                <div class="card-preview relative aspect-video cursor-pointer" 
-                     onclick="window.open('${viewportLink}', '_blank')">
-                    <img src="${spark.image || '/assets/thumbnails/default.jpg'}" 
-                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${hasRealCover ? '' : 'opacity-20 grayscale'}">
+            <div class="flex flex-col gap-4">
+                <div class="action-card group relative overflow-hidden" onclick="window.open('${viewportLink}', '_blank')" style="cursor: pointer;">
                     
-                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span class="text-[10px] text-[var(--neon-color)] font-black uppercase tracking-widest">Launch</span>
+                    <div class="absolute top-4 left-0 w-full z-10 text-center px-4">
+                        <h4 class="text-white font-black text-[11px] uppercase tracking-[0.2em] drop-shadow-md group-hover:text-[var(--neon-color)] transition-colors">
+                            ${spark.name}
+                        </h4>
+                    </div>
+
+                    <div class="card-preview w-full h-full min-h-[160px] m-0 border-none">
+                        <img src="${spark.image || '/assets/thumbnails/default.jpg'}" 
+                             class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${hasRealCover ? '' : 'opacity-20 grayscale'}">
+                    </div>
+
+                    <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div class="border border-[var(--neon-color)] px-4 py-1 rounded text-[8px] text-[var(--neon-color)] font-bold uppercase tracking-widest">
+                            Initialize Viewport
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex flex-col flex-grow">
-                    <h4 class="text-white font-black text-sm uppercase tracking-tighter mb-2 group-hover:text-[var(--neon-color)] transition-colors">
-                        ${spark.name}
-                    </h4>
-
-                    <div class="card-stats-row border-t border-white/5 pt-3">
-                        <div class="flex gap-3">
-                            <div class="flex items-center gap-1 text-[9px] text-white/40">
-                                <i class="fas fa-eye"></i> <span>${stats.views}</span>
-                            </div>
-                            <div class="flex items-center gap-1 text-[9px] text-white/40">
-                                <i class="fas fa-heart"></i> <span>${stats.likes}</span>
-                            </div>
-                        </div>
-                        <div class="text-[9px] text-[var(--neon-color)] font-bold">
-                            <i class="fas fa-coins"></i> <span>${stats.tips || 0}</span>
-                        </div>
+                <div class="px-2">
+                    <div class="flex items-center gap-4 text-[10px] font-bold uppercase tracking-tighter">
+                        <span class="text-white/60">${stats.views} views</span>
+                        <span class="text-white/60">${stats.likes} likes</span>
+                        <span class="text-[var(--neon-color)]">${stats.tips || 0} tips</span>
                     </div>
 
-                    <div class="flex justify-between items-center mt-4">
-                        <div class="flex flex-col">
-                            <span class="text-[7px] text-white/20 uppercase font-bold tracking-[0.2em]">Rank #${spark.internal_rank || 0}</span>
-                            <span class="text-[7px] text-white/20 uppercase font-bold tracking-[0.2em]">${formatTimeAgo(spark.created)}</span>
+                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[8px] text-white/20 uppercase font-black">Rank #${spark.internal_rank || 0}</span>
+                            <span class="text-[8px] text-white/20 uppercase font-black">${formatTimeAgo(spark.created)}</span>
                         </div>
 
-                        <div class="flex gap-3">
+                        <div class="flex gap-4">
                             <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" 
-                                    class="text-white/20 hover:text-white transition-colors">
-                                <i class="fas fa-share-alt text-[10px]"></i>
+                                    class="text-white/20 hover:text-[var(--neon-color)] transition-colors bg-transparent border-none p-0 shadow-none">
+                                <i class="fas fa-share-alt text-[11px]"></i>
                             </button>
                             ${isOwner ? `
                             <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
-                                    class="text-red-500/20 hover:text-red-500 transition-colors text-[7px] font-black">
-                                KILL
+                                    class="text-red-500/20 hover:text-red-500 transition-colors text-[8px] font-black uppercase bg-transparent border-none p-0 shadow-none">
+                                [ KILL ]
                             </button>
                             ` : ''}
                         </div>
@@ -189,7 +181,6 @@ function renderSparks(sparks, currentId) {
         `;
     }).join('');
 }
-
 
 // --- 4. CORE LOGIC & ACTIONS ---
 window.handleCreation = async (currentId) => {
