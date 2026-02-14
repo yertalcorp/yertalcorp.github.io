@@ -25,10 +25,10 @@ main.max-width-limit {
 
 /* Each Current is a distinct row with breathing room */
 .current-block {
-    margin-bottom: 8rem; /* Large gap between different currents */
+    margin-bottom: 2rem; /* Large gap between different currents */
     width: 100%;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding-top: 3rem;
+    padding-top: 1.5rem;
 }
 
 /* --- DECORATIVE HEADERS --- */
@@ -72,7 +72,7 @@ main.max-width-limit {
     display: grid !important;
     /* Min 200px (1/2 mobile) | Max 1fr (1/6 desktop) */
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
-    gap: 3rem !important; /* Spacious gap between sparks */
+    gap: 1.5rem !important; /* Spacious gap between sparks */
     width: 100% !important;
 }
 
