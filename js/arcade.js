@@ -17,7 +17,7 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 17:59 `, 'background: #00f3ff; color: #000; font-weight: bold;');
+    console.log(`%c ARCADE CORE LOADED: 18:03 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
         statusText.textContent = "SYNCHRONIZING WITH CORE...";
@@ -77,32 +77,33 @@ function renderCurrents(currents) {
 
         return `
         <section class="current-block w-full">
-            <div class="flex flex-col lg:flex-row items-center gap-8 mb-3">
-                <h2 class="text-4xl font-black italic uppercase tracking-tighter leading-none" 
-                    style="background: linear-gradient(to right, #fff, rgba(255,255,255,0.2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                    ${current.name}
-                </h2>
+            <h2 class="text-4xl font-black italic uppercase tracking-tighter leading-none mb-2" 
+                style="background: linear-gradient(to right, #fff, rgba(255,255,255,0.2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                ${current.name}
+            </h2>
+
+            <div class="mb-6">
+                <span class="text-[9px] uppercase tracking-[0.4em] font-black text-[var(--neon-color)] opacity-80 font-mono">
+                    BASED ON ${templateName}
+                </span>
+            </div>
+
+            <div class="flex flex-col lg:flex-row items-center gap-4 mb-10">
+                <div class="text-[10px] text-white/40 uppercase font-bold tracking-widest whitespace-nowrap">
+                    Create a Spark
+                </div>
                 
                 <div class="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10 flex-grow max-w-2xl backdrop-blur-md">
                     <input type="text" id="input-${current.id}" 
-                           placeholder="Type your Prompt or URL here..." 
+                           placeholder="Type a prompt or paste a URL..." 
                            class="bg-transparent border-none text-[11px] text-white px-4 py-1.5 flex-grow outline-none focus:ring-0 font-mono">
                     
                     <button onclick="handleCreation('${current.id}')" 
                             ${sparkCount >= limits.max_sparks_per_current ? 'disabled' : ''}
                             class="bg-[var(--neon-color)] text-black text-[9px] font-black px-6 py-2 rounded-lg uppercase tracking-tight hover:scale-105 transition-transform">
-                        Generate New Card
+                        Generate
                     </button>
                 </div>
-            </div>
-
-            <div class="flex flex-col mb-8">
-                <span class="text-[9px] uppercase tracking-[0.4em] font-black text-[var(--neon-color)] opacity-80 font-mono">
-                    BASED ON ${templateName}
-                </span>
-                <span class="text-[8px] uppercase tracking-widest font-bold text-white/30 mt-1">
-                    ARCHITECT: <span class="text-white/60">${current.owner || 'yertal-arcade'}</span>
-                </span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
