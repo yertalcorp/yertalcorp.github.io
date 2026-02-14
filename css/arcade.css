@@ -16,7 +16,7 @@
 /* --- THE LABORATORY LAYOUT --- */
 /* Compress the top area */
 main {
-    padding-top: 4rem ;
+    padding-top: 0.5rem ;
 }
 
 main.max-width-limit {
@@ -29,7 +29,7 @@ main.max-width-limit {
 
 /* Industrial Heading Style */
 #hero-heading {
-    font-size: 3rem ; /* Reduced from 4.5rem */
+    font-size: 2.5rem ; /* Reduced from 4.5rem */
     line-height: 1;
     letter-spacing: -0.02em;
     margin-bottom: 0 ;
@@ -37,13 +37,11 @@ main.max-width-limit {
 
 /* Pull the subheading closer */
 #hero-subheading {
-    margin-bottom: 0px;
-    margin-top: 0px ;
-    line-height: 1.2;
-    opacity: 0.6;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
+    font-size: 0.8rem ;
+    margin-top: -0.2rem ;
+    margin-bottom: 0 ;
+    opacity: 0.8;
+    text-transform: uppercase;
 }
 
 /* Each Current is a distinct row with breathing room */
@@ -72,11 +70,12 @@ header {
 /* Ensure the status bar (System Ready) sits tight against the header */
 #engine-status-container, 
 .status-bar {
-    margin-top: -3rem; /* Keep your existing pull */
+    margin-top: -0.5rem; /* Keep your existing pull */
     border-top: 1px solid rgba(255, 255, 255, 0.15); /* Slightly brighter line */
-    padding-top: 0.25rem; /* Reduced padding to keep it tight */
+    padding-top: 0.2rem; /* Reduced padding to keep it tight */
     display: flex;
     align-items: center;
+    justify-content: space-between;
 }
 /* Add this to give the text that bright, metallic hardware look */
 #engine-status-text, 
@@ -84,12 +83,15 @@ header {
     font-weight: 900 !important;
     text-transform: uppercase;
     letter-spacing: 0.2em;
-    font-size: 10px;
+    font-size: 11px;
     color: #ffffff;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 2px var(--neon-color);
     filter: brightness(1.4) contrast(1.1);
 }
-
+/* Status Dot pulse */
+.status-dot {
+    box-shadow: 0 0 8px var(--neon-color);
+}
 /* Metallic/Chrome Text Effect */
 .metallic-text {
     font-weight: 900 ;
