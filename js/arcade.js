@@ -76,37 +76,38 @@ function renderCurrents(currents) {
         const templateName = typeData ? typeData.name : "Custom Logic";
 
         return `
-        <section class="current-block mb-16 w-full border-t border-white/5 pt-8">
-            <div class="flex flex-col lg:flex-row items-center gap-6 mb-4">
-                <h2 class="text-4xl font-black italic uppercase tracking-tighter text-white whitespace-nowrap">
+        <section class="current-block mb-20 w-full pt-12">
+            <div class="flex flex-col lg:flex-row items-baseline gap-8 mb-2">
+                <h2 class="text-5xl font-black italic uppercase tracking-tighter text-white">
                     ${current.name}
                 </h2>
                 
-                <div class="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10 w-full backdrop-blur-md">
+                <div class="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10 flex-grow max-w-2xl backdrop-blur-md">
                     <input type="text" id="input-${current.id}" 
                            placeholder="Type your Prompt or URL here..." 
                            class="bg-transparent border-none text-[11px] text-white px-4 py-1.5 flex-grow outline-none focus:ring-0 font-mono">
                     
                     <button onclick="handleCreation('${current.id}')" 
                             ${sparkCount >= limits.max_sparks_per_current ? 'disabled' : ''}
-                            class="bg-[var(--neon-color)] text-black text-[9px] font-black px-6 py-2 rounded-lg uppercase tracking-tight hover:scale-105 transition-transform">
-                        ${sparkCount >= limits.max_sparks_per_current ? 'FULL' : 'Generate New Card'}
+                            class="bg-[var(--neon-color)] text-black text-[9px] font-black px-6 py-2 rounded-lg uppercase tracking-tight whitespace-nowrap">
+                        Generate New Card
                     </button>
                 </div>
             </div>
 
-            <div class="flex gap-6 mb-10 items-center">
-                <div class="text-[10px] uppercase tracking-widest font-mono text-[var(--neon-color)] border-r border-white/10 pr-6">
+            <div class="flex gap-4 items-center mb-12">
+                <div class="text-[11px] uppercase tracking-[0.2em] font-mono text-[var(--neon-color)] font-bold">
                     BASED ON ${templateName}
                 </div>
-                <div class="text-[9px] uppercase tracking-tight font-bold text-white/30">
-                    <span class="text-white/60">${current.owner || 'yertal-arcade'}</span> 
-                    <span class="mx-2 opacity-20">|</span> 
+                <div class="h-px w-8 bg-white/10"></div>
+                <div class="text-[9px] uppercase tracking-widest text-white/40">
+                    <span class="text-white/70">${current.owner || 'yertal-arcade'}</span> 
+                    <span class="mx-3 opacity-20">|</span> 
                     CREATED: ${formatTimeAgo(current.created)}
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
                 ${renderSparks(current.sparks, current.id)}
             </div>
         </section>
@@ -115,8 +116,8 @@ function renderCurrents(currents) {
 
 function renderSparks(sparks, currentId) {
     if (!sparks || Object.keys(sparks).length === 0) {
-        return `<div class="col-span-full py-12 border border-dashed border-white/5 rounded-[2rem] text-center bg-white/[0.01]">
-                    <p class="text-white/20 text-[9px] uppercase tracking-[0.5em] font-mono">No Sparks in Stream</p>
+        return `<div class="col-span-full py-16 border border-dashed border-white/5 rounded-[2rem] text-center bg-white/[0.01]">
+                    <p class="text-white/20 text-[9px] uppercase tracking-[0.5em] font-mono">Empty Stream</p>
                 </div>`;
     }
 
@@ -129,39 +130,37 @@ function renderSparks(sparks, currentId) {
         const isOwner = user && (user.email.split('@')[0] === spark.owner || user.email === 'yertal-arcade@gmail.com');
 
         return `
-            <div class="flex flex-col gap-3">
-                <div class="action-card group relative flex flex-col justify-center items-center overflow-hidden h-[180px]" 
+            <div class="flex flex-col gap-4">
+                <div class="action-card group relative flex items-center justify-center overflow-hidden min-h-[180px]" 
                      onclick="window.open('${viewportLink}', '_blank')" style="cursor: pointer;">
                     
-                    <div class="absolute inset-0 z-20 flex items-center justify-center p-6 text-center pointer-events-none">
-                        <h4 class="text-white font-black text-[12px] uppercase tracking-[0.25em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] group-hover:text-[var(--neon-color)] transition-colors leading-tight">
-                            ${spark.name}
-                        </h4>
-                    </div>
+                    <h4 class="relative z-20 text-white font-black text-[13px] uppercase tracking-[0.2em] text-center px-6 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] group-hover:text-[var(--neon-color)] transition-colors">
+                        ${spark.name}
+                    </h4>
 
                     <div class="absolute inset-0 z-0">
                         <img src="${spark.image || '/assets/thumbnails/default.jpg'}" 
                              class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${hasRealCover ? 'opacity-40' : 'opacity-10 grayscale'}">
-                        <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
+                        <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60"></div>
                     </div>
                 </div>
 
                 <div class="flex justify-between items-center px-1">
-                    <div class="flex items-center gap-3 text-[9px] font-bold uppercase tracking-tighter">
-                        <span class="text-white/40">${stats.views} views</span>
-                        <span class="text-white/40">${stats.likes} likes</span>
-                        <span class="text-[var(--neon-color)] opacity-80">${stats.tips || 0} tips</span>
+                    <div class="flex items-center gap-4 text-[10px] font-bold uppercase tracking-tight">
+                        <div class="text-white/40">${stats.views} <span class="text-[8px] opacity-50">views</span></div>
+                        <div class="text-white/40">${stats.likes} <span class="text-[8px] opacity-50">likes</span></div>
+                        <div class="text-[var(--neon-color)]">${stats.tips || 0} <span class="text-[8px] opacity-70">tips</span></div>
                     </div>
 
-                    <div class="flex gap-3">
+                    <div class="flex gap-4">
                         <button onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '/arcade/${viewportLink}'); alert('Link Copied');" 
-                                class="text-white/20 hover:text-[var(--neon-color)] transition-colors">
+                                class="text-white/20 hover:text-[var(--neon-color)] transition-all">
                             <i class="fas fa-share-alt text-[10px]"></i>
                         </button>
                         ${isOwner ? `
                         <button onclick="event.stopPropagation(); deleteSpark('${currentId}', '${spark.id}', '${spark.owner}')" 
-                                class="text-red-500/20 hover:text-red-500 transition-colors text-[8px] font-black uppercase">
-                            [X]
+                                class="text-red-500/20 hover:text-red-500 transition-all text-[10px]">
+                            <i class="fas fa-times"></i>
                         </button>
                         ` : ''}
                     </div>
