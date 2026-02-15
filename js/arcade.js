@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // --- DEPLOYMENT TRACKER ---
-console.log("ARCADE CORE V.2026.02.15.20:10 - STATUS: COMPACT MODE ACTIVE");
+console.log("ARCADE CORE V.2026.02.15.20:32 - STATUS: COMPACT MODE ACTIVE");
 
 let user;
 let databaseCache = {};
@@ -201,30 +201,29 @@ function renderCurrents(currents, isOwner) {
     container.innerHTML = currentsArray.map(current => {
         const typeData = currentTypes.find(t => t.id === current.type_ref);
         
-        // Only show "Generate" bar if the logged-in user OWNS this arcade
         const controls = isOwner ? `
-            <div class="flex flex-grow items-center gap-4">
-                <div class="flex-grow bg-white/5 rounded border border-white/10">
-                    <input type="text" id="input-${current.id}" placeholder="Prompt..." class="bg-transparent text-[13px] text-white px-3 py-1 w-full outline-none font-mono">
-                </div>
-                <button onclick="handleCreation('${current.id}')" class="bg-[var(--neon-color)] text-black text-[10px] font-black px-6 py-1.5 rounded uppercase tracking-widest shadow-[0_0_15px_var(--neon-color)]">
+            <div class="flex items-center gap-2 flex-nowrap **ml-auto**">
+                <input type="text" id="input-${current.id}" placeholder="Create a Spark..." 
+                       class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] **w-64** focus:border-[var(--neon-color)] outline-none">
+                <button onclick="handleCreation('${current.id}')" 
+                        class="bg-[var(--neon-color)] text-black text-[9px] font-black px-4 py-2 rounded uppercase whitespace-nowrap shadow-[0_0_10px_var(--neon-color)]">
                     Generate
                 </button>
             </div>
-        ` : `<div class="flex-grow text-right text-[10px] opacity-30 italic">VIEWER MODE</div>`;
+        ` : `<div class="ml-auto text-[10px] opacity-30 italic">VIEWER MODE</div>`;
 
         return `
-            <section class="current-block w-full mb-6">
-                <div class="flex flex-row items-center gap-6 mb-2 border-b border-white/5 pb-2">
-                    <div class="flex flex-col min-w-[200px]">
-                        <h2 class="text-2xl font-black italic uppercase tracking-tighter leading-none text-white">${current.name}</h2>
-                        <span class="text-[9px] uppercase tracking-[0.2em] font-black italic mt-1" style="color: var(--neon-color)">
-                            BASED ON ${typeData?.name || "CORE LOGIC"}
+            <section class="current-block w-full mb-4">
+                <div class="flex flex-row items-center gap-4 border-b border-white/5 pb-1">
+                    <div class="flex flex-row items-baseline gap-2 min-w-fit">
+                        <h2 class="text-sm font-black italic uppercase text-white">${current.name}</h2>
+                        <span class="text-[8px] uppercase tracking-widest text-[var(--neon-color)] opacity-60">
+                            [${typeData?.name || "LOGIC"}]
                         </span>
                     </div>
                     ${controls}
                 </div>
-                <div class="grid grid-cols-4 gap-4">
+                <div class="grid grid-cols-4 gap-2 mt-2">
                     ${renderSparks(current.sparks, current.id, isOwner)}
                 </div>
             </section>
