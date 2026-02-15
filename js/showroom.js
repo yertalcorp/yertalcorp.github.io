@@ -327,7 +327,7 @@ window.handleArcadeEntry = async () => {
     
     // 1. Get the most fresh auth state
     const liveuser = auth.currentUser;
-    const targetLink = heroData?.holographic_cta?.link || './arcade/index.html?user=yertal-arcade';
+    const targetLink = heroData?.holographic_cta?.link;
     
     if (liveuser) {
         window.location.href = targetLink;
