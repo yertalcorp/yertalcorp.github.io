@@ -15,19 +15,27 @@ async function refreshUI() {
     if (statusText) statusText.textContent = "SYNCHRONIZING...";
 
     try {
-        // 1. Get fresh data
         const data = await getArcadeData();
         databaseCache = data; 
 
-        // 2. Resolve routing
+        // CRITICAL: Get the slug from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        let slug = urlParams.get('user');
+
+        // If no slug exists (or it's the string "undefined"), 
+        // redirect to the default arcade or the user's own arcade.
+        if (!slug || slug === 'undefined') {
+            const mySlug = Object.values(data.users || {}).find(u => u.profile?.uid === user.uid)?.profile?.slug;
+            window.location.search = `?user=${mySlug || 'yertal-arcade'}`;
+            return;
+        }
+
         const routeInfo = await handleArcadeRouting(user, data);
 
         if (routeInfo) {
-            // 3. Update CSS Theme
             const ui = data.settings['ui-settings'];
             document.documentElement.style.setProperty('--neon-color', ui['color-neon']);
 
-            // 4. Update UI Components
             renderTopBar(routeInfo.userData, routeInfo.isOwner, user, routeInfo.mySlug);
             renderCurrents(routeInfo.userData?.infrastructure?.currents || {}, routeInfo.isOwner);
 
@@ -38,6 +46,7 @@ async function refreshUI() {
         if (statusText) statusText.textContent = "SYNC ERROR";
     }
 }
+
 /**
  * Objective: Primary System Observer
  * Monitors login status and triggers the specialized rendering pipeline.
