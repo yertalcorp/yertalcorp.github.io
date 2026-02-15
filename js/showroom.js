@@ -15,7 +15,7 @@ async function initShowroom() {
             currentItems = data.navigation.menu_items;
             currentAuth = data.auth_ui;
             currentUi = data.settings['ui-settings'];
-            heroData = data.hero_section;
+           
                        
             applyGlobalStyles(data.settings);
             renderBranding(data.navigation.branding);
@@ -150,6 +150,7 @@ function renderAuthStatus(user, auth) {
 // --- 3. HERO & INTERACTION ENGINE ---
 function renderHero(hero) {
     const container = document.getElementById('hero-container');
+    const ctaLink = hero.holographic_cta.link || './arcade/index.html?user=yertal-arcade';
     container.innerHTML = `
         <div class="py-8 animate-fadeIn text-center">
             <h2 class="text-5xl lg:text-7xl uppercase tracking-tighter text-glow"
@@ -160,7 +161,7 @@ function renderHero(hero) {
                 ${hero.description}
             </p>
             <div class="w-full flex justify-center mt-8 mb-9" style="perspective: 1000px;">
-                <button id="arcade-trigger" onclick="handleArcadeEntry()" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl uppercase text-lg tracking-[0.5em] text-white">
+                <button id="arcade-trigger" data-link="$(ctalink)" onclick="handleArcadeEntry(this)" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl uppercase text-lg tracking-[0.5em] text-white">
                     <div class="inner-content flex items-center gap-6">
                         <i class="fas fa-power-off text-blue-400 opacity-70 group-hover:scale-125 transition-transform"></i>
                         ${hero.holographic_cta.text}
@@ -327,7 +328,7 @@ window.handleArcadeEntry = async () => {
     
     // 1. Get the most fresh auth state
     const liveuser = auth.currentUser;
-    const targetLink = heroData?.holographic_cta?.link;
+    const targetLink = btn.getAttribute('data-link');
     
     if (liveuser) {
         window.location.href = targetLink;
@@ -342,7 +343,7 @@ window.handleArcadeEntry = async () => {
             
             // Double check after login popup
             if (auth.currentUser) {
-                window.location.href = './arcade/index.html';
+                window.location.href = targetLink;
             }
         } catch (error) {
             console.error("Entry Denied:", error);
