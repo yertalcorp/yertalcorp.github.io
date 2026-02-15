@@ -1,18 +1,33 @@
-import { firebaseConfig, auth, saveToRealtimeDB } from '/config/firebase-config.js';
-import { watchAuthState, logout } from '/config/auth.js';
+import { firebaseConfig, auth, saveToRealtimeDB, getArcadeData } from '/config/firebase-config.js';
+import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 let user;
 let databaseCache = {};
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
-// --- 1. INITIALIZATION & AUTH BOUNCER ---
-watchAuthState((newUser) => {
-    user = newUser;
-    if (newUser === null) {
-        window.location.replace('/index.html'); 
-    } else if (newUser) {
-        initArcade();
+/**
+ * Main UI Controller
+ */
+watchAuthState(async (user) => {
+    if (!user) {
+        window.location.href = "/index.html";
+        return;
+    }
+
+    try {
+        // High-level call: No Firebase SDK details visible here!
+        const data = await getArcadeData();
+
+        // Let Auth.js handle the "Where do I go?" logic
+        const routeInfo = await handleArcadeRouting(user, data);
+
+        if (routeInfo) {
+            renderTopBar(routeInfo.userData, routeInfo.isOwner, user, routeInfo.mySlug);
+            renderInfrastructure(routeInfo.userData.infrastructure, routeInfo.isOwner);
+        }
+    } catch (error) {
+        console.error("Initialization Failed:", error);
     }
 });
 
