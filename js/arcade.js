@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // --- DEPLOYMENT TRACKER ---
-console.log("ARCADE CORE V.2026.02.15.20:47 - STATUS: COMPACT MODE ACTIVE");
+console.log("ARCADE CORE V.2026.02.15.20:50 - STATUS: COMPACT MODE ACTIVE");
 
 let user;
 let databaseCache = {};
