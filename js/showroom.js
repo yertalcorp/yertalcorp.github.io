@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // 1. ADD these declarations at the very top of the file
-let currentItems, currentAuth, currentUi, user;
+let currentItems, currentAuth, currentUi, user, heroData;
     
 async function initShowroom() {
     console.log("%c System Build: Feb 05-2026 | 21:55 IST ", "background: #050505; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
@@ -15,7 +15,8 @@ async function initShowroom() {
             currentItems = data.navigation.menu_items;
             currentAuth = data.auth_ui;
             currentUi = data.settings['ui-settings'];
-            
+            heroData = data.hero_section;
+                       
             applyGlobalStyles(data.settings);
             renderBranding(data.navigation.branding);
             renderNavbar(currentItems, currentUi);
@@ -326,9 +327,10 @@ window.handleArcadeEntry = async () => {
     
     // 1. Get the most fresh auth state
     const liveuser = auth.currentUser;
-
+    const targetLink = heroData?.holographic_cta?.link || './arcade/index.html?user=yertal-arcade';
+    
     if (liveuser) {
-        window.location.href = './arcade/index.html';
+        window.location.href = targetLink;
     } else {
         // If the SDK says no user, then and only then trigger login
         try {
