@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 
 // --- DEPLOYMENT TRACKER ---
 window.auth = auth;
-console.log("ARCADE CORE V.2026.02.15.21:07 - STATUS: COMPACT MODE ACTIVE");
+console.log("ARCADE CORE V.2026.02.15.21:35 - STATUS: COMPACT MODE ACTIVE");
 
 let user;
 let databaseCache = {};
@@ -12,50 +12,52 @@ const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
 async function refreshUI() {
     console.log("[SYSTEM]: INITIATING STRICT SYNC...");
-
     try {
         const data = await getArcadeData();
-        databaseCache = data; 
+        databaseCache = data;
 
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('user');
 
-        // 1. STRICT SLUG CHECK (No fallback)
         if (!slug) {
-            console.error("CRITICAL: No slug in URL. Access Denied.");
+            console.error("STRICT MODE: No slug detected in URL.");
             return;
         }
 
-        // 2. STRICT OWNER RESOLUTION
+        // 1. RESOLVE OWNER: Find which UID actually owns this slug in the DB
         const allUsers = data.users || {};
-        const ownerUid = Object.keys(allUsers).find(uid => allUsers[uid].profile?.slug === slug);
-        
-        // 3. LOGIC DEBUGGING (Check your console for this!)
+        const ownerUid = Object.keys(allUsers).find(uid => 
+            allUsers[uid].profile && allUsers[uid].profile.slug === slug
+        );
+
+        // 2. LOG THE TRUTH: Check these values in your console
         console.table({
-            "Action": "Identity Check",
-            "Logged_In_UID": user?.uid,
             "Target_Slug": slug,
-            "Resolved_Owner_UID": ownerUid,
-            "Ownership_Match": user?.uid === ownerUid
+            "Resolved_Owner_UID": ownerUid || "NOT_FOUND",
+            "Logged_In_UID": user ? user.uid : "GUEST",
+            "Access_Level": (user && user.uid === ownerUid) ? "OWNER" : "VIEWER"
         });
 
         if (!ownerUid) {
-            console.error(`CRITICAL: Slug '${slug}' not found in database.`);
+            console.warn(`STRICT MODE: No user owns the slug '${slug}'.`);
+            // We do not render anything here because there is no data to show.
             return;
         }
 
+        // 3. SET DATA CONTEXT
         const isOwner = (user && user.uid === ownerUid);
         const userData = allUsers[ownerUid];
+        const ui = data.settings?.['ui-settings'] || {};
 
-        // 4. UI INITIALIZATION
-        const ui = data.settings?.['ui-settings'] || { 'color-neon': '#00f2ff' };
-        document.documentElement.style.setProperty('--neon-color', ui['color-neon']);
-
+        // 4. APPLY STYLES & RENDER
+        document.documentElement.style.setProperty('--neon-color', ui['color-neon'] || '#00f2ff');
+        
         renderTopBar(userData, isOwner, user, slug);
-        renderCurrents(userData?.infrastructure?.currents || {}, isOwner, ownerUID);
+        // We pass ownerUid here to fix the ReferenceError from your previous crash
+        renderCurrents(userData?.infrastructure?.currents || {}, isOwner, ownerUid);
 
     } catch (e) {
-        console.error("CRITICAL SYSTEM ERROR:", e);
+        console.error("SYSTEM ERROR:", e);
     }
 }
     
@@ -192,47 +194,43 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
 }
 
 // --- 3. THE CONTENT ENGINES (Refined) ---
-function renderCurrents(currents, isOwner, ownerUID) {
+function renderCurrents(currents, isOwner, ownerUid) {
     const container = document.getElementById('currents-container');
     if (!container) return;
 
-    const currentTypes = databaseCache.settings?.['arcade-current-types'] || [];
     const currentsArray = Object.values(currents);
     
+    // If we have no currents for this UID, we stop here.
     if (currentsArray.length === 0) {
-        container.innerHTML = `<div class="text-white/20 text-center py-20 font-black italic">NO CURRENTS INITIALIZED</div>`;
+        container.innerHTML = `<div class="text-center py-20 opacity-20 italic">No infrastructure detected for ID: ${ownerUid.substring(0,8)}</div>`;
         return;
     }
 
     container.innerHTML = currentsArray.map(current => {
-        const typeData = currentTypes.find(t => t.id === current.type_ref);
+        const sparks = current.sparks ? Object.values(current.sparks) : [];
         
-const controls = isOwner ? `
-    <div class="flex items-center gap-2 flex-nowrap ml-auto">
-        <input type="text" id="input-${current.id}" placeholder="Create a Spark..." 
-               class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] w-64 focus:border-[var(--neon-color)] outline-none">
-        <button onclick="handleCreation('${current.id}')" 
-                class="bg-[var(--neon-color)] text-black text-[9px] font-black px-4 py-2 rounded uppercase whitespace-nowrap">
-            Generate
-        </div>
-    </div>
-` : `<div class="ml-auto text-[10px] opacity-30 italic font-mono">ID:${ownderUID? ownerUid.substring(0,5): NULL}... (VIEWER)</div>`;
+        // STRICT CONTROL RENDERING
+        const controls = isOwner ? `
+            <div class="flex items-center gap-2 flex-nowrap ml-auto">
+                <input type="text" id="input-${current.id}" placeholder="Create a Spark..." 
+                       class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] w-64 focus:border-[var(--neon-color)] outline-none">
+                <button onclick="handleCreation('${current.id}')" 
+                        class="bg-[var(--neon-color)] text-black text-[9px] font-black px-4 py-2 rounded uppercase whitespace-nowrap">
+                    Generate
+                </button>
+            </div>
+        ` : `<div class="ml-auto text-[10px] opacity-30 italic font-mono">ENCRYPTED VIEW [${ownerUid.substring(0,5)}]</div>`;
 
         return `
-            <section class="current-block w-full mb-4">
-                <div class="flex flex-row items-center gap-4 border-b border-white/5 pb-1">
-                    <div class="flex flex-row items-baseline gap-2 min-w-fit">
-                        <h2 class="text-sm font-black italic uppercase text-white">${current.name}</h2>
-                        <span class="text-[8px] uppercase tracking-widest text-[var(--neon-color)] opacity-60">
-                            [${typeData?.name || "LOGIC"}]
-                        </span>
-                    </div>
+            <div class="current-block mb-12 animate-fadeIn">
+                <div class="flex items-center gap-4 mb-6 border-b border-white/5 pb-4">
+                    <h2 class="text-2xl font-black uppercase tracking-tighter italic text-white/90">${current.label}</h2>
                     ${controls}
                 </div>
-                <div class="grid grid-cols-4 gap-2 mt-2">
-                    ${renderSparks(current.sparks, current.id, isOwner)}
+                <div id="sparks-${current.id}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${sparks.map(spark => renderSparkCard(spark, isOwner)).join('')}
                 </div>
-            </section>
+            </div>
         `;
     }).join('');
 }
