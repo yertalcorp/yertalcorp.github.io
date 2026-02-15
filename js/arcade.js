@@ -3,17 +3,16 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // --- DEPLOYMENT TRACKER ---
-console.log("ARCADE CORE V.2026.02.15.1917 - STATUS: ONLINE");
+console.log("ARCADE CORE V.2026.02.15.19:31 - STATUS: ONLINE");
 
 let user;
 let databaseCache = {};
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
-/**
- * Objective: Real-time UI Engine
- */
 async function refreshUI() {
     const statusText = document.getElementById('engine-status-text');
+    const container = document.getElementById('currents-container'); // Get this early
+    
     if (statusText) statusText.textContent = "SYNCHRONIZING...";
 
     try {
@@ -23,7 +22,6 @@ async function refreshUI() {
         const urlParams = new URLSearchParams(window.location.search);
         let slug = urlParams.get('user');
 
-        // 1. Initial Slug Check (Fallback logic)
         if (!slug || slug === 'undefined') {
             const myProfile = data.users?.[user.uid]?.profile;
             const fallbackSlug = myProfile?.slug || 'yertal-arcade';
@@ -34,7 +32,8 @@ async function refreshUI() {
         const routeInfo = await handleArcadeRouting(user, data);
 
         if (routeInfo) {
-            const ui = data.settings['ui-settings'];
+            // Check if settings exist before accessing them
+            const ui = data.settings?.['ui-settings'] || { 'color-neon': '#00f2ff' };
             document.documentElement.style.setProperty('--neon-color', ui['color-neon']);
 
             renderTopBar(routeInfo.userData, routeInfo.isOwner, user, routeInfo.mySlug);
@@ -42,14 +41,24 @@ async function refreshUI() {
 
             if (statusText) statusText.textContent = "SYSTEM READY";
         } else {
-            // 2. Routing Fallback (Redirect if slug doesn't exist in DB)
-            const mySlug = data.users?.[user.uid]?.profile?.slug || 'yertal-arcade';
-            console.warn("Routing failed. Engaging fallback to:", mySlug);
-            window.location.search = `?user=${mySlug}`;
+            // --- CRITICAL FIX: Don't just redirect, tell us WHY it's blank ---
+            console.warn("Routing failed for slug:", slug);
+            if (container) {
+                container.innerHTML = `
+                    <div class="text-center py-20 border border-dashed border-white/10 rounded-lg">
+                        <h2 class="text-white font-black text-xl uppercase italic">User Not Found</h2>
+                        <p class="text-white/40 text-[10px] mt-2">SLUG: ${slug}</p>
+                        <button onclick="window.location.search='?user=yertal-arcade'" class="mt-4 text-[var(--neon-color)] text-[10px] font-bold underline">RETURN TO HUB</button>
+                    </div>
+                `;
+            }
+            if (statusText) statusText.textContent = "OFFLINE";
         } 
     } catch (e) {
         console.error("Refresh Error:", e);
         if (statusText) statusText.textContent = "SYNC ERROR";
+        // Show the error on screen so you aren't guessing
+        if (container) container.innerHTML = `<div class="text-red-500 font-mono text-xs p-10">${e.message}</div>`;
     }
 }
 
