@@ -51,7 +51,7 @@ async function refreshUI() {
         document.documentElement.style.setProperty('--neon-color', ui['color-neon']);
 
         renderTopBar(userData, isOwner, user, slug);
-        renderCurrents(userData?.infrastructure?.currents || {}, isOwner);
+        renderCurrents(userData?.infrastructure?.currents || {}, isOwner, ownerUID);
 
     } catch (e) {
         console.error("CRITICAL SYSTEM ERROR:", e);
@@ -191,7 +191,7 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
 }
 
 // --- 3. THE CONTENT ENGINES (Refined) ---
-function renderCurrents(currents, isOwner) {
+function renderCurrents(currents, isOwner, ownerUID) {
     const container = document.getElementById('currents-container');
     if (!container) return;
 
@@ -215,7 +215,7 @@ const controls = isOwner ? `
             Generate
         </div>
     </div>
-` : `<div class="ml-auto text-[10px] opacity-30 italic font-mono">ID:${ownerUid.substring(0,5)}... (VIEWER)</div>`;
+` : `<div class="ml-auto text-[10px] opacity-30 italic font-mono">ID:${ownderUID? ownerUid.substring(0,5): NULL}... (VIEWER)</div>`;
 
         return `
             <section class="current-block w-full mb-4">
