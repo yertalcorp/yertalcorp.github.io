@@ -161,7 +161,7 @@ function renderHero(hero) {
                 ${hero.description}
             </p>
             <div class="w-full flex justify-center mt-8 mb-9" style="perspective: 1000px;">
-                <button id="arcade-trigger" data-link="${ctalink}" onclick="handleArcadeEntry(this)" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl uppercase text-lg tracking-[0.5em] text-white">
+                <button id="arcade-trigger" data-link="${ctaLink}" onclick="handleArcadeEntry(this)" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl uppercase text-lg tracking-[0.5em] text-white">
                     <div class="inner-content flex items-center gap-6">
                         <i class="fas fa-power-off text-blue-400 opacity-70 group-hover:scale-125 transition-transform"></i>
                         ${hero.holographic_cta.text}
