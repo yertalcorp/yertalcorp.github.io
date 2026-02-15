@@ -17,65 +17,44 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    console.log(`%c ARCADE CORE LOADED: 21:51 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
     try {
-        statusText.textContent = "SYNCHRONIZING WITH CORE...";
-        
         const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
         databaseCache = await response.json();
         
-        if (!databaseCache) throw new Error("Database Empty");
+        // --- USER PERSONALIZATION LOGIC ---
+        // Fetch user-specific data or fallback to defaults if not found
+        const userProfile = databaseCache.users?.[user.uid] || {};
+        const arcadeName = userProfile.arcade_name || "THE YERTAL ARCADE";
+        const arcadeSubtitle = userProfile.arcade_subtitle || "Laboratory Mode Active";
+        const accessLevel = user.email === 'yertal-arcade@gmail.com' ? "SYS_ADMIN" : "GUEST_USER";
 
         const ui = databaseCache.settings['ui-settings'];
         const root = document.documentElement;
         root.style.setProperty('--neon-color', ui['color-neon']);
-        root.style.setProperty('--accent-color', ui['color-accent']);
-        root.style.setProperty('--nav-font', ui.nav_font);
-        root.style.setProperty('--hero-pt', '0rem'); 
-        
-        const hero = databaseCache.arcade_infrastructure.hero;
-        const brand = databaseCache.navigation.branding;
-        
-        // 1. RESTORE BRANDING & LOGO (Top Left)
-        const brandDisplay = document.getElementById('corp-name-display');
-        brandDisplay.innerHTML = `
-            <img src="/assets/images/Yertal_Corp_New_HR.png" alt="Logo" class="h-5 w-auto mr-2 inline-block">
-            <span style="color: ${brand.parts[0].color}">${brand.parts[0].text}</span> 
-            <span style="color: ${brand.parts[1].color}">${brand.parts[1].text}</span>
-        `;
 
-        // 2. USER-SPECIFIC HERO IN NAV (Center)
-        // This targets the hero elements now residing in your navigation bar
-        const titleParts = hero.title.split(' ');
-        const navHeroContainer = document.getElementById('nav-hero-central'); 
-        
+        // 1. Injected User Title into Nav
+        const navHeroContainer = document.getElementById('nav-hero-central');
+        const titleParts = arcadeName.split(' ');
         navHeroContainer.innerHTML = `
-            <div class="flex flex-col items-center justify-center">
+            <div class="flex flex-col items-center">
                 <h1 class="text-xl font-black italic uppercase tracking-tighter leading-none">
-                    <span style="color: white">${titleParts[0]} ${titleParts[1]}</span> 
-                    <span style="color: var(--neon-color)">${titleParts[2]}</span>
+                    <span style="color: white">${titleParts[0]} ${titleParts[1] || ''}</span>** **<span style="color: var(--neon-color)">${titleParts[2] || ''}</span>
                 </h1>
-                <p class="text-[9px] font-bold tracking-[0.2em] opacity-60 uppercase mt-0.5">
-                    ${hero.subtitle}
-                </p>
+                <p class="text-[9px] font-bold tracking-[0.2em] opacity-60 uppercase mt-0.5">${arcadeSubtitle}</p>
             </div>
         `;
 
+        // 2. User-Specific Status Bar
         const superUserDisplay = document.getElementById('superuser-display');
-        if (user && user.email === 'yertal-arcade@gmail.com') {
-            superUserDisplay.textContent = "ACCESS: YERTAL-ARCADE";
-            superUserDisplay.style.color = 'var(--neon-color)';
-        }
+        superUserDisplay.textContent = `ACCESS: ${user.email.split('@')[0].toUpperCase()}`;
+        superUserDisplay.style.color = user.email === 'yertal-arcade@gmail.com' ? 'var(--neon-color)' : '#fff';
 
         renderCurrents(databaseCache.arcade_infrastructure.currents);
-        
         statusText.textContent = "SYSTEM READY";
-        document.body.style.opacity = '1';
 
     } catch (e) { 
-        console.error("Initialization Error:", e);
-        statusText.textContent = "CRITICAL ERROR: DATABASE OFFLINE";
+        console.error("Init Error:", e);
     }
 }
 
