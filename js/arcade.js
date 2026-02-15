@@ -6,31 +6,120 @@ let user;
 let databaseCache = {};
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
-/**
- * Main UI Controller
- */
-watchAuthState(async (user) => {
-    if (!user) {
+watchAuthState(async (currentUser) => {
+    if (!currentUser) {
         window.location.href = "/index.html";
         return;
     }
+    user = currentUser; // Update global user variable for saveSpark functions
 
     try {
-        // High-level call: No Firebase SDK details visible here!
         const data = await getArcadeData();
+        databaseCache = data; // Keep cache updated for rendering
 
-        // Let Auth.js handle the "Where do I go?" logic
         const routeInfo = await handleArcadeRouting(user, data);
 
         if (routeInfo) {
+            // Render the new Top Bar
             renderTopBar(routeInfo.userData, routeInfo.isOwner, user, routeInfo.mySlug);
-            renderInfrastructure(routeInfo.userData.infrastructure, routeInfo.isOwner);
+            
+            // Render Infrastructure
+            const container = document.getElementById('currents-container');
+            if (container) {
+                renderCurrents(routeInfo.userData?.infrastructure?.currents || {});
+            }
         }
     } catch (error) {
         console.error("Initialization Failed:", error);
     }
 });
 
+window.openCreateArcadeModal = async () => {
+    const title = prompt("ENTER ARCADE TITLE (e.g., THE QUANTUM LAB):");
+    if (!title) return;
+    const subtitle = prompt("ENTER SUBTITLE (e.g., DECODING REALITY):");
+    
+    const user = auth.currentUser;
+    if (user && title) {
+        const profilePath = `users/${user.uid}/profile`;
+        await saveToRealtimeDB(profilePath, {
+            arcade_title: title.toUpperCase(),
+            arcade_subtitle: (subtitle || "LABORATORY MODE ACTIVE").toUpperCase(),
+            arcade_logo: "/assets/images/Yertal_Corp_New_HR.png",
+            display_name: user.displayName,
+            privacy: "public"
+        });
+        
+        // Refresh the page to load the new identity
+        window.location.reload();
+    }
+};
+function renderTopBar(userData, isOwner, authUser, mySlug) {
+    const header = document.getElementById('arcade-header'); // Ensure this ID exists in index.html
+    if (!header) return;
+
+    // --- SECTION 1: TOP LEFT (Navigation & Brand) ---
+    const profile = userData?.profile || {};
+    const arcadeLogo = profile.arcade_logo || "/assets/images/Yertal_Corp_New_HR.png";
+    
+    const leftSide = `
+        <div class="nav-left flex items-center gap-4">
+            <img src="${arcadeLogo}" class="h-8 w-auto">
+            <span class="text-white font-black tracking-tighter italic">YERTAL</span>
+            <div class="flex gap-2 ml-4">
+                <a href="/index.html" class="nav-icon-btn" title="Showroom"><i class="fas fa-door-open"></i></a>
+                <a href="?user=${mySlug}" class="nav-icon-btn" title="Home"><i class="fas fa-home"></i></a>
+                <a href="?user=yertal-arcade" class="text-[9px] font-black border border-white/20 px-2 py-1 rounded hover:bg-white hover:text-black transition-all">YERTAL ARCADE</a>
+            </div>
+        </div>
+    `;
+
+    // --- SECTION 2: TOP CENTER (Arcade Identity) ---
+    let centerSideContent = "";
+    if (profile.arcade_title) {
+        const titleParts = profile.arcade_title.split(' ');
+        centerSideContent = `
+            <div class="flex flex-col items-center">
+                <h1 class="text-xl font-black italic uppercase tracking-tighter leading-none">
+                    <span style="color: white">${titleParts[0]} ${titleParts[1] || ''}</span> 
+                    <span style="color: var(--neon-color)">${titleParts[2] || ''}</span>
+                </h1>
+                <p class="text-[9px] font-bold tracking-[0.2em] opacity-60 uppercase mt-1">${profile.arcade_subtitle || 'Laboratory Mode Active'}</p>
+            </div>
+        `;
+    } else if (isOwner) {
+        centerSideContent = `
+            <button onclick="openCreateArcadeModal()" class="bg-white text-black text-[10px] font-black px-4 py-2 rounded uppercase tracking-widest hover:bg-[var(--neon-color)] transition-all">
+                <i class="fas fa-plus-circle mr-2"></i> Create Your Arcade
+            </button>
+        `;
+    }
+
+    // --- SECTION 3: TOP RIGHT (Search & Auth) ---
+    const rightSide = `
+        <div class="nav-right flex items-center gap-6 justify-end">
+            <div class="relative hidden md:block">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-[10px]"></i>
+                <input type="text" placeholder="SEARCH LOGIC..." class="bg-white/5 border border-white/10 rounded-full py-1 pl-8 pr-4 text-[10px] text-white focus:outline-none focus:border-[var(--neon-color)] w-48">
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="text-right">
+                    <p class="text-[10px] font-black text-white uppercase leading-none">${authUser.displayName || 'PILOT'}</p>
+                    <button onclick="logout()" class="text-[8px] font-bold text-[var(--neon-color)] uppercase hover:underline">Disconnect</button>
+                </div>
+                <img src="${authUser.photoURL || '/assets/icons/default-avatar.png'}" class="w-8 h-8 rounded-full border border-white/20">
+            </div>
+        </div>
+    `;
+
+    header.innerHTML = `
+        <div class="grid grid-cols-3 items-center w-full">
+            ${leftSide}
+            <div class="nav-center">${centerSideContent}</div>
+            ${rightSide}
+        </div>
+    `;
+}
 async function initArcade() {
     // Note: statusText is now used for background process updates only
     const statusText = document.getElementById('engine-status-text'); 
