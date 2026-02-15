@@ -3,53 +3,58 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // --- DEPLOYMENT TRACKER ---
-console.log("ARCADE CORE V.2026.02.15.20:50 - STATUS: COMPACT MODE ACTIVE");
+console.log("ARCADE CORE V.2026.02.15.20:55 - STATUS: COMPACT MODE ACTIVE");
 
 let user;
 let databaseCache = {};
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
 async function refreshUI() {
-    const logStatus = (msg) => console.log(`[SYSTEM]: ${msg}`);
-    logStatus("SYNCHRONIZING...");
+    console.log("[SYSTEM]: INITIATING STRICT SYNC...");
 
     try {
         const data = await getArcadeData();
         databaseCache = data; 
 
         const urlParams = new URLSearchParams(window.location.search);
-        let slug = urlParams.get('user');
+        const slug = urlParams.get('user');
 
-        // STRIKE ALL FALLBACKS: Logic must be explicit
+        // 1. STRICT SLUG CHECK (No fallback)
         if (!slug) {
-            console.error("CRITICAL: No slug provided in URL.");
+            console.error("CRITICAL: No slug in URL. Access Denied.");
             return;
         }
 
-        // RESOLVE IDENTITY: Find the UID that owns this slug
+        // 2. STRICT OWNER RESOLUTION
         const allUsers = data.users || {};
         const ownerUid = Object.keys(allUsers).find(uid => allUsers[uid].profile?.slug === slug);
         
+        // 3. LOGIC DEBUGGING (Check your console for this!)
+        console.table({
+            "Action": "Identity Check",
+            "Logged_In_UID": user?.uid,
+            "Target_Slug": slug,
+            "Resolved_Owner_UID": ownerUid,
+            "Ownership_Match": user?.uid === ownerUid
+        });
+
         if (!ownerUid) {
-            console.error(`CRITICAL: Slug '${slug}' does not resolve to a valid UID.`);
+            console.error(`CRITICAL: Slug '${slug}' not found in database.`);
             return;
         }
 
-        // DEFINE OWNERSHIP: Compare session user UID to resolved owner UID
-        const isOwner = user && user.uid === ownerUid;
+        const isOwner = (user && user.uid === ownerUid);
         const userData = allUsers[ownerUid];
 
+        // 4. UI INITIALIZATION
         const ui = data.settings?.['ui-settings'] || { 'color-neon': '#00f2ff' };
         document.documentElement.style.setProperty('--neon-color', ui['color-neon']);
 
-        // Use the resolved data and the strict isOwner flag
         renderTopBar(userData, isOwner, user, slug);
         renderCurrents(userData?.infrastructure?.currents || {}, isOwner);
 
-        logStatus("SYSTEM READY");
-        
     } catch (e) {
-        console.error("Refresh Error:", e);
+        console.error("CRITICAL SYSTEM ERROR:", e);
     }
 }
     
@@ -201,16 +206,16 @@ function renderCurrents(currents, isOwner) {
     container.innerHTML = currentsArray.map(current => {
         const typeData = currentTypes.find(t => t.id === current.type_ref);
         
-        const controls = isOwner ? `
-            <div class="flex items-center gap-2 flex-nowrap **ml-auto**">
-                <input type="text" id="input-${current.id}" placeholder="Create a Spark..." 
-                       class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] **w-64** focus:border-[var(--neon-color)] outline-none">
-                <button onclick="handleCreation('${current.id}')" 
-                        class="bg-[var(--neon-color)] text-black text-[9px] font-black px-4 py-2 rounded uppercase whitespace-nowrap shadow-[0_0_10px_var(--neon-color)]">
-                    Generate
-                </button>
-            </div>
-        ` : `<div class="ml-auto text-[10px] opacity-30 italic">VIEWER MODE</div>`;
+const controls = isOwner ? `
+    <div class="flex items-center gap-2 flex-nowrap ml-auto">
+        <input type="text" id="input-${current.id}" placeholder="Create a Spark..." 
+               class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] w-64 focus:border-[var(--neon-color)] outline-none">
+        <button onclick="handleCreation('${current.id}')" 
+                class="bg-[var(--neon-color)] text-black text-[9px] font-black px-4 py-2 rounded uppercase whitespace-nowrap">
+            Generate
+        </div>
+    </div>
+` : `<div class="ml-auto text-[10px] opacity-30 italic font-mono">ID:${ownerUid.substring(0,5)}... (VIEWER)</div>`;
 
         return `
             <section class="current-block w-full mb-4">
