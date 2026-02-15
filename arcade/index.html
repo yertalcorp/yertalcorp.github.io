@@ -6,41 +6,20 @@
     <title>YERTAL | Laboratory Arcade</title>
 
     <link rel="stylesheet" href="/css/global.css">
-    
     <link rel="stylesheet" href="/css/arcade.css">
 
-    <link rel="stylesheet" id="font-awesome-link" href="">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" id="google-fonts-link" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Press+Start+2P&family=Inter:wght@300;400;600&display=swap">
 </head>
 
-<body id="lab-body" class="opacity-0 transition-opacity duration-1000 bg-[#050505]">
+<body id="lab-body" class="opacity-0 transition-opacity duration-1000 bg-[#050505] text-white">
 
-    <nav class="glass hud-border fixed top-0 w-full z-50 flex justify-between items-center px-8 py-4">
-        <div class="flex items-center gap-3" id="nav-logo">
-            <div id="logo-placeholder"></div>
-            <span id="corp-name-display" class="text-xl font-extrabold uppercase tracking-tighter"></span>
-        </div>
-        
-        <div id="auth-zone" class="flex items-center gap-4">
-            <button id="auth-trigger" class="border border-white/20 hover:bg-white/10 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition text-white">
-            </button>
-        </div>
-    </nav>
+    <header id="arcade-header" class="glass hud-border fixed top-0 w-full z-50 px-8 py-4">
+        </header>
 
     <main class="w-full max-w-[1600px] mx-auto pt-32 px-6 flex flex-col items-center">
         
-        <header class="text-center animate-fadeIn w-full">
-            <h1 id="hero-heading" class="text-white text-4xl lg:text-5xl uppercase tracking-tighter font-black"></h1>
-            <p id="hero-subheading" class="text-slate-500 mt-2 text-sm italic font-light tracking-wide"></p>
-            
-            <div class="mt-8 flex justify-center" style="perspective: 1000px;">
-                <button id="create-arcade-btn" class="surreal-3d-btn group relative px-12 py-4 rounded-xl text-white font-bold uppercase tracking-[0.3em]">
-                    <span class="inner-content"></span>
-                </button>
-            </div>
-        </header>
-
-        <div class="w-full mt-10 flex items-center justify-between border-b border-white/5 pb-2">
+        <div class="w-full mb-10 flex items-center justify-between border-b border-white/5 pb-2">
             <div class="flex items-center gap-2">
                 <div class="w-2 h-2 rounded-full bg-[var(--neon-color)] animate-pulse"></div>
                 <span id="engine-status-text" class="text-[9px] uppercase tracking-[0.3em] text-slate-500">System Ready</span>
@@ -51,7 +30,7 @@
         </div>
 
         <div id="currents-container" class="experiment-zone w-full">
-        </div>
+            </div>
 
     </main>
 
@@ -67,6 +46,7 @@
 
     <footer id="footer-container" class="py-12 px-6 border-t border-white/5 w-full mt-20">
     </footer>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module" src="/js/arcade.js"></script>
 </body>
