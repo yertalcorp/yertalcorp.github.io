@@ -41,6 +41,15 @@ async function refreshUI() {
 
             if (statusText) statusText.textContent = "SYSTEM READY";
         }
+        else {
+            // FALLBACK: If we can't find the arcade in the URL, redirect to the superuser 
+            // or the current user's own home if they have one.
+            const mySlug = data.users?.[user.uid]?.profile?.slug || 'yertal-arcade';
+            console.log("Routing failed, falling back to:", mySlug);
+            window.location.search = `?user=${mySlug}`;
+            return;
+        }
+}
     } catch (e) {
         console.error("Refresh Error:", e);
         if (statusText) statusText.textContent = "SYNC ERROR";
