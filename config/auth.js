@@ -101,33 +101,35 @@ export const protectRoute = (redirectPath = "../index.html") => {
 
 export async function handleArcadeRouting(authUser, database) {
     const urlParams = new URLSearchParams(window.location.search);
-    const slug = urlParams.get('user');
+    let urlSlug = urlParams.get('user'); 
     
     const allUsers = database.users || {};
     
-    // 1. Find the UID being viewed via the slug
-    const viewedUid = Object.keys(allUsers).find(uid => allUsers[uid].profile?.slug === slug);
+    // 1. Identify the logged-in user's slug
+    const myEntry = allUsers[authUser.uid];
+    const mySlug = myEntry?.profile?.slug || null;
+
+    // 2. Fallback: If URL is empty, go to user's slug or the superuser
+    if (!urlSlug || urlSlug === 'undefined') {
+        urlSlug = mySlug || 'yertal-arcade';
+    }
+
+    // 3. Find the UID by matching the URL string against the 'slug' field
+    const viewedUid = Object.keys(allUsers).find(uid => 
+        allUsers[uid].profile?.slug === urlSlug
+    );
+
     const viewedData = allUsers[viewedUid];
 
-    // 2. Find the current logged-in user's slug
-    // FIX: We look at the key (uid) directly or the profile field
-    const myEntry = allUsers[authUser.uid];
-    const mySlug = myEntry?.profile?.slug || null; 
-
-    // 3. Handle cases where the viewed slug is invalid or missing
     if (!viewedData) {
-        console.warn("Target arcade not found for slug:", slug);
-        // If the viewer is the owner and has no data yet, we still return essential info
-        if (slug === mySlug && mySlug !== null) {
-            return { userData: myEntry, isOwner: true, mySlug: mySlug };
-        }
+        console.warn(`Slug "${urlSlug}" not found. Falling back to Hub.`);
         return null; 
     }
 
     return {
         userData: viewedData,
         isOwner: authUser.uid === viewedUid,
-        mySlug: mySlug
+        mySlug: mySlug // The slug for the "Home" button
     };
 }
 
