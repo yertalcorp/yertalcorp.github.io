@@ -136,10 +136,10 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
     if (!header) return;
 
     const profile = userData?.profile || {};
-    // FETCH LOGO DYNAMICALLY
-    const globalDefaultLogo = databaseCache.settings?.['ui-settings']?.['arcade-logo-default'];
-    const arcadeLogo = profile.arcade_logo || globalDefaultLogo || "/assets/images/Yertal_Logo_New_HR.png";
-
+    
+    // UI Label (Pretty Name) vs URL Parameter (Slug)
+    const displayName = profile.display_name || "PILOT";
+    const arcadeLogo = profile.arcade_logo || "/assets/images/Yertal_Logo_New_HR.png";
     const titleParts = (profile.arcade_title || "THE YERTAL ARCADE").split(' ');
 
     header.innerHTML = `
@@ -174,7 +174,7 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="text-right">
-                        <p class="text-[9px] font-black text-white uppercase leading-none">${authUser.displayName || 'PILOT'}</p>
+                        <p class="text-[9px] font-black text-white uppercase leading-none">${displayName}</p>
                         <button onclick="logout()" class="text-[8px] font-bold text-[var(--neon-color)] uppercase hover:underline">Disconnect</button>
                     </div>
                     <img src="${authUser.photoURL || '/assets/icons/default-avatar.png'}" class="w-8 h-8 rounded-full border border-white/20">
