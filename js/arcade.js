@@ -118,10 +118,12 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
     if (!header) return;
 
     const profile = userData?.profile || {};
-    const arcadeLogo = profile.arcade_logo || "/assets/images/Yertal_Corp_New_HR.png";
+    // FETCH LOGO DYNAMICALLY
+    const globalDefaultLogo = databaseCache.settings?.['ui-settings']?.['arcade-logo-default'];
+    const arcadeLogo = profile.arcade_logo || globalDefaultLogo || "/assets/images/Yertal_Logo_New_HR.png";
+
     const titleParts = (profile.arcade_title || "THE YERTAL ARCADE").split(' ');
 
-    // --- Template Injection ---
     header.innerHTML = `
         <div class="grid grid-cols-3 items-center w-full">
             <div class="flex items-center gap-4">
