@@ -10,7 +10,6 @@ let databaseCache = {};
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
 async function refreshUI() {
-    // 1. Silent Status Handling
     const logStatus = (msg) => console.log(`[SYSTEM]: ${msg}`);
     logStatus("SYNCHRONIZING...");
 
@@ -21,30 +20,39 @@ async function refreshUI() {
         const urlParams = new URLSearchParams(window.location.search);
         let slug = urlParams.get('user');
 
-        if (!slug || slug === 'undefined') {
-            const myProfile = data.users?.[user.uid]?.profile;
-            const fallbackSlug = myProfile?.slug || 'yertal-arcade';
-            window.location.search = `?user=${fallbackSlug}`;
+        // STRIKE ALL FALLBACKS: Logic must be explicit
+        if (!slug) {
+            console.error("CRITICAL: No slug provided in URL.");
             return;
         }
 
-        const routeInfo = await handleArcadeRouting(user, data);
+        // RESOLVE IDENTITY: Find the UID that owns this slug
+        const allUsers = data.users || {};
+        const ownerUid = Object.keys(allUsers).find(uid => allUsers[uid].profile?.slug === slug);
+        
+        if (!ownerUid) {
+            console.error(`CRITICAL: Slug '${slug}' does not resolve to a valid UID.`);
+            return;
+        }
 
-        if (routeInfo) {
-            const ui = data.settings?.['ui-settings'] || { 'color-neon': '#00f2ff' };
-            document.documentElement.style.setProperty('--neon-color', ui['color-neon']);
+        // DEFINE OWNERSHIP: Compare session user UID to resolved owner UID
+        const isOwner = user && user.uid === ownerUid;
+        const userData = allUsers[ownerUid];
 
-            renderTopBar(routeInfo.userData, routeInfo.isOwner, user, routeInfo.mySlug);
-            renderCurrents(routeInfo.userData?.infrastructure?.currents || {}, routeInfo.isOwner);
+        const ui = data.settings?.['ui-settings'] || { 'color-neon': '#00f2ff' };
+        document.documentElement.style.setProperty('--neon-color', ui['color-neon']);
 
-            logStatus("SYSTEM READY");
-        } else {
-            window.location.search = `?user=yertal-arcade`;
-        } 
+        // Use the resolved data and the strict isOwner flag
+        renderTopBar(userData, isOwner, user, slug);
+        renderCurrents(userData?.infrastructure?.currents || {}, isOwner);
+
+        logStatus("SYSTEM READY");
+        
     } catch (e) {
         console.error("Refresh Error:", e);
     }
 }
+    
 window.openCreateArcadeModal = async () => {
     const title = prompt("ENTER ARCADE TITLE:");
     if (!title) return;
