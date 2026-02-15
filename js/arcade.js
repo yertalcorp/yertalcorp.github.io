@@ -2,10 +2,16 @@ import { firebaseConfig, auth, saveToRealtimeDB, getArcadeData } from '/config/f
 import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
+// --- DEPLOYMENT TRACKER ---
+console.log("ARCADE CORE V.2026.02.15.1905 - STATUS: ONLINE");
+
 let user;
 let databaseCache = {};
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
+/**
+ * Objective: Real-time UI Engine
+ */
 async function refreshUI() {
     const statusText = document.getElementById('engine-status-text');
     if (statusText) statusText.textContent = "SYNCHRONIZING...";
@@ -17,7 +23,7 @@ async function refreshUI() {
         const urlParams = new URLSearchParams(window.location.search);
         let slug = urlParams.get('user');
 
-        // 1. Initial Slug Check
+        // 1. Initial Slug Check (Fallback logic)
         if (!slug || slug === 'undefined') {
             const myProfile = data.users?.[user.uid]?.profile;
             const fallbackSlug = myProfile?.slug || 'yertal-arcade';
@@ -36,11 +42,11 @@ async function refreshUI() {
 
             if (statusText) statusText.textContent = "SYSTEM READY";
         } else {
-            // 2. Routing Fallback
+            // 2. Routing Fallback (Redirect if slug doesn't exist in DB)
             const mySlug = data.users?.[user.uid]?.profile?.slug || 'yertal-arcade';
+            console.warn("Routing failed. Engaging fallback to:", mySlug);
             window.location.search = `?user=${mySlug}`;
-            return;
-        } // <--- Corrected closure here
+        } 
     } catch (e) {
         console.error("Refresh Error:", e);
         if (statusText) statusText.textContent = "SYNC ERROR";
