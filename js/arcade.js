@@ -16,7 +16,6 @@ watchAuthState((newUser) => {
     }
 });
 
-// Ensure no loose text exists above this line
 async function initArcade() {
     console.log(`%c ARCADE CORE LOADED: 21:51 `, 'background: #00f3ff; color: #000; font-weight: bold;');
     const statusText = document.getElementById('engine-status-text');
@@ -33,26 +32,35 @@ async function initArcade() {
         root.style.setProperty('--neon-color', ui['color-neon']);
         root.style.setProperty('--accent-color', ui['color-accent']);
         root.style.setProperty('--nav-font', ui.nav_font);
-        root.style.setProperty('--hero-pt', '0.5rem'); /* Crushing top space */
+        root.style.setProperty('--hero-pt', '0rem'); 
         
         const hero = databaseCache.arcade_infrastructure.hero;
         const brand = databaseCache.navigation.branding;
-        const titleParts = hero.title.split(' ');
         
-        const heroHeading = document.getElementById('hero-heading');
-        heroHeading.style.fontSize = "2.2rem"; /* Industrial but compact */
-        heroHeading.style.fontWeight = ui['nav-font-weight'] || '900';
-        heroHeading.innerHTML = `
-            <span style="color: ${brand.parts[0].color}">${titleParts[0]}</span> 
-            <span style="color: ${brand.parts[0].color}">${titleParts[1]}</span> 
-            <span style="color: var(--neon-color)">${titleParts[2]}</span>
+        // 1. RESTORE BRANDING & LOGO (Top Left)
+        const brandDisplay = document.getElementById('corp-name-display');
+        brandDisplay.innerHTML = `
+            <img src="/assets/images/Yertal_Corp_New_HR.png" alt="Logo" class="h-5 w-auto mr-2 inline-block">
+            <span style="color: ${brand.parts[0].color}">${brand.parts[0].text}</span> 
+            <span style="color: ${brand.parts[1].color}">${brand.parts[1].text}</span>
         `;
 
-        const subtitleEl = document.getElementById('hero-subheading');
-        subtitleEl.textContent = hero.subtitle;
-        subtitleEl.style.fontSize = "0.75rem";
-        subtitleEl.style.marginTop = "-0.25rem";
-        subtitleEl.style.color = "rgba(255, 255, 255, 0.7)";
+        // 2. USER-SPECIFIC HERO IN NAV (Center)
+        // This targets the hero elements now residing in your navigation bar
+        const titleParts = hero.title.split(' ');
+        const navHeroContainer = document.getElementById('nav-hero-central'); 
+        
+        navHeroContainer.innerHTML = `
+            <div class="flex flex-col items-center justify-center">
+                <h1 class="text-xl font-black italic uppercase tracking-tighter leading-none">
+                    <span style="color: white">${titleParts[0]} ${titleParts[1]}</span> 
+                    <span style="color: var(--neon-color)">${titleParts[2]}</span>
+                </h1>
+                <p class="text-[9px] font-bold tracking-[0.2em] opacity-60 uppercase mt-0.5">
+                    ${hero.subtitle}
+                </p>
+            </div>
+        `;
 
         const superUserDisplay = document.getElementById('superuser-display');
         if (user && user.email === 'yertal-arcade@gmail.com') {
