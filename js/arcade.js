@@ -17,41 +17,59 @@ watchAuthState((newUser) => {
 });
 
 async function initArcade() {
-    const statusText = document.getElementById('engine-status-text');
+    // Note: statusText is now used for background process updates only
+    const statusText = document.getElementById('engine-status-text'); 
     try {
         const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
         databaseCache = await response.json();
         
-        // --- USER PERSONALIZATION LOGIC ---
-        // Fetch user-specific data or fallback to defaults if not found
-        const userProfile = databaseCache.users?.[user.uid] || {};
-        const arcadeName = userProfile.arcade_name || "THE YERTAL ARCADE";
-        const arcadeSubtitle = userProfile.arcade_subtitle || "Laboratory Mode Active";
-        const accessLevel = user.email === 'yertal-arcade@gmail.com' ? "SYS_ADMIN" : "GUEST_USER";
+        // 1. Fetch user-specific node
+        const userNode = databaseCache.users?.[user.uid] || {};
+        const profile = userNode.profile || {};
+        
+        // 2. Branding fallbacks
+        const arcadeName = profile.arcade_title || "THE YERTAL ARCADE";
+        const arcadeSubtitle = profile.arcade_subtitle || "Laboratory Mode Active";
+        const arcadeLogo = profile.arcade_logo || "/assets/images/Yertal_Corp_New_HR.png";
 
         const ui = databaseCache.settings['ui-settings'];
         const root = document.documentElement;
         root.style.setProperty('--neon-color', ui['color-neon']);
 
-        // 1. Injected User Title into Nav
+        // 3. User Title & Logo Injection
         const navHeroContainer = document.getElementById('nav-hero-central');
         const titleParts = arcadeName.split(' ');
-        navHeroContainer.innerHTML = `
-            <div class="flex flex-col items-center">
-                <h1 class="text-xl font-black italic uppercase tracking-tighter leading-none">
-                    <span style="color: white">${titleParts[0]} ${titleParts[1] || ''}</span>** **<span style="color: var(--neon-color)">${titleParts[2] || ''}</span>
-                </h1>
-                <p class="text-[9px] font-bold tracking-[0.2em] opacity-60 uppercase mt-0.5">${arcadeSubtitle}</p>
-            </div>
-        `;
+        if (navHeroContainer) {
+            navHeroContainer.innerHTML = `
+                <div class="flex flex-col items-center">
+                    <div class="flex items-center gap-3">
+                        <img src="${arcadeLogo}" class="h-6 w-auto">
+                        <h1 class="text-xl font-black italic uppercase tracking-tighter leading-none">
+                            <span style="color: white">${titleParts[0]} ${titleParts[1] || ''}</span> <span style="color: var(--neon-color)">${titleParts[2] || ''}</span>
+                        </h1>
+                    </div>
+                    <p class="text-[9px] font-bold tracking-[0.2em] opacity-60 uppercase mt-0.5">${arcadeSubtitle}</p>
+                </div>
+            `;
+        }
 
-        // 2. User-Specific Status Bar
-        const superUserDisplay = document.getElementById('superuser-display');
-        superUserDisplay.textContent = `ACCESS: ${user.email.split('@')[0].toUpperCase()}`;
-        superUserDisplay.style.color = user.email === 'yertal-arcade@gmail.com' ? 'var(--neon-color)' : '#fff';
+        // 4. Top-Right Profile & Disconnect
+        const profileContainer = document.getElementById('user-profile-nav'); // Add this ID to your HTML
+        if (profileContainer) {
+            profileContainer.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-white uppercase leading-none">${user.displayName || user.email.split('@')[0]}</p>
+                        <button onclick="logout()" class="text-[8px] font-bold text-[var(--neon-color)] uppercase hover:underline">Disconnect</button>
+                    </div>
+                    <img src="${user.photoURL || '/assets/icons/default-avatar.png'}" class="w-8 h-8 rounded-full border border-white/20 shadow-lg">
+                </div>
+            `;
+        }
 
-        renderCurrents(databaseCache.arcade_infrastructure.currents);
-        statusText.textContent = "SYSTEM READY";
+        // 5. Render user-specific currents
+        renderCurrents(userNode.infrastructure?.currents || {});
+        if (statusText) statusText.textContent = "SYSTEM READY";
 
     } catch (e) { 
         console.error("Init Error:", e);
@@ -60,11 +78,17 @@ async function initArcade() {
 
 function renderCurrents(currents) {
     const container = document.getElementById('currents-container');
-    if (!container || !currents) return;
+    if (!container) return;
 
     const currentTypes = databaseCache.settings?.['arcade-current-types'] || [];
     const currentsArray = Object.values(currents);
     
+    // If user has no currents yet, show an empty state or invitation
+    if (currentsArray.length === 0) {
+        container.innerHTML = `<div class="text-white/20 text-center py-20 font-black italic">NO CURRENTS INITIALIZED IN THIS ARCADE</div>`;
+        return;
+    }
+
     container.innerHTML = currentsArray.map(current => {
         const typeData = currentTypes.find(t => t.id === current.type_ref);
         const templateName = typeData ? typeData.name : "CORE LOGIC";
@@ -72,17 +96,13 @@ function renderCurrents(currents) {
         return `
         <section class="current-block w-full mb-6">
             <div class="flex flex-row items-center gap-6 mb-2 border-b border-white/5 pb-2">
-                
                 <div class="flex flex-col min-w-[200px]">
-                    <h2 class="text-2xl font-black italic uppercase tracking-tighter leading-none text-white">
-                        ${current.name}
-                    </h2>
+                    <h2 class="text-2xl font-black italic uppercase tracking-tighter leading-none text-white">${current.name}</h2>
                     <span class="text-[9px] uppercase tracking-[0.2em] font-black italic mt-1" 
                           style="background: linear-gradient(to right, var(--neon-color), var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                         BASED ON ${templateName}
                     </span>
                 </div>
-
                 <div class="flex flex-grow items-center gap-4">
                     <label class="text-[10px] text-white/80 uppercase font-black tracking-widest whitespace-nowrap">Create Spark</label>
                     <div class="flex-grow bg-white/5 rounded border border-white/10">
@@ -218,14 +238,18 @@ async function callGeminiAPI(prompt, val, type) {
 
 async function saveSpark(currentId, data, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg') {
     const sparkId = `spark_${Date.now()}_${Math.floor(Math.random()*1000)}`;
-    const dbPath = `arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`;
-    const currentCurrent = Object.values(databaseCache.arcade_infrastructure.currents).find(c => c.id === currentId);
-    const rank = currentCurrent && currentCurrent.sparks ? Object.keys(currentCurrent.sparks).length + 1 : 1;
+    
+    // UPDATED PATH: users/[UID]/infrastructure/currents/...
+    **const dbPath = `users/${user.uid}/infrastructure/currents/${currentId}/sparks/${sparkId}`;**
+    
+    const userNode = databaseCache.users?.[user.uid];
+    const currentCurrent = userNode?.infrastructure?.currents?.[currentId];
+    const rank = currentCurrent?.sparks ? Object.keys(currentCurrent.sparks).length + 1 : 1;
 
     await saveToRealtimeDB(dbPath, {
         id: sparkId,
         name: data.name || "Unnamed Spark",
-        owner: user ? user.email.split('@')[0] : "yertal-arcade",
+        owner: **user.uid**, // Use UID for owner check, not email
         created: Date.now(),
         template_type: detectedTemplate,
         image: data.image || '/assets/thumbnails/default.jpg',
@@ -236,13 +260,14 @@ async function saveSpark(currentId, data, detectedTemplate = 'Custom', templateU
     });
 }
 
-window.deleteSpark = async (currentId, sparkId, ownerPrefix) => {
-    const currentUserPrefix = user ? user.email.split('@')[0] : null;
-    const isSuperUser = user && user.email === 'yertal-arcade@gmail.com';
-    if (currentUserPrefix !== ownerPrefix && !isSuperUser) return alert("Unauthorized.");
+window.deleteSpark = async (currentId, sparkId, ownerUid) => {
+    // Only allow deletion if user owns this specific arcade node
+    **if (user.uid !== ownerUid && user.email !== 'yertal-arcade@gmail.com') return alert("Unauthorized.");**
 
     if (!confirm("Decommission this spark permanently?")) return;
-    await saveToRealtimeDB(`arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`, null);
+    
+    **const dbPath = `users/${user.uid}/infrastructure/currents/${currentId}/sparks/${sparkId}`;**
+    await saveToRealtimeDB(dbPath, null);
     initArcade();
 };
 
