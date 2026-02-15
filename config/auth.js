@@ -98,3 +98,30 @@ export const protectRoute = (redirectPath = "../index.html") => {
          }
      });
 };
+
+/**
+ * Objective: Intent-Based Routing
+ * Handles the logic for "Enter Yertal Arcade" (hub) vs "Direct Login" (home)
+ */
+export const handleArcadeRouting = async (user, data) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestedSlug = urlParams.get('user');
+
+    // Find the logged-in user's slug from the search_index
+    const mySlug = Object.keys(data.search_index).find(key => data.search_index[key] === user.uid);
+
+    // 1. BYPASS LOGIC: If no user is specified in the URL, send them home
+    if (!requestedSlug) {
+        window.location.replace(`/arcade/index.html?user=${mySlug}`);
+        return null; // Stop execution, redirecting...
+    }
+
+    // 2. HUB LOGIC: If a slug exists (like ?user=yertal-arcade), return the target info
+    const targetUID = data.search_index[requestedSlug];
+    return {
+        userData: data.users[targetUID],
+        isOwner: user.uid === targetUID,
+        mySlug: mySlug
+    };
+};
+
