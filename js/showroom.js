@@ -322,7 +322,7 @@ window.handleSignupFlow = async () => {
 };
 
 // Objective: Update handleArcadeEntry to use the first provider in the list
-window.handleArcadeEntry = async () => {
+window.handleArcadeEntry = async (btn) => {
     // Wait for Firebase to be certain of the token
     await auth.authStateReady();
     
