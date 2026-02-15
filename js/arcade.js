@@ -6,10 +6,6 @@ let user;
 let databaseCache = {};
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
-/**
- * Objective: Real-time UI Engine
- * Re-fetches data and updates the DOM without reloading the page.
- */
 async function refreshUI() {
     const statusText = document.getElementById('engine-status-text');
     if (statusText) statusText.textContent = "SYNCHRONIZING...";
@@ -18,15 +14,14 @@ async function refreshUI() {
         const data = await getArcadeData();
         databaseCache = data; 
 
-        // CRITICAL: Get the slug from the URL
         const urlParams = new URLSearchParams(window.location.search);
         let slug = urlParams.get('user');
 
-        // If no slug exists (or it's the string "undefined"), 
-        // redirect to the default arcade or the user's own arcade.
+        // 1. Initial Slug Check
         if (!slug || slug === 'undefined') {
-            const mySlug = Object.values(data.users || {}).find(u => u.profile?.uid === user.uid)?.profile?.slug;
-            window.location.search = `?user=${mySlug || 'yertal-arcade'}`;
+            const myProfile = data.users?.[user.uid]?.profile;
+            const fallbackSlug = myProfile?.slug || 'yertal-arcade';
+            window.location.search = `?user=${fallbackSlug}`;
             return;
         }
 
@@ -40,21 +35,40 @@ async function refreshUI() {
             renderCurrents(routeInfo.userData?.infrastructure?.currents || {}, routeInfo.isOwner);
 
             if (statusText) statusText.textContent = "SYSTEM READY";
-        }
-        else {
-            // FALLBACK: If we can't find the arcade in the URL, redirect to the superuser 
-            // or the current user's own home if they have one.
+        } else {
+            // 2. Routing Fallback
             const mySlug = data.users?.[user.uid]?.profile?.slug || 'yertal-arcade';
-            console.log("Routing failed, falling back to:", mySlug);
             window.location.search = `?user=${mySlug}`;
             return;
-        }
-}
+        } // <--- Corrected closure here
     } catch (e) {
         console.error("Refresh Error:", e);
         if (statusText) statusText.textContent = "SYNC ERROR";
     }
 }
+
+window.openCreateArcadeModal = async () => {
+    const title = prompt("ENTER ARCADE TITLE:");
+    if (!title) return;
+    const name = prompt("ENTER YOUR DISPLAY NAME (e.g. Yertal Corp):");
+    const slug = prompt("ENTER YOUR URL SLUG (e.g. yertal-corp):").toLowerCase().replace(/\s+/g, '-');
+    
+    if (user && title && slug) {
+        const profilePath = `users/${user.uid}/profile`;
+        await saveToRealtimeDB(profilePath, {
+            arcade_title: title.toUpperCase(),
+            arcade_subtitle: "LABORATORY ACTIVE",
+            arcade_logo: "/assets/images/Yertal_Logo_New_HR.png",
+            display_name: name || user.displayName,
+            slug: slug,
+            privacy: "public"
+        });
+        
+        // Use history.replaceState so we stay on the page but update the URL for the next refresh
+        window.history.replaceState({}, '', `?user=${slug}`);
+        await refreshUI();
+    }
+};
 
 /**
  * Objective: Primary System Observer
@@ -106,25 +120,6 @@ window.cloneSpark = async (currentId, sparkId) => {
     } catch (e) {
         console.error("Clone Error:", e);
         alert("Failed to clone spark.");
-    }
-};
-window.openCreateArcadeModal = async () => {
-    const title = prompt("ENTER ARCADE TITLE:");
-    if (!title) return;
-    const subtitle = prompt("ENTER SUBTITLE:");
-    
-    if (user && title) {
-        const profilePath = `users/${user.uid}/profile`;
-        await saveToRealtimeDB(profilePath, {
-            arcade_title: title.toUpperCase(),
-            arcade_subtitle: (subtitle || "LAB MODE").toUpperCase(),
-            arcade_logo: "/assets/images/Yertal_Corp_New_HR.png",
-            display_name: user.displayName,
-            privacy: "public"
-        });
-        
-        // Instant update: the "Create" button disappears and title appears
-        await refreshUI();
     }
 };
 
