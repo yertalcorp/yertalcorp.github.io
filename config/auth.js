@@ -99,29 +99,35 @@ export const protectRoute = (redirectPath = "../index.html") => {
      });
 };
 
-/**
- * Objective: Intent-Based Routing
- * Handles the logic for "Enter Yertal Arcade" (hub) vs "Direct Login" (home)
- */
-export const handleArcadeRouting = async (user, data) => {
+export async function handleArcadeRouting(authUser, database) {
     const urlParams = new URLSearchParams(window.location.search);
-    const requestedSlug = urlParams.get('user');
+    const slug = urlParams.get('user');
+    
+    const allUsers = database.users || {};
+    
+    // 1. Find the UID being viewed via the slug
+    const viewedUid = Object.keys(allUsers).find(uid => allUsers[uid].profile?.slug === slug);
+    const viewedData = allUsers[viewedUid];
 
-    // Find the logged-in user's slug from the search_index
-    const mySlug = Object.keys(data.search_index).find(key => data.search_index[key] === user.uid);
+    // 2. Find the current logged-in user's slug
+    // FIX: We look at the key (uid) directly or the profile field
+    const myEntry = allUsers[authUser.uid];
+    const mySlug = myEntry?.profile?.slug || null; 
 
-    // 1. BYPASS LOGIC: If no user is specified in the URL, send them home
-    if (!requestedSlug) {
-        window.location.replace(`/arcade/index.html?user=${mySlug}`);
-        return null; // Stop execution, redirecting...
+    // 3. Handle cases where the viewed slug is invalid or missing
+    if (!viewedData) {
+        console.warn("Target arcade not found for slug:", slug);
+        // If the viewer is the owner and has no data yet, we still return essential info
+        if (slug === mySlug && mySlug !== null) {
+            return { userData: myEntry, isOwner: true, mySlug: mySlug };
+        }
+        return null; 
     }
 
-    // 2. HUB LOGIC: If a slug exists (like ?user=yertal-arcade), return the target info
-    const targetUID = data.search_index[requestedSlug];
     return {
-        userData: data.users[targetUID],
-        isOwner: user.uid === targetUID,
+        userData: viewedData,
+        isOwner: authUser.uid === viewedUid,
         mySlug: mySlug
     };
-};
+}
 
