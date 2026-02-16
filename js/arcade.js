@@ -241,12 +241,12 @@ function renderCurrents(currents, isOwner, ownerUid) {
  */
 function renderSparkCard(spark, isOwner, currentId) {
     // If it's a link (sourcing), use the URL. Otherwise, route to the internal player.
-    const targetUrl = spark.link ? spark.link : `spark.html?current=${currentId}&spark=${spark.id}`;
+    const targetUrl = `spark.html?current=${currentId}&spark=${spark.id}`;
     
     return `
         <div class="flex flex-col gap-3">
             <div class="action-card group relative flex items-center justify-center overflow-hidden min-h-[180px] rounded-[1.5rem] cursor-pointer" 
-                 onclick="window.open('${targetUrl}', '_blank')">
+                 onclick="window.open('${targetUrl}'">
                 
                 <h4 class="relative z-20 text-white font-black text-[12px] uppercase tracking-[0.2em] text-center px-6">
                     ${spark.name}
