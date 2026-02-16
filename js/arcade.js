@@ -246,7 +246,7 @@ function renderSparkCard(spark, isOwner, currentId) {
     return `
         <div class="flex flex-col gap-3">
             <div class="action-card group relative flex items-center justify-center overflow-hidden min-h-[180px] rounded-[1.5rem] cursor-pointer" 
-                 onclick="window.open('${targetUrl}'">
+                 onclick="window.location.href='${targetUrl}'">
                 
                 <h4 class="relative z-20 text-white font-black text-[12px] uppercase tracking-[0.2em] text-center px-6">
                     ${spark.name}
