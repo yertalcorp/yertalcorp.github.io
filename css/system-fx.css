@@ -45,9 +45,27 @@
 .gap-8 { gap: 2rem !important; }
 .gap-10 { gap: 2.5rem; }
 
-.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-@media (min-width: 768px) { .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1024px) { .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* Navigation Restoration Logic */
+.nav-container {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding: 1rem 2rem !important;
+}
+
+#nav-menu {
+    display: flex;
+    gap: 3rem !important;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+}
+
+#nav-logo { flex: 0 0 auto; }
+#auth-zone { flex: 0 0 auto; display: flex; justify-content: flex-end; }
 
 #showcase-grid {
     display: flex;
@@ -66,8 +84,9 @@
 .pt-32 { padding-top: 8rem !important; }
 .px-6 { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
 .py-4 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+.py-8 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
 .p-8 { padding: 2rem !important; }
-.px-20 { padding-left: 5rem; padding-right: 5rem; }
+.px-20 { padding-left: 5rem !important; padding-right: 5rem !important; }
 .w-full { width: 100% !important; }
 .max-w-7xl { max-width: 1280px !important; margin-left: auto; margin-right: auto; }
 .aspect-video { aspect-ratio: 16 / 9; width: 100%; }
@@ -86,8 +105,13 @@
 .tracking-tighter { letter-spacing: -0.05em; }
 .tracking-widest { letter-spacing: 0.25em !important; }
 .text-xs { font-size: 0.75rem; }
-.text-lg { font-size: 1.125rem !important; }
-.text-xl { font-size: 1.25rem !important; }
+
+.text-xl { 
+    font-size: 1.25rem !important; 
+    line-height: 1.4 !important; 
+    letter-spacing: -0.01em !important; 
+}
+
 .text-5xl { font-size: 3rem; }
 @media (min-width: 1024px) { .lg\:text-7xl { font-size: 4.5rem; } }
 
@@ -106,28 +130,66 @@
 }
 .animate-fadeIn { animation: fadeIn 0.8s ease-out forwards; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
 
 .bg-cover { background-size: cover; }
 .bg-center { background-position: center; }
 .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
-.duration-500 { transition-duration: 500ms; }
 
 /* --- 6. COMPONENT SPECIFIC --- */
+
+/* Surreal 3D Button - Restored Vertical Scale */
 .surreal-3d-btn {
+    min-height: 80px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     background: linear-gradient(145deg, #1e293b, #0f172a);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
     transition: transform 0.1s ease-out, box-shadow 0.3s ease;
     transform-style: preserve-3d;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(0, 242, 255, 0.2);
 }
 .surreal-3d-btn .inner-content { transform: translateZ(50px); }
 
-.featured-card { min-width: 300px; flex: 1 1 300px; max-width: 400px; }
-.action-card { width: 100%; min-height: 250px; }
+.featured-card { 
+    min-width: 320px; 
+    height: 200px !important;
+    flex: 0 1 350px; 
+}
 
-#nav-menu { display: flex; gap: 2rem !important; align-items: center; }
+/* Action Card Typography Polish */
+.action-card {
+    width: 100%;
+    min-height: 240px !important;
+    padding: 1.75rem !important;
+    justify-content: space-between;
+    display: flex;
+    flex-direction: column;
+}
+
+.action-card h3 {
+    font-size: 1rem !important;
+    letter-spacing: 0.075em !important;
+    text-transform: uppercase !important;
+    color: #ffffff !important;
+    margin-top: 1.5rem !important;
+}
+
+.action-card p {
+    font-size: 11px !important;
+    line-height: 1.6 !important;
+    color: #94a3b8 !important;
+    margin-bottom: 1.25rem !important;
+}
+
+.execute-label {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.2em !important;
+    color: var(--accent-color) !important;
+}
 
 /* Group Hover Logic */
 .group:hover .group-hover\:scale-125 { --tw-scale-x: 1.25; --tw-scale-y: 1.25; }
