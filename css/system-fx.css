@@ -1,53 +1,12 @@
-/* YERTAL SYSTEM-FX ENGINE v2.4 
-   Objective: Restore centering, grid density, and glassmorphism without !important.
-   Synchronized: global.css, arcade.css, showroom_style.css
+/* YERTAL SYSTEM-FX ENGINE v2.5
+   Objective: Restore centering, grid density, and z-index hierarchy.
+   No !important used; relying on high-specificity selectors.
 */
 
-/* --- 1. CORE LAYOUT ENGINE --- */
-/* Restores centering and alignment logic for main containers */
-.flex { 
-    display: flex; 
-}
-.flex-col { 
-    display: flex; 
-    flex-direction: column; 
-}
-.items-center { 
-    align-items: center; 
-}
-.justify-center { 
-    justify-content: center; 
-}
-.justify-between { 
-    justify-content: space-between; 
-}
-
-/* --- 2. THE GRID RECOVERY (Fixes "Too Long" Cards) --- */
-/* Maps directly to global.css grid logic */
-.grid-container {
-    display: grid;
-    gap: 1.5rem; 
-    width: 100%;
-}
-
-/* Desktop: 3 or 4 Columns based on showroom_style.css */
-@media (min-width: 1024px) {
-    .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
-    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-}
-
-/* Tablet/Mobile Stacking */
-@media (max-width: 1023px) {
-    .grid-cols-4, .grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
-}
-
-/* --- 3. MARGIN & CENTERING (The Fix for Realignment) --- */
-.mx-auto { 
-    margin-left: auto; 
-    margin-right: auto; 
-}
-
-.max-width-limit {
+/* --- 1. THE STRUCTURAL BRIDGE (Centering & Dimensions) --- */
+/* Fix: Ensures the container doesn't stretch to infinity and stays centered */
+div.max-width-limit, 
+main.max-width-limit {
     max-width: 1280px; 
     margin-left: auto;
     margin-right: auto;
@@ -56,8 +15,9 @@
     width: 100%;
 }
 
-/* Hero Centering Logic */
-.hero-showroom {
+/* Fix: Centering the Hero content naturally */
+header.hero-showroom,
+div.hero-showroom {
     padding-top: 10rem; 
     padding-bottom: 6rem;
     display: flex;
@@ -66,22 +26,47 @@
     text-align: center;
 }
 
-/* --- 4. THE BEAUTIFUL BOX (Action Cards & Showcases) --- */
-/* Inherits --card-blur and --btn-radius from global.css */
-.action-card, .glass-card, .showcase-item {
+/* --- 2. LAYOUT ENGINE (Flex & Grid Density) --- */
+div.flex { display: flex; }
+div.flex-col { display: flex; flex-direction: column; }
+div.items-center { align-items: center; }
+div.justify-center { justify-content: center; }
+
+/* Grid Recovery: Prevents action cards from being full-width rows */
+div.grid-container {
+    display: grid;
+    gap: 1.5rem; 
+    width: 100%;
+}
+
+@media (min-width: 1024px) {
+    div.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+    div.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Tablet/Mobile fallback */
+@media (max-width: 1023px) {
+    div.grid-cols-4, div.grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* --- 3. THE BEAUTIFUL BOX (Action Cards & Showcases) --- */
+/* Restore translucency using variables from global.css */
+div.action-card, 
+div.glass-card, 
+div.showcase-item {
     position: relative;
-    z-index: 10;
+    z-index: 10; /* Forces cards above the background logo */
     background: rgba(15, 23, 42, 0.75); 
     backdrop-filter: blur(var(--card-blur, 15px));
     -webkit-backdrop-filter: blur(var(--card-blur, 15px));
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--btn-radius, 12px);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     width: 100%;
+    overflow: hidden;
 }
 
-/* Fix: Ensuring showcase images are visible */
-.showcase-item {
+/* Fix: Showcase card sizing and image display */
+div.showcase-item {
     min-height: 320px;
     background-size: cover;
     background-position: center;
@@ -91,23 +76,24 @@
     padding: 2rem;
 }
 
-/* --- 5. LOGO & UTILITIES --- */
-.logo-container, .logo-constrained {
+/* --- 4. LOGO CONSTRAINTS & Z-INDEX HIERARCHY --- */
+/* Fix: Constrains the massive logo seen in screenshots and moves it to the background */
+div.logo-container, 
+img.logo-constrained {
     position: absolute;
     top: 2rem;
     left: 2rem;
     width: 180px;
-    z-index: 1000;
-}
-
-.logo-container img {
-    width: 100%;
     height: auto;
-    display: block;
+    z-index: 1; /* Lowest layer */
+    pointer-events: none; /* Allows clicking the UI underneath the logo */
 }
 
-/* Typography sync with showroom_style.css */
-.text-4xl {
-    font-size: 3.5rem;
-    font-weight: 900;
+img.logo-constrained {
+    display: block;
+    opacity: 0.8;
 }
+
+/* --- 5. UTILITIES --- */
+div.mx-auto { margin-left: auto; margin-right: auto; }
+h1.text-4xl { font-size: 3.5rem; font-weight: 900; }
