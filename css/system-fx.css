@@ -1,27 +1,150 @@
-/* --- TAILWIND REPLACEMENT ENGINE --- */
+/* YERTAL SYSTEM-FX ENGINE v2.7
+   Objective: Complete Tailwind Utility Replacement & Layout Restoration
+   Synchronized: global.css, arcade.css, showroom_style.css
+*/
 
-/* Width & Height Utility Definitions */
+/* --- 1. THE FOUNDATION (Preflight Reset) --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color, #050505);
+    color: var(--text-color, #f8fafc);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* --- 2. TAILWIND MAPPING: DIMENSIONS & SPACING --- */
 .w-full { width: 100%; }
 .w-screen { width: 100vw; }
 .h-full { height: 100%; }
 .h-screen { height: 100vh; }
+.max-w-full { max-width: 100%; }
 
-/* Grid Layout definitions found in Global.css */
-.grid { display: grid; }
-.grid-container { 
-    display: grid; 
-    gap: 1.5rem; 
-    width: 100%; 
-}
-
-/* Spacing Scale (Tailwind Default Rem Mappings) */
+/* Spacing Scale (Standard Tailwind Rem Values) */
+.p-2 { padding: 0.5rem; }
 .p-4 { padding: 1rem; }
 .p-6 { padding: 1.5rem; }
+.p-8 { padding: 2rem; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
 .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
 .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+.py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+
+/* --- 3. TAILWIND MAPPING: FLEX & ALIGNMENT --- */
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.gap-2 { gap: 0.5rem; }
 .gap-4 { gap: 1rem; }
 .gap-6 { gap: 1.5rem; }
 
-/* Centering Logic */
+/* Centering Utilities */
 .mx-auto { margin-left: auto; margin-right: auto; }
 .text-center { text-align: center; }
+
+/* --- 4. THE GRID ENGINE (Fixes the "Too Long" Cards) --- */
+.grid { display: grid; }
+.grid-container {
+    display: grid;
+    gap: 1.5rem; /* Synced with global.css */
+    width: 100%;
+}
+
+/* Precise Desktop Densities */
+@media (min-width: 1024px) {
+    .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Tablet Fallback */
+@media (max-width: 1023px) and (min-width: 641px) {
+    .grid-cols-4, .grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Mobile Stacking */
+@media (max-width: 640px) {
+    .grid-cols-4, .grid-cols-3 { grid-template-columns: 1fr; }
+}
+
+/* --- 5. YERTAL BRAND COMPONENTS (Showcase & Glass) --- */
+.max-width-limit {
+    max-width: 1280px; /* Synced with global.css */
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    width: 100%;
+}
+
+.hero-showroom {
+    padding-top: 10rem; /* Synced with global.css */
+    padding-bottom: 6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* The Beautiful Box (Action Cards & Showcases) */
+.action-card, .glass-card, .showcase-item {
+    position: relative;
+    z-index: 10;
+    background: rgba(15, 23, 42, 0.75); /* Synced with .glass */
+    backdrop-filter: blur(var(--card-blur, 15px));
+    -webkit-backdrop-filter: blur(var(--card-blur, 15px));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--btn-radius, 12px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.showcase-item {
+    min-height: 320px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 2rem;
+}
+
+.action-card:hover, .showcase-item:hover {
+    transform: translateY(-8px);
+    border-color: var(--neon-color, #00f2ff);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 242, 255, 0.2);
+    background: rgba(30, 41, 59, 0.8);
+}
+
+/* --- 6. LOGO & Z-INDEX MANAGEMENT --- */
+.logo-container, .logo-constrained {
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    width: 180px;
+    z-index: 1; /* Moves behind UI */
+    pointer-events: none; /* Allows clicking buttons through the logo */
+}
+
+.logo-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* --- 7. UTILITIES --- */
+.text-4xl { font-size: 3.5rem; font-weight: 900; line-height: 1.1; }
+.uppercase { text-transform: uppercase; }
+.hidden { display: none; }
+.relative { position: relative; }
+.absolute { position: absolute; }
+.fixed { position: fixed; }
