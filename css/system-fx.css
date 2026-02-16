@@ -76,7 +76,51 @@
     transform: translateY(20px) !important;
 }
 
-/* --- LAYOUT SHIMS (Replacing Tailwind Flex) --- */
+/* --- LAYOUT SHIMS (Replacing Tailwind CDN Logic) --- */
+
+/* Core Display & Orientation */
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
 .fx-flex-col { display: flex; flex-direction: column; }
-.fx-gap-1 { gap: 0.25rem; }
-.fx-gap-2 { gap: 0.5rem; }
+
+/* Spacing & Gaps */
+.gap-1, .fx-gap-1 { gap: 0.25rem; }
+.gap-2, .fx-gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+.m-0 { margin: 0; }
+.p-0 { padding: 0; }
+
+/* Positioning & Layering */
+.fixed { position: fixed; }
+.absolute { position: absolute; }
+.relative { position: relative; }
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.z-\[10000\] { z-index: 10000; }
+.z-\[9000\] { z-index: 9000; }
+
+/* Coordinate System */
+.left-1\/2 { left: 50%; }
+.-translate-x-1\/2 { transform: translateX(-50%); }
+.top-20 { top: 5rem; }
+.top-6 { top: 1.5rem; }
+.left-6 { left: 1.5rem; }
+.bottom-6 { bottom: 1.5rem; }
+
+/* Viewport Dimensions */
+.w-screen { width: 100vw; }
+.h-screen { height: 100vh; }
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+/* Typography & Display Utilities */
+.text-center { text-align: center; }
+.uppercase { text-transform: uppercase; }
+.font-black { font-weight: 900; }
+.tracking-\[0\.3em\] { letter-spacing: 0.3em; }
+.pointer-events-none { pointer-events: none; }
+.overflow-hidden { overflow: hidden; }
+.backdrop-blur-md { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.transition-all { transition: all 0.3s ease; }
