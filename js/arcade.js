@@ -227,54 +227,56 @@ function renderCurrents(currents, isOwner, ownerUid) {
                     <h2 class="text-2xl font-black uppercase tracking-tighter italic text-white/90">${current.label}</h2>
                     ${controls}
                 </div>
-                <div id="sparks-${current.id}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    ${sparks.map(spark => renderSparkCard(spark, isOwner)).join('')}
-                </div>
+<div id="sparks-${current.id}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id)).join('')}
+</div>
             </div>
         `;
     }).join('');
 }
 
-function renderSparks(sparks, currentId, isOwner) {
-    if (!sparks || Object.keys(sparks).length === 0) return '';
+/**
+ * Objective: Atomic Card Renderer
+ * Handles both Sourced (links) and Forged (code) spark types.
+ */
+function renderSparkCard(spark, isOwner, currentId) {
+    // If it's a link (sourcing), use the URL. Otherwise, route to the internal player.
+    const targetUrl = spark.link ? spark.link : `spark.html?current=${currentId}&spark=${spark.id}`;
+    
+    return `
+        <div class="flex flex-col gap-3">
+            <div class="action-card group relative flex items-center justify-center overflow-hidden min-h-[180px] rounded-[1.5rem] cursor-pointer" 
+                 onclick="window.open('${targetUrl}', '_blank')">
+                
+                <h4 class="relative z-20 text-white font-black text-[12px] uppercase tracking-[0.2em] text-center px-6">
+                    ${spark.name}
+                </h4>
 
-    return Object.values(sparks).map(spark => {
-        const viewportLink = `${window.location.origin}/arcade/spark.html?current=${currentId}&spark=${spark.id}`;
-        
-        return `
-            <div class="flex flex-col gap-3">
-                <div class="action-card group relative flex items-center justify-center overflow-hidden min-h-[180px] rounded-[1.5rem] cursor-pointer" 
-                     onclick="window.open('spark.html?current=${currentId}&spark=${spark.id}', '_blank')">
-                    
-                    <h4 class="relative z-20 text-white font-black text-[12px] uppercase tracking-[0.2em] text-center px-6">
-                        ${spark.name}
-                    </h4>
-
-                    <div class="absolute inset-0 z-0">
-                        <img src="${spark.image || '/assets/thumbnails/default.jpg'}" class="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
-                    </div>
-                </div>
-
-                <div class="flex justify-between items-center px-1">
-                    <div class="text-[7px] uppercase tracking-[0.2em] font-bold text-white/10 italic">
-                        CREATED: ${formatTimeAgo(spark.created)}
-                    </div>
-                    
-                    ${isOwner ? `
-                        <button onclick="deleteSpark('${currentId}', '${spark.id}', '${user.uid}')" class="text-white/20 hover:text-red-500 transition-colors">
-                            <i class="fas fa-trash text-[10px]"></i>
-                        </button>
-                    ` : `
-                        <button onclick="cloneSpark('${currentId}', '${spark.id}')" class="text-white/20 hover:text-[var(--neon-color)]">
-                            <i class="fas fa-download text-[10px]"></i>
-                        </button>
-                    `}
+                <div class="absolute inset-0 z-0">
+                    <img src="${spark.image || '/assets/thumbnails/default.jpg'}" class="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
                 </div>
             </div>
-        `;
-    }).join('');
+
+            <div class="flex justify-between items-center px-1">
+                <div class="text-[7px] uppercase tracking-[0.2em] font-bold text-white/10 italic">
+                    ${spark.link ? 'SOURCED' : 'FORGED'}: ${formatTimeAgo(spark.created)}
+                </div>
+                
+                ${isOwner ? `
+                    <button onclick="deleteSpark('${currentId}', '${spark.id}', '${user.uid}')" class="text-white/20 hover:text-red-500 transition-colors">
+                        <i class="fas fa-trash text-[10px]"></i>
+                    </button>
+                ` : `
+                    <button onclick="cloneSpark('${currentId}', '${spark.id}')" class="text-white/20 hover:text-[var(--neon-color)]">
+                        <i class="fas fa-download text-[10px]"></i>
+                    </button>
+                `}
+            </div>
+        </div>
+    `;
 }
+
 
 // --- 4. CORE LOGIC & ACTIONS ---
 
@@ -319,27 +321,34 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
     status.textContent = `FORGING ${count} SPARKS...`;
 
     try {
+        // Use the 'mode' determined by the JSON's 'logic' field
         if (mode === 'sourcing') {
             const links = await callGeminiAPI(prompt, count, 'source');
             for (const item of links) {
-                await saveSpark(currentId, { ...item, type: 'link', image: null }, templateName, templateUrl);
+                await saveSpark(currentId, { 
+                    name: item.name, 
+                    **link: item.url**, // Maps Gemini "url" to DB "link"
+                    type: 'link' 
+                }, templateName, templateUrl);
             }
         } else {
             for (let i = 0; i < count; i++) {
                 const code = await callGeminiAPI(prompt, i, 'code');
-                await saveSpark(currentId, { name: `${prompt} #${i+1}`, code, type: 'code', image: null }, templateName, templateUrl);
+                await saveSpark(currentId, { 
+                    name: `${prompt} #${i+1}`, 
+                    code, 
+                    type: 'code' 
+                }, templateName, templateUrl);
             }
         }
         
         status.textContent = "SYSTEM READY";
-        
-    // REPLACED: window.location.reload()
         await refreshUI();
-        
     } catch (e) { 
         status.textContent = "FORGE ERROR"; 
     }
 }
+
 // Gemini API Wrapper
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code';
