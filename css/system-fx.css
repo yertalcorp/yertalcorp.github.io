@@ -3,84 +3,91 @@
 */
 
 /* --- 1. CORE LAYOUT ENGINE (Tailwind Replacements) --- */
-.flex { display: flex; }
-.flex-col { display: flex; flex-direction: column; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.justify-between { justify-content: space-between; }
+/* Restores the basic structure for flex and grid containers */
+.flex { display: flex !important; }
+.flex-col { display: flex !important; flex-direction: column !important; }
+.items-center { align-items: center !important; }
+.justify-center { justify-content: center !important; }
+.justify-between { justify-content: space-between !important; }
 
 /* Grid Logic for Showcase/Experiment Zones */
 .grid-container {
-    display: grid;
+    display: grid !important;
     gap: 1.5rem;
     width: 100%;
 }
 
-/* Response to Screenshot: Fixes the vertical stacking */
+/* Fixes the vertical stacking seen in screenshots */
 @media (min-width: 1024px) {
-    .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
-    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-cols-4 { grid-template-columns: repeat(4, 1fr) !important; }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
 }
 
 @media (max-width: 1023px) and (min-width: 641px) {
-    .grid-cols-4, .grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
+    .grid-cols-4, .grid-cols-3 { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
-.w-full { width: 100%; }
-.w-screen { width: 100vw; }
-.h-screen { height: 100vh; }
+/* Dimensions & Spacing */
+.w-full { width: 100% !important; }
+.w-screen { width: 100vw !important; }
+.h-screen { height: 100vh !important; }
+.mx-auto { margin-left: auto !important; margin-right: auto !important; }
+.p-6 { padding: 1.5rem !important; }
+.gap-4 { gap: 1rem !important; }
 
-.fixed { position: fixed; }
-.absolute { position: absolute; }
-.relative { position: relative; }
+/* Positioning Shims */
+.fixed { position: fixed !important; }
+.absolute { position: absolute !important; }
+.relative { position: relative !important; }
+.top-0 { top: 0 !important; }
+.left-0 { left: 0 !important; }
+.z-\[10000\] { z-index: 10000 !important; }
 
-/* Positioning & Spacing Shims */
-.top-0 { top: 0; }
-.left-0 { left: 0; }
-.top-20 { top: 5rem; }
-.left-1\/2 { left: 50%; }
-.-translate-x-1\/2 { transform: translateX(-50%); }
+/* Centering Utilities */
+.left-1\/2 { left: 50% !important; }
+.-translate-x-1\/2 { transform: translateX(-50%) !important; }
 
-.mx-auto { margin-left: auto; margin-right: auto; }
-.p-6 { padding: 1.5rem; }
-.gap-4 { gap: 1rem; }
-
-/* --- 2. LOGO & HERO CONSTRAINTS --- */
-/* Fix: Constrains the large logo seen in screenshots to the top-left */
-img.logo-constrained, .logo-container img {
-    max-width: 220px; 
-    height: auto;
-    position: absolute;
-    top: 2rem;
-    left: 2rem;
+/* --- 2. LOGO & HERO RECOVERY --- */
+/* Fix: Keeps the logo in the top-left corner and constrains its size */
+.logo-container, .logo-constrained {
+    position: absolute !important;
+    top: 1.5rem !important;
+    left: 1.5rem !important;
+    max-width: 200px !important;
     z-index: 100;
 }
 
-.hero-showroom {
-    padding-top: 15vh !important; 
-    padding-bottom: 4rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
+.logo-container img {
+    width: 100% !important;
+    height: auto !important;
 }
 
-/* Restores the thick, large hero text style */
+/* Lowers the Hero section to the cinematic middle-third */
+.hero-showroom {
+    padding-top: 15vh !important;
+    padding-bottom: 5rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+/* Restores large, thick hero text */
 .text-4xl {
-    font-size: 3.5rem !important; 
+    font-size: 3.5rem !important;
     font-weight: 900 !important;
     line-height: 1.1;
-    text-align: center;
     text-transform: uppercase;
+    text-align: center;
 }
 
-/* --- 3. THE "BEAUTIFUL BOX" (ACTION CARDS) --- */
-/* Restores the lifting and glowing glass behavior for cards */
+/* --- 3. THE BEAUTIFUL BOX (ACTION CARDS) --- */
+/* Re-implements the lifting glass box with neon glow */
 .action-card, .glass-card, .showcase-item {
-    background: rgba(15, 23, 42, 0.45);
+    background: rgba(15, 23, 42, 0.5);
     backdrop-filter: blur(var(--card-blur, 15px));
     -webkit-backdrop-filter: blur(var(--card-blur, 15px));
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--btn-radius, 12px);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
@@ -88,34 +95,26 @@ img.logo-constrained, .logo-container img {
 }
 
 .action-card:hover, .glass-card:hover, .showcase-item:hover {
-    transform: translateY(-12px) scale(1.02);
+    transform: translateY(-10px) scale(1.01);
     border-color: var(--neon-color, #00f2ff);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 
                 0 0 20px rgba(0, 242, 255, 0.3);
     background: rgba(15, 23, 42, 0.85);
 }
 
-/* --- 4. VIEWPORT & SYSTEM HUD --- */
-.viewport-container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    background: radial-gradient(circle at center, #111 0%, #000 100%);
-}
-
+/* --- 4. SYSTEM HUD & EFFECTS --- */
 .fx-glass-hud {
-    position: fixed;
-    bottom: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%);
+    position: fixed !important;
+    bottom: 1.5rem !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
     display: flex;
     align-items: center;
     gap: 1rem;
     padding: 0.75rem;
     border-radius: 1rem;
     z-index: 10000;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.15);
 }
@@ -129,19 +128,22 @@ img.logo-constrained, .logo-container img {
     color: var(--neon-color, #00f2ff);
     text-shadow: 0 0 15px var(--neon-color, #00f2ff);
     letter-spacing: 0.3em;
-    text-transform: uppercase;
 }
 
-/* --- 5. TYPOGRAPHY & ANIMATION --- */
-.text-center { text-align: center; }
-.uppercase { text-transform: uppercase; }
-.font-black { font-weight: 900; }
-.overflow-hidden { overflow: hidden; }
-.backdrop-blur-md { backdrop-filter: blur(12px); }
+/* --- 5. VISIBILITY & ANIMATION --- */
+.text-center { text-align: center !important; }
+.uppercase { text-transform: uppercase !important; }
+.font-black { font-weight: 900 !important; }
+.overflow-hidden { overflow: hidden !important; }
+.pointer-events-none { pointer-events: none !important; }
+
+.animate-fadeIn {
+    animation: fadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
 
 .zen-mode-active {
     opacity: 0 !important;
     pointer-events: none !important;
     transform: translateY(20px) !important;
-    transition: all 0.6s ease;
+    transition: all 0.7s ease-in-out;
 }
