@@ -1,166 +1,129 @@
-/**
- * SPARK VIEWPORT ENGINE
- * Handles: Live Rendering, Auto-Capture, Zen Mode, and Navigation
- */
+import { getArcadeData, saveToRealtimeDB } from '../config/firebase-config.js';
+import { watchAuthState } from '../config/auth.js';
 
-let currentId, sparkId, sparkList = [];
-const db = firebase.database();
-let isZen = false;
+let allSparks = [];
+let currentIndex = -1;
+let currentId = '';
+let userId = '';
+let thumbInterval = null;
 
-// 1. INITIALIZATION
-const params = new URLSearchParams(window.location.search);
-currentId = params.get('current');
-sparkId = params.get('spark');
+watchAuthState(async (user) => {
+    if (!user) return;
+    userId = user.uid;
 
-async function initSparkView() {
-    if (!currentId || !sparkId) {
-        console.error("Viewport Access Denied: Missing IDs");
-        return;
-    }
+    const params = new URLSearchParams(window.location.search);
+    currentId = params.get('current');
+    const initialSparkId = params.get('spark');
 
-    // Fetch the parent Current to enable navigation between sibling sparks
-    const snapshot = await db.ref(`arcade_infrastructure/currents/${currentId}`).once('value');
-    const currentData = snapshot.val();
+    const data = await getArcadeData();
+    const sparksObj = data.users?.[userId]?.infrastructure?.currents?.[currentId]?.sparks || {};
     
-    if (currentData && currentData.sparks) {
-        // Sort sparks by creation date (newest first) to match the Arcade Lobby
-        sparkList = Object.values(currentData.sparks).sort((a, b) => b.created - a.created);
-        renderActiveSpark();
+    // Convert to array and sort by creation time
+    allSparks = Object.values(sparksObj).sort((a, b) => (a.created || 0) - (b.created || 0));
+    currentIndex = allSparks.findIndex(s => s.id === initialSparkId);
+
+    if (currentIndex !== -1) {
+        loadSpark(allSparks[currentIndex]);
     }
-}
-
-// 2. RENDERING CORE
-function renderActiveSpark() {
-    const spark = sparkList.find(s => s.id === sparkId);
-    if (!spark) return;
-
-    document.title = `ARCADE // ${spark.name.toUpperCase()}`;
-    const container = document.getElementById('spark-content-container');
-    
-    // Logic Selection: External Link vs. Internal Code
-    if (spark.link && (spark.link.startsWith('http') || spark.link.includes('//'))) {
-        container.innerHTML = `
-            <iframe src="${spark.link}" 
-                    class="w-full h-full border-none" 
-                    allow="autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                    allowfullscreen>
-            </iframe>`;
-    } else if (spark.code) {
-        // Injects AI-generated HTML/JS/CSS directly into the viewport
-        // We use an iframe with srcdoc to isolate the spark's CSS/JS from the HUD
-        container.innerHTML = `
-            <iframe id="spark-frame" 
-                    srcdoc="${spark.code.replace(/"/g, '&quot;')}" 
-                    class="w-full h-full border-none">
-            </iframe>`;
-    } else {
-        container.innerHTML = `
-            <div class="flex items-center justify-center h-full text-white/20 font-mono uppercase tracking-[0.5em]">
-                Logic Not Found
-            </div>`;
-    }
-
-    // Re-initialize the capture loop for the new spark
-    startCaptureLoop();
-}
-
-// 3. NAVIGATION LOGIC
-function navigate(direction) {
-    const currentIndex = sparkList.findIndex(s => s.id === sparkId);
-    let nextIndex = currentIndex + direction;
-
-    if (nextIndex >= 0 && nextIndex < sparkList.length) {
-        sparkId = sparkList[nextIndex].id;
-        
-        // Update URL without reloading the page
-        const newUrl = `${window.location.pathname}?current=${currentId}&spark=${sparkId}`;
-        window.history.pushState({ path: newUrl }, '', newUrl);
-        
-        renderActiveSpark();
-    }
-}
-
-// 4. THE CAPTURE ENGINE (Using html2canvas)
-function startCaptureLoop() {
-    const canvas = document.getElementById('live-thumb-canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 400; 
-    canvas.height = 225;
-
-    // Clear any existing intervals to prevent memory leaks
-    clearInterval(window.captureInterval);
-
-    window.captureInterval = setInterval(async () => {
-        const content = document.getElementById('spark-content-container');
-        try {
-            // Note: If using an iframe, html2canvas might face CORS issues with external links.
-            // It works perfectly for internal 'code' based sparks.
-            const tempCanvas = await html2canvas(content, {
-                useCORS: true,
-                scale: 0.5,
-                logging: false,
-                ignoreElements: (el) => el.id === 'spark-hud' || el.classList.contains('exit-btn')
-            });
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
-            
-            document.getElementById('hud-status').textContent = "LIVE SYNC ACTIVE";
-        } catch (e) { 
-            document.getElementById('hud-status').textContent = "SYNC LIMITED (CORS)";
-        }
-    }, 5000); // Capture frame every 5 seconds
-}
-
-// 5. HUD ACTIONS
-function toggleZen() {
-    isZen = !isZen;
-    document.body.classList.toggle('zen-active', isZen);
-}
-
-document.getElementById('set-cover-btn').onclick = async () => {
-    const btn = document.getElementById('set-cover-btn');
-    const canvas = document.getElementById('live-thumb-canvas');
-    const dataUrl = canvas.toDataURL('image/webp', 0.7); // Compressed webp for DB efficiency
-    
-    btn.textContent = "UPLOADING...";
-    try {
-        await db.ref(`arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`).update({ 
-            image: dataUrl 
-        });
-        btn.textContent = "COVER SAVED";
-        setTimeout(() => { btn.textContent = "SET AS COVER"; }, 2000);
-    } catch (err) {
-        btn.textContent = "ERROR";
-    }
-};
-
-document.getElementById('download-btn').onclick = () => {
-    const canvas = document.getElementById('live-thumb-canvas');
-    const link = document.createElement('a');
-    link.download = `yertal-spark-${sparkId}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-};
-
-document.getElementById('fallback-url-btn').onclick = async () => {
-    const url = prompt("Enter External Image URL for Cover:");
-    if (url) {
-        await db.ref(`arcade_infrastructure/currents/${currentId}/sparks/${sparkId}`).update({ image: url });
-        alert("Image Reference Updated.");
-    }
-};
-
-// 6. CONTROL INPUTS
-document.getElementById('prev-zone').onclick = () => navigate(1);
-document.getElementById('next-zone').onclick = () => navigate(-1);
-
-window.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'z') toggleZen();
-    if (e.key === 'ArrowLeft') navigate(1);
-    if (e.key === 'ArrowRight') navigate(-1);
-    if (e.key === 'Escape') isZen ? toggleZen() : window.close();
+    setupInteractions();
 });
 
-// START VIEWPORT
-initSparkView();
+function loadSpark(spark) {
+    const container = document.getElementById('spark-content-container');
+    const titleEl = document.getElementById('active-spark-name');
+    const overlay = document.getElementById('spark-title-overlay');
+    
+    container.innerHTML = '';
+    
+    // 1. Show Title Animation
+    titleEl.textContent = spark.name;
+    overlay.style.opacity = "1";
+    setTimeout(() => { overlay.style.opacity = "0"; }, 3000);
+
+    // 2. Render Content (Source vs Code)
+    if (spark.link) {
+        let finalUrl = spark.link;
+        if (finalUrl.includes('youtube.com/watch?v=')) {
+            finalUrl = finalUrl.replace('watch?v=', 'embed/') + "?autoplay=1&mute=1";
+        }
+        container.innerHTML = `<iframe id="content-frame" src="${finalUrl}" allow="autoplay; fullscreen"></iframe>`;
+        document.getElementById('fallback-url-btn').onclick = () => window.open(spark.link, '_blank');
+        document.getElementById('fallback-url-btn').classList.remove('hidden');
+    } else {
+        const iframe = document.createElement('iframe');
+        iframe.id = "content-frame";
+        container.appendChild(iframe);
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(spark.code || '<h1>No Code Found</h1>');
+        doc.close();
+        document.getElementById('fallback-url-btn').classList.add('hidden');
+    }
+
+    // 3. Reset Live Thumbnail logic
+    startLiveThumbnail();
+}
+
+function startLiveThumbnail() {
+    if (thumbInterval) clearInterval(thumbInterval);
+    
+    const canvas = document.getElementById('live-thumb-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Preview cycle: attempt to snapshot the iframe every 5 seconds for the HUD
+    thumbInterval = setInterval(async () => {
+        try {
+            const shot = await html2canvas(document.getElementById('spark-content-container'), {
+                useCORS: true,
+                scale: 0.2
+            });
+            ctx.drawImage(shot, 0, 0, canvas.width, canvas.height);
+        } catch (e) { /* Content might be cross-origin protected */ }
+    }, 5000);
+}
+
+async function setPermanentCover() {
+    const status = document.getElementById('hud-status');
+    const spark = allSparks[currentIndex];
+    status.textContent = "SAVING COVER...";
+
+    try {
+        const canvas = await html2canvas(document.getElementById('spark-content-container'), {
+            useCORS: true,
+            scale: 0.5
+        });
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        const path = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}/image`;
+        
+        await saveToRealtimeDB(path, imageData);
+        status.textContent = "COVER UPDATED!";
+        setTimeout(() => status.textContent = "AUTO-CAPTURE ACTIVE", 2000);
+    } catch (e) {
+        status.textContent = "SAVE FAILED";
+        console.error(e);
+    }
+}
+
+function navigate(dir) {
+    currentIndex = (currentIndex + dir + allSparks.length) % allSparks.length;
+    const nextSpark = allSparks[currentIndex];
+    
+    // Update URL without refresh
+    const newUrl = `${window.location.pathname}?current=${currentId}&spark=${nextSpark.id}`;
+    window.history.pushState({path: newUrl}, '', newUrl);
+    
+    loadSpark(nextSpark);
+}
+
+function setupInteractions() {
+    document.getElementById('set-cover-btn').onclick = setPermanentCover;
+    document.getElementById('prev-zone').onclick = () => navigate(-1);
+    document.getElementById('next-zone').onclick = () => navigate(1);
+    document.getElementById('zen-btn').onclick = () => document.body.classList.toggle('zen-active');
+    
+    window.onkeydown = (e) => {
+        if (e.key === 'ArrowLeft') navigate(-1);
+        if (e.key === 'ArrowRight') navigate(1);
+        if (e.key.toLowerCase() === 'z') document.body.classList.toggle('zen-active');
+    };
+}
