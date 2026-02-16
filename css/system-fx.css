@@ -1,9 +1,8 @@
-/* Objective: High-performance visual effects for the Yertal Viewport.
-   Replaces Tailwind CDN for production.
+/* Objective: High-performance visual effects and layout engine.
+   Replaces Tailwind CDN logic for production.
 */
 
-/* --- THE VIEWPORT ENGINE --- */
-
+/* --- 1. THE VIEWPORT & GLOBAL RESET --- */
 .viewport-container {
     position: relative;
     width: 100vw;
@@ -12,8 +11,72 @@
     background: radial-gradient(circle at center, #111 0%, #000 100%);
 }
 
-/* --- SYSTEM HUD & GLASS --- */
+/* Fix for logo/image scaling and background issues */
+img, .logo-constrained {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
 
+/* --- 2. HERO & TYPOGRAPHY ELEVATION --- */
+.hero-showroom {
+    padding-top: 15vh !important; /* Forces hero lower on screen */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.text-4xl {
+    font-size: 3.5rem !important; /* Thicker, larger hero text */
+    font-weight: 900 !important;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+/* --- 3. THE "BEAUTIFUL BOX" (ACTION CARDS) --- */
+/* Restores the lifting and glowing effect for cards */
+.action-card, .showcase-item {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.action-card:hover, .showcase-item:hover {
+    transform: translateY(-12px) scale(1.02);
+    border-color: var(--neon-color, #00f2ff);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 
+                0 0 20px rgba(0, 242, 255, 0.3);
+    background: rgba(15, 23, 42, 0.8);
+}
+
+/* --- 4. POSITIONING & UTILITY SHIMS --- */
+.fixed { position: fixed; }
+.absolute { position: absolute; }
+.relative { position: relative; }
+
+/* Top Left Constraint (for Logo) */
+.top-0 { top: 0; }
+.left-0 { left: 0; }
+.p-6 { padding: 1.5rem; }
+.m-8 { margin: 2rem; }
+
+/* Centering Logic */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.text-center { text-align: center; }
+
+/* Layout Dimensions */
+.w-screen { width: 100vw; }
+.h-screen { height: 100vh; }
+.w-full { width: 100%; }
+
+/* --- 5. SYSTEM HUD & SPECIAL FX --- */
 .fx-glass-hud {
     position: fixed;
     bottom: 1.5rem;
@@ -25,12 +88,9 @@
     padding: 0.75rem;
     border-radius: 1rem;
     z-index: 10000;
-    
     background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(var(--card-blur, 15px));
-    -webkit-backdrop-filter: blur(var(--card-blur, 15px));
+    backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
 
 .fx-neon-border {
@@ -38,89 +98,16 @@
     box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
 }
 
-/* --- INTERACTIVE UTILITIES --- */
-
-.fx-exit-btn {
-    position: fixed;
-    top: 1.5rem;
-    left: 1.5rem;
-    z-index: 10001;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.fx-exit-btn:hover {
-    background: var(--neon-color, #00f2ff);
-    color: #000 !important;
-    box-shadow: 0 0 20px var(--neon-color, #00f2ff);
-}
-
-/* --- TYPOGRAPHY & ANIMATION --- */
-
 .fx-chroma-header {
     color: var(--neon-color, #00f2ff);
     text-shadow: 0 0 15px var(--neon-color, #00f2ff);
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
 }
 
 .zen-mode-active {
     opacity: 0 !important;
     pointer-events: none !important;
     transform: translateY(20px) !important;
+    transition: all 0.5s ease;
 }
-
-/* --- LAYOUT SHIMS (Replacing Tailwind CDN Logic) --- */
-
-/* Core Display & Orientation */
-.flex { display: flex; }
-.flex-col { display: flex; flex-direction: column; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.justify-between { justify-content: space-between; }
-.fx-flex-col { display: flex; flex-direction: column; }
-
-/* Spacing & Gaps */
-.gap-1, .fx-gap-1 { gap: 0.25rem; }
-.gap-2, .fx-gap-2 { gap: 0.5rem; }
-.gap-4 { gap: 1rem; }
-.m-0 { margin: 0; }
-.p-0 { padding: 0; }
-
-/* Positioning & Layering */
-.fixed { position: fixed; }
-.absolute { position: absolute; }
-.relative { position: relative; }
-.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
-.z-\[10000\] { z-index: 10000; }
-.z-\[9000\] { z-index: 9000; }
-
-/* Coordinate System */
-.left-1\/2 { left: 50%; }
-.-translate-x-1\/2 { transform: translateX(-50%); }
-.top-20 { top: 5rem; }
-.top-6 { top: 1.5rem; }
-.left-6 { left: 1.5rem; }
-.bottom-6 { bottom: 1.5rem; }
-
-/* Viewport Dimensions */
-.w-screen { width: 100vw; }
-.h-screen { height: 100vh; }
-.w-full { width: 100%; }
-.h-full { height: 100%; }
-
-/* Typography & Display Utilities */
-.text-center { text-align: center; }
-.uppercase { text-transform: uppercase; }
-.font-black { font-weight: 900; }
-.tracking-\[0\.3em\] { letter-spacing: 0.3em; }
-.pointer-events-none { pointer-events: none; }
-.overflow-hidden { overflow: hidden; }
-.backdrop-blur-md { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-.transition-all { transition: all 0.3s ease; }
