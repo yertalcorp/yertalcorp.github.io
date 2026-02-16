@@ -327,7 +327,7 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
             for (const item of links) {
                 await saveSpark(currentId, { 
                     name: item.name, 
-                    **link: item.url**, // Maps Gemini "url" to DB "link"
+                    link: item.url, // Maps Gemini "url" to DB "link"
                     type: 'link' 
                 }, templateName, templateUrl);
             }
