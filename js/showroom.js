@@ -5,7 +5,6 @@ import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 let currentItems, currentAuth, currentUi, user, heroData;
     
 async function initShowroom() {
-    console.log("%c System Build: Feb 05-2026 | 21:55 IST ", "background: #050505; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
     try {
         const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
         const data = await response.json();
