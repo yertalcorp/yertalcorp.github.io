@@ -1,150 +1,119 @@
-/* YERTAL SYSTEM-FX ENGINE v2.7
-   Objective: Complete Tailwind Utility Replacement & Layout Restoration
-   Synchronized: global.css, arcade.css, showroom_style.css
+/* YERTAL SYSTEM-FX ENGINE v4.0
+   Objective: Permanent Static Replacement for Tailwind Utilities.
+   Bakes in exact values from the Inspect Window for Showroom & Arcade.
 */
 
-/* --- 1. THE FOUNDATION (Preflight Reset) --- */
-* {
-    margin: 0;
-    padding: 0;
+/* --- 1. THE TAILWIND PREFLIGHT RESET --- */
+*, ::before, ::after {
     box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: rgba(255, 255, 255, 0.1);
+    --tw-translate-x: 0;
+    --tw-translate-y: 0;
+    --tw-rotate: 0;
+    --tw-skew-x: 0;
+    --tw-skew-y: 0;
+    --tw-scale-x: 1;
+    --tw-scale-y: 1;
 }
 
-body {
-    background-color: var(--bg-color, #050505);
-    color: var(--text-color, #f8fafc);
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-}
-
-/* --- 2. TAILWIND MAPPING: DIMENSIONS & SPACING --- */
-.w-full { width: 100%; }
-.w-screen { width: 100vw; }
-.h-full { height: 100%; }
-.h-screen { height: 100vh; }
-.max-w-full { max-width: 100%; }
-
-/* Spacing Scale (Standard Tailwind Rem Values) */
-.p-2 { padding: 0.5rem; }
-.p-4 { padding: 1rem; }
-.p-6 { padding: 1.5rem; }
-.p-8 { padding: 2rem; }
-.px-4 { padding-left: 1rem; padding-right: 1rem; }
-.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-.py-4 { padding-top: 1rem; padding-bottom: 1rem; }
-.py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
-.mt-4 { margin-top: 1rem; }
-.mb-6 { margin-bottom: 1.5rem; }
-
-/* --- 3. TAILWIND MAPPING: FLEX & ALIGNMENT --- */
+/* --- 2. LAYOUT ENGINE (Flex, Grid, & Centering) --- */
 .flex { display: flex; }
-.flex-col { display: flex; flex-direction: column; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-grow { flex-grow: 1; }
+.flex-1 { flex: 1 1 0%; }
+
+.grid { display: grid; }
 .items-center { align-items: center; }
 .items-start { align-items: flex-start; }
 .justify-center { justify-content: center; }
 .justify-between { justify-content: space-between; }
-.justify-end { justify-content: flex-end; }
-.gap-2 { gap: 0.5rem; }
+
+/* Grid Columns */
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+@media (min-width: 768px) {
+    .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .md\:flex { display: flex; }
+}
+@media (min-width: 1024px) {
+    .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* --- 3. SPACING & DIMENSIONS --- */
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.h-10 { height: 2.5rem; }
+.w-auto { width: auto; }
+.max-w-7xl { max-width: 80rem; }
+.max-w-2xl { max-width: 42rem; }
+.min-w-\[300px\] { min-width: 300px; }
+
+.mx-auto { margin-left: auto; margin-right: auto; }
+.mt-4 { margin-top: 1rem; }
+.mt-8 { margin-top: 2rem; }
+.mb-9 { margin-bottom: 2.25rem; }
+.mb-16 { margin-bottom: 4rem; }
+.mb-24 { margin-bottom: 6rem; }
+.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+.py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+.py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+.py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+.pt-32 { padding-top: 8rem; }
+.gap-3 { gap: 0.75rem; }
 .gap-4 { gap: 1rem; }
 .gap-6 { gap: 1.5rem; }
+.gap-8 { gap: 2rem; }
 
-/* Centering Utilities */
-.mx-auto { margin-left: auto; margin-right: auto; }
-.text-center { text-align: center; }
-
-/* --- 4. THE GRID ENGINE (Fixes the "Too Long" Cards) --- */
-.grid { display: grid; }
-.grid-container {
-    display: grid;
-    gap: 1.5rem; /* Synced with global.css */
-    width: 100%;
-}
-
-/* Precise Desktop Densities */
-@media (min-width: 1024px) {
-    .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
-    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-}
-
-/* Tablet Fallback */
-@media (max-width: 1023px) and (min-width: 641px) {
-    .grid-cols-4, .grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
-}
-
-/* Mobile Stacking */
-@media (max-width: 640px) {
-    .grid-cols-4, .grid-cols-3 { grid-template-columns: 1fr; }
-}
-
-/* --- 5. YERTAL BRAND COMPONENTS (Showcase & Glass) --- */
-.max-width-limit {
-    max-width: 1280px; /* Synced with global.css */
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 2rem;
-    padding-right: 2rem;
-    width: 100%;
-}
-
-.hero-showroom {
-    padding-top: 10rem; /* Synced with global.css */
-    padding-bottom: 6rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* The Beautiful Box (Action Cards & Showcases) */
-.action-card, .glass-card, .showcase-item {
-    position: relative;
-    z-index: 10;
-    background: rgba(15, 23, 42, 0.75); /* Synced with .glass */
-    backdrop-filter: blur(var(--card-blur, 15px));
-    -webkit-backdrop-filter: blur(var(--card-blur, 15px));
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--btn-radius, 12px);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
-}
-
-.showcase-item {
-    min-height: 320px;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding: 2rem;
-}
-
-.action-card:hover, .showcase-item:hover {
-    transform: translateY(-8px);
-    border-color: var(--neon-color, #00f2ff);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 242, 255, 0.2);
-    background: rgba(30, 41, 59, 0.8);
-}
-
-/* --- 6. LOGO & Z-INDEX MANAGEMENT --- */
-.logo-container, .logo-constrained {
-    position: absolute;
-    top: 2rem;
-    left: 2rem;
-    width: 180px;
-    z-index: 1; /* Moves behind UI */
-    pointer-events: none; /* Allows clicking buttons through the logo */
-}
-
-.logo-container img {
-    width: 100%;
-    height: auto;
-    display: block;
-}
-
-/* --- 7. UTILITIES --- */
-.text-4xl { font-size: 3.5rem; font-weight: 900; line-height: 1.1; }
-.uppercase { text-transform: uppercase; }
-.hidden { display: none; }
+/* --- 4. BRAND SPECIFIC COMPONENTS --- */
+.aspect-video { aspect-ratio: 16 / 9; }
 .relative { position: relative; }
 .absolute { position: absolute; }
 .fixed { position: fixed; }
+.inset-0 { inset: 0px; }
+.z-50 { z-index: 50; }
+.z-10 { z-index: 10; }
+
+.uppercase { text-transform: uppercase; }
+.tracking-tighter { letter-spacing: -0.05em; }
+.tracking-widest { letter-spacing: 0.1em; }
+.tracking-\[0\.5em\] { letter-spacing: 0.5em; }
+.italic { font-style: italic; }
+.text-center { text-align: center; }
+
+/* Colors */
+.text-slate-400 { color: #94a3b8; }
+.text-slate-500 { color: #64748b; }
+.text-blue-500 { color: #3b82f6; }
+.text-white { color: #ffffff; }
+
+/* Typography */
+.text-xl { font-size: 1.25rem; }
+.text-lg { font-size: 1.125rem; }
+.text-5xl { font-size: 3rem; }
+@media (min-width: 1024px) {
+    .lg\:text-7xl { font-size: 4.5rem; }
+}
+
+/* Background Gradients */
+.bg-gradient-to-t {
+    background-image: linear-gradient(to top, var(--tw-gradient-stops));
+}
+.from-slate-950 {
+    --tw-gradient-from: #020617;
+    --tw-gradient-to: rgb(2 6 23 / 0);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+/* Animations & Transitions */
+.transition-all { transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); }
+.duration-700 { transition-duration: 700ms; }
+.group:hover .group-hover\:scale-105 { transform: scale(1.05); }
+
+/* Visibility Control */
+.hidden { display: none; }
+@media (min-width: 768px) {
+    .md\:flex { display: flex; }
+}
