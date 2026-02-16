@@ -9,7 +9,23 @@
 .justify-center { justify-content: center; }
 .justify-between { justify-content: space-between; }
 
-.grid-container { display: grid; width: 100%; }
+/* Grid Logic for Showcase/Experiment Zones */
+.grid-container {
+    display: grid;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+/* Response to Screenshot: Fixes the vertical stacking */
+@media (min-width: 1024px) {
+    .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 1023px) and (min-width: 641px) {
+    .grid-cols-4, .grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
 .w-full { width: 100%; }
 .w-screen { width: 100vw; }
 .h-screen { height: 100vh; }
@@ -18,66 +34,64 @@
 .absolute { position: absolute; }
 .relative { position: relative; }
 
-/* Coordinate & Spacing Shims */
+/* Positioning & Spacing Shims */
 .top-0 { top: 0; }
 .left-0 { left: 0; }
-.top-6 { top: 1.5rem; }
-.left-6 { left: 1.5rem; }
-.bottom-6 { bottom: 1.5rem; }
 .top-20 { top: 5rem; }
 .left-1\/2 { left: 50%; }
 .-translate-x-1\/2 { transform: translateX(-50%); }
 
 .mx-auto { margin-left: auto; margin-right: auto; }
-.p-0 { padding: 0; }
-.m-0 { margin: 0; }
 .p-6 { padding: 1.5rem; }
-.gap-1 { gap: 0.25rem; }
-.gap-2 { gap: 0.5rem; }
 .gap-4 { gap: 1rem; }
 
 /* --- 2. LOGO & HERO CONSTRAINTS --- */
-/* Restores logo to corner and pushes hero to cinematic position */
-img, .logo-constrained {
-    max-width: 100%;
+/* Fix: Constrains the large logo seen in screenshots to the top-left */
+img.logo-constrained, .logo-container img {
+    max-width: 220px; 
     height: auto;
-    display: block;
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    z-index: 100;
 }
 
 .hero-showroom {
-    padding-top: 15vh !important; /* Lowers hero section from top */
-    padding-bottom: 6rem;
+    padding-top: 15vh !important; 
+    padding-bottom: 4rem;
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
 }
 
+/* Restores the thick, large hero text style */
 .text-4xl {
-    font-size: 3.5rem !important; /* Larger, thicker header */
+    font-size: 3.5rem !important; 
     font-weight: 900 !important;
     line-height: 1.1;
     text-align: center;
+    text-transform: uppercase;
 }
 
 /* --- 3. THE "BEAUTIFUL BOX" (ACTION CARDS) --- */
-/* Encases items in lifting, glowing glass boxes */
+/* Restores the lifting and glowing glass behavior for cards */
 .action-card, .glass-card, .showcase-item {
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(15, 23, 42, 0.45);
     backdrop-filter: blur(var(--card-blur, 15px));
     -webkit-backdrop-filter: blur(var(--card-blur, 15px));
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--btn-radius, 16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--btn-radius, 12px);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
     overflow: hidden;
-    cursor: pointer;
 }
 
 .action-card:hover, .glass-card:hover, .showcase-item:hover {
-    transform: translateY(-12px) scale(1.02); /* Lifting effect */
+    transform: translateY(-12px) scale(1.02);
     border-color: var(--neon-color, #00f2ff);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 
-                0 0 20px rgba(0, 242, 255, 0.3); /* Lighting effect */
+                0 0 20px rgba(0, 242, 255, 0.3);
     background: rgba(15, 23, 42, 0.85);
 }
 
@@ -104,7 +118,6 @@ img, .logo-constrained {
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
 }
 
 .fx-neon-border {
@@ -119,26 +132,10 @@ img, .logo-constrained {
     text-transform: uppercase;
 }
 
-.fx-exit-btn {
-    position: fixed;
-    top: 1.5rem;
-    left: 1.5rem;
-    z-index: 10001;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-}
-
-/* --- 5. TYPOGRAPHY & VISIBILITY --- */
+/* --- 5. TYPOGRAPHY & ANIMATION --- */
 .text-center { text-align: center; }
 .uppercase { text-transform: uppercase; }
 .font-black { font-weight: 900; }
-.tracking-\[0\.3em\] { letter-spacing: 0.3em; }
-.pointer-events-none { pointer-events: none; }
 .overflow-hidden { overflow: hidden; }
 .backdrop-blur-md { backdrop-filter: blur(12px); }
 
