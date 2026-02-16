@@ -3,39 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arcade Spark Viewport</title>
+    <title>Yertal Arcade | Viewport</title>
     <link rel="stylesheet" href="../css/arcade.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .zen-active #spark-hud, 
-        .zen-active #prev-zone, 
-        .zen-active #next-zone, 
-        .zen-active .exit-btn {
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(20px);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        .zen-active #spark-hud, .zen-active #prev-zone, .zen-active #next-zone, .zen-active .exit-btn, .zen-active #spark-title-overlay {
+            opacity: 0; pointer-events: none; transform: translateY(20px);
         }
-        #spark-hud, #prev-zone, #next-zone, .exit-btn {
-            transition: all 0.3s ease;
+        #spark-title-overlay {
+            transition: opacity 1.5s ease-in-out;
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.8);
         }
+        iframe { width: 100%; height: 100%; border: none; background: black; }
     </style>
 </head>
 <body class="bg-black m-0 p-0 overflow-hidden font-sans">
 
-    <button onclick="window.close()" class="exit-btn fixed top-6 left-6 z-[10000] bg-black/50 hover:bg-black border border-white/20 text-white p-3 rounded-full backdrop-blur-md">
+    <div id="spark-title-overlay" class="fixed top-20 left-1/2 -translate-x-1/2 z-[10000] text-center pointer-events-none">
+        <h1 id="active-spark-name" class="text-[#00f2ff] text-4xl font-black uppercase tracking-[0.3em]">Loading...</h1>
+    </div>
+
+    <button onclick="window.location.href='/arcade/index.html?user=yertal-arcade'" class="exit-btn fixed top-6 left-6 z-[10000] bg-black/50 hover:bg-black border border-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all">
         <i class="fas fa-arrow-left"></i>
     </button>
 
     <div id="prev-zone" class="fixed left-0 top-0 w-24 h-full z-[9000] group cursor-pointer flex items-center justify-center">
-        <div class="opacity-0 group-hover:opacity-100 bg-black/40 p-4 rounded-r-xl border-y border-r border-white/10">
+        <div class="opacity-0 group-hover:opacity-100 bg-black/40 p-4 rounded-r-xl border border-white/10 transition-all">
             <i class="fas fa-chevron-left text-white text-2xl"></i>
         </div>
     </div>
     
     <div id="next-zone" class="fixed right-0 top-0 w-24 h-full z-[9000] group cursor-pointer flex items-center justify-center">
-        <div class="opacity-0 group-hover:opacity-100 bg-black/40 p-4 rounded-l-xl border-y border-l border-white/10">
+        <div class="opacity-0 group-hover:opacity-100 bg-black/40 p-4 rounded-l-xl border border-white/10 transition-all">
             <i class="fas fa-chevron-right text-white text-2xl"></i>
         </div>
     </div>
@@ -49,26 +49,22 @@
 
         <div class="flex flex-col gap-1">
             <div class="flex gap-2">
-                <button id="set-cover-btn" class="bg-[var(--neon-color)] text-black text-[10px] font-black px-4 py-2 rounded-lg uppercase tracking-tighter hover:brightness-110">
+                <button id="set-cover-btn" class="bg-[#00f2ff] text-black text-[10px] font-black px-4 py-2 rounded-lg uppercase tracking-tighter hover:scale-105 transition-transform">
                     Set as Cover
                 </button>
-                <button id="zen-btn" class="bg-white/10 text-white/60 hover:text-white text-[10px] font-black px-3 py-2 rounded-lg border border-white/5 transition-all" title="Zen Mode (Z)">
+                <button id="zen-btn" class="bg-white/10 text-white/60 hover:text-white p-2 rounded-lg border border-white/5 transition-all">
                     <i class="fas fa-eye-slash"></i>
                 </button>
-                <button id="download-btn" class="bg-white/10 text-white/60 hover:text-white text-[10px] font-black px-3 py-2 rounded-lg border border-white/5 transition-all">
-                    <i class="fas fa-download"></i>
-                </button>
-                <button id="fallback-url-btn" class="bg-white/10 text-white/60 hover:text-white text-[10px] font-black px-3 py-2 rounded-lg border border-white/5">
+                <button id="fallback-url-btn" class="bg-white/10 text-white/60 hover:text-white p-2 rounded-lg border border-white/5 transition-all">
                     <i class="fas fa-link"></i>
                 </button>
             </div>
-            <div id="hud-status" class="text-[7px] text-white/40 uppercase tracking-widest text-center">Auto-Capture Active</div>
+            <div id="hud-status" class="text-[7px] text-white/40 uppercase tracking-widest text-center">Engine Standby</div>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script src="../config/firebase-config.js"></script>
-    <script src="../js/spark.js"></script>
+    <script type="module" src="../js/spark.js"></script>
 </body>
 </html>
