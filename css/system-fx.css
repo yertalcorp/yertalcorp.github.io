@@ -1,14 +1,11 @@
-/* YERTAL SYSTEM-FX ENGINE v4.0
-   Objective: Permanent Static Replacement for Tailwind Utilities.
-   Bakes in exact values from the Inspect Window for Showroom & Arcade.
+/* YERTAL CORP | system-fx.css
+   Compiled from Tailwind v3.4.17 Utility Logic 
 */
 
-/* --- 1. THE TAILWIND PREFLIGHT RESET --- */
-*, ::before, ::after {
-    box-sizing: border-box;
-    border-width: 0;
-    border-style: solid;
-    border-color: rgba(255, 255, 255, 0.1);
+/* --- 1. CORE ENGINE & VARIABLE RESETS --- */
+:root {
+    --tw-border-spacing-x: 0;
+    --tw-border-spacing-y: 0;
     --tw-translate-x: 0;
     --tw-translate-y: 0;
     --tw-rotate: 0;
@@ -16,104 +13,102 @@
     --tw-skew-y: 0;
     --tw-scale-x: 1;
     --tw-scale-y: 1;
+    --tw-ring-offset-width: 0px;
+    --tw-ring-offset-color: #fff;
+    --tw-ring-color: rgb(59 130 246 / 0.5);
+    --tw-ring-offset-shadow: 0 0 #0000;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-shadow: 0 0 #0000;
 }
 
-/* --- 2. LAYOUT ENGINE (Flex, Grid, & Centering) --- */
+*, ::before, ::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: #e5e7eb;
+    /* Hardware Accelerated Transform Engine */
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+/* --- 2. LAYOUT & GRID SYSTEM --- */
 .flex { display: flex; }
+.grid { display: grid; }
 .flex-col { flex-direction: column; }
 .flex-wrap { flex-wrap: wrap; }
-.flex-grow { flex-grow: 1; }
-.flex-1 { flex: 1 1 0%; }
-
-.grid { display: grid; }
 .items-center { align-items: center; }
 .items-start { align-items: flex-start; }
 .justify-center { justify-content: center; }
 .justify-between { justify-content: space-between; }
-
-/* Grid Columns */
-.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-@media (min-width: 768px) {
-    .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .md\:flex { display: flex; }
-}
-@media (min-width: 1024px) {
-    .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-
-/* --- 3. SPACING & DIMENSIONS --- */
-.w-full { width: 100%; }
-.h-full { height: 100%; }
-.h-10 { height: 2.5rem; }
-.w-auto { width: auto; }
-.max-w-7xl { max-width: 80rem; }
-.max-w-2xl { max-width: 42rem; }
-.min-w-\[300px\] { min-width: 300px; }
-
-.mx-auto { margin-left: auto; margin-right: auto; }
-.mt-4 { margin-top: 1rem; }
-.mt-8 { margin-top: 2rem; }
-.mb-9 { margin-bottom: 2.25rem; }
-.mb-16 { margin-bottom: 4rem; }
-.mb-24 { margin-bottom: 6rem; }
-.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-.py-4 { padding-top: 1rem; padding-bottom: 1rem; }
-.py-8 { padding-top: 2rem; padding-bottom: 2rem; }
-.py-12 { padding-top: 3rem; padding-bottom: 3rem; }
-.pt-32 { padding-top: 8rem; }
+.gap-2 { gap: 0.5rem; }
 .gap-3 { gap: 0.75rem; }
 .gap-4 { gap: 1rem; }
 .gap-6 { gap: 1.5rem; }
 .gap-8 { gap: 2rem; }
+.gap-10 { gap: 2.5rem; }
 
-/* --- 4. BRAND SPECIFIC COMPONENTS --- */
+/* Grid Breakpoints */
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+@media (min-width: 768px) { .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* --- 3. SPACING & SIZING --- */
+.mx-auto { margin-left: auto; margin-right: auto; }
+.mt-4 { margin-top: 1rem; }
+.mb-9 { margin-bottom: 2.25rem; }
+.mb-16 { margin-bottom: 4rem; }
+.mb-24 { margin-bottom: 6rem; }
+.pt-32 { padding-top: 8rem; }
+.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+.py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+.py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+.px-20 { padding-left: 5rem; padding-right: 5rem; }
+.w-full { width: 100%; }
+.h-10 { height: 2.5rem; }
+.max-w-7xl { max-width: 80rem; }
+.max-w-2xl { max-width: 42rem; }
 .aspect-video { aspect-ratio: 16 / 9; }
-.relative { position: relative; }
-.absolute { position: absolute; }
-.fixed { position: fixed; }
-.inset-0 { inset: 0px; }
-.z-50 { z-index: 50; }
-.z-10 { z-index: 10; }
 
-.uppercase { text-transform: uppercase; }
-.tracking-tighter { letter-spacing: -0.05em; }
-.tracking-widest { letter-spacing: 0.1em; }
-.tracking-\[0\.5em\] { letter-spacing: 0.5em; }
-.italic { font-style: italic; }
+/* --- 4. TYPOGRAPHY & COLORS --- */
 .text-center { text-align: center; }
+.uppercase { text-transform: uppercase; }
+.italic { font-style: italic; }
+.font-light { font-weight: 300; }
+.font-bold { font-weight: 700; }
+.font-extrabold { font-weight: 800; }
+.tracking-tighter { letter-spacing: -0.05em; }
+.tracking-wide { letter-spacing: 0.025em; }
+.tracking-widest { letter-spacing: 0.1em; }
+.text-xs { font-size: 0.75rem; }
+.text-lg { font-size: 1.125rem; }
+.text-xl { font-size: 1.25rem; }
+.text-5xl { font-size: 3rem; }
+@media (min-width: 1024px) { .lg\:text-7xl { font-size: 4.5rem; } }
 
-/* Colors */
+.text-white { color: #ffffff; }
+.text-blue-400 { color: #60a5fa; }
+.text-blue-500 { color: #3b82f6; }
 .text-slate-400 { color: #94a3b8; }
 .text-slate-500 { color: #64748b; }
-.text-blue-500 { color: #3b82f6; }
-.text-white { color: #ffffff; }
 
-/* Typography */
-.text-xl { font-size: 1.25rem; }
-.text-lg { font-size: 1.125rem; }
-.text-5xl { font-size: 3rem; }
-@media (min-width: 1024px) {
-    .lg\:text-7xl { font-size: 4.5rem; }
-}
-
-/* Background Gradients */
-.bg-gradient-to-t {
-    background-image: linear-gradient(to top, var(--tw-gradient-stops));
-}
-.from-slate-950 {
-    --tw-gradient-from: #020617;
-    --tw-gradient-to: rgb(2 6 23 / 0);
-    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
-
-/* Animations & Transitions */
-.transition-all { transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); }
+/* --- 5. EFFECTS & ANIMATIONS --- */
+.bg-cover { background-size: cover; }
+.bg-center { background-position: center; }
+.opacity-50 { opacity: 0.5; }
+.opacity-70 { opacity: 0.7; }
+.opacity-80 { opacity: 0.8; }
+.rounded-full { border-radius: 9999px; }
+.rounded-2xl { border-radius: 1rem; }
+.transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.duration-300 { transition-duration: 300ms; }
 .duration-700 { transition-duration: 700ms; }
-.group:hover .group-hover\:scale-105 { transform: scale(1.05); }
 
-/* Visibility Control */
-.hidden { display: none; }
-@media (min-width: 768px) {
-    .md\:flex { display: flex; }
+/* Group Hover States */
+.group:hover .group-hover\:scale-105 { --tw-scale-x: 1.05; --tw-scale-y: 1.05; }
+.group:hover .group-hover\:rotate-180 { --tw-rotate: 180deg; }
+.hover\:scale-110:hover { --tw-scale-x: 1.1; --tw-scale-y: 1.1; }
+
+/* Glass specific backdrop matching */
+.backdrop-blur-\[1px\] {
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
 }
