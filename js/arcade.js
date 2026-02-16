@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 
 // --- DEPLOYMENT TRACKER ---
 window.auth = auth;
-console.log("ARCADE CORE V.2026.02.16.11:32 - STATUS: COMPACT MODE ACTIVE");
+console.log("ARCADE CORE V.2026.02.16.11:41 - STATUS: COMPACT MODE ACTIVE");
 
 let user;
 let databaseCache = {};
