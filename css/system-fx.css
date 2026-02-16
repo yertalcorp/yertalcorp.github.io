@@ -1,0 +1,82 @@
+/* Objective: High-performance visual effects for the Yertal Viewport.
+   Replaces Tailwind CDN for production.
+*/
+
+/* --- THE VIEWPORT ENGINE --- */
+
+.viewport-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(circle at center, #111 0%, #000 100%);
+}
+
+/* --- SYSTEM HUD & GLASS --- */
+
+.fx-glass-hud {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 1rem;
+    z-index: 10000;
+    
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(var(--card-blur, 15px));
+    -webkit-backdrop-filter: blur(var(--card-blur, 15px));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.fx-neon-border {
+    border-color: var(--neon-color, #00f2ff) !important;
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+}
+
+/* --- INTERACTIVE UTILITIES --- */
+
+.fx-exit-btn {
+    position: fixed;
+    top: 1.5rem;
+    left: 1.5rem;
+    z-index: 10001;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fx-exit-btn:hover {
+    background: var(--neon-color, #00f2ff);
+    color: #000 !important;
+    box-shadow: 0 0 20px var(--neon-color, #00f2ff);
+}
+
+/* --- TYPOGRAPHY & ANIMATION --- */
+
+.fx-chroma-header {
+    color: var(--neon-color, #00f2ff);
+    text-shadow: 0 0 15px var(--neon-color, #00f2ff);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
+}
+
+.zen-mode-active {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(20px) !important;
+}
+
+/* --- LAYOUT SHIMS (Replacing Tailwind Flex) --- */
+.fx-flex-col { display: flex; flex-direction: column; }
+.fx-gap-1 { gap: 0.25rem; }
+.fx-gap-2 { gap: 0.5rem; }
