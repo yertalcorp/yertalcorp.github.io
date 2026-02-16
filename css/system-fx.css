@@ -54,18 +54,29 @@
     max-width: 1400px !important;
     margin: 0 auto !important;
     padding: 1rem 2rem !important;
+   overflow: hidden;
 }
 
 #nav-menu {
     display: flex;
-    gap: 3rem !important;
+    gap: 2.5rem !important;
     align-items: center;
     flex: 1;
     justify-content: center;
 }
 
-#nav-logo { flex: 0 0 auto; }
-#auth-zone { flex: 0 0 auto; display: flex; justify-content: flex-end; }
+#nav-logo { flex: 0 0 220px; }
+#nav-logo img {
+    height: 32px !important; /* Forces standard height regardless of container */
+    width: auto !important;
+    object-fit: contain;
+}
+
+#auth-zone { 
+    flex: 0 0 250px; /* Fix the auth zone width */
+    display: flex; 
+    justify-content: flex-end; 
+}
 
 #showcase-grid {
     display: flex;
@@ -142,7 +153,8 @@
 /* Surreal 3D Button - Restored Vertical Scale */
 .surreal-3d-btn {
     min-height: 80px !important;
-    display: flex !important;
+   padding: 0 4rem !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     background: linear-gradient(145deg, #1e293b, #0f172a);
