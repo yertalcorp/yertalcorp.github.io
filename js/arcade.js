@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 
 // --- DEPLOYMENT TRACKER ---
 window.auth = auth;
-console.log("ARCADE CORE V.2026.02.16.12:01 - STATUS: COMPACT MODE ACTIVE");
+console.log("ARCADE CORE V.2026.02.16.12:10 - STATUS: COMPACT MODE ACTIVE");
 
 let user;
 let databaseCache = {};
@@ -212,12 +212,12 @@ function renderCurrents(currents, isOwner, ownerUid) {
         // STRICT CONTROL RENDERING
         const controls = isOwner ? `
             <div class="flex items-center gap-2 flex-nowrap ml-auto">
-                **<label class="text-[10px] font-black text-white/40 uppercase mr-2">Create a New Card:</label>**
+                <label class="text-[10px] font-black text-white/40 uppercase mr-2">Create a New Card:</label>
                 <input type="text" id="input-${current.id}" 
-                       **placeholder="Type your prompt or paste a URL..."** class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] w-64 focus:border-[var(--neon-color)] outline-none">
+                       placeholder="Type your prompt or paste a URL..." class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] w-64 focus:border-[var(--neon-color)] outline-none">
                 <button onclick="handleCreation('${current.id}')" 
                         class="bg-[var(--neon-color)] text-black text-[9px] font-black px-4 py-2 rounded uppercase whitespace-nowrap">
-                    **Generate Spark**
+                    Generate Spark
                 </button>
             </div>
         ` : `<div class="ml-auto text-[10px] opacity-30 italic font-mono">ENCRYPTED VIEW [${ownerUid.substring(0,5)}]</div>`;
@@ -225,7 +225,7 @@ function renderCurrents(currents, isOwner, ownerUid) {
         return `
             <div class="current-block mb-12 animate-fadeIn">
                 <div class="flex items-center gap-4 mb-6 border-b border-white/5 pb-4">
-                    **<h2 class="text-2xl font-black uppercase tracking-tighter italic text-white/90">${current.name || 'Active Current'}</h2>**
+                    <h2 class="text-2xl font-black uppercase tracking-tighter italic text-white/90">${current.name || 'Active Current'}</h2>
                     ${controls}
                 </div>
 <div id="sparks-${current.id}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
