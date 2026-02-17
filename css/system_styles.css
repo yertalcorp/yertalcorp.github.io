@@ -131,11 +131,20 @@
 }
 
 #auth-zone { 
-    flex: 0 0 250px; /* Fix the auth zone width */
+    flex: 0 0 320px; /* Fix the auth zone width */
     display: flex; 
     justify-content: flex-end; 
    align-items: center;
+   gap: 1rem;
+
+
+/* Identity HUD Layout Restoration */
+#auth-zone .flex-col { 
+    display: flex; 
+    flex-direction: column; 
 }
+#auth-zone .items-end { align-items: flex-end; }
+
 /* Base state for Disconnect button */
 .border-white\/10 { border: 1px solid rgba(255, 255, 255, 0.1); }
 .text-white\/60 { color: rgba(255, 255, 255, 0.6); }
@@ -187,6 +196,10 @@
 .pt-24 { padding-top: 6rem ; } /* Pulls hero up slightly more than pt-32 */
 
 .w-full { width: 100% ; }
+.w-9 { width: 2.25rem; }
+.h-9 { height: 2.25rem; }
+.rounded-full { border-radius: 9999px; }
+.border-2 { border-width: 2px; }
 .max-w-7xl { max-width: 1280px ; margin-left: auto; margin-right: auto; }
 .aspect-video { aspect-ratio: 16 / 9; width: 100%; }
 .absolute { position: absolute; }
@@ -212,7 +225,11 @@
 }
 .text-5xl { font-size: 3rem; }
 
-
+/* Force Text Visibility for Small Labels */
+.text-\[10px\] { font-size: 10px; }
+.text-\[8px\] { font-size: 8px; }
+.text-\[9px\] { font-size: 9px; }
+   
 /* General Hover Polish */
 .action-card:hover, .featured-card:hover {
    transform: translateY(-10px);
