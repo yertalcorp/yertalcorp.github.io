@@ -89,13 +89,14 @@
 
 .metallic-bezel {
     position: relative;
-    border: 1.5px solid rgba(255, 255, 255, 0.1) transparent;
-    border-radius: 2.5rem;
+    border: 2px solid solid var(--neon-color);
+    border-radius: 2rem;
+    overflow: hidden;
     background-image: linear-gradient(to bottom, #1e293b, #0f172a), 
                       linear-gradient(135deg, #ffffff50 0%, #334155 40%, #ffffff50 50%, #1e293b 70%, #ffffff50 100%);
     background-origin: border-box;
     background-clip: padding-box, border-box;
-    box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.05), 0 10px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2), inset 0 0 10px rgba(0, 242, 255, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -110,6 +111,8 @@
     z-index: 20; /* Ensures it sits ABOVE the background image */
 }
 .featured-card:hover.metallic-bezel {
+    border-color: #fff;
+    box-shadow: 0 0 30px var(--neon-color);
     animation: neon-glow-pulse 1.5s infinite;
     transform: translateY(-2px);
 }
