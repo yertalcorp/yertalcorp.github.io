@@ -4,6 +4,8 @@ import { ENV } from '/config/env.js';
 
 // --- DEPLOYMENT TRACKER ---
 window.auth = auth;
+// attach the global logout function
+window.handleLogout = logout;
 console.log("ARCADE CORE V.2026.02.17.18:04 - STATUS: COMPACT MODE ACTIVE");
 
 let user;
@@ -141,14 +143,13 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
 
-    // STRICT DATA EXTRACTION - No Fallbacks
+    // STRICT DATA EXTRACTION
     const profile = userData?.profile || {};
     const arcadeLogo = profile.arcade_logo;
     const brandName = profile.display_name;
     const arcadeTitle = profile.arcade_title;
     const arcadeSubtitle = profile.arcade_subtitle;
     
-    // Title splitting logic for neon highlighting
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
     header.innerHTML = `
@@ -166,7 +167,7 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
 
                 <div style="display: flex; gap: 0.75rem; align-items: center; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 1rem; margin-left: 0.5rem;">
                     <a href="/index.html" title="Showroom" style="color: rgba(255,255,255,0.6);"><i class="fas fa-door-open"></i></a>
-                    <a href="?user=${mySlug}" title="Home" style="color: rgba(255,255,255,0.6);"><i class="fas fa-home"></i></a>
+                    <a href="?user=${mySlug}" title="My Arcade" style="color: rgba(255,255,255,0.6);"><i class="fas fa-home"></i></a>
                     <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--neon-color); padding: 0.2rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 8px; background: rgba(0, 242, 255, 0.05); box-shadow: 0 0 5px rgba(0, 242, 255, 0.2);">HUB</a>
                 </div>
             </div>
@@ -193,7 +194,7 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <div style="text-align: right;">
                         <p id="pilot-display" style="margin: 0; line-height: 1; color: white; font-weight: 800; font-size: 10px; text-transform: uppercase;">${authUser.displayName}</p>
-                        <button onclick="window.logout ? window.logout() : console.error('Logout function not found')" 
+                        <button onclick="handleLogout()" 
                                 style="background: none; border: none; font-size: 8px; font-weight: 900; color: var(--neon-color); text-transform: uppercase; cursor: pointer; padding: 0; letter-spacing: 0.5px;">
                             Disconnect
                         </button>
