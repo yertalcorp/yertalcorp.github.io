@@ -1,21 +1,17 @@
 /* YERTAL CORP | system_styles.css
-   Engine Version: V2.0.2-2026-OPTIMIZED
-   Consolidated: Layout, Grids, Branding, and FX
+   Engine Version: V2.1.0-PRODUCTION
+   Build Date: 2026-02-17
 */
 
 /* --- 1. CORE ENGINE & VERSIONING --- */
 :root {
-    --system-fx-version: "YERTAL-CORE-V2.0.2";
+    --system-fx-version: "YERTAL-CORE-V2.1.0";
     --accent-color: #00f2ff;
-    --card-blur: 12px;
+    --card-blur: 16px;
     --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1;
 }
 
-/* Hidden Version Tag for Console/Inspector Check */
-head::after {
-    content: var(--system-fx-version);
-    display: none;
-}
+head::after { content: var(--system-fx-version); display: none; }
 
 *, ::before, ::after {
     box-sizing: border-box;
@@ -27,189 +23,179 @@ body {
     background: #000; 
     color: #fff; 
     overflow-x: hidden; 
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
 }
 
-/* --- 2. GLOBAL BRANDING & UI FIXES --- */
-/* Fixes oversized logo in /arcade/ and stabilizes navigation */
-.logo-container img, .nav-container img, #nav-logo img {
+/* --- 2. NAVIGATION & AUTH ZONE FIXES --- */
+.nav-container {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 1rem 2rem !important;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+#nav-logo img {
     height: 40px !important;
     width: auto !important;
-    object-fit: contain !important;
-    max-width: 200px !important;
+    max-width: 200px;
 }
 
-button, a, [onclick], .logo-container, .featured-card, .action-card {
-    cursor: pointer !important;
+#nav-menu {
+    display: flex !important;
+    gap: 2rem !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
-/* Universal Button Reset: Strips "white bars" */
-button, .glass-card button, #footer-container button, .nav-container button {
-    background: transparent !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    color: inherit;
+#auth-zone {
+    display: flex !important;
+    gap: 1rem !important;
+    align-items: center !important;
+    font-size: 0.75rem;
+    font-weight: 800;
 }
 
-/* --- 3. THE GRID SYSTEM (4-COLUMN DESKTOP DEFAULT) --- */
-
-/* Specific override for Showroom Action Grid */
-#action-grid {
-    display: grid !important;
-    gap: 1.5rem !important;
-    grid-template-columns: repeat(1, 1fr) !important;
-}
-
-@media (min-width: 1024px) {
-    #action-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    }
-}
-
-/* Modular Utilities for Cross-Page use */
-.grid-cols-4, .grid-4 {
-    display: grid !important; gap: 1.5rem !important;
-    grid-template-columns: repeat(1, 1fr) !important;
-}
-
-.grid-cols-5, .grid-5 {
-    display: grid !important; gap: 1.5rem !important;
-    grid-template-columns: repeat(1, 1fr) !important;
-}
-
-@media (min-width: 1024px) {
-    .grid-cols-4, .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
-    .grid-cols-5, .grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
-}
-
-/* --- 4. LAYOUT & SPACING --- */
+/* --- 3. HERO ZONE & SURREAL BUTTON --- */
 .hero-section {
-    padding-top: 10rem !important;
-    padding-bottom: 5rem !important;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    padding: 12rem 2rem 6rem 2rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
 }
 
+.hero-section h1 {
+    font-size: 4.5rem !important; /* Larger impact */
+    font-weight: 900 !important;
+    margin-bottom: 1rem;
+    letter-spacing: -0.05em;
+}
+
+.surreal-3d-btn {
+    min-height: 85px !important; /* Taller button */
+    padding: 0 5rem !important;
+    font-size: 1.5rem !important; /* Larger text */
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: linear-gradient(145deg, #1e293b, #0f172a) !important;
+    border: 1px solid rgba(0, 242, 255, 0.4) !important;
+    border-radius: 20px;
+    margin-top: 3rem !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 20px rgba(0, 242, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* --- 4. SHOWCASE ITEMS (BEZEL & TRANSLUCENCY) --- */
 #showcase-grid {
     display: flex !important;
     flex-wrap: wrap !important;
     justify-content: center !important;
-    gap: 1.5rem !important;
-    padding: 2rem !important;
-    width: 100% !important;
-    max-width: 1400px !important;
-    margin: 0 auto !important;
-}
-
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.justify-between { justify-content: space-between; }
-.mx-auto { margin-left: auto; margin-right: auto; }
-.w-full { width: 100%; }
-.max-w-7xl { max-width: 1280px; }
-.mb-24 { margin-bottom: 6rem; }
-
-/* --- 5. TYPOGRAPHY & COLOR --- */
-.text-white { color: #ffffff; }
-.text-slate-500 { color: #64748b; }
-.text-blue-500 { color: #3b82f6; }
-.uppercase { text-transform: uppercase; }
-.italic { font-style: italic; }
-.font-bold { font-weight: 700; }
-.text-glow { text-shadow: 0 0 20px var(--accent-color), 0 0 40px var(--accent-color); }
-.tracking-tighter { letter-spacing: -0.05em; }
-
-/* --- 6. COMPONENTS & FX --- */
-.glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-.glass-card { 
-    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
-    border: 1px solid rgba(255,255,255,0.1);
-    backdrop-filter: blur(var(--card-blur));
-}
-
-.surreal-3d-btn {
-    min-height: 75px;
-    padding: 0 4rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(145deg, #1e293b, #0f172a) !important;
-    border: 1px solid rgba(0, 242, 255, 0.3) !important;
-    border-radius: 16px;
-    transform-style: preserve-3d;
-    transition: transform 0.1s ease-out;
-    margin: 2rem 0 !important;
-    perspective: 1000px;
+    gap: 2.5rem !important; /* Increased padding between items */
+    padding: 4rem 2rem !important;
 }
 
 .featured-card { 
-    min-width: 300px !important;
-    flex: 0 1 350px !important;
-    height: 320px; 
-    border-radius: 20px;
+    min-width: 320px !important;
+    flex: 0 1 380px !important;
+    height: 380px !important; /* Taller bezel */
+    border-radius: 32px !important; /* Rounder tech bezel */
     position: relative;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: rgba(255, 255, 255, 0.03); /* Translucent base */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(var(--card-blur));
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .featured-card img {
+    position: absolute;
+    inset: 0;
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
+    opacity: 0.5 !important; /* Translucent effect */
+    z-index: 0;
+}
+
+.featured-card .content-overlay {
+    position: relative;
+    z-index: 10;
+    padding: 2.5rem !important;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+}
+
+/* --- 5. ACTION CARDS (4-COLUMN GRID) --- */
+#action-grid {
+    display: grid !important;
+    gap: 1.5rem !important;
+    max-width: 1400px;
+    margin: 0 auto;
+    grid-template-columns: repeat(1, 1fr) !important;
+}
+
+@media (min-width: 1024px) {
+    #action-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 }
 
 .action-card {
-    min-height: 260px;
-    flex: 1 1 280px;
-    max-width: 400px;
-    padding: 1.75rem;
+    min-height: 280px;
+    padding: 2rem;
+    border-radius: 24px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .action-card:hover, .featured-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0, 242, 255, 0.15);
+    transform: translateY(-12px);
+    box-shadow: 0 30px 60px rgba(0, 242, 255, 0.15);
 }
 
-/* --- 7. FOOTER STABILIZATION --- */
+/* --- 6. FOOTER STABILIZATION --- */
 #footer-container {
-    background: rgba(5, 5, 5, 0.95);
-    padding: 4rem 2rem;
+    background: rgba(5, 5, 5, 0.98);
+    padding: 6rem 2rem;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 #footer-container .max-w-7xl.mx-auto.grid {
     display: grid !important;
     grid-template-columns: repeat(1, 1fr) !important;
-    gap: 2.5rem !important;
+    gap: 3rem !important;
 }
 
 @media (min-width: 768px) {
-    #footer-container .max-w-7xl.mx-auto.grid {
-        grid-template-columns: repeat(3, 1fr) !important;
-    }
+    #footer-container .max-w-7xl.mx-auto.grid { grid-template-columns: repeat(3, 1fr) !important; }
 }
 
 #footer-container button {
     color: #94a3b8 !important;
-    font-size: 0.75rem !important;
+    font-size: 0.8rem !important;
     text-align: left !important;
-    padding: 4px 0 !important;
+    padding: 6px 0 !important;
+    background: transparent !important;
 }
 
 #footer-container button:hover { color: var(--accent-color) !important; }
 
-/* --- 8. ANIMATIONS --- */
-.animate-fadeIn { animation: fadeIn 0.8s ease-out forwards; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+/* --- 7. UTILITIES & ANIMATIONS --- */
+.text-glow { text-shadow: 0 0 20px var(--accent-color), 0 0 40px var(--accent-color); }
+.animate-fadeIn { animation: fadeIn 1s ease-out forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-.group:hover .group-hover\:scale-125 { --tw-scale-x: 1.25; --tw-scale-y: 1.25; }
-.group:hover .group-hover\:rotate-180 { --tw-rotate: 180deg; }
+button, .surreal-3d-btn { outline: none !important; box-shadow: none; border: none; }
