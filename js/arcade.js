@@ -500,3 +500,11 @@ function formatTimeAgo(timestamp) {
     
     return Math.floor(seconds) + "S AGO";
 }
+window.openOnboardingHUD = () => {
+    const hud = document.getElementById('onboarding-hud');
+    if (hud) {
+        hud.classList.add('active');
+        // Logic to populate the 20 category buttons from your JSON settings
+        renderCategoryButtons(); 
+    }
+};
