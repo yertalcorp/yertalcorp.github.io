@@ -11,6 +11,7 @@ console.log("ARCADE CORE V.2026.02.17.18:04 - STATUS: COMPACT MODE ACTIVE");
 
 let user;
 let databaseCache = {};
+let selectedCategory = null;
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
 async function refreshUI() {
@@ -500,6 +501,34 @@ function formatTimeAgo(timestamp) {
     
     return Math.floor(seconds) + "S AGO";
 }
+
+function renderCategoryButtons() {
+    const grid = document.getElementById('category-grid');
+    // Assuming 'appData' is your global variable containing the full JSON
+    const categories = appData.settings['arcade-current-types'];
+    
+    grid.innerHTML = categories.map(cat => `
+        <button class="cat-btn" onclick="selectCategory('${cat.id}', '${cat.name}')">
+            <i class="fas fa-circle-notch"></i>
+            <span>${cat.name}</span>
+        </button>
+    `).join('');
+}
+
+window.selectCategory = (id, name) => {
+    selectedCategory = id;
+    // Highlight selected button
+    document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+    
+    // Show final step and update placeholder
+    const finalStep = document.getElementById('final-intent-step');
+    const promptInput = document.getElementById('initial-prompt');
+    finalStep.style.display = 'block';
+    promptInput.placeholder = `e.g., Top 5 ${name.toLowerCase()} videos...`;
+    
+    document.getElementById('intent-label').innerText = `INITIALIZE ${name.toUpperCase()} INTENT`;
+};
 window.openOnboardingHUD = () => {
     const hud = document.getElementById('onboarding-hud');
     if (hud) {
