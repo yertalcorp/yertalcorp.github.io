@@ -426,12 +426,13 @@ button:hover {
     font-family: 'Orbitron', sans-serif;
 }
 .logic-display {
+    border: 1px solid var(--neon-color);
     background: #000;
     border: 1px solid var(--neon-color);
     padding: 2rem;
     font-family: 'monospace';
     color: #fff;
-    box-shadow: inset 0 0 20px rgba(0, 242, 255, 0.1);
+    box-shadow: inset 0 0 30px rgba(0, 242, 255, 0.1), 0 0 15px rgba(0, 242, 255, 0.05);
 }
 
 .terminal-code {
@@ -442,6 +443,7 @@ button:hover {
     font-size: 1.2rem;
     overflow-x: auto;
     border-left: 3px solid var(--neon-color);
+    text-shadow: 0 0 5px rgba(0, 242, 255, 0.5);
 }
 
 .terminal-btn {
@@ -449,9 +451,16 @@ button:hover {
     color: #000;
     border: none;
     padding: 5px 15px;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 2px;
     font-size: 10px;
     font-weight: 900;
     cursor: pointer;
+}
+.terminal-btn:hover {
+    background: #fff;
+    box-shadow: 0 0 20px #fff;
+    transform: translateY(-2px);
 }
 /* --- UTILITIES --- */
 .hidden { display: none ; }
