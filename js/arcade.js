@@ -405,7 +405,6 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
     const currentSparks = userNode?.infrastructure?.currents?.[currentId]?.sparks || {};
     const existingCount = Object.keys(currentSparks).length;
     
-    // Use dynamic limit from JSON instead of hardcoded 48
     const maxSparks = planLimits.max_sparks_per_current;
     const remainingSpace = maxSparks - existingCount;
 
@@ -417,8 +416,8 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
 
     // 3. DETERMINE REQUESTED COUNT
     const countMatch = prompt.match(/\d+/);
-    // Default to plan's sparks_per_row_desktop if no number provided
-    let requestedCount = countMatch ? parseInt(countMatch[0]) : planLimits.sparks_per_row_desktop;
+    // Use num_mass_sparks as the default if no number is found in the prompt
+    let requestedCount = countMatch ? parseInt(countMatch[0]) : (planLimits.num_mass_sparks || 3);
 
     // 4. APPLY LIMITS (Clip to remaining space)
     const finalForgeCount = Math.min(requestedCount, remainingSpace);
@@ -431,6 +430,9 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
     }
 
     try {
+        const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
+        const finalImageUrl = templateUrl || defaultThumb;
+
         if (mode === 'sourcing') {
             const links = await callGeminiAPI(prompt, finalForgeCount, 'source');
             for (const item of links) {
@@ -438,24 +440,27 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
                     name: item.name, 
                     link: item.url, 
                     type: 'link',
-                    image: templateUrl 
-                }, templateName, templateUrl);
+                    image: finalImageUrl
+                }, templateName, finalImageUrl);
             }
         } else {
             for (let i = 0; i < finalForgeCount; i++) {
                 const code = await callGeminiAPI(prompt, i, 'code');
+                // Clean the prompt text for the name if a number was manually included
+                const displayName = countMatch ? prompt.replace(countMatch[0], '').trim() : prompt;
+                
                 await saveSpark(currentId, { 
-                    name: `${prompt} #${existingCount + i + 1}`, 
+                    name: `${displayName} #${existingCount + i + 1}`,
                     code, 
                     type: 'code',
-                    image: templateUrl
-                }, templateName, templateUrl);
+                    image: finalImageUrl
+                }, templateName, finalImageUrl);
             }
         }
         
         status.textContent = "SYSTEM READY";
-        // Finalize with sync instead of reload
-        await refreshUI(); } catch (e) { 
+        await refreshUI(); 
+    } catch (e) { 
         console.error("Forge Error:", e);
         status.textContent = "FORGE ERROR"; 
     }
@@ -639,21 +644,26 @@ window.handleInitialForge = async () => {
             created: Date.now()
         });
 
-        // 3. Update Profile Settings (Ensuring branding is user-specific from JSON)
+        // 3. Update Profile Settings (Merging existing data to prevent loss)
         await saveToRealtimeDB(`users/${user.uid}/profile`, {
             ...userProfile,
             arcade_title: arcadeName.toUpperCase(),
             arcade_subtitle: arcadeSubtitle,
-            // Retrieve branding from databaseCache if available, otherwise use default
-            arcade_logo: userProfile.arcade_logo || "/assets/images/Yertal_Logo_New_HR.png"
+            arcade_logo: userProfile.arcade_logo || databaseCache.settings?.['ui-settings']?.['default-logo'] || "/assets/images/default-logo.png"
         });
 
-        // 4. Trigger Mass Spark Execution (Respects plan_limits for max_sparks_per_current)
-        const template = databaseCache.settings['arcade-current-types'].find(t => t.id === selectedCategory) || { name: 'Custom', image: '/assets/thumbnails/default.jpg' };
+        // 4. Trigger Mass Spark Execution (Respects plan-based default count)
+        const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
+        const template = databaseCache.settings['arcade-current-types'].find(t => t.id === selectedCategory) || { name: 'Custom', image: defaultThumb };
         
+        // If prompt doesn't contain a number, use num_mass_sparks from plan limits (fallback to 3)
+        const countMatch = initialPrompt.match(/\d+/);
+        const finalCount = countMatch ? countMatch[0] : (limits.num_mass_sparks || 3);
+        const augmentedPrompt = countMatch ? initialPrompt : `${initialPrompt} ${finalCount}`;
+
         await executeMassSpark(
             currentId, 
-            initialPrompt, 
+            augmentedPrompt, 
             (logicType === 'source' ? 'sourcing' : 'prompt'), 
             template.name, 
             template.image
@@ -661,7 +671,7 @@ window.handleInitialForge = async () => {
 
         // 5. System Sync & UI Refresh
         document.getElementById('onboarding-hud').classList.remove('active');
-        await refreshUI(); // Re-renders without reload
+        await refreshUI(); 
         
     } catch (error) {
         console.error("FORGE CRITICAL FAILURE:", error);
