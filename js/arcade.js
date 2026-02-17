@@ -515,19 +515,82 @@ function renderCategoryButtons() {
     `).join('');
 }
 
+// --- CATEGORY SELECTION ---
 window.selectCategory = (id, name) => {
     selectedCategory = id;
-    // Highlight selected button
     document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('selected'));
     event.currentTarget.classList.add('selected');
     
-    // Show final step and update placeholder
+    // Show/Hide Custom Name field
+    const customWrap = document.getElementById('custom-category-wrap');
+    customWrap.style.display = (id === 'custom') ? 'block' : 'none';
+
     const finalStep = document.getElementById('final-intent-step');
-    const promptInput = document.getElementById('initial-prompt');
     finalStep.style.display = 'block';
-    promptInput.placeholder = `e.g., Top 5 ${name.toLowerCase()} videos...`;
     
-    document.getElementById('intent-label').innerText = `INITIALIZE ${name.toUpperCase()} INTENT`;
+    const promptInput = document.getElementById('initial-prompt');
+    promptInput.placeholder = (id === 'custom') ? 
+        "Describe what you want to build..." : 
+        `e.g., Top 5 ${name.toLowerCase()} videos...`;
+};
+// --- SMART LOGIC ASSIGNER ---
+function predictLogicType(prompt) {
+    const p = prompt.toLowerCase();
+    // Gemini-style keyword matching
+    if (p.includes('generate') || p.includes('create') || p.includes('build') || p.includes('design')) return 'create';
+    if (p.includes('top') || p.includes('find') || p.includes('list') || p.includes('show me')) return 'source';
+    return 'hybrid'; // Default fallback
+}
+
+// --- INITIAL FORGE HANDLER ---
+window.handleInitialForge = async () => {
+    const arcadeName = document.getElementById('new-arcade-name').value;
+    const arcadeSubtitle = document.getElementById('new-arcade-subtitle').value;
+    const initialPrompt = document.getElementById('initial-prompt').value;
+    const customName = document.getElementById('custom-cat-name').value;
+
+    if (!arcadeName || !initialPrompt || !selectedCategory) {
+        alert("System Error: Please define Name, Topic, and Intent.");
+        return;
+    }
+
+    // Determine the Category Identity
+    const isCustom = selectedCategory === 'custom';
+    const finalCatName = isCustom ? customName : selectedCategory;
+    const logicType = predictLogicType(initialPrompt);
+
+    const user = auth.currentUser;
+    const currentId = `current-${Date.now()}`;
+
+    const updatePayload = {
+        // Update Profile
+        [`users/${user.uid}/profile/arcade_title`]: arcadeName.toUpperCase(),
+        [`users/${user.uid}/profile/arcade_subtitle`]: arcadeSubtitle,
+        
+        // Create the First Current
+        [`users/${user.uid}/infrastructure/currents/${currentId}`]: {
+            id: currentId,
+            name: isCustom ? customName : `${finalCatName} Lab`,
+            type_ref: selectedCategory,
+            logic_mode: logicType, // Auto-assigned: create, source, or hybrid
+            privacy: 'private',
+            sparks: {}
+        }
+    };
+
+    try {
+        await update(ref(db), updatePayload);
+        
+        // Trigger the creation of 5 sparks based on the prompt
+        // (Assuming you have a function called generateSparks)
+        await window.generateSparks(currentId, initialPrompt, 5);
+        
+        // Close HUD and refresh
+        document.getElementById('onboarding-hud').classList.remove('active');
+        window.location.reload(); 
+    } catch (error) {
+        console.error("Forge Failed:", error);
+    }
 };
 window.openOnboardingHUD = () => {
     const hud = document.getElementById('onboarding-hud');
