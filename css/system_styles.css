@@ -50,11 +50,18 @@
     #action-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr)) ;
     }
-}
-
-@media (min-width: 1024px) {
-    .grid-5 {
+   .grid-5 {
         grid-template-columns: repeat(5, minmax(0, 1fr)) ;
+    }
+   .lg:text-7xl { font-size: 4.5rem; line-height: 1; }
+   .grid-cols-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+   .grid-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) ;
+    }
+   .grid-cols-5 {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 }
 
@@ -65,22 +72,11 @@
     grid-template-columns: repeat(1, 1fr) ; /* Mobile */
 }
 
-@media (min-width: 1024px) {
-    .grid-4 {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) ;
-    }
-}
 
 /* Standardizing grid-cols-5 to be used anywhere */
 .grid-cols-5 {
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-@media (min-width: 1024px) {
-    .grid-cols-5 {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
 }
 
 /* Standardizing grid-cols-4 to be used anywhere */
@@ -89,11 +85,6 @@
     grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 
-@media (min-width: 1024px) {
-    .grid-cols-4 {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-}
 .flex { display: flex; }
 .grid { display: grid; }
 .flex-col { flex-direction: column; }
@@ -169,6 +160,11 @@
 .py-8 { padding-top: 2rem ; padding-bottom: 2rem ; }
 .p-8 { padding: 2rem ; }
 .px-20 { padding-left: 5rem ; padding-right: 5rem ; }
+.mb-24 { margin-bottom: 6rem ; }
+.pt-24 { padding-top: 6rem ; } /* Pulls hero up slightly more than pt-32 */
+.pt-32 { padding-top: 8rem ; }
+.py-12 { padding-top: 3rem ; padding-bottom: 3rem ; }
+.px-6 { padding-left: 1.5rem ; padding-right: 1.5rem ; }
 .w-full { width: 100% ; }
 .max-w-7xl { max-width: 1280px ; margin-left: auto; margin-right: auto; }
 .aspect-video { aspect-ratio: 16 / 9; width: 100%; }
@@ -197,16 +193,6 @@
 .text-5xl { font-size: 3rem; }
 
 
-/* Mobile Override */
-@media (max-width: 768px) {
-    .action-card {
-        flex: 1 1 100% ;
-        max-width: 100% ;
-    }
-    #showcase-grid {
-        padding: 1rem ;
-    }
-}
 /* General Hover Polish */
 .action-card:hover, .featured-card:hover {
    transform: translateY(-10px);
@@ -366,7 +352,16 @@ button, a, [onclick], .logo-container, .featured-card, .action-card {
     display: grid ;
     grid-template-columns: repeat(1, 1fr) ;
 }
+/* Mobile Override */
 @media (min-width: 768px) {
+       .action-card {
+        flex: 1 1 100% ;
+        max-width: 100% ;
+    }
+    #showcase-grid {
+        padding: 1rem ;
+    }
+   .md:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     #footer-container .max-w-7xl.mx-auto.grid {
         /* Matches the 3-column md:grid-cols-3 in your JS render */
         grid-template-columns: repeat(3, 1fr);
