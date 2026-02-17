@@ -136,7 +136,23 @@
     justify-content: flex-end; 
    align-items: center;
 }
+/* Base state for Disconnect button */
+.border-white\/10 { border: 1px solid rgba(255, 255, 255, 0.1); }
+.text-white\/60 { color: rgba(255, 255, 255, 0.6); }
+/* Hover states for Disconnect button - Overriding Red with Neon Cyan */
+.hover\:border-red-500\/50:hover { 
+    border-color: var(--neon-color); 
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+}
+.hover\:bg-red-500\/10:hover { 
+    background-color: rgba(0, 242, 255, 0.1); 
+}
+.hover\:text-white:hover { 
+    color: #ffffff; 
+}
 
+/* Rounded corners for the Disconnect button */
+.rounded-lg { border-radius: 0.5rem; }
 #showcase-grid {
     display: flex;
     flex-wrap: wrap;
@@ -159,16 +175,17 @@
 .mb-24 { margin-bottom: 6rem ; }
 .pt-20 { padding-top: 5rem ; }
 .pt-32 { padding-top: 8rem ; }
+.px-4 { padding-left: 1rem ; padding-right: 1rem ; }
+.py-2 { padding-top: 0.5rem ; padding-bottom: 0.5rem ; }
 .px-6 { padding-left: 1.5rem ; padding-right: 1.5rem ; }
 .py-4 { padding-top: 1rem ; padding-bottom: 1rem ; }
 .py-8 { padding-top: 2rem ; padding-bottom: 2rem ; }
+.py-12 { padding-top: 3rem ; padding-bottom: 3rem ; }
 .p-8 { padding: 2rem ; }
 .px-20 { padding-left: 5rem ; padding-right: 5rem ; }
 .mb-24 { margin-bottom: 6rem ; }
 .pt-24 { padding-top: 6rem ; } /* Pulls hero up slightly more than pt-32 */
-.pt-32 { padding-top: 8rem ; }
-.py-12 { padding-top: 3rem ; padding-bottom: 3rem ; }
-.px-6 { padding-left: 1.5rem ; padding-right: 1.5rem ; }
+
 .w-full { width: 100% ; }
 .max-w-7xl { max-width: 1280px ; margin-left: auto; margin-right: auto; }
 .aspect-video { aspect-ratio: 16 / 9; width: 100%; }
@@ -187,13 +204,12 @@
 .tracking-tighter { letter-spacing: -0.05em; }
 .tracking-widest { letter-spacing: 0.25em ; }
 .text-xs { font-size: 0.75rem; }
-
+.text-lg { font-size: 1.25rem; line-height: 1.6; }
 .text-xl { 
     font-size: 1.5rem ; 
     line-height: 1.4 ; 
     letter-spacing: -0.01em ; 
 }
-
 .text-5xl { font-size: 3rem; }
 
 
@@ -221,7 +237,6 @@ button, a, [onclick], .logo-container, .featured-card, .action-card {
 .text-blue-400 { color: #60a5fa; }
 .text-blue-500 { color: #3b82f6; }
 .text-slate-400 { color: #94a3b8; }
-.text-slate-500 { color: #64748b; }
 .text-slate-500 { color: #64748b; font-size: 1.25rem; line-height: 1.6; }
 
 /* --- 5. EFFECTS & ANIMATIONS --- */
@@ -236,11 +251,11 @@ button, a, [onclick], .logo-container, .featured-card, .action-card {
 
 /* Generic reset for buttons inside containers to avoid "White Bars" */
 .glass-card button, footer button, .nav-container button {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    outline: none !important;
-    cursor: pointer !important;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    outline: none;
+    cursor: pointer;
 }
 .animate-fadeIn { animation: fadeIn 0.8s ease-out forwards; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
