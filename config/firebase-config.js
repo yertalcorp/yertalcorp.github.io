@@ -31,4 +31,33 @@ export async function getArcadeData() {
     throw new Error("Could not retrieve Arcade data from Realtime DB.");
 }
 
+/* Create a new user in the DB*/
+export async function initializeUserIfNeeded(user) {
+    const userRef = ref(db, `users/${user.uid}`);
+    const snapshot = await get(userRef);
+
+    if (!snapshot.exists()) {
+        const fullName = user.displayName || "New Engineer";
+        const firstName = fullName.split(' ')[0];
+        const baseSlug = fullName.toLowerCase().replace(/\s+/g, '-') + `-${user.uid.substring(0, 4)}`;
+
+        const initialData = {
+            profile: {
+                display_name: fullName,
+                slug: baseSlug,
+                arcade_title: `${firstName.toUpperCase()}'S ARCADE`,
+                arcade_subtitle: "System Standby. Awaiting Initial Sequence.",
+                branding_color: "#00f2ff",
+                arcade_logo: "/assets/images/Yertal_Logo_New_HR.png",
+                privacy: "private"
+            }
+            // Infrastructure is left empty here
+        };
+
+        await set(userRef, initialData);
+        await set(ref(db, `search_index/${baseSlug}`), user.uid);
+        return baseSlug;
+    }
+    return snapshot.val().profile.slug;
+}
 export { auth, db };
