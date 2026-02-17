@@ -227,16 +227,16 @@ function renderShowcase(items) {
     grid.innerHTML = Object.keys(items).map(key => {
         const item = items[key];
         return `
-            <div class="featured-card metallic-bezel p-8 rounded-[2.5rem] cursor-pointer aspect-video relative overflow-hidden group flex-1 min-w-[300px]"
+            <div class="featured-card metallic-bezel p-8 rounded-[2rem] cursor-pointer aspect-video relative overflow-hidden group flex-1 min-w-[300px]"
                  onclick="window.location.href='${item.path || '#'}'">
                 
-                <div class="absolute inset-0 bg-cover bg-no-repeat bg-center transition-transform duration-700 group-hover:scale-105 brightness-110 contrast-105" 
+                <div class="absolute inset-0 bg-cover bg-no-repeat bg-center transition-transform duration-700 group-hover:scale-105 brightness-110 contrast-105 rounded-[2rem]" 
                      style="background-image: url('${item.img}')">
                 </div>
 
-                 <div class="absolute inset-0 bg-slate-950/30 backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-500"></div>
+                 <div class="absolute inset-0 bg-slate-950/30 backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-500 rounded-[2rem]"></div>
                 
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 rounded-[2rem]"></div>
 
                 
                 <div class="relative z-10 flex flex-col h-full justify-between">
