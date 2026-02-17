@@ -232,6 +232,7 @@ button, a, [onclick], .logo-container, .featured-card, .action-card {
 .text-blue-500 { color: #3b82f6; }
 .text-slate-400 { color: #94a3b8; }
 .text-slate-500 { color: #64748b; }
+.text-slate-500 { color: #64748b; font-size: 1.25rem; line-height: 1.6; }
 
 /* --- 5. EFFECTS & ANIMATIONS --- */
 .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
