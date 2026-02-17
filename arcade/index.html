@@ -12,30 +12,31 @@
     <link rel="stylesheet" id="google-fonts-link" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Press+Start+2P&family=Inter:wght@300;400;600&display=swap">
 </head>
 
-<body id="lab-body" class="bg-[#050505] text-white">
+<body id="lab-body">
 
-    <header id="arcade-header" class="glass hud-border fixed top-0 w-full z-50 px-8 py-3">
+    <header id="arcade-header">
     </header>
 
-    <main class="w-full max-w-[1600px] mx-auto pt-16 px-6 flex flex-col items-center">
+    <main class="max-width-limit">
         
-        <div id="currents-container" class="experiment-zone w-full">
+        <div id="currents-container">
             </div>
 
     </main>
 
-    <div id="intent-modal" class="fixed inset-0 bg-black/90 backdrop-blur-xl z-[100] hidden flex items-center justify-center">
-        <div class="glass p-10 max-w-md w-full text-center flex flex-col items-center gap-6">
-            <h4 class="text-white uppercase tracking-widest text-xs font-bold">Specify Creative Intent</h4>
-            <div class="flex flex-col w-full gap-4">
-                <button id="choice-a"></button>
-                <button id="choice-b"></button>
+    <div id="intent-modal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); z-index: 1000; display: none; align-items: center; justify-content: center;">
+        <div class="glass" style="padding: 2.5rem; max-width: 400px; width: 90%; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; border: 1px solid rgba(255,255,255,0.1);">
+            <h4 class="metallic-text" style="font-size: 11px;">Specify Creative Intent</h4>
+            <div style="display: flex; flex-direction: column; width: 100%; gap: 1rem;">
+                <button id="choice-a" class="spark-button"></button>
+                <button id="choice-b" class="spark-button"></button>
             </div>
+            <button onclick="document.getElementById('intent-modal').style.display='none'" style="background: none; border: none; color: rgba(255,255,255,0.3); font-size: 10px; cursor: pointer; text-transform: uppercase;">Cancel</button>
         </div>
     </div>
 
-    <footer id="footer-container" class="py-12 px-6 border-t border-white/5 w-full mt-20">
-    </footer>
+    <footer id="footer-container">
+        </footer>
 
    <script type="module" src="/js/arcade.js"></script>
 </body>
