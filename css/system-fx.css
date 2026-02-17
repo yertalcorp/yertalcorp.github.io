@@ -31,6 +31,7 @@
 
 /* --- 2. LAYOUT & GRID SYSTEM --- */
 #action-grid {
+   @extend .grid-cols-4;
     display: grid ;
     grid-template-columns: repeat(1, minmax(0, 1fr)); /* Mobile Default */
     gap: 1.5rem ;
@@ -67,6 +68,30 @@
 @media (min-width: 1024px) {
     .grid-4 {
         grid-template-columns: repeat(4, minmax(0, 1fr)) ;
+    }
+}
+
+/* Standardizing grid-cols-5 to be used anywhere */
+.grid-cols-5 {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 1024px) {
+    .grid-cols-5 {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+/* Standardizing grid-cols-4 to be used anywhere */
+.grid-cols-4 {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 1024px) {
+    .grid-cols-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
 .flex { display: flex; }
@@ -186,6 +211,15 @@
    transform: translateY(-10px);
    box-shadow: 0 20px 40px rgba(0, 242, 255, 0.15);
 }
+/* --- 1. GLOBAL BRANDING & LOGO CONSTRAINTS --- */
+
+/* Fix for the oversized logo */
+.logo-container img, .nav-container img {
+    height: 40px; /* Fixed standard height */
+    width: auto;
+    object-fit: contain;
+    max-width: 200px;
+}
 
 /* Apply hand cursor to any clickable element including branding and nav */
 button, a, [onclick], .logo-container, .featured-card, .action-card {
@@ -204,6 +238,17 @@ button, a, [onclick], .logo-container, .featured-card, .action-card {
     background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
     border: 1px solid rgba(255,255,255,0.1);
     backdrop-filter: blur(var(--card-blur));
+}
+
+/* --- 5. COMPONENT RESET (BUTTONS & INTERACTION) --- */
+
+/* Generic reset for buttons inside containers to avoid "White Bars" */
+.glass-card button, footer button, .nav-container button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    cursor: pointer !important;
 }
 .animate-fadeIn { animation: fadeIn 0.8s ease-out forwards; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -324,4 +369,16 @@ button, a, [onclick], .logo-container, .featured-card, .action-card {
         /* Matches the 3-column md:grid-cols-3 in your JS render */
         grid-template-columns: repeat(3, 1fr);
     }
+       .footer-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+/* Force consistency on the Footer Grid */
+.footer-grid {
+    display: grid;
+    gap: 2.5rem;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+#footer-container > div {
+    @extend .footer-grid;
 }
