@@ -146,7 +146,10 @@
 #auth-zone .items-end { align-items: flex-end; }
 
 /* Base state for Disconnect button */
-.border-white\/10 { border: 1px solid rgba(255, 255, 255, 0.1); }
+.border-white\/10 { 
+   background: transparent;
+   border: 1px solid rgba(255, 255, 255, 0.1); 
+}
 .text-white\/60 { color: rgba(255, 255, 255, 0.6); }
 /* Hover states for Disconnect button - Overriding Red with Neon Cyan */
 .hover\:border-red-500\/50:hover { 
@@ -374,9 +377,28 @@ button, a, [onclick], .logo-container, .featured-card, .action-card {
     text-align: left ;
     width: fit-content ;
     color: #94a3b8 ;
-    font-size: 0.75rem ;
+    font-size: 0.85rem ;
+   font-family: var(--nav-font), sans-serif;
     transition: color 0.3s ease ;
     box-shadow: none ;
+}
+/* Legal & Copyright Section (Bottom Right) */
+#footer-container .flex-col.justify-center {
+    font-family: var(--nav-font), sans-serif; /* Removing serif mismatch */
+    font-size: 9px; /* Scaled down for professional look */
+    letter-spacing: 0.15em;
+    line-height: 1.8;
+}
+
+/* Global Font Enforcement for all dynamic text */
+body, button, span, p, h1, h2, h3, h4 {
+    font-family: var(--nav-font), sans-serif;
+}
+
+/* Ensure Hero Subtitle matches the requested Inter scale */
+#hero-subtitle {
+    font-size: 1.1rem;
+    font-family: var(--nav-font), sans-serif;
 }
 
 #footer-container button:hover {
