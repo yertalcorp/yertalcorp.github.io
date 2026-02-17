@@ -31,36 +31,36 @@
 
 /* --- 2. LAYOUT & GRID SYSTEM --- */
 #action-grid {
-    display: grid !important;
+    display: grid ;
     grid-template-columns: repeat(1, minmax(0, 1fr));** /* Mobile Default */
-    gap: 1.5rem !important;
+    gap: 1.5rem ;
 }
 
 /* --- 2. LAYOUT & GRID SYSTEM (MODULAR UTILITIES) --- */
 
 /* Utility: 5-Column Desktop Grid */
 .grid-5 {
-    display: grid !important;
-    gap: 1.5rem !important;
-    grid-template-columns: repeat(1, 1fr) !important; /* Mobile */
+    display: grid ;
+    gap: 1.5rem ;
+    grid-template-columns: repeat(1, 1fr) ; /* Mobile */
 }
 
 @media (min-width: 1024px) {
     .grid-5 {
-        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr)) ;
     }
 }
 
 /* Utility: 4-Column Desktop Grid */
 .grid-4 {
-    display: grid !important;
-    gap: 1.5rem !important;
-    grid-template-columns: repeat(1, 1fr) !important; /* Mobile */
+    display: grid ;
+    gap: 1.5rem ;
+    grid-template-columns: repeat(1, 1fr) ; /* Mobile */
 }
 
 @media (min-width: 1024px) {
     .grid-4 {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) ;
     }
 }
 .flex { display: flex; }
@@ -183,7 +183,7 @@
 
 /* Apply hand cursor to any clickable element including branding and nav */
 button, a, [onclick], .logo-container, .featured-card, .action-card {
-    cursor: pointer !important;
+    cursor: pointer ;
 }
 
 .text-white { color: #ffffff; }
@@ -236,6 +236,7 @@ button, a, [onclick], .logo-container, .featured-card, .action-card {
     min-width: 320px; 
     height: 320px ;
     flex: 0 1 300px; 
+   border-radius: 20px;
    cursor: pointer; /* UI Hand Cursor */
    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -280,3 +281,28 @@ button, a, [onclick], .logo-container, .featured-card, .action-card {
 .group:hover .group-hover\:scale-125 { --tw-scale-x: 1.25; --tw-scale-y: 1.25; }
 .group:hover .group-hover\:rotate-180 { --tw-rotate: 180deg; }
 .group:hover .group-hover\:text-cyan-400 { color: #22d3ee ; }
+
+/* --- 5. FOOTER COMPONENT REPAIR --- */
+
+#footer-container {
+    background: rgba(5, 5, 5, 0.95) !important;
+    padding: 4rem 2rem !important;
+}
+
+/* Stripping the "white bar" look from footer buttons */
+#footer-container button {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    padding: 6px 0 !important;
+    text-align: left !important;
+    width: fit-content !important;
+    color: #94a3b8 !important;
+    font-size: 0.75rem !important;
+    transition: color 0.3s ease !important;
+    box-shadow: none !important;
+}
+
+#footer-container button:hover {
+    color: var(--accent-color) !important;
+}
