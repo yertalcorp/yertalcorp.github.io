@@ -5,6 +5,7 @@ import { ENV } from '/config/env.js';
 // --- DEPLOYMENT TRACKER ---
 window.auth = auth;
 // attach the global logout function
+window.handleCreation = handleCreation;
 window.handleLogout = logout;
 console.log("ARCADE CORE V.2026.02.17.18:04 - STATUS: COMPACT MODE ACTIVE");
 
@@ -231,24 +232,25 @@ function renderCurrents(currents, isOwner, ownerUid) {
         const sparks = current.sparks ? Object.values(current.sparks) : [];
         
         const controls = isOwner ? `
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
-                <label class="metallic-text" style="font-size: 10px; opacity: 0.4; margin-right: 0.5rem;">Create a New Card:</label>
+            <div style="display: flex; align-items: center; gap: 0; margin-left: auto; background: rgba(0,0,0,0.6); border: 1px solid rgba(0,242,255,0.2); border-radius: 4px; padding: 2px 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+                <span style="font-family: monospace; color: var(--neon-color); font-size: 10px; margin-right: 10px; opacity: 0.7; font-weight: 900; letter-spacing: 1px;">FORGE_CMD></span>
                 <input type="text" id="input-${current.id}" 
-                       placeholder="Type your prompt..." 
+                       placeholder="SPECIFY INTENT..." 
                        class="glass"
-                       style="border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 0.25rem 0.5rem; font-size: 11px; width: 16rem; outline: none;">
-                <button onclick="handleCreation('${current.id}')" 
-                        class="generate-btn spark-button"
-                        style="white-space: nowrap;">
-                    Generate Spark
+                       style="background: transparent; border: none; padding: 0.5rem 0; font-size: 10px; width: 14rem; outline: none; color: white; font-family: 'Orbitron', sans-serif; letter-spacing: 2px;"
+                       onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}')">
+                <button onclick="window.handleCreation('${current.id}')" 
+                        class="generate-btn"
+                        style="background: var(--neon-color); color: black; border: none; padding: 4px 14px; margin-left: 10px; border-radius: 2px; font-size: 9px; font-weight: 900; cursor: pointer; text-transform: uppercase; transition: all 0.3s; box-shadow: 0 0 10px var(--neon-color);">
+                    EXEC
                 </button>
             </div>
-        ` : `<div style="margin-left: auto; font-size: 10px; opacity: 0.3; font-style: italic; font-family: monospace;">ENCRYPTED VIEW [${ownerUid.substring(0,5)}]</div>`;
+        ` : `<div style="margin-left: auto; font-size: 10px; opacity: 0.3; font-family: monospace; letter-spacing: 2px; text-transform: uppercase;">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
 
         return `
             <div class="current-block animate-fadeIn">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
-                    <h2 class="current-title">${current.name || 'Active Current'}</h2>
+                    <h2 class="current-title" style="margin: 0;">${current.name || 'Active Current'}</h2>
                     ${controls}
                 </div>
                 
