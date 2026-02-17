@@ -228,6 +228,18 @@ header {
     animation: spark-pulse 2s infinite ease-in-out;
 }
 
+/* Restoring the "Light up" effect on hover since group-hover is gone */
+.action-card:hover .spark-thumbnail {
+    opacity: 0.8 !important;
+    filter: grayscale(0%) !important;
+    transform: scale(1.05);
+}
+
+/* Ensure the title stays sharp during the 3D shift */
+.action-card:hover .metallic-text {
+    filter: brightness(2);
+    text-shadow: 0 0 15px var(--neon-color);
+}
 /* --- COMPONENTS & STATS --- */
 
 .card-preview {
