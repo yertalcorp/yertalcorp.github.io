@@ -147,9 +147,9 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
     const titleParts = (profile.arcade_title || "THE YERTAL ARCADE").split(' ');
 
     header.innerHTML = `
-        <nav style="filter: brightness(1.2);"> <div style="display: flex; align-items: center; gap: 0.5rem;"> <div id="nav-logo" class="logo-container" style="margin-right: -4px;"> <img src="${arcadeLogo}" alt="YERTAL" style="filter: drop-shadow(0 0 5px var(--neon-color));">
+        <nav style="filter: brightness(1.2);"> <div style="display: flex; align-items: center; gap: 0.5rem;"> <div id="nav-logo" class="logo-container" style="margin-right: -20px;"> <img src="${arcadeLogo}" alt="YERTAL" style="filter: drop-shadow(0 0 5px var(--neon-color));">
                 </div>
-                <span class="metallic-text" style="letter-spacing: 1px; font-size: 14px;">YERTAL</span>
+                <span class="metallic-text" style="letter-spacing: 1px; font-size: 14px;">YERTAL ARCADE</span>
                 <div style="display: flex; gap: 0.75rem; margin-left: 0.5rem;">
                     <a href="/index.html" style="color: rgba(255,255,255,0.6); text-decoration: none;" onmouseover="this.style.color='var(--neon-color)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'"><i class="fas fa-door-open"></i></a>
                     <a href="?user=${mySlug}" style="color: rgba(255,255,255,0.6); text-decoration: none;" onmouseover="this.style.color='var(--neon-color)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'"><i class="fas fa-home"></i></a>
