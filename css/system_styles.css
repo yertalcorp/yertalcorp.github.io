@@ -136,7 +136,7 @@
     justify-content: flex-end; 
    align-items: center;
    gap: 1rem;
-
+}
 
 /* Identity HUD Layout Restoration */
 #auth-zone .flex-col { 
