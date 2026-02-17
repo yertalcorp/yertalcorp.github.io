@@ -47,7 +47,7 @@
 
 @media (min-width: 1024px) {
     #action-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) ;
     }
 }
 
@@ -291,24 +291,37 @@ button, a, [onclick], .logo-container, .featured-card, .action-card {
 /* --- 5. FOOTER COMPONENT REPAIR --- */
 
 #footer-container {
-    background: rgba(5, 5, 5, 0.95) !important;
-    padding: 4rem 2rem !important;
+    background: rgba(5, 5, 5, 0.95) ;
+    padding: 4rem 2rem ;
+   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Stripping the "white bar" look from footer buttons */
 #footer-container button {
-    background: transparent !important;
-    border: none !important;
-    outline: none !important;
-    padding: 6px 0 !important;
-    text-align: left !important;
-    width: fit-content !important;
-    color: #94a3b8 !important;
-    font-size: 0.75rem !important;
-    transition: color 0.3s ease !important;
-    box-shadow: none !important;
+    background: transparent ;
+    border: none ;
+    outline: none ;
+    padding: 4px 0 ;
+    text-align: left ;
+    width: fit-content ;
+    color: #94a3b8 ;
+    font-size: 0.75rem ;
+    transition: color 0.3s ease ;
+    box-shadow: none ;
 }
 
 #footer-container button:hover {
-    color: var(--accent-color) !important;
+    color: var(--accent-color) ;
+}
+
+/* Targeting the specific footer grid structure from showroom.js */
+#footer-container .max-w-7xl.mx-auto.grid {
+    display: grid ;
+    grid-template-columns: repeat(1, 1fr) ;
+}
+@media (min-width: 768px) {
+    #footer-container .max-w-7xl.mx-auto.grid {
+        /* Matches the 3-column md:grid-cols-3 in your JS render */
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
