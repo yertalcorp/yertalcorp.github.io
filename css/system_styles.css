@@ -99,6 +99,9 @@
 .gap-6 { gap: 1.5rem ; }
 .gap-8 { gap: 2rem ; }
 .gap-10 { gap: 2.5rem; }
+.fixed { position: fixed; }
+.z-50 { z-index: 50; }
+.hidden { display: none; }
 
 /* Navigation Restoration Logic */
 .nav-container {
@@ -131,6 +134,7 @@
     flex: 0 0 250px; /* Fix the auth zone width */
     display: flex; 
     justify-content: flex-end; 
+   align-items: center;
 }
 
 #showcase-grid {
@@ -354,6 +358,8 @@ button, a, [onclick], .logo-container, .featured-card, .action-card {
 }
 /* Mobile Override */
 @media (min-width: 768px) {
+      .md:flex { display: flex; }
+    .md:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
        .action-card {
         flex: 1 1 100% ;
         max-width: 100% ;
