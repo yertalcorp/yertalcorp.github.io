@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 
 // --- DEPLOYMENT TRACKER ---
 window.auth = auth;
-console.log("ARCADE CORE V.2026.02.17.17:15 - STATUS: COMPACT MODE ACTIVE");
+console.log("ARCADE CORE V.2026.02.17.18:04 - STATUS: COMPACT MODE ACTIVE");
 
 let user;
 let databaseCache = {};
@@ -154,20 +154,20 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
     header.innerHTML = `
         <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; height: 64px; filter: brightness(1.2);">
             
-            <div style="display: flex; align-items: center; gap: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="window.location.href='/index.html'">
-                    <div id="nav-logo" class="logo-container" style="width: 40px; height: 40px; display: flex; align-items: center;">
-                        <img src="${arcadeLogo}" alt="BRAND_LOGO" style="height: 100%; width: auto; filter: drop-shadow(0 0 5px var(--neon-color));">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='/index.html'">
+                    <div id="nav-logo" class="logo-container" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                        <img src="${arcadeLogo}" alt="${brandName}" style="height: 100%; width: auto; filter: drop-shadow(0 0 5px var(--neon-color));">
                     </div>
-                    <h1 class="metallic-text" style="font-size: 1.25rem; font-weight: 800; text-transform: uppercase; tracking-tighter; margin: 0; line-height: 1;">
+                    <h1 class="metallic-text" style="font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 0; line-height: 1;">
                         <span style="color: white;">${brandName}</span>
                     </h1>
                 </div>
 
-                <div style="display: flex; gap: 1rem; align-items: center; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 1rem;">
+                <div style="display: flex; gap: 0.75rem; align-items: center; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 1rem; margin-left: 0.5rem;">
                     <a href="/index.html" title="Showroom" style="color: rgba(255,255,255,0.6);"><i class="fas fa-door-open"></i></a>
-                    <a href="?user=${mySlug}" title="My Arcade" style="color: rgba(255,255,255,0.6);"><i class="fas fa-home"></i></a>
-                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--neon-color); padding: 0.2rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 8px; background: rgba(0, 242, 255, 0.05);">HUB</a>
+                    <a href="?user=${mySlug}" title="Home" style="color: rgba(255,255,255,0.6);"><i class="fas fa-home"></i></a>
+                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--neon-color); padding: 0.2rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 8px; background: rgba(0, 242, 255, 0.05); box-shadow: 0 0 5px rgba(0, 242, 255, 0.2);">HUB</a>
                 </div>
             </div>
 
@@ -177,7 +177,7 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
                         <span style="color: white">${titleParts[0] || ''} ${titleParts[1] || ''}</span> 
                         <span style="color: var(--neon-color); filter: drop-shadow(0 0 8px var(--neon-color));">${titleParts[2] || ''}</span>
                     </h1>
-                    <p id="hero-subheading" style="color: white; opacity: 0.8; font-size: 10px; margin-top: 4px;">${arcadeSubtitle}</p>
+                    <p id="hero-subheading" style="color: white; opacity: 0.8; font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${arcadeSubtitle}</p>
                 ` : isOwner ? `
                     <button onclick="openCreateArcadeModal()" class="generate-btn" style="padding: 0.5rem 1.5rem; border-radius: 4px; font-size: 10px; font-weight: 900; text-transform: uppercase;">
                         Initialize Arcade
@@ -185,17 +185,20 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
                 ` : ''}
             </div>
 
-            <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.5rem;">
+            <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
                 <div class="hidden lg:block" style="position: relative;">
                     <input type="text" placeholder="SEARCH SPARKS..." class="glass" 
-                           style="border: 1px solid var(--neon-color); border-radius: 9999px; padding: 0.25rem 1rem; font-size: 9px; color: white; width: 10rem; outline: none; background: rgba(255,255,255,0.05);">
+                           style="border: 1px solid var(--neon-color); border-radius: 9999px; padding: 0.25rem 1rem; font-size: 9px; color: white; width: 9rem; outline: none; background: rgba(255,255,255,0.05);">
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <div style="text-align: right;">
-                        <p id="pilot-display" style="margin: 0; line-height: 1; color: white; font-weight: bold; font-size: 11px;">${authUser.displayName}</p>
-                        <button onclick="logout()" style="background: none; border: none; font-size: 8px; font-weight: 700; color: var(--neon-color); text-transform: uppercase; cursor: pointer; padding: 0;">Disconnect</button>
+                        <p id="pilot-display" style="margin: 0; line-height: 1; color: white; font-weight: 800; font-size: 10px; text-transform: uppercase;">${authUser.displayName}</p>
+                        <button onclick="window.logout ? window.logout() : console.error('Logout function not found')" 
+                                style="background: none; border: none; font-size: 8px; font-weight: 900; color: var(--neon-color); text-transform: uppercase; cursor: pointer; padding: 0; letter-spacing: 0.5px;">
+                            Disconnect
+                        </button>
                     </div>
-                    <img src="${authUser.photoURL}" alt="Pilot Avatar" style="width: 2.2rem; height: 2.2rem; border-radius: 50%; border: 2px solid var(--neon-color); box-shadow: 0 0 10px var(--neon-color);">
+                    <img src="${authUser.photoURL}" alt="Pilot Avatar" style="width: 2rem; height: 2rem; border-radius: 50%; border: 2px solid var(--neon-color); box-shadow: 0 0 8px var(--neon-color);">
                 </div>
             </div>
         </nav>
