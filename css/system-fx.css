@@ -30,6 +30,39 @@
 }
 
 /* --- 2. LAYOUT & GRID SYSTEM --- */
+#action-grid {
+    display: grid !important;
+    grid-template-columns: repeat(1, minmax(0, 1fr));** /* Mobile Default */
+    gap: 1.5rem !important;
+}
+
+/* --- 2. LAYOUT & GRID SYSTEM (MODULAR UTILITIES) --- */
+
+/* Utility: 5-Column Desktop Grid */
+.grid-5 {
+    display: grid !important;
+    gap: 1.5rem !important;
+    grid-template-columns: repeat(1, 1fr) !important; /* Mobile */
+}
+
+@media (min-width: 1024px) {
+    .grid-5 {
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    }
+}
+
+/* Utility: 4-Column Desktop Grid */
+.grid-4 {
+    display: grid !important;
+    gap: 1.5rem !important;
+    grid-template-columns: repeat(1, 1fr) !important; /* Mobile */
+}
+
+@media (min-width: 1024px) {
+    .grid-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+}
 .flex { display: flex; }
 .grid { display: grid; }
 .flex-col { flex-direction: column; }
@@ -130,8 +163,9 @@
 }
 
 .text-5xl { font-size: 3rem; }
+
+
 /* Mobile Override */
-/* Mobile Responsive Override */
 @media (max-width: 768px) {
     .action-card {
         flex: 1 1 100% ;
@@ -143,14 +177,15 @@
 }
 /* General Hover Polish */
 .action-card:hover, .featured-card:hover {
-    transform: translateY(-5px) ;
-    box-shadow: 0 10px 20px rgba(0, 242, 255, 0.15) ;
+   transform: translateY(-10px);
+   box-shadow: 0 20px 40px rgba(0, 242, 255, 0.15);
 }
 
-/* Ensure all buttons show the hand cursor */
-button, .surreal-3d-btn, [onclick] {
-    cursor: pointer ;
+/* Apply hand cursor to any clickable element including branding and nav */
+button, a, [onclick], .logo-container, .featured-card, .action-card {
+    cursor: pointer !important;
 }
+
 .text-white { color: #ffffff; }
 .text-blue-400 { color: #60a5fa; }
 .text-blue-500 { color: #3b82f6; }
@@ -177,7 +212,7 @@ button, .surreal-3d-btn, [onclick] {
 
 /* Surreal 3D Button - Restored Vertical Scale */
 .surreal-3d-btn {
-    min-height: 80px ;
+    min-height: 75px ;
    padding: 0 4rem ;
     display: inline-flex ;
     align-items: center ;
@@ -191,23 +226,23 @@ button, .surreal-3d-btn, [onclick] {
 }
 .surreal-3d-btn .inner-content { 
    transform: translateZ(50px); 
-   font-size: 1.1rem ; /* Larger, more readable text */
-   font-weight: 700 ;
-   letter-spacing: 0.2em; /* High-end tech spacing */
+   font-size: 1.3rem ; /* Larger, more readable text */
+   font-weight: 800 ;
+   letter-spacing: 0.25em; /* High-end tech spacing */
    text-transform: uppercase;
 }
 
 .featured-card { 
     min-width: 320px; 
-    height: 260px ;
-    flex: 0 1 350px; 
+    height: 320px ;
+    flex: 0 1 300px; 
    cursor: pointer; /* UI Hand Cursor */
-   transition: transform 0.3s ease, box-shadow 0.3s ease;
+   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 /* Action Card Typography Polish */
 .action-card {
-    min-height: 240px;
+    min-height: 260px;
     min-width: 240px;
     padding: 1.75rem ;
     justify-content: space-between;
@@ -216,6 +251,7 @@ button, .surreal-3d-btn, [onclick] {
    flex: 0 1 calc(20% - 1.5rem);
    max-width: 320px;
    cursor: pointer;
+   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .action-card h3 {
