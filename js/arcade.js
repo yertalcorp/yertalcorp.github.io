@@ -2,13 +2,6 @@ import { firebaseConfig, auth, saveToRealtimeDB, getArcadeData } from '/config/f
 import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
-// --- DEPLOYMENT TRACKER ---
-window.auth = auth;
-// attach the global logout function
-window.handleCreation = handleCreation;
-window.handleLogout = logout;
-console.log("ARCADE CORE V.2026.02.17.22:15 - STATUS: COMPACT MODE ACTIVE");
-
 let user;
 let databaseCache = {};
 let selectedCategory = null;
@@ -730,3 +723,10 @@ function getPlanLimits(uid) {
         sparksPerRow: currentPlanLimits.sparks_per_row_desktop || 6
     };
 }
+
+// --- DEPLOYMENT TRACKER AT THE BOTTOM ---
+window.auth = auth;
+// attach the global logout function
+window.handleCreation = handleCreation;
+window.handleLogout = logout;
+console.log("ARCADE CORE V.2026.02.17.22:29 - STATUS: COMPACT MODE ACTIVE");
