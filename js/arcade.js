@@ -24,13 +24,11 @@ async function refreshUI() {
             return;
         }
 
-        // 1. RESOLVE OWNER: Find which UID actually owns this slug in the DB
         const allUsers = data.users || {};
         const ownerUid = Object.keys(allUsers).find(uid => 
             allUsers[uid].profile && allUsers[uid].profile.slug === slug
         );
 
-        // 2. LOG THE TRUTH: Check these values in your console
         console.table({
             "Target_Slug": slug,
             "Resolved_Owner_UID": ownerUid || "NOT_FOUND",
@@ -39,21 +37,23 @@ async function refreshUI() {
         });
 
         if (!ownerUid) {
-            console.warn(`STRICT MODE: No user owns the slug '${slug}'.`);
-            // We do not render anything here because there is no data to show.
+            const container = document.getElementById('currents-container');
+            if (container) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 5rem 0; opacity: 0.2; font-style: italic;">
+                        STRICT MODE: No user owns the slug '${slug}'.
+                    </div>`;
+            }
             return;
         }
 
-        // 3. SET DATA CONTEXT
         const isOwner = (user && user.uid === ownerUid);
         const userData = allUsers[ownerUid];
         const ui = data.settings?.['ui-settings'] || {};
 
-        // 4. APPLY STYLES & RENDER
         document.documentElement.style.setProperty('--neon-color', ui['color-neon'] || '#00f2ff');
         
         renderTopBar(userData, isOwner, user, slug);
-        // We pass ownerUid here to fix the ReferenceError from your previous crash
         renderCurrents(userData?.infrastructure?.currents || {}, isOwner, ownerUid);
 
     } catch (e) {
@@ -142,160 +142,158 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
     if (!header) return;
 
     const profile = userData?.profile || {};
-    
-    // UI Label (Pretty Name) vs URL Parameter (Slug)
     const displayName = profile.display_name || "PILOT";
     const arcadeLogo = profile.arcade_logo || "/assets/images/Yertal_Logo_New_HR.png";
     const titleParts = (profile.arcade_title || "THE YERTAL ARCADE").split(' ');
 
     header.innerHTML = `
         <nav>
-            <div class="flex items-center gap-4">
+            <div style="display: flex; align-items: center; gap: 1rem;">
                 <div id="nav-logo" class="logo-container">
                     <img src="${arcadeLogo}" alt="YERTAL">
                 </div>
                 <span class="metallic-text">YERTAL</span>
-                <div class="flex gap-3 ml-4">
-                    <a href="/index.html" class="text-white/60 hover:text-white"><i class="fas fa-door-open"></i></a>
-                    <a href="?user=${mySlug}" class="text-white/60 hover:text-white"><i class="fas fa-home"></i></a>
-                    <a href="?user=yertal-arcade" class="metallic-text border-white/10 px-2 py-1 rounded-lg border hover:bg-white/10 transition-all">HUB</a>
+                <div style="display: flex; gap: 0.75rem; margin-left: 1rem;">
+                    <a href="/index.html" style="color: rgba(255,255,255,0.4); text-decoration: none;" onmouseover="this.style.color='var(--neon-color)'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><i class="fas fa-door-open"></i></a>
+                    <a href="?user=${mySlug}" style="color: rgba(255,255,255,0.4); text-decoration: none;" onmouseover="this.style.color='var(--neon-color)'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><i class="fas fa-home"></i></a>
+                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid rgba(255,255,255,0.1); padding: 0.25rem 0.5rem; border-radius: 8px; text-decoration: none; font-size: 8px;">HUB</a>
                 </div>
             </div>
 
-            <div id="nav-hero-central" class="flex-col items-center text-center">
+            <div id="nav-hero-central" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
                 ${profile.arcade_title ? `
-                    <h1 class="text-xl font-extrabold italic uppercase tracking-tighter leading-none">
+                    <h1 style="margin: 0; font-size: 1.25rem; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; line-height: 1;">
                         <span style="color: white">${titleParts[0]} ${titleParts[1] || ''}</span> 
                         <span style="color: var(--neon-color)">${titleParts[2] || ''}</span>
                     </h1>
-                    <p id="hero-subheading" class="font-bold tracking-widest opacity-60 mt-0.5">
-                        ${profile.arcade_subtitle || 'Laboratory Active'}
-                    </p>
+                    <p id="hero-subheading">${profile.arcade_subtitle || 'Laboratory Active'}</p>
                 ` : isOwner ? `
-                    <button onclick="openCreateArcadeModal()" class="generate-btn px-6 py-2 rounded text-[10px] font-black uppercase tracking-widest">
+                    <button onclick="openCreateArcadeModal()" class="generate-btn" style="padding: 0.5rem 1.5rem; border-radius: 4px; font-size: 10px; font-weight: 900; text-transform: uppercase;">
                         Initialize Arcade
                     </button>
                 ` : ''}
             </div>
 
-            <div id="auth-zone" class="items-center justify-between">
-                <div class="relative hidden lg:block mr-4">
-                    <input type="text" placeholder="SEARCH SPARKS..." 
-                           class="glass border-white/10 rounded-full py-1 px-4 text-[9px] text-white focus:outline-none focus:border-[var(--neon-color)] w-40">
+            <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end;">
+                <div class="hidden lg:block" style="margin-right: 1rem; position: relative;">
+                    <input type="text" placeholder="SEARCH SPARKS..." class="glass" 
+                           style="border: 1px solid rgba(255,255,255,0.1); border-radius: 9999px; padding: 0.25rem 1rem; font-size: 9px; color: white; width: 10rem; outline: none;">
                 </div>
-                <div class="flex items-center gap-3">
-                    <div class="text-right">
-                        <p id="superuser-display" class="leading-none">${displayName}</p>
-                        <button onclick="logout()" class="text-[8px] font-bold text-[var(--neon-color)] uppercase hover:underline">
-                            Disconnect
-                        </button>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="text-align: right;">
+                        <p id="superuser-display" style="margin: 0; line-height: 1;">${displayName}</p>
+                        <button onclick="logout()" style="background: none; border: none; font-size: 8px; font-weight: 700; color: var(--neon-color); text-transform: uppercase; cursor: pointer; padding: 0;">Disconnect</button>
                     </div>
-                    <img src="${authUser.photoURL || '/assets/icons/default-avatar.png'}" 
-                         class="w-8 h-8 rounded-full border border-white/20">
+                    <img src="${authUser.photoURL || '/assets/icons/default-avatar.png'}" style="width: 2rem; height: 2rem; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.2);">
                 </div>
             </div>
         </nav>
         
         <div id="engine-status-container" class="status-bar">
-            <div class="flex items-center gap-2">
-                <div class="status-dot w-1.5 h-1.5 rounded-full bg-[var(--neon-color)] animate-pulse"></div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div class="status-dot" style="width: 6px; height: 6px; border-radius: 50%; background: var(--neon-color);"></div>
                 <span id="engine-status-text">Laboratory System Ready</span>
             </div>
-            <div class="text-[9px] font-black opacity-30 tracking-widest uppercase">
+            <div style="font-size: 9px; font-weight: 900; opacity: 0.3; letter-spacing: 0.2em; text-transform: uppercase;">
                 Arcade Environment v2.0
             </div>
         </div>
     `;
 }
 
-// --- 3. THE CONTENT ENGINES (Refined) ---
 function renderCurrents(currents, isOwner, ownerUid) {
     const container = document.getElementById('currents-container');
     if (!container) return;
 
     const currentsArray = Object.values(currents);
     
-    // If we have no currents for this UID, we stop here.
     if (currentsArray.length === 0) {
-        container.innerHTML = `<div class="text-center py-20 opacity-20 italic">No infrastructure detected for ID: ${ownerUid.substring(0,8)}</div>`;
+        container.innerHTML = `<div style="text-align: center; padding: 5rem 0; opacity: 0.2; font-style: italic;">No infrastructure detected for ID: ${ownerUid.substring(0,8)}</div>`;
         return;
     }
 
     container.innerHTML = currentsArray.map(current => {
         const sparks = current.sparks ? Object.values(current.sparks) : [];
         
-        // STRICT CONTROL RENDERING
         const controls = isOwner ? `
-            <div class="flex items-center gap-2 flex-nowrap ml-auto">
-                <label class="text-[10px] font-black text-white/40 uppercase mr-2">Create a New Card:</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
+                <label class="metallic-text" style="font-size: 10px; opacity: 0.4; margin-right: 0.5rem;">Create a New Card:</label>
                 <input type="text" id="input-${current.id}" 
-                       placeholder="Type your prompt or paste a URL..." class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] w-64 focus:border-[var(--neon-color)] outline-none">
+                       placeholder="Type your prompt..." 
+                       class="glass"
+                       style="border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 0.25rem 0.5rem; font-size: 11px; width: 16rem; outline: none;">
                 <button onclick="handleCreation('${current.id}')" 
-                        class="bg-[var(--neon-color)] text-black text-[9px] font-black px-4 py-2 rounded uppercase whitespace-nowrap">
+                        class="generate-btn spark-button"
+                        style="white-space: nowrap;">
                     Generate Spark
                 </button>
             </div>
-        ` : `<div class="ml-auto text-[10px] opacity-30 italic font-mono">ENCRYPTED VIEW [${ownerUid.substring(0,5)}]</div>`;
+        ` : `<div style="margin-left: auto; font-size: 10px; opacity: 0.3; font-style: italic; font-family: monospace;">ENCRYPTED VIEW [${ownerUid.substring(0,5)}]</div>`;
 
         return `
-            <div class="current-block mb-12 animate-fadeIn">
-                <div class="flex items-center gap-4 mb-6 border-b border-white/5 pb-4">
-                    <h2 class="text-2xl font-black uppercase tracking-tighter italic text-white/90">${current.name || 'Active Current'}</h2>
+            <div class="current-block animate-fadeIn">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                    <h2 class="current-title">${current.name || 'Active Current'}</h2>
                     ${controls}
                 </div>
-<div id="sparks-${current.id}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id)).join('')}
-</div>
+                
+                <div class="experiment-zone">
+                    <div id="sparks-${current.id}" class="grid">
+                        ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id)).join('')}
+                    </div>
+                </div>
             </div>
         `;
     }).join('');
 }
 
-/**
- * Objective: Atomic Card Renderer
- * Handles both Sourced (links) and Forged (code) spark types.
- */
 function renderSparkCard(spark, isOwner, currentId) {
-    // If it's a link (sourcing), use the URL. Otherwise, route to the internal player.
     const targetUrl = `spark.html?current=${currentId}&spark=${spark.id}`;
     
     return `
-        <div class="flex flex-col gap-3">
-            <div class="action-card group relative flex items-center justify-center overflow-hidden min-h-[180px] rounded-[1.5rem] cursor-pointer" 
-                 onclick="window.location.href='${targetUrl}'">
+        <div class="spark-unit" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div class="action-card" 
+                 onclick="window.location.href='${targetUrl}'"
+                 style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; cursor: pointer;">
                 
-                <h4 class="relative z-20 text-white font-black text-[12px] uppercase tracking-[0.2em] text-center px-6">
+                <h4 class="metallic-text" style="position: relative; z-index: 20; text-align: center; padding: 0 1.5rem; font-size: 12px; margin: 0;">
                     ${spark.name}
                 </h4>
 
-                <div class="absolute inset-0 z-0">
-                    <img src="${spark.image || '/assets/thumbnails/default.jpg'}" class="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;">
+                    <img src="${spark.image || '/assets/thumbnails/default.jpg'}" 
+                         class="spark-thumbnail"
+                         style="width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: grayscale(100%); transition: all 0.7s;">
+                    <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);"></div>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center px-1">
-                <div class="text-[7px] uppercase tracking-[0.2em] font-bold text-white/10 italic">
+            <div class="card-stats-row" style="display: flex; justify-content: space-between; align-items: center; padding: 0 0.25rem;">
+                <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none;">
                     ${spark.link ? 'SOURCED' : 'FORGED'}: ${formatTimeAgo(spark.created)}
                 </div>
                 
-                ${isOwner ? `
-                    <button onclick="deleteSpark('${currentId}', '${spark.id}', '${user.uid}')" class="text-white/20 hover:text-red-500 transition-colors">
-                        <i class="fas fa-trash text-[10px]"></i>
-                    </button>
-                ` : `
-                    <button onclick="cloneSpark('${currentId}', '${spark.id}')" class="text-white/20 hover:text-[var(--neon-color)]">
-                        <i class="fas fa-download text-[10px]"></i>
-                    </button>
-                `}
+                <div style="display: flex; gap: 0.5rem;">
+                    ${isOwner ? `
+                        <button onclick="deleteSpark('${currentId}', '${spark.id}', '${user.uid}')" 
+                                style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; transition: color 0.3s;"
+                                onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(255,255,255,0.2)'">
+                            <i class="fas fa-trash" style="font-size: 10px;"></i>
+                        </button>
+                    ` : `
+                        <button onclick="cloneSpark('${currentId}', '${spark.id}')" 
+                                style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; transition: color 0.3s;"
+                                onmouseover="this.style.color='var(--neon-color)'" onmouseout="this.style.color='rgba(255,255,255,0.2)'">
+                            <i class="fas fa-download" style="font-size: 10px;"></i>
+                        </button>
+                    `}
+                </div>
             </div>
         </div>
     `;
 }
 
-
 // --- 4. CORE LOGIC & ACTIONS ---
-
 window.handleCreation = async (currentId) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
