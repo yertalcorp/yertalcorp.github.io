@@ -217,17 +217,46 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
     `;
 }
 
-function renderCurrents(currents, isOwner, ownerUid) {
+function renderCurrents(currents, isOwner, ownerUid, profile) {
     const container = document.getElementById('currents-container');
     if (!container) return;
 
-    const currentsArray = Object.values(currents);
+    // Handle potential null/undefined infrastructure
+    const currentsArray = currents ? Object.values(currents) : [];
     
+    // --- EMPTY STATE LOGIC ---
     if (currentsArray.length === 0) {
-        container.innerHTML = `<div style="text-align: center; padding: 5rem 0; opacity: 0.2; font-style: italic;">No infrastructure detected for ID: ${ownerUid.substring(0,8)}</div>`;
+        if (isOwner) {
+            // Get first name from profile for the personal welcome
+            const firstName = profile?.display_name?.split(' ')[0] || "Engineer";
+            
+            container.innerHTML = `
+                <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 8rem 2rem; border: 1px dashed rgba(0, 242, 255, 0.1); border-radius: 20px; margin: 2rem;">
+                    <h1 class="metallic-text" style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem; letter-spacing: -1px;">
+                        ${firstName}, Welcome to your Arcade
+                    </h1>
+                    <p style="color: var(--neon-color); opacity: 0.6; margin-bottom: 4rem; letter-spacing: 4px; font-size: 12px; font-family: 'Orbitron', sans-serif;">
+                        SYSTEM STANDBY // NO ACTIVE CURRENTS DETECTED
+                    </p>
+                    
+                    <button onclick="window.openOnboardingHUD()" class="ethereal-btn">
+                        <span class="btn-content">CREATE YOUR ARCADE</span>
+                        <div class="btn-glow"></div>
+                    </button>
+                </div>
+            `;
+        } else {
+            // Visitor view of an empty arcade
+            container.innerHTML = `
+                <div style="text-align: center; padding: 5rem 0; opacity: 0.2; font-style: italic; letter-spacing: 2px;">
+                    OFFLINE: No infrastructure detected for ID: ${ownerUid.substring(0,8)}
+                </div>
+            `;
+        }
         return;
     }
 
+    // --- ACTIVE STATE LOGIC (Your Console Interface) ---
     container.innerHTML = currentsArray.map(current => {
         const sparks = current.sparks ? Object.values(current.sparks) : [];
         
