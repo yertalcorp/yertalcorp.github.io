@@ -58,7 +58,7 @@ async function refreshUI() {
         document.documentElement.style.setProperty('--neon-color', ui['color-neon'] || '#00f2ff');
         
         renderTopBar(userData, isOwner, user, slug);
-        renderCurrents(userData?.infrastructure?.currents || {}, isOwner, ownerUid);
+        renderCurrents(userData?.infrastructure?.currents || {}, isOwner, ownerUid, userData?.profile);
 
     } catch (e) {
         console.error("SYSTEM ERROR:", e);
@@ -195,7 +195,10 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <div style="text-align: right;">
-                        <p id="pilot-display" style="margin: 0; line-height: 1; color: white; font-weight: 800; font-size: 10px; text-transform: uppercase;">${authUser.displayName}</p>
+                        <p id="pilot-display" style="margin: 0; line-height: 1; color: white; font-weight: 800; font-size: 10px; text-transform: uppercase;">
+                            ${authUser.displayName}
+                            <span style="margin-left: 4px; padding: 1px 4px; border: 1px solid var(--neon-color); border-radius: 3px; font-size: 7px; vertical-align: middle; color: var(--neon-color); background: rgba(0, 242, 255, 0.1);">${profile.plan_type || 'FREE'}</span>
+                        </p>
                         <button onclick="handleLogout()" 
                                 style="background: none; border: none; font-size: 8px; font-weight: 900; color: var(--neon-color); text-transform: uppercase; cursor: pointer; padding: 0; letter-spacing: 0.5px;">
                             Disconnect
@@ -222,15 +225,18 @@ function renderCurrents(currents, isOwner, ownerUid, profile) {
     const container = document.getElementById('currents-container');
     if (!container) return;
 
-    // Handle potential null/undefined infrastructure
+    // 1. DYNAMIC PLAN LOOKUP FOR THE OWNER
+    const ownerData = databaseCache.users?.[ownerUid] || {};
+    const planType = ownerData.profile?.plan_type || 'free';
+    const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
+    const maxSparks = planLimits.max_sparks_per_current;
+
     const currentsArray = currents ? Object.values(currents) : [];
     
     // --- EMPTY STATE LOGIC ---
     if (currentsArray.length === 0) {
         if (isOwner) {
-            // Get first name from profile for the personal welcome
             const firstName = profile?.display_name?.split(' ')[0] || "Engineer";
-            
             container.innerHTML = `
                 <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 8rem 2rem; border: 1px dashed rgba(0, 242, 255, 0.1); border-radius: 20px; margin: 2rem;">
                     <h1 class="metallic-text" style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem; letter-spacing: -1px;">
@@ -239,7 +245,6 @@ function renderCurrents(currents, isOwner, ownerUid, profile) {
                     <p style="color: var(--neon-color); opacity: 0.6; margin-bottom: 4rem; letter-spacing: 4px; font-size: 12px; font-family: 'Orbitron', sans-serif;">
                         SYSTEM STANDBY // NO ACTIVE CURRENTS DETECTED
                     </p>
-                    
                     <button onclick="window.openOnboardingHUD()" class="ethereal-btn">
                         <span class="btn-content">CREATE YOUR ARCADE</span>
                         <div class="btn-glow"></div>
@@ -247,7 +252,6 @@ function renderCurrents(currents, isOwner, ownerUid, profile) {
                 </div>
             `;
         } else {
-            // Visitor view of an empty arcade
             container.innerHTML = `
                 <div style="text-align: center; padding: 5rem 0; opacity: 0.2; font-style: italic; letter-spacing: 2px;">
                     OFFLINE: No infrastructure detected for ID: ${ownerUid.substring(0,8)}
@@ -257,11 +261,15 @@ function renderCurrents(currents, isOwner, ownerUid, profile) {
         return;
     }
 
-    // --- ACTIVE STATE LOGIC (Your Console Interface) ---
+    // --- ACTIVE STATE LOGIC ---
     container.innerHTML = currentsArray.map(current => {
         const sparks = current.sparks ? Object.values(current.sparks) : [];
+        const sparkCount = sparks.length;
+        const isFull = sparkCount >= maxSparks;
+        const meterColor = isFull ? '#ef4444' : 'var(--neon-color)';
         
-        const controls = isOwner ? `
+        // Hide controls if current is at capacity
+        const controls = (isOwner && !isFull) ? `
             <div style="display: flex; align-items: center; gap: 0; margin-left: auto; background: rgba(0,0,0,0.6); border: 1px solid rgba(0,242,255,0.2); border-radius: 4px; padding: 2px 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
                 <span style="font-family: monospace; color: var(--neon-color); font-size: 10px; margin-right: 10px; opacity: 0.7; font-weight: 900; letter-spacing: 1px;">FORGE_CMD></span>
                 <input type="text" id="input-${current.id}" 
@@ -275,12 +283,22 @@ function renderCurrents(currents, isOwner, ownerUid, profile) {
                     EXEC
                 </button>
             </div>
+        ` : isFull && isOwner ? `
+            <div style="margin-left: auto; color: #ef4444; font-size: 9px; font-weight: 900; letter-spacing: 1px; border: 1px solid #ef4444; padding: 4px 10px; border-radius: 4px; background: rgba(239, 68, 68, 0.05);">
+                MAX CAPACITY REACHED
+            </div>
         ` : `<div style="margin-left: auto; font-size: 10px; opacity: 0.3; font-family: monospace; letter-spacing: 2px; text-transform: uppercase;">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
 
         return `
             <div class="current-block animate-fadeIn">
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
                     <h2 class="current-title" style="margin: 0;">${current.name || 'Active Current'}</h2>
+                    
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-family: 'Orbitron', sans-serif; font-size: 9px; color: ${meterColor}; opacity: 0.8; letter-spacing: 1px;">
+                        <span style="opacity: 0.5;">CAPACITY:</span>
+                        <span style="font-weight: 900;">${sparkCount} / ${maxSparks}</span>
+                    </div>
+
                     ${controls}
                 </div>
                 
@@ -376,36 +394,69 @@ window.handleCreation = async (currentId) => {
 
 async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
-    const countMatch = prompt.match(/\d+/);
-    const count = countMatch ? Math.min(parseInt(countMatch[0]), 48) : 6;
     
-    status.textContent = `FORGING ${count} SPARKS...`;
+    // 1. DYNAMIC PLAN LOOKUP
+    const userProfile = databaseCache.users?.[user.uid]?.profile || {};
+    const planType = userProfile.plan_type || 'free';
+    const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
+
+    // 2. CAPACITY VALIDATION
+    const userNode = databaseCache.users?.[user.uid];
+    const currentSparks = userNode?.infrastructure?.currents?.[currentId]?.sparks || {};
+    const existingCount = Object.keys(currentSparks).length;
+    
+    // Use dynamic limit from JSON instead of hardcoded 48
+    const maxSparks = planLimits.max_sparks_per_current;
+    const remainingSpace = maxSparks - existingCount;
+
+    if (remainingSpace <= 0) {
+        status.textContent = `STORAGE FULL (${maxSparks}/${maxSparks})`;
+        alert(`This Current has reached its plan capacity of ${maxSparks} sparks.`);
+        return;
+    }
+
+    // 3. DETERMINE REQUESTED COUNT
+    const countMatch = prompt.match(/\d+/);
+    // Default to plan's sparks_per_row_desktop if no number provided
+    let requestedCount = countMatch ? parseInt(countMatch[0]) : planLimits.sparks_per_row_desktop;
+
+    // 4. APPLY LIMITS (Clip to remaining space)
+    const finalForgeCount = Math.min(requestedCount, remainingSpace);
+
+    if (finalForgeCount < requestedCount) {
+        console.warn(`Clipping forge request from ${requestedCount} to ${finalForgeCount} due to ${planType} plan limits.`);
+        status.textContent = `PLAN LIMIT REACHED: FORGING ${finalForgeCount}...`;
+    } else {
+        status.textContent = `FORGING ${finalForgeCount} SPARKS...`;
+    }
 
     try {
-        // Use the 'mode' determined by the JSON's 'logic' field
         if (mode === 'sourcing') {
-            const links = await callGeminiAPI(prompt, count, 'source');
+            const links = await callGeminiAPI(prompt, finalForgeCount, 'source');
             for (const item of links) {
                 await saveSpark(currentId, { 
                     name: item.name, 
-                    link: item.url, // Maps Gemini "url" to DB "link"
-                    type: 'link' 
+                    link: item.url, 
+                    type: 'link',
+                    image: templateUrl 
                 }, templateName, templateUrl);
             }
         } else {
-            for (let i = 0; i < count; i++) {
+            for (let i = 0; i < finalForgeCount; i++) {
                 const code = await callGeminiAPI(prompt, i, 'code');
                 await saveSpark(currentId, { 
-                    name: `${prompt} #${i+1}`, 
+                    name: `${prompt} #${existingCount + i + 1}`, 
                     code, 
-                    type: 'code' 
+                    type: 'code',
+                    image: templateUrl
                 }, templateName, templateUrl);
             }
         }
         
         status.textContent = "SYSTEM READY";
-        await refreshUI();
-    } catch (e) { 
+        // Finalize with sync instead of reload
+        await refreshUI(); } catch (e) { 
+        console.error("Forge Error:", e);
         status.textContent = "FORGE ERROR"; 
     }
 }
@@ -536,13 +587,18 @@ window.selectCategory = (id, name) => {
 // --- SMART LOGIC ASSIGNER ---
 function predictLogicType(prompt) {
     const p = prompt.toLowerCase();
-    // Gemini-style keyword matching
+    // Use the 20 arcade-current-types to see if it's a known 'source' type first
+    const types = databaseCache.settings?.['arcade-current-types'] || [];
+    const matchedType = types.find(t => p.includes(t.id) || p.includes(t.name.toLowerCase()));
+    
+    if (matchedType) return matchedType.logic;
+    
+    // Fallback Gemini-style keyword matching for Custom
     if (p.includes('generate') || p.includes('create') || p.includes('build') || p.includes('design')) return 'create';
     if (p.includes('top') || p.includes('find') || p.includes('list') || p.includes('show me')) return 'source';
-    return 'hybrid'; // Default fallback
+    return 'hybrid'; 
 }
 
-// --- INITIAL FORGE HANDLER ---
 window.handleInitialForge = async () => {
     const arcadeName = document.getElementById('new-arcade-name').value;
     const arcadeSubtitle = document.getElementById('new-arcade-subtitle').value;
@@ -554,44 +610,65 @@ window.handleInitialForge = async () => {
         return;
     }
 
-    // Determine the Category Identity
+    // 1. DYNAMIC PLAN LIMIT CHECK
+    const userProfile = databaseCache.users?.[user.uid]?.profile || {};
+    const planType = userProfile.plan_type || 'free';
+    const limits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
+
+    const existingCurrents = databaseCache.users?.[user.uid]?.infrastructure?.currents || {};
+    const currentCount = Object.keys(existingCurrents).length;
+
+    if (currentCount >= limits.max_currents) {
+        alert(`PLAN LIMIT: Your ${planType.toUpperCase()} plan is limited to ${limits.max_currents} currents.`);
+        return;
+    }
+
+    const logicType = predictLogicType(initialPrompt);
     const isCustom = selectedCategory === 'custom';
     const finalCatName = isCustom ? customName : selectedCategory;
-    const logicType = predictLogicType(initialPrompt);
-
-    const user = auth.currentUser;
     const currentId = `current-${Date.now()}`;
 
-    const updatePayload = {
-        // Update Profile
-        [`users/${user.uid}/profile/arcade_title`]: arcadeName.toUpperCase(),
-        [`users/${user.uid}/profile/arcade_subtitle`]: arcadeSubtitle,
-        
-        // Create the First Current
-        [`users/${user.uid}/infrastructure/currents/${currentId}`]: {
+    try {
+        // 2. Initialize the Current Node
+        await saveToRealtimeDB(`users/${user.uid}/infrastructure/currents/${currentId}`, {
             id: currentId,
             name: isCustom ? customName : `${finalCatName} Lab`,
             type_ref: selectedCategory,
-            logic_mode: logicType, // Auto-assigned: create, source, or hybrid
+            logic_mode: logicType,
             privacy: 'private',
-            sparks: {}
-        }
-    };
+            created: Date.now()
+        });
 
-    try {
-        await update(ref(db), updatePayload);
+        // 3. Update Profile Settings (Ensuring branding is user-specific from JSON)
+        await saveToRealtimeDB(`users/${user.uid}/profile`, {
+            ...userProfile,
+            arcade_title: arcadeName.toUpperCase(),
+            arcade_subtitle: arcadeSubtitle,
+            // Retrieve branding from databaseCache if available, otherwise use default
+            arcade_logo: userProfile.arcade_logo || "/assets/images/Yertal_Logo_New_HR.png"
+        });
+
+        // 4. Trigger Mass Spark Execution (Respects plan_limits for max_sparks_per_current)
+        const template = databaseCache.settings['arcade-current-types'].find(t => t.id === selectedCategory) || { name: 'Custom', image: '/assets/thumbnails/default.jpg' };
         
-        // Trigger the creation of 5 sparks based on the prompt
-        // (Assuming you have a function called generateSparks)
-        await window.generateSparks(currentId, initialPrompt, 5);
-        
-        // Close HUD and refresh
+        await executeMassSpark(
+            currentId, 
+            initialPrompt, 
+            (logicType === 'source' ? 'sourcing' : 'prompt'), 
+            template.name, 
+            template.image
+        );
+
+        // 5. System Sync & UI Refresh
         document.getElementById('onboarding-hud').classList.remove('active');
-        window.location.reload(); 
+        await refreshUI(); // Re-renders without reload
+        
     } catch (error) {
-        console.error("Forge Failed:", error);
+        console.error("FORGE CRITICAL FAILURE:", error);
+        alert("The Forge encountered a database error. Check console for logs.");
     }
 };
+
 function renderLogicComponent(spark) {
     return `
         <div class="logic-display animate-slideUp">
@@ -623,3 +700,23 @@ window.openOnboardingHUD = () => {
         renderCategoryButtons(); 
     }
 };
+/**
+ * Objective: Retrieve dynamic limits based on the user's plan_type.
+ */
+function getPlanLimits(uid) {
+    // 1. Identify the user's plan type (default to 'free')
+    const userProfile = databaseCache.users?.[uid]?.profile || {};
+    const planType = userProfile.plan_type || 'free';
+    
+    // 2. Map that plan type to the global settings
+    const allPlanSettings = databaseCache.settings?.['plan_limits'] || {};
+    const currentPlanLimits = allPlanSettings[planType] || allPlanSettings['free'];
+
+    return {
+        type: planType,
+        maxCurrents: currentPlanLimits.max_currents || 3,
+        maxSparks: currentPlanLimits.max_sparks_per_current || 10,
+        initialRows: currentPlanLimits.display_rows_initial || 2,
+        sparksPerRow: currentPlanLimits.sparks_per_row_desktop || 6
+    };
+}
