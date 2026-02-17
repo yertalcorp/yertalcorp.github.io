@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 
 // --- DEPLOYMENT TRACKER ---
 window.auth = auth;
-console.log("ARCADE CORE V.2026.02.17.16:34 - STATUS: COMPACT MODE ACTIVE");
+console.log("ARCADE CORE V.2026.02.17.17:15 - STATUS: COMPACT MODE ACTIVE");
 
 let user;
 let databaseCache = {};
@@ -141,29 +141,43 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
 
+    // STRICT DATA EXTRACTION - No Fallbacks
     const profile = userData?.profile || {};
-    const displayName = profile.display_name || "PILOT";
-    const arcadeLogo = profile.arcade_logo || "/assets/images/Yertal_Logo_New_HR.png";
-    const titleParts = (profile.arcade_title || "THE YERTAL ARCADE").split(' ');
+    const arcadeLogo = profile.arcade_logo;
+    const brandName = profile.display_name;
+    const arcadeTitle = profile.arcade_title;
+    const arcadeSubtitle = profile.arcade_subtitle;
+    
+    // Title splitting logic for neon highlighting
+    const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
     header.innerHTML = `
-        <nav style="filter: brightness(1.2);"> <div style="display: flex; align-items: center; gap: 0.5rem;"> <div id="nav-logo" class="logo-container" style="margin-right: -20px;"> <img src="${arcadeLogo}" alt="YERTAL" style="filter: drop-shadow(0 0 5px var(--neon-color));">
+        <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; height: 64px; filter: brightness(1.2);">
+            
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="window.location.href='/index.html'">
+                    <div id="nav-logo" class="logo-container" style="width: 40px; height: 40px; display: flex; align-items: center;">
+                        <img src="${arcadeLogo}" alt="BRAND_LOGO" style="height: 100%; width: auto; filter: drop-shadow(0 0 5px var(--neon-color));">
+                    </div>
+                    <h1 class="metallic-text" style="font-size: 1.25rem; font-weight: 800; text-transform: uppercase; tracking-tighter; margin: 0; line-height: 1;">
+                        <span style="color: white;">${brandName}</span>
+                    </h1>
                 </div>
-                <span class="metallic-text" style="letter-spacing: 1px; font-size: 14px;">YERTAL ARCADE</span>
-                <div style="display: flex; gap: 0.75rem; margin-left: 0.5rem;">
-                    <a href="/index.html" style="color: rgba(255,255,255,0.6); text-decoration: none;" onmouseover="this.style.color='var(--neon-color)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'"><i class="fas fa-door-open"></i></a>
-                    <a href="?user=${mySlug}" style="color: rgba(255,255,255,0.6); text-decoration: none;" onmouseover="this.style.color='var(--neon-color)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'"><i class="fas fa-home"></i></a>
-                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--neon-color); padding: 0.2rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 8px; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);">HUB</a>
+
+                <div style="display: flex; gap: 1rem; align-items: center; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 1rem;">
+                    <a href="/index.html" title="Showroom" style="color: rgba(255,255,255,0.6);"><i class="fas fa-door-open"></i></a>
+                    <a href="?user=${mySlug}" title="My Arcade" style="color: rgba(255,255,255,0.6);"><i class="fas fa-home"></i></a>
+                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--neon-color); padding: 0.2rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 8px; background: rgba(0, 242, 255, 0.05);">HUB</a>
                 </div>
             </div>
 
             <div id="nav-hero-central" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
-                ${profile.arcade_title ? `
+                ${arcadeTitle ? `
                     <h1 style="margin: 0; font-size: 1.4rem; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; line-height: 1; text-shadow: 0 0 10px rgba(255,255,255,0.3);">
-                        <span style="color: white">${titleParts[0]} ${titleParts[1] || ''}</span> 
+                        <span style="color: white">${titleParts[0] || ''} ${titleParts[1] || ''}</span> 
                         <span style="color: var(--neon-color); filter: drop-shadow(0 0 8px var(--neon-color));">${titleParts[2] || ''}</span>
                     </h1>
-                    <p id="hero-subheading" style="color: white; opacity: 0.8; font-size: 10px;">${profile.arcade_subtitle || 'Laboratory Active'}</p>
+                    <p id="hero-subheading" style="color: white; opacity: 0.8; font-size: 10px; margin-top: 4px;">${arcadeSubtitle}</p>
                 ` : isOwner ? `
                     <button onclick="openCreateArcadeModal()" class="generate-btn" style="padding: 0.5rem 1.5rem; border-radius: 4px; font-size: 10px; font-weight: 900; text-transform: uppercase;">
                         Initialize Arcade
@@ -171,32 +185,33 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
                 ` : ''}
             </div>
 
-            <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end;">
-                <div class="hidden lg:block" style="margin-right: 1rem; position: relative;">
+            <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.5rem;">
+                <div class="hidden lg:block" style="position: relative;">
                     <input type="text" placeholder="SEARCH SPARKS..." class="glass" 
                            style="border: 1px solid var(--neon-color); border-radius: 9999px; padding: 0.25rem 1rem; font-size: 9px; color: white; width: 10rem; outline: none; background: rgba(255,255,255,0.05);">
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <div style="text-align: right;">
-                        <p id="superuser-display" style="margin: 0; line-height: 1; color: white; font-weight: bold;">${displayName}</p>
-                        <button onclick="logout()" style="background: none; border: none; font-size: 8px; font-weight: 700; color: var(--neon-color); text-transform: uppercase; cursor: pointer; padding: 0; filter: brightness(1.5);">Disconnect</button>
+                        <p id="pilot-display" style="margin: 0; line-height: 1; color: white; font-weight: bold; font-size: 11px;">${authUser.displayName}</p>
+                        <button onclick="logout()" style="background: none; border: none; font-size: 8px; font-weight: 700; color: var(--neon-color); text-transform: uppercase; cursor: pointer; padding: 0;">Disconnect</button>
                     </div>
-                    <img src="${authUser.photoURL || '/assets/icons/default-avatar.png'}" style="width: 2.2rem; height: 2.2rem; border-radius: 50%; border: 2px solid var(--neon-color); box-shadow: 0 0 10px var(--neon-color);">
+                    <img src="${authUser.photoURL}" alt="Pilot Avatar" style="width: 2.2rem; height: 2.2rem; border-radius: 50%; border: 2px solid var(--neon-color); box-shadow: 0 0 10px var(--neon-color);">
                 </div>
             </div>
         </nav>
         
-        <div id="engine-status-container" class="status-bar" style="border-top: 1px solid rgba(0, 242, 255, 0.3); background: rgba(0,0,0,0.4);">
+        <div id="engine-status-container" class="status-bar" style="border-top: 1px solid rgba(0, 242, 255, 0.2); background: rgba(0,0,0,0.5); padding: 5px 1.5rem; display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <div class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--neon-color); box-shadow: 0 0 10px var(--neon-color);"></div>
-                <span id="engine-status-text" style="color: white; font-weight: bold; text-shadow: 0 0 5px var(--neon-color);">Laboratory System Ready</span>
+                <span id="engine-status-text" style="color: white; font-weight: bold; font-size: 9px; text-shadow: 0 0 5px var(--neon-color);">LABORATORY SYSTEM READY</span>
             </div>
-            <div style="font-size: 9px; font-weight: 900; color: var(--neon-color); opacity: 0.6; letter-spacing: 0.2em; text-transform: uppercase;">
+            <div style="font-size: 8px; font-weight: 900; color: var(--neon-color); opacity: 0.6; letter-spacing: 0.2em; text-transform: uppercase;">
                 Arcade Environment v2.0
             </div>
         </div>
     `;
 }
+
 function renderCurrents(currents, isOwner, ownerUid) {
     const container = document.getElementById('currents-container');
     if (!container) return;
