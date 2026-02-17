@@ -1,238 +1,95 @@
-/* YERTAL CORP | system-fx.css
-   Compiled from Tailwind v3.4.17 Utility Logic 
-*/
+/* YERTAL CORP | Optimized system-fx.css Engine */
 
-/* --- 1. CORE ENGINE & VARIABLE RESETS --- */
+/* --- 1. CORE ENGINE & RESET --- */
 :root {
-    --tw-border-spacing-x: 0;
-    --tw-border-spacing-y: 0;
-    --tw-translate-x: 0;
-    --tw-translate-y: 0;
-    --tw-rotate: 0;
-    --tw-skew-x: 0;
-    --tw-skew-y: 0;
-    --tw-scale-x: 1;
-    --tw-scale-y: 1;
-    --tw-ring-offset-width: 0px;
-    --tw-ring-offset-color: #fff;
-    --tw-ring-color: rgb(59 130 246 / 0.5);
-    --tw-ring-offset-shadow: 0 0 #0000;
-    --tw-ring-shadow: 0 0 #0000;
-    --tw-shadow: 0 0 #0000;
+    --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1;
 }
 
 *, ::before, ::after {
     box-sizing: border-box;
-    border-width: 0;
-    border-style: solid;
-    border-color: #e5e7eb;
+    border: 0 solid #e5e7eb;
     transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
-/* --- 2. LAYOUT & GRID SYSTEM --- */
-#action-grid {
-   @extend .grid-cols-4;
-    display: grid ;
-    grid-template-columns: repeat(1, minmax(0, 1fr)); /* Mobile Default */
-    gap: 1.5rem ;
+body { opacity: 0; transition: opacity 0.5s ease; overflow-x: hidden; }
+
+/* --- 2. GLOBAL BRANDING & UI FIXES --- */
+/* Fixes oversized logo in /arcade/ and stabilizes navigation icons */
+.logo-container img, .nav-container img, #nav-logo img {
+    height: 40px !important;
+    width: auto !important;
+    object-fit: contain !important;
+    max-width: 200px !important;
 }
 
-/* --- 2. LAYOUT & GRID SYSTEM (MODULAR UTILITIES) --- */
+button, a, [onclick], .logo-container, .featured-card, .action-card {
+    cursor: pointer !important;
+}
 
-/* Utility: 5-Column Desktop Grid */
-.grid-5 {
-    display: grid ;
-    gap: 1.5rem ;
-    grid-template-columns: repeat(1, 1fr) ; /* Mobile */
+/* Strips "white bars" from all interactive elements by default */
+button, .glass-card button, footer button, .nav-container button {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* --- 3. THE GRID SYSTEM (4-COLUMN DEFAULT) --- */
+
+/* Specific override for the Showroom Action Grid */
+#action-grid {
+    display: grid !important;
+    gap: 1.5rem !important;
+    grid-template-columns: repeat(1, 1fr) !important;
 }
 
 @media (min-width: 1024px) {
     #action-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) ;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
     }
+}
+
+/* Modular Utilities for Cross-Page use */
+.grid-cols-4, .grid-4 {
+    display: grid !important; gap: 1.5rem !important;
+    grid-template-columns: repeat(1, 1fr) !important;
+}
+
+.grid-cols-5, .grid-5 {
+    display: grid !important; gap: 1.5rem !important;
+    grid-template-columns: repeat(1, 1fr) !important;
 }
 
 @media (min-width: 1024px) {
-    .grid-5 {
-        grid-template-columns: repeat(5, minmax(0, 1fr)) ;
-    }
+    .grid-cols-4, .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+    .grid-cols-5, .grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
 }
 
-/* Utility: 4-Column Desktop Grid */
-.grid-4 {
-    display: grid ;
-    gap: 1.5rem ;
-    grid-template-columns: repeat(1, 1fr) ; /* Mobile */
-}
-
-@media (min-width: 1024px) {
-    .grid-4 {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) ;
-    }
-}
-
-/* Standardizing grid-cols-5 to be used anywhere */
-.grid-cols-5 {
-    display: grid;
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-@media (min-width: 1024px) {
-    .grid-cols-5 {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
-}
-
-/* Standardizing grid-cols-4 to be used anywhere */
-.grid-cols-4 {
-    display: grid;
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-@media (min-width: 1024px) {
-    .grid-cols-4 {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-}
+/* --- 4. LAYOUT & SPACING --- */
 .flex { display: flex; }
-.grid { display: grid; }
 .flex-col { flex-direction: column; }
 .flex-wrap { flex-wrap: wrap; }
-.items-center { align-items: center ; }
-.items-start { align-items: flex-start; }
-.justify-center { justify-content: center ; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
 .justify-between { justify-content: space-between; }
-.gap-2 { gap: 0.5rem; }
-.gap-3 { gap: 0.75rem; }
-.gap-4 { gap: 1rem; }
-.gap-6 { gap: 1.5rem ; }
-.gap-8 { gap: 2rem ; }
-.gap-10 { gap: 2.5rem; }
-
-/* Navigation Restoration Logic */
-.nav-container {
-    display: flex ;
-    justify-content: space-between ;
-    align-items: center ;
-    width: 100% ;
-    max-width: 1400px ;
-    margin: 0 auto ;
-    padding: 1rem 2rem ;
-   overflow: hidden;
-}
-
-#nav-menu {
-    display: flex;
-    gap: 2.5rem ;
-    align-items: center;
-    flex: 1;
-    justify-content: center;
-}
-
-#nav-logo { flex: 0 0 220px; }
-#nav-logo img {
-    height: 32px ; /* Forces standard height regardless of container */
-    width: auto ;
-    object-fit: contain;
-}
-
-#auth-zone { 
-    flex: 0 0 250px; /* Fix the auth zone width */
-    display: flex; 
-    justify-content: flex-end; 
-}
-
-#showcase-grid {
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: row;
-    justify-content: center;
-    width: 100%;
-    gap: 1.5rem;
-    padding: 2rem;
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-/* --- 3. SPACING & SIZING --- */
+.gap-6 { gap: 1.5rem; }
 .mx-auto { margin-left: auto; margin-right: auto; }
-.mt-4 { margin-top: 1rem ; }
-.mt-8 { margin-top: 2rem ; }
-.mb-9 { margin-bottom: 2.25rem; }
-.mb-16 { margin-bottom: 4rem ; }
-.mb-24 { margin-bottom: 6rem ; }
-.pt-32 { padding-top: 8rem ; }
-.px-6 { padding-left: 1.5rem ; padding-right: 1.5rem ; }
-.py-4 { padding-top: 1rem ; padding-bottom: 1rem ; }
-.py-8 { padding-top: 2rem ; padding-bottom: 2rem ; }
-.p-8 { padding: 2rem ; }
-.px-20 { padding-left: 5rem ; padding-right: 5rem ; }
-.w-full { width: 100% ; }
-.max-w-7xl { max-width: 1280px ; margin-left: auto; margin-right: auto; }
-.aspect-video { aspect-ratio: 16 / 9; width: 100%; }
-.absolute { position: absolute; }
-.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.w-full { width: 100%; }
+.max-w-7xl { max-width: 1280px; }
+.pt-32 { padding-top: 8rem; }
+.mb-24 { margin-bottom: 6rem; }
 
-/* --- 4. TYPOGRAPHY & COLORS --- */
-.text-center { text-align: center; }
+/* --- 5. TYPOGRAPHY & COLOR --- */
+.text-white { color: #ffffff; }
+.text-slate-500 { color: #64748b; }
+.text-blue-500 { color: #3b82f6; }
 .uppercase { text-transform: uppercase; }
 .italic { font-style: italic; }
-.font-light { font-weight: 300; }
-.font-bold { font-weight: 700 ; }
-.font-extrabold { font-weight: 800; }
-.text-glow { text-shadow: 0 0 20px var(--accent-color), 0 0 40px var(--accent-color); opacity: 0.9; }
-.font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.font-bold { font-weight: 700; }
+.text-glow { text-shadow: 0 0 20px var(--accent-color), 0 0 40px var(--accent-color); }
 .tracking-tighter { letter-spacing: -0.05em; }
-.tracking-widest { letter-spacing: 0.25em ; }
-.text-xs { font-size: 0.75rem; }
 
-.text-xl { 
-    font-size: 1.25rem ; 
-    line-height: 1.4 ; 
-    letter-spacing: -0.01em ; 
-}
-
-.text-5xl { font-size: 3rem; }
-
-
-/* Mobile Override */
-@media (max-width: 768px) {
-    .action-card {
-        flex: 1 1 100% ;
-        max-width: 100% ;
-    }
-    #showcase-grid {
-        padding: 1rem ;
-    }
-}
-/* General Hover Polish */
-.action-card:hover, .featured-card:hover {
-   transform: translateY(-10px);
-   box-shadow: 0 20px 40px rgba(0, 242, 255, 0.15);
-}
-/* --- 1. GLOBAL BRANDING & LOGO CONSTRAINTS --- */
-
-/* Fix for the oversized logo */
-.logo-container img, .nav-container img {
-    height: 40px; /* Fixed standard height */
-    width: auto;
-    object-fit: contain;
-    max-width: 200px;
-}
-
-/* Apply hand cursor to any clickable element including branding and nav */
-button, a, [onclick], .logo-container, .featured-card, .action-card {
-    cursor: pointer ;
-}
-
-.text-white { color: #ffffff; }
-.text-blue-400 { color: #60a5fa; }
-.text-blue-500 { color: #3b82f6; }
-.text-slate-400 { color: #94a3b8; }
-.text-slate-500 { color: #64748b; }
-
-/* --- 5. EFFECTS & ANIMATIONS --- */
+/* --- 6. COMPONENTS & FX --- */
 .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 .glass-card { 
     background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
@@ -240,145 +97,67 @@ button, a, [onclick], .logo-container, .featured-card, .action-card {
     backdrop-filter: blur(var(--card-blur));
 }
 
-/* --- 5. COMPONENT RESET (BUTTONS & INTERACTION) --- */
-
-/* Generic reset for buttons inside containers to avoid "White Bars" */
-.glass-card button, footer button, .nav-container button {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    outline: none !important;
-    cursor: pointer !important;
-}
-.animate-fadeIn { animation: fadeIn 0.8s ease-out forwards; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-
-.bg-cover { background-size: cover; }
-.bg-center { background-position: center; }
-.transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
-
-/* --- 6. COMPONENT SPECIFIC --- */
-
-/* Surreal 3D Button - Restored Vertical Scale */
 .surreal-3d-btn {
-    min-height: 75px ;
-   padding: 0 4rem ;
-    display: inline-flex ;
-    align-items: center ;
-    justify-content: center ;
-    background: linear-gradient(145deg, #1e293b, #0f172a);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 15px rgba(0, 242, 255, 0.1);
-    transition: transform 0.1s ease-out, box-shadow 0.3s ease;
-    transform-style: preserve-3d;
-    border: 1px solid rgba(0, 242, 255, 0.3);
+    min-height: 75px;
+    padding: 0 4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #1e293b, #0f172a) !important;
+    border: 1px solid rgba(0, 242, 255, 0.3) !important;
     border-radius: 16px;
-}
-.surreal-3d-btn .inner-content { 
-   transform: translateZ(50px); 
-   font-size: 1.3rem ; /* Larger, more readable text */
-   font-weight: 800 ;
-   letter-spacing: 0.25em; /* High-end tech spacing */
-   text-transform: uppercase;
+    transform-style: preserve-3d;
+    transition: transform 0.1s ease-out;
 }
 
 .featured-card { 
-    min-width: 320px; 
-    height: 320px ;
-    flex: 0 1 300px; 
-   border-radius: 20px;
-   cursor: pointer; /* UI Hand Cursor */
-   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    height: 320px; 
+    border-radius: 20px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Action Card Typography Polish */
 .action-card {
     min-height: 260px;
-    min-width: 240px;
-    padding: 1.75rem ;
-    justify-content: space-between;
-    display: flex;
-    flex-direction: column;
-   flex: 0 1 calc(20% - 1.5rem);
-   max-width: 320px;
-   cursor: pointer;
-   transition: transform 0.3s ease, box-shadow 0.3s ease;
+    padding: 1.75rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.action-card h3 {
-    font-size: 1rem ;
-    letter-spacing: 0.075em ;
-    text-transform: uppercase ;
-    color: #ffffff ;
-    margin-top: 1.5rem ;
+.action-card:hover, .featured-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 242, 255, 0.15);
 }
 
-.action-card p {
-    font-size: 11px ;
-    line-height: 1.6 ;
-    color: #94a3b8 ;
-    margin-bottom: 1.25rem ;
-}
-
-.execute-label {
-    font-size: 10px ;
-    font-weight: 800 ;
-    letter-spacing: 0.2em ;
-    color: var(--accent-color) ;
-}
-
-/* Group Hover Logic */
-.group:hover .group-hover\:scale-125 { --tw-scale-x: 1.25; --tw-scale-y: 1.25; }
-.group:hover .group-hover\:rotate-180 { --tw-rotate: 180deg; }
-.group:hover .group-hover\:text-cyan-400 { color: #22d3ee ; }
-
-/* --- 5. FOOTER COMPONENT REPAIR --- */
-
+/* --- 7. FOOTER STABILIZATION --- */
 #footer-container {
-    background: rgba(5, 5, 5, 0.95) ;
-    padding: 4rem 2rem ;
-   border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(5, 5, 5, 0.95);
+    padding: 4rem 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Stripping the "white bar" look from footer buttons */
-#footer-container button {
-    background: transparent ;
-    border: none ;
-    outline: none ;
-    padding: 4px 0 ;
-    text-align: left ;
-    width: fit-content ;
-    color: #94a3b8 ;
-    font-size: 0.75rem ;
-    transition: color 0.3s ease ;
-    box-shadow: none ;
-}
-
-#footer-container button:hover {
-    color: var(--accent-color) ;
-}
-
-/* Targeting the specific footer grid structure from showroom.js */
 #footer-container .max-w-7xl.mx-auto.grid {
-    display: grid ;
-    grid-template-columns: repeat(1, 1fr) ;
+    display: grid !important;
+    grid-template-columns: repeat(1, 1fr) !important;
+    gap: 2.5rem !important;
 }
+
 @media (min-width: 768px) {
     #footer-container .max-w-7xl.mx-auto.grid {
-        /* Matches the 3-column md:grid-cols-3 in your JS render */
-        grid-template-columns: repeat(3, 1fr);
-    }
-       .footer-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(3, 1fr) !important;
     }
 }
-/* Force consistency on the Footer Grid */
-.footer-grid {
-    display: grid;
-    gap: 2.5rem;
-    grid-template-columns: repeat(1, minmax(0, 1fr));
+
+#footer-container button {
+    color: #94a3b8 !important;
+    font-size: 0.75rem !important;
+    text-align: left !important;
+    padding: 4px 0 !important;
 }
-#footer-container > div {
-    @extend .footer-grid;
-}
+
+#footer-container button:hover { color: var(--accent-color) !important; }
+
+/* --- 8. ANIMATIONS --- */
+.animate-fadeIn { animation: fadeIn 0.8s ease-out forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.group:hover .group-hover\:scale-125 { --tw-scale-x: 1.25; --tw-scale-y: 1.25; }
+.group:hover .group-hover\:rotate-180 { --tw-rotate: 180deg; }
