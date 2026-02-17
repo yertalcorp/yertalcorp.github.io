@@ -137,9 +137,6 @@ window.cloneSpark = async (currentId, sparkId) => {
     }
 };
 
-/**
- * Objective: Identity & Navigation Component
- */
 function renderTopBar(userData, isOwner, authUser, mySlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
@@ -152,42 +149,60 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
     const titleParts = (profile.arcade_title || "THE YERTAL ARCADE").split(' ');
 
     header.innerHTML = `
-        <div class="grid grid-cols-3 items-center w-full">
+        <nav>
             <div class="flex items-center gap-4">
-                <img src="${arcadeLogo}" class="h-6 w-auto">
-                <span class="text-white font-black italic tracking-tighter">YERTAL</span>
-                <div class="flex gap-4 ml-4">
-                    <a href="/index.html" class="text-white/40 hover:text-[var(--neon-color)]"><i class="fas fa-door-open"></i></a>
-                    <a href="?user=${mySlug}" class="text-white/40 hover:text-[var(--neon-color)]"><i class="fas fa-home"></i></a>
-                    <a href="?user=yertal-arcade" class="text-[8px] font-black border border-white/10 px-2 py-1 rounded hover:bg-white hover:text-black transition-all">HUB</a>
+                <div id="nav-logo" class="logo-container">
+                    <img src="${arcadeLogo}" alt="YERTAL">
+                </div>
+                <span class="metallic-text">YERTAL</span>
+                <div class="flex gap-3 ml-4">
+                    <a href="/index.html" class="text-white/60 hover:text-white"><i class="fas fa-door-open"></i></a>
+                    <a href="?user=${mySlug}" class="text-white/60 hover:text-white"><i class="fas fa-home"></i></a>
+                    <a href="?user=yertal-arcade" class="metallic-text border-white/10 px-2 py-1 rounded-lg border hover:bg-white/10 transition-all">HUB</a>
                 </div>
             </div>
 
-            <div class="flex flex-col items-center">
+            <div id="nav-hero-central" class="flex-col items-center text-center">
                 ${profile.arcade_title ? `
-                    <h1 class="text-xl font-black italic uppercase tracking-tighter leading-none">
+                    <h1 class="text-xl font-extrabold italic uppercase tracking-tighter leading-none">
                         <span style="color: white">${titleParts[0]} ${titleParts[1] || ''}</span> 
                         <span style="color: var(--neon-color)">${titleParts[2] || ''}</span>
                     </h1>
-                    <p class="text-[9px] font-bold tracking-[0.2em] opacity-60 uppercase mt-0.5">${profile.arcade_subtitle || 'Laboratory Active'}</p>
+                    <p id="hero-subheading" class="font-bold tracking-widest opacity-60 mt-0.5">
+                        ${profile.arcade_subtitle || 'Laboratory Active'}
+                    </p>
                 ` : isOwner ? `
-                    <button onclick="openCreateArcadeModal()" class="bg-white text-black text-[9px] font-black px-4 py-1.5 rounded uppercase tracking-widest hover:shadow-[0_0_15px_var(--neon-color)] transition-all">
-                        Create Arcade
+                    <button onclick="openCreateArcadeModal()" class="generate-btn px-6 py-2 rounded text-[10px] font-black uppercase tracking-widest">
+                        Initialize Arcade
                     </button>
                 ` : ''}
             </div>
 
-            <div class="flex items-center gap-4 justify-end">
-                <div class="relative hidden lg:block">
-                    <input type="text" placeholder="SEARCH SPARKS..." class="bg-white/5 border border-white/10 rounded-full py-1 px-4 text-[9px] text-white focus:outline-none focus:border-[var(--neon-color)] w-40">
+            <div id="auth-zone" class="items-center justify-between">
+                <div class="relative hidden lg:block mr-4">
+                    <input type="text" placeholder="SEARCH SPARKS..." 
+                           class="glass border-white/10 rounded-full py-1 px-4 text-[9px] text-white focus:outline-none focus:border-[var(--neon-color)] w-40">
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="text-right">
-                        <p class="text-[9px] font-black text-white uppercase leading-none">${displayName}</p>
-                        <button onclick="logout()" class="text-[8px] font-bold text-[var(--neon-color)] uppercase hover:underline">Disconnect</button>
+                        <p id="superuser-display" class="leading-none">${displayName}</p>
+                        <button onclick="logout()" class="text-[8px] font-bold text-[var(--neon-color)] uppercase hover:underline">
+                            Disconnect
+                        </button>
                     </div>
-                    <img src="${authUser.photoURL || '/assets/icons/default-avatar.png'}" class="w-8 h-8 rounded-full border border-white/20">
+                    <img src="${authUser.photoURL || '/assets/icons/default-avatar.png'}" 
+                         class="w-8 h-8 rounded-full border border-white/20">
                 </div>
+            </div>
+        </nav>
+        
+        <div id="engine-status-container" class="status-bar">
+            <div class="flex items-center gap-2">
+                <div class="status-dot w-1.5 h-1.5 rounded-full bg-[var(--neon-color)] animate-pulse"></div>
+                <span id="engine-status-text">Laboratory System Ready</span>
+            </div>
+            <div class="text-[9px] font-black opacity-30 tracking-widest uppercase">
+                Arcade Environment v2.0
             </div>
         </div>
     `;
