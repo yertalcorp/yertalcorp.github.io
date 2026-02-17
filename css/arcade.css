@@ -316,6 +316,42 @@ button:hover {
     50% { box-shadow: 0 0 25px var(--neon-color); }
     100% { box-shadow: 0 0 10px var(--neon-color); }
 }
+.ethereal-btn {
+    position: relative;
+    background: transparent;
+    border: 1px solid var(--neon-color);
+    color: var(--neon-color);
+    padding: 1.5rem 4rem;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    letter-spacing: 5px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.5s ease;
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+}
 
+.ethereal-btn:hover {
+    background: var(--neon-color);
+    color: #000;
+    box-shadow: 0 0 50px var(--neon-color);
+    transform: translateY(-5px);
+}
+
+.btn-glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(0,242,255,0.4) 0%, transparent 70%);
+    animation: rotateGlow 10s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes rotateGlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
 /* --- UTILITIES --- */
 .hidden { display: none ; }
