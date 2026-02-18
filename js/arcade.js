@@ -81,7 +81,13 @@ window.openCreateArcadeModal = async () => {
     }
 };
 
+/**
+ * Objective: System Observer & Router [cite: 2026-02-01]
+ * Logic: Prioritizes URL-based discovery. Ensures new users are seeded 
+ * without forcing them away from the page they requested.
+ */
 watchAuthState(async (currentUser) => {
+    // 1. SECURITY BOUNCE: Force guests back to showroom [cite: 2026-02-04]
     if (!currentUser) {
         window.location.href = "/index.html";
         return;
@@ -91,43 +97,35 @@ watchAuthState(async (currentUser) => {
     const data = await getArcadeData();
     databaseCache = data;
 
-    // 1. CONDITIONAL GUARD: Check if the user already exists in the DB
+    // 2. SILENT SEED: Ensure the logged-in user has a profile record [cite: 2026-02-01]
     const userRecord = data.users?.[user.uid];
-
-    // 2. ONLY SEED IF NEW: If no record exists, create the minimal identity
-    if (!userRecord) {
-        console.log("[SYSTEM]: NEW PILOT DETECTED. INITIALIZING MINIMAL IDENTITY...");
-        
+    if (!userRecord || !userRecord.profile) {
+        console.log("[SYSTEM]: INITIALIZING MINIMAL IDENTITY...");
         const cleanSlug = user.displayName.toLowerCase().replace(/\s+/g, '-') + `-${Math.floor(1000 + Math.random() * 9000)}`;
-        const profilePath = `users/${user.uid}/profile`;
         
-        const minimalProfile = {
+        await saveToRealtimeDB(`users/${user.uid}/profile`, {
             display_name: user.displayName,
             uid: user.uid,
             slug: cleanSlug,
             plan_type: "free"
-        };
-
-        await saveToRealtimeDB(profilePath, minimalProfile);
+        });
         
-        // Refresh local cache to include the new user
+        // Update local cache to include the new user profile [cite: 2026-02-17]
         if(!databaseCache.users) databaseCache.users = {};
-        databaseCache.users[user.uid] = { profile: minimalProfile };
-
-        window.location.href = `?user=${cleanSlug}`;
-        return;
+        databaseCache.users[user.uid] = { profile: { display_name: user.displayName, uid: user.uid, slug: cleanSlug, plan_type: "free" } };
     }
 
-    // 3. ROUTING FOR RETURNING USERS
+    // 3. WINDOW-BASED ROUTING: Source of truth is the URL [cite: 2026-02-04]
     const urlParams = new URLSearchParams(window.location.search);
-    const currentSlug = urlParams.get('user');
+    const windowSlug = urlParams.get('user');
 
-    // If a returning user hits /arcade/ without a slug, send them to their known slug
-    if (!currentSlug && userRecord.profile?.slug) {
-        window.location.href = `?user=${userRecord.profile.slug}`;
+    // Default to the Hub if no slug is preset in the window [cite: 2026-02-01]
+    if (!windowSlug) {
+        window.location.href = "?user=yertal-arcade";
         return;
     }
 
+    // 4. TRIGGER PIPELINE
     refreshUI(); 
 });
 
