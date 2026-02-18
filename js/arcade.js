@@ -83,15 +83,63 @@ window.openCreateArcadeModal = async () => {
 
 /**
  * Objective: Primary System Observer
- * Monitors login status and triggers the specialized rendering pipeline.
+ * Monitors login status, enforces guest protection, and performs minimal 
+ * user seeding (Name, UID, Slug) to enable personal routing.
  */
 watchAuthState(async (currentUser) => {
+    // 1. SECURITY BOUNCE: Force guests to showroom
     if (!currentUser) {
         window.location.href = "/index.html";
         return;
     }
-    user = currentUser; 
-    // Simply call refreshUI. It handles the fetch, route, and render.
+
+    user = currentUser;
+
+    // 2. DATA ACQUISITION
+    const data = await getArcadeData();
+    databaseCache = data;
+
+    // 3. MINIMAL SEEDING LOGIC
+    // Check if the user exists in the DB at all
+    const userRecord = data.users?.[user.uid];
+
+    if (!userRecord || !userRecord.profile) {
+        console.log("[SYSTEM]: NEW PILOT DETECTED. INITIALIZING MINIMAL IDENTITY...");
+        
+        // Generate a clean slug from display name (e.g., "Jane Doe" -> "jane-doe")
+        const cleanSlug = user.displayName.toLowerCase().replace(/\s+/g, '-') + `-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        const profilePath = `users/${user.uid}/profile`;
+        
+        // ONLY creating the requested fields: name, id, and slug
+        const minimalProfile = {
+            display_name: user.displayName,
+            uid: user.uid,
+            slug: cleanSlug,
+            plan_type: "free" // Assigned by default to avoid logic errors
+        };
+
+        await saveToRealtimeDB(profilePath, minimalProfile);
+        
+        // Update local cache so refreshUI knows who we are immediately
+        if(!databaseCache.users) databaseCache.users = {};
+        databaseCache.users[user.uid] = { profile: minimalProfile };
+
+        // Redirect to their own blank arcade
+        window.location.href = `?user=${cleanSlug}`;
+        return;
+    }
+
+    // 4. ROUTING & RENDERING
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentSlug = urlParams.get('user');
+
+    // If logged in but on the root /arcade/ path, send to personal slug
+    if (!currentSlug && userRecord.profile.slug) {
+        window.location.href = `?user=${userRecord.profile.slug}`;
+        return;
+    }
+
     refreshUI(); 
 });
 
@@ -598,20 +646,26 @@ function predictLogicType(prompt) {
 }
 
 window.handleInitialForge = async () => {
+    // 1. EXTRACT UI INPUTS
     const arcadeName = document.getElementById('new-arcade-name').value;
     const arcadeSubtitle = document.getElementById('new-arcade-subtitle').value;
     const initialPrompt = document.getElementById('initial-prompt').value;
     const customName = document.getElementById('custom-cat-name').value;
+    
+    // New inputs for branding
+    const arcadeLogo = document.getElementById('new-arcade-logo')?.value;
+    const profilePic = document.getElementById('new-profile-pic')?.value;
 
+    // 2. VALIDATION
     if (!arcadeName || !initialPrompt || !selectedCategory) {
         alert("System Error: Please define Name, Topic, and Intent.");
         return;
     }
 
-    // 1. DYNAMIC PLAN LIMIT CHECK
+    // 3. DYNAMIC PLAN LIMIT CHECK
     const userProfile = databaseCache.users?.[user.uid]?.profile || {};
-    const planType = userProfile.plan_type || 'free';
-    const limits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
+    // Ensure the user starts on 'free' if not already set
+    const planType = userProfile.plan_type || 'free'; const limits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
 
     const existingCurrents = databaseCache.users?.[user.uid]?.infrastructure?.currents || {};
     const currentCount = Object.keys(existingCurrents).length;
@@ -627,7 +681,7 @@ window.handleInitialForge = async () => {
     const currentId = `current-${Date.now()}`;
 
     try {
-        // 2. Initialize the Current Node
+        // 4. INITIALIZE THE CURRENT NODE (Infrastructure)
         await saveToRealtimeDB(`users/${user.uid}/infrastructure/currents/${currentId}`, {
             id: currentId,
             name: isCustom ? customName : `${finalCatName} Lab`,
@@ -637,19 +691,21 @@ window.handleInitialForge = async () => {
             created: Date.now()
         });
 
-        // 3. Update Profile Settings (Merging existing data to prevent loss)
+        // 5. UPDATE PROFILE SETTINGS (Merging identity with new branding)
         await saveToRealtimeDB(`users/${user.uid}/profile`, {
-            ...userProfile,
+            ...userProfile, // Preserves uid, display_name, and slug from minimal seed
             arcade_title: arcadeName.toUpperCase(),
             arcade_subtitle: arcadeSubtitle,
-            arcade_logo: userProfile.arcade_logo || databaseCache.settings?.['ui-settings']?.['default-logo'] || "/assets/images/default-logo.png"
+            arcade_logo: arcadeLogo || databaseCache.settings?.['ui-settings']?.['default-logo'],
+            profile_picture: profilePic || user.photoURL, // Fallback to Google Auth pic
+            plan_type: 'free', // Explicitly set the initial tier
+            branding_color: databaseCache.settings?.['ui-settings']?.['color-neon'] || "#00f2ff"
         });
 
-        // 4. Trigger Mass Spark Execution (Respects plan-based default count)
+        // 6. TRIGGER MASS SPARK EXECUTION
         const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
         const template = databaseCache.settings['arcade-current-types'].find(t => t.id === selectedCategory) || { name: 'Custom', image: defaultThumb };
         
-        // If prompt doesn't contain a number, use num_mass_sparks from plan limits (fallback to 3)
         const countMatch = initialPrompt.match(/\d+/);
         const finalCount = countMatch ? countMatch[0] : (limits.num_mass_sparks || 3);
         const augmentedPrompt = countMatch ? initialPrompt : `${initialPrompt} ${finalCount}`;
@@ -662,8 +718,10 @@ window.handleInitialForge = async () => {
             template.image
         );
 
-        // 5. System Sync & UI Refresh
-        document.getElementById('onboarding-hud').classList.remove('active');
+        // 7. SYSTEM SYNC & UI REFRESH
+        const hud = document.getElementById('onboarding-hud');
+        if (hud) hud.classList.remove('active');
+        
         await refreshUI(); 
         
     } catch (error) {
