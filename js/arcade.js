@@ -81,61 +81,49 @@ window.openCreateArcadeModal = async () => {
     }
 };
 
-/**
- * Objective: Primary System Observer
- * Monitors login status, enforces guest protection, and performs minimal 
- * user seeding (Name, UID, Slug) to enable personal routing.
- */
 watchAuthState(async (currentUser) => {
-    // 1. SECURITY BOUNCE: Force guests to showroom
     if (!currentUser) {
         window.location.href = "/index.html";
         return;
     }
 
     user = currentUser;
-
-    // 2. DATA ACQUISITION
     const data = await getArcadeData();
     databaseCache = data;
 
-    // 3. MINIMAL SEEDING LOGIC
-    // Check if the user exists in the DB at all
+    // 1. CONDITIONAL GUARD: Check if the user already exists in the DB
     const userRecord = data.users?.[user.uid];
 
-    if (!userRecord || !userRecord.profile) {
+    // 2. ONLY SEED IF NEW: If no record exists, create the minimal identity
+    if (!userRecord) {
         console.log("[SYSTEM]: NEW PILOT DETECTED. INITIALIZING MINIMAL IDENTITY...");
         
-        // Generate a clean slug from display name (e.g., "Jane Doe" -> "jane-doe")
         const cleanSlug = user.displayName.toLowerCase().replace(/\s+/g, '-') + `-${Math.floor(1000 + Math.random() * 9000)}`;
-
         const profilePath = `users/${user.uid}/profile`;
         
-        // ONLY creating the requested fields: name, id, and slug
         const minimalProfile = {
             display_name: user.displayName,
             uid: user.uid,
             slug: cleanSlug,
-            plan_type: "free" // Assigned by default to avoid logic errors
+            plan_type: "free"
         };
 
         await saveToRealtimeDB(profilePath, minimalProfile);
         
-        // Update local cache so refreshUI knows who we are immediately
+        // Refresh local cache to include the new user
         if(!databaseCache.users) databaseCache.users = {};
         databaseCache.users[user.uid] = { profile: minimalProfile };
 
-        // Redirect to their own blank arcade
         window.location.href = `?user=${cleanSlug}`;
         return;
     }
 
-    // 4. ROUTING & RENDERING
+    // 3. ROUTING FOR RETURNING USERS
     const urlParams = new URLSearchParams(window.location.search);
     const currentSlug = urlParams.get('user');
 
-    // If logged in but on the root /arcade/ path, send to personal slug
-    if (!currentSlug && userRecord.profile.slug) {
+    // If a returning user hits /arcade/ without a slug, send them to their known slug
+    if (!currentSlug && userRecord.profile?.slug) {
         window.location.href = `?user=${userRecord.profile.slug}`;
         return;
     }
@@ -351,7 +339,61 @@ function renderCurrents(currents, isOwner, ownerUid, profile) {
             </div>
         `;
     }).join('');
+    if (isOwner) {
+        container.innerHTML += `
+            <div style="display: flex; justify-content: center; margin-top: 3rem; padding-bottom: 5rem;">
+                <button onclick="window.openOnboardingHUD()" class="terminal-btn" style="border: 1px dashed var(--neon-color); opacity: 0.6;">
+                    <i class="fas fa-plus"></i> INITIALIZE NEW CURRENT
+                </button>
+            </div>
+        `;
+    }
 }
+
+/**
+ * Objective: Modular infrastructure generator.
+ * Handles DB entry, cache update, and initial spark generation.
+ */
+window.addNewCurrent = async (name, type, prompt, limits) => {
+    const currentId = `current-${Date.now()}`;
+    const logicType = predictLogicType(prompt);
+    
+    const currentData = {
+        id: currentId,
+        name: name,
+        type_ref: type,
+        logic_mode: logicType,
+        privacy: 'private',
+        created: Date.now()
+    };
+
+    // 1. Save to Database
+    await saveToRealtimeDB(`users/${user.uid}/infrastructure/currents/${currentId}`, currentData);
+    
+    // 2. Local Cache Update
+    if (!databaseCache.users[user.uid].infrastructure) {
+        databaseCache.users[user.uid].infrastructure = { currents: {} };
+    }
+    databaseCache.users[user.uid].infrastructure.currents[currentId] = currentData;
+
+    // 3. Spark Generation
+    const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
+    const template = databaseCache.settings['arcade-current-types']?.find(t => t.id === type) || { name: 'Custom', image: defaultThumb };
+    
+    const countMatch = prompt.match(/\d+/);
+    const finalCount = countMatch ? countMatch[0] : (limits?.num_mass_sparks || 3);
+    const augmentedPrompt = countMatch ? prompt : `${prompt} ${finalCount}`;
+
+    await executeMassSpark(
+        currentId, 
+        augmentedPrompt, 
+        (logicType === 'source' ? 'sourcing' : 'prompt'), 
+        template.name, 
+        template.image
+    );
+
+    return currentId;
+};
 
 function renderSparkCard(spark, isOwner, currentId) {
     const targetUrl = `spark.html?current=${currentId}&spark=${spark.id}`;
@@ -646,87 +688,50 @@ function predictLogicType(prompt) {
 }
 
 window.handleInitialForge = async () => {
-    // 1. EXTRACT UI INPUTS
+    // 1. Capture Inputs
     const arcadeName = document.getElementById('new-arcade-name').value;
     const arcadeSubtitle = document.getElementById('new-arcade-subtitle').value;
     const initialPrompt = document.getElementById('initial-prompt').value;
     const customName = document.getElementById('custom-cat-name').value;
-    
-    // New inputs for branding
     const arcadeLogo = document.getElementById('new-arcade-logo')?.value;
     const profilePic = document.getElementById('new-profile-pic')?.value;
 
-    // 2. VALIDATION
     if (!arcadeName || !initialPrompt || !selectedCategory) {
         alert("System Error: Please define Name, Topic, and Intent.");
         return;
     }
 
-    // 3. DYNAMIC PLAN LIMIT CHECK
     const userProfile = databaseCache.users?.[user.uid]?.profile || {};
-    // Ensure the user starts on 'free' if not already set
-    const planType = userProfile.plan_type || 'free'; const limits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
-
-    const existingCurrents = databaseCache.users?.[user.uid]?.infrastructure?.currents || {};
-    const currentCount = Object.keys(existingCurrents).length;
-
-    if (currentCount >= limits.max_currents) {
-        alert(`PLAN LIMIT: Your ${planType.toUpperCase()} plan is limited to ${limits.max_currents} currents.`);
-        return;
-    }
-
-    const logicType = predictLogicType(initialPrompt);
-    const isCustom = selectedCategory === 'custom';
-    const finalCatName = isCustom ? customName : selectedCategory;
-    const currentId = `current-${Date.now()}`;
+    const planType = userProfile.plan_type || 'free';
+    const limits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
 
     try {
-        // 4. INITIALIZE THE CURRENT NODE (Infrastructure)
-        await saveToRealtimeDB(`users/${user.uid}/infrastructure/currents/${currentId}`, {
-            id: currentId,
-            name: isCustom ? customName : `${finalCatName} Lab`,
-            type_ref: selectedCategory,
-            logic_mode: logicType,
-            privacy: 'private',
-            created: Date.now()
-        });
-
-        // 5. UPDATE PROFILE SETTINGS (Merging identity with new branding)
-        await saveToRealtimeDB(`users/${user.uid}/profile`, {
-            ...userProfile, // Preserves uid, display_name, and slug from minimal seed
+        // 2. Update Profile (Selective Merge)
+        const newProfileData = {
+            ...userProfile,
             arcade_title: arcadeName.toUpperCase(),
             arcade_subtitle: arcadeSubtitle,
-            arcade_logo: arcadeLogo || databaseCache.settings?.['ui-settings']?.['default-logo'],
-            profile_picture: profilePic || user.photoURL, // Fallback to Google Auth pic
-            plan_type: 'free', // Explicitly set the initial tier
-            branding_color: databaseCache.settings?.['ui-settings']?.['color-neon'] || "#00f2ff"
-        });
+            arcade_logo: arcadeLogo || userProfile.arcade_logo || databaseCache.settings?.['ui-settings']?.['default-logo'],
+            profile_picture: profilePic || userProfile.profile_picture || user.photoURL,
+            plan_type: 'free'
+        };
 
-        // 6. TRIGGER MASS SPARK EXECUTION
-        const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
-        const template = databaseCache.settings['arcade-current-types'].find(t => t.id === selectedCategory) || { name: 'Custom', image: defaultThumb };
-        
-        const countMatch = initialPrompt.match(/\d+/);
-        const finalCount = countMatch ? countMatch[0] : (limits.num_mass_sparks || 3);
-        const augmentedPrompt = countMatch ? initialPrompt : `${initialPrompt} ${finalCount}`;
+        // Deep check for changes
+        if (JSON.stringify(newProfileData) !== JSON.stringify(userProfile)) {
+            await saveToRealtimeDB(`users/${user.uid}/profile`, newProfileData);
+            databaseCache.users[user.uid].profile = newProfileData; 
+        }
 
-        await executeMassSpark(
-            currentId, 
-            augmentedPrompt, 
-            (logicType === 'source' ? 'sourcing' : 'prompt'), 
-            template.name, 
-            template.image
-        );
+        // 3. REUSE Modular Function for Infrastructure
+        const finalName = selectedCategory === 'custom' ? customName : `${selectedCategory} Lab`;
+        await window.addNewCurrent(finalName, selectedCategory, initialPrompt, limits);
 
-        // 7. SYSTEM SYNC & UI REFRESH
-        const hud = document.getElementById('onboarding-hud');
-        if (hud) hud.classList.remove('active');
-        
+        // 4. Cleanup
+        document.getElementById('onboarding-hud').classList.remove('active');
         await refreshUI(); 
         
     } catch (error) {
-        console.error("FORGE CRITICAL FAILURE:", error);
-        alert("The Forge encountered a database error. Check console for logs.");
+        console.error("FORGE FAILURE:", error);
     }
 };
 
