@@ -46,8 +46,26 @@ async function refreshUI() {
 
         const isOwner = (user && user.uid === ownerUid);
         const userData = allUsers[ownerUid];
-        const ui = data.settings?.['ui-settings'] || {};
+        
+        // SLUG-OWNER BRANDING LOGIC
+        const ownerProfile = userData.profile || {};
+        const branding = ownerProfile.branding || {};
+        
+        // Update document title and branding elements based on owner
+        document.title = `${ownerProfile.name || 'Arcade'} | Showroom`;
+        
+        const brandingLogo = document.getElementById('branding-logo');
+        if (brandingLogo) {
+            brandingLogo.src = branding.logo || 'assets/default-logo.png';
+        }
 
+        const brandingName = document.getElementById('branding-name');
+        if (brandingName) {
+            brandingName.textContent = ownerProfile.name || 'Arcade';
+        }
+
+        // Apply owner-specific UI colors
+        const ui = branding.ui_settings || {};
         document.documentElement.style.setProperty('--neon-color', ui['color-neon'] || '#00f2ff');
         
         renderTopBar(userData, isOwner, user, slug);
@@ -248,7 +266,7 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
     `;
 }
 
-function renderCurrents(currents, isOwner, ownerUid, profile) {
+function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
     if (!container) return;
 
@@ -258,7 +276,14 @@ function renderCurrents(currents, isOwner, ownerUid, profile) {
     const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
     const maxSparks = planLimits.max_sparks_per_current;
 
-    const currentsArray = currents ? Object.values(currents) : [];
+    // 2. PRIVACY FILTERING LOGIC
+    const currentsArray = currents ? Object.values(currents).filter(current => {
+        const isPublic = current.privacy === 'public';
+        const isTargetUnlisted = current.privacy === 'unlisted' && current.id === sharedCurrentId;
+        
+        // Viewer can see it if it's Public OR it's the specific Unlisted ID from the URL
+        return isOwner || isPublic || isTargetUnlisted;
+    }) : [];
     
     // --- EMPTY STATE LOGIC ---
     if (currentsArray.length === 0) {
@@ -290,7 +315,16 @@ function renderCurrents(currents, isOwner, ownerUid, profile) {
 
     // --- ACTIVE STATE LOGIC ---
     container.innerHTML = currentsArray.map(current => {
-        const sparks = current.sparks ? Object.values(current.sparks) : [];
+        // 3. SPARK PRIVACY FILTERING
+        const sparks = current.sparks ? Object.values(current.sparks).filter(spark => {
+            const isSparkPublic = spark.privacy === 'public';
+            const isSparkTargetUnlisted = spark.privacy === 'unlisted' && spark.id === sharedSparkId;
+
+            // Hierarchical requirement: Current must be accessible (already filtered) 
+            // and Spark must be Public or the specific Unlisted ID from URL
+            return isOwner || isSparkPublic || isSparkTargetUnlisted;
+        }) : [];
+
         const sparkCount = sparks.length;
         const isFull = sparkCount >= maxSparks;
         const meterColor = isFull ? '#ef4444' : 'var(--neon-color)';
@@ -396,6 +430,26 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 function renderSparkCard(spark, isOwner, currentId) {
     const targetUrl = `spark.html?current=${currentId}&spark=${spark.id}`;
     
+    // VIEWER INTERACTION LOGIC
+    const viewerActions = `
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <button onclick="likeSpark('${currentId}', '${spark.id}')" title="Like" style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer;">
+                <i class="fas fa-heart" style="font-size: 10px;"></i>
+            </button>
+            <button onclick="tipOwner('${currentId}', '${spark.id}')" title="Tip" style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer;">
+                <i class="fas fa-coins" style="font-size: 10px;"></i>
+            </button>
+            <button onclick="cloneSpark('${currentId}', '${spark.id}')" title="Save to My Arcade"
+                    style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; transition: color 0.3s;"
+                    onmouseover="this.style.color='var(--neon-color)'" onmouseout="this.style.color='rgba(255,255,255,0.2)'">
+                <i class="fas fa-download" style="font-size: 10px;"></i>
+            </button>
+            <button onclick="shareSpark('${currentId}', '${spark.id}')" title="Share" style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer;">
+                <i class="fas fa-share-alt" style="font-size: 10px;"></i>
+            </button>
+        </div>
+    `;
+
     return `
         <div class="spark-unit" style="display: flex; flex-direction: column; gap: 0.75rem;">
             <div class="action-card" 
@@ -421,18 +475,16 @@ function renderSparkCard(spark, isOwner, currentId) {
                 
                 <div style="display: flex; gap: 0.5rem;">
                     ${isOwner ? `
+                        <button onclick="shareSpark('${currentId}', '${spark.id}')" 
+                                style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; margin-right: 5px;">
+                            <i class="fas fa-share-nodes" style="font-size: 10px;"></i>
+                        </button>
                         <button onclick="deleteSpark('${currentId}', '${spark.id}', '${user.uid}')" 
                                 style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; transition: color 0.3s;"
                                 onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(255,255,255,0.2)'">
                             <i class="fas fa-trash" style="font-size: 10px;"></i>
                         </button>
-                    ` : `
-                        <button onclick="cloneSpark('${currentId}', '${spark.id}')" 
-                                style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--neon-color)'" onmouseout="this.style.color='rgba(255,255,255,0.2)'">
-                            <i class="fas fa-download" style="font-size: 10px;"></i>
-                        </button>
-                    `}
+                    ` : viewerActions}
                 </div>
             </div>
         </div>
@@ -756,6 +808,7 @@ function renderLogicComponent(spark) {
         </div>
     `;
 }
+        
 window.openOnboardingHUD = () => {
     const hud = document.getElementById('onboarding-hud');
     if (hud) {
@@ -764,6 +817,7 @@ window.openOnboardingHUD = () => {
         renderCategoryButtons(); 
     }
 };
+        
 /**
  * Objective: Retrieve dynamic limits based on the user's plan_type.
  */
