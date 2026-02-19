@@ -14,23 +14,26 @@ async function refreshUI() {
         databaseCache = data;
 
         const urlParams = new URLSearchParams(window.location.search);
-        const slug = urlParams.get('user');
+        const pageOwnerSlug = urlParams.get('user');
 
-        if (!slug) {
+        if (!pageOwnerSlug) {
             console.error("STRICT MODE: No slug detected in URL.");
             return;
         }
 
         const allUsers = data.users || {};
-        const ownerUid = Object.keys(allUsers).find(uid => 
-            allUsers[uid].profile && allUsers[uid].profile.slug === slug
-        );
-
+        const loggedInUserRecord = allUsers[user?.uid];
+        const userSlug = loggedInUserRecord?.profile?.slug || "NO_SLUG";
+        
+        // The global user is the logged in user
+        // ownerUID is the user who owns the page
+        
         console.table({
-            "Target_Slug": slug,
-            "Resolved_Owner_UID": ownerUid || "NOT_FOUND",
-            "Logged_In_UID": user ? user.uid : "GUEST",
-            "Access_Level": (user && user.uid === ownerUid) ? "OWNER" : "VIEWER"
+            "Page Owner Slug": pageOwnerSlug,
+            "Page Owner UID": ownerUid || "NOT_FOUND",
+            "Logged in User Slug": userSlug,
+            "Current_User_ID": user ? user.uid : 'No User Logged In',
+            "Access_Level": (user && user.uid === ownerUid) ? "OWNER" : "VIEWER",
         });
 
         if (!ownerUid) {
@@ -38,17 +41,17 @@ async function refreshUI() {
             if (container) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 5rem 0; opacity: 0.2; font-style: italic;">
-                        STRICT MODE: No user owns the slug '${slug}'.
+                        STRICT MODE: No user owns the slug '${pageOwnerSlug}'.
                     </div>`;
             }
             return;
         }
 
         const isOwner = (user && user.uid === ownerUid);
-        const userData = allUsers[ownerUid];
+        const pageOwnerData = allUsers[ownerUid];
         
         // SLUG-OWNER BRANDING LOGIC
-        const ownerProfile = userData.profile || {};
+        const ownerProfile = pageOwnerData.profile || {};
         const branding = ownerProfile.branding || {};
         
         // Update document title and branding elements based on owner
@@ -68,8 +71,8 @@ async function refreshUI() {
         const ui = branding.ui_settings || {};
         document.documentElement.style.setProperty('--neon-color', ui['color-neon'] || '#00f2ff');
         
-        renderTopBar(userData, isOwner, user, slug);
-        renderCurrents(userData?.infrastructure?.currents || {}, isOwner, ownerUid, userData?.profile);
+        renderTopBar(pageOwnerData, isOwner, user, userSlug);
+        renderCurrents(pageOwnerData?.infrastructure?.currents || {}, isOwner, ownerUid, pageOwnerData?.profile);
 
     } catch (e) {
         console.error("SYSTEM ERROR:", e);
@@ -186,12 +189,12 @@ window.cloneSpark = async (currentId, sparkId) => {
     }
 };
 
-function renderTopBar(userData, isOwner, authUser, mySlug) {
+function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
 
     // STRICT DATA EXTRACTION
-    const profile = userData?.profile || {};
+    const profile = pageOwnerData?.profile || {};
     const arcadeLogo = profile.arcade_logo;
     const brandName = profile.display_name;
     const arcadeTitle = profile.arcade_title;
@@ -214,7 +217,7 @@ function renderTopBar(userData, isOwner, authUser, mySlug) {
 
                 <div style="display: flex; gap: 0.75rem; align-items: center; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 1rem; margin-left: 0.5rem;">
                     <a href="/index.html" title="Showroom" style="color: rgba(255,255,255,0.6);"><i class="fas fa-door-open"></i></a>
-                    <a href="?user=${mySlug}" title="My Arcade" style="color: rgba(255,255,255,0.6);"><i class="fas fa-home"></i></a>
+                    <a href="?user=${userSlug}" title="My Arcade" style="color: rgba(255,255,255,0.6);"><i class="fas fa-home"></i></a>
                     <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--neon-color); padding: 0.2rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 8px; background: rgba(0, 242, 255, 0.05); box-shadow: 0 0 5px rgba(0, 242, 255, 0.2);">HUB</a>
                 </div>
             </div>
