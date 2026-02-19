@@ -388,7 +388,7 @@ window.openAuthHUD = () => {
             <div class="card-icon-badge" style="margin: 0; width: 1.5rem; height: 1.5rem; font-size: 1.2rem;">
                 <i class="fab fa-${p}"></i>
             </div>
-            **<span>Authorize via ${p}</span>**
+            <span>Authorize via ${p}</span>
         </button>
     `).join('');
 
