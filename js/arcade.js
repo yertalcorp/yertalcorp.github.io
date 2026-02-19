@@ -22,6 +22,12 @@ async function refreshUI() {
         }
 
         const allUsers = data.users || {};
+        // Find the owner of the page with the URL slug
+        const ownerUid = Object.keys(allUsers).find(uid => 
+
+            allUsers[uid].profile && allUsers[uid].profile.slug === pageOwnerSlug
+
+        );
         const loggedInUserRecord = allUsers[user?.uid];
         const userSlug = loggedInUserRecord?.profile?.slug || "NO_SLUG";
         
