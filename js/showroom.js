@@ -375,4 +375,24 @@ window.handleLogout = async () => {
         console.error("Global Logout Failed:", error);
     }
 };
+window.openAuthHUD = () => {
+    const hud = document.getElementById('auth-hud');
+    const list = document.getElementById('provider-list');
+    
+    // 1. Get providers from your JSON databaseCache
+    const providers = databaseCache.settings?.['auth-providers'] || ['google'];
+
+    // 2. Generate the buttons with the function call
+    list.innerHTML = providers.map(p => `
+        <button onclick="loginWithProvider('${p}')" class="glass-card action-card" style="padding: 1rem; width: 100%; display: flex; align-items: center; gap: 15px; color: white; text-transform: uppercase; font-size: 11px; cursor: pointer;">
+            <div class="card-icon-badge" style="margin: 0; width: 1.5rem; height: 1.5rem; font-size: 1.2rem;">
+                <i class="fab fa-${p}"></i>
+            </div>
+            **<span>Authorize via ${p}</span>**
+        </button>
+    `).join('');
+
+    // 3. Reveal the HUD
+    hud.style.display = 'flex';
+};
 window.onload = initShowroom;
