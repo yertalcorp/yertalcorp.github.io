@@ -9,39 +9,49 @@
     <link rel="stylesheet" href="./css/showroom_style.css">
     <link rel="stylesheet" id="google-fonts-link">
     <link rel="stylesheet" id="font-awesome-link">
- </head>
+</head>
 <body class="bg-[#050505]">
 
     <nav class="glass fixed w-full z-50 px-6 py-4 flex justify-between items-center main-nav">
         <div id="nav-logo" class="logo-container">
             </div>
+        
         <div id="nav-menu" class="hidden md:flex gap-8 items-center">
             </div>
-        <div id="auth-zone">
-            </div>
+        <div id="auth-zone" class="flex items-center">
+        </div>
     </nav>
 
     <main class="pt-24 px-6 max-w-7xl mx-auto">
-    <section id="hero-container">
-        <div class="py-8 text-center animate-fadeIn">
-            <h2 id="hero-title" class="text-5xl lg:text-7xl uppercase tracking-tighter text-white">
-            </h2>
-        <p id="hero-subtitle" class="text-slate-500 mt-4 italic font-light">
-        </p>
-        </div>
-    </section>
-
-        <div id="showcase-grid" class="flex flex-wrap gap-6 mb-16">
+        <section id="hero-container">
+            <div class="py-8 text-center animate-fadeIn">
+                <h2 id="hero-title" class="text-5xl lg:text-7xl uppercase tracking-tighter text-white"></h2>
+                <p id="hero-subtitle" class="text-slate-500 mt-4 italic font-light"></p>
             </div>
+        </section>
 
-        <div id="action-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
-            </div>
+        <div id="showcase-grid" class="flex flex-wrap gap-6 mb-16"></div>
+
+        <div id="action-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-24"></div>
     </main>
 
-    <footer id="footer-container" class="py-12 px-6 border-t border-white/5">
-        </footer>
+    <footer id="footer-container" class="py-12 px-6 border-t border-white/5"></footer>
 
     <div id="admin-gateway"></div>
+    <div id="auth-hud" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; backdrop-filter: blur(10px); align-items: center; justify-content: center;">
+        <div class="glass-card metallic-bezel" style="padding: 2.5rem; max-width: 400px; width: 90%; text-align: center;">
+            <h2 class="text-glow uppercase tracking-widest text-white mb-2" style="font-size: 1.2rem;">Access Protocol</h2>
+            <p class="text-slate-400 text-xs mb-8 uppercase tracking-tighter">Select Identity Provider</p>
+            
+            <div id="provider-list" class="flex flex-col gap-4 mb-8">
+                </div>
+
+            <button onclick="document.getElementById('auth-hud').style.display = 'none'" class="text-slate-500 hover:text-white text-[10px] uppercase tracking-widest transition-all">
+                [ ABORT_CONNECTION ]
+            </button>
+        </div>
+    </div>
+
     <script type="module" src="./js/showroom.js"></script>
 </body>
 </html>
