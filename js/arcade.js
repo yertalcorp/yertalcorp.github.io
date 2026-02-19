@@ -85,29 +85,6 @@ async function refreshUI() {
     }
 }
     
-window.openCreateArcadeModal = async () => {
-    const title = prompt("ENTER ARCADE TITLE:");
-    if (!title) return;
-    const name = prompt("ENTER YOUR DISPLAY NAME (e.g. Yertal Corp):");
-    const slug = prompt("ENTER YOUR URL SLUG (e.g. yertal-corp):").toLowerCase().replace(/\s+/g, '-');
-    
-    if (user && title && slug) {
-        const profilePath = `users/${user.uid}/profile`;
-        await saveToRealtimeDB(profilePath, {
-            arcade_title: title.toUpperCase(),
-            arcade_subtitle: "LABORATORY ACTIVE",
-            arcade_logo: "/assets/images/Yertal_Logo_New_HR.png",
-            display_name: name || user.displayName,
-            slug: slug,
-            privacy: "public"
-        });
-        
-        // Use history.replaceState so we stay on the page but update the URL for the next refresh
-        window.history.replaceState({}, '', `?user=${slug}`);
-        await refreshUI();
-    }
-};
-
 /**
  * Objective: System Observer & Router [cite: 2026-02-01]
  * Logic: Prioritizes URL-based discovery. Ensures new users are seeded 
@@ -230,16 +207,12 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
 
             <div id="nav-hero-central" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
                 ${arcadeTitle ? `
-                    <h1 style="margin: 0; font-size: 1.4rem; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; line-height: 1; text-shadow: 0 0 10px rgba(255,255,255,0.3);">
-                        <span style="color: white">${titleParts[0] || ''} ${titleParts[1] || ''}</span> 
-                        <span style="color: var(--neon-color); filter: drop-shadow(0 0 8px var(--neon-color));">${titleParts[2] || ''}</span>
-                    </h1>
+                <h1 style="margin: 0; font-size: 1.4rem; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; line-height: 1; text-shadow: 0 0 10px rgba(255,255,255,0.3);">
+                    <span style="color: white">${titleParts[0] || ''} ${titleParts[1] || ''}</span> 
+                    <span style="color: var(--neon-color); filter: drop-shadow(0 0 8px var(--neon-color));">${titleParts[2] || ''}</span>
+                </h1>
                     <p id="hero-subheading" style="color: white; opacity: 0.8; font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${arcadeSubtitle}</p>
-                ` : isOwner ? `
-                    <button onclick="openCreateArcadeModal()" class="generate-btn" style="padding: 0.5rem 1.5rem; border-radius: 4px; font-size: 10px; font-weight: 900; text-transform: uppercase;">
-                        Initialize Arcade
-                    </button>
-                ` : ''}
+                    ` : ''}
             </div>
 
             <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
@@ -747,12 +720,11 @@ function predictLogicType(prompt) {
 }
 
 window.handleInitialForge = async () => {
-    // 1. Capture Inputs
+    **// 1. Capture Inputs from HUD**
     const arcadeName = document.getElementById('new-arcade-name').value;
     const arcadeSubtitle = document.getElementById('new-arcade-subtitle').value;
     const initialPrompt = document.getElementById('initial-prompt').value;
     const customName = document.getElementById('custom-cat-name').value;
-    const arcadeLogo = document.getElementById('new-arcade-logo')?.value;
     const profilePic = document.getElementById('new-profile-pic')?.value;
 
     if (!arcadeName || !initialPrompt || !selectedCategory) {
@@ -765,27 +737,29 @@ window.handleInitialForge = async () => {
     const limits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
 
     try {
-        // 2. Update Profile (Selective Merge)
+        **// 2. Consolidated Profile Update (No more hardcoded paths)**
         const newProfileData = {
             ...userProfile,
             arcade_title: arcadeName.toUpperCase(),
-            arcade_subtitle: arcadeSubtitle,
-            arcade_logo: arcadeLogo || userProfile.arcade_logo || databaseCache.settings?.['ui-settings']?.['default-logo'],
+            arcade_subtitle: arcadeSubtitle || "LABORATORY ACTIVE",
+            **arcade_logo: userProfile.arcade_logo || databaseCache.settings?.['ui-settings']?.['default-logo'],**
             profile_picture: profilePic || userProfile.profile_picture || user.photoURL,
-            plan_type: 'free'
+            slug: arcadeName.toLowerCase().replace(/\s+/g, '-'),
+            plan_type: 'free',
+            privacy: "public"
         };
 
-        // Deep check for changes
         if (JSON.stringify(newProfileData) !== JSON.stringify(userProfile)) {
             await saveToRealtimeDB(`users/${user.uid}/profile`, newProfileData);
             databaseCache.users[user.uid].profile = newProfileData; 
         }
 
-        // 3. REUSE Modular Function for Infrastructure
+        **// 3. Update URL and Infrastructure**
+        window.history.replaceState({}, '', `?user=${newProfileData.slug}`);
         const finalName = selectedCategory === 'custom' ? customName : `${selectedCategory} Lab`;
         await window.addNewCurrent(finalName, selectedCategory, initialPrompt, limits);
 
-        // 4. Cleanup
+        **// 4. Cleanup UI**
         document.getElementById('onboarding-hud').classList.remove('active');
         await refreshUI(); 
         
@@ -826,6 +800,7 @@ window.openOnboardingHUD = () => {
         renderCategoryButtons(); 
     }
 };
+
         
 /**
  * Objective: Retrieve dynamic limits based on the user's plan_type.
