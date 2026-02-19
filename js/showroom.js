@@ -299,19 +299,6 @@ watchAuthState((newUser) => {
     }
 });
 
-window.handleLoginFlow = async (choice) => {
-     if (!choice) {
-         // Simple UI-less prompt for demo, usually replaced by a modal
-         choice = prompt("Enter Provider (google, facebook, microsoft, discord):").toLowerCase();
-     }
-     try {
-         await loginWithProvider(choice);
-     } catch (error) {
-     console.error("Identity Verification Failed:", error);
-         alert("Access Denied: " + error.message);
-     }
-};
-
 window.handleSignupFlow = async () => {
      const email = prompt("Enter your email to join the Lab:");
      const password = prompt("Create a password (min 6 chars):");
