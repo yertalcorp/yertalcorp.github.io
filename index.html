@@ -43,10 +43,9 @@
 
     <div id="admin-gateway"></div>
     <script type="module" src="./js/showroom.js"></script>
-   <div id="auth-hud" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 1000; backdrop-filter: blur(12px);">
-    
-    <div class="glass-card metallic-bezel hud-bezel-fixed flex flex-col items-center" 
-         style="padding: 2.5rem; width: 320px; height: auto !important;">
+    <div id="auth-hud" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0px; background: rgba(0, 0, 0, 0.96); z-index: 1000; backdrop-filter: blur(12px);">
+
+    <div class="glass-card metallic-bezel hud-bezel-fixed flex flex-col items-center" style="padding: 2.5rem; width: 320px; height: auto !important; max-height: 90vh; overflow-y: auto;">
         
         <h2 class="text-white uppercase font-black" style="font-size: 0.8rem; tracking: 0.5em; filter: drop-shadow(0 0 5px var(--neon-color));">
             ACCESS_PROTOCOL
@@ -59,10 +58,23 @@
         </p>
         
         <div id="provider-list" class="flex flex-col gap-6 mb-10 items-center w-full">
-            </div>
+            <button onclick="handleAuth('google')" class="flex flex-col items-center gap-1 group bg-transparent border-none cursor-pointer">
+                <i class="fab fa-google text-2xl text-white/70 group-hover:text-[var(--neon-color)] transition-all"></i>
+                <span class="text-[8px] tracking-[0.3em] uppercase opacity-40 group-hover:opacity-100">google</span>
+            </button>
         
-        <button onclick="document.getElementById('auth-hud').style.display = 'none'" 
-                class="hud-abort-btn-unique text-[8px] py-2 px-6 uppercase tracking-[0.3em]">
+            <button onclick="handleAuth('github')" class="flex flex-col items-center gap-1 group bg-transparent border-none cursor-pointer">
+                <i class="fab fa-github text-2xl text-white/70 group-hover:text-[var(--neon-color)] transition-all"></i>
+                <span class="text-[8px] tracking-[0.3em] uppercase opacity-40 group-hover:opacity-100">github</span>
+            </button>
+        
+            <button onclick="handleAuth('yahoo')" class="flex flex-col items-center gap-1 group bg-transparent border-none cursor-pointer">
+                <i class="fab fa-yahoo text-2xl text-white/70 group-hover:text-[var(--neon-color)] transition-all"></i>
+                <span class="text-[8px] tracking-[0.3em] uppercase opacity-40 group-hover:opacity-100">yahoo</span>
+            </button>
+        </div>
+        
+        <button onclick="document.getElementById('auth-hud').style.display = 'none'" class="hud-abort-btn-unique text-[8px] py-2 px-6 uppercase tracking-[0.3em]">
             [ ABORT_CONNECTION ]
         </button>
     </div>
