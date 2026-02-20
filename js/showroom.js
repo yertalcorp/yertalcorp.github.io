@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 19:50:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 19:58:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -368,14 +368,13 @@ window.handleLogout = async () => {
     }
 };
 
+/* Tag/Function: openAuthHUD */
 window.openAuthHUD = () => {
   const hud = document.getElementById('auth-hud');
   const list = document.getElementById('provider-list');
 
   if (hud && list) {
-    hud.classList.add('active'); // use class toggle instead of inline style
-
-    list.innerHTML = ['google', 'github', 'yahoo'].map(provider => `
+    hud.classList.add('active'); list.innerHTML = ['google', 'github', 'yahoo'].map(provider => `
       <button onclick="handleAuth('${provider}')" class="flex flex-col items-center gap-1 group bg-transparent border-none cursor-pointer">
         <i class="fab fa-${provider} text-2xl text-white/70 group-hover:text-[var(--neon-color)] transition-all"></i>
         <span class="text-[8px] tracking-[0.3em] uppercase opacity-40 group-hover:opacity-100">${provider}</span>
