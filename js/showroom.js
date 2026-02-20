@@ -282,20 +282,39 @@ window.toggleMobileMenu = () => {
     menu.classList.toggle('flex');
 };
 
-watchAuthState((newUser) => {
+watchAuthState(async (newUser) => {
     user = newUser;
     
-    // Only update the Auth Zone, leaving the branding and menu untouched
+    // UI Update
     if (currentAuth && currentUi) {
         renderAuthStatus(user, currentAuth);
     }
     
-    if (user && user.email === 'yertal-arcade@gmail.com') {
-        const gateway = document.getElementById('admin-gateway');
-        if (gateway) gateway.innerHTML = '<div class="bg-blue-600/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded text-[10px]">ADMIN_ACTIVE</div>';
+    // REDIRECT LOGIC
+    if (user) {
+        // 1. Check for existing profile
+        const response = await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`);
+        let profile = await response.json();
+
+        // 2. New User Initialization (Researcher Profile)
+        if (!profile) {
+            const generatedSlug = (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-');
+            profile = {
+                display_name: user.displayName || "RECRUIT_UNNAMED",
+                slug: generatedSlug,
+                arcade_logo: currentUi['default-logo'], // Retrieve branding from JSON
+                plan_type: 'free'
+            };
+            await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`, {
+                method: 'PUT',
+                body: JSON.stringify(profile)
+            });
+        }
+
+        // 3. The Hand-off: Send them to the arcade with their slug
+        window.location.href = `./arcade/index.html?user=${profile.slug}`;
     }
 });
-
 window.handleSignupFlow = async () => {
      const email = prompt("Enter your email to join the Lab:");
      const password = prompt("Create a password (min 6 chars):");
@@ -307,7 +326,7 @@ window.handleSignupFlow = async () => {
      }
 };
 
-// Objective: Update handleArcadeEntry to use the first provider in the list
+// Objective: Trigger Auth HUD for guests or proceed to target for researchers
 window.handleArcadeEntry = async (btn) => {
     // Wait for Firebase to be certain of the token
     await auth.authStateReady();
@@ -319,21 +338,8 @@ window.handleArcadeEntry = async (btn) => {
     if (liveuser) {
         window.location.href = targetLink;
     } else {
-        // If the SDK says no user, then and only then trigger login
-        try {
-            const defaultProvider = (currentAuth && currentAuth.enabled_providers.length > 0) 
-                ? currentAuth.enabled_providers[0].id 
-                : 'google';
-            
-            await handleLoginFlow(defaultProvider);
-            
-            // Double check after login popup
-            if (auth.currentUser) {
-                window.location.href = targetLink;
-            }
-        } catch (error) {
-            console.error("Entry Denied:", error);
-        }
+        // Unified Login Flow: Instead of forcing the first provider, show the options HUD
+        window.openAuthHUD();
     }
 };
 
@@ -359,24 +365,23 @@ window.handleLogout = async () => {
         console.error("Global Logout Failed:", error);
     }
 };
+
 window.openAuthHUD = () => {
     const hud = document.getElementById('auth-hud');
     const list = document.getElementById('provider-list');
     
-    // 1. Get providers from your JSON databaseCache
-    const providers = databaseCache.settings?.['auth-providers'] || ['google'];
+    // Use the providers defined in your JSON (currentAuth.enabled_providers)
+    const providers = currentAuth?.enabled_providers || [{id: 'google', icon: 'fab fa-google'}];
 
-    // 2. Generate the buttons with the function call
     list.innerHTML = providers.map(p => `
-        <button onclick="loginWithProvider('${p}')" class="glass-card action-card" style="padding: 1rem; width: 100%; display: flex; align-items: center; gap: 15px; color: white; text-transform: uppercase; font-size: 11px; cursor: pointer;">
+        <button onclick="loginWithProvider('${p.id}')" class="glass-card action-card" style="padding: 1rem; width: 100%; display: flex; align-items: center; gap: 15px; color: white; text-transform: uppercase; font-size: 11px; cursor: pointer;">
             <div class="card-icon-badge" style="margin: 0; width: 1.5rem; height: 1.5rem; font-size: 1.2rem;">
-                <i class="fab fa-${p}"></i>
+                <i class="${p.icon}"></i>
             </div>
-            <span>Authorize via ${p}</span>
+            <span>Authorize via ${p.id}</span>
         </button>
     `).join('');
 
-    // 3. Reveal the HUD
     hud.style.display = 'flex';
 };
 window.onload = initShowroom;
