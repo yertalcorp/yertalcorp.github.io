@@ -376,15 +376,12 @@ window.openAuthHUD = () => {
     
     if (hud && list) {
         hud.style.display = 'flex';
-        
-        // Map providers to the list using your dynamic styling
         list.innerHTML = ['google', 'github', 'yahoo'].map(provider => `
-            <button onclick="handleAuth('${provider}')" class="flex flex-col items-center gap-1 group">
-                <i class="fab fa-${provider} text-xl text-white group-hover:text-[var(--neon-color)] transition-colors"></i>
-                <span class="text-[8px] tracking-[0.2em] uppercase opacity-50 group-hover:opacity-100">AUTHORIZE VIA ${provider}</span>
+            <button onclick="handleAuth('${provider}')" class="flex flex-col items-center gap-1 group bg-transparent border-none cursor-pointer">
+                <i class="fab fa-${provider} text-xl text-white/80 group-hover:text-[var(--neon-color)] transition-all"></i>
+                <span class="text-[7px] tracking-[0.3em] uppercase opacity-40 group-hover:opacity-100">${provider}</span>
             </button>
         `).join('');
     }
 };
-
 window.onload = initShowroom;
