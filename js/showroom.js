@@ -369,19 +369,19 @@ window.handleLogout = async () => {
 };
 
 window.openAuthHUD = () => {
-    const hud = document.getElementById('auth-hud');
-    const list = document.getElementById('provider-list');
-    
-    if (hud && list) {
-        hud.style.display = 'flex';
-        
-        list.innerHTML = ['google', 'github', 'yahoo'].map(provider => `
-            <button onclick="handleAuth('${provider}')" class="flex flex-col items-center gap-1 group bg-transparent border-none cursor-pointer">
-                <i class="fab fa-${provider} text-2xl text-white/70 group-hover:text-[var(--neon-color)] transition-all"></i>
-                <span class="text-[8px] tracking-[0.3em] uppercase opacity-40 group-hover:opacity-100">${provider}</span>
-            </button>
-        `).join('');
-    }
+  const hud = document.getElementById('auth-hud');
+  const list = document.getElementById('provider-list');
+
+  if (hud && list) {
+    hud.classList.add('active'); // use class toggle instead of inline style
+
+    list.innerHTML = ['google', 'github', 'yahoo'].map(provider => `
+      <button onclick="handleAuth('${provider}')" class="flex flex-col items-center gap-1 group bg-transparent border-none cursor-pointer">
+        <i class="fab fa-${provider} text-2xl text-white/70 group-hover:text-[var(--neon-color)] transition-all"></i>
+        <span class="text-[8px] tracking-[0.3em] uppercase opacity-40 group-hover:opacity-100">${provider}</span>
+      </button>
+    `).join('');
+  }
 };
 
 window.onload = initShowroom;
