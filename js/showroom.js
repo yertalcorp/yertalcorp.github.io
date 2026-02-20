@@ -139,13 +139,10 @@ function renderAuthStatus(user, auth) {
              </button>
         `).join('');
         
-        authZone.innerHTML = `
-            <div class="flex items-center gap-4 animate-fadeIn">
-                <span class="text-[9px] text-slate-500 uppercase tracking-[0.2em] font-light">Identity Required</span>
-                <div class="flex gap-3 px-3 py-2 glass rounded-full border border-white/5">
-                    ${providerButtons}
-                </div>
-            </div>`;
+        authZone.innerHTML = \`
+            <button onclick="window.openAuthHUD()" class="glass-card" style="padding: 0.5rem 1.2rem; font-size: 10px; font-weight: 900; color: white; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
+                [ SIGN INTO ARCADE ]
+            </button>\`;
     }
 }
 
