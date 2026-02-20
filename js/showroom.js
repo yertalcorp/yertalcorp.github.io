@@ -132,15 +132,17 @@ function renderAuthStatus(user, auth) {
     } else {
         /* RENDER: SIGN INTO ARCADE BUTTON */
         authZone.innerHTML = `
-            <button onclick="window.openAuthHUD()" 
-                    class="surreal-3d-btn group relative px-5 py-2 rounded-md border border-white/10"
-                    style="cursor: pointer; background: rgba(10, 10, 10, 0.8); display: block !important; visibility: visible !important;">
-                <div class="inner-content flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></div>
-                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-white">SIGN_INTO_ARCADE</span>
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-holo-shimmer"></div>
-            </button>`;
+        <button onclick="window.openAuthHUD()" 
+            class="auth-trigger-btn group px-5 py-2"
+            style="cursor: pointer; min-height: 40px;">
+            <div class="flex items-center gap-3">
+                <div class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+                <span class="text-[9px] font-black uppercase tracking-[0.2em] text-white/90">
+                    SIGN_INTO_ARCADE
+                </span>
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-holo-shimmer"></div>
+        </button>`;
     }
 }
 
