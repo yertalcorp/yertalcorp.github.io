@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 15:57:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 16:08:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -106,10 +106,12 @@ function renderAuthStatus(user, auth) {
     if (!authZone || !auth) return;
 
     authZone.innerHTML = '';
+    
     if (user === undefined) {
-        authZone.innerHTML = '<span class="text-[9px] text-slate-500 animate-pulse uppercase tracking-widest">Verifying...</span>';
+        authZone.innerHTML = '<span class="text-[9px] text-slate-500 animate-pulse uppercase tracking-[0.3em]">INITIALIZING_PROTOCOL...</span>';
         return;
     }
+
     if (user) {
         /* RENDER: LOGGED IN HUD */
         authZone.innerHTML = `
@@ -130,10 +132,18 @@ function renderAuthStatus(user, auth) {
                 </button>
             </div>`;
     } else {
-        /* RENDER: ACCESS PORTAL BUTTON (Corrected to single button) */
+        /* RENDER: ACCESS PORTAL BUTTON (Updated to High-End Console Style) */
         authZone.innerHTML = `
-            <button onclick="window.openAuthHUD()" class="glass-card" style="padding: 0.5rem 1.2rem; font-size: 10px; font-weight: 900; color: white; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
-                [ SIGN INTO ARCADE ]
+            <button onclick="window.openAuthHUD()" 
+                    class="surreal-3d-btn group relative px-6 py-2 rounded-lg border border-white/5 overflow-hidden"
+                    style="min-height: 44px; cursor: pointer; background: rgba(15, 23, 42, 0.6);">
+                <div class="inner-content flex items-center gap-4">
+                    <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse border border-red-400/50"></div>
+                    <span class="text-[9px] font-extrabold uppercase tracking-[0.25em] text-white/90">
+                        SIGN_INTO_ARCADE
+                    </span>
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-holo-shimmer"></div>
             </button>`;
     }
 }
