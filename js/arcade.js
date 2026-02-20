@@ -675,12 +675,12 @@ function formatTimeAgo(timestamp) {
 
 function renderCategoryButtons() {
     const grid = document.getElementById('category-grid');
-    // Assuming 'appData' is your global variable containing the full JSON
-    const categories = appData.settings['arcade-current-types'];
+    / Changed: Use databaseCache which is updated in watchAuthState
+    const categories = databaseCache.settings?.['arcade-current-types'] || [];
     
     grid.innerHTML = categories.map(cat => `
         <button class="cat-btn" onclick="selectCategory('${cat.id}', '${cat.name}')">
-            <i class="fas fa-circle-notch"></i>
+            **<i class="${cat.icon || 'fas fa-circle-notch'}"></i>**
             <span>${cat.name}</span>
         </button>
     `).join('');
@@ -824,8 +824,8 @@ function getPlanLimits(uid) {
 }
 
 // --- DEPLOYMENT TRACKER AT THE BOTTOM ---
+// --- DEPLOYMENT TRACKER ---
 window.auth = auth;
-// attach the global logout function
 window.handleCreation = handleCreation;
-window.handleLogout = logout;
-console.log("ARCADE CORE V.2026.02.17.22:29 - STATUS: COMPACT MODE ACTIVE");
+// Ensure this matches the function name in showroom.js and auth.js
+window.handleLogout = window.handleLogout || logout;** console.log("ARCADE CORE V.2026.02.17.22:29 - STATUS: COMPACT MODE ACTIVE");
