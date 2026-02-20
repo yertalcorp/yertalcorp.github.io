@@ -222,7 +222,7 @@
 }
 #auth-hud h2 {
     font-family: var(--nav-font);
-    font-size: 1.1rem;
+    font-size: 1.5rem;
     letter-spacing: 0.2em;
     color: #ffffff;
 }
@@ -271,7 +271,7 @@
     background: transparent;
     border: 2px solid rgba(255, 255, 255, 0.1);
     border-radius: 0.5rem;
-    font-size: 20 px;
+    font-size: 20 px bold;
     color: #94a3b8;
     transition: all 0.3s ease;
 }
