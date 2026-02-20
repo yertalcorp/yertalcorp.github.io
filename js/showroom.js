@@ -105,9 +105,7 @@ function renderAuthStatus(user, auth) {
     const authZone = document.getElementById('auth-zone');
     if (!authZone || !auth) return;
 
-    // Clear previous state to ensure a clean draw
     authZone.innerHTML = '';
-    // If we are in the split-second between page load and Firebase response
     if (user === undefined) {
         authZone.innerHTML = '<span class="text-[9px] text-slate-500 animate-pulse uppercase tracking-widest">Verifying...</span>';
         return;
@@ -132,19 +130,63 @@ function renderAuthStatus(user, auth) {
                 </button>
             </div>`;
     } else {
-        /* RENDER: ACCESS PORTAL (LOGIN) */
-        const providerButtons = auth.enabled_providers.map(p => `
-             <button onclick="handleLoginFlow('${p.id}')" class="hover:text-[var(--neon-color)] transition-all duration-300 transform hover:scale-110" title="Login with ${p.id}">
-                 <i class="${p.icon} text-lg"></i>
-             </button>
-        `).join('');
-        
-        authZone.innerHTML = \`
+        /* RENDER: ACCESS PORTAL BUTTON (Corrected to single button) */
+        authZone.innerHTML = `
             <button onclick="window.openAuthHUD()" class="glass-card" style="padding: 0.5rem 1.2rem; font-size: 10px; font-weight: 900; color: white; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
                 [ SIGN INTO ARCADE ]
             </button>\`;
     }
 }
+
+/* added new */
+watchAuthState(async (newUser) => {
+    user = newUser;
+    
+    if (currentAuth && currentUi) {
+        renderAuthStatus(user, currentAuth);
+    }
+    
+    if (user) {
+        const response = await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`);
+        let profile = await response.json();
+
+        if (!profile) {
+            const generatedSlug = (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-');
+            profile = {
+                display_name: user.displayName || "RECRUIT_UNNAMED",
+                slug: generatedSlug,
+                arcade_logo: currentUi['default-logo'],
+                plan_type: 'free'
+            };
+            await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`, {
+                method: 'PUT',
+                body: JSON.stringify(profile)
+            });
+        }
+
+        // CHECK INTENT: If the Hero button was clicked, session storage will tell us to go to yertal-arcade
+        const forceSuperuser = sessionStorage.getItem('yertal_redirect_override');
+        const finalSlug = forceSuperuser ? 'yertal-arcade' : profile.slug;
+        sessionStorage.removeItem('yertal_redirect_override'); // Clean up after use
+
+        window.location.href = \`./arcade/index.html?user=\${finalSlug}\`;
+    }
+});
+
+/* added new */
+window.handleArcadeEntry = async (btn) => {
+    await auth.authStateReady();
+    const liveuser = auth.currentUser;
+    const targetLink = btn.getAttribute('data-link');
+    
+    if (liveuser) {
+        window.location.href = targetLink;
+    } else {
+        // Set a flag so the watchAuthState knows to ignore the user's personal slug and use the superuser one
+        sessionStorage.setItem('yertal_redirect_override', 'true');
+        window.openAuthHUD();
+    }
+};
 
 // --- 3. HERO & INTERACTION ENGINE ---
 function renderHero(hero) {
@@ -282,39 +324,6 @@ window.toggleMobileMenu = () => {
     menu.classList.toggle('flex');
 };
 
-watchAuthState(async (newUser) => {
-    user = newUser;
-    
-    // UI Update
-    if (currentAuth && currentUi) {
-        renderAuthStatus(user, currentAuth);
-    }
-    
-    // REDIRECT LOGIC
-    if (user) {
-        // 1. Check for existing profile
-        const response = await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`);
-        let profile = await response.json();
-
-        // 2. New User Initialization (Researcher Profile)
-        if (!profile) {
-            const generatedSlug = (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-');
-            profile = {
-                display_name: user.displayName || "RECRUIT_UNNAMED",
-                slug: generatedSlug,
-                arcade_logo: currentUi['default-logo'], // Retrieve branding from JSON
-                plan_type: 'free'
-            };
-            await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`, {
-                method: 'PUT',
-                body: JSON.stringify(profile)
-            });
-        }
-
-        // 3. The Hand-off: Send them to the arcade with their slug
-        window.location.href = `./arcade/index.html?user=${profile.slug}`;
-    }
-});
 window.handleSignupFlow = async () => {
      const email = prompt("Enter your email to join the Lab:");
      const password = prompt("Create a password (min 6 chars):");
@@ -324,23 +333,6 @@ window.handleSignupFlow = async () => {
              alert("Welcome to the Laboratory!");
          } catch(e) { alert(e.message); }
      }
-};
-
-// Objective: Trigger Auth HUD for guests or proceed to target for researchers
-window.handleArcadeEntry = async (btn) => {
-    // Wait for Firebase to be certain of the token
-    await auth.authStateReady();
-    
-    // 1. Get the most fresh auth state
-    const liveuser = auth.currentUser;
-    const targetLink = btn.getAttribute('data-link');
-    
-    if (liveuser) {
-        window.location.href = targetLink;
-    } else {
-        // Unified Login Flow: Instead of forcing the first provider, show the options HUD
-        window.openAuthHUD();
-    }
 };
 
 window.handleLogout = async () => {
