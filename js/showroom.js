@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 17:52:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 18:01:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -101,48 +101,38 @@ function renderNavbar(items, ui) {
     `).join('');
 }
 
+
 function renderAuthStatus(user, auth) {
     const authZone = document.getElementById('auth-zone');
-    // REMOVED: strict !auth check to ensure button shows even if Firebase is initializing
-    if (!authZone) return; 
+    if (!authZone) return;
 
     authZone.innerHTML = '';
-    
-    if (user === undefined) {
-        authZone.innerHTML = '<span class="text-[9px] text-slate-500 animate-pulse uppercase tracking-[0.3em]">INITIALIZING...</span>';
-        return;
-    }
 
     if (user) {
-        /* RENDER: LOGGED IN STATUS */
+        /* LOGGED IN VIEW */
         authZone.innerHTML = `
-            <div class="flex items-center gap-4 animate-fadeIn">
+            <div class="flex items-center gap-4">
                 <div class="flex flex-col items-end leading-none">
                     <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
                         ${user.email === 'yertal-arcade@gmail.com' ? 'SUPERUSER' : 'RESEARCHER'}
                     </span>
                     <span class="text-[8px] text-[var(--neon-color)] opacity-70 font-mono">STATUS: ACTIVE</span>
                 </div>
-                <img src="${user.photoURL || '/assets/images/default-avatar.png'}" 
-                     class="w-8 h-8 rounded-full border border-[var(--neon-color)] shadow-[0_0_10px_rgba(0,242,255,0.3)]">
-                <button onclick="handleLogout()" class="text-[9px] font-bold uppercase tracking-widest text-red-500/60 hover:text-red-500 transition-colors">
-                    [ DISCONNECT ]
-                </button>
+                <img src="${user.photoURL || ''}" class="w-8 h-8 rounded-full border border-[var(--neon-color)]">
+                <button onclick="handleLogout()" class="text-[9px] font-bold uppercase tracking-widest text-red-500/60">[ DISCONNECT ]</button>
             </div>`;
     } else {
-        /* RENDER: SIGN INTO ARCADE BUTTON */
+        /* SIGN IN BUTTON VIEW */
         authZone.innerHTML = `
-        <button onclick="window.openAuthHUD()" 
-            class="auth-trigger-btn group px-5 py-2"
-            style="cursor: pointer; min-height: 40px;">
-            <div class="flex items-center gap-3">
-                <div class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
-                <span class="text-[9px] font-black uppercase tracking-[0.2em] text-white/90">
-                    SIGN_INTO_ARCADE
-                </span>
-            </div>
-            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-holo-shimmer"></div>
-        </button>`;
+            <button onclick="window.openAuthHUD()" 
+                    class="auth-trigger-btn group px-5 py-2"
+                    style="cursor: pointer; position: relative; overflow: hidden;">
+                <div class="flex items-center gap-3">
+                    <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></div>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-white">SIGN_INTO_ARCADE</span>
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-holo-shimmer"></div>
+            </button>`;
     }
 }
 
