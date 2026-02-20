@@ -370,20 +370,21 @@ window.handleLogout = async () => {
     }
 };
 
+/* Tag/Function: openAuthHUD */
 window.openAuthHUD = () => {
     const hud = document.getElementById('auth-hud');
     const list = document.getElementById('provider-list');
     
     if (hud && list) {
-        hud.style.display = 'flex';
-        hud.classList.add('flex', 'items-center', 'justify-center');
+        hud.style.display = 'block'; // display: block works better with position: absolute children
         
         list.innerHTML = ['google', 'github', 'yahoo'].map(provider => `
-            <button onclick="handleAuth('${provider}')" class="flex flex-col items-center gap-2 group bg-transparent border-none cursor-pointer">
-                <i class="fab fa-${provider} text-2xl text-white/80 group-hover:text-[var(--neon-color)] transition-all"></i>
-                <span class="text-[8px] tracking-[0.3em] uppercase opacity-40 group-hover:opacity-100">AUTHORIZE VIA ${provider}</span>
+            <button onclick="handleAuth('${provider}')" class="flex flex-col items-center gap-1 group bg-transparent border-none cursor-pointer">
+                <i class="fab fa-${provider} text-2xl text-white/70 group-hover:text-[var(--neon-color)] transition-all"></i>
+                <span class="text-[8px] tracking-[0.3em] uppercase opacity-40 group-hover:opacity-100">${provider}</span>
             </button>
         `).join('');
     }
 };
+
 window.onload = initShowroom;
