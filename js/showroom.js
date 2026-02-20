@@ -138,38 +138,50 @@ function renderAuthStatus(user, auth) {
     }
 }
 
-/* added new */
 watchAuthState(async (newUser) => {
     user = newUser;
-    
-    if (currentAuth && currentUi) {
+
+    if (user && currentAuth && currentUi) {
         renderAuthStatus(user, currentAuth);
-    }
-    
-    if (user) {
-        const response = await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`);
-        let profile = await response.json();
+        
+        try {
+            // 1. Retrieve from Session Storage first to avoid hardcoded pathing
+            let currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+        
+            if (!currentUser || currentUser.uid !== user.uid) {
+                const profileUrl = firebaseConfig.databaseURL + "/users/" + user.uid + "/profile.json";
+                const response = await fetch(profileUrl);
+                let profile = await response.json();
 
-        if (!profile) {
-            const generatedSlug = (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-');
-            profile = {
-                display_name: user.displayName || "RECRUIT_UNNAMED",
-                slug: generatedSlug,
-                arcade_logo: currentUi['default-logo'],
-                plan_type: 'free'
-            };
-            await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`, {
-                method: 'PUT',
-                body: JSON.stringify(profile)
-            });
+                if (!profile) {
+                    const generatedSlug = (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-');
+                    profile = {
+                        display_name: user.displayName,
+                        slug: generatedSlug,
+                        arcade_logo: currentUi['default-logo'],
+                        plan_type: 'free'
+                    };
+                    
+                    await fetch(profileUrl, {
+                        method: 'PUT',
+                        body: JSON.stringify(profile)
+                    });
+                }
+                // Update currentUser for the session
+                currentUser = profile;
+                sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            }
+
+            const forceSuperuser = sessionStorage.getItem('yertal_redirect_override');
+            // 2026-02-01: Superuser is yertal-arcade
+            const finalSlug = forceSuperuser ? 'yertal-arcade' : currentUser.slug;
+            
+            sessionStorage.removeItem('yertal_redirect_override'); 
+            window.location.href = "./arcade/index.html?user=" + finalSlug;
+
+        } catch (error) {
+            console.error("USER_RETRIEVAL_ERROR:", error);
         }
-
-        // CHECK INTENT: If the Hero button was clicked, session storage will tell us to go to yertal-arcade
-        const forceSuperuser = sessionStorage.getItem('yertal_redirect_override');
-        const finalSlug = forceSuperuser ? 'yertal-arcade' : profile.slug;
-        sessionStorage.removeItem('yertal_redirect_override'); // Clean up after use
-
-        window.location.href = \`./arcade/index.html?user=\${finalSlug}\`;
     }
 });
 
