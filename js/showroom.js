@@ -378,11 +378,11 @@ window.openAuthHUD = () => {
       <button onclick="handleAuth('${provider}')" 
               class="group flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[var(--neon-color)] px-6 py-4 rounded-xl transition-all duration-300 cursor-pointer mb-4">
         
-        <span class="uppercase tracking-[0.3em] text-[11px]" style="font-family: var(--nav-font); color: var(--nav-text-color);">
-          LOGIN_USING <span style="color: var(--neon-color); font-weight: bold;">${provider}</span> :
+        <span class="uppercase tracking-[0.3em] text-[20px]" style="font-family: var(--nav-font); color: var(--nav-text-color);">
+          LOGIN WITH <span style="color: var(--neon-color); font-weight: bold;">${provider}</span> :
         </span>
 
-        <i class="fab fa-${provider} **text-5xl** transition-all duration-500 group-hover:scale-110" 
+        <i class="fab fa-${provider} text-5xl transition-all duration-500 group-hover:scale-110" 
            style="color: var(--neon-color); filter: drop-shadow(0 0 15px var(--neon-color));">
         </i>
       </button>
