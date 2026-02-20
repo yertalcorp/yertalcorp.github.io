@@ -103,17 +103,18 @@ function renderNavbar(items, ui) {
 
 function renderAuthStatus(user, auth) {
     const authZone = document.getElementById('auth-zone');
-    if (!authZone || !auth) return;
+    // REMOVED: strict !auth check to ensure button shows even if Firebase is initializing
+    if (!authZone) return; 
 
     authZone.innerHTML = '';
     
     if (user === undefined) {
-        authZone.innerHTML = '<span class="text-[9px] text-slate-500 animate-pulse uppercase tracking-[0.3em]">INITIALIZING_PROTOCOL...</span>';
+        authZone.innerHTML = '<span class="text-[9px] text-slate-500 animate-pulse uppercase tracking-[0.3em]">INITIALIZING...</span>';
         return;
     }
 
     if (user) {
-        /* RENDER: LOGGED IN HUD */
+        /* RENDER: LOGGED IN STATUS */
         authZone.innerHTML = `
             <div class="flex items-center gap-4 animate-fadeIn">
                 <div class="flex flex-col items-end leading-none">
@@ -122,26 +123,21 @@ function renderAuthStatus(user, auth) {
                     </span>
                     <span class="text-[8px] text-[var(--neon-color)] opacity-70 font-mono">STATUS: ACTIVE</span>
                 </div>
-                
                 <img src="${user.photoURL || '/assets/images/default-avatar.png'}" 
-                     class="w-9 h-9 rounded-full border-2 border-[var(--neon-color)] shadow-[0_0_15px_rgba(0,242,255,0.2)]">
-
-                <button onclick="handleLogout()"
-                        class="border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all duration-300 text-white/60 hover:text-white">
-                    DISCONNECT
+                     class="w-8 h-8 rounded-full border border-[var(--neon-color)] shadow-[0_0_10px_rgba(0,242,255,0.3)]">
+                <button onclick="handleLogout()" class="text-[9px] font-bold uppercase tracking-widest text-red-500/60 hover:text-red-500 transition-colors">
+                    [ DISCONNECT ]
                 </button>
             </div>`;
     } else {
-        /* RENDER: ACCESS PORTAL BUTTON (Updated to High-End Console Style) */
+        /* RENDER: SIGN INTO ARCADE BUTTON */
         authZone.innerHTML = `
             <button onclick="window.openAuthHUD()" 
-                    class="surreal-3d-btn group relative px-6 py-2 rounded-lg border border-white/5 overflow-hidden"
-                    style="min-height: 44px; cursor: pointer; background: rgba(15, 23, 42, 0.6);">
-                <div class="inner-content flex items-center gap-4">
-                    <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse border border-red-400/50"></div>
-                    <span class="text-[9px] font-extrabold uppercase tracking-[0.25em] text-white/90">
-                        SIGN_INTO_ARCADE
-                    </span>
+                    class="surreal-3d-btn group relative px-5 py-2 rounded-md border border-white/10"
+                    style="cursor: pointer; background: rgba(10, 10, 10, 0.8); display: block !important; visibility: visible !important;">
+                <div class="inner-content flex items-center gap-3">
+                    <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></div>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-white">SIGN_INTO_ARCADE</span>
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-holo-shimmer"></div>
             </button>`;
