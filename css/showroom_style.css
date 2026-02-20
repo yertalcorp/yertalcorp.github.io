@@ -186,4 +186,15 @@
 .animate-fadeIn {
     animation: fadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
+/* Add this at the end of Section 4 in showroom_style.css */
+#auth-hud .metallic-bezel {
+    min-height: auto !important;
+    max-height: fit-content !important;
+    display: flex !important;
+    flex-direction: column;
+    overflow: visible;
+}
 
+#auth-hud .metallic-bezel::after {
+    height: 100%; /* Ensures the neon border stays tight to the auto-height box */
+}
