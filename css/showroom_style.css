@@ -190,23 +190,20 @@
 /* Add to the bottom of showroom_styles.css */
 
 #auth-hud { 
-    display: none; /* hidden by default */ 
+    display: none; /* Default state: Hidden */
     position: fixed; 
     inset: 0; 
     height: 100vh; 
     width: 100vw; 
     background: rgba(0, 0, 0, 0.96); 
-    z-index: 1000; 
+    z-index: 9999; 
     backdrop-filter: blur(12px); 
-    display: flex; /* flex container */ 
-    align-items: center; /* vertical centering */ 
-    justify-content: center; /* horizontal centering */ 
+    align-items: center; /* Vertical Center */
+    justify-content: center; /* Horizontal Center */
 } 
+
 #auth-hud.active {
-    display: flex;
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
+    display: flex; /* Force show when JS adds class */
 }
 
 #auth-hud .metallic-bezel {
@@ -238,8 +235,9 @@
 
 .hud-bezel-fixed {
     position: relative;
-    margin: 0; /* remove auto margins */ 
-    transform: none;
+    transform: none; /* REMOVE the -50% translations */
+    margin: auto; 
+    min-height: unset;
 }
 
 /* Isolated Abort Button Style */
