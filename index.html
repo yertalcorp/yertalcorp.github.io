@@ -42,30 +42,31 @@
         </footer>
 
     <div id="admin-gateway"></div>
-    <div id="auth-hud" 
-     style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; backdrop-filter: blur(10px);">
+    <script type="module" src="./js/showroom.js"></script>
+    <div id="auth-hud" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 1000; backdrop-filter: blur(12px);">
     
-    <div class="glass-card metallic-bezel flex flex-col items-center" 
-         style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) !important; 
-                padding: 2.5rem; width: 320px; height: auto !important; margin: 0;">
+    <div class="glass-card metallic-bezel hud-bezel-fixed flex flex-col items-center" 
+         style="padding: 2.5rem; width: 320px; height: auto !important;">
         
-            <h2 class="text-glow uppercase tracking-[0.4em] text-white font-extrabold" 
-                style="font-size: 0.9rem; filter: drop-shadow(0 0 8px var(--neon-color));">
-                ACCESS_PROTOCOL
-            </h2>
-            <div style="height: 1px; width: 40px; background: var(--neon-color); margin: 0.5rem auto 1.5rem; opacity: 0.5;"></div>
-            <p class="text-slate-400 text-[8px] mb-10 uppercase tracking-[0.3em] font-light">
-                IDENTITY PROVIDER <span class="text-[var(--neon-color)]">REQUIRED</span>
-            </p>
+        <h2 class="text-white uppercase font-black" 
+            style="font-size: 0.8rem; tracking: 0.5em; filter: drop-shadow(0 0 5px var(--neon-color));">
+            ACCESS_PROTOCOL
+        </h2>
         
-        <div id="provider-list" class="flex flex-col gap-6 mb-8 items-center w-full"></div>
+        <div style="height: 1px; width: 30px; background: var(--neon-color); margin: 0.8rem 0 1.2rem; opacity: 0.4;"></div>
+        
+        <p style="font-family: monospace; font-size: 7px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 2.5rem;">
+            ID_PROVIDER: <span style="color: var(--neon-color)">REQUIRED</span>
+        </p>
+        
+        <div id="provider-list" class="flex flex-col gap-6 mb-10 items-center w-full">
+            </div>
         
         <button onclick="document.getElementById('auth-hud').style.display = 'none'" 
-                class="text-slate-500 hover:text-white text-[10px] uppercase tracking-[0.3em] transition-all">
+                class="hud-abort-btn text-[8px] uppercase tracking-[0.3em]">
             [ ABORT_CONNECTION ]
         </button>
     </div>
 </div>
-    <script type="module" src="./js/showroom.js"></script>
 </body>
 </html>
