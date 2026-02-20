@@ -207,10 +207,10 @@
 }
 
 #auth-hud .metallic-bezel {
-    transform: translate(-50%, -50%); /* Bypasses the system_styles transform reset */
+    transform: none;
     min-height: unset;
-    max-height: 80vh;
-    box-shadow: 0 0 50px rgba(0, 242, 255, 0.2);
+    max-height: 90vh;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5), 0 0 30px var(--neon-color);
 }
 
 /* Ensure the glow border follows the new auto-height */
@@ -221,12 +221,17 @@
     inset: 0;
 }
 #auth-hud h2 {
-    font-size: 1.1rem; /* Increased from 0.8rem */
-    letter-spacing: 0.6em;
+    font-family: var(--nav-font);
+    font-size: 1.8rem;
+    letter-spacing: 0.5em;
+    color: #ffffff;
 }
 
 #auth-hud p {
-    font-size: 10px; /* Increased from 7px */
+   font-family: var(--nav-font); /* Using system font variable */
+   font-size: 14px;
+   letter-spacing: 0.2em;
+   color: #94a3b8;
 }
 /* --- AUTH SYSTEM SPECIFIC CLASSES --- */
 
@@ -246,14 +251,15 @@
     transform: none; /* REMOVE the -50% translations */
     margin: auto; 
     min-height: unset;
-    width: 450px; /* Increased from 320px */
-    padding: 3.5rem; /* Increased from 2.5rem */
+    width: 500px;
+    padding: 4rem;
 }
 
 /* Isolated Abort Button Style */
 .hud-abort-btn-unique {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
     color: #94a3b8;
     transition: all 0.3s ease;
 }
