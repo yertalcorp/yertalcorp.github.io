@@ -220,6 +220,14 @@
     position: absolute;
     inset: 0;
 }
+#auth-hud h2 {
+    font-size: 1.1rem; /* Increased from 0.8rem */
+    letter-spacing: 0.6em;
+}
+
+#auth-hud p {
+    font-size: 10px; /* Increased from 7px */
+}
 /* --- AUTH SYSTEM SPECIFIC CLASSES --- */
 
 /* Fixes the Sign-In Button visibility in the Navbar */
@@ -238,6 +246,8 @@
     transform: none; /* REMOVE the -50% translations */
     margin: auto; 
     min-height: unset;
+    width: 450px; /* Increased from 320px */
+    padding: 3.5rem; /* Increased from 2.5rem */
 }
 
 /* Isolated Abort Button Style */
