@@ -42,20 +42,20 @@
         </footer>
 
     <div id="admin-gateway"></div>
-<div id="auth-hud" 
-     class="fixed inset-0 z-50 flex items-center justify-center" 
-     style="display: none; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px);">
+    <div id="auth-hud" 
+     style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; backdrop-filter: blur(10px);">
     
     <div class="glass-card metallic-bezel flex flex-col items-center" 
-         style="padding: 2.5rem; width: 320px; height: auto !important; min-height: 0 !important; margin: 0 auto;">
+         style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) !important; 
+                padding: 2.5rem; width: 320px; height: auto !important; margin: 0;">
         
-        <h2 class="text-glow uppercase tracking-widest text-white mb-2" style="font-size: 1.2rem;">Access Protocol</h2>
-        <p class="text-slate-400 text-[10px] mb-8 uppercase tracking-tighter">Select Identity Provider</p>
+        <h2 class="text-glow uppercase tracking-widest text-white mb-2" style="font-size: 1.1rem;">Access Protocol</h2>
+        <p class="text-slate-400 text-[9px] mb-8 uppercase tracking-widest opacity-60">Select Identity Provider</p>
         
         <div id="provider-list" class="flex flex-col gap-6 mb-8 items-center w-full"></div>
         
         <button onclick="document.getElementById('auth-hud').style.display = 'none'" 
-                class="text-slate-500 hover:text-white text-[10px] uppercase tracking-widest transition-all">
+                class="text-slate-500 hover:text-white text-[10px] uppercase tracking-[0.3em] transition-all">
             [ ABORT_CONNECTION ]
         </button>
     </div>
