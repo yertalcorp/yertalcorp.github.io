@@ -42,15 +42,16 @@
         </footer>
 
     <div id="admin-gateway"></div>
-    <div id="auth-hud" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; backdrop-filter: blur(10px); align-items: center; justify-content: center;">
-        <div class="glass-card metallic-bezel" style="padding: 2.5rem; max-width: 400px; width: 90%; text-align: center;">
+    <div id="auth-hud" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; backdrop-filter: blur(10px); **display: flex;** align-items: center; justify-content: center;">
+        <div class="glass-card metallic-bezel" style="padding: 2.5rem; max-width: **320px**; width: 90%; text-align: center;">
             <h2 class="text-glow uppercase tracking-widest text-white mb-2" style="font-size: 1.2rem; font-family: var(--nav-font);">Access Protocol</h2>
             <p class="text-slate-400 text-[10px] mb-8 uppercase tracking-tighter">Select Identity Provider</p>
-            <div id="provider-list" class="flex flex-col gap-4 mb-8"></div>
+        
+            <div id="provider-list" class="flex flex-col gap-6 mb-8 items-center justify-center"></div>
+        
             <button onclick="document.getElementById('auth-hud').style.display = 'none'" class="text-slate-500 hover:text-white text-[10px] uppercase tracking-widest transition-all">[ ABORT_CONNECTION ]</button>
         </div>
     </div>
-
     <script type="module" src="./js/showroom.js"></script>
 </body>
 </html>
