@@ -374,18 +374,17 @@ window.openAuthHUD = () => {
     const hud = document.getElementById('auth-hud');
     const list = document.getElementById('provider-list');
     
-    // Use the providers defined in your JSON (currentAuth.enabled_providers)
-    const providers = currentAuth?.enabled_providers || [{id: 'google', icon: 'fab fa-google'}];
-
-    list.innerHTML = providers.map(p => `
-        <button onclick="loginWithProvider('${p.id}')" class="glass-card action-card" style="padding: 1rem; width: 100%; display: flex; align-items: center; gap: 15px; color: white; text-transform: uppercase; font-size: 11px; cursor: pointer;">
-            <div class="card-icon-badge" style="margin: 0; width: 1.5rem; height: 1.5rem; font-size: 1.2rem;">
-                <i class="${p.icon}"></i>
-            </div>
-            <span>Authorize via ${p.id}</span>
-        </button>
-    `).join('');
-
-    hud.style.display = 'flex';
+    if (hud && list) {
+        hud.style.display = 'flex';
+        
+        // Map providers to the list using your dynamic styling
+        list.innerHTML = ['google', 'github', 'yahoo'].map(provider => `
+            <button onclick="handleAuth('${provider}')" class="flex flex-col items-center gap-1 group">
+                <i class="fab fa-${provider} text-xl text-white group-hover:text-[var(--neon-color)] transition-colors"></i>
+                <span class="text-[8px] tracking-[0.2em] uppercase opacity-50 group-hover:opacity-100">AUTHORIZE VIA ${provider}</span>
+            </button>
+        `).join('');
+    }
 };
+
 window.onload = initShowroom;
