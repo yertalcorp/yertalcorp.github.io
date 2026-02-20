@@ -202,7 +202,12 @@
     align-items: center; /* vertical centering */ 
     justify-content: center; /* horizontal centering */ 
 } 
-#auth-hud.active { display: flex; /* show HUD when active */ }
+#auth-hud.active {
+    display: flex;
+    opacity: 1;
+    pointer-events: auto;
+}
+
 #auth-hud .metallic-bezel {
     transform: translate(-50%, -50%); /* Bypasses the system_styles transform reset */
     min-height: unset;
