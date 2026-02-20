@@ -216,10 +216,13 @@
     opacity: 1;
 }
 
-/* Fixes the HUD "Bottom Paste" by forcing Screen Centering */
 .hud-bezel-fixed {
-    position: relative;
-    margin: auto;
+    /* ... existing properties ... */
+    position: relative ;
+    top: auto ;
+    left: auto ;
+    transform: none ;
+    margin: auto ;
 }
 
 /* Isolated Abort Button Style */
