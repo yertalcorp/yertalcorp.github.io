@@ -251,8 +251,19 @@
     transform: none; /* REMOVE the -50% translations */
     margin: auto; 
     min-height: unset;
-    width: 500px;
+    width: 550px;
     padding: 4rem;
+}
+#provider-list {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    width: 100% !important;
+    gap: 1rem !important;
+}
+
+/* Ensure FontAwesome icons inside the HUD are forced to the neon color */
+#provider-list i {
+    color: var(--neon-color);
 }
 
 /* Isolated Abort Button Style */
