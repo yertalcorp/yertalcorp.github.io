@@ -134,7 +134,7 @@ function renderAuthStatus(user, auth) {
         authZone.innerHTML = `
             <button onclick="window.openAuthHUD()" class="glass-card" style="padding: 0.5rem 1.2rem; font-size: 10px; font-weight: 900; color: white; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
                 [ SIGN INTO ARCADE ]
-            </button>\`;
+            </button>`;
     }
 }
 
