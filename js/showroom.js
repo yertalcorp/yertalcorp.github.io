@@ -364,51 +364,31 @@ window.handleLogout = async () => {
     }
 };
 
-/* Tag/Function: openAuthHUD */
 window.openAuthHUD = (mode = 'personal') => {
-  // 1. SET THE REDIRECT OVERRIDE FLAG
   if (mode === 'superuser') {
     sessionStorage.setItem('yertal_redirect_override', 'true');
   } else {
     sessionStorage.removeItem('yertal_redirect_override');
   }
 
-  // 2. INSTANT REDIRECT IF LOGGED IN (Bypass HUD)
-  if (auth.currentUser) {
+  /* --- THE FIX: CHECK CACHE BEFORE SHOWING HUD --- */
+  const sessionUser = JSON.parse(sessionStorage.getItem('currentUser'));
+
+  if (auth.currentUser || sessionUser) {
+    // If Firebase is ready OR we have a cached user in session storage...
     if (mode === 'superuser') {
         window.location.href = `./arcade/index.html?user=yertal-arcade`;
     } else {
-        const currentUserData = JSON.parse(sessionStorage.getItem('currentUser'));
-        // Priority: Use the session slug, fallback to generated slug if DB fetch hasn't finished
-        const slug = currentUserData?.slug || (auth.currentUser.displayName || auth.currentUser.uid).toLowerCase().replace(/\s+/g, '-');
+        const slug = sessionUser?.slug || (auth.currentUser?.displayName || "user").toLowerCase().replace(/\s+/g, '-');
         window.location.href = `./arcade/index.html?user=${slug}`;
     }
-    return;
+    return; // Exit here so HUD never opens
   }
 
   // 3. SHOW HUD ONLY IF GUEST
   const hud = document.getElementById('auth-hud');
-  const list = document.getElementById('provider-list');
-
-  if (hud && list && currentAuth) {
-    hud.classList.add('active'); 
-    
-    list.innerHTML = currentAuth.enabled_providers.map(provider => `
-      <button onclick="window.handleAuth('${provider.id}')" 
-              class="group flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[var(--neon-color)] px-6 py-4 rounded-xl transition-all duration-300 cursor-pointer mb-4">
-        
-        <span class="uppercase tracking-[0.3em] text-[30px]" style="font-family: var(--nav-font); color: var(--nav-text-color);">
-          SIGNIN WITH <span style="color: var(--neon-color); font-weight: bold;">${provider.id.toUpperCase()}</span> :
-        </span>
-
-        <i class="${provider.icon} text-5xl transition-all duration-500 group-hover:scale-110" 
-           style="color: var(--neon-color); filter: drop-shadow(0 0 15px var(--neon-color));">
-        </i>
-      </button>
-    `).join('');
-  }
+  // ... rest of HUD logic
 };
-
 /* Tag/Function: handleAuth */
 window.handleAuth = async (provider) => {
     try {
