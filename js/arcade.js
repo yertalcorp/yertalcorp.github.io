@@ -680,7 +680,7 @@ function renderCategoryButtons() {
     
     grid.innerHTML = categories.map(cat => `
         <button class="cat-btn" onclick="selectCategory('${cat.id}', '${cat.name}')">
-            **<i class="${cat.icon || 'fas fa-circle-notch'}"></i>**
+            <i class="${cat.icon || 'fas fa-circle-notch'}"></i>
             <span>${cat.name}</span>
         </button>
     `).join('');
@@ -720,7 +720,7 @@ function predictLogicType(prompt) {
 }
 
 window.handleInitialForge = async () => {
-    **// 1. Capture Inputs from HUD**
+    // 1. Capture Inputs from HUD
     const arcadeName = document.getElementById('new-arcade-name').value;
     const arcadeSubtitle = document.getElementById('new-arcade-subtitle').value;
     const initialPrompt = document.getElementById('initial-prompt').value;
@@ -737,12 +737,12 @@ window.handleInitialForge = async () => {
     const limits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
 
     try {
-        **// 2. Consolidated Profile Update (No more hardcoded paths)**
+        // 2. Consolidated Profile Update (No more hardcoded paths)
         const newProfileData = {
             ...userProfile,
             arcade_title: arcadeName.toUpperCase(),
             arcade_subtitle: arcadeSubtitle || "LABORATORY ACTIVE",
-            **arcade_logo: userProfile.arcade_logo || databaseCache.settings?.['ui-settings']?.['default-logo'],**
+            arcade_logo: userProfile.arcade_logo || databaseCache.settings?.['ui-settings']?.['default-logo'],
             profile_picture: profilePic || userProfile.profile_picture || user.photoURL,
             slug: arcadeName.toLowerCase().replace(/\s+/g, '-'),
             plan_type: 'free',
@@ -754,12 +754,12 @@ window.handleInitialForge = async () => {
             databaseCache.users[user.uid].profile = newProfileData; 
         }
 
-        **// 3. Update URL and Infrastructure**
+        // 3. Update URL and Infrastructure
         window.history.replaceState({}, '', `?user=${newProfileData.slug}`);
         const finalName = selectedCategory === 'custom' ? customName : `${selectedCategory} Lab`;
         await window.addNewCurrent(finalName, selectedCategory, initialPrompt, limits);
 
-        **// 4. Cleanup UI**
+        // 4. Cleanup UI
         document.getElementById('onboarding-hud').classList.remove('active');
         await refreshUI(); 
         
@@ -828,4 +828,4 @@ function getPlanLimits(uid) {
 window.auth = auth;
 window.handleCreation = handleCreation;
 // Ensure this matches the function name in showroom.js and auth.js
-window.handleLogout = window.handleLogout || logout;** console.log("ARCADE CORE V.2026.02.17.22:29 - STATUS: COMPACT MODE ACTIVE");
+window.handleLogout = window.handleLogout || logout; console.log("ARCADE CORE V.2026.02.17.22:29 - STATUS: COMPACT MODE ACTIVE");
