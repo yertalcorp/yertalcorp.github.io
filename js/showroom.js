@@ -102,36 +102,45 @@ function renderNavbar(items, ui) {
 }
 
 
-function renderAuthStatus(user, auth) {
+/* Tag/Function: renderAuthStatus */
+function renderAuthStatus(user, authData) {
     const authZone = document.getElementById('auth-zone');
-    if (!authZone) return;
+    if (!authZone || !authData) return;
 
     authZone.innerHTML = '';
 
     if (user) {
         /* LOGGED IN VIEW */
         authZone.innerHTML = `
-            <div class="flex items-center gap-4">
-                <div class="flex flex-col items-end leading-none">
-                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
-                        ${user.email === 'yertal-arcade@gmail.com' ? 'SUPERUSER' : 'RESEARCHER'}
-                    </span>
-                    <span class="text-[8px] text-[var(--neon-color)] opacity-70 font-mono">STATUS: ACTIVE</span>
+            <div class="flex items-center gap-6">
+                <button onclick="window.openAuthHUD('personal')" 
+                        class="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--neon-color)] hover:brightness-125 transition-all cursor-pointer">
+                    [ ${authData.entry_label.toUpperCase()} ]
+                </button>
+
+                <div class="flex items-center gap-4 border-l border-white/10 pl-6">
+                    <div class="flex flex-col items-end leading-none">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                            ${user.email === 'yertal-arcade@gmail.com' ? 'SUPERUSER' : 'RESEARCHER'}
+                        </span>
+                        <span class="text-[8px] text-[var(--neon-color)] opacity-70 font-mono">STATUS: ACTIVE</span>
+                    </div>
+                    <img src="${user.photoURL || ''}" class="w-8 h-8 rounded-full border border-[var(--neon-color)]">
+                    <button onclick="window.handleLogout()" class="text-[9px] font-bold uppercase tracking-widest text-red-500/60 hover:text-red-500 transition-colors">
+                        [ DISCONNECT ]
+                    </button>
                 </div>
-                <img src="${user.photoURL || ''}" class="w-8 h-8 rounded-full border border-[var(--neon-color)]">
-                <button onclick="handleLogout()" class="text-[9px] font-bold uppercase tracking-widest text-red-500/60">[ DISCONNECT ]</button>
             </div>`;
     } else {
         /* SIGN IN BUTTON VIEW */
         authZone.innerHTML = `
-            <button onclick="window.openAuthHUD()" 
-                    class="auth-trigger-btn group px-5 py-2"
-                    style="cursor: pointer; position: relative; overflow: hidden;">
+            <button onclick="window.openAuthHUD('personal')" class="auth-trigger-btn group px-5 py-2">
                 <div class="flex items-center gap-3">
                     <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></div>
-                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-white">SIGN_INTO_ARCADE</span>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-white">
+                        ${authData.signin_label.toUpperCase()}
+                    </span>
                 </div>
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-holo-shimmer"></div>
             </button>`;
     }
 }
@@ -183,21 +192,6 @@ watchAuthState(async (newUser) => {
     }
 });
 
-/* added new */
-window.handleArcadeEntry = async (btn) => {
-    await auth.authStateReady();
-    const liveuser = auth.currentUser;
-    const targetLink = btn.getAttribute('data-link');
-    
-    if (liveuser) {
-        window.location.href = targetLink;
-    } else {
-        // Set a flag so the watchAuthState knows to ignore the user's personal slug and use the superuser one
-        sessionStorage.setItem('yertal_redirect_override', 'true');
-        window.openAuthHUD();
-    }
-};
-
 // --- 3. HERO & INTERACTION ENGINE ---
 function renderHero(hero) {
     const container = document.getElementById('hero-container');
@@ -212,7 +206,7 @@ function renderHero(hero) {
                 ${hero.description}
             </p>
             <div class="w-full flex justify-center mt-8 mb-9" style="perspective: 1000px;">
-                <button id="arcade-trigger" data-link="${ctaLink}" onclick="handleArcadeEntry(this)" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl uppercase text-lg tracking-[0.5em] text-white">
+                <button id="arcade-trigger" data-link="${ctaLink}" onclick="window.openAuthHUD('superuser')" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl uppercase text-lg tracking-[0.5em] text-white">
                     <div class="inner-content flex items-center gap-6">
                         <i class="fas fa-power-off text-blue-400 opacity-70 group-hover:scale-125 transition-transform"></i>
                         ${hero.holographic_cta.text}
@@ -368,18 +362,42 @@ window.handleLogout = async () => {
     }
 };
 
-window.openAuthHUD = () => {
+/* Tag/Function: openAuthHUD */
+window.openAuthHUD = (mode = 'personal') => {
+  // 1. SET REDIRECT OVERRIDE FLAG
+  if (mode === 'superuser') {
+    sessionStorage.setItem('yertal_redirect_override', 'true');
+  } else {
+    sessionStorage.removeItem('yertal_redirect_override');
+  }
+
+  // 2. INSTANT REDIRECT IF LOGGED IN
+  if (auth.currentUser) {
+    if (mode === 'superuser') {
+        window.location.href = `./arcade/index.html?user=yertal-arcade`;
+    } else {
+        const currentUserData = JSON.parse(sessionStorage.getItem('currentUser'));
+        const slug = currentUserData ? currentUserData.slug : (auth.currentUser.displayName || auth.currentUser.uid).toLowerCase().replace(/\s+/g, '-');
+        window.location.href = `./arcade/index.html?user=${slug}`;
+    }
+    return;
+  }
+
+  // 3. RENDER HUD FOR GUESTS
   const hud = document.getElementById('auth-hud');
   const list = document.getElementById('provider-list');
+  
+  // Use the label from your JSON (currentAuth.providers_label)
+  const hudTitle = currentAuth?.providers_label || 'SELECT_PROVIDER';
 
   if (hud && list) {
     hud.classList.add('active'); 
     list.innerHTML = ['google', 'github', 'yahoo'].map(provider => `
-      <button onclick="handleAuth('${provider}')" 
+      <button onclick="window.handleAuth('${provider}')" 
               class="group flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[var(--neon-color)] px-6 py-4 rounded-xl transition-all duration-300 cursor-pointer mb-4">
         
         <span class="uppercase tracking-[0.3em] text-[30px]" style="font-family: var(--nav-font); color: var(--nav-text-color);">
-          LOGIN WITH <span style="color: var(--neon-color); font-weight: bold;">${provider}</span> :
+          ${hudTitle} <span style="color: var(--neon-color); font-weight: bold;">${provider}</span> :
         </span>
 
         <i class="fab fa-${provider} text-5xl transition-all duration-500 group-hover:scale-110" 
@@ -388,6 +406,28 @@ window.openAuthHUD = () => {
       </button>
     `).join('');
   }
+};
+
+/* Tag/Function: handleAuth */
+window.handleAuth = async (provider) => {
+    try {
+        const result = await loginWithProvider(provider);
+        
+        if (result) {
+            // 1. Close the HUD immediately for a clean UI
+            window.closeAuthHUD();
+
+            // NOTE: Your existing watchAuthState listener below will 
+            // detect this login and perform the window.location.href 
+            // redirect automatically based on the user's slug.
+            console.log("%c [AUTH] GATEWAY CLEARED. REDIRECTING...", "color: var(--neon-color)");
+        }
+    } catch (error) {
+        console.error("Auth Bridge Error:", error);
+        if (error.code !== 'auth/popup-closed-by-user') {
+            alert("Login failed: " + error.message);
+        }
+    }
 };
 
 window.closeAuthHUD = () => {
