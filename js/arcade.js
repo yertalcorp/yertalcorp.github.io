@@ -675,7 +675,7 @@ function formatTimeAgo(timestamp) {
 
 function renderCategoryButtons() {
     const grid = document.getElementById('category-grid');
-    / Changed: Use databaseCache which is updated in watchAuthState
+    // Changed: Use databaseCache which is updated in watchAuthState
     const categories = databaseCache.settings?.['arcade-current-types'] || [];
     
     grid.innerHTML = categories.map(cat => `
