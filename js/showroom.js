@@ -341,20 +341,17 @@ window.handleSignupFlow = async () => {
      }
 };
 
+/* Tag/Function: handleLogout */
 window.handleLogout = async () => {
     try {
-        // 1. Get the Global Logout URL from our auth helper
         const globalLogoutUrl = await logout();
 
-        // 2. Local Cleanup
         user = null;
+        // Restoring your explicit request to clear everything
         localStorage.clear();
         sessionStorage.clear();
 
-        // 3. The Nuclear Option
         if (globalLogoutUrl) {
-            // This sends the user to Google/GitHub to kill that session too
-            // They will need to manually navigate back or you can append a redirect param if supported
             window.location.href = globalLogoutUrl;
         } else {
             window.location.replace('/');
@@ -364,51 +361,71 @@ window.handleLogout = async () => {
     }
 };
 
+/* Tag/Function: handleAuth */
+window.handleAuth = async (providerId) => {
+ try {
+ const result = await loginWithProvider(providerId);
+ if (result) {
+ window.closeAuthHUD();
+ // The watchAuthState observer will now trigger and perform the redirect
+ console.log("%c [AUTH] SUCCESS. HANDOVER TO OBSERVER.", "color: var(--neon-color)");
+ }
+ } catch (error) {
+ console.error("Auth Bridge Error:", error);
+ }
+};
+    
+/* Tag/Function: openAuthHUD */
 window.openAuthHUD = (mode = 'personal') => {
+  // 1. SET THE FLAG
   if (mode === 'superuser') {
     sessionStorage.setItem('yertal_redirect_override', 'true');
   } else {
     sessionStorage.removeItem('yertal_redirect_override');
   }
 
-  /* --- THE FIX: CHECK CACHE BEFORE SHOWING HUD --- */
-  const sessionUser = JSON.parse(sessionStorage.getItem('currentUser'));
+  // 2. CHECK FOR USER (FIREBASE OR SESSION CACHE)
+  const cachedUserRaw = sessionStorage.getItem('currentUser');
+  const sessionUser = cachedUserRaw ? JSON.parse(cachedUserRaw) : null;
+  const activeUser = auth.currentUser || sessionUser;
 
-  if (auth.currentUser || sessionUser) {
-    // If Firebase is ready OR we have a cached user in session storage...
+  if (activeUser) {
+    console.log("%c [SYSTEM] AUTH DETECTED. EXECUTING REDIRECT...", "color: #00f2ff");
+    
     if (mode === 'superuser') {
         window.location.href = `./arcade/index.html?user=yertal-arcade`;
     } else {
-        const slug = sessionUser?.slug || (auth.currentUser?.displayName || "user").toLowerCase().replace(/\s+/g, '-');
+        // Use slug from cache, or generate one from the active user object
+        const slug = sessionUser?.slug || (activeUser.displayName || activeUser.uid).toLowerCase().replace(/\s+/g, '-');
         window.location.href = `./arcade/index.html?user=${slug}`;
     }
-    return; // Exit here so HUD never opens
+    return; // Stop here!
   }
 
-  // 3. SHOW HUD ONLY IF GUEST
+  // 3. IF NO USER, SHOW HUD (Requires JSON data)
   const hud = document.getElementById('auth-hud');
-  // ... rest of HUD logic
-};
-/* Tag/Function: handleAuth */
-window.handleAuth = async (provider) => {
-    try {
-        const result = await loginWithProvider(provider);
-        
-        if (result) {
-            // 1. Close the HUD immediately for a clean UI
-            window.closeAuthHUD();
+  const list = document.getElementById('provider-list');
 
-            // NOTE: Your existing watchAuthState listener below will 
-            // detect this login and perform the window.location.href 
-            // redirect automatically based on the user's slug.
-            console.log("%c [AUTH] GATEWAY CLEARED. REDIRECTING...", "color: var(--neon-color)");
-        }
-    } catch (error) {
-        console.error("Auth Bridge Error:", error);
-        if (error.code !== 'auth/popup-closed-by-user') {
-            alert("Login failed: " + error.message);
-        }
-    }
+  if (!currentAuth) {
+      console.warn("[SYSTEM] Database not ready. Retrying HUD in 100ms...");
+      setTimeout(() => window.openAuthHUD(mode), 100);
+      return;
+  }
+
+  if (hud && list) {
+    hud.classList.add('active'); 
+    list.innerHTML = currentAuth.enabled_providers.map(provider => `
+      <button onclick="window.handleAuth('${provider.id}')" 
+              class="group flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[var(--neon-color)] px-6 py-4 rounded-xl transition-all duration-300 cursor-pointer mb-4">
+        <span class="uppercase tracking-[0.3em] text-[30px]" style="font-family: var(--nav-font); color: var(--nav-text-color);">
+          SIGNIN WITH <span style="color: var(--neon-color); font-weight: bold;">${provider.id.toUpperCase()}</span> :
+        </span>
+        <i class="${provider.icon} text-5xl transition-all duration-500 group-hover:scale-110" 
+           style="color: var(--neon-color); filter: drop-shadow(0 0 15px var(--neon-color));">
+        </i>
+      </button>
+    `).join('');
+  }
 };
 
 window.closeAuthHUD = () => {
