@@ -152,7 +152,6 @@ watchAuthState(async (newUser) => {
         renderAuthStatus(user, currentAuth);
         
         try {
-            // 1. Retrieve from Session Storage first to avoid hardcoded pathing
             let currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
         
             if (!currentUser || currentUser.uid !== user.uid) {
@@ -174,16 +173,19 @@ watchAuthState(async (newUser) => {
                         body: JSON.stringify(profile)
                     });
                 }
-                // Update currentUser for the session
                 currentUser = profile;
                 sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             }
 
-            const forceSuperuser = sessionStorage.getItem('yertal_redirect_override');
-            // 2026-02-01: Superuser is yertal-arcade
+            // --- REDIRECT LOGIC ---
+            const forceSuperuser = sessionStorage.getItem('yertal_redirect_override') === 'true';
+            
+            // If Hero Button was clicked (forceSuperuser is true), use 'yertal-arcade'
+            // Otherwise, use the user's specific slug from the profile we just loaded/created
             const finalSlug = forceSuperuser ? 'yertal-arcade' : currentUser.slug;
             
             sessionStorage.removeItem('yertal_redirect_override'); 
+            console.log(`%c [ROUTING] TARGET: ${finalSlug} `, "background: #000; color: #00f2ff;");
             window.location.href = "./arcade/index.html?user=" + finalSlug;
 
         } catch (error) {
@@ -377,7 +379,8 @@ window.openAuthHUD = (mode = 'personal') => {
         window.location.href = `./arcade/index.html?user=yertal-arcade`;
     } else {
         const currentUserData = JSON.parse(sessionStorage.getItem('currentUser'));
-        const slug = currentUserData ? currentUserData.slug : (auth.currentUser.displayName || auth.currentUser.uid).toLowerCase().replace(/\s+/g, '-');
+        // Priority: Use the session slug, fallback to generated slug if DB fetch hasn't finished
+        const slug = currentUserData?.slug || (auth.currentUser.displayName || auth.currentUser.uid).toLowerCase().replace(/\s+/g, '-');
         window.location.href = `./arcade/index.html?user=${slug}`;
     }
     return;
