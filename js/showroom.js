@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 22:17:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 15:32:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -364,14 +364,14 @@ window.handleLogout = async () => {
 
 /* Tag/Function: openAuthHUD */
 window.openAuthHUD = (mode = 'personal') => {
-  // 1. SET REDIRECT OVERRIDE FLAG
+  // 1. SET THE REDIRECT OVERRIDE FLAG
   if (mode === 'superuser') {
     sessionStorage.setItem('yertal_redirect_override', 'true');
   } else {
     sessionStorage.removeItem('yertal_redirect_override');
   }
 
-  // 2. INSTANT REDIRECT IF LOGGED IN
+  // 2. INSTANT REDIRECT IF LOGGED IN (Bypass HUD)
   if (auth.currentUser) {
     if (mode === 'superuser') {
         window.location.href = `./arcade/index.html?user=yertal-arcade`;
@@ -383,24 +383,22 @@ window.openAuthHUD = (mode = 'personal') => {
     return;
   }
 
-  // 3. RENDER HUD FOR GUESTS
+  // 3. SHOW HUD ONLY IF GUEST
   const hud = document.getElementById('auth-hud');
   const list = document.getElementById('provider-list');
-  
-  // Use the label from your JSON (currentAuth.providers_label)
-  const hudTitle = currentAuth?.providers_label || 'SELECT_PROVIDER';
 
-  if (hud && list) {
+  if (hud && list && currentAuth) {
     hud.classList.add('active'); 
-    list.innerHTML = ['google', 'github', 'yahoo'].map(provider => `
-      <button onclick="window.handleAuth('${provider}')" 
+    
+    list.innerHTML = currentAuth.enabled_providers.map(provider => `
+      <button onclick="window.handleAuth('${provider.id}')" 
               class="group flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[var(--neon-color)] px-6 py-4 rounded-xl transition-all duration-300 cursor-pointer mb-4">
         
         <span class="uppercase tracking-[0.3em] text-[30px]" style="font-family: var(--nav-font); color: var(--nav-text-color);">
-          ${hudTitle} <span style="color: var(--neon-color); font-weight: bold;">${provider}</span> :
+          SIGNIN WITH <span style="color: var(--neon-color); font-weight: bold;">${provider.id.toUpperCase()}</span> :
         </span>
 
-        <i class="fab fa-${provider} text-5xl transition-all duration-500 group-hover:scale-110" 
+        <i class="${provider.icon} text-5xl transition-all duration-500 group-hover:scale-110" 
            style="color: var(--neon-color); filter: drop-shadow(0 0 15px var(--neon-color));">
         </i>
       </button>
