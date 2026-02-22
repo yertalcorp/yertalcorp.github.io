@@ -114,7 +114,7 @@ function renderAuthStatus(user, authData) {
         authZone.innerHTML = `
             <div class="flex items-center gap-6">
                 <button onclick="window.openAuthHUD('personal')" 
-                        class="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--neon-color)] hover:brightness-125 transition-all cursor-pointer">
+                        class="text-[7px] font-bold uppercase text-[var(--neon-color)] hover:brightness-125 transition-all cursor-pointer">
                     [ ${authData.entry_label.toUpperCase()} ]
                 </button>
 
@@ -126,7 +126,7 @@ function renderAuthStatus(user, authData) {
                         <span class="text-[8px] text-[var(--neon-color)] opacity-70 font-mono">STATUS: ACTIVE</span>
                     </div>
                     <img src="${user.photoURL || ''}" class="w-8 h-8 rounded-full border border-[var(--neon-color)]">
-                    <button onclick="window.handleLogout()" class="text-[9px] font-bold uppercase tracking-widest text-red-500/60 hover:text-red-500 transition-colors">
+                    <button onclick="window.handleLogout()" class="text-[7px] font-bold uppercase text-red-500/60 hover:text-red-500 transition-colors">
                         [ DISCONNECT ]
                     </button>
                 </div>
