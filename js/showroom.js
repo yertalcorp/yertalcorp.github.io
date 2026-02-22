@@ -145,6 +145,7 @@ function renderAuthStatus(user, authData) {
             </button>`;
     }
 }
+
 watchAuthState(async (newUser) => {
     user = newUser;
 
@@ -152,6 +153,10 @@ watchAuthState(async (newUser) => {
         renderAuthStatus(user, currentAuth);
         
         try {
+            // 1. FLAG CHECK: Only redirect if the user actually clicked a trigger button
+            const isIntentionalRedirect = sessionStorage.getItem('yertal_login_intent') === 'true';
+            if (!isIntentionalRedirect) return;
+
             let currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
         
             if (!currentUser || currentUser.uid !== user.uid) {
@@ -177,14 +182,13 @@ watchAuthState(async (newUser) => {
                 sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             }
 
-            // --- REDIRECT LOGIC ---
             const forceSuperuser = sessionStorage.getItem('yertal_redirect_override') === 'true';
-            
-            // If Hero Button was clicked (forceSuperuser is true), use 'yertal-arcade'
-            // Otherwise, use the user's specific slug from the profile we just loaded/created
             const finalSlug = forceSuperuser ? 'yertal-arcade' : currentUser.slug;
             
-            sessionStorage.removeItem('yertal_redirect_override'); 
+            // 2. CLEANUP: Clear both flags before navigating
+            sessionStorage.removeItem('yertal_redirect_override');
+            sessionStorage.removeItem('yertal_login_intent');
+
             console.log(`%c [ROUTING] TARGET: ${finalSlug} `, "background: #000; color: #00f2ff;");
             window.location.href = "./arcade/index.html?user=" + finalSlug;
 
@@ -193,7 +197,6 @@ watchAuthState(async (newUser) => {
         }
     }
 });
-
 // --- 3. HERO & INTERACTION ENGINE ---
 function renderHero(hero) {
     const container = document.getElementById('hero-container');
