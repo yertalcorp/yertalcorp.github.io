@@ -114,7 +114,7 @@ function renderAuthStatus(user, authData) {
         authZone.innerHTML = `
             <div class="flex items-center gap-6">
                 <button onclick="window.openAuthHUD('personal')" 
-                        class="text-[7px] font-bold uppercase text-[var(--neon-color)] hover:brightness-125 transition-all cursor-pointer">
+                        class="auth-trigger-btn group px-5 py-2">
                     [ ${authData.entry_label.toUpperCase()} ]
                 </button>
 
@@ -126,7 +126,7 @@ function renderAuthStatus(user, authData) {
                         <span class="text-[8px] text-[var(--neon-color)] opacity-70 font-mono">STATUS: ACTIVE</span>
                     </div>
                     <img src="${user.photoURL || ''}" class="w-8 h-8 rounded-full border border-[var(--neon-color)]">
-                    <button onclick="window.handleLogout()" class="text-[7px] font-bold uppercase text-red-500/60 hover:text-red-500 transition-colors">
+                    <button onclick="window.handleLogout()" class="auth-trigger-btn group px-5 py-2">
                         [ DISCONNECT ]
                     </button>
                 </div>
@@ -136,10 +136,11 @@ function renderAuthStatus(user, authData) {
         authZone.innerHTML = `
             <button onclick="window.openAuthHUD('personal')" class="auth-trigger-btn group px-5 py-2">
                 <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></div>
+                    <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse">
                     <span class="text-[9px] font-black uppercase tracking-[0.2em] text-white">
                         ${authData.signin_label.toUpperCase()}
                     </span>
+                    </div>
                 </div>
             </button>`;
     }
