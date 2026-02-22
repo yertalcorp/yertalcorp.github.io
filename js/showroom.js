@@ -108,10 +108,15 @@ function renderAuthStatus(user, authData) {
     authZone.innerHTML = '';
 
     if (user) {
+        // 1. CALCULATE CORRECT SLUG FOR LOGGED IN BUTTON
+        const isSuperuser = user.email === 'yertalcorp@gmail.com';
+        const cachedProfile = JSON.parse(sessionStorage.getItem('currentUser'));
+        const finalSlug = isSuperuser ? 'yertal-arcade' : (cachedProfile?.slug || (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-'));
+
         /* LOGGED IN VIEW */
         authZone.innerHTML = `
             <div class="flex items-center gap-5">
-                <button onclick="window.openAuthHUD('personal')" 
+                <button onclick="sessionStorage.setItem('yertal_login_intent', 'true'); window.location.href='./arcade/index.html?user=${finalSlug}'" 
                         class="auth-trigger-btn group px-5 py-2"
                         style="color: var(--neon-color); border: 1px solid var(--neon-color); box-shadow: 0 0 10px var(--neon-color); text-shadow: 0 0 5px var(--neon-color);">
                     [ ${authData.entry_label.toUpperCase()} ]
@@ -120,7 +125,7 @@ function renderAuthStatus(user, authData) {
                 <div class="flex items-center gap-4 border-l border-white/10 pl-6">
                     <div class="flex flex-col items-end leading-none">
                         <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
-                            ${user.email === 'yertal-arcade@gmail.com' ? 'SUPERUSER' : 'RESEARCHER'}
+                            ${isSuperuser ? 'SUPERUSER' : 'RESEARCHER'}
                         </span>
                         <span class="text-[8px] text-[var(--neon-color)] opacity-70 font-mono">STATUS: ACTIVE</span>
                     </div>
