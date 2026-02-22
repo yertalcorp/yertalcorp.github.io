@@ -91,12 +91,14 @@ async function refreshUI() {
  * without forcing them away from the page they requested.
  */
 watchAuthState(async (currentUser) => {
+    // 0. CONSUME INTENT: Stop the Showroom from snapping back later
+    sessionStorage.removeItem('yertal_login_intent');
+    
     // 1. SECURITY BOUNCE: Force guests back to showroom [cite: 2026-02-04]
     if (!currentUser) {
         window.location.href = "/index.html";
         return;
     }
-
     user = currentUser;
     const data = await getArcadeData();
     databaseCache = data;
