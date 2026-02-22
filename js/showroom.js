@@ -394,12 +394,15 @@ window.openAuthHUD = (mode = 'personal') => {
 
   if (activeUser) {
     console.log("%c [SYSTEM] AUTH DETECTED. EXECUTING REDIRECT...", "color: #00f2ff");
+    console.log("[DEBUG] CACHED PROFILE:", sessionUser);
+    console.log("[DEBUG] FIREBASE DISPLAY NAME:", activeUser.displayName);
     
     if (mode === 'superuser') {
         window.location.href = `./arcade/index.html?user=yertal-arcade`;
     } else {
         // Use slug from cache, or generate one from the active user object
         const slug = sessionUser?.slug || (activeUser.displayName || activeUser.uid).toLowerCase().replace(/\s+/g, '-');
+        console.log(`%c [DEBUG] FINAL CALCULATED SLUG: ${slug} `, "background: #ff0055; color: #fff; font-weight: bold;");
         window.location.href = `./arcade/index.html?user=${slug}`;
     }
     return; // Stop here!
