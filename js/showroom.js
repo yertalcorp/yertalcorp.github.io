@@ -112,7 +112,7 @@ function renderAuthStatus(user, authData) {
     if (user) {
         /* LOGGED IN VIEW */
         authZone.innerHTML = `
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-5">
                 <button onclick="window.openAuthHUD('personal')" 
                         class="auth-trigger-btn group px-5 py-2">
                     [ ${authData.entry_label.toUpperCase()} ]
@@ -135,9 +135,9 @@ function renderAuthStatus(user, authData) {
         /* SIGN IN BUTTON VIEW */
         authZone.innerHTML = `
             <button onclick="window.openAuthHUD('personal')" class="auth-trigger-btn group px-5 py-2">
-                <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse">
-                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-white">
+                <div class="flex items-center">
+                    <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse flex justify-center">
+                    <span class="text-[14px] font-black uppercase tracking-[0.2em] text-white">
                         ${authData.signin_label.toUpperCase()}
                     </span>
                     </div>
