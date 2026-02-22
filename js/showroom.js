@@ -101,8 +101,6 @@ function renderNavbar(items, ui) {
     `).join('');
 }
 
-
-/* Tag/Function: renderAuthStatus */
 function renderAuthStatus(user, authData) {
     const authZone = document.getElementById('auth-zone');
     if (!authZone || !authData) return;
@@ -114,7 +112,8 @@ function renderAuthStatus(user, authData) {
         authZone.innerHTML = `
             <div class="flex items-center gap-5">
                 <button onclick="window.openAuthHUD('personal')" 
-                        class="auth-trigger-btn group px-5 py-2">
+                        class="auth-trigger-btn group px-5 py-2"
+                        style="color: var(--neon-color); border: 1px solid var(--neon-color); box-shadow: 0 0 10px var(--neon-color); text-shadow: 0 0 5px var(--neon-color);">
                     [ ${authData.entry_label.toUpperCase()} ]
                 </button>
 
@@ -126,7 +125,8 @@ function renderAuthStatus(user, authData) {
                         <span class="text-[8px] text-[var(--neon-color)] opacity-70 font-mono">STATUS: ACTIVE</span>
                     </div>
                     <img src="${user.photoURL || ''}" class="w-8 h-8 rounded-full border border-[var(--neon-color)]">
-                    <button onclick="window.handleLogout()" class="auth-trigger-btn group px-5 py-2">
+                    <button onclick="window.handleLogout()" class="auth-trigger-btn group px-5 py-2"
+                            style="color: #ff3131; border: 1px solid #ff3131; box-shadow: 0 0 10px #ff3131; text-shadow: 0 0 5px #ff3131;">
                         [ DISCONNECT ]
                     </button>
                 </div>
@@ -134,18 +134,17 @@ function renderAuthStatus(user, authData) {
     } else {
         /* SIGN IN BUTTON VIEW */
         authZone.innerHTML = `
-            <button onclick="window.openAuthHUD('personal')" class="auth-trigger-btn group px-5 py-2">
+            <button onclick="window.openAuthHUD('personal')" class="auth-trigger-btn group px-5 py-2"
+                    style="color: var(--neon-color); border: 1px solid var(--neon-color); box-shadow: 0 0 15px var(--neon-color);">
                 <div class="flex items-center">
-                    <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse flex justify-center">
-                    <span class="text-[14px] font-black uppercase tracking-[0.2em] text-white">
+                    <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse mr-3"></div>
+                    <span class="text-[14px] font-black uppercase tracking-[0.2em]">
                         ${authData.signin_label.toUpperCase()}
                     </span>
-                    </div>
                 </div>
             </button>`;
     }
 }
-
 watchAuthState(async (newUser) => {
     user = newUser;
 
