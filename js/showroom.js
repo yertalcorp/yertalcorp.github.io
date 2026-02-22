@@ -156,6 +156,9 @@ watchAuthState(async (newUser) => {
 
     if (user && currentAuth && currentUi) {
         renderAuthStatus(user, currentAuth);
+
+        // 1. STRICT EXIT: If the flag isn't present, we are just browsing the showroom.
+        if (sessionStorage.getItem('yertal_login_intent') !== 'true') return;
         
         try {
             // 1. FLAG CHECK: Only redirect if the user actually clicked a trigger button
@@ -202,6 +205,7 @@ watchAuthState(async (newUser) => {
         }
     }
 });
+            
 // --- 3. HERO & INTERACTION ENGINE ---
 function renderHero(hero) {
     const container = document.getElementById('hero-container');
