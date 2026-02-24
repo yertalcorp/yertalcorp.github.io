@@ -151,13 +151,13 @@ function renderAuthStatus(user, authData) {
     }
 }
 
+
 watchAuthState(async (newUser) => {
     user = newUser;
 
     if (user && currentAuth && currentUi) {
         renderAuthStatus(user, currentAuth);
 
-      
         try {
             let currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
         
@@ -184,17 +184,15 @@ watchAuthState(async (newUser) => {
                 sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             }
 
-            const finalSlug =  currentUser.slug;
-            
-            console.log(`%c [ROUTING] TARGET: ${finalSlug} `, "background: #000; color: #00f2ff;");
-            window.location.href = "./arcade/index.html?user=" + finalSlug;
+            // REDIRECT LOGIC REMOVED FROM HERE
+            // This function now only handles profile caching and UI rendering.
+            console.log("%c [SYSTEM] USER RECOGNIZED | UI UPDATED ", "color: #00f2ff;");
 
         } catch (error) {
             console.error("USER_RETRIEVAL_ERROR:", error);
         }
     }
 });
-            
 // --- 3. HERO & INTERACTION ENGINE ---
 function renderHero(hero) {
     const container = document.getElementById('hero-container');
