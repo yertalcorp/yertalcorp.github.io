@@ -396,6 +396,10 @@ window.openAuthHUD = (mode = 'personal') => {
     sessionStorage.removeItem('yertal_redirect_override');
   }
 
+ // 2. SET THE INTENT FLAG (THE MISSING LINK)
+ // This tells the auth observer in auth.js to trigger the redirect
+ sessionStorage.setItem('yertal_login_intent', target);
+
   // 2. CHECK FOR USER (FIREBASE OR SESSION CACHE)
   const cachedUserRaw = sessionStorage.getItem('currentUser');
   const sessionUser = cachedUserRaw ? JSON.parse(cachedUserRaw) : null;
