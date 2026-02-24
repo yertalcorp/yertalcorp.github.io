@@ -115,22 +115,22 @@ function renderAuthStatus(user, authData) {
 
         /* LOGGED IN VIEW */
         authZone.innerHTML = `
-            <div class="flex items-center gap-5">
+            <div class="flex items-center justify-center gap-5">
                 <button onclick="window.location.href='./arcade/index.html?user=${finalSlug}'" 
-                        class="auth-trigger-btn group px-5 py-2"
+                        class="auth-trigger-btn group px-5 py-2 justify-center"
                         style="color: var(--neon-color); border: 1px solid var(--neon-color); box-shadow: 0 0 10px var(--neon-color); text-shadow: 0 0 5px var(--neon-color);">
                     [ ${authData.entry_label.toUpperCase()} ]
                 </button>
 
-                <div class="flex items-center gap-4 border-l border-white/10 pl-6">
-                    <div class="flex flex-col items-end leading-none">
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                <div class="flex items-center justify-center gap-4 border-l border-white/10 pl-6">
+                    <div class="flex flex-col items-end leading-none justify-center">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter justify-center">
                             ${isSuperuser ? 'SUPERUSER' : 'RESEARCHER'}
                         </span>
-                        <span class="text-[8px] text-[var(--neon-color)] opacity-70 font-mono">STATUS: ACTIVE</span>
+                        <span class="text-[8px] text-[var(--neon-color)] opacity-70 font-mono justify-center">STATUS: ACTIVE</span>
                     </div>
                     <img src="${user.photoURL || ''}" class="w-8 h-8 rounded-full border border-[var(--neon-color)]">
-                    <button onclick="window.handleLogout()" class="auth-trigger-btn group px-5 py-2"
+                    <button onclick="window.handleLogout()" class="auth-trigger-btn group px-5 py-2 justify-center"
                             style="color: #ff3131; border: 1px solid #ff3131; box-shadow: 0 0 10px #ff3131; text-shadow: 0 0 5px #ff3131;">
                         [ DISCONNECT ]
                     </button>
