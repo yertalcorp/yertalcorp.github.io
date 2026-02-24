@@ -116,7 +116,7 @@ function renderAuthStatus(user, authData) {
         /* LOGGED IN VIEW */
         authZone.innerHTML = `
             <div class="flex items-center gap-5">
-                <button onclick="sessionStorage.setItem('yertal_login_intent', 'true'); window.location.href='./arcade/index.html?user=${finalSlug}'" 
+                <button onclick="window.location.href='./arcade/index.html?user=${finalSlug}'" 
                         class="auth-trigger-btn group px-5 py-2"
                         style="color: var(--neon-color); border: 1px solid var(--neon-color); box-shadow: 0 0 10px var(--neon-color); text-shadow: 0 0 5px var(--neon-color);">
                     [ ${authData.entry_label.toUpperCase()} ]
@@ -157,14 +157,8 @@ watchAuthState(async (newUser) => {
     if (user && currentAuth && currentUi) {
         renderAuthStatus(user, currentAuth);
 
-        // 1. STRICT EXIT: If the flag isn't present, we are just browsing the showroom.
-        if (sessionStorage.getItem('yertal_login_intent') !== 'true') return;
-        
+      
         try {
-            // 1. FLAG CHECK: Only redirect if the user actually clicked a trigger button
-            const isIntentionalRedirect = sessionStorage.getItem('yertal_login_intent') === 'true';
-            if (!isIntentionalRedirect) return;
-
             let currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
         
             if (!currentUser || currentUser.uid !== user.uid) {
@@ -190,13 +184,8 @@ watchAuthState(async (newUser) => {
                 sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             }
 
-            const forceSuperuser = sessionStorage.getItem('yertal_redirect_override') === 'true';
-            const finalSlug = forceSuperuser ? 'yertal-arcade' : currentUser.slug;
+            const finalSlug =  currentUser.slug;
             
-            // 2. CLEANUP: Clear both flags before navigating
-            sessionStorage.removeItem('yertal_redirect_override');
-            sessionStorage.removeItem('yertal_login_intent');
-
             console.log(`%c [ROUTING] TARGET: ${finalSlug} `, "background: #000; color: #00f2ff;");
             window.location.href = "./arcade/index.html?user=" + finalSlug;
 
@@ -389,16 +378,6 @@ window.handleAuth = async (providerId) => {
     
 /* Tag/Function: openAuthHUD */
 window.openAuthHUD = (mode = 'personal') => {
-  // 1. SET THE FLAG
-  if (mode === 'superuser') {
-    sessionStorage.setItem('yertal_redirect_override', 'true');
-  } else {
-    sessionStorage.removeItem('yertal_redirect_override');
-  }
-
- // 2. SET THE INTENT FLAG (THE MISSING LINK)
- // This tells the auth observer in auth.js to trigger the redirect
- sessionStorage.setItem('yertal_login_intent', target);
 
   // 2. CHECK FOR USER (FIREBASE OR SESSION CACHE)
   const cachedUserRaw = sessionStorage.getItem('currentUser');
