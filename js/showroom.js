@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 17:21:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 17:31:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -137,13 +137,14 @@ function renderAuthStatus(user, authData) {
                 </div>
             </div>`;
     } else {
-/* SIGN IN BUTTON VIEW */
+    /* SIGN IN BUTTON VIEW */
         authZone.innerHTML = `
-            <button onclick="window.openAuthHUD('personal')" class="auth-trigger-btn group px-5 py-2"
-                    style="color: var(--neon-color); border: 1px solid var(--neon-color); box-shadow: 0 0 15px var(--neon-color);">
+            <button onclick="window.openAuthHUD('personal')" 
+                    class="auth-trigger-btn group px-5 py-2 flex items-center justify-center w-full"
+                    style="color: var(--neon-color); border: 1px solid var(--neon-color); box-shadow: 0 0 15px var(--neon-color); display: flex; justify-content: center; align-items: center;">
                 <div class="flex items-center justify-center">
-                    <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse mr-3"></div>
-                    <span class="text-[14px] font-black uppercase tracking-[0.2em] leading-none">
+                    <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse mr-2"></div>
+                    <span class="text-[14px] font-black uppercase tracking-[0.2em] text-center">
                         ${authData.signin_label.toUpperCase()}
                     </span>
                 </div>
