@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 19:07:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 19:18:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -137,8 +137,8 @@ function renderAuthStatus(user, authData) {
                     <img src="${user.photoURL || ''}" class="w-9 h-9 rounded-full border border-white/20 grayscale hover:grayscale-0 transition-all duration-500">
                     
                     <button onclick="window.handleLogout()" 
-                            class="**opacity-70 hover:opacity-100 px-4 py-2 bg-white/5 rounded-md** transition-all duration-300 ml-2">
-                        <span class="text-[10px] text-white font-bold tracking-[0.15em] hover:text-red-400 transition-colors uppercase">
+                            class="border border-slate-700/50 opacity-70 hover:opacity-100 px-4 py-1.5 bg-transparent hover:border-red-500/50 transition-all duration-300 ml-2 rounded-md">
+                        <span class="text-[10px] text-slate-400 font-bold tracking-[0.15em] hover:text-red-400 transition-colors uppercase">
                             Disconnect
                         </span>
                     </button>
