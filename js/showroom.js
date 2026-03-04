@@ -137,8 +137,8 @@ function renderAuthStatus(user, authData) {
                     <img src="${user.photoURL || ''}" class="w-9 h-9 rounded-full border border-white/20 grayscale hover:grayscale-0 transition-all duration-500">
                     
                     <button onclick="window.handleLogout()" 
-                            class="border border-slate-700/50 opacity-70 hover:opacity-100 px-4 py-1.5 bg-transparent hover:border-red-500/50 transition-all duration-300 ml-2 rounded-md">
-                        <span class="text-[10px] text-slate-400 font-bold tracking-[0.15em] hover:text-red-400 transition-colors uppercase">
+                            class="border border-slate-700/50 opacity-90 hover:opacity-100 px-6 py-2.5 bg-slate-400 hover:bg-red-500 transition-all duration-300 ml-2 rounded-md">
+                        <span class="text-[10px] text-black font-black tracking-[0.15em] transition-colors uppercase">
                             Disconnect
                         </span>
                     </button>
