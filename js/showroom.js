@@ -141,7 +141,7 @@ function renderAuthStatus(user, authData) {
         authZone.innerHTML = `
             <button onclick="window.openAuthHUD('personal')" class="auth-trigger-btn group px-5 py-2"
                     style="color: var(--neon-color); border: 1px solid var(--neon-color); box-shadow: 0 0 15px var(--neon-color);">
-                <div class="flex items-center">
+                <div class="flex items-center justify-center">
                     <div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse mr-3"></div>
                     <span class="text-[14px] font-black uppercase tracking-[0.2em]">
                         ${authData.signin_label.toUpperCase()}
