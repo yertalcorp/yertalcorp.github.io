@@ -118,7 +118,7 @@ function renderAuthStatus(user, authData) {
                 <button onclick="window.location.href='./arcade/index.html?user=${finalSlug}'" 
                         class="auth-trigger-btn group px-5 py-2 flex items-center justify-center"
                         style="color: var(--neon-color); border: 1px solid var(--neon-color); box-shadow: 0 0 10px var(--neon-color); text-shadow: 0 0 5px var(--neon-color); display: flex;">
-                    <span class="text-center"> [ ${authData.entry_label.toUpperCase()} ] </span>
+                    <span class="text-[10px] text-center"> ${authData.entry_label.toUpperCase()} </span>
                 </button>
 
                 <div class="flex items-center justify-center gap-4 border-l border-white/10 pl-6">
@@ -126,12 +126,12 @@ function renderAuthStatus(user, authData) {
                         <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter text-center">
                             ${isSuperuser ? 'SUPERUSER' : 'RESEARCHER'}
                         </span>
-                        <span class="text-[8px] text-[var(--neon-color)] opacity-70 font-mono text-center">STATUS: ACTIVE</span>
+                        <span class="text-[10px] text-[var(--neon-color)] opacity-70 font-mono text-center">STATUS: ACTIVE</span>
                     </div>
                     <img src="${user.photoURL || ''}" class="w-8 h-8 rounded-full border border-[var(--neon-color)]">
                     <button onclick="window.handleLogout()" class="auth-trigger-btn group px-5 py-2 flex items-center justify-center"
                             style="color: #ff3131; border: 1px solid #ff3131; box-shadow: 0 0 10px #ff3131; text-shadow: 0 0 5px #ff3131; display: flex;">
-                        <span class="text-center">[ DISCONNECT ]</span>
+                        <span class="text-[10px] text-center">DISCONNECT</span>
                     </button>
                 </div>
             </div>`;
