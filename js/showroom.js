@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 17:30:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 17:35:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -134,8 +134,18 @@ function renderAuthStatus(user, authData) {
                             ${cachedProfile?.display_name || user.displayName || user.email || 'AUTHORIZED USER'}
                         </span>
                         <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
-                            <div style="width: 4px; height: 4px; border-radius: 50%; background-color: var(--neon-color); animation: neon-glow-pulse 2s infinite ease-in-out;"></div>
-                            <span class="text-[9px] text-[var(--neon-color)] font-mono uppercase tracking-tighter text-center">System Active</span>
+                            <div style="
+                                width: 4px; 
+                                height: 4px; 
+                                border-radius: 50%; 
+                                background-color: var(--neon-color); 
+                                **animation: neon-glow-pulse 2s infinite ease-in-out;**
+                                **box-shadow: 0 0 5px var(--neon-color);**">
+                            </div>
+                            
+                            <span class="text-[9px] text-[var(--neon-color)] font-mono uppercase tracking-tighter text-center">
+                                System Active
+                            </span>
                         </div>
                     </div>
                     
