@@ -116,7 +116,7 @@ function renderAuthStatus(user, authData) {
         authZone.innerHTML = `
             <div class="flex items-center justify-center gap-6 bg-black/20 backdrop-blur-md border border-white/10 p-1.5 rounded-full">
                 <button onclick="window.location.href='./arcade/index.html?user=${finalSlug}'" 
-                        class="auth-trigger-btn group px-6 py-2 flex items-center justify-center rounded-full bg-[var(--neon-color)]/10 hover:bg-[var(--neon-color)]/20 transition-all duration-300"
+                        class="auth-trigger-btn group px-4 py-2 flex items-center justify-center rounded-full bg-[var(--neon-color)]/10 hover:bg-[var(--neon-color)]/20 transition-all duration-300"
                         style="color: var(--neon-color); border: 1px solid var(--neon-color); box-shadow: inset 0 0 10px var(--neon-color)/20;">
                     <span class="text-[11px] font-black tracking-[0.2em] text-center">
                         ${authData.entry_label.toUpperCase()}
