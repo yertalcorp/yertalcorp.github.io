@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 19:31:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 16:32:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -126,7 +126,7 @@ function renderAuthStatus(user, authData) {
                 <div class="flex items-center gap-4 pr-2">
                     <div class="flex flex-col items-end leading-tight">
                         <span class="text-[9px] text-white/50 font-bold uppercase tracking-widest">
-                            ${isSuperuser ? 'SECURE ACCESS' : 'RESEARCHER'}
+                            ${cachedProfile?.display_name || user.displayName || user.email || 'AUTHORIZED USER'}
                         </span>
                         <div class="flex items-center gap-1.5">
                             <div class="w-1 h-1 rounded-full bg-[var(--neon-color)] animate-pulse"></div>
