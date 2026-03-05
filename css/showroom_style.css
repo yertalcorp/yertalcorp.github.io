@@ -237,15 +237,29 @@
 }
 /* --- AUTH SYSTEM SPECIFIC CLASSES --- */
 
-/* Fixes the Sign-In Button visibility in the Navbar */
 .auth-trigger-btn {
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    display: flex; /* Forces button to exist */
-    min-width: 160px; /* Prevents squishing */
+    /* Layout & Structure */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
+    padding: 10px 24px;
+    
+    /* Shape & Reset */
+    border-radius: 20px;
+    background: transparent;
+    border-width: 1px;
+    border-style: solid;
+    cursor: pointer;
+    
+    /* Animation Core */
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     visibility: visible;
     opacity: 1;
+    
+    /* Text Baseline */
+    text-decoration: none;
+    line-height: 1;
 }
 
 .hud-bezel-fixed {
