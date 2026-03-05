@@ -112,10 +112,12 @@ function renderAuthStatus(user, authData) {
         const isSuperuser = user.email === 'yertalcorp@gmail.com';
         const cachedProfile = JSON.parse(sessionStorage.getItem('currentUser'));
         const finalSlug = isSuperuser ? 'yertal-arcade' : (cachedProfile?.slug || (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-'));
-   /* LOGGED IN VIEW */
+/* LOGGED IN VIEW */
         authZone.innerHTML = `
-            <div class="flex items-center justify-center gap-6 bg-black/20 backdrop-blur-md border border-white/10 p-1.5 rounded-full">
-            <button onclick="window.location.href='./arcade/index.html?user=${finalSlug}'" 
+            <div class="flex items-center justify-center gap-6 bg-black/20 backdrop-blur-md border border-white/10 p-1.5 rounded-full" 
+                 style="animation: fadeIn 0.8s ease-out forwards;">
+                
+                <button onclick="window.location.href='./arcade/index.html?user=${finalSlug}'" 
                         class="auth-trigger-btn"
                         style="color: var(--neon-color); border-color: var(--neon-color); background: color-mix(in srgb, var(--neon-color), transparent 90%);"
                         onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 20px -5px var(--neon-color), 0 0 15px var(--neon-color)'; this.style.background='color-mix(in srgb, var(--neon-color), transparent 75%)'"
@@ -127,13 +129,13 @@ function renderAuthStatus(user, authData) {
                 </button>
 
                 <div class="flex items-center gap-4 pr-2">
-                    <div class="flex flex-col items-end leading-tight">
-                        <span class="text-[9px] text-white/50 font-bold uppercase tracking-widest">
+                    <div class="flex flex-col items-center leading-tight">
+                        <span class="text-[9px] text-white/50 font-bold uppercase tracking-widest text-center">
                             ${cachedProfile?.display_name || user.displayName || user.email || 'AUTHORIZED USER'}
                         </span>
-                        <div class="flex items-center gap-1.5">
-                            <div class="w-1 h-1 rounded-full bg-[var(--neon-color)] animate-pulse"></div>
-                            <span class="text-[9px] text-[var(--neon-color)] font-mono uppercase tracking-tighter">System Active</span>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <div style="width: 4px; height: 4px; border-radius: 50%; background-color: var(--neon-color); animation: neon-glow-pulse 2s infinite ease-in-out;"></div>
+                            <span class="text-[9px] text-[var(--neon-color)] font-mono uppercase tracking-tighter text-center">System Active</span>
                         </div>
                     </div>
                     
