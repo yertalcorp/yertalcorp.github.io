@@ -148,8 +148,8 @@ function renderAuthStatus(user, authData) {
                                 height: 4px; 
                                 border-radius: 50%; 
                                 background-color: var(--neon-color); 
-                                **animation: neon-glow-pulse 2s infinite ease-in-out;**
-                                **box-shadow: 0 0 5px var(--neon-color);**">
+                                animation: neon-glow-pulse 2s infinite ease-in-out;
+                                box-shadow: 0 0 5px var(--neon-color);">
                             </div>
                             
                             <span class="text-[9px] text-[var(--neon-color)] font-mono uppercase tracking-tighter text-center">
@@ -193,8 +193,6 @@ watchAuthState(async (newUser) => {
     user = newUser;
 
     if (user && currentAuth && currentUi) {
-        renderAuthStatus(user, currentAuth);
-
         try {
             let currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
         
@@ -204,6 +202,7 @@ watchAuthState(async (newUser) => {
                 let profile = await response.json();
 
                 if (!profile) {
+                    // Logic for new users only
                     const generatedSlug = (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-');
                     profile = {
                         display_name: user.displayName,
@@ -221,8 +220,8 @@ watchAuthState(async (newUser) => {
                 sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             }
 
-            // REDIRECT LOGIC REMOVED FROM HERE
-            // This function now only handles profile caching and UI rendering.
+            // MOVE THIS HERE: Now sessionStorage is guaranteed to have the data
+            renderAuthStatus(user, currentAuth);
             console.log("%c [SYSTEM] USER RECOGNIZED | UI UPDATED ", "color: #00f2ff;");
 
         } catch (error) {
@@ -230,6 +229,7 @@ watchAuthState(async (newUser) => {
         }
     }
 });
+
 // --- 3. HERO & INTERACTION ENGINE ---
 function renderHero(hero) {
     const container = document.getElementById('hero-container');
