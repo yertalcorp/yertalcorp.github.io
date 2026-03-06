@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 20:10:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 20:27:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -101,6 +101,26 @@ function renderNavbar(items, ui) {
     `).join('');
 }
 
+// A safe function to set the slug.
+const getSafeSlug = async (user) => {
+     // 1. Try Session storage first
+     let cached = JSON.parse(sessionStorage.getItem('currentUser'));
+     if (cached?.slug) return cached.slug;
+
+    // 2. If session empty, fetch from DB
+    console.log("Slug missing from session, fetching from Firebase...");
+    const snapshot = await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`);
+    const profile = await snapshot.json();
+    
+   if (profile?.slug) {
+        sessionStorage.setItem('currentUser', JSON.stringify(profile));
+        return profile.slug;
+   }
+
+   // 3. Absolute fallback (UID is safer than Display Name)
+   return user.uid; 
+};
+
 function renderAuthStatus(user, authData) {
     const authZone = document.getElementById('auth-zone');
     if (!authZone || !authData) return;
@@ -111,34 +131,16 @@ function renderAuthStatus(user, authData) {
         // 1. CALCULATE CORRECT SLUG FOR LOGGED IN BUTTON
         const isSuperuser = user.email === 'yertalcorp@gmail.com';
         const cachedProfile = JSON.parse(sessionStorage.getItem('currentUser'));
-    
+        const slug = await getSafeSlug(user);
         console.log('--- Debugging Slug Resolution ---');
+        console.log("%c [DEBUG] SAFE SLUG RETRIEVED:", "color: #00ff00; font-weight: bold;", slug);
+        
         console.log('Full cachedProfile object:', cachedProfile);
         console.log('Value of cachedProfile.slug:', cachedProfile?.slug);
-
-        // A safe way to set the slug.
-        const getSafeSlug = async (user) => {
-            // 1. Try Session storage first
-            if (cachedProfile?.slug) return cachedProfile.slug;
-
-            // 2. If session empty, fetch from DB
-            console.log("Slug missing from session, fetching from Firebase...");
-            const snapshot = await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`);
-            const profile = await snapshot.json();
-    
-            if (profile?.slug) {
-                sessionStorage.setItem('currentUser', JSON.stringify(profile));
-                return profile.slug;
-            }
-
-            // 3. Absolute fallback (UID is safer than Display Name)
-            return user.uid; 
-        };
-        console.log('Value of getSafeSlug:', getSafeSlug);
         
         const finalSlug = isSuperuser 
           ? 'yertal-arcade' 
-          : getSafeSlug;
+          : slug;
         
     /* LOGGED IN VIEW */
         authZone.innerHTML = `
