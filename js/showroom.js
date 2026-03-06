@@ -114,9 +114,6 @@ function renderAuthStatus(user, authData) {
         console.log('--- Debugging Slug Resolution ---');
         console.log('Full cachedProfile object:', cachedProfile);
         console.log('Value of cachedProfile.slug:', cachedProfile?.slug);
-        console.log('Full user object:', user);
-        console.log('Value of user.slug:', user.slug);
-        console.log('Value of user.displayName:', user.displayName);
         
         const finalSlug = isSuperuser 
           ? 'yertal-arcade' 
