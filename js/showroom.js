@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 19:41:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 17:29:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -115,7 +115,8 @@ function renderAuthStatus(user, authData) {
         console.log('Full cachedProfile object:', cachedProfile);
         console.log('Value of cachedProfile.slug:', cachedProfile?.slug);
         console.log('Full user object:', user);
-        console.log('Value of user.slug:', user?.slug);
+        console.log('Value of user.slug:', user.slug);
+        console.log('Value of user.displayName:', user.displayName);
         
         const finalSlug = isSuperuser 
           ? 'yertal-arcade' 
