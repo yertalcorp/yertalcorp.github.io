@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 20:30:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 20:35:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -121,7 +121,7 @@ const getSafeSlug = async (user) => {
    return user.uid; 
 };
 
-function renderAuthStatus(user, authData) {
+async function renderAuthStatus(user, authData) {
     const authZone = document.getElementById('auth-zone');
     if (!authZone || !authData) return;
 
@@ -131,18 +131,11 @@ function renderAuthStatus(user, authData) {
         // 1. CALCULATE CORRECT SLUG FOR LOGGED IN BUTTON
         const isSuperuser = user.email === 'yertalcorp@gmail.com';
         const cachedProfile = JSON.parse(sessionStorage.getItem('currentUser'));
-        console.log('--- Debugging Slug Resolution ---');
-        getSafeSlug(user).then(slug => {
-            console.log("The slug is:", slug);
-        });
+        // This line stops the ReferenceError by defining 'finalSlug' properly
+        const finalSlug = isSuperuser ? 'yertal-arcade' : await getSafeSlug(user);
 
-        console.log("%c [DEBUG] SAFE SLUG RETRIEVED:", "color: #00ff00; font-weight: bold;", slug);
-        console.log('Full cachedProfile object:', cachedProfile);
-        console.log('Value of cachedProfile.slug:', cachedProfile?.slug);
-        
-        const finalSlug = isSuperuser 
-          ? 'yertal-arcade' 
-          : slug;
+        console.log('--- Debugging Slug Resolution ---');
+        console.log("The resolved slug is:", finalSlug);        
         
     /* LOGGED IN VIEW */
         authZone.innerHTML = `
