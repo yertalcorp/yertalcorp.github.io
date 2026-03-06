@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 18:58:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 19:55:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -111,13 +111,33 @@ function renderAuthStatus(user, authData) {
         // 1. CALCULATE CORRECT SLUG FOR LOGGED IN BUTTON
         const isSuperuser = user.email === 'yertalcorp@gmail.com';
         const cachedProfile = JSON.parse(sessionStorage.getItem('currentUser'));
+    
         console.log('--- Debugging Slug Resolution ---');
         console.log('Full cachedProfile object:', cachedProfile);
         console.log('Value of cachedProfile.slug:', cachedProfile?.slug);
-        
+
+        // A safe way to set the slug.
+        const getSafeSlug = async (user) => {
+            // 1. Try Session storage first
+            if (cachedProfile?.slug) return cachedProfile.slug;
+
+            // 2. If session empty, fetch from DB
+            console.log("Slug missing from session, fetching from Firebase...");
+            const snapshot = await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`);
+            const profile = await snapshot.json();
+    
+            if (profile?.slug) {
+                sessionStorage.setItem('currentUser', JSON.stringify(profile));
+                return profile.slug;
+            }
+
+            // 3. Absolute fallback (UID is safer than Display Name)
+            return user.uid; 
+        };
         const finalSlug = isSuperuser 
           ? 'yertal-arcade' 
-          : cachedProfile?.slug;
+          : getSafeSlug;
+        
     /* LOGGED IN VIEW */
         authZone.innerHTML = `
             <div class="flex items-center justify-center gap-6 bg-black/20 backdrop-blur-md border border-white/10 p-1.5 rounded-full" 
