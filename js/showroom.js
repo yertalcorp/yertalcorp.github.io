@@ -428,39 +428,44 @@ window.handleAuth = async (providerId) => {
 };
     
 /* Tag/Function: openAuthHUD */
-window.openAuthHUD = (mode = 'personal') => {
+window.openAuthHUD = async (mode = 'personal') => {
+  
+  // 1. WAIT FOR FIREBASE
+  const activeUser = await new Promise((resolve) => {
+    const unsubscribe = watchAuthState((user) => {
+      unsubscribe(); // Stop listening after first response
+      resolve(user);
+    });
+  });
 
-  // 2. CHECK FOR USER (FIREBASE OR SESSION CACHE)
-  const cachedUserRaw = sessionStorage.getItem('currentUser');
-  const sessionUser = cachedUserRaw ? JSON.parse(cachedUserRaw) : null;
-  const activeUser = auth.currentUser || sessionUser;
-
+  // 2. REDIRECT IF LOGGED IN
   if (activeUser) {
-    console.log("%c [SYSTEM] AUTH DETECTED. EXECUTING REDIRECT...", "color: #00f2ff");
-    console.log("[DEBUG] CACHED PROFILE:", sessionUser);
-    console.log("[DEBUG] FIREBASE DISPLAY NAME:", activeUser.displayName);
-    
     if (mode === 'superuser') {
         window.location.href = `./arcade/index.html?user=yertal-arcade`;
     } else {
-        // Use slug from cache, or generate one from the active user object
-        const slug = sessionUser?.slug || (activeUser.displayName || activeUser.uid).toLowerCase().replace(/\s+/g, '-');
-        console.log(`%c [DEBUG] FINAL CALCULATED SLUG: ${slug} `, "background: #ff0055; color: #fff; font-weight: bold;");
-        window.location.href = `./arcade/index.html?user=${slug}`;
+        try {
+            const response = await fetch(`${firebaseConfig.databaseURL}/users/${activeUser.uid}/profile.json`);
+            const profile = await response.json();
+            const slug = profile?.slug || (activeUser.displayName || activeUser.uid).toLowerCase().replace(/\s+/g, '-');
+            window.location.href = `./arcade/index.html?user=${slug}`;
+        } catch (err) {
+            const fallback = (activeUser.displayName || activeUser.uid).toLowerCase().replace(/\s+/g, '-');
+            window.location.href = `./arcade/index.html?user=${fallback}`;
+        }
     }
-    return; // Stop here!
+    return; 
   }
 
-  // 3. IF NO USER, SHOW HUD (Requires JSON data)
+  // 3. INITIALIZE HUD ONLY IF NO USER
   const hud = document.getElementById('auth-hud');
   const list = document.getElementById('provider-list');
 
   if (!currentAuth) {
-      console.warn("[SYSTEM] Database not ready. Retrying HUD in 100ms...");
       setTimeout(() => window.openAuthHUD(mode), 100);
       return;
   }
 
+  // Since user is not logged in, show the HUD
   if (hud && list) {
     hud.classList.add('active'); 
     list.innerHTML = currentAuth.enabled_providers.map(provider => `
