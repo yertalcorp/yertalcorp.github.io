@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 21:50:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 12:13:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -414,12 +414,14 @@ window.handleLogout = async () => {
 };
 
 /* Tag/Function: handleAuth */
-window.handleAuth = async (providerId) => {
+window.handleAuth = async (providerId, mode='personal') => {
  try {
  const result = await loginWithProvider(providerId);
  if (result) {
  window.closeAuthHUD();
- // The watchAuthState observer will now trigger and perform the redirect
+ // The watchAuthState observer will now trigger and perform the redirect -> not really working.
+// Manually trigger the redirect since the one-time observer in openAuthHUD is finished
+window.openAuthHUD(mode);
  console.log("%c [AUTH] SUCCESS. HANDOVER TO OBSERVER.", "color: var(--neon-color)");
  }
  } catch (error) {
@@ -469,7 +471,7 @@ window.openAuthHUD = async (mode = 'personal') => {
   if (hud && list) {
     hud.classList.add('active'); 
     list.innerHTML = currentAuth.enabled_providers.map(provider => `
-      <button onclick="window.handleAuth('${provider.id}')" 
+      <button onclick="window.handleAuth('${provider.id}', '${mode}')" 
               class="group flex items-center justify-between w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[var(--neon-color)] px-6 py-4 rounded-xl transition-all duration-300 cursor-pointer mb-4">
         <span class="uppercase tracking-[0.3em] text-[30px]" style="font-family: var(--nav-font); color: var(--nav-text-color);">
           SIGNIN WITH <span style="color: var(--neon-color); font-weight: bold;">${provider.id.toUpperCase()}</span> :
