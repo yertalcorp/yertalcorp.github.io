@@ -316,9 +316,9 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
             <div style="display: flex; align-items: center; gap: 0; margin-left: auto; background: rgba(0,0,0,0.6); border: 1px solid rgba(0,242,255,0.2); border-radius: 4px; padding: 2px 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
                 <span style="font-family: monospace; color: var(--neon-color); font-size: 10px; margin-right: 10px; opacity: 0.7; font-weight: 900; letter-spacing: 1px;">FORGE_CMD></span>
                 <input type="text" id="input-${current.id}" 
-                       placeholder="SPECIFY INTENT..." 
+                       placeholder="TYPE A PROMPT OR PASTE A URL..." 
                        class="glass"
-                       style="background: transparent; border: none; padding: 0.5rem 0; font-size: 10px; width: 14rem; outline: none; color: white; font-family: 'Orbitron', sans-serif; letter-spacing: 2px;"
+                       style="background: transparent; border: none; padding: 0.5rem 0; font-size: 10px; width: 30rem; outline: none; color: white; font-family: 'Orbitron', sans-serif; letter-spacing: 2px;"
                        onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}')">
                 <button onclick="window.handleCreation('${current.id}')" 
                         class="generate-btn"
