@@ -322,7 +322,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                 <input type="text" id="input-${current.id}" 
                        placeholder="TYPE A PROMPT OR PASTE A URL..." 
                        class="glass"
-                       style="background: transparent; border: none; padding: 0.5rem 0; font-size: 10px; width: 30rem; outline: none; color: white; font-family: 'Orbitron', sans-serif; letter-spacing: 2px;"
+                       style="background: transparent; border: none; padding: 0.5rem 0; font-size: 10px; width: 60rem; outline: none; color: white; font-family: 'Orbitron', sans-serif; letter-spacing: 2px;"
                        onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}')">
                 <button onclick="window.handleCreation('${current.id}')" 
                         class="generate-btn"
