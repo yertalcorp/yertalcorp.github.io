@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 17:56:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 19:20:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 
 let user;
@@ -454,23 +454,38 @@ function renderSparkCard(spark, isOwner, currentId) {
                 </div>
             </div>
 
-            <div class="card-stats-row" style="display: flex; justify-content: space-between; align-items: center; padding: 0 0.25rem;">
-                <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none;">
-                    ${spark.link ? 'SOURCED' : 'FORGED'}: ${formatTimeAgo(spark.created)}
+            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.4rem;">
+                ${isOwner ? `
+                <div class="owner-stats-row" style="display: flex; gap: 0.8rem; padding: 0 0.25rem; font-size: 9px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                    <span><i class="fas fa-eye" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.views || 0}</span>
+                    <span><i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.likes || 0}</span>
+                    <span><i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.reshares || 0}</span>
+                    <span><i class="fas fa-coins" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.tips || 0}</span>
                 </div>
-                
-                <div style="display: flex; gap: 0.5rem;">
-                    ${isOwner ? `
-                        <button onclick="shareSpark('${currentId}', '${spark.id}')" 
-                                style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; margin-right: 5px;">
-                            <i class="fas fa-share-nodes" style="font-size: 10px;"></i>
-                        </button>
-                        <button onclick="deleteSpark('${currentId}', '${spark.id}', '${user.uid}')" 
-                                style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; transition: color 0.3s;"
-                                onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(255,255,255,0.2)'">
-                            <i class="fas fa-trash" style="font-size: 10px;"></i>
-                        </button>
-                    ` : viewerActions}
+                ` : ''}
+
+                <div class="card-stats-row" style="display: flex; justify-content: space-between; align-items: center; padding: 0 0.25rem;">
+                    <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none;">
+                        ${spark.link ? 'SOURCED' : 'FORGED'}: ${formatTimeAgo(spark.created)}
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem;">
+                        ${isOwner ? `
+                            <button onclick="likeSpark('${currentId}', '${spark.id}')" title="Like"
+                                    style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer;">
+                                <i class="fas fa-thumbs-up" style="font-size: 10px;"></i>
+                            </button>
+                            <button onclick="shareSpark('${currentId}', '${spark.id}')" 
+                                    style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer;">
+                                <i class="fas fa-share-nodes" style="font-size: 10px;"></i>
+                            </button>
+                            <button onclick="deleteSpark('${currentId}', '${spark.id}', '${user.uid}')" 
+                                    style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; transition: color 0.3s;"
+                                    onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(255,255,255,0.2)'">
+                                <i class="fas fa-trash" style="font-size: 10px;"></i>
+                            </button>
+                        ` : viewerActions}
+                    </div>
                 </div>
             </div>
         </div>
