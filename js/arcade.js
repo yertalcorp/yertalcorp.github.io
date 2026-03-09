@@ -2,6 +2,10 @@ import { firebaseConfig, auth, saveToRealtimeDB, getArcadeData } from '/config/f
 import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
+// Build Check: Manually update the time string below when pushing new code
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 17:56:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+
+
 let user;
 let databaseCache = {};
 let selectedCategory = null;
