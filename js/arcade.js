@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:36:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:41:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 
 let user;
@@ -418,29 +418,29 @@ function renderSparkCard(spark, isOwner, currentId) {
     
     // VIEWER INTERACTION LOGIC
     const viewerActions = `
-        <div style="display: flex; gap: 0.75rem; align-items: center;">
-            <button onclick="likeSpark('${currentId}', '${spark.id}')" title="Like" style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer;">
+        <div style="display: flex; gap: 0.75rem; align-items: center; justify-content: center;">
+            <button onclick="likeSpark('${currentId}', '${spark.id}')" title="Like" style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; padding: 0;">
                 <i class="fas fa-heart" style="font-size: 10px;"></i>
             </button>
-            <button onclick="tipOwner('${currentId}', '${spark.id}')" title="Tip" style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer;">
+            <button onclick="tipOwner('${currentId}', '${spark.id}')" title="Tip" style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; padding: 0;">
                 <i class="fas fa-coins" style="font-size: 10px;"></i>
             </button>
             <button onclick="cloneSpark('${currentId}', '${spark.id}')" title="Save to My Arcade"
-                    style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; transition: color 0.3s;"
+                    style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; transition: color 0.3s; padding: 0;"
                     onmouseover="this.style.color='var(--neon-color)'" onmouseout="this.style.color='rgba(255,255,255,0.2)'">
                 <i class="fas fa-download" style="font-size: 10px;"></i>
             </button>
-            <button onclick="shareSpark('${currentId}', '${spark.id}')" title="Share" style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer;">
+            <button onclick="shareSpark('${currentId}', '${spark.id}')" title="Share" style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; padding: 0;">
                 <i class="fas fa-share-alt" style="font-size: 10px;"></i>
             </button>
         </div>
     `;
 
     return `
-        <div class="spark-unit" style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div class="spark-unit" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
             <div class="action-card" 
                  onclick="window.location.href='${targetUrl}'"
-                 style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; cursor: pointer;">
+                 style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer;">
                 
                 <h4 class="metallic-text" style="position: relative; z-index: 20; text-align: center; padding: 0 1.5rem; font-size: 12px; margin: 0;">
                     ${spark.name}
@@ -454,9 +454,9 @@ function renderSparkCard(spark, isOwner, currentId) {
                 </div>
             </div>
 
-            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.4rem;">
+            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.4rem; width: 100%; align-items: center;">
                 ${isOwner ? `
-                <div class="owner-stats-row" style="display: flex; justify-content: center; gap: 0.8rem; padding: 0 0.25rem; font-size: 9px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.05); width: 80%; margin: 0 auto; padding-bottom: 4px;">
+                <div class="owner-stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 9px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); width: 80%; margin: 0 auto; padding-bottom: 4px; text-align: center;">
                     <span><i class="fas fa-eye" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.views || 0}</span>
                     <span><i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.likes || 0}</span>
                     <span><i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.reshares || 0}</span>
@@ -464,23 +464,23 @@ function renderSparkCard(spark, isOwner, currentId) {
                 </div>
                 ` : ''}
 
-                <div class="card-stats-row" style="display: flex; justify-content: center; align-items: center; padding: 0 0.25rem; gap: 1rem;">
-                    <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none;">
+                <div class="card-stats-row" style="display: flex; justify-content: center; align-items: center; gap: 1rem; width: 100%; text-align: center;">
+                    <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none; white-space: nowrap;">
                         ${spark.link ? 'SOURCED' : 'FORGED'}: ${formatTimeAgo(spark.created)}
                     </div>
                     
-                    <div style="display: flex; gap: 0.5rem;">
+                    <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: center;">
                         ${isOwner ? `
                             <button onclick="likeSpark('${currentId}', '${spark.id}')" title="Like"
-                                    style="background: none; border: none; color: var(--neon-color); cursor: pointer; padding: 2px;">
+                                    style="background: none; border: none; color: var(--neon-color); cursor: pointer; padding: 2px; display: flex; align-items: center;">
                                 <i class="fas fa-thumbs-up" style="font-size: 9px;"></i>
                             </button>
                             <button onclick="shareSpark('${currentId}', '${spark.id}')" title="Share" 
-                                    style="background: none; border: none; color: var(--neon-color); cursor: pointer; padding: 2px;">
+                                    style="background: none; border: none; color: var(--neon-color); cursor: pointer; padding: 2px; display: flex; align-items: center;">
                                 <i class="fas fa-share-nodes" style="font-size: 9px;"></i>
                             </button>
                             <button onclick="deleteSpark('${currentId}', '${spark.id}', '${user.uid}')" title="Delete" 
-                                    style="background: none; border: none; color: var(--neon-color); cursor: pointer; transition: color 0.3s; padding: 2px;"
+                                    style="background: none; border: none; color: var(--neon-color); cursor: pointer; transition: color 0.3s; padding: 2px; display: flex; align-items: center;"
                                     onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--neon-color)'">
                                 <i class="fas fa-trash" style="font-size: 9px;"></i>
                             </button>
