@@ -25,11 +25,14 @@ nav {
     height: 60px;
 }
 
-/* Ensure the branding group doesn't greedily take space */
-.logo-container {
-    flex-shrink: 0;
-    margin-right: 0;
+/* Update the image itself to fill the new container */
+.logo-container img {
+    height: 100%;
+    width: auto;
+    filter: none; /* Removed the glow/shadow */
+    display: block;
 }
+
 /* Ensure the old Hero Section is hidden to save space */
 .hero-section-old {
     display: none !important;
