@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 9:22:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 9:22:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 
 let user;
