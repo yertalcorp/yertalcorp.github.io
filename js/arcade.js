@@ -180,7 +180,6 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
 
-    // STRICT DATA EXTRACTION
     const profile = pageOwnerData?.profile || {};
     const arcadeLogo = profile.arcade_logo;
     const brandName = profile.display_name;
@@ -192,20 +191,20 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     header.innerHTML = `
         <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; height: 64px; filter: brightness(1.2);">
             
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='/index.html'">
-                    <div id="nav-logo" class="logo-container" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;" onclick="window.location.href='/index.html'">
+                    <div id="nav-logo" class="logo-container" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
                         <img src="${arcadeLogo}" alt="${brandName}" style="height: 100%; width: auto; filter: drop-shadow(0 0 5px var(--neon-color));">
                     </div>
-                    <h1 class="metallic-text" style="font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 0; line-height: 1;">
+                    <h1 class="metallic-text" style="font-size: 1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; line-height: 1; white-space: nowrap;">
                         <span style="color: white;">${brandName}</span>
                     </h1>
                 </div>
 
-                <div style="display: flex; gap: 0.75rem; align-items: center; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 1rem; margin-left: 0.5rem;">
-                    <a href="/index.html" title="Showroom" style="color: rgba(255,255,255,0.6);"><i class="fas fa-door-open"></i></a>
-                    <a href="?user=${userSlug}" title="My Arcade" style="color: rgba(255,255,255,0.6);"><i class="fas fa-home"></i></a>
-                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--neon-color); padding: 0.2rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 8px; background: rgba(0, 242, 255, 0.05); box-shadow: 0 0 5px rgba(0, 242, 255, 0.2);">HUB</a>
+                <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 0.75rem; height: 16px;">
+                    <a href="/index.html" title="Showroom" style="color: rgba(255,255,255,0.4); font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><i class="fas fa-door-open"></i></a>
+                    <a href="?user=${userSlug}" title="My Arcade" style="color: rgba(255,255,255,0.4); font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><i class="fas fa-home"></i></a>
+                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--neon-color); padding: 0.15rem 0.4rem; border-radius: 3px; text-decoration: none; font-size: 7px; background: rgba(0, 242, 255, 0.05); box-shadow: 0 0 5px rgba(0, 242, 255, 0.2); letter-spacing: 1px;">HUB</a>
                 </div>
             </div>
 
@@ -215,8 +214,8 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                     <span style="color: white">${titleParts[0] || ''} ${titleParts[1] || ''}</span> 
                     <span style="color: var(--neon-color); filter: drop-shadow(0 0 8px var(--neon-color));">${titleParts[2] || ''}</span>
                 </h1>
-                    <p id="hero-subheading" style="color: white; opacity: 0.8; font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${arcadeSubtitle}</p>
-                    ` : ''}
+                <p id="hero-subheading" style="color: white; opacity: 0.8; font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${arcadeSubtitle}</p>
+                ` : ''}
             </div>
 
             <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
