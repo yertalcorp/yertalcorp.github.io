@@ -191,15 +191,15 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     header.innerHTML = `
         <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; filter: brightness(1.2);">
             
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='/index.html'">
-                    <div id="nav-logo" class="logo-container" style="width: 32px; height: 32px; display: flex: none; align-items: center; justify-content: center;">
-                        <img src="${arcadeLogo}" alt="${brandName}" style="height: 100%; width: auto; filter: drop-shadow(0 0 5px var(--neon-color));">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer;" onclick="window.location.href='/index.html'">
+                        <div id="nav-logo" class="logo-container" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex: none;">
+                            <img src="${arcadeLogo}" alt="${brandName}" style="height: 100%; width: auto; filter: drop-shadow(0 0 5px var(--neon-color));">
+                        </div>
+                        <h1 class="metallic-text" style="font-size: 1rem; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1;">
+                            <span style="color: white;">${brandName}</span>
+                        </h1>
                     </div>
-                    <h1 class="metallic-text" style="font-size: 1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; line-height: 1; white-space: nowrap;">
-                        <span style="color: white;">${brandName}</span>
-                    </h1>
-                </div>
 
                 <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 0.5rem; height: 16px;">
                     <a href="/index.html" title="Showroom" style="color: rgba(255,255,255,0.4); font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><i class="fas fa-door-open"></i></a>
