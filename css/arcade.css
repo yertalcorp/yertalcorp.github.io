@@ -13,17 +13,20 @@
     overflow-x: hidden;
 }
 
-/* Update Nav Layout */
+
+* Update Nav Layout */
 nav {
-    display: flex; /* Changed from grid to flex for tighter control */
+    display: grid;
+    /* Use 'max-content' to force the first column to be as small as possible */
+    grid-template-columns: max-content 1fr auto; 
     align-items: center;
-    justify-content: space-between; /* Keeps left, center, and right zones balanced */
-    padding: 0 1.5rem;
+    padding: 0 1.5rem; /* Ensure horizontal padding isn't pushing elements in */
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     height: 60px;
 }
+
 /* Ensure the branding group doesn't greedily take space */
 .logo-container {
     flex-shrink: 0;
@@ -123,17 +126,18 @@ header {
 .status-dot {
     box-shadow: 0 0 8px var(--neon-color);
 }
-/* Fix for the metallic text in the nav bar */
+
+/* Metallic/Chrome Text Effect */
 .metallic-text {
     font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0.15em; /* Slightly reduced for nav readability */
+    letter-spacing: **0.1em**; /* Reduced from 0.25em to tighten the word itself */
     font-size: 10px;
     color: #ffffff;
     text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 3px var(--neon-color);
     filter: brightness(1.8) contrast(1.3);
-    white-space: nowrap; /* Prevents wrapping which can cause spacing issues */
 }
+
 .current-block h2 {
     font-family: var(--nav-font);
     font-size: 0.9rem;
