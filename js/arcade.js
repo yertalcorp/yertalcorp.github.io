@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:50:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:00:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 
 let user;
@@ -322,7 +322,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                 <input type="text" id="input-${current.id}" 
                        placeholder="TYPE A PROMPT OR PASTE A URL..." 
                        class="glass"
-                       style="background: transparent; border: none; padding: 0.5rem 0; font-size: 10px; width: 90%; max-width: 600px; outline: none; color: white; font-family: 'Orbitron', sans-serif; letter-spacing: 2px;"
+                       style="background: transparent; border: none; padding: 0.5rem 0; font-size: 10px; width: 90%; outline: none; color: white; font-family: 'Orbitron', sans-serif; letter-spacing: 2px;"
                        onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}')">
                 <button onclick="window.handleCreation('${current.id}')" 
                         class="generate-btn"
