@@ -459,7 +459,7 @@ function renderSparkCard(spark, isOwner, currentId) {
 
                         ${isOwner ? `
                             <button onclick="shareSpark('${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas fa-share-nodes" style="font-size: 10px;"></i>
+                                <i class="fas fa-share-alt" style="font-size: 10px;"></i>
                             </button>
                             <button onclick="deleteSpark('${currentId}', '${spark.id}', '${user.uid}')" title="Delete" 
                                     style="${btnStyle}" 
