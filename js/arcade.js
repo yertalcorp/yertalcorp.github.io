@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:08:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:30:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 
 let user;
@@ -472,7 +472,7 @@ function renderSparkCard(spark, isOwner, currentId) {
                                 <i class="fas fa-save" style="font-size: 10px;"></i>
                             </button>
                             <button onclick="shareSpark('${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas fa-door-open" style="font-size: 10px;"></i>
+                                <i class="fas fa-share-alt" style="font-size: 10px;"></i>
                             </button>
                             <button onclick="tipOwner('${currentId}', '${spark.id}')" title="Tip Jar" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-jar" style="font-size: 10px;"></i>
