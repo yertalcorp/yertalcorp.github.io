@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:35:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:44:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 
 let user;
@@ -189,10 +189,10 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
     header.innerHTML = `
-        <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; height: 64px; filter: brightness(1.2);">
+        <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; filter: brightness(1.2);">
             
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <div style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;" onclick="window.location.href='/index.html'">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='/index.html'">
                     <div id="nav-logo" class="logo-container" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
                         <img src="${arcadeLogo}" alt="${brandName}" style="height: 100%; width: auto; filter: drop-shadow(0 0 5px var(--neon-color));">
                     </div>
@@ -201,7 +201,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                     </h1>
                 </div>
 
-                <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 0.75rem; height: 16px;">
+                <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 0.5rem; height: 16px;">
                     <a href="/index.html" title="Showroom" style="color: rgba(255,255,255,0.4); font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><i class="fas fa-door-open"></i></a>
                     <a href="?user=${userSlug}" title="My Arcade" style="color: rgba(255,255,255,0.4); font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><i class="fas fa-home"></i></a>
                     <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--neon-color); padding: 0.15rem 0.4rem; border-radius: 3px; text-decoration: none; font-size: 7px; background: rgba(0, 242, 255, 0.05); box-shadow: 0 0 5px rgba(0, 242, 255, 0.2); letter-spacing: 1px;">HUB</a>
