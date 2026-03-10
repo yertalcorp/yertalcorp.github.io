@@ -13,14 +13,12 @@
     overflow-x: hidden;
 }
 
-
-* Update Nav Layout */
 nav {
     display: grid;
-    /* Use 'max-content' to force the first column to be as small as possible */
-    grid-template-columns: max-content 1fr auto; 
+    /* Force the branding column to shrink-wrap its content */
+    grid-template-columns: **max-content** 1fr auto; 
     align-items: center;
-    padding: 0 1.5rem; /* Ensure horizontal padding isn't pushing elements in */
+    padding: 0 1.5rem;
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -127,15 +125,16 @@ header {
     box-shadow: 0 0 8px var(--neon-color);
 }
 
-/* Metallic/Chrome Text Effect */
 .metallic-text {
     font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: **0.1em**; /* Reduced from 0.25em to tighten the word itself */
+    /* Reduced letter spacing for maximum density */
+    letter-spacing: 0.12em; 
     font-size: 10px;
     color: #ffffff;
     text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 3px var(--neon-color);
     filter: brightness(1.8) contrast(1.3);
+    white-space: nowrap;
 }
 
 .current-block h2 {
