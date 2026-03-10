@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 10:16:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 10:41:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 
 let user;
@@ -456,7 +456,7 @@ function renderSparkCard(spark, isOwner, currentId) {
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.4rem;">
                 ${isOwner ? `
-                <div class="owner-stats-row" style="display: flex; justify-content: center; gap: 0.8rem; padding: 0 0.25rem; font-size: 9px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                <div class="owner-stats-row" style="display: flex; justify-content: center; gap: 0.8rem; padding: 0 0.25rem; font-size: 9px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.05); width: 80%; margin: 0 auto; padding-bottom: 4px;">
                     <span><i class="fas fa-eye" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.views || 0}</span>
                     <span><i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.likes || 0}</span>
                     <span><i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.reshares || 0}</span>
@@ -464,7 +464,7 @@ function renderSparkCard(spark, isOwner, currentId) {
                 </div>
                 ` : ''}
 
-                <div class="card-stats-row" style="display: flex; justify-content: space-between; align-items: center; padding: 0 0.25rem;">
+                <div class="card-stats-row" style="display: flex; justify-content: center; align-items: center; padding: 0 0.25rem; gap: 1rem;">
                     <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none;">
                         ${spark.link ? 'SOURCED' : 'FORGED'}: ${formatTimeAgo(spark.created)}
                     </div>
