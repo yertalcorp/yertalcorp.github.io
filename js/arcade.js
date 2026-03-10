@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:52:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:25:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 
 let user;
@@ -193,7 +193,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
             
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='/index.html'">
-                    <div id="nav-logo" class="logo-container" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
+                    <div id="nav-logo" class="logo-container" style="width: 32px; height: 32px; display: flex: none; align-items: center; justify-content: center;">
                         <img src="${arcadeLogo}" alt="${brandName}" style="height: 100%; width: auto; filter: drop-shadow(0 0 5px var(--neon-color));">
                     </div>
                     <h1 class="metallic-text" style="font-size: 1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; line-height: 1; white-space: nowrap;">
