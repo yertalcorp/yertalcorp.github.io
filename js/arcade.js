@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:55:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:03:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -932,5 +932,9 @@ function getPlanLimits(uid) {
 // --- DEPLOYMENT TRACKER AT THE BOTTOM ---
 window.auth = auth;
 window.handleCreation = handleCreation;
+// At the bottom of arcade.js
+window.likeSpark = likeSpark;
+console.log("likeSpark function has been successfully bridged to the window scope.");
+
 // Ensure this matches the function name in showroom.js and auth.js
-window.handleLogout = window.handleLogout || logout; console.log("ARCADE CORE V.2026.02.17.22:29 - STATUS: COMPACT MODE ACTIVE");
+window.handleLogout = window.handleLogout || logout;
