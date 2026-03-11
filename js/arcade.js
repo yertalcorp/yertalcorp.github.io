@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:52:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:57:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -522,10 +522,10 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
         <i class="fas fa-eye" style="font-size: 8px; margin-right: 3px;"></i> 
         ${spark.stats?.views || 0}
     </span>
-    <span class="stat-likes">
-        <i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> 
-        ${spark.stats?.likes_count || 0}
-    </span>
+<span class="stat-likes">
+    <i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> 
+    ${spark.stats?.likes?.likes_count || 0}
+</span>
     <span class="stat-reshares">
         <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
         ${spark.stats?.reshares || 0}
