@@ -1,9 +1,10 @@
-import { firebaseConfig, auth, saveToRealtimeDB, getArcadeData } from '/config/firebase-config.js';
+import { firebaseConfig, auth, saveToRealtimeDB, getArcadeData, db } from '/config/firebase-config.js';
 import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
+import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:03:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:21:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -17,85 +18,60 @@ const playClickSound = () => {
     audio.play().catch(e => console.log("Audio play blocked by browser"));
 };
 
-async function likeSpark(ownerId, currentId, sparkId) {
-    console.log("--- Like Action Started ---");
-    console.log("Input IDs:", { ownerId, currentId, sparkId });
-
-    if (!auth.currentUser) {
-        console.warn("User not logged in. Aborting.");
-        return;
-    }
+window.likeSpark = async (ownerUid, currentId, sparkId) => {
+    if (!auth.currentUser) return alert("Please log in to like sparks.");
 
     const visitorUid = auth.currentUser.uid;
     const btn = event.currentTarget;
     const icon = btn.querySelector('i');
-    
-    // Immediate Animation
-    btn.style.transform = "scale(1.5)";
-    setTimeout(() => btn.style.transform = "scale(1)", 150);
 
-    // Audio Feedback
-    try {
-        const audio = new Audio('https://actions.google.com/sounds/v1/foley/button_click.ogg');
-        audio.volume = 0.4;
-        audio.play().then(() => console.log("Audio played successfully")).catch(e => console.log("Audio play blocked by browser"));
-    } catch (e) { 
-        console.log("Audio setup failed", e); 
-    }
-
-    // Path Construction
-    const likesPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/likes`;
-    console.log("Target Path:", likesPath);
-    const likesRef = db.ref(likesPath);
+    // 1. Path Construction (Modular Style)
+    const statsPath = `users/${ownerUid}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats`;
+    const statsRef = ref(db, statsPath);
 
     try {
-        console.log("Initiating Firebase Transaction...");
-        await likesRef.transaction((likes) => {
-            console.log("Transaction logic running. Current node state:", likes);
-            
-            if (!likes) {
-                console.log("Node is empty. Initializing new stats object.");
-                likes = { likes_count: 0, likes_users: {} };
+        // 2. Atomic Transaction
+        const result = await runTransaction(statsRef, (currentStats) => {
+            // Initialize if stats don't exist yet
+            if (!currentStats) {
+                currentStats = { likes_count: 0, likes_users: {}, views: 0 };
             }
-            if (!likes.likes_users) likes.likes_users = {};
+            if (!currentStats.likes_users) currentStats.likes_users = {};
 
-            if (likes.likes_users[visitorUid]) {
-                console.log("User found in likes_users. Removing like.");
-                delete likes.likes_users[visitorUid];
-                likes.likes_count = Math.max(0, (likes.likes_count || 1) - 1);
+            // Toggle Logic
+            if (currentStats.likes_users[visitorUid]) {
+                // Unlike: Remove user and decrement
+                delete currentStats.likes_users[visitorUid];
+                currentStats.likes_count = Math.max(0, (currentStats.likes_count || 1) - 1);
             } else {
-                console.log("User not found in likes_users. Adding like.");
-                likes.likes_users[visitorUid] = true;
-                likes.likes_count = (likes.likes_count || 0) + 1;
+                // Like: Add user and increment
+                currentStats.likes_users[visitorUid] = true;
+                currentStats.likes_count = (currentStats.likes_count || 0) + 1;
             }
-            return likes;
-        }, (error, committed, snapshot) => {
-            if (error) {
-                console.error("Transaction finished with ERROR:", error);
-            } else if (!committed) {
-                console.warn("Transaction ABORTED (not committed).");
-            } else {
-                console.log("Transaction SUCCESS. New Data:", snapshot.val());
-                
-                const updatedData = snapshot.val();
-                const isNowLiked = updatedData.likes_users && updatedData.likes_users[visitorUid];
-                
-                // Update Color & Glow
-                icon.style.color = isNowLiked ? "#00f2ff" : "#f3e5ab";
-                icon.style.filter = isNowLiked ? "drop-shadow(0 0 8px #00f2ff)" : "none";
 
-                // Update Count Label
-                const sparkUnit = btn.closest('.spark-unit');
-                const countSpan = sparkUnit.querySelector('.stats-row span:nth-child(2)');
-                if (countSpan) {
-                    countSpan.innerHTML = `<i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> ${updatedData.likes_count || 0}`;
-                }
-            }
+            return currentStats;
         });
-    } catch (err) {
-        console.error("The transaction promise caught an error:", err);
+
+        // 3. UI Feedback (Only if DB update succeeded)
+        if (result.committed) {
+            const updated = result.snapshot.val();
+            const isLiked = updated.likes_users && updated.likes_users[visitorUid];
+            
+            // Visual Update
+            icon.style.color = isLiked ? "var(--neon-color)" : "#f3e5ab";
+            icon.style.filter = isLiked ? "drop-shadow(0 0 8px var(--neon-color))" : "none";
+            
+            // Update the count label in the UI
+            const sparkUnit = btn.closest('.spark-unit');
+            const countLabel = sparkUnit.querySelector('.stats-row span:nth-child(2)');
+            if (countLabel) {
+                countLabel.innerHTML = `<i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> ${updated.likes_count || 0}`;
+            }
+        }
+    } catch (error) {
+        console.error("Like Transaction Failed:", error);
     }
-}
+};
 
 async function refreshUI() {
     console.log("[SYSTEM]: INITIATING STRICT SYNC...");
