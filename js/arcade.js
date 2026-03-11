@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:21:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:52:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -19,60 +19,67 @@ const playClickSound = () => {
 };
 
 window.likeSpark = async (ownerUid, currentId, sparkId) => {
+    // 1. Validation Check
     if (!auth.currentUser) return alert("Please log in to like sparks.");
+    if (!ownerUid || ownerUid === "undefined") {
+        console.error("Path Error: ownerUid is missing.");
+        return;
+    }
 
     const visitorUid = auth.currentUser.uid;
     const btn = event.currentTarget;
     const icon = btn.querySelector('i');
 
-    // 1. Path Construction (Modular Style)
-    const statsPath = `users/${ownerUid}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats`;
-    const statsRef = ref(db, statsPath);
+    // 2. Target the nested 'likes' node specifically
+    const likesPath = `users/${ownerUid}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/likes`;
+    const likesRef = ref(db, likesPath);
 
     try {
-        // 2. Atomic Transaction
-        const result = await runTransaction(statsRef, (currentStats) => {
-            // Initialize if stats don't exist yet
-            if (!currentStats) {
-                currentStats = { likes_count: 0, likes_users: {}, views: 0 };
+        const result = await runTransaction(likesRef, (currentData) => {
+            // Handle null data (if the likes node doesn't exist yet)
+            if (!currentData) {
+                currentData = { likes_count: 0, likes_users: {} };
             }
-            if (!currentStats.likes_users) currentStats.likes_users = {};
+            if (!currentData.likes_users) currentData.likes_users = {};
 
-            // Toggle Logic
-            if (currentStats.likes_users[visitorUid]) {
-                // Unlike: Remove user and decrement
-                delete currentStats.likes_users[visitorUid];
-                currentStats.likes_count = Math.max(0, (currentStats.likes_count || 1) - 1);
+            // 3. The Toggle Logic
+            if (currentData.likes_users[visitorUid]) {
+                // User already liked it: REMOVE LIKE
+                delete currentData.likes_users[visitorUid];
+                currentData.likes_count = Math.max(0, (currentData.likes_count || 1) - 1);
             } else {
-                // Like: Add user and increment
-                currentStats.likes_users[visitorUid] = true;
-                currentStats.likes_count = (currentStats.likes_count || 0) + 1;
+                // User has not liked it: ADD LIKE
+                currentData.likes_users[visitorUid] = true;
+                currentData.likes_count = (currentData.likes_count || 0) + 1;
             }
 
-            return currentStats;
+            return currentData; // Save back to Firebase
         });
 
-        // 3. UI Feedback (Only if DB update succeeded)
+        // 4. UI Update on Success
         if (result.committed) {
             const updated = result.snapshot.val();
-            const isLiked = updated.likes_users && updated.likes_users[visitorUid];
+            const isNowLiked = updated.likes_users && updated.likes_users[visitorUid];
             
-            // Visual Update
-            icon.style.color = isLiked ? "var(--neon-color)" : "#f3e5ab";
-            icon.style.filter = isLiked ? "drop-shadow(0 0 8px var(--neon-color))" : "none";
+            // Visual feedback (Neon toggle)
+            icon.style.color = isNowLiked ? "var(--neon-color)" : "#f3e5ab";
+            icon.style.filter = isNowLiked ? "drop-shadow(0 0 8px var(--neon-color))" : "none";
             
-            // Update the count label in the UI
-            const sparkUnit = btn.closest('.spark-unit');
-            const countLabel = sparkUnit.querySelector('.stats-row span:nth-child(2)');
-            if (countLabel) {
-                countLabel.innerHTML = `<i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> ${updated.likes_count || 0}`;
+            // Targeted CSS class update
+            const card = btn.closest('.spark-card'); 
+            const likeLabel = card.querySelector('.stat-likes');
+            
+            if (likeLabel) {
+                likeLabel.innerHTML = `
+                    <i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> 
+                    ${updated.likes_count || 0}
+                `;
             }
         }
     } catch (error) {
-        console.error("Like Transaction Failed:", error);
+        console.error("Like Transaction Failed. Verify path and rules:", error);
     }
 };
-
 async function refreshUI() {
     console.log("[SYSTEM]: INITIATING STRICT SYNC...");
     try {
@@ -510,12 +517,24 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
                 
-                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 9px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); width: 85%; padding-bottom: 6px; text-align: center;">
-                    <span><i class="fas fa-eye" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.views || 0}</span>
-                    <span><i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.likes?.likes_count || 0}</span>
-                    <span><i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.reshares || 0}</span>
-                    <span><i class="fas fa-coins" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.tips || 0}</span>
-                </div>
+<div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 9px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); width: 85%; padding-bottom: 6px; text-align: center;">
+    <span class="stat-views">
+        <i class="fas fa-eye" style="font-size: 8px; margin-right: 3px;"></i> 
+        ${spark.stats?.views || 0}
+    </span>
+    <span class="stat-likes">
+        <i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> 
+        ${spark.stats?.likes_count || 0}
+    </span>
+    <span class="stat-reshares">
+        <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
+        ${spark.stats?.reshares || 0}
+    </span>
+    <span class="stat-tips">
+        <i class="fas fa-coins" style="font-size: 8px; margin-right: 3px;"></i> 
+        ${spark.stats?.tips || 0}
+    </span>
+</div>
 
                 <div class="interaction-row" style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%;">
                     <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none; white-space: nowrap;">
