@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:05:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:33:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 
 let user;
@@ -842,51 +842,67 @@ function getPlanLimits(uid) {
         sparksPerRow: currentPlanLimits.sparks_per_row_desktop || 6
     };
 }
+
+// Helper for the satisfying click
+const playClickSound = () => {
+    const audio = new Audio('https://actions.google.com/sounds/v1/foley/button_click.ogg');
+    audio.volume = 0.5;
+    audio.play().catch(e => console.log("Audio play blocked by browser"));
+};
+
 async function likeSpark(ownerId, currentId, sparkId) {
-    if (!auth.currentUser) {
-        alert("Login to like this Spark!");
-        return;
-    }
+    if (!auth.currentUser) return;
 
     const visitorUid = auth.currentUser.uid;
-    // Path based on our established Gem structure
     const likesRef = db.ref(`users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/likes`);
     
-    // UI Reference: Assuming the icon is within the clicked button
     const btn = event.currentTarget;
     const icon = btn.querySelector('i');
+    const sparkUnit = btn.closest('.spark-unit');
+    const countLabel = sparkUnit.querySelector('.stats-row span:nth-child(2)');
+
+    // 1. PHYSICAL INTERACTION: Magnify and Sound
+    playClickSound();
+    btn.style.transform = "scale(1.5)";
+    btn.style.transition = "transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+    
+    // Snap back after 150ms
+    setTimeout(() => {
+        btn.style.transform = "scale(1)";
+    }, 150);
 
     try {
         await likesRef.transaction((likes) => {
-            // Initialize if the node is empty
-            if (!likes) {
-                likes = { likes_count: 0, likes_users: {} };
-            }
-            if (!likes.liked_users) likes.liked_users = {};
+            if (!likes) likes = { likes_count: 0, likes_users: {} };
+            if (!likes.likes_users) likes.likes_users = {};
 
-            if (likes.liked_users[visitorUid]) {
-                // TOGGLE OFF: Unlike
-                delete likes.liked_users[visitorUid];
+            if (likes.likes_users[visitorUid]) {
+                // UNLIKE
+                delete likes.likes_users[visitorUid];
                 likes.likes_count = Math.max(0, (likes.likes_count || 1) - 1);
                 
-                // Visuals: Pearl / White
-                icon.style.color = "#f3e5ab";
+                icon.style.color = "#f3e5ab"; 
                 icon.style.filter = "none";
             } else {
-                // TOGGLE ON: Like
-                likes.liked_users[visitorUid] = true;
+                // LIKE
+                likes.likes_users[visitorUid] = true;
                 likes.likes_count = (likes.likes_count || 0) + 1;
                 
-                // Visuals: Neon Cyan + Glow
                 icon.style.color = "#00f2ff";
-                icon.style.filter = "drop-shadow(0 0 8px #00f2ff)";
+                icon.style.filter = "drop-shadow(0 0 10px #00f2ff)";
             }
+
+            if (countLabel) {
+                countLabel.innerHTML = `<i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> ${likes.likes_count}`;
+            }
+
             return likes;
         });
     } catch (error) {
-        console.error("Like transaction failed:", error);
+        console.error("Transaction Error:", error);
     }
 }
+
 // --- DEPLOYMENT TRACKER AT THE BOTTOM ---
 window.auth = auth;
 window.handleCreation = handleCreation;
