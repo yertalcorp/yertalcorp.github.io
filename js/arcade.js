@@ -412,10 +412,18 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
-function renderSparkCard(spark, isOwner, currentId) {
+function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const targetUrl = `spark.html?current=${currentId}&spark=${spark.id}`;
+    const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
     
-    // Shared button style for neon glow effect
+    // Check if current visitor has liked this spark
+    const hasLiked = spark.stats?.likes?.likes_users?.[visitorUid] === true;
+    
+    // Dynamic Colors
+    const likeIconColor = hasLiked ? "var(--neon-color)" : "#f3e5ab";
+    const likeIconGlow = hasLiked ? "drop-shadow(0 0 5px var(--neon-color))" : "none";
+
+    // Shared button style
     const btnStyle = `background: none; border: none; color: var(--neon-color); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; filter: drop-shadow(0 0 2px var(--neon-color));`;
     const onHover = "this.style.filter='drop-shadow(0 0 8px var(--neon-color))'; this.style.transform='scale(1.2)';"
     const onOut = "this.style.filter='drop-shadow(0 0 2px var(--neon-color))'; this.style.transform='scale(1)';"
@@ -442,7 +450,7 @@ function renderSparkCard(spark, isOwner, currentId) {
                 
                 <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 9px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); width: 85%; padding-bottom: 6px; text-align: center;">
                     <span><i class="fas fa-eye" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.views || 0}</span>
-                    <span><i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.likes || 0}</span>
+                    <span><i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.likes?.likes_count || 0}</span>
                     <span><i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.reshares || 0}</span>
                     <span><i class="fas fa-coins" style="font-size: 8px; margin-right: 3px;"></i> ${spark.stats?.tips || 0}</span>
                 </div>
@@ -453,15 +461,15 @@ function renderSparkCard(spark, isOwner, currentId) {
                     </div>
                     
                     <div class="action-buttons" style="display: flex; gap: 0.8rem; align-items: center; justify-content: center;">
-                        <button onclick="likeSpark('${currentId}', '${spark.id}')" title="Like" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                            <i class="fas fa-thumbs-up" style="font-size: 10px;"></i>
+                        <button onclick="likeSpark('${ownerId}', '${currentId}', '${spark.id}')" title="Like" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <i class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
                         </button>
 
                         ${isOwner ? `
                             <button onclick="shareSpark('${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-share-alt" style="font-size: 10px;"></i>
                             </button>
-                            <button onclick="deleteSpark('${currentId}', '${spark.id}', '${user.uid}')" title="Delete" 
+                            <button onclick="deleteSpark('${currentId}', '${spark.id}', '${visitorUid}')" title="Delete" 
                                     style="${btnStyle}" 
                                     onmouseover="this.style.color='#ef4444'; this.style.filter='drop-shadow(0 0 8px #ef4444)'; this.style.transform='scale(1.2)';" 
                                     onmouseout="${onOut}">
@@ -834,9 +842,52 @@ function getPlanLimits(uid) {
         sparksPerRow: currentPlanLimits.sparks_per_row_desktop || 6
     };
 }
+async function likeSpark(ownerId, currentId, sparkId) {
+    if (!auth.currentUser) {
+        alert("Login to like this Spark!");
+        return;
+    }
 
+    const visitorUid = auth.currentUser.uid;
+    // Path based on our established Gem structure
+    const likesRef = db.ref(`users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/likes`);
+    
+    // UI Reference: Assuming the icon is within the clicked button
+    const btn = event.currentTarget;
+    const icon = btn.querySelector('i');
+
+    try {
+        await likesRef.transaction((likes) => {
+            // Initialize if the node is empty
+            if (!likes) {
+                likes = { likes_count: 0, likes_users: {} };
+            }
+            if (!likes.liked_users) likes.liked_users = {};
+
+            if (likes.liked_users[visitorUid]) {
+                // TOGGLE OFF: Unlike
+                delete likes.liked_users[visitorUid];
+                likes.likes_count = Math.max(0, (likes.likes_count || 1) - 1);
+                
+                // Visuals: Pearl / White
+                icon.style.color = "#f3e5ab";
+                icon.style.filter = "none";
+            } else {
+                // TOGGLE ON: Like
+                likes.liked_users[visitorUid] = true;
+                likes.likes_count = (likes.likes_count || 0) + 1;
+                
+                // Visuals: Neon Cyan + Glow
+                icon.style.color = "#00f2ff";
+                icon.style.filter = "drop-shadow(0 0 8px #00f2ff)";
+            }
+            return likes;
+        });
+    } catch (error) {
+        console.error("Like transaction failed:", error);
+    }
+}
 // --- DEPLOYMENT TRACKER AT THE BOTTOM ---
-// --- DEPLOYMENT TRACKER ---
 window.auth = auth;
 window.handleCreation = handleCreation;
 // Ensure this matches the function name in showroom.js and auth.js
