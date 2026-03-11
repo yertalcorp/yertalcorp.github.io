@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:49:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:55:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -18,55 +18,82 @@ const playClickSound = () => {
 };
 
 async function likeSpark(ownerId, currentId, sparkId) {
-    if (!auth.currentUser) return;
+    console.log("--- Like Action Started ---");
+    console.log("Input IDs:", { ownerId, currentId, sparkId });
+
+    if (!auth.currentUser) {
+        console.warn("User not logged in. Aborting.");
+        return;
+    }
 
     const visitorUid = auth.currentUser.uid;
-    const likesRef = db.ref(`users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/likes`);
-    
     const btn = event.currentTarget;
     const icon = btn.querySelector('i');
-    const sparkUnit = btn.closest('.spark-unit');
-    const countLabel = sparkUnit.querySelector('.stats-row span:nth-child(2)');
-
-    // 1. PHYSICAL INTERACTION: Magnify and Sound
-    playClickSound();
-    btn.style.transform = "scale(1.5)";
-    btn.style.transition = "transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
     
-    // Snap back after 150ms
-    setTimeout(() => {
-        btn.style.transform = "scale(1)";
-    }, 150);
+    // Immediate Animation
+    btn.style.transform = "scale(1.5)";
+    setTimeout(() => btn.style.transform = "scale(1)", 150);
+
+    // Audio Feedback
+    try {
+        const audio = new Audio('https://actions.google.com/sounds/v1/foley/button_click.ogg');
+        audio.volume = 0.4;
+        audio.play().then(() => console.log("Audio played successfully")).catch(e => console.log("Audio play blocked by browser"));
+    } catch (e) { 
+        console.log("Audio setup failed", e); 
+    }
+
+    // Path Construction
+    const likesPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/likes`;
+    console.log("Target Path:", likesPath);
+    const likesRef = db.ref(likesPath);
 
     try {
+        console.log("Initiating Firebase Transaction...");
         await likesRef.transaction((likes) => {
-            if (!likes) likes = { likes_count: 0, likes_users: {} };
+            console.log("Transaction logic running. Current node state:", likes);
+            
+            if (!likes) {
+                console.log("Node is empty. Initializing new stats object.");
+                likes = { likes_count: 0, likes_users: {} };
+            }
             if (!likes.likes_users) likes.likes_users = {};
 
             if (likes.likes_users[visitorUid]) {
-                // UNLIKE
+                console.log("User found in likes_users. Removing like.");
                 delete likes.likes_users[visitorUid];
                 likes.likes_count = Math.max(0, (likes.likes_count || 1) - 1);
-                
-                icon.style.color = "#f3e5ab"; 
-                icon.style.filter = "none";
             } else {
-                // LIKE
+                console.log("User not found in likes_users. Adding like.");
                 likes.likes_users[visitorUid] = true;
                 likes.likes_count = (likes.likes_count || 0) + 1;
-                
-                icon.style.color = "#00f2ff";
-                icon.style.filter = "drop-shadow(0 0 10px #00f2ff)";
             }
-
-            if (countLabel) {
-                countLabel.innerHTML = `<i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> ${likes.likes_count}`;
-            }
-
             return likes;
+        }, (error, committed, snapshot) => {
+            if (error) {
+                console.error("Transaction finished with ERROR:", error);
+            } else if (!committed) {
+                console.warn("Transaction ABORTED (not committed).");
+            } else {
+                console.log("Transaction SUCCESS. New Data:", snapshot.val());
+                
+                const updatedData = snapshot.val();
+                const isNowLiked = updatedData.likes_users && updatedData.likes_users[visitorUid];
+                
+                // Update Color & Glow
+                icon.style.color = isNowLiked ? "#00f2ff" : "#f3e5ab";
+                icon.style.filter = isNowLiked ? "drop-shadow(0 0 8px #00f2ff)" : "none";
+
+                // Update Count Label
+                const sparkUnit = btn.closest('.spark-unit');
+                const countSpan = sparkUnit.querySelector('.stats-row span:nth-child(2)');
+                if (countSpan) {
+                    countSpan.innerHTML = `<i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> ${updatedData.likes_count || 0}`;
+                }
+            }
         });
-    } catch (error) {
-        console.error("Transaction Error:", error);
+    } catch (err) {
+        console.error("The transaction promise caught an error:", err);
     }
 }
 
