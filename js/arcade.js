@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:44:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:07:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -165,12 +165,14 @@ function launchShareHUD(url, title) {
     hud.innerHTML = `
         <div class="share-hud-content">
             <h4 class="metallic-text" style="font-size: 14px; margin-bottom: 20px;">SHARE THIS BRILLIANCE</h4>
-            <div class="share-grid" style="display: flex; gap: 20px; justify-content: center; margin-bottom: 20px;">
-                <a href="${platforms.x}" target="_blank" style="color: #f3e5ab; font-size: 20px;"><i class="fab fa-x-twitter"></i></a>
-                <a href="${platforms.facebook}" target="_blank" style="color: #f3e5ab; font-size: 20px;"><i class="fab fa-facebook"></i></a>
-                <a href="${platforms.whatsapp}" target="_blank" style="color: #f3e5ab; font-size: 20px;"><i class="fab fa-whatsapp"></i></a>
-                <a href="${platforms.email}" style="color: #f3e5ab; font-size: 20px;"><i class="fas fa-envelope"></i></a>
-            </div>
+// Inside the launchShareHUD function, update the share-grid innerHTML:
+<div class="share-grid" style="display: flex; gap: 20px; justify-content: center; margin-bottom: 20px;">
+    <a href="${platforms.x}" target="_blank" style="color: #f3e5ab; font-size: 20px;"><i class="fab fa-x-twitter"></i></a>
+    <a href="${platforms.facebook}" target="_blank" style="color: #f3e5ab; font-size: 20px;"><i class="fab fa-facebook"></i></a>
+    <a href="${platforms.whatsapp}" target="_blank" style="color: #f3e5ab; font-size: 20px;"><i class="fab fa-whatsapp"></i></a>
+    <a href="${platforms.email}" style="color: #f3e5ab; font-size: 20px;"><i class="fas fa-envelope"></i></a>
+    <button onclick="copyToClipboard('${url}', this)" style="background:none; border:none; color: #f3e5ab; font-size: 20px; cursor:pointer;"><i class="fas fa-link"></i></button>
+</div>
             <p style="font-size: 9px; color: var(--neon-color); margin-bottom: 15px;">LINK COPIED TO CLIPBOARD</p>
             <button onclick="this.closest('.share-hud-overlay').remove()" class="close-hud">CLOSE</button>
         </div>
