@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:43:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:51:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -514,7 +514,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     // DEBUG LOG: Check if ownerUid is valid before we build the HTML
     console.log(`[Render] Spark: ${spark.id} | Owner: ${ownerId} | Current: ${currentId}`);
     return `
-        <div class="spark-unit" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
+        <div class="spark-card" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
             <div class="action-card" 
                  onclick="window.location.href='${targetUrl}'"
                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px;">
