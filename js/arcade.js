@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:04:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:22:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -96,47 +96,63 @@ window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
 };
 
 window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
-    // 1. Build the deep-link URL
     const baseUrl = window.location.origin + window.location.pathname;
     const shareUrl = `${baseUrl}?user=${ownerId}&current=${currentId}&spark=${sparkId}`;
+    const shareTitle = "Check out this Spark on Yertal Arcade!";
+    
+    const shareData = { title: shareTitle, text: 'Explore this brilliant spark:', url: shareUrl };
 
-    try {
-        // 2. Copy to Clipboard
-        await navigator.clipboard.writeText(shareUrl);
-        
-        // 3. Database Update (Increment Reshare Count)
-        const resharePath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/reshares`;
-        const reshareRef = ref(db, resharePath);
-
-        // Run transaction to increment
-        const result = await runTransaction(reshareRef, (currentCount) => {
-            return (currentCount || 0) + 1;
-        });
-
-        // 4. UI Update: Update the Reshare Label
-        if (result.committed) {
-            const card = btnElement.closest('.spark-card');
-            const reshareLabel = card ? card.querySelector('.stat-reshares') : null;
-            if (reshareLabel) {
-                reshareLabel.innerHTML = `
-                    <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
-                    ${result.snapshot.val()}
-                `;
-            }
-            
-            // Brief "Success" glow on the button
-            const originalColor = btnElement.style.color;
-            btnElement.style.color = "#fff"; // Flash white
-            setTimeout(() => btnElement.style.color = originalColor, 500);
-            
-            console.log("Reshare recorded and link copied!");
+    // 1. ATTEMPT NATIVE SHARE (Mobile / Supported Desktops)
+    if (navigator.share && navigator.canShare(shareData)) {
+        try {
+            await navigator.share(shareData);
+            recordReshare(ownerId, currentId, sparkId, btnElement);
+            return; // Exit if successful
+        } catch (err) {
+            if (err.name === 'AbortError') return; // User closed native sheet
+            console.warn("Native share failed, launching custom HUD.");
         }
-
-    } catch (err) {
-        console.error("Share failed:", err);
     }
+
+    // 2. CUSTOM HUD FALLBACK (Unsupported Desktops)
+    launchShareHUD(shareUrl, shareTitle, ownerId, currentId, sparkId, btnElement);
 };
 
+// Internal Helper to Build and Launch the HUD
+function launchShareHUD(url, title, ownerId, currentId, sparkId, btnElement) {
+    const platforms = {
+        x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
+        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+        whatsapp: `https://api.whatsapp.com/send?text=${encodeURIComponent(title + " " + url)}`,
+        email: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent("Explore this spark: " + url)}`
+    };
+
+    const hud = document.createElement('div');
+    hud.className = 'share-hud-overlay';
+    hud.innerHTML = `
+        <div class="share-hud-content">
+            <h4 class="metallic-text" style="font-size: 14px; margin-bottom: 20px;">LIBERATE THIS SPARK</h4>
+            <div class="share-grid">
+                <a href="${platforms.x}" target="_blank"><i class="fab fa-x-twitter"></i></a>
+                <a href="${platforms.facebook}" target="_blank"><i class="fab fa-facebook"></i></a>
+                <a href="${platforms.whatsapp}" target="_blank"><i class="fab fa-whatsapp"></i></a>
+                <a href="${platforms.email}"><i class="fas fa-envelope"></i></a>
+                <button onclick="copyToClipboard('${url}', this)" class="copy-link-btn"><i class="fas fa-link"></i></button>
+            </div>
+            <button onclick="this.closest('.share-hud-overlay').remove()" class="close-hud">CLOSE</button>
+        </div>
+    `;
+    document.body.appendChild(hud);
+    recordReshare(ownerId, currentId, sparkId, btnElement);
+}
+
+// Global helper for the HUD's copy button
+window.copyToClipboard = (text, btn) => {
+    navigator.clipboard.writeText(text);
+    const originalIcon = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check" style="color: var(--neon-color)"></i>';
+    setTimeout(() => btn.innerHTML = originalIcon, 2000);
+};
 async function refreshUI() {
     console.log("[SYSTEM]: INITIATING STRICT SYNC...");
     try {
