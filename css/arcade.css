@@ -473,3 +473,60 @@ button:hover {
 }
 /* --- UTILITIES --- */
 .hidden { display: none ; }
+.share-hud-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    animation: fadeIn 0.3s ease;
+}
+
+.share-hud-content {
+    background: #111;
+    padding: 30px;
+    border: 1px solid var(--neon-color);
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+    min-width: 300px;
+}
+
+.share-grid {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.share-grid a, .copy-link-btn {
+    color: #f3e5ab;
+    font-size: 24px;
+    transition: all 0.3s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.share-grid a:hover, .copy-link-btn:hover {
+    color: var(--neon-color);
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 8px var(--neon-color));
+}
+
+.close-hud {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
