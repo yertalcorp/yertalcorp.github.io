@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:39:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:45:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -497,7 +497,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const onHover = "this.style.filter='drop-shadow(0 0 8px var(--neon-color))'; this.style.transform='scale(1.2)';"
     const onOut = "this.style.filter='drop-shadow(0 0 2px var(--neon-color))'; this.style.transform='scale(1)';"
     // DEBUG LOG: Check if ownerUid is valid before we build the HTML
-    console.log(`[Render] Spark: ${spark.id} | Owner: ${ownerUid} | Current: ${currentId}`);
+    console.log(`[Render] Spark: ${spark.id} | Owner: ${ownerId} | Current: ${currentId}`);
     return `
         <div class="spark-unit" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
             <div class="action-card" 
