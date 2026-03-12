@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:22:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:32:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -99,53 +99,84 @@ window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
     const baseUrl = window.location.origin + window.location.pathname;
     const shareUrl = `${baseUrl}?user=${ownerId}&current=${currentId}&spark=${sparkId}`;
     const shareTitle = "Check out this Spark on Yertal Arcade!";
-    
     const shareData = { title: shareTitle, text: 'Explore this brilliant spark:', url: shareUrl };
 
-    // 1. ATTEMPT NATIVE SHARE (Mobile / Supported Desktops)
+    // Function to handle the actual DB and UI update
+    const performReshareUpdate = async () => {
+        const resharePath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/reshares`;
+        const reshareRef = ref(db, resharePath);
+
+        try {
+            const result = await runTransaction(reshareRef, (count) => {
+                return (count || 0) + 1;
+            });
+
+            if (result.committed) {
+                const newCount = result.snapshot.val();
+                // Find the specific card and update the label instantly
+                const card = btnElement.closest('.spark-card');
+                const reshareLabel = card ? card.querySelector('.stat-reshares') : null;
+                
+                if (reshareLabel) {
+                    reshareLabel.innerHTML = `
+                        <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
+                        ${newCount}
+                    `;
+                }
+                console.log(`[Reshare] Success! New count for ${sparkId}: ${newCount}`);
+            }
+        } catch (error) {
+            console.error("Reshare Transaction Failed:", error);
+        }
+    };
+
+    // 1. ATTEMPT NATIVE SHARE
     if (navigator.share && navigator.canShare(shareData)) {
         try {
             await navigator.share(shareData);
-            recordReshare(ownerId, currentId, sparkId, btnElement);
-            return; // Exit if successful
+            await performReshareUpdate(); // Update DB/UI only if they actually shared
+            return;
         } catch (err) {
-            if (err.name === 'AbortError') return; // User closed native sheet
-            console.warn("Native share failed, launching custom HUD.");
+            if (err.name === 'AbortError') return; // User cancelled, don't count it
+            console.warn("Native share failed, falling back to HUD.");
         }
     }
 
-    // 2. CUSTOM HUD FALLBACK (Unsupported Desktops)
-    launchShareHUD(shareUrl, shareTitle, ownerId, currentId, sparkId, btnElement);
+    // 2. FALLBACK: Launch HUD & Copy Link
+    // We update the DB here because they've "initiated" the share via the custom menu
+    launchShareHUD(shareUrl, shareTitle);
+    await performReshareUpdate();
 };
 
-// Internal Helper to Build and Launch the HUD
-function launchShareHUD(url, title, ownerId, currentId, sparkId, btnElement) {
+// Simple HUD Launcher for Desktop Fallback
+function launchShareHUD(url, title) {
+    // Ensure the link is copied immediately for convenience
+    navigator.clipboard.writeText(url);
+    
     const platforms = {
         x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
         facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
         whatsapp: `https://api.whatsapp.com/send?text=${encodeURIComponent(title + " " + url)}`,
-        email: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent("Explore this spark: " + url)}`
+        email: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent("Check this out: " + url)}`
     };
 
     const hud = document.createElement('div');
     hud.className = 'share-hud-overlay';
     hud.innerHTML = `
         <div class="share-hud-content">
-            <h4 class="metallic-text" style="font-size: 14px; margin-bottom: 20px;">LIBERATE THIS SPARK</h4>
-            <div class="share-grid">
-                <a href="${platforms.x}" target="_blank"><i class="fab fa-x-twitter"></i></a>
-                <a href="${platforms.facebook}" target="_blank"><i class="fab fa-facebook"></i></a>
-                <a href="${platforms.whatsapp}" target="_blank"><i class="fab fa-whatsapp"></i></a>
-                <a href="${platforms.email}"><i class="fas fa-envelope"></i></a>
-                <button onclick="copyToClipboard('${url}', this)" class="copy-link-btn"><i class="fas fa-link"></i></button>
+            <h4 class="metallic-text" style="font-size: 14px; margin-bottom: 20px;">SHARE THIS BRILLIANCE</h4>
+            <div class="share-grid" style="display: flex; gap: 20px; justify-content: center; margin-bottom: 20px;">
+                <a href="${platforms.x}" target="_blank" style="color: #f3e5ab; font-size: 20px;"><i class="fab fa-x-twitter"></i></a>
+                <a href="${platforms.facebook}" target="_blank" style="color: #f3e5ab; font-size: 20px;"><i class="fab fa-facebook"></i></a>
+                <a href="${platforms.whatsapp}" target="_blank" style="color: #f3e5ab; font-size: 20px;"><i class="fab fa-whatsapp"></i></a>
+                <a href="${platforms.email}" style="color: #f3e5ab; font-size: 20px;"><i class="fas fa-envelope"></i></a>
             </div>
+            <p style="font-size: 9px; color: var(--neon-color); margin-bottom: 15px;">LINK COPIED TO CLIPBOARD</p>
             <button onclick="this.closest('.share-hud-overlay').remove()" class="close-hud">CLOSE</button>
         </div>
     `;
     document.body.appendChild(hud);
-    recordReshare(ownerId, currentId, sparkId, btnElement);
 }
-
 // Global helper for the HUD's copy button
 window.copyToClipboard = (text, btn) => {
     navigator.clipboard.writeText(text);
