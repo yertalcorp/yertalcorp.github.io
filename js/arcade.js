@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:25:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:41:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -333,76 +333,67 @@ watchAuthState(async (currentUser) => {
     refreshUI(); 
 });
 
-window.cloneSpark = async (btn, sourceOwnerId, sourceCurrentId, sparkId) => {
-    const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
-    
-    // 1. Validation
-    if (!visitorUid) {
-        alert("Log in to Yertal to forge sparks!");
-        return;
-    }
-
-    if (!sourceOwnerId) {
-        console.error("[Clone] Missing Source Owner ID.");
-        return;
-    }
-
-    // Define Paths
+window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, sparkId) => {
+    // Paths
     const sourcePath = `users/${sourceOwnerId}/infrastructure/currents/${sourceCurrentId}/sparks/${sparkId}`;
     const destinationPath = `users/${visitorUid}/infrastructure/currents/${sourceCurrentId}/sparks/${sparkId}`;
 
-    // Helper for UI Feedback
-    const setNeonFeedback = () => {
+    // Function to permanently set the icon to Neon for this session
+    const setNeonPermanent = () => {
         const icon = btn.querySelector('i');
         if (icon) {
             icon.style.color = "var(--neon-color)";
             icon.style.filter = "drop-shadow(0 0 5px var(--neon-color))";
+            // Disable interactions since this is a one-time action
+            btn.style.pointerEvents = "none"; 
         }
     };
 
     try {
-        // 2. CHECK IF ALREADY SAVED (Instant check in Visitor's DB)
-        const checkRef = ref(db, destinationPath);
-        const checkSnapshot = await get(checkRef);
-
+        // 1. Check if it already exists in the visitor's collection
+        const checkSnapshot = await get(ref(db, destinationPath));
         if (checkSnapshot.exists()) {
+            setNeonPermanent();
             alert("This spark is already in your collection!");
-            setNeonFeedback(); // Turn neon to indicate it's already "active" in your DB
             return;
         }
 
-        // 3. FETCH ORIGINAL DATA
+        // 2. Fetch the original spark data
         const sourceRef = ref(db, sourcePath);
         const snapshot = await get(sourceRef);
 
         if (snapshot.exists()) {
             const sparkData = snapshot.val();
 
-            // 4. PREPARE CLONE (Reset stats for the new instance)
+            // 3. Update the 'forges' analytic field on the original spark
+            const forgeRef = ref(db, `${sourcePath}/stats/forges`);
+            await runTransaction(forgeRef, (count) => {
+                return (count || 0) + 1;
+            });
+
+            // 4. Create the clone for the visitor with fresh stats
             const clonedData = {
                 ...sparkData,
-                clonedFrom: sourceOwnerId, // Attribution
+                clonedFrom: sourceOwnerId,
                 created: Date.now(),
                 stats: {
                     views: 0,
                     likes: { likes_count: 0, likes_users: {} },
                     reshares: 0,
-                    tips: 0
+                    tips: 0,
+                    forges: 0 
                 }
             };
 
-            // 5. SAVE TO VISITOR DB
+            // 5. Write to Visitor's DB
             await set(ref(db, destinationPath), clonedData);
             
-            // 6. SUCCESS UI FEEDBACK
-            setNeonFeedback();
-            console.log(`%c[Clone SUCCESS] Spark ${sparkId} forged to ${visitorUid}`, "color: #00ff00; font-weight: bold;");
-        } else {
-            console.error("[Clone] Source spark not found in database.");
+            // 6. UI Feedback
+            setNeonPermanent();
+            console.log(`[Forge] Recorded in analytics and saved to visitor: ${visitorUid}`);
         }
     } catch (error) {
         console.error("[Clone Error]", error);
-        alert("Forge failed. Check connection or permissions.");
     }
 };
 
@@ -728,7 +719,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                                 <i class="fas fa-trash" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                         ` : `
-                            <button onclick="cloneSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Save to My Arcade" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <button onclick="cloneSpark(this, '${currentId}', '${ownerId}', '${currentId}', '${spark.id}')" title="Save to My Arcade" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-save" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                             <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
