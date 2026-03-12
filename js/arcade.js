@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:35:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:15:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -320,42 +320,69 @@ watchAuthState(async (currentUser) => {
     refreshUI(); 
 });
 
-window.cloneSpark = async (currentId, sparkId) => {
+window.cloneSpark = async (btn, sourceCurrentId, sparkId) => {
+    const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
+    if (!visitorUid) {
+        alert("Log in to Yertal to forge sparks!");
+        return;
+    }
+
+    // Get source owner from URL
+    const params = new URLSearchParams(window.location.search);
+    const sourceOwnerId = params.get('user'); 
+    
+    if (!sourceOwnerId) return;
+
+    // Paths
+    const sourcePath = `users/${sourceOwnerId}/infrastructure/currents/${sourceCurrentId}/sparks/${sparkId}`;
+    const destinationPath = `users/${visitorUid}/infrastructure/currents/${sourceCurrentId}/sparks/${sparkId}`;
+
     try {
-        // 1. Identify source spark from the cache
-        // We look through all users in the cache to find the one currently being viewed
-        const urlParams = new URLSearchParams(window.location.search);
-        const viewedUserSlug = urlParams.get('user');
-        
-        // Find the user ID associated with the slug we are viewing
-        const allUsers = databaseCache.users || {};
-        const sourceUid = Object.keys(allUsers).find(uid => allUsers[uid].profile?.slug === viewedUserSlug);
-        
-        if (!sourceUid) return alert("Source Spark not found.");
-        
-        const sourceSpark = allUsers[sourceUid].infrastructure?.currents?.[currentId]?.sparks?.[sparkId];
-        
-        if (!sourceSpark) return alert("Spark data missing.");
+        // 1. CHECK IF ALREADY SAVED
+        const checkRef = ref(db, destinationPath);
+        const checkSnapshot = await get(checkRef);
 
-        // 2. Prepare the clone for the CURRENT logged-in user
-        const newSparkId = `spark_clone_${Date.now()}`;
-        const targetPath = `users/${user.uid}/infrastructure/currents/${currentId}/sparks/${newSparkId}`;
-        
-        const clonedData = {
-            ...sourceSpark,
-            id: newSparkId,
-            owner: user.uid,
-            created: Date.now(),
-            name: `${sourceSpark.name} (CLONE)`,
-            stats: { views: 0, likes: 0, tips: 0 } // Reset stats for the clone
-        };
+        if (checkSnapshot.exists()) {
+            alert("This spark is already in your collection!");
+            // Set to neon anyway just in case the UI missed it
+            const icon = btn.querySelector('i');
+            if (icon) icon.style.color = "var(--neon-color)";
+            return;
+        }
 
-        await saveToRealtimeDB(targetPath, clonedData);
-        alert("Spark synchronized to your Laboratory!");
-        
-    } catch (e) {
-        console.error("Clone Error:", e);
-        alert("Failed to clone spark.");
+        // 2. FETCH ORIGINAL DATA
+        const sourceRef = ref(db, sourcePath);
+        const snapshot = await get(sourceRef);
+
+        if (snapshot.exists()) {
+            const sparkData = snapshot.val();
+
+            // 3. PREPARE CLONE (Fresh Stats)
+            const clonedData = {
+                ...sparkData,
+                clonedFrom: sourceOwnerId,
+                created: Date.now(),
+                stats: {
+                    views: 0,
+                    likes: { likes_count: 0, likes_users: {} },
+                    reshares: 0,
+                    tips: 0
+                }
+            };
+
+            // 4. SAVE TO VISITOR DB
+            await set(ref(db, destinationPath), clonedData);
+            
+            // 5. SUCCESS UI FEEDBACK
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.style.color = "var(--neon-color)";
+                icon.style.filter = "drop-shadow(0 0 5px var(--neon-color))";
+            }
+            console.log("[Clone] Spark forged successfully.");
+        }
+    } catch (error) {
+        console.error("[Clone Error]", error);
     }
 };
 
@@ -599,21 +626,30 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const targetUrl = `spark.html?current=${currentId}&spark=${spark.id}`;
     const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
     
-    // Check if current visitor has liked this spark
+    // 1. Core Color Palette
+    const pearlColor = "#f3e5ab";
+    const neonColor = "var(--neon-color)";
+    const neonGlow = "drop-shadow(0 0 5px var(--neon-color))";
+    
+    // 2. State & Variable Assignments
     const hasLiked = spark.stats?.likes?.likes_users?.[visitorUid] === true;
     
-    // Dynamic Colors
-    const likeIconColor = hasLiked ? "var(--neon-color)" : "#f3e5ab";
-    const likeIconGlow = hasLiked ? "drop-shadow(0 0 5px var(--neon-color))" : "none";
+    // Persistent state colors
+    const likeIconColor = hasLiked ? neonColor : pearlColor;
+    const likeIconGlow = hasLiked ? neonGlow : "none";
 
-    // Shared button style
-    const btnStyle = `background: none; border: none; color: var(--neon-color); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; filter: drop-shadow(0 0 2px var(--neon-color));`;
+    // Standard tool colors (starting as Pearl)
+    const toolIconColor = pearlColor;
+
+    // 3. Shared Button Styling
+    const btnStyle = `background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; filter: drop-shadow(0 0 2px var(--neon-color));`;
     const onHover = "this.style.filter='drop-shadow(0 0 8px var(--neon-color))'; this.style.transform='scale(1.2)';"
     const onOut = "this.style.filter='drop-shadow(0 0 2px var(--neon-color))'; this.style.transform='scale(1)';"
-    // DEBUG LOG: Check if ownerUid is valid before we build the HTML
+    
     console.log(`[Render] Spark: ${spark.id} | Owner: ${ownerId} | Current: ${currentId}`);
+    
     return `
-        <div class="spark-card" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
+        <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
             <div class="action-card" 
                  onclick="window.location.href='${targetUrl}'"
                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px;">
@@ -632,24 +668,24 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
                 
-<div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 9px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); width: 85%; padding-bottom: 6px; text-align: center;">
-    <span class="stat-views">
-        <i class="fas fa-eye" style="font-size: 8px; margin-right: 3px;"></i> 
-        ${spark.stats?.views || 0}
-    </span>
-<span class="stat-likes">
-    <i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> 
-    ${spark.stats?.likes?.likes_count || 0}
-</span>
-    <span class="stat-reshares">
-        <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
-        ${spark.stats?.reshares || 0}
-    </span>
-    <span class="stat-tips">
-        <i class="fas fa-coins" style="font-size: 8px; margin-right: 3px;"></i> 
-        ${spark.stats?.tips || 0}
-    </span>
-</div>
+                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 9px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); width: 85%; padding-bottom: 6px; text-align: center;">
+                    <span class="stat-views">
+                        <i class="fas fa-eye" style="font-size: 8px; margin-right: 3px;"></i> 
+                        ${spark.stats?.views || 0}
+                    </span>
+                    <span class="stat-likes">
+                        <i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> 
+                        ${spark.stats?.likes?.likes_count || 0}
+                    </span>
+                    <span class="stat-reshares">
+                        <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
+                        ${spark.stats?.reshares || 0}
+                    </span>
+                    <span class="stat-tips">
+                        <i class="fas fa-coins" style="font-size: 8px; margin-right: 3px;"></i> 
+                        ${spark.stats?.tips || 0}
+                    </span>
+                </div>
 
                 <div class="interaction-row" style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%;">
                     <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none; white-space: nowrap;">
@@ -663,23 +699,23 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
 
                         ${isOwner ? `
                             <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas fa-share-alt" style="font-size: 10px;"></i>
+                                <i class="fas fa-share-alt" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                             <button onclick="deleteSpark('${currentId}', '${spark.id}', '${visitorUid}')" title="Delete" 
                                     style="${btnStyle}" 
                                     onmouseover="this.style.color='#ef4444'; this.style.filter='drop-shadow(0 0 8px #ef4444)'; this.style.transform='scale(1.2)';" 
                                     onmouseout="${onOut}">
-                                <i class="fas fa-trash" style="font-size: 10px;"></i>
+                                <i class="fas fa-trash" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                         ` : `
-                            <button onclick="cloneSpark('${currentId}', '${spark.id}')" title="Save to My Arcade" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas fa-save" style="font-size: 10px;"></i>
+                            <button onclick="cloneSpark(this, '${currentId}', '${spark.id}')" title="Save to My Arcade" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                                <i class="fas fa-save" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                             <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas fa-share-alt" style="font-size: 10px;"></i>
+                                <i class="fas fa-share-alt" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
-                            <button onclick="tipOwner('${currentId}', '${spark.id}')" title="Tip Jar" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas fa-jar" style="font-size: 10px;"></i>
+                            <button onclick="tipOwner(this, '${currentId}', '${spark.id}')" title="Tip Jar" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                                <i class="fas fa-coins" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                         `}
                     </div>
