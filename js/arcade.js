@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:51:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:04:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -92,6 +92,48 @@ window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
         }
     } catch (error) {
         console.error("Like Transaction Failed. Verify path and rules:", error);
+    }
+};
+
+window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
+    // 1. Build the deep-link URL
+    const baseUrl = window.location.origin + window.location.pathname;
+    const shareUrl = `${baseUrl}?user=${ownerId}&current=${currentId}&spark=${sparkId}`;
+
+    try {
+        // 2. Copy to Clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        
+        // 3. Database Update (Increment Reshare Count)
+        const resharePath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/reshares`;
+        const reshareRef = ref(db, resharePath);
+
+        // Run transaction to increment
+        const result = await runTransaction(reshareRef, (currentCount) => {
+            return (currentCount || 0) + 1;
+        });
+
+        // 4. UI Update: Update the Reshare Label
+        if (result.committed) {
+            const card = btnElement.closest('.spark-card');
+            const reshareLabel = card ? card.querySelector('.stat-reshares') : null;
+            if (reshareLabel) {
+                reshareLabel.innerHTML = `
+                    <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
+                    ${result.snapshot.val()}
+                `;
+            }
+            
+            // Brief "Success" glow on the button
+            const originalColor = btnElement.style.color;
+            btnElement.style.color = "#fff"; // Flash white
+            setTimeout(() => btnElement.style.color = originalColor, 500);
+            
+            console.log("Reshare recorded and link copied!");
+        }
+
+    } catch (err) {
+        console.error("Share failed:", err);
     }
 };
 
@@ -563,7 +605,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                         </button>
 
                         ${isOwner ? `
-                            <button onclick="shareSpark('${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-share-alt" style="font-size: 10px;"></i>
                             </button>
                             <button onclick="deleteSpark('${currentId}', '${spark.id}', '${visitorUid}')" title="Delete" 
