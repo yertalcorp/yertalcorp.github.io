@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:15:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:25:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -104,6 +104,15 @@ window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
 
     console.log(`[Share] Attempting share for Spark: ${sparkId}`);
 
+    // Helper to update the UI button to Neon
+    const setNeonFeedback = () => {
+        const icon = btnElement.querySelector('i');
+        if (icon) {
+            icon.style.color = "var(--neon-color)";
+            icon.style.filter = "drop-shadow(0 0 5px var(--neon-color))";
+        }
+    };
+
     const performReshareUpdate = async () => {
         const resharePath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/reshares`;
         const reshareRef = ref(db, resharePath);
@@ -126,6 +135,10 @@ window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
                         ${newCount}
                     `;
                 }
+                
+                // Feedback: Set icon to Neon upon successful DB update
+                setNeonFeedback();
+                
                 console.log(`%c[Reshare SUCCESS] New count for ${sparkId}: ${newCount}`, "color: #00ff00; font-weight: bold;");
             } else {
                 console.warn("[Reshare ABORTED] Transaction did not commit.");
@@ -320,47 +333,55 @@ watchAuthState(async (currentUser) => {
     refreshUI(); 
 });
 
-window.cloneSpark = async (btn, sourceCurrentId, sparkId) => {
+window.cloneSpark = async (btn, sourceOwnerId, sourceCurrentId, sparkId) => {
     const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
+    
+    // 1. Validation
     if (!visitorUid) {
         alert("Log in to Yertal to forge sparks!");
         return;
     }
 
-    // Get source owner from URL
-    const params = new URLSearchParams(window.location.search);
-    const sourceOwnerId = params.get('user'); 
-    
-    if (!sourceOwnerId) return;
+    if (!sourceOwnerId) {
+        console.error("[Clone] Missing Source Owner ID.");
+        return;
+    }
 
-    // Paths
+    // Define Paths
     const sourcePath = `users/${sourceOwnerId}/infrastructure/currents/${sourceCurrentId}/sparks/${sparkId}`;
     const destinationPath = `users/${visitorUid}/infrastructure/currents/${sourceCurrentId}/sparks/${sparkId}`;
 
+    // Helper for UI Feedback
+    const setNeonFeedback = () => {
+        const icon = btn.querySelector('i');
+        if (icon) {
+            icon.style.color = "var(--neon-color)";
+            icon.style.filter = "drop-shadow(0 0 5px var(--neon-color))";
+        }
+    };
+
     try {
-        // 1. CHECK IF ALREADY SAVED
+        // 2. CHECK IF ALREADY SAVED (Instant check in Visitor's DB)
         const checkRef = ref(db, destinationPath);
         const checkSnapshot = await get(checkRef);
 
         if (checkSnapshot.exists()) {
             alert("This spark is already in your collection!");
-            // Set to neon anyway just in case the UI missed it
-            const icon = btn.querySelector('i');
-            if (icon) icon.style.color = "var(--neon-color)";
+            setNeonFeedback(); // Turn neon to indicate it's already "active" in your DB
             return;
         }
 
-        // 2. FETCH ORIGINAL DATA
+        // 3. FETCH ORIGINAL DATA
         const sourceRef = ref(db, sourcePath);
         const snapshot = await get(sourceRef);
 
         if (snapshot.exists()) {
             const sparkData = snapshot.val();
 
-            // 3. PREPARE CLONE (Fresh Stats)
+            // 4. PREPARE CLONE (Reset stats for the new instance)
             const clonedData = {
                 ...sparkData,
-                clonedFrom: sourceOwnerId,
+                clonedFrom: sourceOwnerId, // Attribution
                 created: Date.now(),
                 stats: {
                     views: 0,
@@ -370,19 +391,18 @@ window.cloneSpark = async (btn, sourceCurrentId, sparkId) => {
                 }
             };
 
-            // 4. SAVE TO VISITOR DB
+            // 5. SAVE TO VISITOR DB
             await set(ref(db, destinationPath), clonedData);
             
-            // 5. SUCCESS UI FEEDBACK
-            const icon = btn.querySelector('i');
-            if (icon) {
-                icon.style.color = "var(--neon-color)";
-                icon.style.filter = "drop-shadow(0 0 5px var(--neon-color))";
-            }
-            console.log("[Clone] Spark forged successfully.");
+            // 6. SUCCESS UI FEEDBACK
+            setNeonFeedback();
+            console.log(`%c[Clone SUCCESS] Spark ${sparkId} forged to ${visitorUid}`, "color: #00ff00; font-weight: bold;");
+        } else {
+            console.error("[Clone] Source spark not found in database.");
         }
     } catch (error) {
         console.error("[Clone Error]", error);
+        alert("Forge failed. Check connection or permissions.");
     }
 };
 
@@ -708,13 +728,13 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                                 <i class="fas fa-trash" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                         ` : `
-                            <button onclick="cloneSpark(this, '${currentId}', '${spark.id}')" title="Save to My Arcade" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <button onclick="cloneSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Save to My Arcade" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-save" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                             <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-share-alt" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
-                            <button onclick="tipOwner(this, '${currentId}', '${spark.id}')" title="Tip Jar" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <button onclick="tipOwner(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Tip Jar" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-coins" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                         `}
