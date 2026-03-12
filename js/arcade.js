@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:45:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:43:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -18,17 +18,18 @@ const playClickSound = () => {
     audio.play().catch(e => console.log("Audio play blocked by browser"));
 };
 
-window.likeSpark = async (ownerUid, currentId, sparkId) => {
+window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
     // 1. Validation Check
     if (!auth.currentUser) return alert("Please log in to like sparks.");
-    if (!ownerUid || ownerUid === "undefined") {
-        console.error("Path Error: ownerUid is missing.");
+    
+    // Safety check for the shifted arguments/missing IDs
+    if (!ownerUid || ownerUid === "undefined" || ownerUid === "[object Object]") {
+        console.error("Path Error: ownerUid is invalid:", ownerUid);
         return;
     }
 
     const visitorUid = auth.currentUser.uid;
-    const btn = event.currentTarget;
-    const icon = btn.querySelector('i');
+    const icon = btnElement.querySelector('i');
 
     // 2. Target the nested 'likes' node specifically
     const likesPath = `users/${ownerUid}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/likes`;
@@ -58,28 +59,42 @@ window.likeSpark = async (ownerUid, currentId, sparkId) => {
 
         // 4. UI Update on Success
         if (result.committed) {
-            const updated = result.snapshot.val();
+            const updated = result.snapshot.val(); // This is the 'likes' object
             const isNowLiked = updated.likes_users && updated.likes_users[visitorUid];
             
             // Visual feedback (Neon toggle)
             icon.style.color = isNowLiked ? "var(--neon-color)" : "#f3e5ab";
             icon.style.filter = isNowLiked ? "drop-shadow(0 0 8px var(--neon-color))" : "none";
             
-            // Targeted CSS class update
-            const card = btn.closest('.spark-card'); 
+            // Find the label specifically within this card
+            const card = btnElement.closest('.spark-card'); 
             const likeLabel = card.querySelector('.stat-likes');
             
             if (likeLabel) {
+                // updated is the 'likes' node, so we use updated.likes_count
+                const count = updated.likes_count !== undefined ? updated.likes_count : 0;
                 likeLabel.innerHTML = `
                     <i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> 
-                    ${updated.likes_count || 0}
+                    ${count}
                 `;
+            }
+
+            // 5. Cache Sync: Update the local state so it doesn't revert on re-render
+            try {
+                if (window.databaseCache?.users?.[ownerUid]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
+                    const sparkCache = window.databaseCache.users[ownerUid].infrastructure.currents[currentId].sparks[sparkId];
+                    if (!sparkCache.stats) sparkCache.stats = {};
+                    sparkCache.stats.likes = updated;
+                }
+            } catch (cacheErr) {
+                console.warn("Cache sync skipped:", cacheErr);
             }
         }
     } catch (error) {
         console.error("Like Transaction Failed. Verify path and rules:", error);
     }
 };
+
 async function refreshUI() {
     console.log("[SYSTEM]: INITIATING STRICT SYNC...");
     try {
@@ -543,7 +558,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                     </div>
                     
                     <div class="action-buttons" style="display: flex; gap: 0.8rem; align-items: center; justify-content: center;">
-                        <button onclick="likeSpark('${ownerId}', '${currentId}', '${spark.id}')" title="Like" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                        <button onclick="likeSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Like" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                             <i class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
                         </button>
 
