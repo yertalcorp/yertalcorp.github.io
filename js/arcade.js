@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:43:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:48:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -77,14 +77,15 @@ window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
 };
 
 window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
-    // Objective: Update share stats with timestamp and count, then trigger sharing UI.
+    /* Overall Objective: Update share stats with timestamp and count, 
+       then trigger sharing UI. Ensure user UID and Date are tracked. */
+
     const baseUrl = window.location.origin + window.location.pathname;
     const shareUrl = `${baseUrl}?user=${ownerId}&current=${currentId}&spark=${sparkId}`;
     const shareTitle = "Check out this Spark on Yertal Arcade!";
     const shareData = { title: shareTitle, text: 'Explore this brilliant spark:', url: shareUrl };
     const visitorUid = auth.currentUser ? auth.currentUser.uid : "anonymous";
 
-    // Helper to update the UI button to Neon
     const setNeonFeedback = () => {
         const icon = btnElement.querySelector('i');
         if (icon) {
@@ -94,19 +95,25 @@ window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
     };
 
     const performReshareUpdate = async () => {
-        // Updated Path: Now targeting 'forges' as per the new stats structure
-        const resharePath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/forges`;
+        // Path matches the rules update we discussed earlier
+        const resharePath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/reshares`;
         const reshareRef = ref(db, resharePath);
 
         try {
             const result = await runTransaction(reshareRef, (currentData) => {
-                // Initialize if node doesn't exist
-                if (!currentData) {
-                    currentData = { count: 0, users: {} };
+                // 1. Data Transformation Logic
+                // If it's a number (old style) or empty, initialize the new object
+                if (typeof currentData !== 'object' || currentData === null) {
+                    const oldCount = typeof currentData === 'number' ? currentData : 0;
+                    currentData = { count: oldCount, users: {} };
                 }
-                if (!currentData.users) currentData.users = {};
 
-                // Update: Increment count and store Date instead of true
+                // 2. Ensure users map exists for UID tracking
+                if (!currentData.users) {
+                    currentData.users = {};
+                }
+
+                // 3. Update count and map UID to ISO Date
                 currentData.count = (currentData.count || 0) + 1;
                 currentData.users[visitorUid] = new Date().toISOString();
 
@@ -120,17 +127,14 @@ window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
                 
                 if (reshareLabel) {
                     const displayCount = updated.count || 0;
-                    // Syncing with the new "SHARES: count" label format
                     reshareLabel.innerHTML = `
                         <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
-                        SHARES: ${displayCount}
+                        **SHARES: ${displayCount}**
                     `;
                 }
                 
-                // Set icon to Neon upon successful DB update
                 setNeonFeedback();
                 
-                // Cache Sync
                 try {
                     if (window.databaseCache?.users?.[ownerId]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
                         window.databaseCache.users[ownerId].infrastructure.currents[currentId].sparks[sparkId].stats.forges = updated;
@@ -150,15 +154,13 @@ window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
             return;
         } catch (err) {
             if (err.name === 'AbortError') return;
-            console.warn("[Share] Native fallback to HUD.", err);
         }
     }
 
-    // 2. FALLBACK: Launch HUD
+    // 2. FALLBACK
     if (typeof launchShareHUD === "function") {
         launchShareHUD(shareUrl, shareTitle);
     } else {
-        // Final fallback: Clipboard
         await navigator.clipboard.writeText(shareUrl);
     }
     await performReshareUpdate();
