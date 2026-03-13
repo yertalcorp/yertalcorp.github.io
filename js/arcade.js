@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:41:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:24:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -19,67 +19,58 @@ const playClickSound = () => {
 };
 
 window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
-    // 1. Validation Check
-    if (!auth.currentUser) return alert("Please log in to like sparks.");
-    
-    // Safety check for the shifted arguments/missing IDs
-    if (!ownerUid || ownerUid === "undefined" || ownerUid === "[object Object]") {
-        console.error("Path Error: ownerUid is invalid:", ownerUid);
-        return;
-    }
+    // 1. Internal Safety Check (Silent)
+    if (!auth.currentUser || !ownerUid || ownerUid === "undefined") return;
 
     const visitorUid = auth.currentUser.uid;
     const icon = btnElement.querySelector('i');
 
-    // 2. Target the nested 'likes' node specifically
     const likesPath = `users/${ownerUid}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/likes`;
     const likesRef = ref(db, likesPath);
 
     try {
         const result = await runTransaction(likesRef, (currentData) => {
-            // Handle null data (if the likes node doesn't exist yet)
+            // Handle initialization for the new structure
             if (!currentData) {
-                currentData = { likes_count: 0, likes_users: {} };
+                currentData = { count: 0, users: {} };
             }
-            if (!currentData.likes_users) currentData.likes_users = {};
+            if (!currentData.users) currentData.users = {};
 
-            // 3. The Toggle Logic
-            if (currentData.likes_users[visitorUid]) {
-                // User already liked it: REMOVE LIKE
-                delete currentData.likes_users[visitorUid];
-                currentData.likes_count = Math.max(0, (currentData.likes_count || 1) - 1);
+            // 2. Toggle Logic
+            if (currentData.users[visitorUid]) {
+                // User already liked: REMOVE
+                delete currentData.users[visitorUid];
+                currentData.count = Math.max(0, (currentData.count || 1) - 1);
             } else {
-                // User has not liked it: ADD LIKE
-                currentData.likes_users[visitorUid] = true;
-                currentData.likes_count = (currentData.likes_count || 0) + 1;
+                // User has not liked: ADD
+                currentData.users[visitorUid] = new Date().toISOString();
+                currentData.count = (currentData.count || 0) + 1;
             }
 
-            return currentData; // Save back to Firebase
+            return currentData; 
         });
 
-        // 4. UI Update on Success
+        // 3. UI and Style Updates
         if (result.committed) {
-            const updated = result.snapshot.val(); // This is the 'likes' object
-            const isNowLiked = updated.likes_users && updated.likes_users[visitorUid];
+            const updated = result.snapshot.val(); 
+            const isNowLiked = updated.users && updated.users[visitorUid];
             
-            // Visual feedback (Neon toggle)
+            // Neon Visual Feedback
             icon.style.color = isNowLiked ? "var(--neon-color)" : "#f3e5ab";
             icon.style.filter = isNowLiked ? "drop-shadow(0 0 8px var(--neon-color))" : "none";
             
-            // Find the label specifically within this card
             const card = btnElement.closest('.spark-card'); 
             const likeLabel = card.querySelector('.stat-likes');
             
             if (likeLabel) {
-                // updated is the 'likes' node, so we use updated.likes_count
-                const count = updated.likes_count !== undefined ? updated.likes_count : 0;
+                const count = updated.count !== undefined ? updated.count : 0;
                 likeLabel.innerHTML = `
                     <i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> 
                     ${count}
                 `;
             }
 
-            // 5. Cache Sync: Update the local state so it doesn't revert on re-render
+            // 4. Cache Synchronization
             try {
                 if (window.databaseCache?.users?.[ownerUid]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
                     const sparkCache = window.databaseCache.users[ownerUid].infrastructure.currents[currentId].sparks[sparkId];
@@ -87,14 +78,13 @@ window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
                     sparkCache.stats.likes = updated;
                 }
             } catch (cacheErr) {
-                console.warn("Cache sync skipped:", cacheErr);
+                console.warn("Local cache sync bypassed.");
             }
         }
     } catch (error) {
-        console.error("Like Transaction Failed. Verify path and rules:", error);
+        console.error("Like sync failed:", error);
     }
 };
-
 
 window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
     const baseUrl = window.location.origin + window.location.pathname;
