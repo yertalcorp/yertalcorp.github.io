@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:17:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:26:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -629,6 +629,9 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 };
 
 function renderSparkCard(spark, isOwner, currentId, ownerId) {
+    /* Overall Objective: Generate the HTML for a spark card with persistent 
+       neon state for likes and shares based on user history. */
+    
     const targetUrl = `spark.html?current=${currentId}&spark=${spark.id}`;
     const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
     
@@ -637,10 +640,16 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const neonColor = "var(--neon-color)";
     const neonGlow = "drop-shadow(0 0 5px var(--neon-color))";
     
-    // 2. State Assignments (Corrected structure)
+    // 2. State Assignments (Persisting the Neon state)
     const hasLiked = spark.stats?.likes?.users?.[visitorUid] ? true : false;
     const likeIconColor = hasLiked ? neonColor : pearlColor;
     const likeIconGlow = hasLiked ? neonGlow : "none";
+
+    // Task: Check if this visitor has shared this spark at least once
+    const hasShared = spark.stats?.reshares?.users?.[visitorUid] ? true : false;
+    const shareIconColor = hasShared ? neonColor : pearlColor;
+    const shareIconGlow = hasShared ? neonGlow : "none";
+
     const toolIconColor = pearlColor;
 
     // 3. Extraction of Stats Counts
@@ -705,7 +714,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
 
                         ${isOwner ? `
                             <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas fa-share-alt" style="font-size: 10px; color: ${toolIconColor};"></i>
+                                <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
                             </button>
                             <button onclick="deleteSpark('${currentId}', '${spark.id}', '${visitorUid}')" title="Delete" 
                                     style="${btnStyle}" 
@@ -718,7 +727,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                                 <i class="fas fa-save" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                             <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas fa-share-alt" style="font-size: 10px; color: ${toolIconColor};"></i>
+                                <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
                             </button>
                             <button onclick="tipOwner(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Tip Jar" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-coins" style="font-size: 10px; color: ${toolIconColor};"></i>
