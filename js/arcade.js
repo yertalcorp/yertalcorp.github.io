@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:40:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:43:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -672,19 +672,19 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                 <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 8px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); width: 85%; padding-bottom: 6px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
                     <span class="stat-views" title="Total Views">
                         <i class="fas fa-eye" style="margin-right: 2px;"></i> 
-                        **VIEWS: ${viewCount}**
+                        VIEWS: ${viewCount}
                     </span>
                     <span class="stat-likes" title="Total Likes">
                         <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> 
-                        **LIKES: ${likeCount}**
+                        LIKES: ${likeCount}
                     </span>
                     <span class="stat-reshares" title="Total Shares">
                         <i class="fas fa-retweet" style="margin-right: 2px;"></i> 
-                        **SHARES: ${shareCount}**
+                        SHARES: ${shareCount}
                     </span>
                     <span class="stat-tips" title="Total Tips">
                         <i class="fas fa-coins" style="margin-right: 2px;"></i> 
-                        **TIPS: ${tipCount}**
+                        TIPS: ${tipCount}
                     </span>
                 </div>
 
