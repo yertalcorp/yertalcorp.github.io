@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:43:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:30:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -49,8 +49,8 @@ window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
             const isNowLiked = updated.users && updated.users[visitorUid];
             
             // Update Icon Color & Glow
-            **icon.style.color = isNowLiked ? "var(--neon-color)" : "#f3e5ab";**
-            **icon.style.filter = isNowLiked ? "drop-shadow(0 0 8px var(--neon-color))" : "none";**
+            icon.style.color = isNowLiked ? "var(--neon-color)" : "#f3e5ab";
+            icon.style.filter = isNowLiked ? "drop-shadow(0 0 8px var(--neon-color))" : "none";
             
             const card = btnElement.closest('.spark-card'); 
             const likeLabel = card.querySelector('.stat-likes');
@@ -58,10 +58,10 @@ window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
             if (likeLabel) {
                 const count = updated.count !== undefined ? updated.count : 0;
                 // FIX: Matches the new labeled format in renderSparkCard
-                **likeLabel.innerHTML = `**
-** <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> **
-** LIKES: ${count}**
-** `;**
+                likeLabel.innerHTML = `
+                 <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> 
+                     LIKES: ${count}
+                 `;
             }
 
             // 3. Cache Synchronization
