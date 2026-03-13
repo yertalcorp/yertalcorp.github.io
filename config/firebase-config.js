@@ -60,4 +60,4 @@ export async function initializeUserIfNeeded(user) {
     }
     return snapshot.val().profile.slug;
 }
-export { auth, db };
+export { ref, set, get, push, runTransaction, auth, db };
