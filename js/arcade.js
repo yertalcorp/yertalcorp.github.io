@@ -19,70 +19,60 @@ const playClickSound = () => {
 };
 
 window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
-    // 1. Internal Safety Check (Silent)
+    // 1. Internal Safety Check
     if (!auth.currentUser || !ownerUid || ownerUid === "undefined") return;
 
     const visitorUid = auth.currentUser.uid;
     const icon = btnElement.querySelector('i');
-
-    const likesPath = `users/${ownerUid}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/likes`;
-    const likesRef = ref(db, likesPath);
+    const likesRef = ref(db, `users/${ownerUid}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/likes`);
 
     try {
         const result = await runTransaction(likesRef, (currentData) => {
-            // Handle initialization for the new structure
-            if (!currentData) {
-                currentData = { count: 0, users: {} };
-            }
+            if (!currentData) currentData = { count: 0, users: {} };
             if (!currentData.users) currentData.users = {};
 
-            // 2. Toggle Logic
             if (currentData.users[visitorUid]) {
-                // User already liked: REMOVE
+                // TOGGLE OFF
                 delete currentData.users[visitorUid];
                 currentData.count = Math.max(0, (currentData.count || 1) - 1);
             } else {
-                // User has not liked: ADD
+                // TOGGLE ON
                 currentData.users[visitorUid] = new Date().toISOString();
                 currentData.count = (currentData.count || 0) + 1;
             }
-
             return currentData; 
         });
 
-        // 3. UI and Style Updates
+        // 2. UI and Style Updates (The Toggle Fix)
         if (result.committed) {
             const updated = result.snapshot.val(); 
             const isNowLiked = updated.users && updated.users[visitorUid];
             
-            // Neon Visual Feedback
-            icon.style.color = isNowLiked ? "var(--neon-color)" : "#f3e5ab";
-            icon.style.filter = isNowLiked ? "drop-shadow(0 0 8px var(--neon-color))" : "none";
+            // Update Icon Color & Glow
+            **icon.style.color = isNowLiked ? "var(--neon-color)" : "#f3e5ab";**
+            **icon.style.filter = isNowLiked ? "drop-shadow(0 0 8px var(--neon-color))" : "none";**
             
             const card = btnElement.closest('.spark-card'); 
             const likeLabel = card.querySelector('.stat-likes');
             
             if (likeLabel) {
                 const count = updated.count !== undefined ? updated.count : 0;
-                likeLabel.innerHTML = `
-                    <i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> 
-                    ${count}
-                `;
+                // FIX: Matches the new labeled format in renderSparkCard
+                **likeLabel.innerHTML = `**
+** <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> **
+** LIKES: ${count}**
+** `;**
             }
 
-            // 4. Cache Synchronization
+            // 3. Cache Synchronization
             try {
                 if (window.databaseCache?.users?.[ownerUid]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
-                    const sparkCache = window.databaseCache.users[ownerUid].infrastructure.currents[currentId].sparks[sparkId];
-                    if (!sparkCache.stats) sparkCache.stats = {};
-                    sparkCache.stats.likes = updated;
+                    window.databaseCache.users[ownerUid].infrastructure.currents[currentId].sparks[sparkId].stats.likes = updated;
                 }
-            } catch (cacheErr) {
-                console.warn("Local cache sync bypassed.");
-            }
+            } catch (e) {}
         }
     } catch (error) {
-        console.error("Like sync failed:", error);
+        console.error("Like toggle failed:", error);
     }
 };
 
