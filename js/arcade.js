@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:26:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:43:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -331,61 +331,91 @@ watchAuthState(async (currentUser) => {
 window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, sparkId) => {
     // Paths
     const sourcePath = `users/${sourceOwnerId}/infrastructure/currents/${sourceCurrentId}/sparks/${sparkId}`;
-    const destinationPath = `users/${visitorUid}/infrastructure/currents/${sourceCurrentId}/sparks/${sparkId}`;
+    const destinationCurrentPath = `users/${visitorUid}/infrastructure/currents/${sourceCurrentId}`;
+    const destinationSparkPath = `${destinationCurrentPath}/sparks/${sparkId}`;
+    const globalForgeStatsPath = `stats/forges`;
 
-    // Function to permanently set the icon to Neon for this session
     const setNeonPermanent = () => {
         const icon = btn.querySelector('i');
         if (icon) {
             icon.style.color = "var(--neon-color)";
             icon.style.filter = "drop-shadow(0 0 5px var(--neon-color))";
-            // Disable interactions since this is a one-time action
             btn.style.pointerEvents = "none"; 
         }
     };
 
     try {
-        // 1. Check if it already exists in the visitor's collection
-        const checkSnapshot = await get(ref(db, destinationPath));
+        // 1. Check if spark already exists in visitor's collection
+        const checkSnapshot = await get(ref(db, destinationSparkPath));
         if (checkSnapshot.exists()) {
             setNeonPermanent();
             alert("This spark is already in your collection!");
             return;
         }
 
-        // 2. Fetch the original spark data
-        const sourceRef = ref(db, sourcePath);
-        const snapshot = await get(sourceRef);
+        // 2. Fetch original spark and source current metadata
+        const sourceSnapshot = await get(ref(db, sourcePath));
+        const sourceCurrentSnapshot = await get(ref(db, `users/${sourceOwnerId}/infrastructure/currents/${sourceCurrentId}`));
 
-        if (snapshot.exists()) {
-            const sparkData = snapshot.val();
+        if (sourceSnapshot.exists() && sourceCurrentSnapshot.exists()) {
+            const sparkData = sourceSnapshot.val();
+            const currentMeta = sourceCurrentSnapshot.val();
+            const saveDate = new Date().toISOString();
 
-            // 3. Update the 'forges' analytic field on the original spark
-            const forgeRef = ref(db, `${sourcePath}/stats/forges`);
-            await runTransaction(forgeRef, (count) => {
-                return (count || 0) + 1;
+            // 3. Ensure the Infrastructure "Current" container exists for the visitor
+            const visitorCurrentSnapshot = await get(ref(db, destinationCurrentPath));
+            if (!visitorCurrentSnapshot.exists()) {
+                await set(ref(db, destinationCurrentPath), {
+                    id: currentMeta.id,
+                    name: currentMeta.name,
+                    privacy: "public",
+                    type_ref: currentMeta.type_ref || "",
+                    sparks: {}
+                });
+            }
+
+            // 4. Update forges analytic field on the ORIGINAL spark
+            const sourceForgeRef = ref(db, `${sourcePath}/stats/forges`);
+            await runTransaction(sourceForgeRef, (forgeObj) => {
+                if (!forgeObj) forgeObj = { count: 0, users: {} };
+                forgeObj.count = (forgeObj.count || 0) + 1;
+                if (!forgeObj.users) forgeObj.users = {};
+                forgeObj.users[visitorUid] = saveDate;
+                return forgeObj;
             });
 
-            // 4. Create the clone for the visitor with fresh stats
+            // 5. Update GLOBAL stats/forges entry
+            const globalForgeRef = ref(db, globalForgeStatsPath);
+            await runTransaction(globalForgeRef, (globalStats) => {
+                if (!globalStats) globalStats = { count: 0, lastSavedBy: "", lastSavedAt: "" };
+                globalStats.count = (globalStats.count || 0) + 1;
+                globalStats.lastSavedBy = visitorUid;
+                globalStats.lastSavedAt = saveDate;
+                return globalStats;
+            });
+
+            // 6. Create the forged copy for the visitor with fresh nested stats
             const clonedData = {
                 ...sparkData,
+                id: sparkId, // Preserve original seed ID
+                owner: visitorUid,
                 clonedFrom: sourceOwnerId,
                 created: Date.now(),
                 stats: {
-                    views: 0,
-                    likes: { likes_count: 0, likes_users: {} },
-                    reshares: 0,
-                    tips: 0,
-                    forges: 0 
+                    views: { total_count: 0, last_viewed: saveDate, monthly_ledger: {} },
+                    likes: { count: 0, users: {} },
+                    reshares: { count: 0, users: {} },
+                    tips: { total_amount: 0, ledger: {} },
+                    forges: { count: 0, users: {} }
                 }
             };
 
-            // 5. Write to Visitor's DB
-            await set(ref(db, destinationPath), clonedData);
+            // 7. Write to Visitor's DB
+            await set(ref(db, destinationSparkPath), clonedData);
             
-            // 6. UI Feedback
+            // 8. UI Feedback
             setNeonPermanent();
-            console.log(`[Forge] Recorded in analytics and saved to visitor: ${visitorUid}`);
+            console.log(`[Forge] Infrastructure verified, global stats updated, and seed ${sparkId} saved to visitor.`);
         }
     } catch (error) {
         console.error("[Clone Error]", error);
