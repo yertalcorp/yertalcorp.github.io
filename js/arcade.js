@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:40:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:55:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -364,24 +364,22 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
             const visitorCurrentSnapshot = await get(ref(db, destinationCurrentPath));
             if (!visitorCurrentSnapshot.exists()) {
                 await set(ref(db, destinationCurrentPath), {
-                    id: currentMeta.id,
-                    name: currentMeta.name,
+                    id: sourceCurrentId,
+                    name: currentMeta.name || "My Collection",
                     privacy: "public",
-                    type_ref: currentMeta.type_ref || "",
+                    type_ref: currentMeta.type_ref || "arcade",
                     sparks: {}
                 });
             }
 
-            // 4. Update forges analytic field on the ORIGINAL spark (Matches Security Rule Path)
+            // 4. Update forges analytic field on the ORIGINAL spark
             const sourceForgeRef = ref(db, `${sourcePath}/stats/forges`);
             await runTransaction(sourceForgeRef, (forgeObj) => {
-                // If node is empty, initialize to match rule validation (count + users)
                 if (!forgeObj) {
                     forgeObj = { count: 1, users: { [visitorUid]: saveDate } };
                     return forgeObj;
                 }
                 
-                // Increment count and add visitor to the ledger
                 forgeObj.count = (forgeObj.count || 0) + 1;
                 if (!forgeObj.users) forgeObj.users = {};
                 forgeObj.users[visitorUid] = saveDate;
@@ -389,7 +387,7 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
                 return forgeObj;
             });
 
-            // 5. Create the forged copy for the visitor with fresh nested stats
+            // 5. Create the forged copy for the visitor (Rule Compliant Stats)
             const clonedData = {
                 ...sparkData,
                 id: sparkId, // Preserve original seed ID
@@ -397,15 +395,22 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
                 clonedFrom: sourceOwnerId,
                 created: Date.now(),
                 stats: {
-                    views: { count: 0 },
+                    // Views and Tips require 'count' for rule validation
+                    views: { count: 0, total_count: 0, last_viewed: saveDate, monthly_ledger: {} },
+                    tips: { count: 0, total_amount: 0, ledger: {} },
+                    
+                    // Likes, Reshares, and Forges require 'count' AND 'users'
                     likes: { count: 0, users: {} },
                     reshares: { count: 0, users: {} },
-                    tips: { count: 0 },
-                    forges: { count: 0, users: {} }
+                    forges: { count: 0, users: {} },
+                    
+                    // Feedback requires 'count'
+                    feedback: { count: 0, entries: {} }
                 }
             };
 
             // 6. Write to Visitor's DB
+            // This now contains all children required by the .validate rules
             await set(ref(db, destinationSparkPath), clonedData);
             
             // 7. UI Feedback
@@ -414,6 +419,9 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
         }
     } catch (error) {
         console.error("[Clone Error]", error);
+        if (error.message.includes("PERMISSION_DENIED")) {
+            console.warn("Permission Denied: Check if the visitorUid matches your auth state or if a .validate rule failed.");
+        }
     }
 };
 
