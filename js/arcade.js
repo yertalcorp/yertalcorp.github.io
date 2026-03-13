@@ -1,7 +1,7 @@
 import { firebaseConfig, auth, saveToRealtimeDB, getArcadeData, db } from '/config/firebase-config.js';
 import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
-import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { ref, runTransaction }  from '/config/firebase-config.js';
 
 // Build Check: Manually update the time string below when pushing new code
 console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:04:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
