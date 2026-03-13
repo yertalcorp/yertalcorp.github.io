@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:30:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:40:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -332,7 +332,6 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
     const sourcePath = `users/${sourceOwnerId}/infrastructure/currents/${sourceCurrentId}/sparks/${sparkId}`;
     const destinationCurrentPath = `users/${visitorUid}/infrastructure/currents/${sourceCurrentId}`;
     const destinationSparkPath = `${destinationCurrentPath}/sparks/${sparkId}`;
-    const globalForgeStatsPath = `stats/forges`;
 
     const setNeonPermanent = () => {
         const icon = btn.querySelector('i');
@@ -373,27 +372,24 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
                 });
             }
 
-            // 4. Update forges analytic field on the ORIGINAL spark
+            // 4. Update forges analytic field on the ORIGINAL spark (Matches Security Rule Path)
             const sourceForgeRef = ref(db, `${sourcePath}/stats/forges`);
             await runTransaction(sourceForgeRef, (forgeObj) => {
-                if (!forgeObj) forgeObj = { count: 0, users: {} };
+                // If node is empty, initialize to match rule validation (count + users)
+                if (!forgeObj) {
+                    forgeObj = { count: 1, users: { [visitorUid]: saveDate } };
+                    return forgeObj;
+                }
+                
+                // Increment count and add visitor to the ledger
                 forgeObj.count = (forgeObj.count || 0) + 1;
                 if (!forgeObj.users) forgeObj.users = {};
                 forgeObj.users[visitorUid] = saveDate;
+                
                 return forgeObj;
             });
 
-            // 5. Update GLOBAL stats/forges entry
-            const globalForgeRef = ref(db, globalForgeStatsPath);
-            await runTransaction(globalForgeRef, (globalStats) => {
-                if (!globalStats) globalStats = { count: 0, lastSavedBy: "", lastSavedAt: "" };
-                globalStats.count = (globalStats.count || 0) + 1;
-                globalStats.lastSavedBy = visitorUid;
-                globalStats.lastSavedAt = saveDate;
-                return globalStats;
-            });
-
-            // 6. Create the forged copy for the visitor with fresh nested stats
+            // 5. Create the forged copy for the visitor with fresh nested stats
             const clonedData = {
                 ...sparkData,
                 id: sparkId, // Preserve original seed ID
@@ -401,20 +397,20 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
                 clonedFrom: sourceOwnerId,
                 created: Date.now(),
                 stats: {
-                    views: { total_count: 0, last_viewed: saveDate, monthly_ledger: {} },
+                    views: { count: 0 },
                     likes: { count: 0, users: {} },
                     reshares: { count: 0, users: {} },
-                    tips: { total_amount: 0, ledger: {} },
+                    tips: { count: 0 },
                     forges: { count: 0, users: {} }
                 }
             };
 
-            // 7. Write to Visitor's DB
+            // 6. Write to Visitor's DB
             await set(ref(db, destinationSparkPath), clonedData);
             
-            // 8. UI Feedback
+            // 7. UI Feedback
             setNeonPermanent();
-            console.log(`[Forge] Infrastructure verified, global stats updated, and seed ${sparkId} saved to visitor.`);
+            console.log(`[Forge Success] Spark ${sparkId} cloned from ${sourceOwnerId} to ${visitorUid}.`);
         }
     } catch (error) {
         console.error("[Clone Error]", error);
