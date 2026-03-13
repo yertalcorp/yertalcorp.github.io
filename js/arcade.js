@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:30:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:43:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -77,55 +77,68 @@ window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
 };
 
 window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
+    // Objective: Update share stats with timestamp and count, then trigger sharing UI.
     const baseUrl = window.location.origin + window.location.pathname;
     const shareUrl = `${baseUrl}?user=${ownerId}&current=${currentId}&spark=${sparkId}`;
     const shareTitle = "Check out this Spark on Yertal Arcade!";
     const shareData = { title: shareTitle, text: 'Explore this brilliant spark:', url: shareUrl };
-
-    console.log(`[Share] Attempting share for Spark: ${sparkId}`);
+    const visitorUid = auth.currentUser ? auth.currentUser.uid : "anonymous";
 
     // Helper to update the UI button to Neon
     const setNeonFeedback = () => {
         const icon = btnElement.querySelector('i');
         if (icon) {
             icon.style.color = "var(--neon-color)";
-            icon.style.filter = "drop-shadow(0 0 5px var(--neon-color))";
+            icon.style.filter = "drop-shadow(0 0 8px var(--neon-color))";
         }
     };
 
     const performReshareUpdate = async () => {
-        const resharePath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/reshares`;
+        // Updated Path: Now targeting 'forges' as per the new stats structure
+        const resharePath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/forges`;
         const reshareRef = ref(db, resharePath);
 
-        console.log(`[DB Path] Target: ${resharePath}`);
-
         try {
-            const result = await runTransaction(reshareRef, (count) => {
-                return (count || 0) + 1;
+            const result = await runTransaction(reshareRef, (currentData) => {
+                // Initialize if node doesn't exist
+                if (!currentData) {
+                    currentData = { count: 0, users: {} };
+                }
+                if (!currentData.users) currentData.users = {};
+
+                // Update: Increment count and store Date instead of true
+                currentData.count = (currentData.count || 0) + 1;
+                currentData.users[visitorUid] = new Date().toISOString();
+
+                return currentData;
             });
 
             if (result.committed) {
-                const newCount = result.snapshot.val();
+                const updated = result.snapshot.val();
                 const card = btnElement.closest('.spark-card');
                 const reshareLabel = card ? card.querySelector('.stat-reshares') : null;
                 
                 if (reshareLabel) {
+                    const displayCount = updated.count || 0;
+                    // Syncing with the new "SHARES: count" label format
                     reshareLabel.innerHTML = `
                         <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
-                        ${newCount}
+                        SHARES: ${displayCount}
                     `;
                 }
                 
-                // Feedback: Set icon to Neon upon successful DB update
+                // Set icon to Neon upon successful DB update
                 setNeonFeedback();
                 
-                console.log(`%c[Reshare SUCCESS] New count for ${sparkId}: ${newCount}`, "color: #00ff00; font-weight: bold;");
-            } else {
-                console.warn("[Reshare ABORTED] Transaction did not commit.");
+                // Cache Sync
+                try {
+                    if (window.databaseCache?.users?.[ownerId]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
+                        window.databaseCache.users[ownerId].infrastructure.currents[currentId].sparks[sparkId].stats.forges = updated;
+                    }
+                } catch (e) {}
             }
         } catch (error) {
-            console.error("%c[Reshare ERROR] Firebase update failed.", "color: #ff0000; font-weight: bold;");
-            console.error("Error Detail:", error);
+            console.error("[Share Error] Firebase transaction failed:", error);
         }
     };
 
@@ -133,21 +146,21 @@ window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
     if (navigator.share && navigator.canShare(shareData)) {
         try {
             await navigator.share(shareData);
-            console.log("[Share] Native Share completed.");
             await performReshareUpdate();
             return;
         } catch (err) {
-            if (err.name === 'AbortError') {
-                console.log("[Share] User cancelled native share tray.");
-                return;
-            }
-            console.warn("[Share] Native share failed, falling back to HUD.", err);
+            if (err.name === 'AbortError') return;
+            console.warn("[Share] Native fallback to HUD.", err);
         }
     }
 
     // 2. FALLBACK: Launch HUD
-    console.log("[Share] Launching HUD Fallback.");
-    launchShareHUD(shareUrl, shareTitle);
+    if (typeof launchShareHUD === "function") {
+        launchShareHUD(shareUrl, shareTitle);
+    } else {
+        // Final fallback: Clipboard
+        await navigator.clipboard.writeText(shareUrl);
+    }
     await performReshareUpdate();
 };
 
