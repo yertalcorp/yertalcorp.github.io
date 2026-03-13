@@ -129,7 +129,7 @@ window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
                     const displayCount = updated.count || 0;
                     reshareLabel.innerHTML = `
                         <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
-                        **SHARES: ${displayCount}**
+                        SHARES: ${displayCount}
                     `;
                 }
                 
