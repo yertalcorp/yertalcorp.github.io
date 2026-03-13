@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:43:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:04:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -664,6 +664,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     
     const targetUrl = `spark.html?current=${currentId}&spark=${spark.id}`;
     const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
+    const sparkElementId = `save-btn-${spark.id}`;
     
     // 1. Core Color Palette
     const pearlColor = "#f3e5ab";
@@ -679,6 +680,24 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const hasShared = spark.stats?.reshares?.users?.[visitorUid] ? true : false;
     const shareIconColor = hasShared ? neonColor : pearlColor;
     const shareIconGlow = hasShared ? neonGlow : "none";
+
+    // Forge State Check (Internal Async)
+    if (visitorUid && !isOwner) {
+        (async () => {
+            const savedRef = ref(db, `users/${visitorUid}/infrastructure/currents/${currentId}/sparks/${spark.id}`);
+            const snapshot = await get(savedRef);
+            if (snapshot.exists()) {
+                const btn = document.getElementById(sparkElementId);
+                if (btn) {
+                    const icon = btn.querySelector('i');
+                    icon.style.color = neonColor;
+                    icon.style.filter = neonGlow;
+                    btn.style.pointerEvents = "none";
+                    btn.title = "Already in Your Arcade";
+                }
+            }
+        })();
+    }
 
     const toolIconColor = pearlColor;
 
@@ -753,7 +772,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                                 <i class="fas fa-trash" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                         ` : `
-                            <button onclick="cloneSpark(this, '${currentId}', '${ownerId}', '${currentId}', '${spark.id}')" title="Save to My Arcade" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <button id="${sparkElementId}" onclick="cloneSpark(this, '${visitorUid}', '${ownerId}', '${currentId}', '${spark.id}')" title="Save to My Arcade" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-save" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                             <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
