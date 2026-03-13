@@ -4,7 +4,7 @@ import { ENV } from '/config/env.js';
 import { ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:24:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:40:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user;
 let databaseCache = {};
@@ -275,7 +275,7 @@ async function refreshUI() {
     }
 }
     
-/**
+/*
  * Objective: System Observer & Router [cite: 2026-02-01]
  * Logic: Prioritizes URL-based discovery. Ensures new users are seeded 
  * without forcing them away from the page they requested.
@@ -578,7 +578,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
     }
 }
 
-/**
+/*
  * Objective: Modular infrastructure generator.
  * Handles DB entry, cache update, and initial spark generation.
  */
@@ -632,22 +632,22 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const neonColor = "var(--neon-color)";
     const neonGlow = "drop-shadow(0 0 5px var(--neon-color))";
     
-    // 2. State & Variable Assignments
-    const hasLiked = spark.stats?.likes?.likes_users?.[visitorUid] === true;
-    
-    // Persistent state colors
+    // 2. State Assignments (Corrected structure)
+    const hasLiked = spark.stats?.likes?.users?.[visitorUid] ? true : false;
     const likeIconColor = hasLiked ? neonColor : pearlColor;
     const likeIconGlow = hasLiked ? neonGlow : "none";
-
-    // Standard tool colors (starting as Pearl)
     const toolIconColor = pearlColor;
 
-    // 3. Shared Button Styling
+    // 3. Extraction of Stats Counts
+    const viewCount = spark.stats?.views?.count || 0;
+    const likeCount = spark.stats?.likes?.count || 0;
+    const shareCount = spark.stats?.reshares?.count || 0;
+    const tipCount = spark.stats?.tips?.count || 0;
+
+    // Shared Styles
     const btnStyle = `background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; filter: drop-shadow(0 0 2px var(--neon-color));`;
     const onHover = "this.style.filter='drop-shadow(0 0 8px var(--neon-color))'; this.style.transform='scale(1.2)';"
     const onOut = "this.style.filter='drop-shadow(0 0 2px var(--neon-color))'; this.style.transform='scale(1)';"
-    
-    console.log(`[Render] Spark: ${spark.id} | Owner: ${ownerId} | Current: ${currentId}`);
     
     return `
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
@@ -669,22 +669,22 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
                 
-                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 9px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); width: 85%; padding-bottom: 6px; text-align: center;">
-                    <span class="stat-views">
-                        <i class="fas fa-eye" style="font-size: 8px; margin-right: 3px;"></i> 
-                        ${spark.stats?.views || 0}
+                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 8px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); width: 85%; padding-bottom: 6px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <span class="stat-views" title="Total Views">
+                        <i class="fas fa-eye" style="margin-right: 2px;"></i> 
+                        **VIEWS: ${viewCount}**
                     </span>
-                    <span class="stat-likes">
-                        <i class="fas fa-thumbs-up" style="font-size: 8px; margin-right: 3px;"></i> 
-                        ${spark.stats?.likes?.likes_count || 0}
+                    <span class="stat-likes" title="Total Likes">
+                        <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> 
+                        **LIKES: ${likeCount}**
                     </span>
-                    <span class="stat-reshares">
-                        <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
-                        ${spark.stats?.reshares || 0}
+                    <span class="stat-reshares" title="Total Shares">
+                        <i class="fas fa-retweet" style="margin-right: 2px;"></i> 
+                        **SHARES: ${shareCount}**
                     </span>
-                    <span class="stat-tips">
-                        <i class="fas fa-coins" style="font-size: 8px; margin-right: 3px;"></i> 
-                        ${spark.stats?.tips || 0}
+                    <span class="stat-tips" title="Total Tips">
+                        <i class="fas fa-coins" style="margin-right: 2px;"></i> 
+                        **TIPS: ${tipCount}**
                     </span>
                 </div>
 
@@ -1055,7 +1055,7 @@ window.openOnboardingHUD = () => {
 };
 
         
-/**
+/*
  * Objective: Retrieve dynamic limits based on the user's plan_type.
  */
 function getPlanLimits(uid) {
