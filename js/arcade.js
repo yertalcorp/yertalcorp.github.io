@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:55:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:03:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -329,6 +329,7 @@ watchAuthState(async (currentUser) => {
 
 window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, sparkId) => {
     // Paths
+    const profilePath = `users/${visitorUid}/profile`;
     const sourcePath = `users/${sourceOwnerId}/infrastructure/currents/${sourceCurrentId}/sparks/${sparkId}`;
     const destinationCurrentPath = `users/${visitorUid}/infrastructure/currents/${sourceCurrentId}`;
     const destinationSparkPath = `${destinationCurrentPath}/sparks/${sparkId}`;
@@ -351,7 +352,48 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
             return;
         }
 
-        // 2. Fetch original spark and source current metadata
+        // 2. NEW: Check if Arcade Identity exists. If not, Intercept with HUD.
+        const profileSnapshot = await get(ref(db, profilePath));
+        let profileData = profileSnapshot.val();
+
+        if (!profileData || !profileData.arcade_title) {
+            console.log("[Onboarding] No Arcade Name found. Launching Setup HUD...");
+            
+            // Intercept and wait for HUD completion
+            const branding = await new Promise((resolve) => {
+                window.openOnboardingHUD(true); // Open in Forge Mode
+
+                const submitBtn = document.getElementById('submit-onboarding');
+                submitBtn.onclick = async () => {
+                    const name = document.getElementById('new-arcade-name').value.trim();
+                    const subtitle = document.getElementById('new-arcade-subtitle').value.trim();
+
+                    if (!name) {
+                        alert("SYSTEM_ERROR: Arcade designation required.");
+                        return;
+                    }
+
+                    const newBranding = {
+                        arcade_title: name,
+                        arcade_subtitle: subtitle,
+                        arcade_logo: "/assets/images/default_logo.png",
+                        branding_color: "#00f2ff",
+                        privacy: "public"
+                    };
+
+                    // Update local reference and Database Profile
+                    await update(ref(db, profilePath), newBranding);
+                    profileData = { ...profileData, ...newBranding };
+
+                    document.getElementById('onboarding-hud').classList.remove('active');
+                    resolve(newBranding);
+                };
+            });
+            
+            if (!branding) return; // Safety exit if resolve fails
+        }
+
+        // 3. Fetch original spark and source current metadata
         const sourceSnapshot = await get(ref(db, sourcePath));
         const sourceCurrentSnapshot = await get(ref(db, `users/${sourceOwnerId}/infrastructure/currents/${sourceCurrentId}`));
 
@@ -360,19 +402,22 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
             const currentMeta = sourceCurrentSnapshot.val();
             const saveDate = new Date().toISOString();
 
-            // 3. Ensure the Infrastructure "Current" container exists for the visitor
+            // 4. Ensure the Infrastructure "Current" container exists for the visitor
             const visitorCurrentSnapshot = await get(ref(db, destinationCurrentPath));
             if (!visitorCurrentSnapshot.exists()) {
                 await set(ref(db, destinationCurrentPath), {
                     id: sourceCurrentId,
                     name: currentMeta.name || "My Collection",
+                    // Use identity branding if available
+                    arcade_title: profileData.arcade_title,
+                    arcade_logo: profileData.arcade_logo,
                     privacy: "public",
                     type_ref: currentMeta.type_ref || "arcade",
                     sparks: {}
                 });
             }
 
-            // 4. Update forges analytic field on the ORIGINAL spark
+            // 5. Update forges analytic field on the ORIGINAL spark
             const sourceForgeRef = ref(db, `${sourcePath}/stats/forges`);
             await runTransaction(sourceForgeRef, (forgeObj) => {
                 if (!forgeObj) {
@@ -387,40 +432,34 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
                 return forgeObj;
             });
 
-            // 5. Create the forged copy for the visitor (Rule Compliant Stats)
+            // 6. Create the forged copy for the visitor
             const clonedData = {
                 ...sparkData,
-                id: sparkId, // Preserve original seed ID
+                id: sparkId,
                 owner: visitorUid,
                 clonedFrom: sourceOwnerId,
                 created: Date.now(),
                 stats: {
-                    // Views and Tips require 'count' for rule validation
                     views: { count: 0, total_count: 0, last_viewed: saveDate, monthly_ledger: {} },
                     tips: { count: 0, total_amount: 0, ledger: {} },
-                    
-                    // Likes, Reshares, and Forges require 'count' AND 'users'
                     likes: { count: 0, users: {} },
                     reshares: { count: 0, users: {} },
                     forges: { count: 0, users: {} },
-                    
-                    // Feedback requires 'count'
                     feedback: { count: 0, entries: {} }
                 }
             };
 
-            // 6. Write to Visitor's DB
-            // This now contains all children required by the .validate rules
+            // 7. Write to Visitor's DB
             await set(ref(db, destinationSparkPath), clonedData);
             
-            // 7. UI Feedback
+            // 8. UI Feedback
             setNeonPermanent();
-            console.log(`[Forge Success] Spark ${sparkId} cloned from ${sourceOwnerId} to ${visitorUid}.`);
+            console.log(`[Forge Success] Spark ${sparkId} cloned with Identity ${profileData.arcade_title}.`);
         }
     } catch (error) {
         console.error("[Clone Error]", error);
         if (error.message.includes("PERMISSION_DENIED")) {
-            console.warn("Permission Denied: Check if the visitorUid matches your auth state or if a .validate rule failed.");
+            console.warn("Permission Denied: Check if the visitorUid matches your auth state.");
         }
     }
 };
@@ -1111,12 +1150,35 @@ function renderLogicComponent(spark) {
     `;
 }
         
-window.openOnboardingHUD = () => {
+window.openOnboardingHUD = (isForge = false) => {
     const hud = document.getElementById('onboarding-hud');
-    if (hud) {
-        hud.classList.add('active');
-        // Logic to populate the 20 category buttons from your JSON settings
-        renderCategoryButtons(); 
+    if (!hud) return;
+
+    // Grab our semantic IDs
+    const stepIdentity = document.getElementById('define-arcade-name');
+    const stepTopic = document.getElementById('select-current-type');
+    const stepSparks = document.getElementById('create-sparks');
+    const submitBtn = document.getElementById('submit-onboarding');
+
+    hud.classList.add('active');
+
+    if (isForge) {
+        // FORGE MODE: Hide the manual creation steps
+        stepIdentity.style.display = 'block';
+        stepTopic.style.display = 'none';
+        stepSparks.style.display = 'none';
+        
+        submitBtn.innerText = "FINALIZE FORGE SEQUENCE";
+        // We will handle the click via a Promise inside cloneSpark
+    } else {
+        // MANUAL MODE: Standard flow
+        stepIdentity.style.display = 'block';
+        stepTopic.style.display = 'block';
+        stepSparks.style.display = 'none'; 
+        
+        renderCategoryButtons();
+        submitBtn.innerText = "INITIALIZE FORGE";
+        submitBtn.onclick = () => handleInitialForge(); // Your existing logic
     }
 };
 
