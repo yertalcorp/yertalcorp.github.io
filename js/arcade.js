@@ -1079,14 +1079,25 @@ function predictLogicType(prompt) {
 
 window.handleInitialForge = async () => {
     // 1. Capture Inputs from HUD
-    const arcadeName = document.getElementById('new-arcade-name').value;
-    const arcadeSubtitle = document.getElementById('new-arcade-subtitle').value;
-    const initialPrompt = document.getElementById('initial-prompt').value;
-    const customName = document.getElementById('custom-cat-name').value;
+    const arcadeName = document.getElementById('new-arcade-name').value.trim();
+    const arcadeSubtitle = document.getElementById('new-arcade-subtitle').value.trim();
+    const initialPrompt = document.getElementById('initial-prompt')?.value;
+    const customName = document.getElementById('custom-cat-name')?.value;
     const profilePic = document.getElementById('new-profile-pic')?.value;
 
-    if (!arcadeName || !initialPrompt || !selectedCategory) {
-        alert("System Error: Please define Name, Topic, and Intent.");
+    // DETERMINING CONTEXT: Is this a Forge Intercept or a Manual Creation?
+    // If the category step is hidden, we are in Forge Mode.
+    const isForgeMode = document.getElementById('select-current-type').style.display === 'none';
+
+    // 2. Dynamic Validation
+    if (!arcadeName) {
+        alert("System Error: Please define Arcade Name.");
+        return;
+    }
+
+    // Manual Creation requires more data than a Forge
+    if (!isForgeMode && (!initialPrompt || !window.selectedCategory)) {
+        alert("System Error: Please define Topic and Intent.");
         return;
     }
 
@@ -1095,7 +1106,7 @@ window.handleInitialForge = async () => {
     const limits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
 
     try {
-        // 2. Consolidated Profile Update (No more hardcoded paths)
+        // 3. Consolidated Profile Update
         const newProfileData = {
             ...userProfile,
             arcade_title: arcadeName.toUpperCase(),
@@ -1103,23 +1114,31 @@ window.handleInitialForge = async () => {
             arcade_logo: userProfile.arcade_logo || databaseCache.settings?.['ui-settings']?.['default-logo'],
             profile_picture: profilePic || userProfile.profile_picture || user.photoURL,
             slug: arcadeName.toLowerCase().replace(/\s+/g, '-'),
-            plan_type: 'free',
+            plan_type: planType,
             privacy: "public"
         };
 
+        // Only save if data changed
         if (JSON.stringify(newProfileData) !== JSON.stringify(userProfile)) {
             await saveToRealtimeDB(`users/${user.uid}/profile`, newProfileData);
+            if (!databaseCache.users[user.uid]) databaseCache.users[user.uid] = {};
             databaseCache.users[user.uid].profile = newProfileData; 
         }
 
-        // 3. Update URL and Infrastructure
-        window.history.replaceState({}, '', `?user=${newProfileData.slug}`);
-        const finalName = selectedCategory === 'custom' ? customName : `${selectedCategory} Lab`;
-        await window.addNewCurrent(finalName, selectedCategory, initialPrompt, limits);
+        // 4. Divergent Pathways
+        if (isForgeMode) {
+            // FORGE PATH: Just close HUD. cloneSpark's Promise will resolve and finish the job.
+            console.log("[Forge Mode] Identity established. Handing back to cloneSpark.");
+        } else {
+            // MANUAL PATH: Create the infrastructure from scratch
+            window.history.replaceState({}, '', `?user=${newProfileData.slug}`);
+            const finalName = window.selectedCategory === 'custom' ? customName : `${window.selectedCategory} Lab`;
+            await window.addNewCurrent(finalName, window.selectedCategory, initialPrompt, limits);
+            await refreshUI(); 
+        }
 
-        // 4. Cleanup UI
+        // 5. Cleanup UI
         document.getElementById('onboarding-hud').classList.remove('active');
-        await refreshUI(); 
         
     } catch (error) {
         console.error("FORGE FAILURE:", error);
