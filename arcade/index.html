@@ -41,7 +41,7 @@
    <div id="onboarding-hud" class="hud-overlay">
     <div class="hud-window glass-3d animate-slideUp">
         <div class="hud-header">
-            <h2 class="metallic-text">INITIALIZE_ARCADE_SEQUENCE</h2>
+            <h2 class="metallic-text">INITIALIZE_IDENTITY_SEQUENCE</h2>
             <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud">&times;</button>
         </div>
         
@@ -52,30 +52,18 @@
                 
                 <label>SYSTEM SUBTITLE</label>
                 <input type="text" id="new-arcade-subtitle" placeholder="e.g., Explorations in AI" class="hud-input">
-            </section>
 
-            <section class="hud-step" id="select-current-type">
-                <label>SELECT PRIMARY TOPIC</label>
-                <div id="category-grid" class="category-grid">
-                </div>
-                
-                <div id="custom-category-wrap" style="display:none; margin-top: 1rem;">
-                    <label>CUSTOM CATEGORY NAME</label>
-                    <input type="text" id="custom-cat-name" placeholder="e.g., Cybernetics" class="hud-input">
-                </div>
-            </section>
-
-            <section class="hud-step" id="create-sparks" style="display:none;">
-                <label id="intent-label">DEFINE INITIAL INTENT</label>
-                <div class="console-input-wrap">
-                    <span class="prompt-prefix">>></span>
-                    <input type="text" id="initial-prompt" placeholder="e.g., Top 5 videos of physics" class="hud-input">
-                </div>
+                <label>INTERFACE THEME</label>
+                <select id="arcade-theme-select" class="hud-input">
+                    <option value="dark">NEON_DARK</option>
+                    <option value="light">SILICON_LIGHT</option>
+                    <option value="seasonal">SEASONAL_DYNAMICS</option>
+                </select>
             </section>
         </div>
 
         <div class="hud-footer">
-            <button id="submit-onboarding" class="ethereal-btn-sm" onclick="handleInitialForge()">INITIALIZE FORGE</button>
+            <button id="submit-onboarding" class="ethereal-btn-sm" onclick="handleInitialForge()">ESTABLISH IDENTITY</button>
         </div>
     </div>
 </div>
