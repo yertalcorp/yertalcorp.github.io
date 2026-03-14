@@ -344,53 +344,22 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
     };
 
     try {
-        // 1. Check if spark already exists in visitor's collection
+        // 1. Check if Arcade Identity exists. If not, Intercept with HUD and exit.
+        const profileSnapshot = await get(ref(db, profilePath));
+        const profileData = profileSnapshot.val();
+
+        if (!profileData || !profileData.arcade_title) {
+            console.log("[Identity Gate] No Arcade Name found. Launching Setup HUD...");
+            window.openOnboardingHUD(); 
+            return; // Exit here. The user will click Forge again after Establish Identity.
+        }
+
+        // 2. Check if spark already exists in visitor's collection
         const checkSnapshot = await get(ref(db, destinationSparkPath));
         if (checkSnapshot.exists()) {
             setNeonPermanent();
             alert("This spark is already in your collection!");
             return;
-        }
-
-        // 2. NEW: Check if Arcade Identity exists. If not, Intercept with HUD.
-        const profileSnapshot = await get(ref(db, profilePath));
-        let profileData = profileSnapshot.val();
-
-        if (!profileData || !profileData.arcade_title) {
-            console.log("[Onboarding] No Arcade Name found. Launching Setup HUD...");
-            
-            // Intercept and wait for HUD completion
-            const branding = await new Promise((resolve) => {
-                window.openOnboardingHUD(true); // Open in Forge Mode
-
-                const submitBtn = document.getElementById('submit-onboarding');
-                submitBtn.onclick = async () => {
-                    const name = document.getElementById('new-arcade-name').value.trim();
-                    const subtitle = document.getElementById('new-arcade-subtitle').value.trim();
-
-                    if (!name) {
-                        alert("SYSTEM_ERROR: Arcade designation required.");
-                        return;
-                    }
-
-                    const newBranding = {
-                        arcade_title: name,
-                        arcade_subtitle: subtitle,
-                        arcade_logo: "/assets/images/default_logo.png",
-                        branding_color: "#00f2ff",
-                        privacy: "public"
-                    };
-
-                    // Update local reference and Database Profile
-                    await update(ref(db, profilePath), newBranding);
-                    profileData = { ...profileData, ...newBranding };
-
-                    document.getElementById('onboarding-hud').classList.remove('active');
-                    resolve(newBranding);
-                };
-            });
-            
-            if (!branding) return; // Safety exit if resolve fails
         }
 
         // 3. Fetch original spark and source current metadata
@@ -408,9 +377,6 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
                 await set(ref(db, destinationCurrentPath), {
                     id: sourceCurrentId,
                     name: currentMeta.name || "My Collection",
-                    // Use identity branding if available
-                    arcade_title: profileData.arcade_title,
-                    arcade_logo: profileData.arcade_logo,
                     privacy: "public",
                     type_ref: currentMeta.type_ref || "arcade",
                     sparks: {}
@@ -432,10 +398,10 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
                 return forgeObj;
             });
 
-            // 6. Create the forged copy for the visitor
+            // 6. Create the forged copy for the visitor (Rule Compliant Stats)
             const clonedData = {
                 ...sparkData,
-                id: sparkId,
+                id: sparkId, 
                 owner: visitorUid,
                 clonedFrom: sourceOwnerId,
                 created: Date.now(),
@@ -454,16 +420,15 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
             
             // 8. UI Feedback
             setNeonPermanent();
-            console.log(`[Forge Success] Spark ${sparkId} cloned with Identity ${profileData.arcade_title}.`);
+            console.log(`[Forge Success] Spark ${sparkId} cloned from ${sourceOwnerId} to ${visitorUid}.`);
         }
     } catch (error) {
         console.error("[Clone Error]", error);
         if (error.message.includes("PERMISSION_DENIED")) {
-            console.warn("Permission Denied: Check if the visitorUid matches your auth state.");
+            console.warn("Permission Denied: Check auth state or .validate rules.");
         }
     }
 };
-
 function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
@@ -1031,37 +996,6 @@ function formatTimeAgo(timestamp) {
     return Math.floor(seconds) + "S AGO";
 }
 
-function renderCategoryButtons() {
-    const grid = document.getElementById('category-grid');
-    // Changed: Use databaseCache which is updated in watchAuthState
-    const categories = databaseCache.settings?.['arcade-current-types'] || [];
-    
-    grid.innerHTML = categories.map(cat => `
-        <button class="cat-btn" onclick="selectCategory('${cat.id}', '${cat.name}')">
-            <i class="${cat.icon || 'fas fa-circle-notch'}"></i>
-            <span>${cat.name}</span>
-        </button>
-    `).join('');
-}
-
-// --- CATEGORY SELECTION ---
-window.selectCategory = (id, name) => {
-    selectedCategory = id;
-    document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('selected'));
-    event.currentTarget.classList.add('selected');
-    
-    // Show/Hide Custom Name field
-    const customWrap = document.getElementById('custom-category-wrap');
-    customWrap.style.display = (id === 'custom') ? 'block' : 'none';
-
-    const finalStep = document.getElementById('final-intent-step');
-    finalStep.style.display = 'block';
-    
-    const promptInput = document.getElementById('initial-prompt');
-    promptInput.placeholder = (id === 'custom') ? 
-        "Describe what you want to build..." : 
-        `e.g., Top 5 ${name.toLowerCase()} videos...`;
-};
 // --- SMART LOGIC ASSIGNER ---
 function predictLogicType(prompt) {
     const p = prompt.toLowerCase();
@@ -1077,73 +1011,6 @@ function predictLogicType(prompt) {
     return 'hybrid'; 
 }
 
-window.handleInitialForge = async () => {
-    // 1. Capture Inputs from HUD
-    const arcadeName = document.getElementById('new-arcade-name').value.trim();
-    const arcadeSubtitle = document.getElementById('new-arcade-subtitle').value.trim();
-    const initialPrompt = document.getElementById('initial-prompt')?.value;
-    const customName = document.getElementById('custom-cat-name')?.value;
-    const profilePic = document.getElementById('new-profile-pic')?.value;
-
-    // DETERMINING CONTEXT: Is this a Forge Intercept or a Manual Creation?
-    // If the category step is hidden, we are in Forge Mode.
-    const isForgeMode = document.getElementById('select-current-type').style.display === 'none';
-
-    // 2. Dynamic Validation
-    if (!arcadeName) {
-        alert("System Error: Please define Arcade Name.");
-        return;
-    }
-
-    // Manual Creation requires more data than a Forge
-    if (!isForgeMode && (!initialPrompt || !window.selectedCategory)) {
-        alert("System Error: Please define Topic and Intent.");
-        return;
-    }
-
-    const userProfile = databaseCache.users?.[user.uid]?.profile || {};
-    const planType = userProfile.plan_type || 'free';
-    const limits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
-
-    try {
-        // 3. Consolidated Profile Update
-        const newProfileData = {
-            ...userProfile,
-            arcade_title: arcadeName.toUpperCase(),
-            arcade_subtitle: arcadeSubtitle || "LABORATORY ACTIVE",
-            arcade_logo: userProfile.arcade_logo || databaseCache.settings?.['ui-settings']?.['default-logo'],
-            profile_picture: profilePic || userProfile.profile_picture || user.photoURL,
-            slug: arcadeName.toLowerCase().replace(/\s+/g, '-'),
-            plan_type: planType,
-            privacy: "public"
-        };
-
-        // Only save if data changed
-        if (JSON.stringify(newProfileData) !== JSON.stringify(userProfile)) {
-            await saveToRealtimeDB(`users/${user.uid}/profile`, newProfileData);
-            if (!databaseCache.users[user.uid]) databaseCache.users[user.uid] = {};
-            databaseCache.users[user.uid].profile = newProfileData; 
-        }
-
-        // 4. Divergent Pathways
-        if (isForgeMode) {
-            // FORGE PATH: Just close HUD. cloneSpark's Promise will resolve and finish the job.
-            console.log("[Forge Mode] Identity established. Handing back to cloneSpark.");
-        } else {
-            // MANUAL PATH: Create the infrastructure from scratch
-            window.history.replaceState({}, '', `?user=${newProfileData.slug}`);
-            const finalName = window.selectedCategory === 'custom' ? customName : `${window.selectedCategory} Lab`;
-            await window.addNewCurrent(finalName, window.selectedCategory, initialPrompt, limits);
-            await refreshUI(); 
-        }
-
-        // 5. Cleanup UI
-        document.getElementById('onboarding-hud').classList.remove('active');
-        
-    } catch (error) {
-        console.error("FORGE FAILURE:", error);
-    }
-};
 
 function renderLogicComponent(spark) {
     return `
@@ -1169,38 +1036,29 @@ function renderLogicComponent(spark) {
     `;
 }
         
-window.openOnboardingHUD = (isForge = false) => {
+window.openOnboardingHUD = () => {
     const hud = document.getElementById('onboarding-hud');
     if (!hud) return;
 
-    // Grab our semantic IDs
-    const stepIdentity = document.getElementById('define-arcade-name');
-    const stepTopic = document.getElementById('select-current-type');
-    const stepSparks = document.getElementById('create-sparks');
     const submitBtn = document.getElementById('submit-onboarding');
 
+    // Reset inputs for a fresh identity sequence
+    const nameInput = document.getElementById('new-arcade-name');
+    const subtitleInput = document.getElementById('new-arcade-subtitle');
+    
+    if (nameInput) nameInput.value = '';
+    if (subtitleInput) subtitleInput.value = '';
+
+    // Show the HUD
     hud.classList.add('active');
 
-    if (isForge) {
-        // FORGE MODE: Hide the manual creation steps
-        stepIdentity.style.display = 'block';
-        stepTopic.style.display = 'none';
-        stepSparks.style.display = 'none';
-        
-        submitBtn.innerText = "FINALIZE FORGE SEQUENCE";
-        // We will handle the click via a Promise inside cloneSpark
-    } else {
-        // MANUAL MODE: Standard flow
-        stepIdentity.style.display = 'block';
-        stepTopic.style.display = 'block';
-        stepSparks.style.display = 'none'; 
-        
-        renderCategoryButtons();
-        submitBtn.innerText = "INITIALIZE FORGE";
-        submitBtn.onclick = () => handleInitialForge(); // Your existing logic
-    }
+    // Universal Configuration:
+    // Whether triggered by 'Create Arcade' or 'Forge', the goal is Establish Identity.
+    submitBtn.innerText = "ESTABLISH IDENTITY";
+    
+    // Set the global handler as the default action
+    submitBtn.onclick = () => handleInitialForge();
 };
-
         
 /*
  * Objective: Retrieve dynamic limits based on the user's plan_type.
