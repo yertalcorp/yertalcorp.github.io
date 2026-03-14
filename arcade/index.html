@@ -18,10 +18,8 @@
     </header>
 
     <main class="max-width-limit">
-        
         <div id="currents-container">
-            </div>
-
+        </div>
     </main>
 
     <div id="intent-modal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); z-index: 1000; display: none; align-items: center; justify-content: center;">
@@ -36,9 +34,11 @@
     </div>
 
     <footer id="footer-container">
-        </footer>
+    </footer>
+    
    <script type="module" src="/js/arcade.js"></script>
-    <div id="onboarding-hud" class="hud-overlay">
+
+   <div id="onboarding-hud" class="hud-overlay">
     <div class="hud-window glass-3d animate-slideUp">
         <div class="hud-header">
             <h2 class="metallic-text">INITIALIZE_ARCADE_SEQUENCE</h2>
@@ -46,7 +46,7 @@
         </div>
         
         <div class="hud-body">
-            <section class="hud-step">
+            <section class="hud-step" id="define-arcade-name">
                 <label>ARCADE NAME</label>
                 <input type="text" id="new-arcade-name" placeholder="e.g., Quantum Lab" class="hud-input">
                 
@@ -54,18 +54,18 @@
                 <input type="text" id="new-arcade-subtitle" placeholder="e.g., Explorations in AI" class="hud-input">
             </section>
 
-<section class="hud-step">
-    <label>SELECT PRIMARY TOPIC</label>
-    <div id="category-grid" class="category-grid">
-        </div>
-    
-    <div id="custom-category-wrap" style="display:none; margin-top: 1rem;">
-        <label>CUSTOM CATEGORY NAME</label>
-        <input type="text" id="custom-cat-name" placeholder="e.g., Cybernetics" class="hud-input">
-    </div>
-</section>
+            <section class="hud-step" id="select-current-type">
+                <label>SELECT PRIMARY TOPIC</label>
+                <div id="category-grid" class="category-grid">
+                </div>
+                
+                <div id="custom-category-wrap" style="display:none; margin-top: 1rem;">
+                    <label>CUSTOM CATEGORY NAME</label>
+                    <input type="text" id="custom-cat-name" placeholder="e.g., Cybernetics" class="hud-input">
+                </div>
+            </section>
 
-            <section class="hud-step" id="final-intent-step" style="display:none;">
+            <section class="hud-step" id="create-sparks" style="display:none;">
                 <label id="intent-label">DEFINE INITIAL INTENT</label>
                 <div class="console-input-wrap">
                     <span class="prompt-prefix">>></span>
