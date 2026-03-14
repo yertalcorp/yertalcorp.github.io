@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:03:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:34:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1011,31 +1011,6 @@ function predictLogicType(prompt) {
     return 'hybrid'; 
 }
 
-
-function renderLogicComponent(spark) {
-    return `
-        <div class="logic-display animate-slideUp">
-            <div class="logic-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 class="metallic-text">${spark.title}</h3>
-                <div class="logic-actions">
-                    ${spark.audio_hint ? 
-                        `<button onclick="window.playSparkAudio('${spark.content}')" class="terminal-btn btn-pulse">
-                            <i class="fas fa-play"></i> AUDIT_FREQUENCIES
-                        </button>` : ''}
-                    <button onclick="copyToClipboard('${spark.content}')" class="terminal-btn">COPY_DATA</button>
-                </div>
-            </div>
-            
-            <pre class="terminal-code"><code>${spark.content}</code></pre>
-            
-            <div class="logic-metadata">
-                <span class="tag">LOGIC_MODE: ${spark.type.toUpperCase()}</span>
-                <span class="tag">SOURCE: GEMINI_FORGE_V3</span>
-            </div>
-        </div>
-    `;
-}
-        
 window.openOnboardingHUD = () => {
     const hud = document.getElementById('onboarding-hud');
     if (!hud) return;
