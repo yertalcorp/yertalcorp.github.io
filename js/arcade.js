@@ -10,6 +10,62 @@ let databaseCache = {};
 let selectedCategory = null;
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
+/* Objective: Manage the System Drawer and Settings Sync 
+*/
+
+// 1. Toggle Drawer Visibility
+window.toggleDrawer = () => {
+    document.getElementById('main-drawer').classList.toggle('active');
+};
+
+// 2. Navigation between Main and Sub-menus
+window.showSubMenu = (menuId) => {
+    document.getElementById('drawer-main-nav').style.display = 'none';
+    document.querySelectorAll('.sub-menu').forEach(m => m.style.display = 'none');
+    document.getElementById(`drawer-${menuId}`).style.display = 'block';
+    
+    // Pre-fill settings if opening settings
+    if(menuId === 'settings') prefillSettings();
+};
+
+window.showMainMenu = () => {
+    document.querySelectorAll('.sub-menu').forEach(m => m.style.display = 'none');
+    document.getElementById('drawer-main-nav').style.display = 'block';
+};
+
+// 3. Prefill the inputs with current cached data
+function prefillSettings() {
+    const profile = databaseCache.userProfile || {};
+    document.getElementById('set-display-name').value = profile.display_name || "";
+    document.getElementById('set-arcade-title').value = profile.arcade_title || "";
+    document.getElementById('set-arcade-subtitle').value = profile.arcade_subtitle || "";
+    document.getElementById('set-arcade-logo').value = profile.arcade_logo || "";
+    document.getElementById('set-arcade-theme').value = profile.current_theme_id || "neon-dark";
+}
+
+// 4. Save and Apply
+window.saveAllSettings = async () => {
+    const updates = {
+        display_name: document.getElementById('set-display-name').value,
+        arcade_title: document.getElementById('set-arcade-title').value,
+        arcade_subtitle: document.getElementById('set-arcade-subtitle').value,
+        arcade_logo: document.getElementById('set-arcade-logo').value,
+        current_theme_id: document.getElementById('set-arcade-theme').value
+    };
+
+    // Assuming you have a helper for Firebase
+    await saveToRealtimeDB(`users/${user.uid}/profile`, updates);
+    
+    // Refresh the UI locally
+    applyTheme(updates.current_theme_id);
+    
+    // If your logo/title are rendered via a function, call it here
+    if (typeof renderHeader === "function") renderHeader(); 
+    
+    window.toggleDrawer();
+    console.log("System Identity Re-Forged.");
+};
+
 /**
  * Objective: Apply the flattened theme properties to the document root.
  */
@@ -468,6 +524,7 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
         }
     }
 };
+
 function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
@@ -527,6 +584,12 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                         </button>
                     </div>
                     <img src="${authUser.photoURL}" alt="Pilot Avatar" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; border: 2px solid var(--neon-color); box-shadow: none; object-fit: cover;">
+                    
+                    ${isOwner ? `
+                    <div id="system-menu-trigger" onclick="toggleDrawer()" style="cursor: pointer; padding-left: 0.5rem; color: var(--neon-color); font-size: 1.1rem; transition: transform 0.3s;">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
         </nav>
@@ -542,7 +605,6 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
         </div>
     `;
 }
-
 function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
     if (!container) return;
