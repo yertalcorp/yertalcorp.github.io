@@ -101,10 +101,74 @@ function renderTutorialStep() {
 */
 
 // 1. Toggle Drawer Visibility
+/* * Objective: Unified Drawer Toggle
+ * Task: Toggle 'active' class and inject menu content
+ */
 window.toggleDrawer = () => {
-    document.getElementById('main-drawer').classList.toggle('active');
+    const drawer = document.getElementById('main-drawer');
+    if (!drawer) return;
+
+    // Only populate if we are opening it (not active yet)
+    if (!drawer.classList.contains('active')) {
+        renderSettingsDrawer(); 
+    }
+
+    drawer.classList.toggle('active');
 };
 
+function renderSettingsDrawer() {
+    const contentContainer = document.querySelector('#main-drawer .drawer-content'); 
+    // Adjust selector above if your drawer content div has a different ID/Class
+    if (!contentContainer) return;
+
+    contentContainer.innerHTML = `
+        <div class="drawer-section">
+            <h4 class="drawer-header">HELP</h4>
+            <div class="menu-list">
+                <div class="menu-item" onclick="window.toggleDrawer(); window.showTutorial();">
+                    <span>View Tutorial</span>
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="menu-item" onclick="openHelpSearch()">
+                    <span>Search Help Topics</span>
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="menu-item" onclick="startAutomatedSupport()">
+                    <span>Chat for Support</span>
+                    <i class="fas fa-robot"></i>
+                </div>
+            </div>
+        </div>
+
+        <hr class="drawer-hr">
+
+        <div class="drawer-section">
+            <h4 class="drawer-header">SETTINGS</h4>
+            <div class="menu-list">
+                <div class="menu-item" onclick="openArcadeSettings()">
+                    <span>Arcade Settings</span>
+                    <i class="fas fa-vial"></i>
+                </div>
+                <div class="menu-item" onclick="openUpgradePath()">
+                    <span style="color: var(--branding-color); font-weight: 800;">Upgrade Plan</span>
+                    <i class="fas fa-bolt" style="color: var(--branding-color);"></i>
+                </div>
+            </div>
+        </div>
+
+        <hr class="drawer-hr">
+
+        <div class="drawer-section">
+            <h4 class="drawer-header">PERFORMANCE</h4>
+            <div class="menu-list">
+                <div class="menu-item" onclick="window.location.href='/analytics.html'">
+                    <span>Analytics</span>
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+    `;
+}
 // 2. Navigation between Main and Sub-menus
 window.showSubMenu = (menuId) => {
     document.getElementById('drawer-main-nav').style.display = 'none';
@@ -147,7 +211,7 @@ window.saveAllSettings = async () => {
     applyTheme(updates.current_theme_id);
     
     // If your logo/title are rendered via a function, call it here
-    if (typeof renderHeader === "function") renderHeader(); 
+    if (typeof renderTopBar === "function") renderTopBar(); 
     
     window.toggleDrawer();
     console.log("System Identity Re-Forged.");
@@ -612,6 +676,7 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
     }
 };
 
+
 function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
@@ -621,6 +686,9 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const brandName = profile.display_name;
     const arcadeTitle = profile.arcade_title;
     const arcadeSubtitle = profile.arcade_subtitle;
+    
+    // Check if the user has completed the initial laboratory forge
+    const isSetupComplete = profile.setup_complete === true;
     
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
@@ -672,7 +740,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                     </div>
                     <img src="${authUser.photoURL}" alt="Pilot Avatar" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; border: 2px solid var(--neon-color); box-shadow: none; object-fit: cover;">
                     
-                    ${isOwner ? `
+                    ${(isOwner && isSetupComplete) ? `
                     <div id="system-menu-trigger" onclick="toggleDrawer()" style="cursor: pointer; padding-left: 0.5rem; color: var(--neon-color); font-size: 1.1rem; transition: transform 0.3s;">
                         <i class="fa-solid fa-ellipsis-vertical"></i>
                     </div>
@@ -692,7 +760,6 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
         </div>
     `;
 }
-
 
 function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
