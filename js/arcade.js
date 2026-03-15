@@ -66,7 +66,7 @@ window.saveAllSettings = async () => {
     console.log("System Identity Re-Forged.");
 };
 
-/**
+/*
  * Objective: Apply the flattened theme properties to the document root.
  */
 function applyTheme(themeId) {
@@ -605,6 +605,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
         </div>
     `;
 }
+
 function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
     if (!container) return;
@@ -1112,7 +1113,7 @@ function predictLogicType(prompt) {
     return 'hybrid'; 
 }
 
-/**
+/*
  * Objective: Initialize the identity sequence with a theme-aware, centered UI.
  * Integrates applyTheme for live UI feedback.
  */
@@ -1235,7 +1236,7 @@ window.handleInitialForge = async () => {
     }
 };
 
-/**
+/*
  * Helper to pull the primary branding color from the cached theme data
  */
 function getThemeBrandingColor(themeId) {
