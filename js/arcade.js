@@ -10,6 +10,68 @@ let databaseCache = {};
 let selectedCategory = null;
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
+/*
+ * Objective: Laboratory Manual / Guided Viewlets
+ * Logic: Uses element-masking to highlight specific UI nodes.
+ */
+let tutorialIndex = 0;
+const steps = [
+    {
+        target: null,
+        title: "ARCADE_INIT",
+        msg: "Welcome to your Node. This is a versatile showroom for your projects, a social hub for friends, or a business storefront where you can collect tips and funding."
+    },
+    {
+        target: ".settings-trigger", // Assuming three dots
+        title: "OS_PREFERENCES",
+        msg: "Access System Settings to change themes (like Autumn Ember) or upgrade plans. **Business Plans** allow you to rebrand 'Tips' to 'Funds' or 'Purchase' to match your shop."
+    },
+    {
+        target: ".terminal-btn", 
+        title: "INFRASTRUCTURE",
+        msg: "Initialize a 'Current' to organize your work. You can Add, Rename (Update), or Decommission (Delete) Currents to manage your lab's data streams."
+    },
+    {
+        target: ".generate-btn",
+        title: "FORGE_GENERATION",
+        msg: "This is the Forge. Paste a URL to scrape content or type a prompt—try: 'Top 3 movies for the current year'—to generate a Spark instantly."
+    },
+    {
+        target: ".spark-stats-row", // Target the icons/stats row on a card
+        title: "ENGAGEMENT_PROTOCOLS",
+        msg: "Interact with Sparks via Save, Share, or Tip. In Business mode, these interactions become your revenue stream for tips or product funding."
+    },
+    {
+        target: null,
+        title: "SYSTEM_READY",
+        msg: "Your Laboratory is online. Start forging Currents and share your unique URL to begin growing your audience and funding."
+    }
+];
+
+window.showTutorial = function() {
+    tutorialIndex = 0;
+    renderStep();
+};
+
+function renderStep() {
+    const step = tutorialSteps[tutorialIndex];
+    const overlay = document.getElementById('tutorial-overlay') || createOverlay();
+    
+    // Logic to highlight 'step.target' and position the tooltip
+    // If target is null, show center-screen welcome
+    
+    overlay.innerHTML = `
+        <div class="tutorial-card animate-slideUp">
+            <div class="step-counter">${tutorialIndex + 1} / ${tutorialSteps.length}</div>
+            <h3 class="metallic-text">${step.title}</h3>
+            <p>${step.text}</p>
+            <div class="tutorial-actions">
+                <button onclick="exitTutorial()" class="ghost-btn">SKIP</button>
+                <button onclick="nextStep()" class="ethereal-btn-sm">NEXT ></button>
+            </div>
+        </div>
+    `;
+}
 /* Objective: Manage the System Drawer and Settings Sync 
 */
 
