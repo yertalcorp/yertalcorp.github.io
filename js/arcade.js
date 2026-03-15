@@ -596,7 +596,7 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
 
         if (!profileData || !profileData.arcade_title) {
             console.log("[Identity Gate] No Arcade Name found. Launching Setup HUD...");
-            window.openOnboardingHUD(); 
+            window.openArcadeSettings(); 
             return; // Exit here. The user will click Forge again after Establish Identity.
         }
 
@@ -797,7 +797,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                             IDENTITY_VERIFIED // READY_FOR_INFRASTRUCTURE
                         </p>
                         <div style="display: flex; justify-content: center; gap: 20px;">
-                            <button onclick="window.openOnboardingHUD()" class="ethereal-btn-sm">
+                            <button onclick="window.openArcadeSettings()" class="ethereal-btn-sm">
                                 <i class="fas fa-plus"></i> INITIALIZE_FIRST_CURRENT
                             </button>
                             <button onclick="window.showTutorial()" class="ethereal-btn-sm" style="opacity: 0.7;">
@@ -816,7 +816,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                         <p style="color: var(--neon-color); opacity: 0.6; margin-bottom: 4rem; letter-spacing: 4px; font-size: 12px; font-family: 'Orbitron', sans-serif;">
                             SYSTEM STANDBY // NO ACTIVE CURRENTS DETECTED
                         </p>
-                        <button onclick="window.openOnboardingHUD()" class="ethereal-btn">
+                        <button onclick="window.openArcadeSettings()" class="ethereal-btn">
                             <span class="btn-content">CREATE YOUR ARCADE</span>
                             <div class="btn-glow"></div>
                         </button>
@@ -891,7 +891,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
     if (isOwner) {
         container.innerHTML += `
             <div style="display: flex; justify-content: center; margin-top: 3rem; padding-bottom: 5rem;">
-                <button onclick="window.openOnboardingHUD()" class="terminal-btn" style="border: 1px dashed var(--neon-color); opacity: 0.6;">
+                <button onclick="window.openArcadeSettings()" class="terminal-btn" style="border: 1px dashed var(--neon-color); opacity: 0.6;">
                     <i class="fas fa-plus"></i> INITIALIZE NEW CURRENT
                 </button>
             </div>
@@ -1291,33 +1291,61 @@ function predictLogicType(prompt) {
 }
 
 
-window.openOnboardingHUD = () => {
+window.openArcadeSettings = () => {
     const hud = document.getElementById('onboarding-hud');
     if (!hud) return;
+
+    // The Source of Truth for existing user data
+    const profile = pageOwnerData?.profile || {};
+    const isSetup = profile.setup_complete === true;
 
     const submitBtn = document.getElementById('submit-onboarding');
     const themeSelect = document.getElementById('arcade-theme-select');
     const privacySelect = document.getElementById('arcade-privacy-select');
-    
-    // Reset inputs
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
-    if (nameInput) nameInput.value = '';
-    if (subtitleInput) subtitleInput.value = '';
 
-    // 2. Updated Header with Absolute Close Button
+    // --- LOGIC: PRE-FILL OR DEFAULT ---
+    if (isSetup) {
+        // Established User: Fetch all details from profile
+        if (nameInput) nameInput.value = profile.arcade_title || '';
+        if (subtitleInput) subtitleInput.value = profile.arcade_subtitle || '';
+        if (themeSelect) themeSelect.value = profile.current_theme_id || 'neon-dark';
+        if (privacySelect) privacySelect.value = profile.privacy || 'public';
+        
+        // Handle Plan Type (Radios)
+        const activePlan = profile.plan_type || 'free';
+        const planRadios = hud.querySelectorAll('input[name="arcade-plan"]');
+        planRadios.forEach(radio => { radio.checked = (radio.value === activePlan); });
+        
+        // Ensure the theme preview matches their actual theme immediately
+        applyTheme(themeSelect.value);
+    } else {
+        // New User: Proceed with setup defaults
+        if (nameInput) nameInput.value = '';
+        if (subtitleInput) subtitleInput.value = '';
+        if (themeSelect) themeSelect.value = 'neon-dark';
+        if (privacySelect) privacySelect.value = 'public';
+        
+        const planRadios = hud.querySelectorAll('input[name="arcade-plan"]');
+        planRadios.forEach(radio => { radio.checked = (radio.value === 'free'); });
+        
+        applyTheme('neon-dark');
+    }
+
+    // --- UI UPDATES (Labels & Header) ---
     const hudHeader = hud.querySelector('.hud-header');
     if (hudHeader) {
         hudHeader.innerHTML = `
             <div class="hud-header-content">
-                <h2 class="hud-title-metallic">INITIALIZE YOUR ARCADE</h2>
-                <p class="hud-subtitle-info">Establish Your Arcade to Start Creating or Saving</p>
+                <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE IDENTITY' : 'INITIALIZE YOUR ARCADE'}</h2>
+                <p class="hud-subtitle-info">${isSetup ? 'Modify your existing lab parameters' : 'Establish Your Arcade to Start Creating or Saving'}</p>
             </div>
             <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud-corner">&times;</button>
         `;
     }
 
-    // 3. Populate Free Tier Limits
+    // Populate Limits Display (Generic helper)
     const limits = databaseCache.settings?.plan_limits?.free;
     if (limits) {
         const freePlanList = hud.querySelector('.plan-card.active ul');
@@ -1332,7 +1360,7 @@ window.openOnboardingHUD = () => {
         }
     }
 
-    // 4. Force 'neon-dark' Default and Live Preview
+    // Refresh Themes in Select (if changed in DB)
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     if (themes && themeSelect) {
         themeSelect.innerHTML = ''; 
@@ -1342,18 +1370,12 @@ window.openOnboardingHUD = () => {
             opt.textContent = themes[id].name.replace(/_/g, ' ');
             themeSelect.appendChild(opt);
         });
-
-        themeSelect.value = 'neon-dark';
+        themeSelect.value = isSetup ? (profile.current_theme_id || 'neon-dark') : 'neon-dark';
         themeSelect.onchange = (e) => applyTheme(e.target.value);
-        applyTheme('neon-dark');
     }
 
-    if (privacySelect) privacySelect.value = 'public';
-    const planRadios = hud.querySelectorAll('input[name="arcade-plan"]');
-    planRadios.forEach(radio => { if (radio.value === 'free') radio.checked = true; });
-
     hud.classList.add('active');
-    submitBtn.innerText = "ESTABLISH IDENTITY";
+    submitBtn.innerText = isSetup ? "SAVE CHANGES" : "ESTABLISH IDENTITY";
 };
 
 /*
@@ -1395,13 +1417,13 @@ window.updateLogoStatus = (input) => {
 /*
  * Validates and Commits the Laboratory Identity.
  */
-window.handleInitialForge = async () => {
+window.saveArcadeSettings = async () => {
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
     const themeSelect = document.getElementById('arcade-theme-select');
     const privacySelect = document.getElementById('arcade-privacy-select');
     const planValue = document.querySelector('input[name="arcade-plan"]:checked')?.value || 'free';
-    const logoFile = document.getElementById('logo-browse-input').files[0];
+    const logoFile = document.getElementById('logo-browse-input')?.files?.[0];
 
     // 1. VALIDATION_PROTOCOL
     const arcadeName = nameInput.value.trim();
@@ -1427,6 +1449,7 @@ window.handleInitialForge = async () => {
         }
 
         const profilePath = `users/${activeUser.uid}/profile`;
+        const profile = pageOwnerData?.profile || {};
 
         // 3. COMMIT_TO_DATABASE (Using theme-agnostic keys)
         const updates = {};
@@ -1436,7 +1459,11 @@ window.handleInitialForge = async () => {
         updates[`${profilePath}/theme`] = themeSelect.value;
         updates[`${profilePath}/privacy`] = privacySelect.value;
         updates[`${profilePath}/plan_type`] = planValue;
-        updates[`${profilePath}/setup_complete`] = true;
+
+        // Only add setup_complete if it's not already true
+        if (profile.setup_complete !== true) {
+            updates[`${profilePath}/setup_complete`] = true;
+        }
 
         await update(ref(db), updates);
 
@@ -1444,7 +1471,7 @@ window.handleInitialForge = async () => {
         applyTheme(themeSelect.value);
         document.getElementById('onboarding-hud').classList.remove('active');
         
-        console.log("IDENTITY_ESTABLISHED: Arcade initialized successfully.");
+        console.log("IDENTITY_ESTABLISHED: Arcade settings saved successfully.");
 
     } catch (error) {
         console.error("FORGE_FAILURE:", error);
