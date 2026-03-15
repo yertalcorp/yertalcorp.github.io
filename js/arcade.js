@@ -1124,7 +1124,7 @@ window.openOnboardingHUD = () => {
     const submitBtn = document.getElementById('submit-onboarding');
     const themeSelect = document.getElementById('arcade-theme-select');
     
-    // 1. Reset text inputs
+    // 1. Reset text inputs to ensure a clean state
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
     if (nameInput) nameInput.value = '';
@@ -1143,7 +1143,23 @@ window.openOnboardingHUD = () => {
     }
     hud.querySelector('.hud-body')?.classList.add('hud-body-centered');
 
-    // 3. Populate Theme Options & Trigger Live Preview
+    // 3. Populate Live Plan Limits (Free Tier) from databaseCache
+    const limits = databaseCache.settings?.plan_limits?.free;
+    if (limits) {
+        // Target the <ul> inside the Free plan card
+        const freePlanList = hud.querySelector('.plan-card.active ul');
+        if (freePlanList) {
+            freePlanList.innerHTML = `
+                <li>• ${limits.max_currents} Currents</li>
+                <li>• ${limits.max_sparks_per_current} Sparks/Current</li>
+                <li>• ${limits.display_rows_initial} Display Rows</li>
+                <li>• ${limits.num_mass_sparks} Sparks/Prompt</li>
+                <li>• Gain Tips</li>
+            `;
+        }
+    }
+
+    // 4. Populate Theme Options & Trigger Live Preview
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     if (themes && themeSelect) {
         themeSelect.innerHTML = ''; 
@@ -1161,10 +1177,22 @@ window.openOnboardingHUD = () => {
         applyTheme(themeSelect.value);
     }
 
-    // 4. Show the HUD
+    // 5. Initialize Privacy & Plan Defaults
+    // This ensures that the radio buttons are reset to 'public' and 'free'
+    const privacyRadios = hud.querySelectorAll('input[name="arcade-privacy"]');
+    privacyRadios.forEach(radio => {
+        if (radio.value === 'public') radio.checked = true;
+    });
+
+    const planRadios = hud.querySelectorAll('input[name="arcade-plan"]');
+    planRadios.forEach(radio => {
+        if (radio.value === 'free') radio.checked = true;
+    });
+
+    // 6. Show the HUD
     hud.classList.add('active');
 
-    // 5. Finalize Identity
+    // 7. Finalize Identity
     submitBtn.innerText = "ESTABLISH IDENTITY";
     submitBtn.onclick = () => window.handleInitialForge();
 };
