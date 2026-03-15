@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:13:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:07:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -50,28 +50,53 @@ const steps = [
 
 window.showTutorial = function() {
     tutorialIndex = 0;
-    renderStep();
+    renderTutorialStep();
 };
 
-function renderStep() {
-    const step = tutorialSteps[tutorialIndex];
-    const overlay = document.getElementById('tutorial-overlay') || createOverlay();
+function renderTutorialStep() {
+    const step = steps[currentStep];
+    const mask = document.getElementById('tutorial-mask');
+    const existingTooltip = document.querySelector('.tutorial-tooltip');
+    if (existingTooltip) existingTooltip.remove();
+
+    if (!step) {
+        if (mask) mask.remove();
+        return;
+    }
+
+    const targetEl = step.target ? document.querySelector(step.target) : null;
     
-    // Logic to highlight 'step.target' and position the tooltip
-    // If target is null, show center-screen welcome
-    
-    overlay.innerHTML = `
-        <div class="tutorial-card animate-slideUp">
-            <div class="step-counter">${tutorialIndex + 1} / ${tutorialSteps.length}</div>
-            <h3 class="metallic-text">${step.title}</h3>
-            <p>${step.text}</p>
-            <div class="tutorial-actions">
-                <button onclick="exitTutorial()" class="ghost-btn">SKIP</button>
-                <button onclick="nextStep()" class="ethereal-btn-sm">NEXT ></button>
-            </div>
-        </div>
-    `;
+    if (targetEl) {
+        // --- SPOTLIGHT STATE ---
+        const rect = targetEl.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        // Radius based on element size + padding
+        const r = Math.max(rect.width, rect.height) / 1.5 + 15;
+
+        mask.style.setProperty('--x', `${x}px`);
+        mask.style.setProperty('--y', `${y}px`);
+        mask.style.setProperty('--r', `${r}px`);
+
+        // Position tooltip near the element, but check for screen overflow
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const tooltipX = Math.min(rect.left, window.innerWidth - 360);
+        const tooltipY = spaceBelow > 250 ? rect.bottom + 25 : rect.top - 250;
+        
+        createTooltip(tooltipX, tooltipY, step);
+    } else {
+        // --- CENTERED STATE (Intro/Outro) ---
+        // Hide the spotlight by setting radius to 0
+        mask.style.setProperty('--r', `0px`);
+        
+        // Center the tooltip exactly
+        const centerX = (window.innerWidth / 2) - 170; // Half of tooltip width
+        const centerY = (window.innerHeight / 2) - 100;
+        
+        createTooltip(centerX, centerY, step);
+    }
 }
+
 /* Objective: Manage the System Drawer and Settings Sync 
 */
 
