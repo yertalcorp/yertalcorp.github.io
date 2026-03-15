@@ -325,6 +325,7 @@ button:hover {
     50% { box-shadow: 0 0 25px var(--neon-color); }
     100% { box-shadow: 0 0 10px var(--neon-color); }
 }
+/* Ethereal large button for Hero sections */
 .ethereal-btn {
     position: relative;
     background: transparent;
