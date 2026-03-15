@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:59:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:15:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1113,14 +1113,7 @@ function predictLogicType(prompt) {
     return 'hybrid'; 
 }
 
-/*
- * Objective: Initialize the identity sequence with a theme-aware, centered UI.
- * Integrates applyTheme for live UI feedback.
- */
-/*
- * Objective: Initialize the identity sequence with a theme-aware, centered UI.
- * Integrates applyTheme for live UI feedback and populates dynamic plan limits.
- */
+
 window.openOnboardingHUD = () => {
     const hud = document.getElementById('onboarding-hud');
     if (!hud) return;
@@ -1129,25 +1122,25 @@ window.openOnboardingHUD = () => {
     const themeSelect = document.getElementById('arcade-theme-select');
     const privacySelect = document.getElementById('arcade-privacy-select');
     
-    // 1. Reset text inputs to ensure a clean state
+    // Reset inputs
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
     if (nameInput) nameInput.value = '';
     if (subtitleInput) subtitleInput.value = '';
 
-    // 2. Stylize Header & Centering
+    // 2. Updated Header with Absolute Close Button
     const hudHeader = hud.querySelector('.hud-header');
     if (hudHeader) {
         hudHeader.innerHTML = `
-            <div style="width: 100%; text-align: center;">
-                <h2 class="hud-title-metallic">INITIALIZE_IDENTITY</h2>
-                <p class="hud-subtitle-info">Establish your laboratory's visual parameters</p>
+            <div class="hud-header-content">
+                <h2 class="hud-title-metallic">INITIALIZE YOUR ARCADE</h2>
+                <p class="hud-subtitle-info">Establish Your Arcade to Start Creating or Saving</p>
             </div>
-            <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud">&times;</button>
+            <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud-corner">&times;</button>
         `;
     }
 
-    // 3. Populate Live Plan Limits (Free Tier) from databaseCache
+    // 3. Populate Free Tier Limits
     const limits = databaseCache.settings?.plan_limits?.free;
     if (limits) {
         const freePlanList = hud.querySelector('.plan-card.active ul');
@@ -1162,7 +1155,7 @@ window.openOnboardingHUD = () => {
         }
     }
 
-    // 4. Populate Theme Options & Trigger Live Preview
+    // 4. Force 'neon-dark' Default and Live Preview
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     if (themes && themeSelect) {
         themeSelect.innerHTML = ''; 
@@ -1173,29 +1166,19 @@ window.openOnboardingHUD = () => {
             themeSelect.appendChild(opt);
         });
 
-        // Live Preview: Morph the UI as the user chooses
+        themeSelect.value = 'neon-dark';
         themeSelect.onchange = (e) => applyTheme(e.target.value);
-        
-        // Start with the first theme in the list
-        applyTheme(themeSelect.value);
+        applyTheme('neon-dark');
     }
 
-    // 5. Initialize Privacy & Plan Defaults
     if (privacySelect) privacySelect.value = 'public';
-
     const planRadios = hud.querySelectorAll('input[name="arcade-plan"]');
-    planRadios.forEach(radio => {
-        if (radio.value === 'free') radio.checked = true;
-    });
+    planRadios.forEach(radio => { if (radio.value === 'free') radio.checked = true; });
 
-    // 6. Show the HUD
     hud.classList.add('active');
-
-    // 7. Finalize Identity
     submitBtn.innerText = "ESTABLISH IDENTITY";
-    submitBtn.onclick = () => window.handleInitialForge();
 };
-        
+
 /*
  * Objective: Retrieve dynamic limits based on the user's plan_type.
  */
