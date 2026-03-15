@@ -1112,28 +1112,60 @@ function predictLogicType(prompt) {
     return 'hybrid'; 
 }
 
+/**
+ * Objective: Initialize the identity sequence with a theme-aware, centered UI.
+ * Integrates applyTheme for live UI feedback.
+ */
 window.openOnboardingHUD = () => {
     const hud = document.getElementById('onboarding-hud');
     if (!hud) return;
 
     const submitBtn = document.getElementById('submit-onboarding');
-
-    // Reset inputs for a fresh identity sequence
+    const themeSelect = document.getElementById('arcade-theme-select');
+    
+    // 1. Reset text inputs
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
-    
     if (nameInput) nameInput.value = '';
     if (subtitleInput) subtitleInput.value = '';
 
-    // Show the HUD
+    // 2. Stylize Header & Centering
+    const hudHeader = hud.querySelector('.hud-header');
+    if (hudHeader) {
+        hudHeader.innerHTML = `
+            <div style="width: 100%; text-align: center;">
+                <h2 class="hud-title-metallic">INITIALIZE_IDENTITY</h2>
+                <p class="hud-subtitle-info">Establish your laboratory's visual parameters</p>
+            </div>
+            <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud">&times;</button>
+        `;
+    }
+    hud.querySelector('.hud-body')?.classList.add('hud-body-centered');
+
+    // 3. Populate Theme Options & Trigger Live Preview
+    const themes = databaseCache.settings?.['ui-settings']?.themes;
+    if (themes && themeSelect) {
+        themeSelect.innerHTML = ''; 
+        Object.keys(themes).forEach(id => {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = themes[id].name.replace(/_/g, ' ');
+            themeSelect.appendChild(opt);
+        });
+
+        // Use applyTheme to morph the UI live as the user chooses
+        themeSelect.onchange = (e) => applyTheme(e.target.value);
+        
+        // Apply the first theme in the list as a starting preview
+        applyTheme(themeSelect.value);
+    }
+
+    // 4. Show the HUD
     hud.classList.add('active');
 
-    // Universal Configuration:
-    // Whether triggered by 'Create Arcade' or 'Forge', the goal is Establish Identity.
+    // 5. Finalize Identity
     submitBtn.innerText = "ESTABLISH IDENTITY";
-    
-    // Set the global handler as the default action
-    submitBtn.onclick = () => handleInitialForge();
+    submitBtn.onclick = () => window.handleInitialForge();
 };
         
 /*
@@ -1156,7 +1188,64 @@ function getPlanLimits(uid) {
         sparksPerRow: currentPlanLimits.sparks_per_row_desktop || 6
     };
 }
+/**
+ * Objective: Capture HUD inputs to finalize the user's laboratory identity.
+ */
+window.handleInitialForge = async () => {
+    // 1. Capture inputs from the centered HUD
+    const nameInput = document.getElementById('new-arcade-name').value.trim();
+    const subtitleInput = document.getElementById('new-arcade-subtitle').value.trim();
+    const themeSelection = document.getElementById('arcade-theme-select').value;
 
+    // Validation: Ensure we have at least a title
+    if (!nameInput) {
+        alert("SYSTEM ERROR: IDENTITY_TITLE_REQUIRED");
+        return;
+    }
+
+    // 2. Prepare the Profile Update Object
+    // We maintain the existing display_name, plan_type, and slug from the session
+    const profileUpdate = {
+        arcade_title: nameInput.toUpperCase(),
+        arcade_subtitle: subtitleInput || "What will you create today?",
+        current_theme_id: themeSelection,
+        // Branding is retrieved from JSON assets as per requirements
+        arcade_logo: "/assets/images/Yertal_Logo_New_HR.png", 
+        branding_color: getThemeBrandingColor(themeSelection),
+        setup_complete: true,
+        privacy: "public"
+    };
+
+    try {
+        // 3. Persist to Firebase Realtime DB
+        // Assuming 'user.uid' is available from your auth state
+        await saveToRealtimeDB(`users/${authUser.uid}/profile`, profileUpdate);
+
+        // 4. Immediate UI Feedback
+        applyTheme(themeSelection);
+        
+        // Refresh the Top Bar to show the new Title/Logo
+        if (typeof renderTopBar === "function") {
+            // Re-fetch or use updated data to refresh the view
+            renderTopBar(updatedPageData, true, authUser, profileUpdate.slug);
+        }
+
+        // 5. Close the Forge
+        document.getElementById('onboarding-hud').classList.remove('active');
+        console.log("IDENTITY_FORGE_COMPLETE: System parameters initialized.");
+
+    } catch (error) {
+        console.error("FORGE_FAILURE:", error);
+    }
+};
+
+/**
+ * Helper to pull the primary branding color from the cached theme data
+ */
+function getThemeBrandingColor(themeId) {
+    const themes = databaseCache.settings?.['ui-settings']?.themes;
+    return themes?.[themeId]?.['branding-color'] || "#00f2ff";
+}
 // --- DEPLOYMENT TRACKER AT THE BOTTOM ---
 window.auth = auth;
 window.handleCreation = handleCreation;
