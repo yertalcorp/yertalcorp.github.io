@@ -6,13 +6,38 @@
 }
 
 #lab-body {
-    background-color: #050505;
-    color: white;
-    font-family: var(--nav-font), -apple-system, sans-serif ;
+    background-color: var(--bg-color);
+    color: var(--text-main-color);
+    font-family: var(--text-main-font);
+    font-size: var(--text-main-size);
+    font-weight: var(--text-main-weight);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth morph effect */
     margin: 0;
     overflow-x: hidden;
 }
 
+/* The Branding / Header Section */
+.arcade-title {
+    color: var(--arcade-title-color);
+    font-family: var(--arcade-title-font);
+    font-size: var(--arcade-title-size);
+    font-weight: var(--arcade-title-weight);
+    text-shadow: var(--arcade-title-glow);
+}
+
+.arcade-subtitle {
+    color: var(--arcade-subtitle-color);
+    font-size: var(--arcade-subtitle-size);
+    font-weight: var(--arcade-subtitle-weight);
+}
+
+/* Glass Panels */
+.glass-3d {
+    background: var(--card-bg);
+    border: 1px solid var(--branding-color);
+    box-shadow: 0 8px 32px var(--shadow-intensity);
+    backdrop-filter: blur(var(--glass-blur, 10px));
+}
 nav {
     display: grid;
     /* Force the branding column to shrink-wrap its content */
