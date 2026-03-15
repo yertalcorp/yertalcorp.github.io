@@ -144,8 +144,7 @@
     backdrop-filter: blur(4px);
     z-index: 9998;
     pointer-events: none;
-    transition: all 0.4s ease;
-    
+    transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
     /* Dynamic Keyhole */
     mask-image: radial-gradient(circle at var(--x) var(--y), transparent var(--r), black var(--r));
     -webkit-mask-image: radial-gradient(circle at var(--x) var(--y), transparent var(--r), black var(--r));
@@ -164,6 +163,7 @@
     font-family: var(--text-main-font);
     color: var(--text-main-color);
     pointer-events: auto;
+    transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .tutorial-tooltip h3 {
