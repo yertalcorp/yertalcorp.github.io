@@ -15,12 +15,67 @@
 <body id="lab-body">
 
     <header id="arcade-header">
-    </header>
+        </header>
 
     <main class="max-width-limit">
         <div id="currents-container">
         </div>
     </main>
+
+    <div id="main-drawer" class="glass-drawer">
+        <div class="drawer-header">
+            <h2 class="metallic-text">ARCADE_OS</h2>
+            <button onclick="toggleDrawer()" class="close-btn">&times;</button>
+        </div>
+
+        <div id="drawer-main-nav">
+            <div class="menu-item" onclick="showSubMenu('settings')">
+                <i class="fa-solid fa-gear"></i> SETTINGS
+            </div>
+            <div class="menu-item" onclick="showSubMenu('help')">
+                <i class="fa-solid fa-circle-question"></i> HELP
+            </div>
+        </div>
+
+        <div id="drawer-settings" class="sub-menu" style="display:none;">
+            <div class="back-btn" onclick="showMainMenu()"><i class="fa-solid fa-chevron-left"></i> BACK</div>
+            
+            <div class="settings-group">
+                <label>DISPLAY NAME</label>
+                <input type="text" id="set-display-name" class="hud-input">
+                
+                <label>ARCADE TITLE</label>
+                <input type="text" id="set-arcade-title" class="hud-input">
+                
+                <label>SUBTITLE</label>
+                <input type="text" id="set-arcade-subtitle" class="hud-input">
+
+                <label>LOGO URL</label>
+                <input type="text" id="set-arcade-logo" class="hud-input">
+
+                <label>THEME</label>
+                <select id="set-arcade-theme" class="hud-input">
+                    <option value="neon-dark">NEON_DARK</option>
+                    <option value="silicon-light">SILICON_LIGHT</option>
+                    <option value="spring-bloom">SPRING_BLOOM</option>
+                    <option value="summer-solstice">SUMMER_SOLSTICE</option>
+                    <option value="autumn-ember">AUTUMN_EMBER</option>
+                    <option value="winter-frost">WINTER_FROST</option>
+                </select>
+            </div>
+
+            <button class="ethereal-btn-sm" onclick="saveAllSettings()" style="width: 100%; margin-top: 20px;">
+                COMMIT_CHANGES
+            </button>
+        </div>
+
+        <div id="drawer-help" class="sub-menu" style="display:none;">
+            <div class="back-btn" onclick="showMainMenu()"><i class="fa-solid fa-chevron-left"></i> BACK</div>
+            <div class="menu-item"><i class="fa-solid fa-comments"></i> CHAT</div>
+            <div class="menu-item"><i class="fa-solid fa-book-open"></i> TUTORIAL</div>
+            <div class="menu-item"><i class="fa-solid fa-circle-info"></i> SYSTEM_TOPICS</div>
+        </div>
+    </div>
 
     <div id="intent-modal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); z-index: 1000; display: none; align-items: center; justify-content: center;">
         <div class="glass" style="padding: 2.5rem; max-width: 400px; width: 90%; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; border: 1px solid rgba(255,255,255,0.1);">
@@ -36,36 +91,36 @@
     <footer id="footer-container">
     </footer>
     
-   <script type="module" src="/js/arcade.js"></script>
+    <script type="module" src="/js/arcade.js"></script>
 
-   <div id="onboarding-hud" class="hud-overlay">
-    <div class="hud-window glass-3d animate-slideUp">
-        <div class="hud-header">
-            <h2 class="metallic-text">INITIALIZE_IDENTITY_SEQUENCE</h2>
-            <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud">&times;</button>
-        </div>
-        
-        <div class="hud-body">
-            <section class="hud-step" id="define-arcade-name">
-                <label>ARCADE NAME</label>
-                <input type="text" id="new-arcade-name" placeholder="e.g., Quantum Lab" class="hud-input">
-                
-                <label>SYSTEM SUBTITLE</label>
-                <input type="text" id="new-arcade-subtitle" placeholder="e.g., Explorations in AI" class="hud-input">
+    <div id="onboarding-hud" class="hud-overlay">
+        <div class="hud-window glass-3d animate-slideUp">
+            <div class="hud-header">
+                <h2 class="metallic-text">INITIALIZE_IDENTITY_SEQUENCE</h2>
+                <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud">&times;</button>
+            </div>
+            
+            <div class="hud-body">
+                <section class="hud-step" id="define-arcade-name">
+                    <label>ARCADE NAME</label>
+                    <input type="text" id="new-arcade-name" placeholder="e.g., Quantum Lab" class="hud-input">
+                    
+                    <label>SYSTEM SUBTITLE</label>
+                    <input type="text" id="new-arcade-subtitle" placeholder="e.g., Explorations in AI" class="hud-input">
 
-                <label>INTERFACE THEME</label>
-                <select id="arcade-theme-select" class="hud-input">
-                    <option value="dark">NEON_DARK</option>
-                    <option value="light">SILICON_LIGHT</option>
-                    <option value="seasonal">SEASONAL_DYNAMICS</option>
-                </select>
-            </section>
-        </div>
+                    <label>INTERFACE THEME</label>
+                    <select id="arcade-theme-select" class="hud-input">
+                        <option value="neon-dark">NEON_DARK</option>
+                        <option value="silicon-light">SILICON_LIGHT</option>
+                        <option value="spring-bloom">SPRING_BLOOM</option>
+                    </select>
+                </section>
+            </div>
 
-        <div class="hud-footer">
-            <button id="submit-onboarding" class="ethereal-btn-sm" onclick="handleInitialForge()">ESTABLISH IDENTITY</button>
+            <div class="hud-footer">
+                <button id="submit-onboarding" class="ethereal-btn-sm" onclick="handleInitialForge()">ESTABLISH IDENTITY</button>
+            </div>
         </div>
     </div>
-</div>
 </body>
 </html>
