@@ -1219,14 +1219,14 @@ function getPlanLimits(uid) {
 }
 
 window.handleInitialForge = async () => {
-    // Capture Inputs
+    // Identity Inputs
     const nameInput = document.getElementById('new-arcade-name').value.trim();
     const subtitleInput = document.getElementById('new-arcade-subtitle').value.trim();
     const themeSelection = document.getElementById('arcade-theme-select').value;
     
-    // Capture New Privacy & Plan Radios
-    const privacySelection = document.querySelector('input[name="arcade-privacy"]:checked').value;
-    const planSelection = document.querySelector('input[name="arcade-plan"]:checked').value;
+    // Privacy & Plan Selections
+    const privacySelection = document.getElementById('arcade-privacy-select').value;
+    const planSelection = document.querySelector('input[name="arcade-plan"]:checked')?.value || 'free';
 
     if (!nameInput) {
         alert("SYSTEM ERROR: IDENTITY_TITLE_REQUIRED");
@@ -1239,42 +1239,44 @@ window.handleInitialForge = async () => {
     const profilePath = `users/${activeUser.uid}/profile`;
 
     try {
-        // SURGICAL UPDATES: Only target these specific keys
+        // COMMIT_SEQUENCE: Writing to Realtime Database
         await saveToRealtimeDB(`${profilePath}/arcade_title`, nameInput.toUpperCase());
         await saveToRealtimeDB(`${profilePath}/arcade_subtitle`, subtitleInput || "What will you create today?");
         await saveToRealtimeDB(`${profilePath}/arcade_logo`, "/assets/images/Yertal_Logo_New_HR.png");
-        await saveToRealtimeDB(`${profilePath}/theme`, themeSelection);
         await saveToRealtimeDB(`${profilePath}/plan_type`, planSelection);
+        await saveToRealtimeDB(`${profilePath}/theme`, themeSelection);
         await saveToRealtimeDB(`${profilePath}/privacy`, privacySelection);
         await saveToRealtimeDB(`${profilePath}/setup_complete`, true);
 
-        // LOCAL CACHE SYNC: Merge new data into the existing cache object
+        // Update Local Cache to prevent extra DB reads
         if (databaseCache.users[activeUser.uid]) {
             const cachedProfile = databaseCache.users[activeUser.uid].profile;
-            cachedProfile.arcade_title = nameInput.toUpperCase();
-            cachedProfile.arcade_subtitle = subtitleInput;
-            cachedProfile.theme = themeSelection;
-            cachedProfile.plan_type = planSelection;
-            cachedProfile.privacy = privacySelection;
-            cachedProfile.arcade_logo = "/assets/images/Yertal_Logo_New_HR.png";
+            Object.assign(cachedProfile, {
+                arcade_title: nameInput.toUpperCase(),
+                arcade_subtitle: subtitleInput,
+                theme: themeSelection,
+                plan_type: planSelection,
+                privacy: privacySelection,
+                setup_complete: true
+            });
         }
 
+        // Apply final theme and refresh UI
         applyTheme(themeSelection);
         
         if (typeof renderTopBar === "function") {
-            // Re-render using the persistent slug from the cache
             const persistentSlug = databaseCache.users[activeUser.uid]?.profile?.slug;
             renderTopBar(databaseCache.users[activeUser.uid], true, activeUser, persistentSlug);
         }
 
+        // Close HUD Sequence
         document.getElementById('onboarding-hud').classList.remove('active');
-        console.log("IDENTITY_FORGE_COMPLETE: Profile logic updated successfully.");
+        console.log("IDENTITY_ESTABLISHED: Profile parameters localized.");
 
     } catch (error) {
         console.error("FORGE_FAILURE:", error);
     }
 };
-
 /*
  * Helper to pull the primary branding color from the cached theme data
  */
