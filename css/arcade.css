@@ -58,32 +58,53 @@
 .glass-drawer.active {
     right: 0;
 }
+.drawer-hr {
+    border: none;
+    height: 1px;
+    background: var(--text-muted-color);
+    opacity: 0.2;
+    margin: 0.5rem 1rem;
+}
 
 .drawer-header {
+    font-family: var(--branding-font);
+    color: var(--branding-color);
+    font-size: 9px;
+    letter-spacing: 2px;
+    margin: 1rem 0 0.5rem 1rem;
+    opacity: 0.7;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
     border-bottom: 1px solid rgba(255,255,255,0.1);
     padding-bottom: 1rem;
 }
 
 .menu-item {
-    padding: 1.2rem;
+    display: flex;
+    padding: 0.75rem 1.25rem;
+    align-items: center;
+    justify-content: space-between;
     cursor: pointer;
     font-family: var(--branding-font);
     font-size: 13px;
     letter-spacing: 1px;
-    transition: 0.3s;
+    transition: background 0.2s ease;
     border-radius: 4px;
 }
 
 .menu-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--branding-rgb, 255, 255, 255), 0.05);
     color: var(--branding-color);
 }
 
 .menu-item i { margin-right: 15px; width: 20px; text-align: center; }
+
+.menu-item span {
+    font-family: var(--text-main-font);
+    font-size: 13px;
+    color: var(--text-main-color);
+}
 
 /* Metallic Theme-Oriented Title */
 .hud-title-metallic {
