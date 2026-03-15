@@ -85,6 +85,41 @@
 
 .menu-item i { margin-right: 15px; width: 20px; text-align: center; }
 
+/* Metallic Theme-Oriented Title */
+.hud-title-metallic {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    text-align: center;
+    letter-spacing: 3px;
+    background: linear-gradient(to bottom, #ffffff 20%, var(--branding-color) 50%, #888888 80%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 5px var(--branding-glow));
+    margin-bottom: 0.5rem;
+}
+
+.hud-subtitle-info {
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-muted-color);
+    letter-spacing: 1px;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+}
+
+/* Centering the HUD Body Content */
+.hud-body-centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.hud-input-group {
+    width: 100%;
+    max-width: 300px; /* Keeps the inputs elegant and centered */
+}
 .back-btn {
     font-size: 10px;
     color: var(--text-muted-color);
