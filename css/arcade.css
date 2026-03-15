@@ -131,6 +131,78 @@
     text-transform: uppercase;
 }
 
+/* --- THEME_AWARE_TUTORIAL_OS --- */
+#tutorial-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    /* Pulls directly from the theme's bg-color */
+    background: var(--bg-color); 
+    opacity: 0.85;
+    backdrop-filter: blur(4px);
+    z-index: 9998;
+    pointer-events: none;
+    transition: all 0.4s ease;
+    
+    /* Dynamic Keyhole */
+    mask-image: radial-gradient(circle at var(--x) var(--y), transparent var(--r), black var(--r));
+    -webkit-mask-image: radial-gradient(circle at var(--x) var(--y), transparent var(--r), black var(--r));
+}
+
+.tutorial-tooltip {
+    position: fixed;
+    z-index: 9999;
+    width: 340px;
+    /* Uses the theme's card-bg and branding-color for borders */
+    background: var(--card-bg);
+    border: 1px solid var(--branding-color);
+    box-shadow: var(--branding-glow);
+    border-radius: 4px;
+    padding: 1.8rem;
+    font-family: var(--text-main-font);
+    color: var(--text-main-color);
+    pointer-events: auto;
+}
+
+.tutorial-tooltip h3 {
+    color: var(--branding-color);
+    font-family: var(--branding-font);
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--text-muted-color);
+    padding-bottom: 8px;
+}
+
+.tutorial-tooltip p {
+    color: var(--text-main-color);
+    font-size: var(--text-main-size);
+    font-weight: var(--text-main-weight);
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.tutorial-next-btn {
+    /* Uses the theme's specific button gradient */
+    background: var(--btn-gradient);
+    color: #fff; /* Ensuring visibility on dark gradients */
+    border: none;
+    padding: 10px 20px;
+    font-family: var(--branding-font);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+    transition: transform 0.2s ease;
+}
+
+.tutorial-next-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.2);
+}
 /* --- THEMED HUD PLAN SELECTION --- */
 .plans-grid {
     display: grid;
