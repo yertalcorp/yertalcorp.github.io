@@ -606,6 +606,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     `;
 }
 
+
 function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
     if (!container) return;
@@ -629,20 +630,45 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
     if (currentsArray.length === 0) {
         if (isOwner) {
             const firstName = profile?.display_name?.split(' ')[0] || "Engineer";
-            container.innerHTML = `
-                <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 8rem 2rem; border: 1px dashed rgba(0, 242, 255, 0.1); border-radius: 20px; margin: 2rem;">
-                    <h1 class="metallic-text" style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem; letter-spacing: -1px;">
-                        ${firstName}, Welcome to your Arcade
-                    </h1>
-                    <p style="color: var(--neon-color); opacity: 0.6; margin-bottom: 4rem; letter-spacing: 4px; font-size: 12px; font-family: 'Orbitron', sans-serif;">
-                        SYSTEM STANDBY // NO ACTIVE CURRENTS DETECTED
-                    </p>
-                    <button onclick="window.openOnboardingHUD()" class="ethereal-btn">
-                        <span class="btn-content">CREATE YOUR ARCADE</span>
-                        <div class="btn-glow"></div>
-                    </button>
-                </div>
-            `;
+            
+            // Check if the user has completed the initial onboarding forge
+            if (profile?.setup_complete === true) {
+                // CASE: Established User, no currents (Show Tutorial/Ready state)
+                container.innerHTML = `
+                    <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 6rem 2rem; border: 1px solid rgba(0, 242, 255, 0.05); border-radius: 20px; margin: 2rem; background: rgba(0,0,0,0.2);">
+                        <h1 class="metallic-text" style="font-size: 2.5rem; margin-bottom: 1rem;">
+                            LABORATORY: ${profile.arcade_title || 'ACTIVE'}
+                        </h1>
+                        <p style="color: var(--neon-color); opacity: 0.6; margin-bottom: 3rem; letter-spacing: 2px; font-size: 11px; font-family: 'Orbitron', sans-serif;">
+                            IDENTITY_VERIFIED // READY_FOR_INFRASTRUCTURE
+                        </p>
+                        <div style="display: flex; justify-content: center; gap: 20px;">
+                            <button onclick="window.openOnboardingHUD()" class="ethereal-btn-sm">
+                                <i class="fas fa-plus"></i> INITIALIZE_FIRST_CURRENT
+                            </button>
+                            <button onclick="window.showTutorial()" class="ethereal-btn-sm" style="opacity: 0.7;">
+                                <i class="fas fa-book-open"></i> VIEW_LAB_MANUAL
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // CASE: New User (Show Create Your Arcade button)
+                container.innerHTML = `
+                    <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 8rem 2rem; border: 1px dashed rgba(0, 242, 255, 0.1); border-radius: 20px; margin: 2rem;">
+                        <h1 class="metallic-text" style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem; letter-spacing: -1px;">
+                            ${firstName}, Welcome to your Arcade
+                        </h1>
+                        <p style="color: var(--neon-color); opacity: 0.6; margin-bottom: 4rem; letter-spacing: 4px; font-size: 12px; font-family: 'Orbitron', sans-serif;">
+                            SYSTEM STANDBY // NO ACTIVE CURRENTS DETECTED
+                        </p>
+                        <button onclick="window.openOnboardingHUD()" class="ethereal-btn">
+                            <span class="btn-content">CREATE YOUR ARCADE</span>
+                            <div class="btn-glow"></div>
+                        </button>
+                    </div>
+                `;
+            }
         } else {
             container.innerHTML = `
                 <div style="text-align: center; padding: 5rem 0; opacity: 0.2; font-style: italic; letter-spacing: 2px;">
@@ -659,9 +685,6 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         const sparks = current.sparks ? Object.values(current.sparks).filter(spark => {
             const isSparkPublic = spark.privacy === 'public';
             const isSparkTargetUnlisted = spark.privacy === 'unlisted' && spark.id === sharedSparkId;
-
-            // Hierarchical requirement: Current must be accessible (already filtered) 
-            // and Spark must be Public or the specific Unlisted ID from URL
             return isOwner || isSparkPublic || isSparkTargetUnlisted;
         }) : [];
 
@@ -669,7 +692,6 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         const isFull = sparkCount >= maxSparks;
         const meterColor = isFull ? '#ef4444' : 'var(--neon-color)';
         
-        // Hide controls if current is at capacity
         const controls = (isOwner && !isFull) ? `
             <div style="display: flex; align-items: center; gap: 0; margin-left: auto; background: rgba(0,0,0,0.6); border: 1px solid rgba(0,242,255,0.2); border-radius: 4px; padding: 2px 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
                 <span style="font-family: monospace; color: var(--neon-color); font-size: 10px; margin-right: 10px; opacity: 0.7; font-weight: 900; letter-spacing: 1px;">FORGE_CMD></span>
@@ -711,6 +733,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
             </div>
         `;
     }).join('');
+
     if (isOwner) {
         container.innerHTML += `
             <div style="display: flex; justify-content: center; margin-top: 3rem; padding-bottom: 5rem;">
