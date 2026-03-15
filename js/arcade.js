@@ -1117,12 +1117,17 @@ function predictLogicType(prompt) {
  * Objective: Initialize the identity sequence with a theme-aware, centered UI.
  * Integrates applyTheme for live UI feedback.
  */
+/*
+ * Objective: Initialize the identity sequence with a theme-aware, centered UI.
+ * Integrates applyTheme for live UI feedback and populates dynamic plan limits.
+ */
 window.openOnboardingHUD = () => {
     const hud = document.getElementById('onboarding-hud');
     if (!hud) return;
 
     const submitBtn = document.getElementById('submit-onboarding');
     const themeSelect = document.getElementById('arcade-theme-select');
+    const privacySelect = document.getElementById('arcade-privacy-select');
     
     // 1. Reset text inputs to ensure a clean state
     const nameInput = document.getElementById('new-arcade-name');
@@ -1141,12 +1146,10 @@ window.openOnboardingHUD = () => {
             <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud">&times;</button>
         `;
     }
-    hud.querySelector('.hud-body')?.classList.add('hud-body-centered');
 
     // 3. Populate Live Plan Limits (Free Tier) from databaseCache
     const limits = databaseCache.settings?.plan_limits?.free;
     if (limits) {
-        // Target the <ul> inside the Free plan card
         const freePlanList = hud.querySelector('.plan-card.active ul');
         if (freePlanList) {
             freePlanList.innerHTML = `
@@ -1170,19 +1173,15 @@ window.openOnboardingHUD = () => {
             themeSelect.appendChild(opt);
         });
 
-        // Use applyTheme to morph the UI live as the user chooses
+        // Live Preview: Morph the UI as the user chooses
         themeSelect.onchange = (e) => applyTheme(e.target.value);
         
-        // Apply the first theme in the list as a starting preview
+        // Start with the first theme in the list
         applyTheme(themeSelect.value);
     }
 
     // 5. Initialize Privacy & Plan Defaults
-    // This ensures that the radio buttons are reset to 'public' and 'free'
-    const privacyRadios = hud.querySelectorAll('input[name="arcade-privacy"]');
-    privacyRadios.forEach(radio => {
-        if (radio.value === 'public') radio.checked = true;
-    });
+    if (privacySelect) privacySelect.value = 'public';
 
     const planRadios = hud.querySelectorAll('input[name="arcade-plan"]');
     planRadios.forEach(radio => {
