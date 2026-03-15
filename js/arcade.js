@@ -3,12 +3,51 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:34:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:28:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
 let selectedCategory = null;
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
+
+/**
+ * Objective: Apply the flattened theme properties to the document root.
+ */
+function applyTheme(themeId) {
+    const themes = databaseCache.settings?.['ui-settings']?.themes;
+    const activeTheme = themes[themeId] || themes['neon-dark']; // Default to Neon
+
+    if (!activeTheme) return;
+
+    const root = document.documentElement;
+
+    // We iterate through the keys (bg-color, branding-size, etc.)
+    Object.keys(activeTheme).forEach(key => {
+        if (key !== 'name') {
+            // This turns 'bg-color' into '--bg-color'
+            root.style.setProperty(`--${key}`, activeTheme[key]);
+        }
+    });
+
+    console.log(`[SYSTEM] Identity Initialized: ${activeTheme.name}`);
+}
+
+function renderThemeMenu() {
+    const list = document.getElementById('theme-list');
+    const themes = databaseCache.settings['ui-settings'].themes;
+
+    Object.keys(themes).forEach(id => {
+        const btn = document.createElement('button');
+        btn.className = 'ethereal-btn-sm';
+        btn.innerText = themes[id].name;
+        btn.onclick = () => {
+            applyTheme(id);
+            // Save preference to Firebase so it persists
+            updateUserPath(`profile/current_theme_id`, id);
+        };
+        list.appendChild(btn);
+    });
+}
 
 // Helper for the satisfying click
 const playClickSound = () => {
