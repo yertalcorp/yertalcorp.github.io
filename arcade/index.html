@@ -15,7 +15,7 @@
 <body id="lab-body">
 
     <header id="arcade-header">
-        </header>
+    </header>
 
     <main class="max-width-limit">
         <div id="currents-container">
@@ -101,20 +101,54 @@
             </div>
             
             <div class="hud-body">
-                <section class="hud-step" id="define-arcade-name">
-                    <label>ARCADE NAME</label>
-                    <input type="text" id="new-arcade-name" placeholder="e.g., Quantum Lab" class="hud-input">
-                    
-                    <label>SYSTEM SUBTITLE</label>
-                    <input type="text" id="new-arcade-subtitle" placeholder="e.g., Explorations in AI" class="hud-input">
+                <div class="hud-onboarding-grid">
+                    <section class="hud-step">
+                        <label>ARCADE NAME</label>
+                        <input type="text" id="new-arcade-name" placeholder="e.g., Quantum Lab" class="hud-input">
+                        
+                        <label>SYSTEM SUBTITLE</label>
+                        <input type="text" id="new-arcade-subtitle" placeholder="e.g., Explorations in AI" class="hud-input">
 
-                    <label>INTERFACE THEME</label>
-                    <select id="arcade-theme-select" class="hud-input">
-                        <option value="neon-dark">NEON_DARK</option>
-                        <option value="silicon-light">SILICON_LIGHT</option>
-                        <option value="spring-bloom">SPRING_BLOOM</option>
-                    </select>
-                </section>
+                        <label>INTERFACE THEME</label>
+                        <select id="arcade-theme-select" class="hud-input"></select>
+
+                        <label>PRIVACY_PROTOCOL</label>
+                        <select id="arcade-privacy-select" class="hud-input">
+                            <option value="public" selected>PUBLIC</option>
+                            <option value="unlisted">UNLISTED</option>
+                            <option value="private">PRIVATE</option>
+                        </select>
+                    </section>
+
+                    <section class="hud-step">
+                        <label>SYSTEM_PLAN_SELECTION</label>
+                        <div class="plans-grid">
+                            <div class="plan-card active">
+                                <h3>FREE</h3>
+                                <ul></ul>
+                                <p class="plan-price">$0</p>
+                                <input type="radio" name="arcade-plan" value="free" checked>
+                            </div>
+
+                            <div class="plan-card disabled-tier">
+                                <h3>PERSONAL</h3>
+                                <ul><li>Coming Soon</li></ul>
+                                <p class="plan-price">$15/mo</p>
+                                <input type="radio" name="arcade-plan" value="personal" disabled>
+                            </div>
+
+                            <div class="plan-card disabled-tier">
+                                <h3>BUSINESS</h3>
+                                <ul>
+                                    <li>Coming Soon</li>
+                                    <li>Custom Shop</li>
+                                </ul>
+                                <p class="plan-price">$50/mo</p>
+                                <input type="radio" name="arcade-plan" value="business" disabled>
+                            </div>
+                        </div>
+                    </section>
+                </div>
             </div>
 
             <div class="hud-footer">
