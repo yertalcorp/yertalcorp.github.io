@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:41:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:18:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1191,45 +1191,56 @@ function getPlanLimits(uid) {
 }
 
 window.handleInitialForge = async () => {
+    // Capture Inputs
     const nameInput = document.getElementById('new-arcade-name').value.trim();
     const subtitleInput = document.getElementById('new-arcade-subtitle').value.trim();
     const themeSelection = document.getElementById('arcade-theme-select').value;
+    
+    // Capture New Privacy & Plan Radios
+    const privacySelection = document.querySelector('input[name="arcade-privacy"]:checked').value;
+    const planSelection = document.querySelector('input[name="arcade-plan"]:checked').value;
 
     if (!nameInput) {
         alert("SYSTEM ERROR: IDENTITY_TITLE_REQUIRED");
         return;
     }
 
-    // Fix: Ensure we use the validated auth instance
     const activeUser = auth.currentUser;
-    if (!activeUser) {
-     console.error("FORGE_FAILURE: No authenticated session found.");
-     return;
-    }
+    if (!activeUser) return;
 
-    const profileUpdate = {
-        arcade_title: nameInput.toUpperCase(),
-        arcade_subtitle: subtitleInput || "What will you create today?",
-        current_theme_id: themeSelection,
-        arcade_logo: "/assets/images/Yertal_Logo_New_HR.png", 
-        // Delete: branding_color (Derived from theme selection at runtime)
-        setup_complete: true,
-        privacy: "public"
-    };
+    const profilePath = `users/${activeUser.uid}/profile`;
 
     try {
-        // Change: Use activeUser.uid instead of the undefined authUser.uid
-        await saveToRealtimeDB(`users/${activeUser.uid}/profile`, profileUpdate);
+        // SURGICAL UPDATES: Only target these specific keys
+        await saveToRealtimeDB(`${profilePath}/arcade_title`, nameInput.toUpperCase());
+        await saveToRealtimeDB(`${profilePath}/arcade_subtitle`, subtitleInput || "What will you create today?");
+        await saveToRealtimeDB(`${profilePath}/arcade_logo`, "/assets/images/Yertal_Logo_New_HR.png");
+        await saveToRealtimeDB(`${profilePath}/theme`, themeSelection);
+        await saveToRealtimeDB(`${profilePath}/plan_type`, planSelection);
+        await saveToRealtimeDB(`${profilePath}/privacy`, privacySelection);
+        await saveToRealtimeDB(`${profilePath}/setup_complete`, true);
+
+        // LOCAL CACHE SYNC: Merge new data into the existing cache object
+        if (databaseCache.users[activeUser.uid]) {
+            const cachedProfile = databaseCache.users[activeUser.uid].profile;
+            cachedProfile.arcade_title = nameInput.toUpperCase();
+            cachedProfile.arcade_subtitle = subtitleInput;
+            cachedProfile.theme = themeSelection;
+            cachedProfile.plan_type = planSelection;
+            cachedProfile.privacy = privacySelection;
+            cachedProfile.arcade_logo = "/assets/images/Yertal_Logo_New_HR.png";
+        }
 
         applyTheme(themeSelection);
         
         if (typeof renderTopBar === "function") {
-            // Refreshes the UI using the fresh profile data
-            renderTopBar(databaseCache.users[activeUser.uid], true, activeUser);
+            // Re-render using the persistent slug from the cache
+            const persistentSlug = databaseCache.users[activeUser.uid]?.profile?.slug;
+            renderTopBar(databaseCache.users[activeUser.uid], true, activeUser, persistentSlug);
         }
 
         document.getElementById('onboarding-hud').classList.remove('active');
-        console.log("IDENTITY_FORGE_COMPLETE: System parameters initialized.");
+        console.log("IDENTITY_FORGE_COMPLETE: Profile logic updated successfully.");
 
     } catch (error) {
         console.error("FORGE_FAILURE:", error);
