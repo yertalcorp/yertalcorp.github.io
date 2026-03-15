@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:53:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:39:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1188,49 +1188,45 @@ function getPlanLimits(uid) {
         sparksPerRow: currentPlanLimits.sparks_per_row_desktop || 6
     };
 }
-/**
- * Objective: Capture HUD inputs to finalize the user's laboratory identity.
- */
+
 window.handleInitialForge = async () => {
-    // 1. Capture inputs from the centered HUD
     const nameInput = document.getElementById('new-arcade-name').value.trim();
     const subtitleInput = document.getElementById('new-arcade-subtitle').value.trim();
     const themeSelection = document.getElementById('arcade-theme-select').value;
 
-    // Validation: Ensure we have at least a title
     if (!nameInput) {
         alert("SYSTEM ERROR: IDENTITY_TITLE_REQUIRED");
         return;
     }
 
-    // 2. Prepare the Profile Update Object
-    // We maintain the existing display_name, plan_type, and slug from the session
+    // Fix: Ensure we use the validated auth instance
+    const activeUser = auth.currentUser;
+    if (!activeUser) {
+     console.error("FORGE_FAILURE: No authenticated session found.");
+     return;
+    }
+
     const profileUpdate = {
         arcade_title: nameInput.toUpperCase(),
         arcade_subtitle: subtitleInput || "What will you create today?",
         current_theme_id: themeSelection,
-        // Branding is retrieved from JSON assets as per requirements
         arcade_logo: "/assets/images/Yertal_Logo_New_HR.png", 
-        branding_color: getThemeBrandingColor(themeSelection),
+        // Delete: branding_color (Derived from theme selection at runtime)
         setup_complete: true,
         privacy: "public"
     };
 
     try {
-        // 3. Persist to Firebase Realtime DB
-        // Assuming 'user.uid' is available from your auth state
-        await saveToRealtimeDB(`users/${authUser.uid}/profile`, profileUpdate);
+        // Change: Use activeUser.uid instead of the undefined authUser.uid
+        **await saveToRealtimeDB(`users/${activeUser.uid}/profile`, profileUpdate);**
 
-        // 4. Immediate UI Feedback
         applyTheme(themeSelection);
         
-        // Refresh the Top Bar to show the new Title/Logo
         if (typeof renderTopBar === "function") {
-            // Re-fetch or use updated data to refresh the view
-            renderTopBar(updatedPageData, true, authUser, profileUpdate.slug);
+            // Refreshes the UI using the fresh profile data
+            **renderTopBar(databaseCache.users[activeUser.uid], true, activeUser);**
         }
 
-        // 5. Close the Forge
         document.getElementById('onboarding-hud').classList.remove('active');
         console.log("IDENTITY_FORGE_COMPLETE: System parameters initialized.");
 
