@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:15:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:13:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1200,65 +1200,80 @@ function getPlanLimits(uid) {
     };
 }
 
-window.handleInitialForge = async () => {
-    // Identity Inputs
-    const nameInput = document.getElementById('new-arcade-name').value.trim();
-    const subtitleInput = document.getElementById('new-arcade-subtitle').value.trim();
-    const themeSelection = document.getElementById('arcade-theme-select').value;
-    
-    // Privacy & Plan Selections
-    const privacySelection = document.getElementById('arcade-privacy-select').value;
-    const planSelection = document.querySelector('input[name="arcade-plan"]:checked')?.value || 'free';
 
-    if (!nameInput) {
-        alert("SYSTEM ERROR: IDENTITY_TITLE_REQUIRED");
+/*
+ * Updates the UI status when a user selects a logo file.
+ */
+window.updateLogoStatus = (input) => {
+    const statusText = document.getElementById('logo-status-text');
+    if (input.files && input.files[0]) {
+        statusText.textContent = input.files[0].name;
+        statusText.style.color = 'var(--neon-color)';
+    } else {
+        statusText.textContent = "No file selected";
+        statusText.style.color = 'var(--text-secondary)';
+    }
+};
+
+/*
+ * Validates and Commits the Laboratory Identity.
+ */
+window.handleInitialForge = async () => {
+    const nameInput = document.getElementById('new-arcade-name');
+    const subtitleInput = document.getElementById('new-arcade-subtitle');
+    const themeSelect = document.getElementById('arcade-theme-select');
+    const privacySelect = document.getElementById('arcade-privacy-select');
+    const planValue = document.querySelector('input[name="arcade-plan"]:checked')?.value || 'free';
+    const logoFile = document.getElementById('logo-browse-input').files[0];
+
+    // 1. VALIDATION_PROTOCOL
+    const arcadeName = nameInput.value.trim();
+    if (!arcadeName) {
+        nameInput.style.border = "1px solid var(--error-glow, #ff4444)";
+        nameInput.placeholder = "REQUIRED: NAME YOUR LAB";
+        nameInput.focus();
         return;
     }
 
+    // 2. IDENTITY_CONSTRUCTION
     const activeUser = auth.currentUser;
     if (!activeUser) return;
 
-    const profilePath = `users/${activeUser.uid}/profile`;
-
     try {
-        // COMMIT_SEQUENCE: Writing to Realtime Database
-        await saveToRealtimeDB(`${profilePath}/arcade_title`, nameInput.toUpperCase());
-        await saveToRealtimeDB(`${profilePath}/arcade_subtitle`, subtitleInput || "What will you create today?");
-        await saveToRealtimeDB(`${profilePath}/arcade_logo`, "/assets/images/Yertal_Logo_New_HR.png");
-        await saveToRealtimeDB(`${profilePath}/plan_type`, planSelection);
-        await saveToRealtimeDB(`${profilePath}/theme`, themeSelection);
-        await saveToRealtimeDB(`${profilePath}/privacy`, privacySelection);
-        await saveToRealtimeDB(`${profilePath}/setup_complete`, true);
+        // Fallback for logo if none is uploaded (Sourced from theme/branding JSON via cache)
+        let finalLogoUrl = databaseCache.settings?.branding?.logo_url || "/assets/images/default_logo.png";
 
-        // Update Local Cache to prevent extra DB reads
-        if (databaseCache.users[activeUser.uid]) {
-            const cachedProfile = databaseCache.users[activeUser.uid].profile;
-            Object.assign(cachedProfile, {
-                arcade_title: nameInput.toUpperCase(),
-                arcade_subtitle: subtitleInput,
-                theme: themeSelection,
-                plan_type: planSelection,
-                privacy: privacySelection,
-                setup_complete: true
-            });
+        // Logic for handling the logo file would go here (e.g., Firebase Storage upload)
+        if (logoFile) {
+            console.log(`PREPARING_UPLOAD: ${logoFile.name}`);
+            // finalLogoUrl = await uploadLogoToStorage(logoFile, activeUser.uid);
         }
 
-        // Apply final theme and refresh UI
-        applyTheme(themeSelection);
-        
-        if (typeof renderTopBar === "function") {
-            const persistentSlug = databaseCache.users[activeUser.uid]?.profile?.slug;
-            renderTopBar(databaseCache.users[activeUser.uid], true, activeUser, persistentSlug);
-        }
+        const profilePath = `users/${activeUser.uid}/profile`;
 
-        // Close HUD Sequence
+        // 3. COMMIT_TO_DATABASE (Using theme-agnostic keys)
+        const updates = {};
+        updates[`${profilePath}/arcade_title`] = arcadeName.toUpperCase();
+        updates[`${profilePath}/arcade_subtitle`] = subtitleInput.value.trim() || "";
+        updates[`${profilePath}/arcade_logo`] = finalLogoUrl;
+        updates[`${profilePath}/theme`] = themeSelect.value;
+        updates[`${profilePath}/privacy`] = privacySelect.value;
+        updates[`${profilePath}/plan_type`] = planValue;
+        updates[`${profilePath}/setup_complete`] = true;
+
+        await update(ref(db), updates);
+
+        // 4. UI_SYNCHRONIZATION
+        applyTheme(themeSelect.value);
         document.getElementById('onboarding-hud').classList.remove('active');
-        console.log("IDENTITY_ESTABLISHED: Profile parameters localized.");
+        
+        console.log("IDENTITY_ESTABLISHED: Arcade initialized successfully.");
 
     } catch (error) {
         console.error("FORGE_FAILURE:", error);
     }
 };
+
 /*
  * Helper to pull the primary branding color from the cached theme data
  */
