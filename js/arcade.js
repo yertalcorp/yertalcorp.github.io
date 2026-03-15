@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:39:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:51:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1218,13 +1218,13 @@ window.handleInitialForge = async () => {
 
     try {
         // Change: Use activeUser.uid instead of the undefined authUser.uid
-        **await saveToRealtimeDB(`users/${activeUser.uid}/profile`, profileUpdate);**
+        await saveToRealtimeDB(`users/${activeUser.uid}/profile`, profileUpdate);
 
         applyTheme(themeSelection);
         
         if (typeof renderTopBar === "function") {
             // Refreshes the UI using the fresh profile data
-            **renderTopBar(databaseCache.users[activeUser.uid], true, activeUser);**
+            renderTopBar(databaseCache.users[activeUser.uid], true, activeUser);
         }
 
         document.getElementById('onboarding-hud').classList.remove('active');
