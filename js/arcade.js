@@ -1326,8 +1326,8 @@ window.openArcadeSettings = () => {
                 <option value="private">PRIVATE</option>
             </select>
 
-            <label class="hud-label-metallic">LAB_IDENTITY_LOGO</label>
-            <div class="logo-upload-wrapper" style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+            <label class="hud-label-metallic">ARCADE_IDENTITY_LOGO</label>
+            <div class="logo-upload-wrapper" style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
                 <button type="button" class="ethereal-btn-xs" onclick="document.getElementById('logo-browse-input').click()">BROWSE_FILES</button>
                 <span id="logo-status-text" style="font-size: 9px; color: var(--text-secondary);">No file selected</span>
                 <input type="file" id="logo-browse-input" accept="image/*" style="display: none;" onchange="updateLogoStatus(this)">
