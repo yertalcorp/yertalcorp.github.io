@@ -46,22 +46,22 @@
 }
 
 .tier-pitch {
-    font-size: 10px;
+    font-size: 12px;
     font-style: italic;
     color: var(--text-muted-color, #888);
-    margin-bottom: 15px;
+    margin-bottom: 5px;
     min-height: 30px; /* Ensures alignment across columns */
 }
 
 .tier-pricing {
-    margin-bottom: 15px;
+    margin-bottom: 5px;
     padding: 10px 0;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .price-main {
-    font-size: 1.4rem;
+    font-size: 0.5rem;
     font-weight: 900;
     color: #fff;
 }
@@ -272,7 +272,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
     width: 100%;
 }
 
