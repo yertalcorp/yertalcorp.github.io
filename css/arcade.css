@@ -855,11 +855,11 @@ button:hover {
 .hud-overlay {
     position: fixed;
     top: 0; left: 0; 
-    width: 100vw; height: 100vh;
-    /* Use a solid color fallback for older browsers, then the blur */
-    background: #00080f; 
+    width: 100%; 
+    height: 100%;
     background: rgba(0, 8, 15, 0.98); 
     backdrop-filter: blur(25px); /* Increased blur to hide background artifacts */
+    -webkit-backdrop-filter: blur(25px);
     display: none; 
     align-items: center;      /* Vertical Center */
     justify-content: center;   /* Horizontal Center */
@@ -871,7 +871,7 @@ button:hover {
 .hud-window {
     position: relative; /* Break away from any accidental bottom-anchors */
     width: 90%;
-    max-width: 800px;
+    max-width: 750px;
     margin: auto;       /* The "Safety Net" for flex centering */
     display: flex;
     flex-direction: column;
