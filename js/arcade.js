@@ -2,8 +2,13 @@ import { firebaseConfig, auth, saveToRealtimeDB, getArcadeData, db, get, set, re
 import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
+// --- ADD THE GLOBAL BRIDGE HERE ---
+window.auth = auth;
+window.db = db;
+window.ref = ref;
+window.update = update;
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:13:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:20:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1580,11 +1585,7 @@ function getThemeBrandingColor(themeId) {
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     return themes?.[themeId]?.['branding-color'] || "#00f2ff";
 }
-// --- ADD THE GLOBAL BRIDGE HERE ---
-window.auth = auth;
-window.db = db;
-window.ref = ref;
-window.update = update;
+
 // ----------------------------------
 window.handleCreation = handleCreation;
 // At the bottom of arcade.js
