@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, set, get, push, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, set, get, push, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 export const firebaseConfig = {
@@ -60,4 +60,4 @@ export async function initializeUserIfNeeded(user) {
     }
     return snapshot.val().profile.slug;
 }
-export { ref, set, get, push, runTransaction, auth, db };
+export { ref, set, get, push, runTransaction, auth, db, update };
