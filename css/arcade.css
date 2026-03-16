@@ -41,7 +41,7 @@
 
 /* --- PLAN CARD INTERNALS --- */
 .plan-box-inner {
-    padding-bottom: 15px;
+    padding: 5px;
     width: 100%;
 }
 
@@ -868,7 +868,7 @@ button:hover {
 .hud-window {
     position: relative; /* Break away from any accidental bottom-anchors */
     width: 90%;
-    max-width: 500px;
+    max-width: 600px;
     margin: auto;       /* The "Safety Net" for flex centering */
     display: flex;
     flex-direction: column;
