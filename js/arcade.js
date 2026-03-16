@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:18:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:22:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1291,21 +1291,21 @@ function predictLogicType(prompt) {
 }
 
 
+
 window.openArcadeSettings = () => {
     const hud = document.getElementById('onboarding-hud');
     if (!hud) return;
 
-    // 1. SAFE_CHECK: If variable doesn't exist or profile is missing, default to empty object
+    // 1. SAFE_CHECK
     let profile = {};
     try {
         if (typeof pageOwnerData !== 'undefined' && pageOwnerData.profile) {
             profile = pageOwnerData.profile;
         }
     } catch (e) {
-        console.warn("[Identity Gate] Global data not yet initialized. Proceeding with New User defaults.");
+        console.warn("[Identity Gate] Global data not yet initialized.");
     }
 
-    // 2. CUE_CHECK: If setup_complete is missing, it's a new profile creation
     const isSetup = profile.hasOwnProperty('setup_complete') && profile.setup_complete === true;
 
     const submitBtn = document.getElementById('submit-onboarding');
@@ -1327,21 +1327,27 @@ window.openArcadeSettings = () => {
         if (privacySelect) privacySelect.value = 'public';
     }
 
-    // --- DYNAMIC PLAN RENDERING ---
+    // --- DYNAMIC PLAN RENDERING with LOCKDOWN ---
     const planContainer = hud.querySelector('.plan-selection-container');
     const planLimits = databaseCache.settings?.plan_limits;
 
     if (planLimits && planContainer) {
-        planContainer.innerHTML = ''; // Clear container to rebuild cards
+        planContainer.innerHTML = ''; 
         
         Object.keys(planLimits).forEach(planKey => {
             const plan = planLimits[planKey];
             const isCurrentPlan = isSetup ? (profile.plan_type === planKey) : (planKey === 'free');
+            
+            // SECURITY: Disable if it's a paid plan and NOT the user's current plan
+            const isPaid = plan.cost > 0;
+            const isDisabled = isPaid && !isCurrentPlan; 
 
             const planCard = document.createElement('div');
-            planCard.className = `plan-card ${isCurrentPlan ? 'active' : ''}`;
+            // Added 'plan-disabled' class for styling
+            planCard.className = `plan-card ${isCurrentPlan ? 'active' : ''} ${isDisabled ? 'plan-disabled' : ''}`;
             
             planCard.innerHTML = `
+                ${isDisabled ? '<div class="plan-lock-tag"><i class="fa-solid fa-lock"></i> COMING SOON</div>' : ''}
                 <div class="plan-header">
                     <div class="plan-identity">${plan.identity.toUpperCase()}</div>
                     <div class="plan-cost">$${plan.cost}<span class="cost-unit">/mo</span></div>
@@ -1360,21 +1366,22 @@ window.openArcadeSettings = () => {
                         <i class="fa-solid ${plan.analytics_enabled ? 'fa-check check-yes' : 'fa-xmark check-no'}"></i>
                         Analytics
                     </li>
-                    <li>
-                        <i class="fa-solid ${plan.priority_support ? 'fa-check check-yes' : 'fa-xmark check-no'}"></i>
-                        Priority Support
-                    </li>
                 </ul>
                 
-                <input type="radio" name="arcade-plan" value="${planKey}" ${isCurrentPlan ? 'checked' : ''} style="display:none;">
+                <input type="radio" name="arcade-plan" value="${planKey}" 
+                    ${isCurrentPlan ? 'checked' : ''} 
+                    ${isDisabled ? 'disabled' : ''} 
+                    style="display:none;">
             `;
 
-            // Card click logic to handle radio selection and visual active state
-            planCard.onclick = () => {
-                hud.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
-                planCard.classList.add('active');
-                planCard.querySelector('input').checked = true;
-            };
+            // Only allow clicking if not disabled
+            if (!isDisabled) {
+                planCard.onclick = () => {
+                    hud.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
+                    planCard.classList.add('active');
+                    planCard.querySelector('input').checked = true;
+                };
+            }
 
             planContainer.appendChild(planCard);
         });
@@ -1395,6 +1402,7 @@ window.openArcadeSettings = () => {
     submitBtn.innerText = isSetup ? "SAVE CHANGES" : "ESTABLISH IDENTITY";
     hud.classList.add('active');
 };
+
 /*
  * Objective: Retrieve dynamic limits based on the user's plan_type.
  */
