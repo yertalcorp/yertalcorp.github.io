@@ -736,7 +736,8 @@ button:hover {
     margin: auto;       /* The "Safety Net" for flex centering */
     display: flex;
     flex-direction: column;
-    padding-top: 20px;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 .hud-header-content {
