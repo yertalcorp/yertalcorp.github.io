@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:13:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:19:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1421,7 +1421,7 @@ window.openArcadeSettings = () => {
                     <input type="radio" name="arcade-plan" id="radio-${planId}" value="${planId}" 
                         ${isActive ? 'checked' : ''} 
                         ${!canSelect ? 'disabled' : ''}>
-                    <label for="radio-${planId}">${isActive ? 'CURRENT' : (canSelect ? 'SELECT' : 'LOCKED')}</label>
+                    <label for="radio-${planId}">${isActive ? ' CURRENT PLAN' : (canSelect ? ' SELECT PLAN' : ' DISABLED')}</label>
                 </div>
             `;
 
