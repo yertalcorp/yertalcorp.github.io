@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:26:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:35:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -683,24 +683,38 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
     }
 };
 
-/* * Task: Procedural logo generation fallback logic
- */
 window.genLogo = (name, logoAsset) => {
-    // 1. If the logo exists in the profile, use it (Superuser Case)
     if (logoAsset) {
         return `<img src="${logoAsset}" alt="Brand Logo" style="height: 85%; width: auto; filter: none;">`;
     }
 
-    // 2. Otherwise, generate initials from Display Name (Procedural Case)
     const initials = name
-        .split(' ')
-        .map(word => word[0])
-        .join('')
-        .toUpperCase()
-        .substring(0, 2);
+        ? name.split(' ').map(word => word[0]).join('').toUpperCase().substring(0, 2)
+        : "YA";
 
-    return `<span class="logo-initials" style="font-family: 'Orbitron', sans-serif; font-weight: 900; color: white; text-shadow: 0 0 5px var(--neon-color); font-size: 1.1rem;">${initials}</span>`;
+    // Using var(--neon-color) for the background and a semi-transparent black for depth
+    return `
+        <div class="procedural-logo-tile" style="
+            background: linear-gradient(135deg, var(--neon-color) 0%, rgba(0,0,0,0.8) 100%);
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        ">
+            <span style="
+                font-family: 'Orbitron', sans-serif; 
+                font-weight: 900; 
+                color: rgba(0,0,0,0.9); 
+                font-size: 1.1rem;
+                text-shadow: 0.5px 0.5px 0px rgba(255,255,255,0.2);
+            ">
+                ${initials}
+            </span>
+        </div>
+    `;
 };
+
 function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
