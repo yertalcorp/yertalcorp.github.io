@@ -889,7 +889,7 @@ button:hover {
     position: relative; /* Break away from any accidental bottom-anchors */
     width: 90%;
     top: 0; left: auto; 
-    max-width: 750px;
+    max-width: 650px;
     margin: auto;       /* The "Safety Net" for flex centering */
     display: flex;
     flex-direction: column;
