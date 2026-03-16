@@ -244,7 +244,39 @@
     text-align: center;
     transition: all 0.3s ease;
 }
+.plan-card-rounded {
+    background: rgba(15, 15, 15, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.tier-identity-metallic {
+    color: var(--branding-color);
+    text-shadow: 0 0 10px var(--branding-color);
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
 
+.btn-metallic-center {
+    display: block;
+    margin: 20px auto; /* Centers the button */
+    padding: 12px 40px;
+    border-radius: 30px;
+    background: linear-gradient(145deg, #222, #000);
+    border: 1px solid var(--branding-color);
+    color: var(--branding-color);
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(var(--branding-rgb), 0.2);
+}
+
+.tier-locked {
+    filter: grayscale(1) opacity(0.4);
+    cursor: not-allowed !important;
+}
+
+.text-glow-green { color: #00ff88; filter: drop-shadow(0 0 5px #00ff88); }
+.text-dim { color: #555; }
 /* Active State: Driven by the theme's accent/neon color */
 .plan-card.active {
     border-color: var(--neon-color);
