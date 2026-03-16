@@ -54,6 +54,12 @@
 
 .tier-pricing {
     padding: 10px;
+    gap: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    align-items:center;
+    text-align: center;
+    justify-items: center;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
