@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:20:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:45:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1552,27 +1552,10 @@ window.saveArcadeSettings = async () => {
         document.getElementById('arcadesettings-hud').classList.remove('active');
 
         // --- START WINDOW RELOAD SECTION ---
-
-        // 1. Get the slug from the URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlSlug = urlParams.get('user');
-
-        // 2. FETCH THE ACTUAL SLUG FROM FIREBASE
-        // We go directly to the source of truth for the active user
-        const slugSnapshot = await window.get(window.ref(window.db, `${profilePath}/slug`));
-        const activeUserSlug = slugSnapshot.exists() ? slugSnapshot.val() : null;
-
-        console.log(`[Identity Gate] URL Slug: ${urlSlug} | Database User Slug: ${activeUserSlug}`);
-
-        // 3. Compare and Navigate
-        if (urlSlug && activeUserSlug && urlSlug === activeUserSlug) {
-            console.log("[SYSTEM] Ownership Verified via Database. Reloading...");
-            window.location.reload();
-        } else {
-            console.log("[SYSTEM] Guest Mode: Reload suppressed.");
-            if (window.pageOwnerData) window.isVisitorSetup = true;
-            alert("Your Arcade has been established! Click 'Home' to see your new laboratory.");
-        }
+            await refreshUI();
+            console.log("IDENTITY_SYNC_COMPLETE: Laboratory properties updated.");
+            console.log("[SYSTEM] SYNC COMPLETE. Identity Forged for:", activeUser.uid);
+            console.log("[SYSTEM] CURRENT URL:", window.location.href);
         // --- END WINDOW RELOAD SECTION ---
 
     } catch (error) {
