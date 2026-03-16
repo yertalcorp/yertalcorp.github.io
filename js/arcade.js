@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:23:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:42:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1544,26 +1544,32 @@ window.saveArcadeSettings = async () => {
         if (typeof applyTheme === 'function') applyTheme(themeSelect.value);
         document.getElementById('arcadesettings-hud').classList.remove('active');
 
-        if (isOwner) {
+        // --- START RELOAD SECTION ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSlug = urlParams.get('user');
+        const userSlug = window.pageOwnerData?.profile?.slug;
+
+        console.log(`[Identity Gate] URL Slug: ${urlSlug} | User Slug: ${userSlug}`);
+
+        if (urlSlug === userSlug) {
             // New owner on home page OR existing owner changing settings
-            console.log("[SYSTEM] Reloading for Owner Profile Sync...");
+            console.log("[SYSTEM] Owner detected. Reloading for Profile Sync...");
             window.location.reload();
         } else {
             // New user forging a spark on a guest page
             console.log("[SYSTEM] Guest setup complete. Suppression of reload to maintain view.");
             
-            // Optional: Update the local memory so the HUD doesn't think they are uninitialized
             if (window.pageOwnerData) {
-                // We don't want to overwrite the guest's pageOwnerData, 
-                // but we might want to flag the local app that the 'visitor' is now setup.
                 window.isVisitorSetup = true; 
             }
             
             alert("Your Arcade has been established! You can continue exploring here, or click Home to see your new laboratory.");
         }
+
         console.log("IDENTITY_SYNC_COMPLETE: Laboratory properties updated.");
         console.log("[SYSTEM] SYNC COMPLETE. Identity Forged for:", activeUser.uid);
         console.log("[SYSTEM] CURRENT URL:", window.location.href);
+        // --- END WINDOW RELOAD SECTION ---
 
     } catch (error) {
         console.error("FORGE_FAILURE:", error);
