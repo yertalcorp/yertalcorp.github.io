@@ -5,6 +5,142 @@
     --nav-font: 'Inter', sans-serif;
 }
 
+/* --- DYNAMIC HUD LAYOUT --- */
+.hud-onboarding-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 10px 5px;
+}
+
+.hud-step {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- LABELS & FORM ELEMENTS --- */
+.hud-label-metallic {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--branding-color, #00f2ff);
+    margin-bottom: 8px;
+    margin-top: 12px;
+    text-transform: uppercase;
+    opacity: 0.9;
+    text-shadow: 0 0 5px rgba(0, 242, 255, 0.3);
+}
+
+.logo-upload-wrapper {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+/* --- PLAN CARD INTERNALS --- */
+.plan-box-inner {
+    padding-bottom: 15px;
+    width: 100%;
+}
+
+.tier-pitch {
+    font-size: 10px;
+    font-style: italic;
+    color: var(--text-muted-color, #888);
+    margin-bottom: 15px;
+    min-height: 30px; /* Ensures alignment across columns */
+}
+
+.tier-pricing {
+    margin-bottom: 15px;
+    padding: 10px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.price-main {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #fff;
+}
+
+.price-main small {
+    font-size: 10px;
+    opacity: 0.6;
+}
+
+.price-annual {
+    font-size: 9px;
+    color: var(--neon-color);
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+.metallic-divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+    margin: 10px 0;
+}
+
+/* --- LIST REPAIR (The "Inside" Fix) --- */
+.tier-specs-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+}
+
+.tier-specs-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 6px;
+}
+
+.tier-specs-list li i {
+    width: 12px;
+    font-size: 10px;
+}
+
+/* --- SELECTION DOCK --- */
+.plan-radio-dock {
+    margin-top: auto;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.plan-radio-dock label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+/* --- EXTRA UI BUTTON --- */
+.ethereal-btn-xs {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 4px 10px;
+    font-size: 8px;
+    font-family: 'Orbitron', sans-serif;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.ethereal-btn-xs:hover {
+    border-color: var(--neon-color);
+    box-shadow: 0 0 10px var(--neon-color);
+}
 #lab-body {
     background-color: var(--bg-color);
     color: var(--text-main-color);
