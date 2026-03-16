@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:37:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:55:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1292,118 +1292,38 @@ function predictLogicType(prompt) {
 
 
 
+/* * Objective: Initialize or Re-Forge Arcade Identity
+ * Task: Populate HUD with existing profile data or defaults, and render dynamic plan grid.
+ */
 window.openArcadeSettings = () => {
     const hud = document.getElementById('onboarding-hud');
     if (!hud) return;
 
-    // 1. DATA_RECOVERY_PROTOCOL
-    let profile = {};
-    try {
-        if (typeof pageOwnerData !== 'undefined' && pageOwnerData.profile) {
-            profile = pageOwnerData.profile;
-        }
-    } catch (e) {
-        console.warn("[Identity Gate] Global data not initialized.");
-    }
+    // 1. IDENTITY & STATE CHECK
+    const activeUser = auth.currentUser;
+    const profile = (window.pageOwnerData && window.pageOwnerData.profile) ? window.pageOwnerData.profile : {};
+    const isSetup = profile.setup_complete === true;
 
-    const isSetup = profile.hasOwnProperty('setup_complete') && profile.setup_complete === true;
-    const submitBtn = document.getElementById('submit-onboarding');
-    const themeSelect = document.getElementById('arcade-theme-select');
-    const privacySelect = document.getElementById('arcade-privacy-select');
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
+    const themeSelect = document.getElementById('arcade-theme-select');
+    const privacySelect = document.getElementById('arcade-privacy-select');
+    const submitBtn = document.getElementById('submit-onboarding');
 
-    // 2. INPUT_SYNC
-    if (isSetup) {
-        if (nameInput) nameInput.value = profile.arcade_title || '';
-        if (subtitleInput) subtitleInput.value = profile.arcade_subtitle || '';
-        if (themeSelect) themeSelect.value = profile.theme || 'neon-dark';
-        if (privacySelect) privacySelect.value = profile.privacy || 'public';
-    } else {
-        if (nameInput) nameInput.value = '';
-        if (subtitleInput) subtitleInput.value = '';
-        if (themeSelect) themeSelect.value = 'neon-dark';
-        if (privacySelect) privacySelect.value = 'public';
-    }
-
-    // 3. THEMATIC_HEADER_INJECTION
-    const hudHeader = hud.querySelector('.hud-header');
-    if (hudHeader) {
-        hudHeader.innerHTML = `
-            <div class="hud-header-content">
-                <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE IDENTITY' : 'INITIALIZE YOUR ARCADE'}</h2>
-                <p class="hud-subtitle-info">${isSetup ? 'Modify your existing lab parameters' : 'Establish Your Arcade to Start Creating'}</p>
-            </div>
-            <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud-corner">&times;</button>
-        `;
-    }
-
-    // 4. DYNAMIC_PLAN_GRID_CONSTRUCTION
-    const planContainer = hud.querySelector('.plan-selection-container');
-    const planLimits = databaseCache.settings?.plan_limits;
-
-    if (planLimits && planContainer) {
-        planContainer.innerHTML = ''; // Wipe for clean forge
-        
-        Object.keys(planLimits).forEach(planKey => {
-            const plan = planLimits[planKey];
-            const isCurrentPlan = isSetup ? (profile.plan_type === planKey) : (planKey === 'free');
-            const isDisabled = plan.cost > 0 && !isCurrentPlan; 
-
-            const planCard = document.createElement('div');
-            planCard.className = `plan-card-rounded ${isCurrentPlan ? 'active' : ''} ${isDisabled ? 'locked-tier' : ''}`;
-            
-            // Build the dynamic feature list with ticks/crosses
-            planCard.innerHTML = `
-                <div class="plan-box-inner">
-                    <div class="tier-identity">${plan.identity.toUpperCase()}</div>
-                    <div class="tier-pitch">"${plan.pitch}"</div>
-                    
-                    <div class="tier-pricing">
-                        <span class="price-mo">$${plan.cost}/mo</span>
-                        <span class="price-yr">$${(plan.cost * 10)}/yr</span>
-                    </div>
-
-                    <ul class="tier-specs">
-                        <li><i class="fa-solid fa-folder-tree"></i> <b>${plan.max_currents}</b> Topics (Currents)</li>
-                        <li><i class="fa-solid fa-microchip"></i> <b>${plan.max_sparks_per_current}</b> Action Cards (Sparks)</li>
-                        <li><i class="fa-solid fa-wand-sparkles"></i> <b>${plan.num_mass_sparks}</b> Generated/Prompt</li>
-                        <hr class="tier-divider">
-                        <li><i class="fa-solid ${plan.analytics_enabled ? 'fa-check text-success' : 'fa-xmark text-danger'}"></i> Analytics</li>
-                        <li><i class="fa-solid ${plan.priority_support ? 'fa-check text-success' : 'fa-xmark text-danger'}"></i> Priority Support</li>
-                        <li><i class="fa-solid ${plan.monetization !== 'tips_only' ? 'fa-check text-success' : 'fa-xmark text-danger'}"></i> Sales Storefront</li>
-                        <li><i class="fa-solid fa-check text-success"></i> Community Tips</li>
-                    </ul>
-                </div>
-                
-                <div class="radio-wrapper">
-                    <input type="radio" name="arcade-plan" id="plan-${planKey}" value="${planKey}" 
-                        ${isCurrentPlan ? 'checked' : ''} 
-                        ${isDisabled ? 'disabled' : ''}>
-                    <label for="plan-${planKey}">${isDisabled ? 'LOCKED' : 'SELECT'}</label>
-                </div>
-            `;
-
-            if (!isDisabled) {
-                planCard.onclick = () => {
-                    hud.querySelectorAll('.plan-card-rounded').forEach(c => c.classList.remove('active'));
-                    planCard.classList.add('active');
-                    planCard.querySelector('input').checked = true;
-                };
-            }
-
-            planContainer.appendChild(planCard);
-        });
-    }
-
-    // 5. THEME_ENGINE_SYNC
+    // 2. FIELD POPULATION (Setup vs New)
+    if (nameInput) nameInput.value = isSetup ? (profile.arcade_title || '') : '';
+    if (subtitleInput) subtitleInput.value = isSetup ? (profile.arcade_subtitle || '') : '';
+    
+    // Privacy & Theme Initialization
+    if (privacySelect) privacySelect.value = isSetup ? (profile.privacy || 'public') : 'public';
+    
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     if (themes && themeSelect) {
         themeSelect.innerHTML = ''; 
         Object.keys(themes).forEach(id => {
             const opt = document.createElement('option');
             opt.value = id;
-            opt.textContent = themes[id].name.replace(/_/g, ' ');
+            opt.textContent = themes[id].name.replace(/_/g, ' ').toUpperCase();
             themeSelect.appendChild(opt);
         });
         themeSelect.value = isSetup ? (profile.theme || 'neon-dark') : 'neon-dark';
@@ -1411,7 +1331,83 @@ window.openArcadeSettings = () => {
         applyTheme(themeSelect.value);
     }
 
-    submitBtn.innerText = isSetup ? "SAVE CHANGES" : "ESTABLISH IDENTITY";
+    // 3. HEADER & LABEL REFINEMENT
+    const hudHeader = hud.querySelector('.hud-header');
+    if (hudHeader) {
+        hudHeader.innerHTML = `
+            <div class="hud-header-content">
+                <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE LABORATORY' : 'INITIALIZE YOUR ARCADE'}</h2>
+                <p class="hud-subtitle-info">${isSetup ? 'Syncing Profile Data...' : 'Establish Your Arcade to Start Creating'}</p>
+            </div>
+            <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud-corner">&times;</button>
+        `;
+    }
+
+    // 4. DYNAMIC 3-COLUMN PLAN GRID
+    const planContainer = hud.querySelector('.plan-selection-container');
+    const allPlans = databaseCache.settings?.plan_limits;
+
+    if (allPlans && planContainer) {
+        planContainer.innerHTML = ''; // Clear for fresh forge
+        
+        Object.keys(allPlans).forEach(planId => {
+            const plan = allPlans[planId];
+            const userCurrentPlan = profile.plan_type || 'free';
+            const isActive = (planId === userCurrentPlan);
+            
+            // SECURITY: Enabled check + Logic to allow user to keep their current plan even if disabled globally
+            const canSelect = (plan.enabled === true) || isActive;
+
+            const planBox = document.createElement('div');
+            planBox.className = `plan-card-rounded ${isActive ? 'active' : ''} ${!canSelect ? 'tier-locked' : ''}`;
+            
+            planBox.innerHTML = `
+                <div class="plan-box-inner">
+                    <div class="tier-identity-metallic">${plan.identity.toUpperCase()}</div>
+                    <div class="tier-pitch">"${plan.pitch}"</div>
+                    
+                    <div class="tier-pricing">
+                        <div class="price-main">$${plan.cost}<small>/mo</small></div>
+                        <div class="price-annual">$${plan.cost * 10}<small>/yr</small></div>
+                    </div>
+
+                    <ul class="tier-specs-list">
+                        <li><i class="fa-solid fa-folder"></i> <b>${plan.max_currents}</b> Topics</li>
+                        <li><i class="fa-solid fa-microchip"></i> <b>${plan.max_sparks_per_current}</b> Action Cards</li>
+                        <li><i class="fa-solid fa-wand-magic-sparkles"></i> <b>${plan.num_mass_sparks}</b> Cards/Prompt</li>
+                        <hr class="metallic-divider">
+                        <li><i class="fa-solid ${plan.analytics_enabled ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Analytics</li>
+                        <li><i class="fa-solid ${plan.priority_support ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Priority Support</li>
+                        <li><i class="fa-solid ${plan.monetization === 'sales' ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Direct Sales</li>
+                        <li><i class="fa-solid fa-square-check text-glow-green"></i> Community Tips</li>
+                    </ul>
+                </div>
+                
+                <div class="plan-radio-dock">
+                    <input type="radio" name="arcade-plan" id="radio-${planId}" value="${planId}" 
+                        ${isActive ? 'checked' : ''} 
+                        ${!canSelect ? 'disabled' : ''}>
+                    <label for="radio-${planId}">${isActive ? 'CURRENT' : (canSelect ? 'SELECT' : 'LOCKED')}</label>
+                </div>
+            `;
+
+            // Interaction logic
+            if (canSelect) {
+                planBox.onclick = () => {
+                    hud.querySelectorAll('.plan-card-rounded').forEach(el => el.classList.remove('active'));
+                    planBox.classList.add('active');
+                    planBox.querySelector('input').checked = true;
+                };
+            }
+
+            planContainer.appendChild(planBox);
+        });
+    }
+
+    // 5. BUTTON & HUD ACTIVATION
+    submitBtn.innerText = isSetup ? "UPDATE IDENTITY" : "ESTABLISH IDENTITY";
+    submitBtn.className = "btn-metallic-center"; // Ensure CSS centers this
+    
     hud.classList.add('active');
 };
 
