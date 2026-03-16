@@ -1483,11 +1483,7 @@ window.updateLogoStatus = (input) => {
     }
 };
 
-/* * Objective: Direct HUD-to-Firebase Sync
- * Task: Read HUD inputs and update specific profile keys.
- */
 window.saveArcadeSettings = async () => {
-    // 1. CAPTURE INPUTS DIRECTLY FROM HUD
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
     const themeSelect = document.getElementById('arcade-theme-select');
@@ -1495,21 +1491,24 @@ window.saveArcadeSettings = async () => {
     const planValue = document.querySelector('input[name="arcade-plan"]:checked')?.value || 'free';
     const logoFile = document.getElementById('logo-browse-input')?.files?.[0];
 
-    // 2. VALIDATION
     const arcadeName = nameInput.value.trim().toUpperCase();
     if (!arcadeName) {
         nameInput.style.border = "1px solid var(--error-glow, #ff4444)";
-        nameInput.placeholder = "REQUIRED: NAME YOUR LAB";
-        nameInput.focus();
         return;
     }
 
-    const activeUser = auth.currentUser;
+    const activeUser = window.auth?.currentUser;
     if (!activeUser) return;
 
     try {
         const profilePath = `users/${activeUser.uid}/profile`;
-        const profile = window.pageOwnerData?.profile || {};
+        
+        // --- SAFE INITIALIZATION ---
+        // Ensure the object exists so we don't crash on read
+        if (!window.pageOwnerData) window.pageOwnerData = {};
+        if (!window.pageOwnerData.profile) window.pageOwnerData.profile = {};
+        
+        const profile = window.pageOwnerData.profile;
 
         // 3. CONSTRUCT UPDATE PAYLOAD
         const updates = {};
@@ -1519,12 +1518,10 @@ window.saveArcadeSettings = async () => {
         updates[`${profilePath}/privacy`] = privacySelect.value;
         updates[`${profilePath}/plan_type`] = planValue;
 
-        // Logic for logo - currently placeholder for Firebase Storage path
         if (logoFile) {
             console.log(`PREPARING_UPLOAD: ${logoFile.name}`);
-            // updates[`${profilePath}/arcade_logo`] = await uploadLogo(logoFile);
+            // Logic for storage would go here
         } else {
-            // Keep existing or set default if missing
             updates[`${profilePath}/arcade_logo`] = profile.arcade_logo || "";
         }
 
@@ -1534,18 +1531,19 @@ window.saveArcadeSettings = async () => {
         }
 
         // 5. EXECUTE UPDATE
-        await update(ref(db), updates);
+        await window.update(window.ref(window.db), updates);
 
-        // 6. SYNC LOCAL STATE
-        // Map updates back to local object to prevent stale UI
+        // 6. SYNC LOCAL STATE (SAFE MAPPING)
         Object.keys(updates).forEach(path => {
             const key = path.split('/').pop();
+            // Assigning to the now-guaranteed profile object
             window.pageOwnerData.profile[key] = updates[path];
         });
 
         // 7. UI FINALIZATION
-        applyTheme(themeSelect.value);
+        if (typeof applyTheme === 'function') applyTheme(themeSelect.value);
         document.getElementById('arcadesettings-hud').classList.remove('active');
+        
         console.log("IDENTITY_SYNC_COMPLETE: Laboratory properties updated.");
 
     } catch (error) {
