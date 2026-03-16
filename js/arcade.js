@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:55:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:57:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1293,30 +1293,61 @@ function predictLogicType(prompt) {
 
 
 /* * Objective: Initialize or Re-Forge Arcade Identity
- * Task: Populate HUD with existing profile data or defaults, and render dynamic plan grid.
+ * Task: Dynamically generate HUD structure and populate with Firebase data.
  */
 window.openArcadeSettings = () => {
-    const hud = document.getElementById('onboarding-hud');
+    const hud = document.getElementById('arcadesettings-hud');
     if (!hud) return;
 
     // 1. IDENTITY & STATE CHECK
-    const activeUser = auth.currentUser;
     const profile = (window.pageOwnerData && window.pageOwnerData.profile) ? window.pageOwnerData.profile : {};
     const isSetup = profile.hasOwnProperty('setup_complete') && profile.setup_complete === true;
 
+    // Target the dynamic zones defined in index.html
+    const profileZone = document.getElementById('arcade-profile-zone');
+    const planZone = document.getElementById('plan-selection-zone');
+
+    // 2. GENERATE DYNAMIC PROFILE STRUCTURE
+    if (profileZone) {
+        profileZone.innerHTML = `
+            <label class="hud-label-metallic">* ARCADE NAME</label>
+            <input type="text" id="new-arcade-name" placeholder="e.g., Quantum Lab" class="hud-input">
+            
+            <label class="hud-label-metallic">SYSTEM SUBTITLE</label>
+            <input type="text" id="new-arcade-subtitle" placeholder="Establish Your Arcade to Start Creating" class="hud-input">
+
+            <label class="hud-label-metallic">INTERFACE THEME</label>
+            <select id="arcade-theme-select" class="hud-input"></select>
+
+            <label class="hud-label-metallic">PRIVACY_PROTOCOL</label>
+            <select id="arcade-privacy-select" class="hud-input">
+                <option value="public">PUBLIC</option>
+                <option value="unlisted">UNLISTED</option>
+                <option value="private">PRIVATE</option>
+            </select>
+
+            <label class="hud-label-metallic">LAB_IDENTITY_LOGO</label>
+            <div class="logo-upload-wrapper" style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                <button type="button" class="ethereal-btn-xs" onclick="document.getElementById('logo-browse-input').click()">BROWSE_FILES</button>
+                <span id="logo-status-text" style="font-size: 9px; color: var(--text-secondary);">No file selected</span>
+                <input type="file" id="logo-browse-input" accept="image/*" style="display: none;" onchange="updateLogoStatus(this)">
+            </div>
+        `;
+    }
+
+    // Capture newly created inputs
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
     const themeSelect = document.getElementById('arcade-theme-select');
     const privacySelect = document.getElementById('arcade-privacy-select');
     const submitBtn = document.getElementById('submit-onboarding');
 
-    // 2. FIELD POPULATION (Setup vs New)
+    // Sync values from Profile
     if (nameInput) nameInput.value = isSetup ? (profile.arcade_title || '') : '';
     if (subtitleInput) subtitleInput.value = isSetup ? (profile.arcade_subtitle || '') : '';
-    
-    // Privacy & Theme Initialization
     if (privacySelect) privacySelect.value = isSetup ? (profile.privacy || 'public') : 'public';
-    
+
+    // Populate Themes
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     if (themes && themeSelect) {
         themeSelect.innerHTML = ''; 
@@ -1331,7 +1362,7 @@ window.openArcadeSettings = () => {
         applyTheme(themeSelect.value);
     }
 
-    // 3. HEADER & LABEL REFINEMENT
+    // 3. METALLIC HEADER REFINEMENT
     const hudHeader = hud.querySelector('.hud-header');
     if (hudHeader) {
         hudHeader.innerHTML = `
@@ -1339,25 +1370,27 @@ window.openArcadeSettings = () => {
                 <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE LABORATORY' : 'INITIALIZE YOUR ARCADE'}</h2>
                 <p class="hud-subtitle-info">${isSetup ? 'Syncing Profile Data...' : 'Establish Your Arcade to Start Creating'}</p>
             </div>
-            <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud-corner">&times;</button>
+            <button onclick="document.getElementById('arcadesettings-hud').classList.remove('active')" class="close-hud-corner">&times;</button>
         `;
     }
 
-    // 4. DYNAMIC 3-COLUMN PLAN GRID
-    const planContainer = hud.querySelector('.plan-selection-container');
+    // 4. DYNAMIC 3-COLUMN PLAN GRID GENERATION
     const allPlans = databaseCache.settings?.plan_limits;
+    if (allPlans && planZone) {
+        planZone.innerHTML = `
+            <label class="hud-label-metallic">SYSTEM_PLAN_SELECTION</label>
+            <div class="plans-grid plan-selection-container"></div>
+        `;
 
-    if (allPlans && planContainer) {
-        planContainer.innerHTML = ''; // Clear for fresh forge
+        const planContainer = planZone.querySelector('.plan-selection-container');
         
         Object.keys(allPlans).forEach(planId => {
             const plan = allPlans[planId];
             const userCurrentPlan = profile.plan_type || 'free';
             const isActive = (planId === userCurrentPlan);
-            // --- DEBUG LOG ---
+            
             console.log(`[Plan Forge] ID: ${planId} | Identity: ${plan.identity} | Cost: ${plan.cost}`);
             
-            // SECURITY: Enabled check + Logic to allow user to keep their current plan even if disabled globally
             const canSelect = (plan.enabled === true) || isActive;
 
             const planBox = document.createElement('div');
@@ -1365,7 +1398,7 @@ window.openArcadeSettings = () => {
             
             planBox.innerHTML = `
                 <div class="plan-box-inner">
-                    <div class="tier-identity-metallic">${plan.identity.toUpperCase()}</div>
+                    <div class="tier-identity-metallic">${(plan.identity || planId).toUpperCase()}</div>
                     <div class="tier-pitch">"${plan.pitch}"</div>
                     
                     <div class="tier-pricing">
@@ -1381,7 +1414,6 @@ window.openArcadeSettings = () => {
                         <li><i class="fa-solid ${plan.analytics_enabled ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Analytics</li>
                         <li><i class="fa-solid ${plan.priority_support ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Priority Support</li>
                         <li><i class="fa-solid ${plan.monetization === 'sales' ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Direct Sales</li>
-                        <li><i class="fa-solid fa-square-check text-glow-green"></i> Community Tips</li>
                     </ul>
                 </div>
                 
@@ -1393,7 +1425,6 @@ window.openArcadeSettings = () => {
                 </div>
             `;
 
-            // Interaction logic
             if (canSelect) {
                 planBox.onclick = () => {
                     hud.querySelectorAll('.plan-card-rounded').forEach(el => el.classList.remove('active'));
@@ -1407,8 +1438,11 @@ window.openArcadeSettings = () => {
     }
 
     // 5. BUTTON & HUD ACTIVATION
-    submitBtn.innerText = isSetup ? "UPDATE IDENTITY" : "ESTABLISH IDENTITY";
-    submitBtn.className = "btn-metallic-center"; // Ensure CSS centers this
+    if (submitBtn) {
+        submitBtn.innerText = isSetup ? "UPDATE IDENTITY" : "ESTABLISH IDENTITY";
+        submitBtn.style.display = "block";
+        submitBtn.style.margin = "30px auto 10px auto";
+    }
     
     hud.classList.add('active');
 };
