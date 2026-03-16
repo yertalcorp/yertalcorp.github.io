@@ -1483,10 +1483,11 @@ window.updateLogoStatus = (input) => {
     }
 };
 
-/*
- * Validates and Commits the Laboratory Identity.
+/* * Objective: Direct HUD-to-Firebase Sync
+ * Task: Read HUD inputs and update specific profile keys.
  */
 window.saveArcadeSettings = async () => {
+    // 1. CAPTURE INPUTS DIRECTLY FROM HUD
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
     const themeSelect = document.getElementById('arcade-theme-select');
@@ -1494,8 +1495,8 @@ window.saveArcadeSettings = async () => {
     const planValue = document.querySelector('input[name="arcade-plan"]:checked')?.value || 'free';
     const logoFile = document.getElementById('logo-browse-input')?.files?.[0];
 
-    // 1. VALIDATION_PROTOCOL
-    const arcadeName = nameInput.value.trim();
+    // 2. VALIDATION
+    const arcadeName = nameInput.value.trim().toUpperCase();
     if (!arcadeName) {
         nameInput.style.border = "1px solid var(--error-glow, #ff4444)";
         nameInput.placeholder = "REQUIRED: NAME YOUR LAB";
@@ -1503,44 +1504,49 @@ window.saveArcadeSettings = async () => {
         return;
     }
 
-    // 2. IDENTITY_CONSTRUCTION
     const activeUser = auth.currentUser;
     if (!activeUser) return;
 
     try {
-        // Fallback for logo if none is uploaded (Sourced from theme/branding JSON via cache)
-        let finalLogoUrl = databaseCache.settings?.branding?.logo_url || "/assets/images/default_logo.png";
-
-        // Logic for handling the logo file would go here (e.g., Firebase Storage upload)
-        if (logoFile) {
-            console.log(`PREPARING_UPLOAD: ${logoFile.name}`);
-            // finalLogoUrl = await uploadLogoToStorage(logoFile, activeUser.uid);
-        }
-
         const profilePath = `users/${activeUser.uid}/profile`;
-        const profile = pageOwnerData?.profile || {};
+        const profile = window.pageOwnerData?.profile || {};
 
-        // 3. COMMIT_TO_DATABASE (Using theme-agnostic keys)
+        // 3. CONSTRUCT UPDATE PAYLOAD
         const updates = {};
-        updates[`${profilePath}/arcade_title`] = arcadeName.toUpperCase();
-        updates[`${profilePath}/arcade_subtitle`] = subtitleInput.value.trim() || "";
-        updates[`${profilePath}/arcade_logo`] = finalLogoUrl;
+        updates[`${profilePath}/arcade_title`] = arcadeName;
+        updates[`${profilePath}/arcade_subtitle`] = subtitleInput.value.trim();
         updates[`${profilePath}/theme`] = themeSelect.value;
         updates[`${profilePath}/privacy`] = privacySelect.value;
         updates[`${profilePath}/plan_type`] = planValue;
 
-        // Only add setup_complete if it's not already true
-        if (profile.setup_complete !== true) {
+        // Logic for logo - currently placeholder for Firebase Storage path
+        if (logoFile) {
+            console.log(`PREPARING_UPLOAD: ${logoFile.name}`);
+            // updates[`${profilePath}/arcade_logo`] = await uploadLogo(logoFile);
+        } else {
+            // Keep existing or set default if missing
+            updates[`${profilePath}/arcade_logo`] = profile.arcade_logo || "";
+        }
+
+        // 4. CONDITIONAL SETUP_COMPLETE
+        if (profile.setup_complete === undefined || profile.setup_complete === null) {
             updates[`${profilePath}/setup_complete`] = true;
         }
 
+        // 5. EXECUTE UPDATE
         await update(ref(db), updates);
 
-        // 4. UI_SYNCHRONIZATION
+        // 6. SYNC LOCAL STATE
+        // Map updates back to local object to prevent stale UI
+        Object.keys(updates).forEach(path => {
+            const key = path.split('/').pop();
+            window.pageOwnerData.profile[key] = updates[path];
+        });
+
+        // 7. UI FINALIZATION
         applyTheme(themeSelect.value);
-        document.getElementById('onboarding-hud').classList.remove('active');
-        
-        console.log("IDENTITY_ESTABLISHED: Arcade settings saved successfully.");
+        document.getElementById('arcadesettings-hud').classList.remove('active');
+        console.log("IDENTITY_SYNC_COMPLETE: Laboratory properties updated.");
 
     } catch (error) {
         console.error("FORGE_FAILURE:", error);
