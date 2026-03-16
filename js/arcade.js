@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:37:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:12:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1545,6 +1545,9 @@ window.saveArcadeSettings = async () => {
         document.getElementById('arcadesettings-hud').classList.remove('active');
         
         console.log("IDENTITY_SYNC_COMPLETE: Laboratory properties updated.");
+        // 3. LOG FINAL STATE & SYNC
+        console.log("[SYSTEM] SYNC COMPLETE. Identity Forged for:", activeUser.uid);
+        console.log("[SYSTEM] CURRENT URL:", window.location.href);
 
     } catch (error) {
         console.error("FORGE_FAILURE:", error);
