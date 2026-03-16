@@ -45,11 +45,15 @@
 }
 
 .tier-pitch {
-    font-size: 12px;
+    text-align: center;        /* Added for centering */
+    font-size: 11px;           /* Slightly smaller for density */
     font-style: italic;
     color: var(--text-muted-color, #888);
-    margin-bottom: 5px;
-    min-height: 30px; /* Ensures alignment across columns */
+    margin-bottom: 8px;        /* Controlled gap before pricing */
+    margin-top: 0;             /* Removed top margin to pull closer to title */
+    min-height: 25px;          /* Tightened from 30px */
+    font-family: var(--nav-font), 'Inter', sans-serif; /* Brand-aligned secondary font */
+    line-height: 1.2;
 }
 
 .tier-pricing {
@@ -371,7 +375,7 @@
     /* Use a semi-transparent version of the theme's text or border color */
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     border-radius: 12px;
-    padding: 1.2rem;
+    padding: 0.8rem;
     background: var(--card-bg, rgba(255, 255, 255, 0.03));
     display: flex;
     flex-direction: column;
@@ -386,13 +390,17 @@
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .tier-identity-metallic {
+    display: flex;             /* Added to ensure centering logic */
+    align-items: center;       /* Added */
+    justify-content: center;    /* Added */
     text-align: center;
-    align-items: center;
-    justify-content: center;
     color: var(--branding-color);
     text-shadow: 0 0 10px var(--branding-color);
     font-size: 1.1rem;
-    margin-bottom: 5px;
+    margin-bottom: 2px;        /* Reduced from 5px to close gap */
+    font-family: var(--branding-font), 'Orbitron', sans-serif; /* Brand-aligned font */
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .btn-metallic-center {
