@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:20:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:26:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1353,13 +1353,6 @@ window.openArcadeSettings = () => {
                 <option value="unlisted">UNLISTED</option>
                 <option value="private">PRIVATE</option>
             </select>
-
-            <label class="hud-label-metallic">ARCADE_IDENTITY_LOGO</label>
-            <div class="logo-upload-wrapper" style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
-                <button type="button" class="ethereal-btn-xs" onclick="document.getElementById('logo-browse-input').click()">BROWSE_FILES</button>
-                <span id="logo-status-text" style="font-size: 9px; color: var(--text-secondary);">No file selected</span>
-                <input type="file" id="logo-browse-input" accept="image/*" style="display: none;" onchange="updateLogoStatus(this)">
-            </div>
         `;
     }
 
@@ -1517,7 +1510,7 @@ window.saveArcadeSettings = async () => {
     const themeSelect = document.getElementById('arcade-theme-select');
     const privacySelect = document.getElementById('arcade-privacy-select');
     const planValue = document.querySelector('input[name="arcade-plan"]:checked')?.value || 'free';
-    const logoFile = document.getElementById('logo-browse-input')?.files?.[0];
+  
 
     const arcadeName = nameInput.value.trim().toUpperCase();
     if (!arcadeName) {
@@ -1545,13 +1538,6 @@ window.saveArcadeSettings = async () => {
         updates[`${profilePath}/theme`] = themeSelect.value;
         updates[`${profilePath}/privacy`] = privacySelect.value;
         updates[`${profilePath}/plan_type`] = planValue;
-
-        if (logoFile) {
-            console.log(`PREPARING_UPLOAD: ${logoFile.name}`);
-            // Logic for storage would go here
-        } else {
-            updates[`${profilePath}/arcade_logo`] = profile.arcade_logo || "";
-        }
 
         // 4. CONDITIONAL SETUP_COMPLETE
         if (profile.setup_complete === undefined || profile.setup_complete === null) {
