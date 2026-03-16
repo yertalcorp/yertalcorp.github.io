@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:22:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:37:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1296,25 +1296,24 @@ window.openArcadeSettings = () => {
     const hud = document.getElementById('onboarding-hud');
     if (!hud) return;
 
-    // 1. SAFE_CHECK
+    // 1. DATA_RECOVERY_PROTOCOL
     let profile = {};
     try {
         if (typeof pageOwnerData !== 'undefined' && pageOwnerData.profile) {
             profile = pageOwnerData.profile;
         }
     } catch (e) {
-        console.warn("[Identity Gate] Global data not yet initialized.");
+        console.warn("[Identity Gate] Global data not initialized.");
     }
 
     const isSetup = profile.hasOwnProperty('setup_complete') && profile.setup_complete === true;
-
     const submitBtn = document.getElementById('submit-onboarding');
     const themeSelect = document.getElementById('arcade-theme-select');
     const privacySelect = document.getElementById('arcade-privacy-select');
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
 
-    // --- POPULATE TEXT INPUTS ---
+    // 2. INPUT_SYNC
     if (isSetup) {
         if (nameInput) nameInput.value = profile.arcade_title || '';
         if (subtitleInput) subtitleInput.value = profile.arcade_subtitle || '';
@@ -1327,67 +1326,7 @@ window.openArcadeSettings = () => {
         if (privacySelect) privacySelect.value = 'public';
     }
 
-    // --- DYNAMIC PLAN RENDERING with LOCKDOWN ---
-    const planContainer = hud.querySelector('.plan-selection-container');
-    const planLimits = databaseCache.settings?.plan_limits;
-
-    if (planLimits && planContainer) {
-        planContainer.innerHTML = ''; 
-        
-        Object.keys(planLimits).forEach(planKey => {
-            const plan = planLimits[planKey];
-            const isCurrentPlan = isSetup ? (profile.plan_type === planKey) : (planKey === 'free');
-            
-            // SECURITY: Disable if it's a paid plan and NOT the user's current plan
-            const isPaid = plan.cost > 0;
-            const isDisabled = isPaid && !isCurrentPlan; 
-
-            const planCard = document.createElement('div');
-            // Added 'plan-disabled' class for styling
-            planCard.className = `plan-card ${isCurrentPlan ? 'active' : ''} ${isDisabled ? 'plan-disabled' : ''}`;
-            
-            planCard.innerHTML = `
-                ${isDisabled ? '<div class="plan-lock-tag"><i class="fa-solid fa-lock"></i> COMING SOON</div>' : ''}
-                <div class="plan-header">
-                    <div class="plan-identity">${plan.identity.toUpperCase()}</div>
-                    <div class="plan-cost">$${plan.cost}<span class="cost-unit">/mo</span></div>
-                </div>
-                
-                <div class="plan-pitch">"${plan.pitch}"</div>
-                
-                <ul class="plan-details-list">
-                    <li><i class="fa-solid fa-layer-group"></i> ${plan.max_currents} Currents</li>
-                    <li><i class="fa-solid fa-bolt"></i> ${plan.max_sparks_per_current} Sparks/Current</li>
-                    <li>
-                        <i class="fa-solid ${plan.monetization !== 'tips_only' ? 'fa-check check-yes' : 'fa-xmark check-no'}"></i>
-                        Direct Sales
-                    </li>
-                    <li>
-                        <i class="fa-solid ${plan.analytics_enabled ? 'fa-check check-yes' : 'fa-xmark check-no'}"></i>
-                        Analytics
-                    </li>
-                </ul>
-                
-                <input type="radio" name="arcade-plan" value="${planKey}" 
-                    ${isCurrentPlan ? 'checked' : ''} 
-                    ${isDisabled ? 'disabled' : ''} 
-                    style="display:none;">
-            `;
-
-            // Only allow clicking if not disabled
-            if (!isDisabled) {
-                planCard.onclick = () => {
-                    hud.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
-                    planCard.classList.add('active');
-                    planCard.querySelector('input').checked = true;
-                };
-            }
-
-            planContainer.appendChild(planCard);
-        });
-    }
-
-    // 3. UPDATE UI LABELS
+    // 3. THEMATIC_HEADER_INJECTION
     const hudHeader = hud.querySelector('.hud-header');
     if (hudHeader) {
         hudHeader.innerHTML = `
@@ -1397,6 +1336,79 @@ window.openArcadeSettings = () => {
             </div>
             <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud-corner">&times;</button>
         `;
+    }
+
+    // 4. DYNAMIC_PLAN_GRID_CONSTRUCTION
+    const planContainer = hud.querySelector('.plan-selection-container');
+    const planLimits = databaseCache.settings?.plan_limits;
+
+    if (planLimits && planContainer) {
+        planContainer.innerHTML = ''; // Wipe for clean forge
+        
+        Object.keys(planLimits).forEach(planKey => {
+            const plan = planLimits[planKey];
+            const isCurrentPlan = isSetup ? (profile.plan_type === planKey) : (planKey === 'free');
+            const isDisabled = plan.cost > 0 && !isCurrentPlan; 
+
+            const planCard = document.createElement('div');
+            planCard.className = `plan-card-rounded ${isCurrentPlan ? 'active' : ''} ${isDisabled ? 'locked-tier' : ''}`;
+            
+            // Build the dynamic feature list with ticks/crosses
+            planCard.innerHTML = `
+                <div class="plan-box-inner">
+                    <div class="tier-identity">${plan.identity.toUpperCase()}</div>
+                    <div class="tier-pitch">"${plan.pitch}"</div>
+                    
+                    <div class="tier-pricing">
+                        <span class="price-mo">$${plan.cost}/mo</span>
+                        <span class="price-yr">$${(plan.cost * 10)}/yr</span>
+                    </div>
+
+                    <ul class="tier-specs">
+                        <li><i class="fa-solid fa-folder-tree"></i> <b>${plan.max_currents}</b> Topics (Currents)</li>
+                        <li><i class="fa-solid fa-microchip"></i> <b>${plan.max_sparks_per_current}</b> Action Cards (Sparks)</li>
+                        <li><i class="fa-solid fa-wand-sparkles"></i> <b>${plan.num_mass_sparks}</b> Generated/Prompt</li>
+                        <hr class="tier-divider">
+                        <li><i class="fa-solid ${plan.analytics_enabled ? 'fa-check text-success' : 'fa-xmark text-danger'}"></i> Analytics</li>
+                        <li><i class="fa-solid ${plan.priority_support ? 'fa-check text-success' : 'fa-xmark text-danger'}"></i> Priority Support</li>
+                        <li><i class="fa-solid ${plan.monetization !== 'tips_only' ? 'fa-check text-success' : 'fa-xmark text-danger'}"></i> Sales Storefront</li>
+                        <li><i class="fa-solid fa-check text-success"></i> Community Tips</li>
+                    </ul>
+                </div>
+                
+                <div class="radio-wrapper">
+                    <input type="radio" name="arcade-plan" id="plan-${planKey}" value="${planKey}" 
+                        ${isCurrentPlan ? 'checked' : ''} 
+                        ${isDisabled ? 'disabled' : ''}>
+                    <label for="plan-${planKey}">${isDisabled ? 'LOCKED' : 'SELECT'}</label>
+                </div>
+            `;
+
+            if (!isDisabled) {
+                planCard.onclick = () => {
+                    hud.querySelectorAll('.plan-card-rounded').forEach(c => c.classList.remove('active'));
+                    planCard.classList.add('active');
+                    planCard.querySelector('input').checked = true;
+                };
+            }
+
+            planContainer.appendChild(planCard);
+        });
+    }
+
+    // 5. THEME_ENGINE_SYNC
+    const themes = databaseCache.settings?.['ui-settings']?.themes;
+    if (themes && themeSelect) {
+        themeSelect.innerHTML = ''; 
+        Object.keys(themes).forEach(id => {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = themes[id].name.replace(/_/g, ' ');
+            themeSelect.appendChild(opt);
+        });
+        themeSelect.value = isSetup ? (profile.theme || 'neon-dark') : 'neon-dark';
+        themeSelect.onchange = (e) => applyTheme(e.target.value);
+        applyTheme(themeSelect.value);
     }
 
     submitBtn.innerText = isSetup ? "SAVE CHANGES" : "ESTABLISH IDENTITY";
