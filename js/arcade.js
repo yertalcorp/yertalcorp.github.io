@@ -7,6 +7,8 @@ window.auth = auth;
 window.db = db;
 window.ref = ref;
 window.update = update;
+window.get = get;
+
 // Build Check: Manually update the time string below when pushing new code
 console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:20:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
