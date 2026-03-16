@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:07:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:18:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -24,7 +24,7 @@ const steps = [
     {
         target: ".settings-trigger", // Assuming three dots
         title: "OS_PREFERENCES",
-        msg: "Access System Settings to change themes (like Autumn Ember) or upgrade plans. **Business Plans** allow you to rebrand 'Tips' to 'Funds' or 'Purchase' to match your shop."
+        msg: "Access System Settings to change themes (like Autumn Ember) or upgrade plans. Business Plans allow you to rebrand 'Tips' to 'Funds' or 'Purchase' to match your shop."
     },
     {
         target: ".terminal-btn", 
@@ -1295,9 +1295,18 @@ window.openArcadeSettings = () => {
     const hud = document.getElementById('onboarding-hud');
     if (!hud) return;
 
-    // The Source of Truth for existing user data
-    const profile = pageOwnerData?.profile || {};
-    const isSetup = profile.setup_complete === true;
+    // 1. SAFE_CHECK: If variable doesn't exist or profile is missing, default to empty object
+    let profile = {};
+    try {
+        if (typeof pageOwnerData !== 'undefined' && pageOwnerData.profile) {
+            profile = pageOwnerData.profile;
+        }
+    } catch (e) {
+        console.warn("[Identity Gate] Global data not yet initialized. Proceeding with New User defaults.");
+    }
+
+    // 2. CUE_CHECK: If setup_complete is missing, it's a new profile creation
+    const isSetup = profile.hasOwnProperty('setup_complete') && profile.setup_complete === true;
 
     const submitBtn = document.getElementById('submit-onboarding');
     const themeSelect = document.getElementById('arcade-theme-select');
@@ -1305,79 +1314,87 @@ window.openArcadeSettings = () => {
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
 
-    // --- LOGIC: PRE-FILL OR DEFAULT ---
+    // --- POPULATE TEXT INPUTS ---
     if (isSetup) {
-        // Established User: Fetch all details from profile
         if (nameInput) nameInput.value = profile.arcade_title || '';
         if (subtitleInput) subtitleInput.value = profile.arcade_subtitle || '';
-        if (themeSelect) themeSelect.value = profile.current_theme_id || 'neon-dark';
+        if (themeSelect) themeSelect.value = profile.theme || 'neon-dark';
         if (privacySelect) privacySelect.value = profile.privacy || 'public';
-        
-        // Handle Plan Type (Radios)
-        const activePlan = profile.plan_type || 'free';
-        const planRadios = hud.querySelectorAll('input[name="arcade-plan"]');
-        planRadios.forEach(radio => { radio.checked = (radio.value === activePlan); });
-        
-        // Ensure the theme preview matches their actual theme immediately
-        applyTheme(themeSelect.value);
     } else {
-        // New User: Proceed with setup defaults
         if (nameInput) nameInput.value = '';
         if (subtitleInput) subtitleInput.value = '';
         if (themeSelect) themeSelect.value = 'neon-dark';
         if (privacySelect) privacySelect.value = 'public';
-        
-        const planRadios = hud.querySelectorAll('input[name="arcade-plan"]');
-        planRadios.forEach(radio => { radio.checked = (radio.value === 'free'); });
-        
-        applyTheme('neon-dark');
     }
 
-    // --- UI UPDATES (Labels & Header) ---
+    // --- DYNAMIC PLAN RENDERING ---
+    const planContainer = hud.querySelector('.plan-selection-container');
+    const planLimits = databaseCache.settings?.plan_limits;
+
+    if (planLimits && planContainer) {
+        planContainer.innerHTML = ''; // Clear container to rebuild cards
+        
+        Object.keys(planLimits).forEach(planKey => {
+            const plan = planLimits[planKey];
+            const isCurrentPlan = isSetup ? (profile.plan_type === planKey) : (planKey === 'free');
+
+            const planCard = document.createElement('div');
+            planCard.className = `plan-card ${isCurrentPlan ? 'active' : ''}`;
+            
+            planCard.innerHTML = `
+                <div class="plan-header">
+                    <div class="plan-identity">${plan.identity.toUpperCase()}</div>
+                    <div class="plan-cost">$${plan.cost}<span class="cost-unit">/mo</span></div>
+                </div>
+                
+                <div class="plan-pitch">"${plan.pitch}"</div>
+                
+                <ul class="plan-details-list">
+                    <li><i class="fa-solid fa-layer-group"></i> ${plan.max_currents} Currents</li>
+                    <li><i class="fa-solid fa-bolt"></i> ${plan.max_sparks_per_current} Sparks/Current</li>
+                    <li>
+                        <i class="fa-solid ${plan.monetization !== 'tips_only' ? 'fa-check check-yes' : 'fa-xmark check-no'}"></i>
+                        Direct Sales
+                    </li>
+                    <li>
+                        <i class="fa-solid ${plan.analytics_enabled ? 'fa-check check-yes' : 'fa-xmark check-no'}"></i>
+                        Analytics
+                    </li>
+                    <li>
+                        <i class="fa-solid ${plan.priority_support ? 'fa-check check-yes' : 'fa-xmark check-no'}"></i>
+                        Priority Support
+                    </li>
+                </ul>
+                
+                <input type="radio" name="arcade-plan" value="${planKey}" ${isCurrentPlan ? 'checked' : ''} style="display:none;">
+            `;
+
+            // Card click logic to handle radio selection and visual active state
+            planCard.onclick = () => {
+                hud.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
+                planCard.classList.add('active');
+                planCard.querySelector('input').checked = true;
+            };
+
+            planContainer.appendChild(planCard);
+        });
+    }
+
+    // 3. UPDATE UI LABELS
     const hudHeader = hud.querySelector('.hud-header');
     if (hudHeader) {
         hudHeader.innerHTML = `
             <div class="hud-header-content">
                 <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE IDENTITY' : 'INITIALIZE YOUR ARCADE'}</h2>
-                <p class="hud-subtitle-info">${isSetup ? 'Modify your existing lab parameters' : 'Establish Your Arcade to Start Creating or Saving'}</p>
+                <p class="hud-subtitle-info">${isSetup ? 'Modify your existing lab parameters' : 'Establish Your Arcade to Start Creating'}</p>
             </div>
             <button onclick="document.getElementById('onboarding-hud').classList.remove('active')" class="close-hud-corner">&times;</button>
         `;
     }
 
-    // Populate Limits Display (Generic helper)
-    const limits = databaseCache.settings?.plan_limits?.free;
-    if (limits) {
-        const freePlanList = hud.querySelector('.plan-card.active ul');
-        if (freePlanList) {
-            freePlanList.innerHTML = `
-                <li>• ${limits.max_currents} Currents</li>
-                <li>• ${limits.max_sparks_per_current} Sparks/Current</li>
-                <li>• ${limits.display_rows_initial} Display Rows</li>
-                <li>• ${limits.num_mass_sparks} Sparks/Prompt</li>
-                <li>• Gain Tips</li>
-            `;
-        }
-    }
-
-    // Refresh Themes in Select (if changed in DB)
-    const themes = databaseCache.settings?.['ui-settings']?.themes;
-    if (themes && themeSelect) {
-        themeSelect.innerHTML = ''; 
-        Object.keys(themes).forEach(id => {
-            const opt = document.createElement('option');
-            opt.value = id;
-            opt.textContent = themes[id].name.replace(/_/g, ' ');
-            themeSelect.appendChild(opt);
-        });
-        themeSelect.value = isSetup ? (profile.current_theme_id || 'neon-dark') : 'neon-dark';
-        themeSelect.onchange = (e) => applyTheme(e.target.value);
-    }
-
-    hud.classList.add('active');
     submitBtn.innerText = isSetup ? "SAVE CHANGES" : "ESTABLISH IDENTITY";
+    hud.classList.add('active');
 };
-
 /*
  * Objective: Retrieve dynamic limits based on the user's plan_type.
  */
