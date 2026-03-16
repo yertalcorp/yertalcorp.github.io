@@ -46,18 +46,14 @@
 
 .tier-pitch {
     text-align: center;        /* Added for centering */
-    font-size: 11px;           /* Slightly smaller for density */
+    font-size: 12px;           /* Slightly smaller for density */
     font-style: italic;
     color: var(--text-muted-color, #888);
-    margin-bottom: 8px;        /* Controlled gap before pricing */
-    margin-top: 0;             /* Removed top margin to pull closer to title */
-    min-height: 25px;          /* Tightened from 30px */
     font-family: var(--nav-font), 'Inter', sans-serif; /* Brand-aligned secondary font */
-    line-height: 1.2;
 }
 
 .tier-pricing {
-    padding: 5px;
+    padding: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -395,10 +391,10 @@
     color: var(--branding-color);
     text-shadow: 0 0 10px var(--branding-color);
     font-size: 1.1rem;
-    margin-bottom: 2px;        /* Reduced from 5px to close gap */
     font-family: var(--branding-font), 'Orbitron', sans-serif; /* Brand-aligned font */
     text-transform: uppercase;
     letter-spacing: 1px;
+    padding-bottom: 5px;
 }
 
 .btn-metallic-center {
