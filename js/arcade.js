@@ -1398,8 +1398,8 @@ window.openArcadeSettings = () => {
             
             planBox.innerHTML = `
                 <div class="plan-box-inner">
-                    <div class="tier-identity-metallic">${(plan.identity || planId).toUpperCase()}</div>
-                    <div class="tier-pitch">"${plan.pitch}"</div>
+                    <div class="tier-identity-metallic">${(planId).toUpperCase()}</div>
+                    <div class="tier-pitch">${plan.pitch}</div>
                     
                     <div class="tier-pricing">
                         <div class="price-main">$${plan.cost}<small>/mo</small></div>
