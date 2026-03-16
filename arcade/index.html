@@ -19,7 +19,7 @@
 
     <main class="max-width-limit">
         <div id="currents-container">
-        </div>
+            </div>
     </main>
 
     <div id="main-drawer" class="glass-drawer">
@@ -55,13 +55,7 @@
 
                 <label>THEME</label>
                 <select id="set-arcade-theme" class="hud-input">
-                    <option value="neon-dark">NEON_DARK</option>
-                    <option value="silicon-light">SILICON_LIGHT</option>
-                    <option value="spring-bloom">SPRING_BLOOM</option>
-                    <option value="summer-solstice">SUMMER_SOLSTICE</option>
-                    <option value="autumn-ember">AUTUMN_EMBER</option>
-                    <option value="winter-frost">WINTER_FROST</option>
-                </select>
+                    </select>
             </div>
 
             <button class="ethereal-btn-sm" onclick="saveAllSettings()" style="width: 100%; margin-top: 20px;">
@@ -93,73 +87,32 @@
     
     <script type="module" src="/js/arcade.js"></script>
 
-    <div id="onboarding-hud" class="hud-overlay">
+    <div id="arcadesettings-hud" class="hud-overlay">
         <div class="hud-window glass-3d animate-slideUp">
+            
             <div class="hud-header">
-            </div>
+                </div>
             
             <div class="hud-body">
                 <div class="hud-onboarding-grid">
-                    <section class="hud-step">
-                        <label>ARCADE NAME <span style="color: var(--neon-color);">*</span></label>
-                        <input type="text" id="new-arcade-name" placeholder="e.g., Quantum Lab" class="hud-input">
-                        
-                        <label>SYSTEM SUBTITLE</label>
-                        <input type="text" id="new-arcade-subtitle" placeholder="Establish Your Arcade to Start Creating or Saving" class="hud-input">
+                    
+                    <section class="hud-step" id="arcade-profile-zone">
+                        </section>
 
-                        <label>INTERFACE THEME</label>
-                        <select id="arcade-theme-select" class="hud-input"></select>
+                    <section class="hud-step" id="plan-selection-zone">
+                        </section>
 
-                        <label>PRIVACY_PROTOCOL</label>
-                        <select id="arcade-privacy-select" class="hud-input">
-                            <option value="public" selected>PUBLIC</option>
-                            <option value="unlisted">UNLISTED</option>
-                            <option value="private">PRIVATE</option>
-                        </select>
-
-                        <label>LAB_IDENTITY_LOGO</label>
-                        <div class="logo-upload-wrapper" style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
-                            <button type="button" class="ethereal-btn-xs" onclick="document.getElementById('logo-browse-input').click()">BROWSE_FILES</button>
-                            <span id="logo-status-text" style="font-size: 9px; color: var(--text-secondary);">No file selected</span>
-                            <input type="file" id="logo-browse-input" accept="image/*" style="display: none;" onchange="updateLogoStatus(this)">
-                        </div>
-                    </section>
-
-                    <section class="hud-step">
-                        <label>SYSTEM_PLAN_SELECTION</label>
-                        <div class="plans-grid">
-                            <div class="plan-card active">
-                                <h3>FREE</h3>
-                                <ul></ul> 
-                                <p class="plan-price">$0</p>
-                                <input type="radio" name="arcade-plan" value="free" checked>
-                            </div>
-
-                            <div class="plan-card disabled-tier">
-                                <h3>PERSONAL</h3>
-                                <ul><li>Coming Soon</li></ul>
-                                <p class="plan-price">$15/mo</p>
-                                <input type="radio" name="arcade-plan" value="personal" disabled>
-                            </div>
-
-                            <div class="plan-card disabled-tier">
-                                <h3>BUSINESS</h3>
-                                <ul>
-                                    <li>Coming Soon</li>
-                                    <li>Custom Shop</li>
-                                </ul>
-                                <p class="plan-price">$50/mo</p>
-                                <input type="radio" name="arcade-plan" value="business" disabled>
-                            </div>
-                        </div>
-                    </section>
                 </div>
             </div>
 
             <div class="hud-footer">
-                <button id="submit-onboarding" class="ethereal-btn-sm" onclick="saveArcadeSettings()">ESTABLISH IDENTITY</button>
+                <button id="submit-onboarding" class="ethereal-btn-sm" onclick="saveArcadeSettings()">
+                    ESTABLISH IDENTITY
+                </button>
             </div>
+
         </div>
     </div>
+
 </body>
 </html>
