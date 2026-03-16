@@ -1302,7 +1302,7 @@ window.openArcadeSettings = () => {
     // 1. IDENTITY & STATE CHECK
     const activeUser = auth.currentUser;
     const profile = (window.pageOwnerData && window.pageOwnerData.profile) ? window.pageOwnerData.profile : {};
-    const isSetup = profile.setup_complete === true;
+    const isSetup = profile.hasOwnProperty('setup_complete') && profile.setup_complete === true;
 
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
@@ -1354,6 +1354,8 @@ window.openArcadeSettings = () => {
             const plan = allPlans[planId];
             const userCurrentPlan = profile.plan_type || 'free';
             const isActive = (planId === userCurrentPlan);
+            // --- DEBUG LOG ---
+            console.log(`[Plan Forge] ID: ${planId} | Identity: ${plan.identity} | Cost: ${plan.cost}`);
             
             // SECURITY: Enabled check + Logic to allow user to keep their current plan even if disabled globally
             const canSelect = (plan.enabled === true) || isActive;
