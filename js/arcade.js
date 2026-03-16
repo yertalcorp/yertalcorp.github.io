@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:45:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:20:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -683,7 +683,24 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
     }
 };
 
+/* * Task: Procedural logo generation fallback logic
+ */
+window.genLogo = (name, logoAsset) => {
+    // 1. If the logo exists in the profile, use it (Superuser Case)
+    if (logoAsset) {
+        return `<img src="${logoAsset}" alt="Brand Logo" style="height: 85%; width: auto; filter: none;">`;
+    }
 
+    // 2. Otherwise, generate initials from Display Name (Procedural Case)
+    const initials = name
+        .split(' ')
+        .map(word => word[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+
+    return `<span class="logo-initials" style="font-family: 'Orbitron', sans-serif; font-weight: 900; color: white; text-shadow: 0 0 5px var(--neon-color); font-size: 1.1rem;">${initials}</span>`;
+};
 function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
@@ -699,13 +716,17 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
+    // 1. Generate Logo Content
+    // If arcadeLogo exists, genLogo uses it. Else, it generates initials.
+    const logoContent = window.genLogo(brandName, arcadeLogo);
+    
     header.innerHTML = `
         <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; filter: brightness(1.2);">
             
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='/index.html'">
                     <div id="nav-logo" class="logo-container" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; flex: none; border: 1px solid var(--neon-color); border-radius: 4px; background: rgba(0,0,0,0.3); overflow: hidden;">
-                        <img src="${arcadeLogo}" alt="${brandName}" style="height: 90%; width: auto; filter: none;">
+                        ${logoContent}
                     </div>
                     <h1 class="metallic-text" style="font-size: 1rem; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1;">
                         <span style="color: white;">${brandName}</span>
