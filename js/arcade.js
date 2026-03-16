@@ -3,7 +3,7 @@ import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 import { ENV } from '/config/env.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:42:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:13:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1544,31 +1544,28 @@ window.saveArcadeSettings = async () => {
         if (typeof applyTheme === 'function') applyTheme(themeSelect.value);
         document.getElementById('arcadesettings-hud').classList.remove('active');
 
-        // --- START RELOAD SECTION ---
+        // --- START WINDOW RELOAD SECTION ---
+
+        // 1. Get the slug from the URL
         const urlParams = new URLSearchParams(window.location.search);
         const urlSlug = urlParams.get('user');
-        const userSlug = window.pageOwnerData?.profile?.slug;
 
-        console.log(`[Identity Gate] URL Slug: ${urlSlug} | User Slug: ${userSlug}`);
+        // 2. FETCH THE ACTUAL SLUG FROM FIREBASE
+        // We go directly to the source of truth for the active user
+        const slugSnapshot = await window.get(window.ref(window.db, `${profilePath}/slug`));
+        const activeUserSlug = slugSnapshot.exists() ? slugSnapshot.val() : null;
 
-        if (urlSlug === userSlug) {
-            // New owner on home page OR existing owner changing settings
-            console.log("[SYSTEM] Owner detected. Reloading for Profile Sync...");
+        console.log(`[Identity Gate] URL Slug: ${urlSlug} | Database User Slug: ${activeUserSlug}`);
+
+        // 3. Compare and Navigate
+        if (urlSlug && activeUserSlug && urlSlug === activeUserSlug) {
+            console.log("[SYSTEM] Ownership Verified via Database. Reloading...");
             window.location.reload();
         } else {
-            // New user forging a spark on a guest page
-            console.log("[SYSTEM] Guest setup complete. Suppression of reload to maintain view.");
-            
-            if (window.pageOwnerData) {
-                window.isVisitorSetup = true; 
-            }
-            
-            alert("Your Arcade has been established! You can continue exploring here, or click Home to see your new laboratory.");
+            console.log("[SYSTEM] Guest Mode: Reload suppressed.");
+            if (window.pageOwnerData) window.isVisitorSetup = true;
+            alert("Your Arcade has been established! Click 'Home' to see your new laboratory.");
         }
-
-        console.log("IDENTITY_SYNC_COMPLETE: Laboratory properties updated.");
-        console.log("[SYSTEM] SYNC COMPLETE. Identity Forged for:", activeUser.uid);
-        console.log("[SYSTEM] CURRENT URL:", window.location.href);
         // --- END WINDOW RELOAD SECTION ---
 
     } catch (error) {
