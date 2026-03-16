@@ -45,40 +45,48 @@
 }
 
 .tier-pitch {
-    text-align: center;        /* Added for centering */
-    font-size: 12px;           /* Slightly smaller for density */
+    font-family: var(--nav-font), 'Inter', sans-serif;
+    text-align: center;
+    font-size: 11px;
     font-style: italic;
     color: var(--text-muted-color, #888);
-    font-family: var(--nav-font), 'Inter', sans-serif; /* Brand-aligned secondary font */
+    /* THE FIX: Reduce line-height and remove large min-height */
+    line-height: 1.1; 
+    min-height: auto; 
+    margin-top: 0;
+    margin-bottom: 8px; /* Controlled gap before the pricing section */
+    display: block;
 }
 
 .tier-pricing {
-    padding: 10px;
-    gap: 5px;
-    margin-top: 5px;
-    margin-bottom: 5px;
-    align-items:center;
-    text-align: center;
-    justify-items: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;             /* Added: Enables flex layout */
+    flex-direction: column;    /* Added: Stacks main price and annual price */
+    align-items: center;       /* Added: Centers children horizontally */
+    justify-content: center;   /* Added: Centers children vertically */
+    margin-bottom: 5px;        /* Existing */
+    border-top: 1px solid rgba(255, 255, 255, 0.05);    /* Existing */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Existing */
 }
 
 .price-main {
-    font-size: 11px;
-    font-weight: 900;
-    color: #fff;
+    text-align: center;        /* Ensures text inside the block is centered */
+    font-size: 1.2rem;         /* Adjusted for better visibility */
+    font-weight: 900;          /* Existing */
+    color: #fff;               /* Existing */
 }
 
 .price-main small {
     font-size: 10px;
     opacity: 0.6;
+    gap: 5px;
 }
 
 .price-annual {
-    font-size: 11px;
-    color: var(--neon-color);
-    opacity: 0.7;
+    text-align: center;        /* Ensures the annual price subtitle is centered */
+    font-size: 9px;            /* Existing */
+    color: var(--neon-color);  /* Existing */
+    opacity: 0.7;              /* Existing */
+    margin-top: 2px;           /* Existing */
 }
 
 .metallic-divider {
