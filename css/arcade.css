@@ -28,13 +28,13 @@
     margin-bottom: 4px;
     text-transform: uppercase;
     opacity: 0.9;
-    text-shadow: 0 0 5px rgba(0, 242, 255, 0.3);
+    text-shadow: 0 0 5px var(--branding-glow);
 }
 
 .logo-upload-wrapper {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--branding-rgb, 255, 255, 255), 0.03);
     padding: 10px;
-    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border: 1px dashed var(--text-muted-color);
     border-radius: 4px;
 }
 
@@ -64,15 +64,15 @@
     align-items: center;       /* Added: Centers children horizontally */
     justify-content: center;   /* Added: Centers children vertically */
     margin-bottom: 5px;        /* Existing */
-    border-top: 1px solid rgba(255, 255, 255, 0.05);    /* Existing */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Existing */
+    border-top: 1px solid var(--text-muted-color);    /* Updated for visibility */
+    border-bottom: 1px solid var(--text-muted-color); /* Updated for visibility */
 }
 
 .price-main {
     text-align: center;        /* Ensures text inside the block is centered */
     font-size: 1.2rem;         /* Adjusted for better visibility */
     font-weight: 900;          /* Existing */
-    color: #fff;               /* Existing */
+    color: var(--text-main-color); /* Theme Aware */
 }
 
 .price-main small {
@@ -84,7 +84,7 @@
 .price-annual {
     text-align: center;        /* Ensures the annual price subtitle is centered */
     font-size: 9px;            /* Existing */
-    color: var(--neon-color);  /* Existing */
+    color: var(--branding-color);  /* Theme Aware */
     opacity: 0.7;              /* Existing */
     margin-top: 2px;           /* Existing */
 }
@@ -92,7 +92,7 @@
 .metallic-divider {
     border: none;
     height: 1px;
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+    background: linear-gradient(to right, transparent, var(--text-muted-color), transparent);
     margin: 10px 0;
 }
 
@@ -109,13 +109,14 @@
     align-items: center;
     gap: 10px;
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-main-color);
     margin-bottom: 6px;
 }
 
 .tier-specs-list li i {
     width: 12px;
     font-size: 10px;
+    color: var(--branding-color);
 }
 
 /* --- SELECTION DOCK --- */
@@ -123,7 +124,7 @@
     margin-top: auto;
     padding-bottom: 5px;
     padding-top: 5px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--text-muted-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -135,13 +136,14 @@
     font-size: 10px;
     font-weight: 900;
     cursor: pointer;
+    color: var(--text-main-color);
 }
 
 /* --- EXTRA UI BUTTON --- */
 .ethereal-btn-xs {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
+    border: 1px solid var(--branding-color);
+    color: var(--branding-color);
     padding: 4px 10px;
     font-size: 8px;
     font-family: 'Orbitron', sans-serif;
@@ -150,8 +152,8 @@
 }
 
 .ethereal-btn-xs:hover {
-    border-color: var(--neon-color);
-    box-shadow: 0 0 10px var(--neon-color);
+    border-color: var(--branding-color);
+    box-shadow: 0 0 10px var(--branding-glow);
 }
 #lab-body {
     background-color: var(--bg-color);
@@ -224,7 +226,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid var(--text-muted-color);
     padding-bottom: 1rem;
 }
 
@@ -261,7 +263,7 @@
     font-weight: 900;
     text-align: center;
     letter-spacing: 2px;
-    background: linear-gradient(to bottom, #ffffff 20%, var(--branding-color) 50%, #888888 80%);
+    background: linear-gradient(to bottom, var(--text-main-color) 20%, var(--branding-color) 50%, var(--text-muted-color) 80%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 5px var(--branding-glow));
@@ -381,10 +383,10 @@
 
 .plan-card {
     /* Use a semi-transparent version of the theme's text or border color */
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border: 1px solid var(--text-muted-color);
     border-radius: 12px;
     padding: 0.8rem;
-    background: var(--card-bg, rgba(255, 255, 255, 0.03));
+    background: var(--card-bg);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -392,8 +394,8 @@
     transition: all 0.3s ease;
 }
 .plan-card-rounded {
-    background: rgba(15, 15, 15, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--card-bg);
+    border: 1px solid var(--text-muted-color);
     border-radius: 20px;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -403,7 +405,7 @@
     justify-content: center;    /* Added */
     text-align: center;
     color: var(--branding-color);
-    text-shadow: 0 0 10px var(--branding-color);
+    text-shadow: 0 0 10px var(--branding-glow);
     font-size: 1.1rem;
     font-family: var(--branding-font), 'Orbitron', sans-serif; /* Brand-aligned font */
     text-transform: uppercase;
@@ -416,12 +418,12 @@
     margin: 20px auto; /* Centers the button */
     padding: 12px 40px;
     border-radius: 30px;
-    background: linear-gradient(145deg, #222, #000);
+    background: var(--btn-gradient);
     border: 1px solid var(--branding-color);
-    color: var(--branding-color);
+    color: #fff;
     text-transform: uppercase;
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(var(--branding-rgb), 0.2);
+    box-shadow: 0 0 10px var(--branding-glow);
 }
 
 .tier-locked {
@@ -430,19 +432,19 @@
 }
 
 .text-glow-green { color: #00ff88; filter: drop-shadow(0 0 5px #00ff88); }
-.text-dim { color: #555; }
+.text-dim { color: var(--text-muted-color); }
 /* Active State: Driven by the theme's accent/neon color */
 .plan-card.active {
-    border-color: var(--neon-color);
-    background: var(--accent-faint, rgba(0, 242, 255, 0.05));
-    box-shadow: 0 0 15px var(--accent-glow, rgba(0, 242, 255, 0.1));
+    border-color: var(--branding-color);
+    background: var(--card-bg);
+    box-shadow: 0 0 15px var(--branding-glow);
 }
 
 .plan-card h3 {
     font-size: 10px;
     letter-spacing: 1px;
     margin-bottom: 10px;
-    color: var(--neon-color); /* The primary accent color */
+    color: var(--branding-color); /* The primary accent color */
     text-transform: uppercase;
 }
 
@@ -452,7 +454,7 @@
     margin: 0 0 1.5rem 0;
     font-size: 9px;
     text-align: left;
-    color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+    color: var(--text-main-color);
     width: 100%;
 }
 
@@ -466,12 +468,12 @@
     font-size: 11px;
     margin-top: auto;
     margin-bottom: 12px;
-    color: var(--text-main, #fff);
+    color: var(--text-main-color);
 }
 
 .plan-card input[type="radio"] {
     cursor: pointer;
-    accent-color: var(--neon-color);
+    accent-color: var(--branding-color);
     transform: scale(1.2);
 }
 
@@ -497,12 +499,12 @@
 nav {
     display: grid;
     /* Force the branding column to shrink-wrap its content */
-    grid-template-columns: **max-content** 1fr auto; 
+    grid-template-columns: max-content 1fr auto; 
     align-items: center;
     padding: 0 1.5rem;
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--bg-color);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--text-muted-color);
     height: 60px;
 }
 
@@ -554,7 +556,7 @@ main.max-width-limit {
     margin-top: 0.5rem;
     margin-bottom: 1.5rem; /* Large gap between different currents */
     width: 100%;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid var(--text-muted-color);
     padding-top: 0.75rem;
 }
 
@@ -567,7 +569,7 @@ main.max-width-limit {
 .current-block label {
     font-size: 13px ;
     font-weight: 900 ;
-    color: #ffffff ;
+    color: var(--text-main-color) ;
     opacity: 1 ;
     letter-spacing: 0.15em;
 }
@@ -583,14 +585,14 @@ header {
 .status-bar {
     margin-top: 0;
     padding: 0.1rem 1.5rem;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(var(--branding-rgb), 0.02);
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--text-muted-color);
 }
 /* Metallic Sheen for Nav Title */
 #nav-hero-central h1 {
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    text-shadow: 0 0 10px var(--branding-glow);
     letter-spacing: -0.05em;
 }
 /* Add this to give the text that bright, metallic hardware look */
@@ -600,13 +602,13 @@ header {
     text-transform: uppercase;
     letter-spacing: 0.2em;
     font-size: 11px;
-    color: #ffffff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 2px var(--neon-color);
+    color: var(--text-main-color);
+    text-shadow: 0 0 10px var(--branding-glow);
     filter: brightness(1.5);
 }
 /* Status Dot pulse */
 .status-dot {
-    box-shadow: 0 0 8px var(--neon-color);
+    box-shadow: 0 0 8px var(--branding-color);
 }
 
 .metallic-text {
@@ -615,8 +617,8 @@ header {
     /* Reduced letter spacing for maximum density */
     letter-spacing: 0.12em; 
     font-size: 10px;
-    color: #ffffff;
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 3px var(--neon-color);
+    color: var(--text-main-color);
+    text-shadow: 0 0 12px var(--branding-glow);
     filter: brightness(1.8) contrast(1.3);
     white-space: nowrap;
 }
@@ -627,10 +629,10 @@ header {
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: white;
+    color: var(--text-main-color);
     margin-bottom: 0.25rem;
     /* Decorative Gradient Text */
-    background: linear-gradient(to right, #fff, rgba(255,255,255,0.3));
+    background: linear-gradient(to right, var(--text-main-color), var(--text-muted-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -646,13 +648,13 @@ header {
 /* High-Density Current Headings */
 .current-title {
     text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
-    filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));
+    filter: drop-shadow(0 0 5px var(--branding-glow));
 }
 
 /* Generate Button: Metallic Glow */
 .generate-btn {
-    box-shadow: 0 0 15px var(--neon-color);
-    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 0 15px var(--branding-color);
+    border: 1px solid var(--text-muted-color);
     position: relative;
     overflow: hidden;
 }
@@ -664,7 +666,7 @@ header {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+    background: linear-gradient(45deg, transparent, rgba(var(--branding-rgb),0.3), transparent);
     transform: rotate(45deg);
     transition: 0.5s;
 }
@@ -675,7 +677,7 @@ header {
 /* New Sub-style for "Based on Type" */
 .current-type-label {
     font-size: 0.75rem;
-    color: var(--neon-color);
+    color: var(--branding-color);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     opacity: 0.7;
@@ -695,8 +697,8 @@ header {
 /* --- SURREAL 3D SPARK BOXES --- */
 
 .action-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--card-bg);
+    border: 1px solid var(--text-muted-color);
     border-radius: 12px;
     padding: 1.5rem; /* Internal padding from border */
     position: relative;
@@ -709,12 +711,12 @@ header {
 
 /* Hover & 3D Boundary */
 .action-card:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: var(--neon-color);
+    background: var(--card-bg);
+    border-color: var(--branding-color);
     transform: translateY(-10px) rotateX(2deg) rotateY(-2deg);
     box-shadow: 
         0 20px 40px rgba(0, 0, 0, 0.6),
-        0 0 20px rgba(0, 242, 255, 0.1);
+        0 0 20px var(--branding-glow);
     animation: spark-pulse 2s infinite ease-in-out;
 }
 
@@ -728,7 +730,7 @@ header {
 /* Ensure the title stays sharp during the 3D shift */
 .action-card:hover .metallic-text {
     filter: brightness(2);
-    text-shadow: 0 0 15px var(--neon-color);
+    text-shadow: 0 0 15px var(--branding-glow);
 }
 /* --- COMPONENTS & STATS --- */
 
@@ -736,7 +738,7 @@ header {
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--text-muted-color);
 }
 
 .card-stats-row {
@@ -752,11 +754,11 @@ header {
 button#auth-trigger, 
 .current-block button {
     padding: 12px 36px ;
-    background: var(--neon-color) ;
-    color: black ;
+    background: var(--btn-gradient) ;
+    color: #fff ;
     font-weight: 900 ;
     border: none ;
-    box-shadow: 0 0 20px var(--neon-color);
+    box-shadow: 0 0 20px var(--branding-glow);
     border-radius: 8px;
     text-transform: uppercase;
     font-size: 11px;
@@ -764,27 +766,27 @@ button#auth-trigger,
     transition: all 0.3s ease;
 }
 .current-block button:hover {
-    box-shadow: 0 0 35px var(--neon-color);
+    box-shadow: 0 0 35px var(--branding-glow);
     transform: translateY(-1px);
 }
 .current-block input {
     font-size: 16px ;
-    color: #ffffff ;
+    color: var(--text-main-color) ;
     background: transparent ;
-    text-shadow: 0 0 8px rgba(255,255,255,0.2);
+    text-shadow: 0 0 8px var(--branding-glow);
     font-weight: 500;
 }
 
 .current-block input::placeholder {
-    color: rgba(255, 255, 255, 0.5) ;
+    color: var(--text-muted-color) ;
     font-style: italic;
 }
 .current-block input:focus {
-    border-bottom: 1px solid var(--neon-color);
+    border-bottom: 1px solid var(--branding-color);
 }
 button:hover {
     filter: brightness(1.2);
-    box-shadow: 0 0 25px rgba(0, 242, 255, 0.5);
+    box-shadow: 0 0 25px var(--branding-glow);
 }
 
 .spark-button {
@@ -795,37 +797,37 @@ button:hover {
 }
 
 .spark-button:hover {
-    background: #fff ;
-    color: black ;
-    box-shadow: 0 0 20px var(--neon-color) ;
+    background: var(--text-main-color) ;
+    color: var(--bg-color) ;
+    box-shadow: 0 0 20px var(--branding-color) ;
     animation: spark-pulse 1.5s infinite;
 }
 
 @keyframes spark-pulse {
-    0% { box-shadow: 0 0 10px var(--neon-color); }
-    50% { box-shadow: 0 0 25px var(--neon-color); }
-    100% { box-shadow: 0 0 10px var(--neon-color); }
+    0% { box-shadow: 0 0 10px var(--branding-color); }
+    50% { box-shadow: 0 0 25px var(--branding-color); }
+    100% { box-shadow: 0 0 10px var(--branding-color); }
 }
 /* Ethereal large button for Hero sections */
 .ethereal-btn {
     position: relative;
     background: transparent;
-    border: 1px solid var(--neon-color);
-    color: var(--neon-color);
+    border: 1px solid var(--branding-color);
+    color: var(--branding-color);
     padding: 1.5rem 4rem;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--branding-font);
     font-weight: 900;
     letter-spacing: 5px;
     cursor: pointer;
     overflow: hidden;
     transition: all 0.5s ease;
-    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+    box-shadow: 0 0 20px var(--branding-glow);
 }
 
 .ethereal-btn:hover {
-    background: var(--neon-color);
-    color: #000;
-    box-shadow: 0 0 50px var(--neon-color);
+    background: var(--branding-color);
+    color: var(--bg-color);
+    box-shadow: 0 0 50px var(--branding-glow);
     transform: translateY(-5px);
 }
 
@@ -858,7 +860,7 @@ button:hover {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(0,242,255,0.4) 0%, transparent 70%);
+    background: radial-gradient(circle, var(--branding-glow) 0%, transparent 70%);
     animation: rotateGlow 10s linear infinite;
     pointer-events: none;
 }
@@ -874,7 +876,7 @@ button:hover {
     top: 0; left: 0; 
     width: 100%; 
     height: 100%;
-    background: rgba(0, 8, 15, 0.98); 
+    background: var(--bg-color); 
     backdrop-filter: blur(25px); /* Increased blur to hide background artifacts */
     -webkit-backdrop-filter: blur(25px);
     display: none; 
@@ -910,7 +912,7 @@ button:hover {
     right: 20px;
     background: transparent;
     border: none;
-    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+    color: var(--text-muted-color);
     font-size: 28px;
     line-height: 1;
     cursor: pointer;
@@ -918,7 +920,7 @@ button:hover {
     z-index: 100;
 }
 .close-hud-corner:hover {
-    color: var(--neon-color, #00f2ff);
+    color: var(--branding-color);
     transform: scale(1.1);
 }
 /* 3. Check the Animation */
@@ -937,37 +939,37 @@ button:hover {
 }
 
 .cat-btn {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: white; padding: 10px;
+    background: rgba(var(--branding-rgb),0.05);
+    border: 1px solid var(--text-muted-color);
+    color: var(--text-main-color); padding: 10px;
     font-size: 10px; cursor: pointer;
     font-family: 'Orbitron', sans-serif;
     transition: all 0.3s;
 }
 
 .cat-btn.selected {
-    border-color: var(--neon-color);
-    background: rgba(0, 242, 255, 0.1);
-    box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+    border-color: var(--branding-color);
+    background: var(--card-bg);
+    box-shadow: 0 0 15px var(--branding-glow);
 }
 
 .hud-input {
-    width: 100%; background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 10px; color: white; 
+    width: 100%; background: var(--bg-color);
+    border: 1px solid var(--text-muted-color);
+    padding: 10px; color: var(--text-main-color); 
     margin-bottom: 5px;
     font-family: 'Inter', sans-serif;
 }
 .btn-pulse {
-    background: var(--neon-color) !important;
-    color: black !important;
-    box-shadow: 0 0 15px var(--neon-color);
+    background: var(--branding-color) !important;
+    color: var(--bg-color) !important;
+    box-shadow: 0 0 15px var(--branding-color);
     animation: neon-flicker 2s infinite alternate;
 }
 
 @keyframes neon-flicker {
-    0% { box-shadow: 0 0 5px var(--neon-color); }
-    100% { box-shadow: 0 0 20px var(--neon-color); }
+    0% { box-shadow: 0 0 5px var(--branding-color); }
+    100% { box-shadow: 0 0 20px var(--branding-color); }
 }
 
 .logic-metadata {
@@ -979,35 +981,34 @@ button:hover {
 .tag {
     font-size: 9px;
     padding: 3px 8px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(0,242,255,0.2);
-    color: var(--neon-color);
+    background: var(--card-bg);
+    border: 1px solid var(--branding-color);
+    color: var(--branding-color);
     font-family: 'Orbitron', sans-serif;
 }
 .logic-display {
-    border: 1px solid var(--neon-color);
-    background: #000;
-    border: 1px solid var(--neon-color);
+    border: 1px solid var(--branding-color);
+    background: var(--bg-color);
     padding: 2rem;
     font-family: 'monospace';
-    color: #fff;
-    box-shadow: inset 0 0 30px rgba(0, 242, 255, 0.1), 0 0 15px rgba(0, 242, 255, 0.05);
+    color: var(--text-main-color);
+    box-shadow: inset 0 0 30px var(--branding-glow);
 }
 
 .terminal-code {
-    background: rgba(0, 242, 255, 0.05);
+    background: var(--card-bg);
     padding: 1.5rem;
     border-radius: 4px;
-    color: var(--neon-color);
+    color: var(--branding-color);
     font-size: 1.2rem;
     overflow-x: auto;
-    border-left: 3px solid var(--neon-color);
-    text-shadow: 0 0 5px rgba(0, 242, 255, 0.5);
+    border-left: 3px solid var(--branding-color);
+    text-shadow: 0 0 5px var(--branding-glow);
 }
 
 .terminal-btn {
-    background: var(--neon-color);
-    color: #000;
+    background: var(--branding-color);
+    color: var(--bg-color);
     border: none;
     padding: 5px 15px;
     font-family: 'Orbitron', sans-serif;
@@ -1017,8 +1018,8 @@ button:hover {
     cursor: pointer;
 }
 .terminal-btn:hover {
-    background: #fff;
-    box-shadow: 0 0 20px #fff;
+    background: var(--text-main-color);
+    box-shadow: 0 0 20px var(--branding-glow);
     transform: translateY(-2px);
 }
 /* --- UTILITIES --- */
@@ -1026,7 +1027,7 @@ button:hover {
 .share-hud-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: var(--bg-color);
     backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
@@ -1036,12 +1037,12 @@ button:hover {
 }
 
 .share-hud-content {
-    background: #111;
+    background: var(--card-bg);
     padding: 30px;
-    border: 1px solid var(--neon-color);
+    border: 1px solid var(--branding-color);
     border-radius: 15px;
     text-align: center;
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 30px var(--branding-glow);
     min-width: 300px;
 }
 
@@ -1053,7 +1054,7 @@ button:hover {
 }
 
 .share-grid a, .copy-link-btn {
-    color: #f3e5ab;
+    color: var(--text-main-color);
     font-size: 24px;
     transition: all 0.3s ease;
     background: none;
@@ -1063,15 +1064,15 @@ button:hover {
 }
 
 .share-grid a:hover, .copy-link-btn:hover {
-    color: var(--neon-color);
+    color: var(--branding-color);
     transform: scale(1.2);
-    filter: drop-shadow(0 0 8px var(--neon-color));
+    filter: drop-shadow(0 0 8px var(--branding-glow));
 }
 
 .close-hud {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
+    background: var(--card-bg);
+    border: 1px solid var(--text-muted-color);
+    color: var(--text-main-color);
     padding: 8px 20px;
     border-radius: 5px;
     cursor: pointer;
