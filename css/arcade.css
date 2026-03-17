@@ -28,13 +28,13 @@
     margin-bottom: 4px;
     text-transform: uppercase;
     opacity: 0.9;
-    text-shadow: 0 0 5px rgba(0, 242, 255, 0.3);
+    text-shadow: 0 0 5px var(--text-shadow-color);
 }
 
 .logo-upload-wrapper {
     background: rgba(255, 255, 255, 0.03);
     padding: 10px;
-    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border: 1px dashed var(--border-color);
     border-radius: 4px;
 }
 
@@ -64,8 +64,8 @@
     align-items: center;       /* Added: Centers children horizontally */
     justify-content: center;   /* Added: Centers children vertically */
     margin-bottom: 5px;        /* Existing */
-    border-top: 1px solid rgba(255, 255, 255, 0.05);    /* Existing */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Existing */
+    border-top: 1px solid var(--border-color);    /* Existing */
+    border-bottom: 1px solid var(--border-color); /* Existing */
 }
 
 .price-main {
