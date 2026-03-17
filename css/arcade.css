@@ -378,9 +378,7 @@
     gap: 5px;
     margin-top: 0.2rem;
 }
-
 .plan-card {
-    /* Use a semi-transparent version of the theme's text or border color */
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     border-radius: 12px;
     padding: 0.8rem;
@@ -391,53 +389,19 @@
     text-align: center;
     transition: all 0.3s ease;
 }
+
 .plan-card-rounded {
-    background: var(--card-bg,rgba(15, 15, 15, 0.8));
+    background: var(--card-bg, rgba(15, 15, 15, 0.8));
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     border-radius: 20px;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.tier-identity-metallic {
-    display: flex;             /* Added to ensure centering logic */
-    align-items: center;       /* Added */
-    justify-content: center;    /* Added */
-    text-align: center;
-    color: var(--branding-color);
-    text-shadow: 0 0 10px var(--branding-color);
-    font-size: 1.1rem;
-    font-family: var(--branding-font), 'Orbitron', sans-serif; /* Brand-aligned font */
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding-bottom: 5px;
-}
 
-.btn-metallic-center {
-    display: block;
-    margin: 20px auto; /* Centers the button */
-    padding: 12px 40px;
-    border-radius: 30px;
-    background: linear-gradient(145deg, #222, #000);
-    border: 1px solid var(--branding-color);
-    color: var(--branding-color);
-    text-transform: uppercase;
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(var(--box-shadow-color));
-}
-
-.tier-locked {
-    filter: grayscale(1) opacity(0.4);
-    cursor: not-allowed !important;
-}
-
-.text-glow-green { color: #00ff88; filter: drop-shadow(0 0 5px #00ff88); }
-.text-dim { color: #555; }
-/* Active State: Driven by the theme's accent/neon color */
 .plan-card.active {
     border-color: var(--glow-color);
-    background: var(--accent-faint, rgba(0, 242, 255, 0.05));
+    background: var(--card-glow-color, rgba(0, 242, 255, 0.05));
     box-shadow: 0 0 15px var(--box-shadow-color, rgba(0, 242, 255, 0.1));
 }
-
 .plan-card h3 {
     font-size: 10px;
     letter-spacing: 1px;
@@ -475,12 +439,48 @@
     transform: scale(1.2);
 }
 
+.tier-identity-metallic {
+    display: flex;             /* Added to ensure centering logic */
+    align-items: center;       /* Added */
+    justify-content: center;    /* Added */
+    text-align: center;
+    color: var(--branding-color);
+    text-shadow: 0 0 10px var(--branding-color);
+    font-size: 1.1rem;
+    font-family: var(--branding-font), 'Orbitron', sans-serif; /* Brand-aligned font */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 5px;
+}
+
+.btn-metallic-center {
+    display: block;
+    margin: 20px auto; /* Centers the button */
+    padding: 12px 40px;
+    border-radius: 30px;
+    background: linear-gradient(145deg, #222, #000);
+    border: 1px solid var(--branding-color);
+    color: var(--branding-color);
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(var(--box-shadow-color));
+}
+
+.tier-locked {
+    filter: grayscale(1) opacity(0.4);
+    cursor: not-allowed !important;
+}
+
+
 .disabled-tier {
     opacity: 0.4;
     filter: grayscale(1);
     cursor: not-allowed;
     border-style: dashed;
 }
+.text-glow-green { color: #00ff88; filter: drop-shadow(0 0 5px #00ff88); }
+.text-dim { color: #555; }
+
 /* --- Trigger Icon --- */
 #system-menu-trigger {
     cursor: pointer;
@@ -953,17 +953,11 @@ button:hover {
 
 .hud-input {
     width: 100%;
-    background: rgba(0, 0, 0, 0.3); /* Keep this dark for the HUD look */
+    background: color-mix(in srgb, var(--branding-color), transparent 90%);
     border: 1px solid var(--border-color);
     padding: 10px;
     margin-bottom: 5px;
     font-family: 'Inter', sans-serif;
-    
-    /* Mix 80% white with 20% of your branding color for a tinted light look */
-    color: color-mix(in srgb, var(--branding-color), white 80%);
-    
-    /* Fallback for older browsers */
-    /* color: #ffffff; */
 }
 /* Add focus state to make it look active */
 .hud-input:focus {
