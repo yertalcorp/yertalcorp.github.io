@@ -28,7 +28,8 @@
     margin-bottom: 4px;
     text-transform: uppercase;
     opacity: 0.9;
-    text-shadow: 0 0 5px var(--text-shadow-color);
+    text-shadow: -0.5px -0.5px 0px rgba(255,255,255,0.3), 
+                  1px 1px 3px var(--text-shadow-color);
 }
 
 .logo-upload-wrapper {
