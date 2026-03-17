@@ -480,7 +480,7 @@ async function refreshUI() {
         
         // The global user is the logged in user
         // ownerUID is the user who owns the page
-        
+
         console.table({
             "Page Owner Slug": pageOwnerSlug,
             "Page Owner UID": ownerUid || "NOT_FOUND",
