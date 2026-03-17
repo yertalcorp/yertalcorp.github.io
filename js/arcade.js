@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:35:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:55:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1438,7 +1438,10 @@ window.openArcadeSettings = () => {
                     <div class="tier-pitch">${plan.pitch}</div>
                     
                     <div class="tier-pricing">
-                        <div class="price-main">$${plan.cost}<small>/mo </small> $${plan.cost * 10}<small>/yr</small></div>
+                        <div class="price-main">
+                            $${plan.cost}<small>/mo</small> 
+                                <span class="price-annual" style="margin-left: 15px;">$${plan.cost * 10}<small>/yr</small></span>
+                        </div>                    
                     </div>
 
                     <ul class="tier-specs-list">
