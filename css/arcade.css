@@ -1,8 +1,8 @@
 /* --- SYSTEM FOUNDATION --- */
 
 :root {
-    --neon-color: var(--branding-color, #00f2ff);
-    --nav-font: var(--text-main-font, 'Inter', sans-serif);
+    --neon-color: #00f2ff;
+    --nav-font: 'Inter', sans-serif;
 }
 
 /* --- DYNAMIC HUD LAYOUT --- */
@@ -21,20 +21,20 @@
 
 /* --- LABELS & FORM ELEMENTS --- */
 .hud-label-metallic {
-    font-family: var(--branding-font, 'Orbitron', sans-serif);
+    font-family: 'Orbitron', sans-serif;
     font-size: 9px;
     letter-spacing: 2px;
-    color: var(--branding-color);
+    color: var(--branding-color, #00f2ff);
     margin-bottom: 4px;
     text-transform: uppercase;
     opacity: 0.9;
-    text-shadow: var(--branding-glow);
+    text-shadow: 0 0 5px rgba(0, 242, 255, 0.3);
 }
 
 .logo-upload-wrapper {
     background: rgba(255, 255, 255, 0.03);
     padding: 10px;
-    border: 1px dashed var(--text-muted-color);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
     border-radius: 4px;
 }
 
@@ -45,11 +45,11 @@
 }
 
 .tier-pitch {
-    font-family: var(--nav-font);
+    font-family: var(--nav-font), 'Inter', sans-serif;
     text-align: center;
     font-size: 11px;
     font-style: italic;
-    color: var(--text-muted-color);
+    color: var(--text-muted-color, #888);
     /* THE FIX: Reduce line-height and remove large min-height */
     line-height: 1.1; 
     min-height: auto; 
@@ -64,16 +64,15 @@
     align-items: center;       /* Added: Centers children horizontally */
     justify-content: center;   /* Added: Centers children vertically */
     margin-bottom: 5px;        /* Existing */
-    border-top: 1px solid var(--text-muted-color);    /* Themed */
-    border-bottom: 1px solid var(--text-muted-color); /* Themed */
-    opacity: 0.8;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);    /* Existing */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Existing */
 }
 
 .price-main {
     text-align: center;        /* Ensures text inside the block is centered */
     font-size: 1.2rem;         /* Adjusted for better visibility */
     font-weight: 900;          /* Existing */
-    color: var(--text-main-color);               /* Themed */
+    color: #fff;               /* Existing */
 }
 
 .price-main small {
@@ -85,7 +84,7 @@
 .price-annual {
     text-align: center;        /* Ensures the annual price subtitle is centered */
     font-size: 9px;            /* Existing */
-    color: var(--branding-color);  /* Themed */
+    color: var(--neon-color);  /* Existing */
     opacity: 0.7;              /* Existing */
     margin-top: 2px;           /* Existing */
 }
@@ -93,7 +92,7 @@
 .metallic-divider {
     border: none;
     height: 1px;
-    background: linear-gradient(to right, transparent, var(--text-muted-color), transparent);
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
     margin: 10px 0;
 }
 
@@ -110,15 +109,13 @@
     align-items: center;
     gap: 10px;
     font-size: 10px;
-    color: var(--text-main-color);
-    opacity: 0.8;
+    color: rgba(255, 255, 255, 0.8);
     margin-bottom: 6px;
 }
 
 .tier-specs-list li i {
     width: 12px;
     font-size: 10px;
-    color: var(--branding-color);
 }
 
 /* --- SELECTION DOCK --- */
@@ -126,7 +123,7 @@
     margin-top: auto;
     padding-bottom: 5px;
     padding-top: 5px;
-    border-top: 1px solid var(--text-muted-color);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -134,30 +131,28 @@
 }
 
 .plan-radio-dock label {
-    font-family: var(--branding-font);
+    font-family: 'Orbitron', sans-serif;
     font-size: 10px;
     font-weight: 900;
-    color: var(--text-main-color);
     cursor: pointer;
 }
 
 /* --- EXTRA UI BUTTON --- */
 .ethereal-btn-xs {
     background: transparent;
-    border: 1px solid var(--text-muted-color);
-    color: var(--text-main-color);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
     padding: 4px 10px;
     font-size: 8px;
-    font-family: var(--branding-font);
+    font-family: 'Orbitron', sans-serif;
     cursor: pointer;
     transition: 0.2s;
 }
 
 .ethereal-btn-xs:hover {
-    border-color: var(--branding-color);
-    box-shadow: var(--branding-glow);
+    border-color: var(--neon-color);
+    box-shadow: 0 0 10px var(--neon-color);
 }
-
 #lab-body {
     background-color: var(--bg-color);
     color: var(--text-main-color);
@@ -188,10 +183,9 @@
 .glass-3d {
     background: var(--card-bg);
     border: 1px solid var(--branding-color);
-    box-shadow: 0 8px 32px rgba(0,0,0, var(--shadow-intensity));
+    box-shadow: 0 8px 32px var(--shadow-intensity);
     backdrop-filter: blur(var(--glass-blur, 10px));
 }
-
 /* --- System Drawer Styles --- */
 .glass-drawer {
     position: fixed;
@@ -199,7 +193,7 @@
     top: 0;
     width: 350px;
     height: 100vh;
-    background: var(--card-bg); /* Uses dynamic theme color */
+    background: var(--card-bg); /* Uses your dynamic theme color */
     backdrop-filter: blur(25px);
     border-left: 1px solid var(--branding-color);
     transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
@@ -212,7 +206,6 @@
 .glass-drawer.active {
     right: 0;
 }
-
 .drawer-hr {
     border: none;
     height: 1px;
@@ -231,7 +224,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--text-muted-color);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
     padding-bottom: 1rem;
 }
 
@@ -249,7 +242,7 @@
 }
 
 .menu-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--branding-rgb, 255, 255, 255), 0.05);
     color: var(--branding-color);
 }
 
@@ -263,12 +256,12 @@
 
 /* Metallic Theme-Oriented Title */
 .hud-title-metallic {
-    font-family: var(--branding-font);
+    font-family: 'Orbitron', sans-serif;
     font-size: 1.2rem;
     font-weight: 900;
     text-align: center;
     letter-spacing: 2px;
-    background: linear-gradient(to bottom, var(--text-main-color) 20%, var(--branding-color) 50%, var(--text-muted-color) 80%);
+    background: linear-gradient(to bottom, #ffffff 20%, var(--branding-color) 50%, #888888 80%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 5px var(--branding-glow));
@@ -298,7 +291,6 @@
     width: 100%;
     max-width: 300px; /* Keeps the inputs elegant and centered */
 }
-
 .back-btn {
     font-size: 10px;
     color: var(--text-muted-color);
@@ -314,12 +306,14 @@
     left: 0;
     width: 100vw;
     height: 100vh;
+    /* Pulls directly from the theme's bg-color */
     background: var(--bg-color); 
     opacity: 0.85;
     backdrop-filter: blur(4px);
     z-index: 9998;
     pointer-events: none;
     transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+    /* Dynamic Keyhole */
     mask-image: radial-gradient(circle at var(--x) var(--y), transparent var(--r), black var(--r));
     -webkit-mask-image: radial-gradient(circle at var(--x) var(--y), transparent var(--r), black var(--r));
 }
@@ -328,6 +322,7 @@
     position: fixed;
     z-index: 9999;
     width: 340px;
+    /* Uses the theme's card-bg and branding-color for borders */
     background: var(--card-bg);
     border: 1px solid var(--branding-color);
     box-shadow: var(--branding-glow);
@@ -359,8 +354,9 @@
 }
 
 .tutorial-next-btn {
+    /* Uses the theme's specific button gradient */
     background: var(--btn-gradient);
-    color: #fff; 
+    color: #fff; /* Ensuring visibility on dark gradients */
     border: none;
     padding: 10px 20px;
     font-family: var(--branding-font);
@@ -375,7 +371,6 @@
     transform: translateY(-2px);
     filter: brightness(1.2);
 }
-
 /* --- THEMED HUD PLAN SELECTION --- */
 .plans-grid {
     display: grid;
@@ -385,33 +380,32 @@
 }
 
 .plan-card {
-    border: 1px solid var(--text-muted-color);
+    /* Use a semi-transparent version of the theme's text or border color */
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     border-radius: 12px;
     padding: 0.8rem;
-    background: var(--card-bg);
+    background: var(--card-bg, rgba(255, 255, 255, 0.03));
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     transition: all 0.3s ease;
 }
-
 .plan-card-rounded {
-    background: var(--card-bg);
-    border: 1px solid var(--text-muted-color);
+    background: rgba(15, 15, 15, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-
 .tier-identity-metallic {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex;             /* Added to ensure centering logic */
+    align-items: center;       /* Added */
+    justify-content: center;    /* Added */
     text-align: center;
     color: var(--branding-color);
-    text-shadow: var(--branding-glow);
+    text-shadow: 0 0 10px var(--branding-color);
     font-size: 1.1rem;
-    font-family: var(--branding-font);
+    font-family: var(--branding-font), 'Orbitron', sans-serif; /* Brand-aligned font */
     text-transform: uppercase;
     letter-spacing: 1px;
     padding-bottom: 5px;
@@ -419,15 +413,15 @@
 
 .btn-metallic-center {
     display: block;
-    margin: 20px auto; 
+    margin: 20px auto; /* Centers the button */
     padding: 12px 40px;
     border-radius: 30px;
-    background: var(--btn-gradient);
+    background: linear-gradient(145deg, #222, #000);
     border: 1px solid var(--branding-color);
-    color: #fff;
+    color: var(--branding-color);
     text-transform: uppercase;
     cursor: pointer;
-    box-shadow: var(--branding-glow);
+    box-shadow: 0 0 10px rgba(var(--branding-rgb), 0.2);
 }
 
 .tier-locked {
@@ -436,20 +430,19 @@
 }
 
 .text-glow-green { color: #00ff88; filter: drop-shadow(0 0 5px #00ff88); }
-.text-dim { color: var(--text-muted-color); }
-
+.text-dim { color: #555; }
 /* Active State: Driven by the theme's accent/neon color */
 .plan-card.active {
-    border-color: var(--branding-color);
-    background: var(--card-bg);
-    box-shadow: var(--branding-glow);
+    border-color: var(--neon-color);
+    background: var(--accent-faint, rgba(0, 242, 255, 0.05));
+    box-shadow: 0 0 15px var(--accent-glow, rgba(0, 242, 255, 0.1));
 }
 
 .plan-card h3 {
     font-size: 10px;
     letter-spacing: 1px;
     margin-bottom: 10px;
-    color: var(--branding-color); 
+    color: var(--neon-color); /* The primary accent color */
     text-transform: uppercase;
 }
 
@@ -459,7 +452,7 @@
     margin: 0 0 1.5rem 0;
     font-size: 9px;
     text-align: left;
-    color: var(--text-muted-color);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.7));
     width: 100%;
 }
 
@@ -473,12 +466,12 @@
     font-size: 11px;
     margin-top: auto;
     margin-bottom: 12px;
-    color: var(--text-main-color);
+    color: var(--text-main, #fff);
 }
 
 .plan-card input[type="radio"] {
     cursor: pointer;
-    accent-color: var(--branding-color);
+    accent-color: var(--neon-color);
     transform: scale(1.2);
 }
 
@@ -488,7 +481,6 @@
     cursor: not-allowed;
     border-style: dashed;
 }
-
 /* --- Trigger Icon --- */
 #system-menu-trigger {
     cursor: pointer;
@@ -502,16 +494,15 @@
     color: var(--branding-color);
     transform: scale(1.1);
 }
-
 nav {
     display: grid;
     /* Force the branding column to shrink-wrap its content */
-    grid-template-columns: max-content 1fr auto; 
+    grid-template-columns: **max-content** 1fr auto; 
     align-items: center;
     padding: 0 1.5rem;
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--text-muted-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     height: 60px;
 }
 
@@ -519,7 +510,7 @@ nav {
 .logo-container img {
     height: 100%;
     width: auto;
-    filter: none; 
+    filter: none; /* Removed the glow/shadow */
     display: block;
 }
 
@@ -527,21 +518,19 @@ nav {
 .hero-section-old {
     display: none !important;
 }
-
 /* --- THE LABORATORY LAYOUT --- */
+/* Compress the top area */
 main {
     padding-top: 0.5rem ;
 }
 
+
 /* Industrial Heading Style */
 #hero-heading {
-    font-size: 2.5rem ; 
+    font-size: 2.5rem ; /* Reduced from 4.5rem */
     line-height: 1;
     letter-spacing: -0.02em;
     margin-bottom: 0 ;
-    font-family: var(--branding-font);
-    color: var(--branding-color);
-    text-shadow: var(--branding-glow);
 }
 
 /* Pull the subheading closer */
@@ -551,24 +540,21 @@ main {
     margin-bottom: 0 ;
     opacity: 0.8;
     text-transform: uppercase;
-    color: var(--text-main-color);
 }
-
 /* --- THE LABORATORY LAYOUT (MAX DENSITY) --- */
 main.max-width-limit {
     width: 100%;
-    max-width: 1800px; 
+    max-width: 1800px; /* Widened to fit more cards per row */
     margin: 0 auto;
-    padding: 1rem 1.5rem; 
+    padding: 1rem 1.5rem; /* Tightened from 6rem */
     box-sizing: border-box;
 }
-
 /* Each Current is a distinct row with breathing room */
 .current-block {
     margin-top: 0.5rem;
-    margin-bottom: 1.5rem; 
+    margin-bottom: 1.5rem; /* Large gap between different currents */
     width: 100%;
-    border-top: 1px solid var(--text-muted-color);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
     padding-top: 0.75rem;
 }
 
@@ -581,12 +567,12 @@ main.max-width-limit {
 .current-block label {
     font-size: 13px ;
     font-weight: 900 ;
-    color: var(--text-main-color) ;
+    color: #ffffff ;
     opacity: 1 ;
     letter-spacing: 0.15em;
 }
-
 /* --- DECORATIVE HEADERS --- */
+/* Reduce space between hero and system ready line */
 header {
     margin-bottom: 0px ;
     padding-bottom: 0px ;
@@ -600,38 +586,37 @@ header {
     background: rgba(255, 255, 255, 0.02);
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px solid var(--text-muted-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
-
 /* Metallic Sheen for Nav Title */
 #nav-hero-central h1 {
-    text-shadow: 0 0 10px var(--text-muted-color);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
     letter-spacing: -0.05em;
 }
-
+/* Add this to give the text that bright, metallic hardware look */
 #engine-status-text, 
 #superuser-display {
     font-weight: 900 !important;
     text-transform: uppercase;
     letter-spacing: 0.2em;
     font-size: 11px;
-    color: var(--text-main-color);
-    text-shadow: 0 0 10px var(--text-main-color), 0 0 2px var(--branding-color);
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 2px var(--neon-color);
     filter: brightness(1.5);
 }
-
 /* Status Dot pulse */
 .status-dot {
-    box-shadow: 0 0 8px var(--branding-color);
+    box-shadow: 0 0 8px var(--neon-color);
 }
 
 .metallic-text {
     font-weight: 900;
     text-transform: uppercase;
+    /* Reduced letter spacing for maximum density */
     letter-spacing: 0.12em; 
     font-size: 10px;
-    color: var(--text-main-color);
-    text-shadow: 0 0 12px var(--text-main-color), 0 0 3px var(--branding-color);
+    color: #ffffff;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 3px var(--neon-color);
     filter: brightness(1.8) contrast(1.3);
     white-space: nowrap;
 }
@@ -642,9 +627,10 @@ header {
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--text-main-color);
+    color: white;
     margin-bottom: 0.25rem;
-    background: linear-gradient(to right, var(--text-main-color), var(--text-muted-color));
+    /* Decorative Gradient Text */
+    background: linear-gradient(to right, #fff, rgba(255,255,255,0.3));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -657,22 +643,18 @@ header {
 .spark-unit {
     max-width: 100%;
 }
-
 /* High-Density Current Headings */
 .current-title {
     text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
-    filter: drop-shadow(0 0 5px var(--text-muted-color));
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));
 }
 
 /* Generate Button: Metallic Glow */
 .generate-btn {
-    background: var(--btn-gradient);
-    box-shadow: var(--branding-glow);
+    box-shadow: 0 0 15px var(--neon-color);
     border: 1px solid rgba(255,255,255,0.3);
     position: relative;
     overflow: hidden;
-    color: #fff;
-    font-family: var(--branding-font);
 }
 
 .generate-btn:after {
@@ -690,32 +672,33 @@ header {
 .generate-btn:hover:after {
     left: 100%;
 }
-
 /* New Sub-style for "Based on Type" */
 .current-type-label {
     font-size: 0.75rem;
-    color: var(--branding-color);
+    color: var(--neon-color);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     opacity: 0.7;
     margin-bottom: 1rem;
     display: block;
 }
-
 /* --- THE SPARK GRID --- */
+
 .experiment-zone .grid {
     display: grid ;
+    /* Min 200px (1/2 mobile) | Max 1fr (1/6 desktop) */
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) ;
-    gap: 0.5rem ; 
+    gap: 0.5rem ; /* Spacious gap between sparks */
     width: 100% ;
 }
 
 /* --- SURREAL 3D SPARK BOXES --- */
+
 .action-card {
-    background: var(--card-bg);
-    border: 1px solid var(--text-muted-color);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
-    padding: 1.5rem; 
+    padding: 1.5rem; /* Internal padding from border */
     position: relative;
     transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
     perspective: 1000px;
@@ -727,31 +710,33 @@ header {
 /* Hover & 3D Boundary */
 .action-card:hover {
     background: rgba(255, 255, 255, 0.07);
-    border-color: var(--branding-color);
+    border-color: var(--neon-color);
     transform: translateY(-10px) rotateX(2deg) rotateY(-2deg);
     box-shadow: 
         0 20px 40px rgba(0, 0, 0, 0.6),
-        0 0 20px var(--branding-glow);
+        0 0 20px rgba(0, 242, 255, 0.1);
     animation: spark-pulse 2s infinite ease-in-out;
 }
 
+/* Restoring the "Light up" effect on hover since group-hover is gone */
 .action-card:hover .spark-thumbnail {
     opacity: 0.8 !important;
     filter: grayscale(0%) !important;
     transform: scale(1.05);
 }
 
+/* Ensure the title stays sharp during the 3D shift */
 .action-card:hover .metallic-text {
     filter: brightness(2);
-    text-shadow: 0 0 15px var(--branding-color);
+    text-shadow: 0 0 15px var(--neon-color);
 }
-
 /* --- COMPONENTS & STATS --- */
+
 .card-preview {
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 1rem;
-    border: 1px solid var(--text-muted-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .card-stats-row {
@@ -763,46 +748,43 @@ header {
 }
 
 /* --- DECORATIVE BUTTONS --- */
+
 button#auth-trigger, 
 .current-block button {
     padding: 12px 36px ;
-    background: var(--btn-gradient) ;
-    color: #fff ;
+    background: var(--neon-color) ;
+    color: black ;
     font-weight: 900 ;
     border: none ;
-    box-shadow: var(--branding-glow);
+    box-shadow: 0 0 20px var(--neon-color);
     border-radius: 8px;
     text-transform: uppercase;
     font-size: 11px;
     letter-spacing: 1px;
     transition: all 0.3s ease;
 }
-
 .current-block button:hover {
-    box-shadow: 0 0 35px var(--branding-color);
+    box-shadow: 0 0 35px var(--neon-color);
     transform: translateY(-1px);
 }
-
 .current-block input {
     font-size: 16px ;
-    color: var(--text-main-color) ;
+    color: #ffffff ;
     background: transparent ;
     text-shadow: 0 0 8px rgba(255,255,255,0.2);
     font-weight: 500;
 }
 
 .current-block input::placeholder {
-    color: var(--text-muted-color) ;
+    color: rgba(255, 255, 255, 0.5) ;
     font-style: italic;
 }
-
 .current-block input:focus {
-    border-bottom: 1px solid var(--branding-color);
+    border-bottom: 1px solid var(--neon-color);
 }
-
 button:hover {
     filter: brightness(1.2);
-    box-shadow: 0 0 25px var(--branding-glow);
+    box-shadow: 0 0 25px rgba(0, 242, 255, 0.5);
 }
 
 .spark-button {
@@ -815,36 +797,35 @@ button:hover {
 .spark-button:hover {
     background: #fff ;
     color: black ;
-    box-shadow: var(--branding-glow) ;
+    box-shadow: 0 0 20px var(--neon-color) ;
     animation: spark-pulse 1.5s infinite;
 }
 
 @keyframes spark-pulse {
-    0% { box-shadow: 0 0 10px var(--branding-color); }
-    50% { box-shadow: 0 0 25px var(--branding-color); }
-    100% { box-shadow: 0 0 10px var(--branding-color); }
+    0% { box-shadow: 0 0 10px var(--neon-color); }
+    50% { box-shadow: 0 0 25px var(--neon-color); }
+    100% { box-shadow: 0 0 10px var(--neon-color); }
 }
-
 /* Ethereal large button for Hero sections */
 .ethereal-btn {
     position: relative;
     background: transparent;
-    border: 1px solid var(--branding-color);
-    color: var(--branding-color);
+    border: 1px solid var(--neon-color);
+    color: var(--neon-color);
     padding: 1.5rem 4rem;
-    font-family: var(--branding-font);
+    font-family: 'Orbitron', sans-serif;
     font-weight: 900;
     letter-spacing: 5px;
     cursor: pointer;
     overflow: hidden;
     transition: all 0.5s ease;
-    box-shadow: 0 0 20px var(--branding-glow);
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
 }
 
 .ethereal-btn:hover {
-    background: var(--branding-color);
+    background: var(--neon-color);
     color: #000;
-    box-shadow: 0 0 50px var(--branding-color);
+    box-shadow: 0 0 50px var(--neon-color);
     transform: translateY(-5px);
 }
 
@@ -861,7 +842,7 @@ button:hover {
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: var(--branding-glow);
+    box-shadow: 0 0 10px var(--branding-glow);
     border-radius: 4px;
 }
 
@@ -871,14 +852,13 @@ button:hover {
     box-shadow: 0 0 20px var(--branding-glow);
     transform: translateY(-2px);
 }
-
 .btn-glow {
     position: absolute;
     top: -50%;
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, var(--branding-glow) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(0,242,255,0.4) 0%, transparent 70%);
     animation: rotateGlow 10s linear infinite;
     pointer-events: none;
 }
@@ -895,23 +875,22 @@ button:hover {
     width: 100%; 
     height: 100%;
     background: rgba(0, 8, 15, 0.98); 
-    backdrop-filter: blur(25px); 
+    backdrop-filter: blur(25px); /* Increased blur to hide background artifacts */
     -webkit-backdrop-filter: blur(25px);
     display: none; 
     align-items: center;      /* Vertical Center */
     justify-content: center;   /* Horizontal Center */
-    z-index: 10000;            
+    z-index: 10000;            /* Bump this up to be safe */
 }
-
 .hud-overlay.active { display: flex; }
 
 /* 2. Fix the Window Positioning */
 .hud-window {
-    position: relative; 
+    position: relative; /* Break away from any accidental bottom-anchors */
     width: 90%;
     top: 0; left: auto; 
     max-width: 650px;
-    margin: auto;       
+    margin: auto;       /* The "Safety Net" for flex centering */
     display: flex;
     flex-direction: column;
     padding: 10px;
@@ -931,29 +910,26 @@ button:hover {
     right: 20px;
     background: transparent;
     border: none;
-    color: var(--text-muted-color);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
     font-size: 28px;
     line-height: 1;
     cursor: pointer;
     transition: all 0.2s ease;
     z-index: 100;
 }
-
 .close-hud-corner:hover {
-    color: var(--branding-color);
+    color: var(--neon-color, #00f2ff);
     transform: scale(1.1);
 }
-
 /* 3. Check the Animation */
 @keyframes slideUp {
     from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); } 
+    to { opacity: 1; transform: translateY(0); } /* Ensure it ends at 0 */
 }
 
 .animate-slideUp {
     animation: slideUp 0.4s ease-out forwards;
 }
-
 .category-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -962,41 +938,36 @@ button:hover {
 
 .cat-btn {
     background: rgba(255,255,255,0.05);
-    border: 1px solid var(--text-muted-color);
-    color: var(--text-main-color); 
-    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: white; padding: 10px;
     font-size: 10px; cursor: pointer;
-    font-family: var(--branding-font);
+    font-family: 'Orbitron', sans-serif;
     transition: all 0.3s;
 }
 
 .cat-btn.selected {
-    border-color: var(--branding-color);
-    background: var(--btn-gradient);
-    box-shadow: var(--branding-glow);
-    color: #fff;
+    border-color: var(--neon-color);
+    background: rgba(0, 242, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
 }
 
 .hud-input {
-    width: 100%; 
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--text-muted-color);
-    padding: 10px; 
-    color: var(--text-main-color); 
+    width: 100%; background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 10px; color: white; 
     margin-bottom: 5px;
-    font-family: var(--nav-font);
+    font-family: 'Inter', sans-serif;
 }
-
 .btn-pulse {
-    background: var(--branding-color) !important;
-    color: #000 !important;
-    box-shadow: var(--branding-glow);
+    background: var(--neon-color) !important;
+    color: black !important;
+    box-shadow: 0 0 15px var(--neon-color);
     animation: neon-flicker 2s infinite alternate;
 }
 
 @keyframes neon-flicker {
-    0% { box-shadow: 0 0 5px var(--branding-color); }
-    100% { box-shadow: 0 0 20px var(--branding-color); }
+    0% { box-shadow: 0 0 5px var(--neon-color); }
+    100% { box-shadow: 0 0 20px var(--neon-color); }
 }
 
 .logic-metadata {
@@ -1009,49 +980,47 @@ button:hover {
     font-size: 9px;
     padding: 3px 8px;
     background: rgba(255,255,255,0.05);
-    border: 1px solid var(--branding-color);
-    color: var(--branding-color);
-    font-family: var(--branding-font);
+    border: 1px solid rgba(0,242,255,0.2);
+    color: var(--neon-color);
+    font-family: 'Orbitron', sans-serif;
 }
-
 .logic-display {
-    border: 1px solid var(--branding-color);
+    border: 1px solid var(--neon-color);
     background: #000;
+    border: 1px solid var(--neon-color);
     padding: 2rem;
     font-family: 'monospace';
     color: #fff;
-    box-shadow: inset 0 0 30px rgba(var(--branding-rgb), 0.1), var(--branding-glow);
+    box-shadow: inset 0 0 30px rgba(0, 242, 255, 0.1), 0 0 15px rgba(0, 242, 255, 0.05);
 }
 
 .terminal-code {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 242, 255, 0.05);
     padding: 1.5rem;
     border-radius: 4px;
-    color: var(--branding-color);
+    color: var(--neon-color);
     font-size: 1.2rem;
     overflow-x: auto;
-    border-left: 3px solid var(--branding-color);
-    text-shadow: var(--branding-glow);
+    border-left: 3px solid var(--neon-color);
+    text-shadow: 0 0 5px rgba(0, 242, 255, 0.5);
 }
 
 .terminal-btn {
-    background: var(--branding-color);
+    background: var(--neon-color);
     color: #000;
     border: none;
     padding: 5px 15px;
-    font-family: var(--branding-font);
+    font-family: 'Orbitron', sans-serif;
     letter-spacing: 2px;
     font-size: 10px;
     font-weight: 900;
     cursor: pointer;
 }
-
 .terminal-btn:hover {
     background: #fff;
     box-shadow: 0 0 20px #fff;
     transform: translateY(-2px);
 }
-
 /* --- UTILITIES --- */
 .hidden { display: none ; }
 .share-hud-overlay {
@@ -1067,12 +1036,12 @@ button:hover {
 }
 
 .share-hud-content {
-    background: var(--card-bg);
+    background: #111;
     padding: 30px;
-    border: 1px solid var(--branding-color);
+    border: 1px solid var(--neon-color);
     border-radius: 15px;
     text-align: center;
-    box-shadow: var(--branding-glow);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
     min-width: 300px;
 }
 
@@ -1084,7 +1053,7 @@ button:hover {
 }
 
 .share-grid a, .copy-link-btn {
-    color: var(--link-color, #f3e5ab);
+    color: #f3e5ab;
     font-size: 24px;
     transition: all 0.3s ease;
     background: none;
@@ -1094,15 +1063,15 @@ button:hover {
 }
 
 .share-grid a:hover, .copy-link-btn:hover {
-    color: var(--branding-color);
+    color: var(--neon-color);
     transform: scale(1.2);
-    filter: drop-shadow(0 0 8px var(--branding-color));
+    filter: drop-shadow(0 0 8px var(--neon-color));
 }
 
 .close-hud {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--text-muted-color);
-    color: var(--text-main-color);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
     padding: 8px 20px;
     border-radius: 5px;
     cursor: pointer;
