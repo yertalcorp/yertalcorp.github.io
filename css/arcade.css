@@ -421,7 +421,7 @@
     color: var(--branding-color);
     text-transform: uppercase;
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(var(--branding-rgb), 0.2);
+    box-shadow: 0 0 10px rgba(var(--box-shadow-color));
 }
 
 .tier-locked {
@@ -435,7 +435,7 @@
 .plan-card.active {
     border-color: var(--glow-color);
     background: var(--accent-faint, rgba(0, 242, 255, 0.05));
-    box-shadow: 0 0 15px var(--accent-glow, rgba(0, 242, 255, 0.1));
+    box-shadow: 0 0 15px var(--box-shadow-color, rgba(0, 242, 255, 0.1));
 }
 
 .plan-card h3 {
@@ -651,7 +651,7 @@ header {
 
 /* Generate Button: Metallic Glow */
 .generate-btn {
-    box-shadow: 0 0 15px var(--glow-color);
+    dow: 0 0 15px var(--glow-color);
     border: 1px solid rgba(255,255,255,0.3);
     position: relative;
     overflow: hidden;
@@ -756,7 +756,7 @@ button#auth-trigger,
     color: black ;
     font-weight: 900 ;
     border: none ;
-    box-shadow: 0 0 20px var(--glow-color);
+    box-shadow: 0 0 20px var(--box-shadow-color);
     border-radius: 8px;
     text-transform: uppercase;
     font-size: 11px;
@@ -764,7 +764,7 @@ button#auth-trigger,
     transition: all 0.3s ease;
 }
 .current-block button:hover {
-    box-shadow: 0 0 35px var(--glow-color);
+    box-shadow: 0 0 35px var(--box-shadow-color);
     transform: translateY(-1px);
 }
 .current-block input {
@@ -784,7 +784,7 @@ button#auth-trigger,
 }
 button:hover {
     filter: brightness(1.2);
-    box-shadow: 0 0 25px rgba(0, 242, 255, 0.5);
+    box-shadow: 0 0 25px var(--box-shadow-color);
 }
 
 .spark-button {
@@ -819,7 +819,7 @@ button:hover {
     cursor: pointer;
     overflow: hidden;
     transition: all 0.5s ease;
-    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+    box-shadow: 0 0 20px var(--glow-color);
 }
 
 .ethereal-btn:hover {
@@ -842,14 +842,14 @@ button:hover {
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 0 10px var(--branding-glow);
+    box-shadow: 0 0 10px var(--glow-color);
     border-radius: 4px;
 }
 
 .ethereal-btn-sm:hover {
     background: var(--branding-color);
     color: var(--bg-color);
-    box-shadow: 0 0 20px var(--branding-glow);
+    box-shadow: 0 0 20px var(--glow-color);
     transform: translateY(-2px);
 }
 .btn-glow {
@@ -948,15 +948,28 @@ button:hover {
 .cat-btn.selected {
     border-color: var(--glow-color);
     background: rgba(0, 242, 255, 0.1);
-    box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+    box-shadow: 0 0 15px var(--box-shadow-color);
 }
 
 .hud-input {
-    width: 100%; background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 10px; color: white; 
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3); /* Keep this dark for the HUD look */
+    border: 1px solid var(--border-color);
+    padding: 10px;
     margin-bottom: 5px;
     font-family: 'Inter', sans-serif;
+    
+    /* Mix 80% white with 20% of your branding color for a tinted light look */
+    color: color-mix(in srgb, var(--branding-color), white 80%);
+    
+    /* Fallback for older browsers */
+    /* color: #ffffff; */
+}
+/* Add focus state to make it look active */
+.hud-input:focus {
+    outline: none;
+    border-color: var(--glow-color);
+    box-shadow: 0 0 10px var(--box-shadow-color);
 }
 .btn-pulse {
     background: var(--glow-color) !important;
