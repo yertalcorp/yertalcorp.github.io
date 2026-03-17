@@ -50,7 +50,6 @@
     font-size: 11px;
     font-style: italic;
     color: var(--text-muted-color, #888);
-    /* THE FIX: Reduce line-height and remove large min-height */
     line-height: 1.1; 
     min-height: auto; 
     margin-top: 0;
@@ -72,7 +71,7 @@
     text-align: center;        /* Ensures text inside the block is centered */
     font-size: 1.2rem;         /* Adjusted for better visibility */
     font-weight: 900;          /* Existing */
-    color: #fff;               /* Existing */
+    color: var(--branding-color);              /* Existing */
 }
 
 .price-main small {
