@@ -1,8 +1,8 @@
 /* --- SYSTEM FOUNDATION --- */
 
 :root {
-    --neon-color: #00f2ff;
-    --nav-font: 'Inter', sans-serif;
+    --neon-color: var(--branding-color);
+    --nav-font: var(--text-main-font);
 }
 
 /* --- DYNAMIC HUD LAYOUT --- */
@@ -21,20 +21,20 @@
 
 /* --- LABELS & FORM ELEMENTS --- */
 .hud-label-metallic {
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--branding-font);
     font-size: 9px;
     letter-spacing: 2px;
-    color: var(--branding-color, #00f2ff);
+    color: var(--branding-color);
     margin-bottom: 4px;
     text-transform: uppercase;
     opacity: 0.9;
-    text-shadow: 0 0 5px rgba(0, 242, 255, 0.3);
+    text-shadow: var(--branding-glow);
 }
 
 .logo-upload-wrapper {
     background: rgba(255, 255, 255, 0.03);
     padding: 10px;
-    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border: 1px dashed var(--text-muted-color);
     border-radius: 4px;
 }
 
@@ -45,34 +45,33 @@
 }
 
 .tier-pitch {
-    font-family: var(--nav-font), 'Inter', sans-serif;
+    font-family: var(--text-main-font);
     text-align: center;
     font-size: 11px;
     font-style: italic;
-    color: var(--text-muted-color, #888);
-    /* THE FIX: Reduce line-height and remove large min-height */
+    color: var(--text-muted-color);
     line-height: 1.1; 
     min-height: auto; 
     margin-top: 0;
-    margin-bottom: 8px; /* Controlled gap before the pricing section */
+    margin-bottom: 8px; 
     display: block;
 }
 
 .tier-pricing {
-    display: flex;             /* Added: Enables flex layout */
-    flex-direction: column;    /* Added: Stacks main price and annual price */
-    align-items: center;       /* Added: Centers children horizontally */
-    justify-content: center;   /* Added: Centers children vertically */
-    margin-bottom: 5px;        /* Existing */
-    border-top: 1px solid rgba(255, 255, 255, 0.05);    /* Existing */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Existing */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5px;
+    border-top: 1px solid var(--text-muted-color);
+    border-bottom: 1px solid var(--text-muted-color);
 }
 
 .price-main {
-    text-align: center;        /* Ensures text inside the block is centered */
-    font-size: 1.2rem;         /* Adjusted for better visibility */
-    font-weight: 900;          /* Existing */
-    color: #fff;               /* Existing */
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: var(--text-main-color);
 }
 
 .price-main small {
@@ -82,21 +81,21 @@
 }
 
 .price-annual {
-    text-align: center;        /* Ensures the annual price subtitle is centered */
-    font-size: 9px;            /* Existing */
-    color: var(--neon-color);  /* Existing */
-    opacity: 0.7;              /* Existing */
-    margin-top: 2px;           /* Existing */
+    text-align: center;
+    font-size: 9px;
+    color: var(--branding-color);
+    opacity: 0.7;
+    margin-top: 2px;
 }
 
 .metallic-divider {
     border: none;
     height: 1px;
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+    background: linear-gradient(to right, transparent, var(--text-muted-color), transparent);
     margin: 10px 0;
 }
 
-/* --- LIST REPAIR (The "Inside" Fix) --- */
+/* --- LIST REPAIR --- */
 .tier-specs-list {
     list-style: none;
     padding: 0;
@@ -109,13 +108,14 @@
     align-items: center;
     gap: 10px;
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-main-color);
     margin-bottom: 6px;
 }
 
 .tier-specs-list li i {
     width: 12px;
     font-size: 10px;
+    color: var(--branding-color);
 }
 
 /* --- SELECTION DOCK --- */
@@ -123,7 +123,7 @@
     margin-top: auto;
     padding-bottom: 5px;
     padding-top: 5px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--text-muted-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -131,35 +131,37 @@
 }
 
 .plan-radio-dock label {
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--branding-font);
     font-size: 10px;
     font-weight: 900;
+    color: var(--text-main-color);
     cursor: pointer;
 }
 
 /* --- EXTRA UI BUTTON --- */
 .ethereal-btn-xs {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
+    border: 1px solid var(--text-muted-color);
+    color: var(--text-main-color);
     padding: 4px 10px;
     font-size: 8px;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--branding-font);
     cursor: pointer;
     transition: 0.2s;
 }
 
 .ethereal-btn-xs:hover {
-    border-color: var(--neon-color);
-    box-shadow: 0 0 10px var(--neon-color);
+    border-color: var(--branding-color);
+    box-shadow: var(--branding-glow);
 }
+
 #lab-body {
     background-color: var(--bg-color);
     color: var(--text-main-color);
     font-family: var(--text-main-font);
     font-size: var(--text-main-size);
     font-weight: var(--text-main-weight);
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth morph effect */
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     margin: 0;
     overflow-x: hidden;
 }
@@ -183,17 +185,18 @@
 .glass-3d {
     background: var(--card-bg);
     border: 1px solid var(--branding-color);
-    box-shadow: 0 8px 32px var(--shadow-intensity);
+    box-shadow: 0 8px 32px var(--card-shadow-color);
     backdrop-filter: blur(var(--glass-blur, 10px));
 }
+
 /* --- System Drawer Styles --- */
 .glass-drawer {
     position: fixed;
-    right: -400px; /* Hidden state */
+    right: -400px;
     top: 0;
     width: 350px;
     height: 100vh;
-    background: var(--card-bg); /* Uses your dynamic theme color */
+    background: var(--card-bg);
     backdrop-filter: blur(25px);
     border-left: 1px solid var(--branding-color);
     transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
@@ -206,6 +209,7 @@
 .glass-drawer.active {
     right: 0;
 }
+
 .drawer-hr {
     border: none;
     height: 1px;
@@ -224,7 +228,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid var(--text-muted-color);
     padding-bottom: 1rem;
 }
 
@@ -242,7 +246,7 @@
 }
 
 .menu-item:hover {
-    background: rgba(var(--branding-rgb, 255, 255, 255), 0.05);
+    background: rgba(255, 255, 255, 0.05);
     color: var(--branding-color);
 }
 
@@ -256,12 +260,12 @@
 
 /* Metallic Theme-Oriented Title */
 .hud-title-metallic {
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--branding-font);
     font-size: 1.2rem;
     font-weight: 900;
     text-align: center;
     letter-spacing: 2px;
-    background: linear-gradient(to bottom, #ffffff 20%, var(--branding-color) 50%, #888888 80%);
+    background: linear-gradient(to bottom, var(--text-main-color) 20%, var(--branding-color) 50%, var(--text-muted-color) 80%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 5px var(--branding-glow));
@@ -289,8 +293,9 @@
 
 .hud-input-group {
     width: 100%;
-    max-width: 300px; /* Keeps the inputs elegant and centered */
+    max-width: 300px;
 }
+
 .back-btn {
     font-size: 10px;
     color: var(--text-muted-color);
@@ -302,18 +307,14 @@
 /* --- THEME_AWARE_TUTORIAL_OS --- */
 #tutorial-mask {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    /* Pulls directly from the theme's bg-color */
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
     background: var(--bg-color); 
     opacity: 0.85;
     backdrop-filter: blur(4px);
     z-index: 9998;
     pointer-events: none;
     transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-    /* Dynamic Keyhole */
     mask-image: radial-gradient(circle at var(--x) var(--y), transparent var(--r), black var(--r));
     -webkit-mask-image: radial-gradient(circle at var(--x) var(--y), transparent var(--r), black var(--r));
 }
@@ -322,7 +323,6 @@
     position: fixed;
     z-index: 9999;
     width: 340px;
-    /* Uses the theme's card-bg and branding-color for borders */
     background: var(--card-bg);
     border: 1px solid var(--branding-color);
     box-shadow: var(--branding-glow);
@@ -331,7 +331,6 @@
     font-family: var(--text-main-font);
     color: var(--text-main-color);
     pointer-events: auto;
-    transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .tutorial-tooltip h3 {
@@ -354,9 +353,8 @@
 }
 
 .tutorial-next-btn {
-    /* Uses the theme's specific button gradient */
     background: var(--btn-gradient);
-    color: #fff; /* Ensuring visibility on dark gradients */
+    color: #fff;
     border: none;
     padding: 10px 20px;
     font-family: var(--branding-font);
@@ -367,10 +365,6 @@
     transition: transform 0.2s ease;
 }
 
-.tutorial-next-btn:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.2);
-}
 /* --- THEMED HUD PLAN SELECTION --- */
 .plans-grid {
     display: grid;
@@ -380,32 +374,26 @@
 }
 
 .plan-card {
-    /* Use a semi-transparent version of the theme's text or border color */
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border: 1px solid var(--text-muted-color);
     border-radius: 12px;
     padding: 0.8rem;
-    background: var(--card-bg, rgba(255, 255, 255, 0.03));
+    background: var(--card-bg);
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     transition: all 0.3s ease;
 }
-.plan-card-rounded {
-    background: rgba(15, 15, 15, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
+
 .tier-identity-metallic {
-    display: flex;             /* Added to ensure centering logic */
-    align-items: center;       /* Added */
-    justify-content: center;    /* Added */
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     color: var(--branding-color);
-    text-shadow: 0 0 10px var(--branding-color);
+    text-shadow: var(--branding-glow);
     font-size: 1.1rem;
-    font-family: var(--branding-font), 'Orbitron', sans-serif; /* Brand-aligned font */
+    font-family: var(--branding-font);
     text-transform: uppercase;
     letter-spacing: 1px;
     padding-bottom: 5px;
@@ -413,36 +401,28 @@
 
 .btn-metallic-center {
     display: block;
-    margin: 20px auto; /* Centers the button */
+    margin: 20px auto;
     padding: 12px 40px;
     border-radius: 30px;
-    background: linear-gradient(145deg, #222, #000);
+    background: var(--btn-gradient);
     border: 1px solid var(--branding-color);
-    color: var(--branding-color);
+    color: #fff;
     text-transform: uppercase;
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(var(--branding-rgb), 0.2);
 }
 
-.tier-locked {
-    filter: grayscale(1) opacity(0.4);
-    cursor: not-allowed !important;
-}
-
-.text-glow-green { color: #00ff88; filter: drop-shadow(0 0 5px #00ff88); }
-.text-dim { color: #555; }
-/* Active State: Driven by the theme's accent/neon color */
+/* Active State */
 .plan-card.active {
-    border-color: var(--neon-color);
-    background: var(--accent-faint, rgba(0, 242, 255, 0.05));
-    box-shadow: 0 0 15px var(--accent-glow, rgba(0, 242, 255, 0.1));
+    border-color: var(--branding-color);
+    background: var(--card-bg);
+    box-shadow: var(--branding-glow);
 }
 
 .plan-card h3 {
     font-size: 10px;
     letter-spacing: 1px;
     margin-bottom: 10px;
-    color: var(--neon-color); /* The primary accent color */
+    color: var(--branding-color);
     text-transform: uppercase;
 }
 
@@ -452,13 +432,8 @@
     margin: 0 0 1.5rem 0;
     font-size: 9px;
     text-align: left;
-    color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+    color: var(--text-muted-color);
     width: 100%;
-}
-
-.plan-card li {
-    margin-bottom: 6px;
-    line-height: 1.3;
 }
 
 .plan-price {
@@ -466,370 +441,58 @@
     font-size: 11px;
     margin-top: auto;
     margin-bottom: 12px;
-    color: var(--text-main, #fff);
+    color: var(--text-main-color);
 }
 
 .plan-card input[type="radio"] {
-    cursor: pointer;
-    accent-color: var(--neon-color);
-    transform: scale(1.2);
+    accent-color: var(--branding-color);
 }
 
-.disabled-tier {
-    opacity: 0.4;
-    filter: grayscale(1);
-    cursor: not-allowed;
-    border-style: dashed;
-}
 /* --- Trigger Icon --- */
 #system-menu-trigger {
     cursor: pointer;
     padding: 0 15px;
     font-size: 1.2rem;
     color: var(--text-main-color);
-    transition: 0.3s;
 }
 
 #system-menu-trigger:hover {
     color: var(--branding-color);
-    transform: scale(1.1);
-}
-nav {
-    display: grid;
-    /* Force the branding column to shrink-wrap its content */
-    grid-template-columns: **max-content** 1fr auto; 
-    align-items: center;
-    padding: 0 1.5rem;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    height: 60px;
 }
 
-/* Update the image itself to fill the new container */
-.logo-container img {
-    height: 100%;
-    width: auto;
-    filter: none; /* Removed the glow/shadow */
-    display: block;
-}
-
-/* Ensure the old Hero Section is hidden to save space */
-.hero-section-old {
-    display: none !important;
-}
 /* --- THE LABORATORY LAYOUT --- */
-/* Compress the top area */
-main {
-    padding-top: 0.5rem ;
+.action-card {
+    background: var(--card-bg);
+    border: 1px solid var(--text-muted-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+    color: var(--card-text-color);
+    font-family: var(--card-font-family);
+    font-size: var(--card-font-size);
 }
 
-
-/* Industrial Heading Style */
-#hero-heading {
-    font-size: 2.5rem ; /* Reduced from 4.5rem */
-    line-height: 1;
-    letter-spacing: -0.02em;
-    margin-bottom: 0 ;
-}
-
-/* Pull the subheading closer */
-#hero-subheading {
-    font-size: 0.8rem ;
-    margin-top: -0.2rem ;
-    margin-bottom: 0 ;
-    opacity: 0.8;
-    text-transform: uppercase;
-}
-/* --- THE LABORATORY LAYOUT (MAX DENSITY) --- */
-main.max-width-limit {
-    width: 100%;
-    max-width: 1800px; /* Widened to fit more cards per row */
-    margin: 0 auto;
-    padding: 1rem 1.5rem; /* Tightened from 6rem */
-    box-sizing: border-box;
-}
-/* Each Current is a distinct row with breathing room */
-.current-block {
-    margin-top: 0.5rem;
-    margin-bottom: 1.5rem; /* Large gap between different currents */
-    width: 100%;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding-top: 0.75rem;
-}
-
-/* Tightest possible row headers */
-.current-block .flex-row {
-    margin-bottom: 0.25rem !important;
-}
-
-/* Increase visibility of creation controls */
-.current-block label {
-    font-size: 13px ;
-    font-weight: 900 ;
-    color: #ffffff ;
-    opacity: 1 ;
-    letter-spacing: 0.15em;
-}
-/* --- DECORATIVE HEADERS --- */
-/* Reduce space between hero and system ready line */
-header {
-    margin-bottom: 0px ;
-    padding-bottom: 0px ;
-}
-
-/* Ensure the status bar (System Ready) sits tight against the header */
-#engine-status-container, 
-.status-bar {
-    margin-top: 0;
-    padding: 0.1rem 1.5rem;
-    background: rgba(255, 255, 255, 0.02);
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-/* Metallic Sheen for Nav Title */
-#nav-hero-central h1 {
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-    letter-spacing: -0.05em;
-}
-/* Add this to give the text that bright, metallic hardware look */
-#engine-status-text, 
-#superuser-display {
-    font-weight: 900 !important;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    font-size: 11px;
-    color: #ffffff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 2px var(--neon-color);
-    filter: brightness(1.5);
-}
-/* Status Dot pulse */
-.status-dot {
-    box-shadow: 0 0 8px var(--neon-color);
+.action-card:hover {
+    border-color: var(--branding-color);
+    box-shadow: 0 20px 40px var(--card-shadow-color), var(--card-glow-color);
 }
 
 .metallic-text {
     font-weight: 900;
     text-transform: uppercase;
-    /* Reduced letter spacing for maximum density */
     letter-spacing: 0.12em; 
     font-size: 10px;
-    color: #ffffff;
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 3px var(--neon-color);
-    filter: brightness(1.8) contrast(1.3);
-    white-space: nowrap;
+    color: var(--text-main-color);
+    text-shadow: var(--branding-glow);
 }
 
-.current-block h2 {
-    font-family: var(--nav-font);
-    font-size: 0.9rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: white;
-    margin-bottom: 0.25rem;
-    /* Decorative Gradient Text */
-    background: linear-gradient(to right, #fff, rgba(255,255,255,0.3));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-/* Hide the 1/48 counter as requested */
-.current-block h2 span {
-    display: none ;
-}
-
-.spark-unit {
-    max-width: 100%;
-}
-/* High-Density Current Headings */
-.current-title {
-    text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
-    filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));
-}
-
-/* Generate Button: Metallic Glow */
 .generate-btn {
-    box-shadow: 0 0 15px var(--neon-color);
-    border: 1px solid rgba(255,255,255,0.3);
-    position: relative;
-    overflow: hidden;
+    background: var(--btn-gradient);
+    box-shadow: var(--branding-glow);
+    border: 1px solid var(--branding-color);
+    color: #fff;
 }
 
-.generate-btn:after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
-    transform: rotate(45deg);
-    transition: 0.5s;
-}
-
-.generate-btn:hover:after {
-    left: 100%;
-}
-/* New Sub-style for "Based on Type" */
-.current-type-label {
-    font-size: 0.75rem;
-    color: var(--neon-color);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    opacity: 0.7;
-    margin-bottom: 1rem;
-    display: block;
-}
-/* --- THE SPARK GRID --- */
-
-.experiment-zone .grid {
-    display: grid ;
-    /* Min 200px (1/2 mobile) | Max 1fr (1/6 desktop) */
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) ;
-    gap: 0.5rem ; /* Spacious gap between sparks */
-    width: 100% ;
-}
-
-/* --- SURREAL 3D SPARK BOXES --- */
-
-.action-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 1.5rem; /* Internal padding from border */
-    position: relative;
-    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-    perspective: 1000px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Hover & 3D Boundary */
-.action-card:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: var(--neon-color);
-    transform: translateY(-10px) rotateX(2deg) rotateY(-2deg);
-    box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.6),
-        0 0 20px rgba(0, 242, 255, 0.1);
-    animation: spark-pulse 2s infinite ease-in-out;
-}
-
-/* Restoring the "Light up" effect on hover since group-hover is gone */
-.action-card:hover .spark-thumbnail {
-    opacity: 0.8 !important;
-    filter: grayscale(0%) !important;
-    transform: scale(1.05);
-}
-
-/* Ensure the title stays sharp during the 3D shift */
-.action-card:hover .metallic-text {
-    filter: brightness(2);
-    text-shadow: 0 0 15px var(--neon-color);
-}
-/* --- COMPONENTS & STATS --- */
-
-.card-preview {
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.card-stats-row {
-    display: flex ;
-    flex-direction: row ;
-    justify-content: space-between ;
-    margin-top: 0.25rem;
-    border: none ;
-}
-
-/* --- DECORATIVE BUTTONS --- */
-
-button#auth-trigger, 
-.current-block button {
-    padding: 12px 36px ;
-    background: var(--neon-color) ;
-    color: black ;
-    font-weight: 900 ;
-    border: none ;
-    box-shadow: 0 0 20px var(--neon-color);
-    border-radius: 8px;
-    text-transform: uppercase;
-    font-size: 11px;
-    letter-spacing: 1px;
-    transition: all 0.3s ease;
-}
-.current-block button:hover {
-    box-shadow: 0 0 35px var(--neon-color);
-    transform: translateY(-1px);
-}
-.current-block input {
-    font-size: 16px ;
-    color: #ffffff ;
-    background: transparent ;
-    text-shadow: 0 0 8px rgba(255,255,255,0.2);
-    font-weight: 500;
-}
-
-.current-block input::placeholder {
-    color: rgba(255, 255, 255, 0.5) ;
-    font-style: italic;
-}
-.current-block input:focus {
-    border-bottom: 1px solid var(--neon-color);
-}
-button:hover {
-    filter: brightness(1.2);
-    box-shadow: 0 0 25px rgba(0, 242, 255, 0.5);
-}
-
-.spark-button {
-    padding: 6px 20px ;
-    height: auto ;
-    min-width: 100px;
-    transition: all 0.3s ease ;
-}
-
-.spark-button:hover {
-    background: #fff ;
-    color: black ;
-    box-shadow: 0 0 20px var(--neon-color) ;
-    animation: spark-pulse 1.5s infinite;
-}
-
-@keyframes spark-pulse {
-    0% { box-shadow: 0 0 10px var(--neon-color); }
-    50% { box-shadow: 0 0 25px var(--neon-color); }
-    100% { box-shadow: 0 0 10px var(--neon-color); }
-}
-/* Ethereal large button for Hero sections */
-.ethereal-btn {
-    position: relative;
-    background: transparent;
-    border: 1px solid var(--neon-color);
-    color: var(--neon-color);
-    padding: 1.5rem 4rem;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 900;
-    letter-spacing: 5px;
-    cursor: pointer;
-    overflow: hidden;
-    transition: all 0.5s ease;
-    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
-}
-
-.ethereal-btn:hover {
-    background: var(--neon-color);
-    color: #000;
-    box-shadow: 0 0 50px var(--neon-color);
-    transform: translateY(-5px);
-}
-
-/* Ethereal Small Variant for HUDs */
 .ethereal-btn-sm {
     background: transparent;
     border: 1px solid var(--branding-color);
@@ -840,243 +503,51 @@ button:hover {
     font-size: 10px;
     letter-spacing: 2px;
     text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 0 10px var(--branding-glow);
-    border-radius: 4px;
+    box-shadow: var(--branding-glow);
 }
 
-.ethereal-btn-sm:hover {
-    background: var(--branding-color);
-    color: var(--bg-color);
-    box-shadow: 0 0 20px var(--branding-glow);
-    transform: translateY(-2px);
-}
-.btn-glow {
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(0,242,255,0.4) 0%, transparent 70%);
-    animation: rotateGlow 10s linear infinite;
-    pointer-events: none;
-}
-
-@keyframes rotateGlow {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* 1. Ensure the overlay is a Flex Sandbox */
 .hud-overlay {
-    position: fixed;
-    top: 0; left: 0; 
-    width: 100%; 
-    height: 100%;
-    background: rgba(0, 8, 15, 0.98); 
-    backdrop-filter: blur(25px); /* Increased blur to hide background artifacts */
-    -webkit-backdrop-filter: blur(25px);
-    display: none; 
-    align-items: center;      /* Vertical Center */
-    justify-content: center;   /* Horizontal Center */
-    z-index: 10000;            /* Bump this up to be safe */
-}
-.hud-overlay.active { display: flex; }
-
-/* 2. Fix the Window Positioning */
-.hud-window {
-    position: relative; /* Break away from any accidental bottom-anchors */
-    width: 90%;
-    top: 0; left: auto; 
-    max-width: 650px;
-    margin: auto;       /* The "Safety Net" for flex centering */
-    display: flex;
-    flex-direction: column;
-    padding: 10px;
-    box-sizing: border-box;
-}
-
-.hud-header-content {
-    width: 100%;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-/* Floating Close Button */
-.close-hud-corner {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    background: transparent;
-    border: none;
-    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
-    font-size: 28px;
-    line-height: 1;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    z-index: 100;
-}
-.close-hud-corner:hover {
-    color: var(--neon-color, #00f2ff);
-    transform: scale(1.1);
-}
-/* 3. Check the Animation */
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); } /* Ensure it ends at 0 */
-}
-
-.animate-slideUp {
-    animation: slideUp 0.4s ease-out forwards;
-}
-.category-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px; margin: 1.5rem 0;
-}
-
-.cat-btn {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: white; padding: 10px;
-    font-size: 10px; cursor: pointer;
-    font-family: 'Orbitron', sans-serif;
-    transition: all 0.3s;
+    background: var(--bg-color); 
+    opacity: 0.98;
+    backdrop-filter: blur(25px);
 }
 
 .cat-btn.selected {
-    border-color: var(--neon-color);
-    background: rgba(0, 242, 255, 0.1);
-    box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
-}
-
-.hud-input {
-    width: 100%; background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 10px; color: white; 
-    margin-bottom: 5px;
-    font-family: 'Inter', sans-serif;
-}
-.btn-pulse {
-    background: var(--neon-color) !important;
-    color: black !important;
-    box-shadow: 0 0 15px var(--neon-color);
-    animation: neon-flicker 2s infinite alternate;
-}
-
-@keyframes neon-flicker {
-    0% { box-shadow: 0 0 5px var(--neon-color); }
-    100% { box-shadow: 0 0 20px var(--neon-color); }
-}
-
-.logic-metadata {
-    margin-top: 1.5rem;
-    display: flex;
-    gap: 10px;
+    border-color: var(--branding-color);
+    background: var(--btn-gradient);
+    box-shadow: var(--branding-glow);
 }
 
 .tag {
     font-size: 9px;
     padding: 3px 8px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(0,242,255,0.2);
-    color: var(--neon-color);
-    font-family: 'Orbitron', sans-serif;
+    background: var(--card-bg);
+    border: 1px solid var(--branding-color);
+    color: var(--branding-color);
+    font-family: var(--branding-font);
 }
+
 .logic-display {
-    border: 1px solid var(--neon-color);
-    background: #000;
-    border: 1px solid var(--neon-color);
-    padding: 2rem;
-    font-family: 'monospace';
-    color: #fff;
-    box-shadow: inset 0 0 30px rgba(0, 242, 255, 0.1), 0 0 15px rgba(0, 242, 255, 0.05);
+    border: 1px solid var(--branding-color);
+    background: var(--bg-color);
+    color: var(--text-main-color);
 }
 
 .terminal-code {
-    background: rgba(0, 242, 255, 0.05);
-    padding: 1.5rem;
-    border-radius: 4px;
-    color: var(--neon-color);
-    font-size: 1.2rem;
-    overflow-x: auto;
-    border-left: 3px solid var(--neon-color);
-    text-shadow: 0 0 5px rgba(0, 242, 255, 0.5);
+    background: var(--card-bg);
+    color: var(--branding-color);
+    border-left: 3px solid var(--branding-color);
+    text-shadow: var(--branding-glow);
 }
 
 .terminal-btn {
-    background: var(--neon-color);
-    color: #000;
-    border: none;
-    padding: 5px 15px;
-    font-family: 'Orbitron', sans-serif;
-    letter-spacing: 2px;
-    font-size: 10px;
-    font-weight: 900;
-    cursor: pointer;
-}
-.terminal-btn:hover {
-    background: #fff;
-    box-shadow: 0 0 20px #fff;
-    transform: translateY(-2px);
-}
-/* --- UTILITIES --- */
-.hidden { display: none ; }
-.share-hud-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(8px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 99999;
-    animation: fadeIn 0.3s ease;
+    background: var(--branding-color);
+    color: var(--bg-color);
+    font-family: var(--branding-font);
 }
 
 .share-hud-content {
-    background: #111;
-    padding: 30px;
-    border: 1px solid var(--neon-color);
-    border-radius: 15px;
-    text-align: center;
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
-    min-width: 300px;
+    background: var(--card-bg);
+    border: 1px solid var(--branding-color);
+    box-shadow: var(--branding-glow);
 }
-
-.share-grid {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 25px;
-}
-
-.share-grid a, .copy-link-btn {
-    color: #f3e5ab;
-    font-size: 24px;
-    transition: all 0.3s ease;
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-}
-
-.share-grid a:hover, .copy-link-btn:hover {
-    color: var(--neon-color);
-    transform: scale(1.2);
-    filter: drop-shadow(0 0 8px var(--neon-color));
-}
-
-.close-hud {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    padding: 8px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 10px;
-    letter-spacing: 1px;
-}
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
