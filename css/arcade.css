@@ -83,7 +83,7 @@
 .price-annual {
     text-align: center;        /* Ensures the annual price subtitle is centered */
     font-size: 9px;            /* Existing */
-    color: var(--neon-color);  /* Existing */
+    color: var(--glow-color);  /* Existing */
     opacity: 0.7;              /* Existing */
     margin-top: 2px;           /* Existing */
 }
@@ -149,8 +149,8 @@
 }
 
 .ethereal-btn-xs:hover {
-    border-color: var(--neon-color);
-    box-shadow: 0 0 10px var(--neon-color);
+    border-color: var(--glow-color);
+    box-shadow: 0 0 10px var(--glow-color);
 }
 #lab-body {
     background-color: var(--bg-color);
@@ -432,7 +432,7 @@
 .text-dim { color: #555; }
 /* Active State: Driven by the theme's accent/neon color */
 .plan-card.active {
-    border-color: var(--neon-color);
+    border-color: var(--glow-color);
     background: var(--accent-faint, rgba(0, 242, 255, 0.05));
     box-shadow: 0 0 15px var(--accent-glow, rgba(0, 242, 255, 0.1));
 }
@@ -441,7 +441,7 @@
     font-size: 10px;
     letter-spacing: 1px;
     margin-bottom: 10px;
-    color: var(--neon-color); /* The primary accent color */
+    color: var(--glow-color); /* The primary accent color */
     text-transform: uppercase;
 }
 
@@ -470,7 +470,7 @@
 
 .plan-card input[type="radio"] {
     cursor: pointer;
-    accent-color: var(--neon-color);
+    accent-color: var(--glow-color);
     transform: scale(1.2);
 }
 
@@ -600,12 +600,12 @@ header {
     letter-spacing: 0.2em;
     font-size: 11px;
     color: #ffffff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 2px var(--neon-color);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 2px var(--glow-color);
     filter: brightness(1.5);
 }
 /* Status Dot pulse */
 .status-dot {
-    box-shadow: 0 0 8px var(--neon-color);
+    box-shadow: 0 0 8px var(--glow-color);
 }
 
 .metallic-text {
@@ -615,7 +615,7 @@ header {
     letter-spacing: 0.12em; 
     font-size: 10px;
     color: #ffffff;
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 3px var(--neon-color);
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 3px var(--glow-color);
     filter: brightness(1.8) contrast(1.3);
     white-space: nowrap;
 }
@@ -650,7 +650,7 @@ header {
 
 /* Generate Button: Metallic Glow */
 .generate-btn {
-    box-shadow: 0 0 15px var(--neon-color);
+    box-shadow: 0 0 15px var(--glow-color);
     border: 1px solid rgba(255,255,255,0.3);
     position: relative;
     overflow: hidden;
@@ -674,7 +674,7 @@ header {
 /* New Sub-style for "Based on Type" */
 .current-type-label {
     font-size: 0.75rem;
-    color: var(--neon-color);
+    color: var(--glow-color);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     opacity: 0.7;
@@ -709,7 +709,7 @@ header {
 /* Hover & 3D Boundary */
 .action-card:hover {
     background: rgba(255, 255, 255, 0.07);
-    border-color: var(--neon-color);
+    border-color: var(--glow-color);
     transform: translateY(-10px) rotateX(2deg) rotateY(-2deg);
     box-shadow: 
         0 20px 40px rgba(0, 0, 0, 0.6),
@@ -727,7 +727,7 @@ header {
 /* Ensure the title stays sharp during the 3D shift */
 .action-card:hover .metallic-text {
     filter: brightness(2);
-    text-shadow: 0 0 15px var(--neon-color);
+    text-shadow: 0 0 15px var(--glow-color);
 }
 /* --- COMPONENTS & STATS --- */
 
@@ -751,11 +751,11 @@ header {
 button#auth-trigger, 
 .current-block button {
     padding: 12px 36px ;
-    background: var(--neon-color) ;
+    background: var(--glow-color) ;
     color: black ;
     font-weight: 900 ;
     border: none ;
-    box-shadow: 0 0 20px var(--neon-color);
+    box-shadow: 0 0 20px var(--glow-color);
     border-radius: 8px;
     text-transform: uppercase;
     font-size: 11px;
@@ -763,7 +763,7 @@ button#auth-trigger,
     transition: all 0.3s ease;
 }
 .current-block button:hover {
-    box-shadow: 0 0 35px var(--neon-color);
+    box-shadow: 0 0 35px var(--glow-color);
     transform: translateY(-1px);
 }
 .current-block input {
@@ -779,7 +779,7 @@ button#auth-trigger,
     font-style: italic;
 }
 .current-block input:focus {
-    border-bottom: 1px solid var(--neon-color);
+    border-bottom: 1px solid var(--glow-color);
 }
 button:hover {
     filter: brightness(1.2);
@@ -796,21 +796,21 @@ button:hover {
 .spark-button:hover {
     background: #fff ;
     color: black ;
-    box-shadow: 0 0 20px var(--neon-color) ;
+    box-shadow: 0 0 20px var(--glow-color) ;
     animation: spark-pulse 1.5s infinite;
 }
 
 @keyframes spark-pulse {
-    0% { box-shadow: 0 0 10px var(--neon-color); }
-    50% { box-shadow: 0 0 25px var(--neon-color); }
-    100% { box-shadow: 0 0 10px var(--neon-color); }
+    0% { box-shadow: 0 0 10px var(--glow-color); }
+    50% { box-shadow: 0 0 25px var(--glow-color); }
+    100% { box-shadow: 0 0 10px var(--glow-color); }
 }
 /* Ethereal large button for Hero sections */
 .ethereal-btn {
     position: relative;
     background: transparent;
-    border: 1px solid var(--neon-color);
-    color: var(--neon-color);
+    border: 1px solid var(--glow-color);
+    color: var(--glow-color);
     padding: 1.5rem 4rem;
     font-family: 'Orbitron', sans-serif;
     font-weight: 900;
@@ -822,9 +822,9 @@ button:hover {
 }
 
 .ethereal-btn:hover {
-    background: var(--neon-color);
+    background: var(--glow-color);
     color: #000;
-    box-shadow: 0 0 50px var(--neon-color);
+    box-shadow: 0 0 50px var(--glow-color);
     transform: translateY(-5px);
 }
 
@@ -917,7 +917,7 @@ button:hover {
     z-index: 100;
 }
 .close-hud-corner:hover {
-    color: var(--neon-color, #00f2ff);
+    color: var(--glow-color, #00f2ff);
     transform: scale(1.1);
 }
 /* 3. Check the Animation */
@@ -945,7 +945,7 @@ button:hover {
 }
 
 .cat-btn.selected {
-    border-color: var(--neon-color);
+    border-color: var(--glow-color);
     background: rgba(0, 242, 255, 0.1);
     box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
 }
@@ -958,15 +958,15 @@ button:hover {
     font-family: 'Inter', sans-serif;
 }
 .btn-pulse {
-    background: var(--neon-color) !important;
+    background: var(--glow-color) !important;
     color: black !important;
-    box-shadow: 0 0 15px var(--neon-color);
+    box-shadow: 0 0 15px var(--glow-color);
     animation: neon-flicker 2s infinite alternate;
 }
 
 @keyframes neon-flicker {
-    0% { box-shadow: 0 0 5px var(--neon-color); }
-    100% { box-shadow: 0 0 20px var(--neon-color); }
+    0% { box-shadow: 0 0 5px var(--glow-color); }
+    100% { box-shadow: 0 0 20px var(--glow-color); }
 }
 
 .logic-metadata {
@@ -980,13 +980,13 @@ button:hover {
     padding: 3px 8px;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(0,242,255,0.2);
-    color: var(--neon-color);
+    color: var(--glow-color);
     font-family: 'Orbitron', sans-serif;
 }
 .logic-display {
-    border: 1px solid var(--neon-color);
+    border: 1px solid var(--glow-color);
     background: #000;
-    border: 1px solid var(--neon-color);
+    border: 1px solid var(--glow-color);
     padding: 2rem;
     font-family: 'monospace';
     color: #fff;
@@ -997,15 +997,15 @@ button:hover {
     background: rgba(0, 242, 255, 0.05);
     padding: 1.5rem;
     border-radius: 4px;
-    color: var(--neon-color);
+    color: var(--glow-color);
     font-size: 1.2rem;
     overflow-x: auto;
-    border-left: 3px solid var(--neon-color);
+    border-left: 3px solid var(--glow-color);
     text-shadow: 0 0 5px rgba(0, 242, 255, 0.5);
 }
 
 .terminal-btn {
-    background: var(--neon-color);
+    background: var(--glow-color);
     color: #000;
     border: none;
     padding: 5px 15px;
@@ -1037,7 +1037,7 @@ button:hover {
 .share-hud-content {
     background: #111;
     padding: 30px;
-    border: 1px solid var(--neon-color);
+    border: 1px solid var(--glow-color);
     border-radius: 15px;
     text-align: center;
     box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
@@ -1062,9 +1062,9 @@ button:hover {
 }
 
 .share-grid a:hover, .copy-link-btn:hover {
-    color: var(--neon-color);
+    color: var(--glow-color);
     transform: scale(1.2);
-    filter: drop-shadow(0 0 8px var(--neon-color));
+    filter: drop-shadow(0 0 8px var(--glow-color));
 }
 
 .close-hud {
