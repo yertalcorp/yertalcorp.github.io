@@ -15,6 +15,9 @@
     --branding-color-dark:     color-mix(in srgb, var(--branding-color), black 30%); /* Rich borders */
     --branding-color-darker:    color-mix(in srgb, var(--branding-color), black 60%); /* Deep contrast */
     --branding-color-darkest:   color-mix(in srgb, var(--branding-color), black 85%); /* Deepest Contrast / Backgrounds */
+
+    /* Mathematically creates a 20% transparent version of the theme's glow */
+    --glow-aura: color-mix(in srgb, var(--glow-color), transparent 80%);
 }
 
 /* --- DYNAMIC HUD LAYOUT --- */
