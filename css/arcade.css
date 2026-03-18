@@ -579,7 +579,7 @@ main.max-width-limit {
 .current-block label {
     font-size: 13px ;
     font-weight: 900 ;
-    color: #ffffff ;
+    color: var(--branding-color-lightest) ;
     opacity: 1 ;
     letter-spacing: 0.15em;
 }
@@ -612,7 +612,7 @@ header {
     text-transform: uppercase;
     letter-spacing: 0.2em;
     font-size: 11px;
-    color: #ffffff;
+    color: var(--branding-color-lightest);
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 2px var(--glow-color);
     filter: brightness(1.5);
 }
@@ -627,7 +627,7 @@ header {
     /* Reduced letter spacing for maximum density */
     letter-spacing: 0.12em; 
     font-size: 10px;
-    color: #ffffff;
+    color: var(--branding-color-lightest);
     text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 3px var(--glow-color);
     filter: brightness(1.8) contrast(1.3);
     white-space: nowrap;
@@ -781,7 +781,7 @@ button#auth-trigger,
 }
 .current-block input {
     font-size: 16px ;
-    color: #ffffff ;
+    color: var(--branding-color-lightest) ;
     background: transparent ;
     text-shadow: 0 0 8px rgba(255,255,255,0.2);
     font-weight: 500;
@@ -807,7 +807,7 @@ button:hover {
 }
 
 .spark-button:hover {
-    background: #fff ;
+    background: var(--branding-color-lightest) ;
     color: black ;
     box-shadow: 0 0 20px var(--glow-color) ;
     animation: spark-pulse 1.5s infinite;
@@ -836,7 +836,7 @@ button:hover {
 
 .ethereal-btn:hover {
     background: var(--glow-color);
-    color: #000;
+    color: var(--branding-color-darkest);
     box-shadow: 0 0 50px var(--glow-color);
     transform: translateY(-5px);
 }
@@ -1005,11 +1005,11 @@ button:hover {
 }
 .logic-display {
     border: 1px solid var(--glow-color);
-    background: #000;
+    background: var(--branding-color-darkest);
     border: 1px solid var(--glow-color);
     padding: 2rem;
     font-family: 'monospace';
-    color: #fff;
+    color: var(--branding-color-darkest);
     box-shadow: inset 0 0 30px rgba(0, 242, 255, 0.1), 0 0 15px rgba(0, 242, 255, 0.05);
 }
 
@@ -1026,7 +1026,7 @@ button:hover {
 
 .terminal-btn {
     background: var(--glow-color);
-    color: #000;
+    color: var(--branding-color-darkest);
     border: none;
     padding: 5px 15px;
     font-family: 'Orbitron', sans-serif;
@@ -1036,7 +1036,7 @@ button:hover {
     cursor: pointer;
 }
 .terminal-btn:hover {
-    background: #fff;
+    background: var(--branding-color-lightest);
     box-shadow: 0 0 20px #fff;
     transform: translateY(-2px);
 }
@@ -1055,7 +1055,7 @@ button:hover {
 }
 
 .share-hud-content {
-    background: #111;
+    background: var(--branding-color-lighter);
     padding: 30px;
     border: 1px solid var(--glow-color);
     border-radius: 15px;
@@ -1072,7 +1072,7 @@ button:hover {
 }
 
 .share-grid a, .copy-link-btn {
-    color: #f3e5ab;
+    color: var(--branding-color-lightest);
     font-size: 24px;
     transition: all 0.3s ease;
     background: none;
