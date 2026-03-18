@@ -10,11 +10,12 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:59:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:44:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
 let selectedCategory = null;
+let globalTheme = "neon-dark";
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
 
@@ -509,7 +510,10 @@ async function refreshUI() {
         const branding = ownerProfile.branding || {};
 
         //apply the theme colors and set the global theme
-         applyTheme(ownerProfile.theme);
+        // Sync the global variable with the owner's actual theme
+        globalTheme = ownerProfile.theme || 'neon-dark';
+        
+         applyTheme(globalTheme);
         
         // Update document title and branding elements based on owner
         document.title = `${ownerProfile.name || 'Arcade'} | Showroom`;
@@ -1277,7 +1281,7 @@ window.deleteSpark = async (currentId, sparkId, ownerUid) => {
     const dbPath = `users/${user.uid}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
     await saveToRealtimeDB(dbPath, null);
     
-    // REPLACED: initArcade() or reload()
+    // Replaced: refreshUI is the newer version of initArcade.
     await refreshUI(); 
 };
 
@@ -1336,15 +1340,14 @@ function predictLogicType(prompt) {
     return 'hybrid'; 
 }
 
-/*Close the Arcade SEttings HUD, Restore the original theme */
-function closeArcadeSettings(originaltheme) {
-    // 1. Re-apply the theme we saved when the HUD opened
-    if (originaltheme) {
-        applyTheme(originaltheme);
-    }
-    
-    // 2. Hide the HUD
-    document.getElementById('arcadesettings-hud').classList.remove('active');
+function closeArcadeSettings() {
+    // The function already "knows" what globalTheme is because it's in the outer scope
+    console.log("[UI]: Reverting to stored theme:", globalTheme);
+    // Apply the globalTheme
+    applyTheme(globalTheme);
+
+    const hud = document.getElementById('arcadesettings-hud');
+    if (hud) hud.classList.remove('active');
 }
 
 /* * Objective: Initialize or Re-Forge Arcade Identity
@@ -1421,7 +1424,7 @@ window.openArcadeSettings = () => {
                 <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE LABORATORY' : 'INITIALIZE YOUR ARCADE'}</h2>
                 <p class="hud-subtitle-info">${isSetup ? 'Syncing Profile Data...' : 'Establish Your Arcade to Start Creating'}</p>
             </div>
-            <button onclick="closeArcadeSettings(profile.theme || 'neon-dark')" class="close-hud-corner">&times;</button>
+            <button onclick="closeArcadeSettings()" class="close-hud-corner">&times;</button>
         `;
     }
 
@@ -1588,7 +1591,8 @@ window.saveArcadeSettings = async () => {
         });
 
         // 7. UI FINALIZATION
-        if (typeof applyTheme === 'function') applyTheme(themeSelect.value);
+        
+        applyTheme(themeSelect.value);
         document.getElementById('arcadesettings-hud').classList.remove('active');
 
         // --- START WINDOW RELOAD SECTION ---
