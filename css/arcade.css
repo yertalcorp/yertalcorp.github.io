@@ -3,6 +3,18 @@
 :root {
     --neon-color: #00f2ff;
     --nav-font: 'Inter', sans-serif;
+    /* --- LIGHTER TINTS (Mixed with White) --- */
+    --branding-color-lightest: color-mix(in srgb, var(--branding-color), white 90%); /* Ultra light / Icon Glow */
+    --branding-color-lighter:  color-mix(in srgb, var(--branding-color), white 70%); /* Soft backgrounds */
+    --branding-color-light:    color-mix(in srgb, var(--branding-color), white 40%); /* Muted accents */
+
+    /* --- THE CORE --- */
+    --branding-color:          /* Handled by your JSON/JS applyTheme */
+
+    /* --- DARKER SHADES (Mixed with Black) --- */
+    --branding-color-dark:     color-mix(in srgb, var(--branding-color), black 30%); /* Rich borders */
+    --branding-color-darker:    color-mix(in srgb, var(--branding-color), black 60%); /* Deep contrast */
+    --branding-color-darkest:   color-mix(in srgb, var(--branding-color), black 85%); /* Deepest Contrast / Backgrounds */
 }
 
 /* --- DYNAMIC HUD LAYOUT --- */
