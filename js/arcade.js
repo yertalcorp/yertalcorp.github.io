@@ -799,7 +799,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
             </div>
         </nav>
         
-        <div id="engine-status-container" class="status-bar" style="border-top: 1px solid rgba(0, 242, 255, 0.2); background: rgba(0,0,0,0.5); padding: 5px 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <div id="engine-status-container" class="status-bar" style="border-top: 1px solid var(--glow-aura); background: var(--branding-color-darkest); padding: 5px 1.5rem; display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <div class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--glow-color); box-shadow: 0 0 10px var(--glow-color);"></div>
                 <span id="engine-status-text" style="color: white; font-weight: bold; font-size: 9px; text-shadow: 0 0 5px var(--glow-color);">LABORATORY SYSTEM READY</span>
