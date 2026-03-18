@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:44:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:44:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -897,7 +897,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         const meterColor = isFull ? '#ef4444' : 'var(--glow-color)';
         
         const controls = (isOwner && !isFull) ? `
-            <div style="display: flex; align-items: center; gap: 0; margin-left: auto; background: var(--bg-color); border: 1px solid rgba(0,242,255,0.2); border-radius: 4px; padding: 2px 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+            <div style="display: flex; align-items: center; gap: 0; margin-left: auto; background: var(--bg-color); border: 1px solid var(--glow-aura); border-radius: 4px; padding: 2px 10px; box-shadow: inset 0 0 10px var(--box-shadow-color);">
                 <span style="font-family: monospace; color: var(--glow-color); font-size: 10px; margin-right: 10px; opacity: 0.7; font-weight: 900; letter-spacing: 1px;">FORGE_CMD></span>
                 <input type="text" id="input-${current.id}" 
                        placeholder="TYPE A PROMPT OR PASTE A URL..." 
@@ -911,7 +911,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                 </button>
             </div>
         ` : isFull && isOwner ? `
-            <div style="margin-left: auto; color: #ef4444; font-size: 9px; font-weight: 900; letter-spacing: 1px; border: 1px solid #ef4444; padding: 4px 10px; border-radius: 4px; background: rgba(239, 68, 68, 0.05);">
+            <div style="margin-left: auto; color: var(--error-color); font-size: 9px; font-weight: 900; letter-spacing: 1px; border: 1px solid var(--error-color); padding: 4px 10px; border-radius: 4px; background: rgba(239, 68, 68, 0.05);">
                 MAX CAPACITY REACHED
             </div>
         ` : `<div style="margin-left: auto; font-size: 10px; opacity: 0.3; font-family: monospace; letter-spacing: 2px; text-transform: uppercase;">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
