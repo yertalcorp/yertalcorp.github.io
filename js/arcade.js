@@ -703,7 +703,7 @@ window.genLogo = (name, logoAsset) => {
     // Using var(--glow-color) for the background and a semi-transparent black for depth
     return `
         <div class="procedural-logo-tile" style="
-            background: linear-gradient(135deg, var(--glow-color) 0%, rgba(0,0,0,0.8) 100%);
+            background: linear-gradient(135deg, var(--glow-color) 0%, var(--branding-color-darkest) 100%);
             width: 100%;
             height: 100%;
             display: flex;
@@ -713,9 +713,9 @@ window.genLogo = (name, logoAsset) => {
             <span style="
                 font-family: 'Orbitron', sans-serif; 
                 font-weight: 900; 
-                color: rgba(0,0,0,0.9); 
+                color: var(--branding-color-darkest); 
                 font-size: 1.1rem;
-                text-shadow: 0.5px 0.5px 0px rgba(255,255,255,0.2);
+                text-shadow: 0.5px 0.5px 0px var(--branding-color-lightest);
             ">
                 ${initials}
             </span>
@@ -747,7 +747,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
             
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='/index.html'">
-                    <div id="nav-logo" class="logo-container" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; flex: none; border: 1px solid var(--glow-color); border-radius: 4px; background: rgba(0,0,0,0.3); overflow: hidden;">
+                    <div id="nav-logo" class="logo-container" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; flex: none; border: 1px solid var(--glow-color); border-radius: 4px; background: var(--branding-color-darkest); overflow: hidden;">
                         ${logoContent}
                     </div>
                     <h1 class="metallic-text" style="font-size: 1rem; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1;">
@@ -755,16 +755,16 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                     </h1>
                 </div>
 
-                <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 0.5rem; height: 16px; margin-left: 0.2rem;">
-                    <a href="/index.html" title="Showroom" style="color: rgba(255,255,255,0.4); font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><i class="fas fa-door-open"></i></a>
-                    <a href="?user=${userSlug}" title="My Arcade" style="color: rgba(255,255,255,0.4); font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><i class="fas fa-home"></i></a>
-                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--glow-color); padding: 0.15rem 0.4rem; border-radius: 3px; text-decoration: none; font-size: 7px; background: rgba(0, 242, 255, 0.05); box-shadow: 0 0 5px rgba(0, 242, 255, 0.2); letter-spacing: 1px;">HUB</a>
+                <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid var(--branding-color-lightest); padding-left: 0.5rem; height: 16px; margin-left: 0.2rem;">
+                    <a href="/index.html" title="Showroom" style="color: var(--branding-color-lightest); font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--branding-color-lightest)'"><i class="fas fa-door-open"></i></a>
+                    <a href="?user=${userSlug}" title="My Arcade" style="color: var(--branding-color-lightest); font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--branding-color-lightest)'"><i class="fas fa-home"></i></a>
+                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--glow-color); padding: 0.15rem 0.4rem; border-radius: 3px; text-decoration: none; font-size: 7px; background: var(--branding-color-lightest); box-shadow: 0 0 5px var(--branding-color-lightest); letter-spacing: 1px;">HUB</a>
                 </div>
             </div>
 
             <div id="nav-hero-central" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
                 ${arcadeTitle ? `
-                <h1 style="margin: 0; font-size: 1.4rem; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; line-height: 1; text-shadow: 0 0 10px rgba(255,255,255,0.3);">
+                <h1 style="margin: 0; font-size: 1.4rem; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; line-height: 1; text-shadow: 0 0 10px var(--branding-color-lightest));">
                     <span style="color: white">${titleParts[0] || ''} ${titleParts[1] || ''}</span> 
                     <span style="color: var(--glow-color); filter: drop-shadow(0 0 8px var(--glow-color));">${titleParts[2] || ''}</span>
                 </h1>
@@ -775,13 +775,13 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
             <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
                 <div class="hidden lg:block" style="position: relative;">
                     <input type="text" placeholder="SEARCH SPARKS..." class="glass" 
-                           style="border: 1px solid var(--glow-color); border-radius: 9999px; padding: 0.25rem 1rem; font-size: 9px; color: white; width: 9rem; outline: none; background: rgba(255,255,255,0.05);">
+                           style="border: 1px solid var(--glow-color); border-radius: 9999px; padding: 0.25rem 1rem; font-size: 9px; color: white; width: 9rem; outline: none; background: var(--branding-color-lightest);">
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <div style="text-align: right;">
                         <p id="pilot-display" style="margin: 0; line-height: 1; color: white; font-weight: 800; font-size: 10px; text-transform: uppercase;">
                             ${authUser.displayName}
-                            <span style="margin-left: 4px; padding: 1px 4px; border: 1px solid var(--glow-color); border-radius: 3px; font-size: 7px; vertical-align: middle; color: var(--glow-color); background: rgba(0, 242, 255, 0.1);">${profile.plan_type || 'FREE'}</span>
+                            <span style="margin-left: 4px; padding: 1px 4px; border: 1px solid var(--glow-color); border-radius: 3px; font-size: 7px; vertical-align: middle; color: var(--glow-color); background: var(--branding-color-lightest);">${profile.plan_type || 'FREE'}</span>
                         </p>
                         <button onclick="handleLogout()" 
                                 style="background: none; border: none; font-size: 8px; font-weight: 900; color: var(--glow-color); text-transform: uppercase; cursor: pointer; padding: 0; letter-spacing: 0.5px;">
