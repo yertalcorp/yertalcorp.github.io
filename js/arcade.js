@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:26:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:59:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -508,7 +508,7 @@ async function refreshUI() {
         const ownerProfile = pageOwnerData.profile || {};
         const branding = ownerProfile.branding || {};
 
-        //apply the theme colors
+        //apply the theme colors and set the global theme
          applyTheme(ownerProfile.theme);
         
         // Update document title and branding elements based on owner
@@ -826,7 +826,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         return isOwner || isPublic || isTargetUnlisted;
     }) : [];
     
-    // --- EMPTY STATE LOGIC ---
+    // --- NEW USER ON THEIR ARCADE PAGE, SHOW WELCOME AND CENTRAL CREATE ARCADE BUTTON ---
     if (currentsArray.length === 0) {
         if (isOwner) {
             const firstName = profile?.display_name?.split(' ')[0] || "Engineer";
@@ -1357,6 +1357,9 @@ window.openArcadeSettings = () => {
     // 1. IDENTITY & STATE CHECK
     const profile = (window.pageOwnerData && window.pageOwnerData.profile) ? window.pageOwnerData.profile : {};
     const isSetup = profile.hasOwnProperty('setup_complete') && profile.setup_complete === true;
+    
+    // 1. Check at the moment the script loads
+    console.log("Global Scope Check - Profile:", typeof profile !== 'undefined' ? profile : "NOT DEFINED YET");
 
     // Target the dynamic zones defined in index.html
     const profileZone = document.getElementById('arcade-profile-zone');
