@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 22:42:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:06:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1335,7 +1335,15 @@ function predictLogicType(prompt) {
     return 'hybrid'; 
 }
 
-
+function closeArcadeSettings(originaltheme) {
+    // 1. Re-apply the theme we saved when the HUD opened
+    if (originaltheme) {
+        applyTheme(originaltheme);
+    }
+    
+    // 2. Hide the HUD
+    document.getElementById('arcadesettings-hud').classList.remove('active');
+}
 
 /* * Objective: Initialize or Re-Forge Arcade Identity
  * Task: Dynamically generate HUD structure and populate with Firebase data.
@@ -1408,7 +1416,7 @@ window.openArcadeSettings = () => {
                 <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE LABORATORY' : 'INITIALIZE YOUR ARCADE'}</h2>
                 <p class="hud-subtitle-info">${isSetup ? 'Syncing Profile Data...' : 'Establish Your Arcade to Start Creating'}</p>
             </div>
-            <button onclick="document.getElementById('arcadesettings-hud').classList.remove('active')" class="close-hud-corner">&times;</button>
+            <button onclick="closeArcadeSettings(profile.theme || 'neon-dark')" class="close-hud-corner">&times;</button>
         `;
     }
 
