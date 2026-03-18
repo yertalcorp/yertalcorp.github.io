@@ -10,12 +10,23 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:06:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:14:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
 let selectedCategory = null;
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
+
+/*Close the Arcade SEttings HUD, Restore the original theme */
+function closeArcadeSettings(originaltheme) {
+    // 1. Re-apply the theme we saved when the HUD opened
+    if (originaltheme) {
+        applyTheme(originaltheme);
+    }
+    
+    // 2. Hide the HUD
+    document.getElementById('arcadesettings-hud').classList.remove('active');
+}
 
 /*
  * Objective: Laboratory Manual / Guided Viewlets
@@ -1333,16 +1344,6 @@ function predictLogicType(prompt) {
     if (p.includes('generate') || p.includes('create') || p.includes('build') || p.includes('design')) return 'create';
     if (p.includes('top') || p.includes('find') || p.includes('list') || p.includes('show me')) return 'source';
     return 'hybrid'; 
-}
-
-function closeArcadeSettings(originaltheme) {
-    // 1. Re-apply the theme we saved when the HUD opened
-    if (originaltheme) {
-        applyTheme(originaltheme);
-    }
-    
-    // 2. Hide the HUD
-    document.getElementById('arcadesettings-hud').classList.remove('active');
 }
 
 /* * Objective: Initialize or Re-Forge Arcade Identity
