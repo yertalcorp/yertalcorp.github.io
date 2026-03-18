@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:44:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:09:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -733,17 +733,12 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const arcadeTitle = profile.arcade_title;
     const arcadeSubtitle = profile.arcade_subtitle;
     
-    // Check if the user has completed the initial laboratory forge
     const isSetupComplete = profile.setup_complete === true;
-    
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
-
-    // 1. Generate Logo Content
-    // If arcadeLogo exists, genLogo uses it. Else, it generates initials.
     const logoContent = window.genLogo(brandName, arcadeLogo);
     
     header.innerHTML = `
-        <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; filter: brightness(1.2);">
+        <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura);">
             
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='/index.html'">
@@ -751,47 +746,47 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                         ${logoContent}
                     </div>
                     <h1 class="metallic-text" style="font-size: 1rem; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1;">
-                        <span style="color: white;">${brandName}</span>
+                        <span style="color: var(--branding-text-color);">${brandName}</span>
                     </h1>
                 </div>
 
-                <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid var(--branding-color-lightest); padding-left: 0.5rem; height: 16px; margin-left: 0.2rem;">
-                    <a href="/index.html" title="Showroom" style="color: var(--branding-color-lightest); font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--branding-color-lightest)'"><i class="fas fa-door-open"></i></a>
-                    <a href="?user=${userSlug}" title="My Arcade" style="color: var(--branding-color-lightest); font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--branding-color-lightest)'"><i class="fas fa-home"></i></a>
-                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--glow-color); padding: 0.15rem 0.4rem; border-radius: 3px; text-decoration: none; font-size: 7px; background: var(--branding-color-lightest); box-shadow: 0 0 5px var(--branding-color-lightest); letter-spacing: 1px;">HUB</a>
+                <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid var(--glow-aura); padding-left: 0.5rem; height: 16px; margin-left: 0.2rem;">
+                    <a href="/index.html" title="Showroom" style="color: var(--branding-text-color); opacity: 0.7; font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-door-open"></i></a>
+                    <a href="?user=${userSlug}" title="My Arcade" style="color: var(--branding-text-color); opacity: 0.7; font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
+                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--glow-color); padding: 0.15rem 0.4rem; border-radius: 3px; text-decoration: none; font-size: 7px; color: var(--branding-color-darkest); background: var(--branding-color); box-shadow: 0 0 5px var(--glow-aura); letter-spacing: 1px; font-weight: 900;">HUB</a>
                 </div>
             </div>
 
             <div id="nav-hero-central" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
                 ${arcadeTitle ? `
-                <h1 style="margin: 0; font-size: 1.4rem; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; line-height: 1; text-shadow: 0 0 10px var(--branding-color-lightest));">
-                    <span style="color: white">${titleParts[0] || ''} ${titleParts[1] || ''}</span> 
+                <h1 style="margin: 0; font-size: 1.4rem; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; line-height: 1;">
+                    <span style="color: var(--branding-text-color);">${titleParts[0] || ''} ${titleParts[1] || ''}</span> 
                     <span style="color: var(--glow-color); filter: drop-shadow(0 0 8px var(--glow-color));">${titleParts[2] || ''}</span>
                 </h1>
-                <p id="hero-subheading" style="color: white; opacity: 0.8; font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${arcadeSubtitle}</p>
+                <p id="hero-subheading" style="color: var(--branding-text-color); opacity: 0.6; font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${arcadeSubtitle}</p>
                 ` : ''}
             </div>
 
             <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
                 <div class="hidden lg:block" style="position: relative;">
                     <input type="text" placeholder="SEARCH SPARKS..." class="glass" 
-                           style="border: 1px solid var(--glow-color); border-radius: 9999px; padding: 0.25rem 1rem; font-size: 9px; color: white; width: 9rem; outline: none; background: var(--branding-color-lightest);">
+                           style="border: 1px solid var(--glow-aura); border-radius: 9999px; padding: 0.25rem 1rem; font-size: 9px; color: var(--branding-text-color); width: 9rem; outline: none; background: var(--branding-color-darkest);">
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <div style="text-align: right;">
-                        <p id="pilot-display" style="margin: 0; line-height: 1; color: white; font-weight: 800; font-size: 10px; text-transform: uppercase;">
+                        <p id="pilot-display" style="margin: 0; line-height: 1; color: var(--branding-text-color); font-weight: 800; font-size: 10px; text-transform: uppercase;">
                             ${authUser.displayName}
-                            <span style="margin-left: 4px; padding: 1px 4px; border: 1px solid var(--glow-color); border-radius: 3px; font-size: 7px; vertical-align: middle; color: var(--glow-color); background: var(--branding-color-lightest);">${profile.plan_type || 'FREE'}</span>
+                            <span style="margin-left: 4px; padding: 1px 4px; border: 1px solid var(--glow-color); border-radius: 3px; font-size: 7px; vertical-align: middle; color: var(--branding-color-darkest); background: var(--branding-color); font-weight: 900;">${profile.plan_type || 'FREE'}</span>
                         </p>
                         <button onclick="handleLogout()" 
                                 style="background: none; border: none; font-size: 8px; font-weight: 900; color: var(--glow-color); text-transform: uppercase; cursor: pointer; padding: 0; letter-spacing: 0.5px;">
                             Disconnect
                         </button>
                     </div>
-                    <img src="${authUser.photoURL}" alt="Pilot Avatar" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; border: 2px solid var(--glow-color); box-shadow: none; object-fit: cover;">
+                    <img src="${authUser.photoURL}" alt="Pilot Avatar" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; border: 2px solid var(--glow-color); box-shadow: 0 0 10px var(--glow-aura); object-fit: cover;">
                     
                     ${(isOwner && isSetupComplete) ? `
-                    <div id="system-menu-trigger" onclick="toggleDrawer()" style="cursor: pointer; padding-left: 0.5rem; color: var(--glow-color); font-size: 1.1rem; transition: transform 0.3s;">
+                    <div id="system-menu-trigger" onclick="toggleDrawer()" style="cursor: pointer; padding-left: 0.5rem; color: var(--branding-color); font-size: 1.1rem; transition: transform 0.3s;">
                         <i class="fa-solid fa-ellipsis-vertical"></i>
                     </div>
                     ` : ''}
@@ -802,9 +797,9 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
         <div id="engine-status-container" class="status-bar" style="border-top: 1px solid var(--glow-aura); background: var(--branding-color-darkest); padding: 5px 1.5rem; display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <div class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--glow-color); box-shadow: 0 0 10px var(--glow-color);"></div>
-                <span id="engine-status-text" style="color: white; font-weight: bold; font-size: 9px; text-shadow: 0 0 5px var(--glow-color);">LABORATORY SYSTEM READY</span>
+                <span id="engine-status-text" style="color: var(--branding-text-color); font-weight: bold; font-size: 9px; text-shadow: 0 0 5px var(--glow-aura);">LABORATORY SYSTEM READY</span>
             </div>
-            <div style="font-size: 8px; font-weight: 900; color: var(--glow-color); opacity: 0.6; letter-spacing: 0.2em; text-transform: uppercase;">
+            <div style="font-size: 8px; font-weight: 900; color: var(--branding-color); opacity: 0.6; letter-spacing: 0.2em; text-transform: uppercase;">
                 Arcade Environment v2.0
             </div>
         </div>
