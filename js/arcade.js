@@ -159,8 +159,8 @@ function renderSettingsDrawer() {
                     <i class="fas fa-vial"></i>
                 </div>
                 <div class="menu-item" onclick="openUpgradePath()">
-                    <span style="color: var(--branding-color); font-weight: 800;">Upgrade Plan</span>
-                    <i class="fas fa-bolt" style="color: var(--branding-color);"></i>
+                    <span style="color: var(--branding-text-color); font-weight: 800;">Upgrade Plan</span>
+                    <i class="fas fa-bolt" style="color: var(--branding-color); text-shadow: 0 0 8px var(--glow-color);"></i>
                 </div>
             </div>
         </div>
