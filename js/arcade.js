@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:09:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:30:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -834,8 +834,8 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
             if (profile?.setup_complete === true) {
                 // CASE: Established User, no currents (Show Tutorial/Ready state)
                 container.innerHTML = `
-                    <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 6rem 2rem; border: 1px solid rgba(0, 242, 255, 0.05); border-radius: 20px; margin: 2rem; background: rgba(0,0,0,0.2);">
-                        <h1 class="metallic-text" style="font-size: 2.5rem; margin-bottom: 1rem;">
+                    <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 6rem 2rem; border: 1px solid var(--glow-aura); border-radius: 20px; margin: 2rem; background: var(--card-bg);">
+                        <h1 class="metallic-text" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--branding-text-color);">
                             LABORATORY: ${profile.arcade_title || 'ACTIVE'}
                         </h1>
                         <p style="color: var(--glow-color); opacity: 0.6; margin-bottom: 3rem; letter-spacing: 2px; font-size: 11px; font-family: 'Orbitron', sans-serif;">
@@ -854,8 +854,8 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
             } else {
                 // CASE: New User (Show Create Your Arcade button)
                 container.innerHTML = `
-                    <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 8rem 2rem; border: 1px dashed rgba(0, 242, 255, 0.1); border-radius: 20px; margin: 2rem;">
-                        <h1 class="metallic-text" style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem; letter-spacing: -1px;">
+                    <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 8rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 2rem; background: var(--card-bg);">
+                        <h1 class="metallic-text" style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem; letter-spacing: -1px; color: var(--branding-text-color);">
                             ${firstName}, Welcome to your Arcade
                         </h1>
                         <p style="color: var(--glow-color); opacity: 0.6; margin-bottom: 4rem; letter-spacing: 4px; font-size: 12px; font-family: 'Orbitron', sans-serif;">
@@ -870,7 +870,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
             }
         } else {
             container.innerHTML = `
-                <div style="text-align: center; padding: 5rem 0; opacity: 0.2; font-style: italic; letter-spacing: 2px;">
+                <div style="text-align: center; padding: 5rem 0; opacity: 0.4; font-style: italic; letter-spacing: 2px; color: var(--branding-text-color);">
                     OFFLINE: No infrastructure detected for ID: ${ownerUid.substring(0,8)}
                 </div>
             `;
@@ -892,29 +892,29 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         const meterColor = isFull ? '#ef4444' : 'var(--glow-color)';
         
         const controls = (isOwner && !isFull) ? `
-            <div style="display: flex; align-items: center; gap: 0; margin-left: auto; background: var(--bg-color); border: 1px solid var(--glow-aura); border-radius: 4px; padding: 2px 10px; box-shadow: inset 0 0 10px var(--box-shadow-color);">
+            <div style="display: flex; align-items: center; gap: 0; margin-left: auto; background: var(--bg-color); border: 1px solid var(--glow-aura); border-radius: 4px; padding: 2px 10px; box-shadow: inset 0 0 10px var(--branding-color-darkest);">
                 <span style="font-family: monospace; color: var(--glow-color); font-size: 10px; margin-right: 10px; opacity: 0.7; font-weight: 900; letter-spacing: 1px;">FORGE_CMD></span>
                 <input type="text" id="input-${current.id}" 
                        placeholder="TYPE A PROMPT OR PASTE A URL..." 
                        class="glass"
-                       style="background: transparent; border: none; padding: 0.5rem 0; font-size: 10px; min-width: 400px; max-width: 1200px; flex: 1; outline: none; color: white; font-family: 'Orbitron', sans-serif; letter-spacing: 2px;"
+                       style="background: transparent; border: none; padding: 0.5rem 0; font-size: 10px; min-width: 400px; max-width: 1200px; flex: 1; outline: none; color: var(--branding-text-color); font-family: 'Orbitron', sans-serif; letter-spacing: 2px;"
                        onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}')">
                 <button onclick="window.handleCreation('${current.id}')" 
                         class="generate-btn"
-                        style="background: var(--glow-color); color: black; border: none; padding: 4px 14px; margin-left: 10px; border-radius: 2px; font-size: 9px; font-weight: 900; cursor: pointer; text-transform: uppercase; transition: all 0.3s; box-shadow: 0 0 10px var(--glow-color);">
+                        style="background: var(--glow-color); color: var(--bg-color); border: none; padding: 4px 14px; margin-left: 10px; border-radius: 2px; font-size: 9px; font-weight: 900; cursor: pointer; text-transform: uppercase; transition: all 0.3s; box-shadow: 0 0 10px var(--glow-aura);">
                     EXEC
                 </button>
             </div>
         ` : isFull && isOwner ? `
-            <div style="margin-left: auto; color: var(--error-color); font-size: 9px; font-weight: 900; letter-spacing: 1px; border: 1px solid var(--error-color); padding: 4px 10px; border-radius: 4px; background: rgba(239, 68, 68, 0.05);">
+            <div style="margin-left: auto; color: #ef4444; font-size: 9px; font-weight: 900; letter-spacing: 1px; border: 1px solid #ef4444; padding: 4px 10px; border-radius: 4px; background: color-mix(in srgb, #ef4444, transparent 95%);">
                 MAX CAPACITY REACHED
             </div>
-        ` : `<div style="margin-left: auto; font-size: 10px; opacity: 0.3; font-family: monospace; letter-spacing: 2px; text-transform: uppercase;">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
+        ` : `<div style="margin-left: auto; font-size: 10px; opacity: 0.5; font-family: monospace; letter-spacing: 2px; text-transform: uppercase; color: var(--branding-text-color);">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
 
         return `
-            <div class="current-block animate-fadeIn">
-                <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
-                    <h2 class="current-title" style="margin: 0;">${current.name || 'Active Current'}</h2>
+            <div class="current-block animate-fadeIn" style="background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--glow-aura);">
+                <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glow-aura); padding-bottom: 1rem;">
+                    <h2 class="current-title" style="margin: 0; color: var(--branding-text-color);">${current.name || 'Active Current'}</h2>
                     
                     <div style="display: flex; align-items: center; gap: 0.5rem; font-family: 'Orbitron', sans-serif; font-size: 9px; color: ${meterColor}; opacity: 0.8; letter-spacing: 1px;">
                         <span style="opacity: 0.5;">CAPACITY:</span>
@@ -936,7 +936,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
     if (isOwner) {
         container.innerHTML += `
             <div style="display: flex; justify-content: center; margin-top: 3rem; padding-bottom: 5rem;">
-                <button onclick="window.openArcadeSettings()" class="terminal-btn" style="border: 1px dashed var(--glow-color); opacity: 0.6;">
+                <button onclick="window.openArcadeSettings()" class="terminal-btn" style="border: 1px dashed var(--glow-color); opacity: 0.6; color: var(--branding-text-color); background: var(--bg-color);">
                     <i class="fas fa-plus"></i> INITIALIZE NEW CURRENT
                 </button>
             </div>
