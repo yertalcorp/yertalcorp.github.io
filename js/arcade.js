@@ -10,23 +10,13 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:14:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:26:00 `, "background: #000; color: #007470; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
 let selectedCategory = null;
 const GEMINI_API_KEY = ENV.GEMINI_KEY;
 
-/*Close the Arcade SEttings HUD, Restore the original theme */
-function closeArcadeSettings(originaltheme) {
-    // 1. Re-apply the theme we saved when the HUD opened
-    if (originaltheme) {
-        applyTheme(originaltheme);
-    }
-    
-    // 2. Hide the HUD
-    document.getElementById('arcadesettings-hud').classList.remove('active');
-}
 
 /*
  * Objective: Laboratory Manual / Guided Viewlets
@@ -1346,6 +1336,17 @@ function predictLogicType(prompt) {
     return 'hybrid'; 
 }
 
+/*Close the Arcade SEttings HUD, Restore the original theme */
+function closeArcadeSettings(originaltheme) {
+    // 1. Re-apply the theme we saved when the HUD opened
+    if (originaltheme) {
+        applyTheme(originaltheme);
+    }
+    
+    // 2. Hide the HUD
+    document.getElementById('arcadesettings-hud').classList.remove('active');
+}
+
 /* * Objective: Initialize or Re-Forge Arcade Identity
  * Task: Dynamically generate HUD structure and populate with Firebase data.
  */
@@ -1609,6 +1610,8 @@ function getThemeBrandingColor(themeId) {
 
 // ----------------------------------
 window.handleCreation = handleCreation;
+// Force the function to be global so the HTML button can see it
+window.closeArcadeSettings = closeArcadeSettings;
 // At the bottom of arcade.js
 window.likeSpark = likeSpark;
 console.log("likeSpark function has been successfully bridged to the window scope.");
