@@ -69,15 +69,18 @@ export const logout = async () => {
  * Objective: Monitor the user's status and trigger immediate sync if already logged in.
  */
 export const watchAuthState = (callback) => {
-    // 1. Check for existing user, but wrap in timeout to prevent ReferenceErrors
+    // 1. IMMEDIATE SYNC (For existing/cached users)
     if (auth.currentUser) {
+        console.log("%c [AUTH] PRE-EXISTING USER DETECTED - VERIFYING METADATA ", "color: #48bb78;");
+        
+        // Push to the end of the execution stack to avoid reference errors
         setTimeout(() => {
-            console.log("%c [AUTH] SYNCING EXISTING USER ", "color: #48bb78;");
             callback(auth.currentUser);
-        }, 0); // 0ms is enough to let the variable assignment finish
+            // Optional: Call a specific syncProfile(auth.currentUser) function here
+        }, 0);
     }
 
-    // 2. Standard listener for future changes
+    // 2. OBSERVER (For login/logout events)
     return onAuthStateChanged(auth, callback);
 };
 
