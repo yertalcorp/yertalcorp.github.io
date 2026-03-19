@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:04:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:09:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -760,11 +760,13 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const isSetupComplete = profile.setup_complete === true;
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
-    // The photoURL of the person who OWNS the page (Yertal)
-    // This must be saved in your database under the user's profile during login
+    // 1. Retrieve the photo specifically from the page owner's record
+    // This is now guaranteed to exist if the owner has logged in since our update
     const ownerPhotoUrl = profile.photoURL || profile.avatar_url; 
 
-    // Generate content: Pass the owner's photo and the isOwner status
+    // 2. Generate the 3D Logo 
+    // If isOwner is false, genLogo shows the ownerPhotoUrl
+    // If isOwner is true, genLogo shows the 3D initials
     const logoContent = window.genLogo(brandName, ownerPhotoUrl, isOwner);
         
     header.innerHTML = `
