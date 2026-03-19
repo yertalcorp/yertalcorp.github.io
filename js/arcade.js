@@ -436,11 +436,11 @@ function launchShareHUD(url, title) {
         <div class="share-hud-content">
             <h4 class="metallic-text" style="font-size: 14px; margin-bottom: 20px;">SHARE THIS BRILLIANCE</h4>
             <div class="share-grid" style="display: flex; gap: 20px; justify-content: center; margin-bottom: 20px;">
-                <a href="${platforms.x}" target="_blank" style="color: var(--branding-color-lightest); font-size: 20px;"><i class="fab fa-x-twitter"></i></a>
-                <a href="${platforms.facebook}" target="_blank" style="color: var(--branding-color-lightest); font-size: 20px;"><i class="fab fa-facebook"></i></a>
-                <a href="${platforms.whatsapp}" target="_blank" style="color: var(--branding-color-lightest); font-size: 20px;"><i class="fab fa-whatsapp"></i></a>
-                <a href="${platforms.email}" style="color: var(--branding-color-lightest); font-size: 20px;"><i class="fas fa-envelope"></i></a>
-                <button onclick="copyToClipboard('${url}', this)" style="background:none; border:none; color: var(--branding-color-lightest); font-size: 20px; cursor:pointer;"><i class="fas fa-link"></i></button>
+                <a href="${platforms.x}" target="_blank" style="color: var(--icon-color); font-size: 20px;"><i class="fab fa-x-twitter"></i></a>
+                <a href="${platforms.facebook}" target="_blank" style="color: var(--icon-color); font-size: 20px;"><i class="fab fa-facebook"></i></a>
+                <a href="${platforms.whatsapp}" target="_blank" style="color: var(--icon-color); font-size: 20px;"><i class="fab fa-whatsapp"></i></a>
+                <a href="${platforms.email}" style="color: var(--icon-color); font-size: 20px;"><i class="fas fa-envelope"></i></a>
+                <button onclick="copyToClipboard('${url}', this)" style="background:none; border:none; color: var(--icon-color); font-size: 20px; cursor:pointer;"><i class="fas fa-link"></i></button>
             </div>
             <p style="font-size: 9px; color: var(--glow-color); margin-bottom: 15px;">LINK COPIED TO CLIPBOARD</p>
             <button onclick="this.closest('.share-hud-overlay').remove()" class="close-hud">CLOSE</button>
