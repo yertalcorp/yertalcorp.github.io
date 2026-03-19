@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:12:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:26:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -691,69 +691,58 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
     }
 };
 
-window.genLogo = (name, profilePic, isOwner) => {
+window.genLogo = (name, ownerPhotoUrl, isOwner) => {
     // 1. VISITOR VIEW: Show the Owner's Profile Pic in a 3D lifted square
-    if (!isOwner && profilePic) {
+    // This is what everyone ELSE sees when they visit your page.
+    if (!isOwner) {
         return `
-            <div class="visitor-logo-frame" style="
-                width: 100%;
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+            <div class="visitor-logo-3d" style="
                 background: var(--btn-gradient);
+                width: 42px; height: 42px;
+                display: flex; align-items: center; justify-content: center;
                 border-radius: 8px;
-                box-shadow: 0 8px 20px var(--button-shadow-color);
+                box-shadow: 0 8px 16px var(--glow-color);
                 border: 1px solid var(--button-border-color);
-                transform: perspective(1000px) rotateX(5deg);
+                transform: perspective(1000px) rotateX(10deg);
                 overflow: hidden;
             ">
-                <img src="${profilePic}" alt="${name}" style="
-                    width: 90%; 
-                    height: 90%; 
-                    object-fit: cover; 
-                    border-radius: 4px;
-                ">
+                ${ownerPhotoUrl ? 
+                    `<img src="${ownerPhotoUrl}" alt="${name}" style="width: 100%; height: 100%; object-fit: cover;">` : 
+                    `<div style="color: var(--button-text-color); font-family: 'Orbitron'; font-weight:900;">${name.charAt(0)}</div>`
+                }
             </div>
         `;
     }
 
-    // 2. OWNER VIEW (or Fallback): Show the Cool 3D Initials Logo
-    const initials = name
-        ? name.split(' ').map(word => word[0]).join('').toUpperCase().substring(0, 2)
-        : "YA";
+    // 2. OWNER VIEW: Show the Cool 3D Initials Logo
+    // This is EXCLUSIVE to you when you view your own page.
+    const initials = name ? name.split(' ').map(word => word[0]).join('').toUpperCase().substring(0, 2) : "YA";
 
     return `
         <div class="owner-logo-3d" style="
             background: var(--btn-gradient);
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 25px var(--button-shadow-color);
+            width: 42px; height: 42px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 10px 20px var(--glow-color);
             border-radius: 4px;
-            transform: perspective(600px) rotateY(-10deg) rotateX(5deg);
+            transform: perspective(600px) rotateY(-15deg) rotateX(5deg);
             border: 1px solid var(--button-border-color);
-            position: relative;
         ">
             <span style="
                 font-family: 'Orbitron', sans-serif; 
                 font-weight: 900; 
                 color: var(--button-text-color); 
-                font-size: 1.2rem;
-                letter-spacing: 1px;
+                font-size: 1.1rem;
                 text-shadow: 
-                    1px 1px 0px var(--button-text-shadow-color),
+                    1px 1px 0px var(--button-text-shadow-color), 
                     2px 2px 0px var(--button-text-shadow-color),
-                    3px 3px 8px var(--button-border-color);
+                    3px 3px 6px var(--button-text-shadow-color);
             ">
                 ${initials}
             </span>
         </div>
     `;
 };
-
 function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
@@ -767,18 +756,12 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const isSetupComplete = profile.setup_complete === true;
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
-    /*
-     * LOGIC: 
-     * 1. If isOwner is true, use authUser.photoURL (Your live Firebase Auth photo).
-     * 2. If isOwner is false, we must use the photoURL stored in the pageOwner's 
-     * public profile record (synced from their provider).
-     */
-    const photoToShow = isOwner 
-        ? authUser?.photoURL 
-        : (profile.photoURL || profile.avatar_url);
+    // The photoURL of the person who OWNS the page (Yertal)
+    // This must be saved in your database under the user's profile during login
+    const ownerPhotoUrl = profile.photoURL || profile.avatar_url; 
 
-    // Pass the determined photo to genLogo
-    const logoContent = window.genLogo(brandName, photoToShow, isOwner);
+    // Generate content: Pass the owner's photo and the isOwner status
+    const logoContent = window.genLogo(brandName, ownerPhotoUrl, isOwner);
         
     header.innerHTML = `
         <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura);">
