@@ -66,10 +66,20 @@ export const logout = async () => {
 };
 
 /**
- * Objective: Monitor the user's status across the Arcade
+ * Objective: Monitor the user's status and trigger immediate sync if already logged in.
  */
 export const watchAuthState = (callback) => {
-    return onAuthStateChanged(auth, callback);
+    // 1. Check if a user is already cached in the Auth object
+    if (auth.currentUser) {
+        console.log("%c [AUTH] EXISTING USER DETECTED ON LOAD ", "color: #48bb78;");
+        callback(auth.currentUser);
+    }
+
+    // 2. Return the standard listener for future login/logout events
+    return onAuthStateChanged(auth, (user) => {
+        console.log("%c [AUTH] STATE CHANGE OBSERVED ", "color: #bada55;");
+        callback(user);
+    });
 };
 
 /**
