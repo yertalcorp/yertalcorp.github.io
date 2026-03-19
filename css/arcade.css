@@ -34,12 +34,12 @@
     margin-bottom: 4px;
     text-transform: uppercase;
     opacity: 0.9;
-    text-shadow: -0.5px -0.5px 0px rgba(255,255,255,0.3), 
+    text-shadow: -0.5px -0.5px 0px var(--branding-text-color), 
                   1px 1px 3px var(--text-shadow-color);
 }
 
 .logo-upload-wrapper {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--branding-text-color);
     padding: 10px;
     border: 1px dashed var(--border-color);
     border-radius: 4px;
@@ -98,7 +98,7 @@
 .metallic-divider {
     border: none;
     height: 1px;
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+    background: linear-gradient(to right, transparent, var(--branding-text-color), transparent);
     margin: 10px 0;
 }
 
@@ -115,7 +115,7 @@
     align-items: center;
     gap: 10px;
     font-size: 10px;
-    color: var(--list-color, rgba(255, 255, 255, 0.8));
+    color: var(--list-color, var(--branding-text-color);
     margin-bottom: 6px;
 }
 
@@ -146,7 +146,7 @@
 /* --- EXTRA UI BUTTON --- */
 .ethereal-btn-xs {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--branding-text-color);
     color: var(--ethereal-button-color);
     padding: 4px 10px;
     font-size: 8px;
@@ -230,7 +230,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid var(--branding-text-color);
     padding-bottom: 1rem;
 }
 
@@ -248,7 +248,7 @@
 }
 
 .menu-item:hover {
-    background: rgba(var(--branding-rgb, 255, 255, 255), 0.05);
+    background: var(--bg-color);
     color: var(--branding-color);
 }
 
@@ -385,10 +385,10 @@
     margin-top: 0.2rem;
 }
 .plan-card {
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border: 1px solid var(--border-color, var(--branding-text-color));
     border-radius: 12px;
     padding: 0.8rem;
-    background: var(--card-bg, rgba(255, 255, 255, 0.03));
+    background: var(--card-bg, var(--branding-text-color));
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -397,15 +397,15 @@
 }
 
 .plan-card-rounded {
-    background: var(--card-bg, rgba(15, 15, 15, 0.8));
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    background: var(--card-bg, var(--bg-color);
+    border: 1px solid var(--border-color, var(--branding-text-color));
     border-radius: 20px;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .plan-card.active {
     border-color: var(--glow-color);
-    background: var(--card-glow-color, rgba(0, 242, 255, 0.05));
+    background: var(--card-glow-color, var(--glow-color));
     box-shadow: 0 0 15px var(--box-shadow-color, rgba(0, 242, 255, 0.1));
 }
 .plan-card h3 {
@@ -1082,8 +1082,8 @@ button:hover {
 }
 
 .close-hud {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--branding-text-color);
+    border: 1px solid var(--branding-text-color);
     color: white;
     padding: 8px 20px;
     border-radius: 5px;
