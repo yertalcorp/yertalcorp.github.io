@@ -889,7 +889,8 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 
         const sparkCount = sparks.length;
         const isFull = sparkCount >= maxSparks;
-        const meterColor = isFull ? 'var(--error-color)' || #ef4444;
+        // This tells the browser: Use --error-color. If it doesn't exist, use #ef4444.
+        const meterColor = isFull ? 'var(--error-color, #ef4444)' : 'var(--glow-color)';
 
         // USER HAS MORE CAPACITY TO BUILD CURRENTS AND SPARKS
         const controls = (isOwner && !isFull) ? `
