@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:50:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:09:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -914,8 +914,8 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         ` : `<div style="margin-left: auto; font-size: 10px; opacity: 0.5; font-family: monospace; letter-spacing: 2px; text-transform: uppercase; color: var(--branding-text-color);">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
 
         return `
-            <div class="current-block animate-fadeIn" style="background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--glow-aura);">
-                <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glow-aura); padding-bottom: 1rem;">
+            <div class="current-block animate-fadeIn" style="background: var(--card-bg); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; border: 1px solid var(--glow-aura);">
+                <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glow-aura); padding-bottom: 0.8rem;">
                     <h2 class="current-title" style="margin: 0; color: var(--branding-text-color);">${current.name || 'Active Current'}</h2>
                     
                     <div style="display: flex; align-items: center; gap: 0.5rem; font-family: 'Orbitron', sans-serif; font-size: 9px; color: ${meterColor}; opacity: 0.8; letter-spacing: 1px;">
@@ -927,7 +927,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                 </div>
                 
                 <div class="experiment-zone">
-                    <div id="sparks-${current.id}" class="grid" style="padding: 5px;">
+                    <div id="sparks-${current.id}" class="grid" style="padding: 10px;">
                         ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id, ownerUid)).join('')}
                     </div>
                 </div>
