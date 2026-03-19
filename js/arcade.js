@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:43:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:04:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -691,58 +691,62 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
     }
 };
 
-window.genLogo = (name, ownerPhotoUrl, isOwner) => {
+
+window.genLogo = (name, profilePic, isOwner) => {
+    // SYSTEM LOGS: Debugging the state
+    console.log(`[genLogo Debug]: Name: "${name}" | isOwner: ${isOwner} | Photo: ${profilePic ? 'FOUND' : 'MISSING'}`);
+
     // 1. VISITOR VIEW: Show the Owner's Profile Pic in a 3D lifted square
-    // This is what everyone ELSE sees when they visit your page.
-    if (!isOwner) {
+    if (!isOwner && profilePic) {
         return `
             <div class="visitor-logo-3d" style="
                 background: var(--btn-gradient);
                 width: 42px; height: 42px;
                 display: flex; align-items: center; justify-content: center;
                 border-radius: 8px;
-                box-shadow: 0 8px 16px var(--glow-color);
-                border: 1px solid var(--button-border-color);
+                box-shadow: 0 4px 12px var(--card-shadow-color);
+                border: 1px solid var(--border-color);
                 transform: perspective(1000px) rotateX(10deg);
                 overflow: hidden;
             ">
-                ${ownerPhotoUrl ? 
-                    `<img src="${ownerPhotoUrl}" alt="${name}" style="width: 100%; height: 100%; object-fit: cover;">` : 
-                    `<div style="color: var(--button-text-color); font-family: 'Orbitron'; font-weight:900;">${name.charAt(0)}</div>`
-                }
+                <img src="${profilePic}" alt="${name}" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
         `;
     }
 
-    // 2. OWNER VIEW: Show the Cool 3D Initials Logo
-    // This is EXCLUSIVE to you when you view your own page.
-    const initials = name ? name.split(' ').map(word => word[0]).join('').toUpperCase().substring(0, 2) : "YA";
+    // 2. OWNER VIEW: Show the Cool 3D Initials Logo (Private to you)
+    // Fix for single-word "Y" -> "YE"
+    const words = name ? name.trim().split(' ') : ["YA"];
+    const initials = words.length > 1 
+        ? (words[0][0] + words[1][0]).toUpperCase()
+        : (words[0].length > 1 ? words[0].substring(0, 2) : words[0]).toUpperCase();
 
     return `
         <div class="owner-logo-3d" style="
             background: var(--btn-gradient);
             width: 42px; height: 42px;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 20px var(--glow-color);
-            border-radius: 4px;
+            box-shadow: 0 8px 15px var(--box-shadow-color);
+            border-radius: 6px;
             transform: perspective(600px) rotateY(-15deg) rotateX(5deg);
             border: 1px solid var(--button-border-color);
+            position: relative;
         ">
             <span style="
-                font-family: 'Orbitron', sans-serif; 
-                font-weight: 900; 
+                font-family: var(--branding-font); 
+                font-weight: var(--branding-weight); 
                 color: var(--button-text-color); 
                 font-size: 1.1rem;
                 text-shadow: 
                     1px 1px 0px var(--button-text-shadow-color), 
-                    2px 2px 0px var(--button-text-shadow-color),
-                    3px 3px 6px var(--button-text-shadow-color);
+                    2px 2px 4px var(--card-shadow-color);
             ">
                 ${initials}
             </span>
         </div>
     `;
 };
+
 function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
