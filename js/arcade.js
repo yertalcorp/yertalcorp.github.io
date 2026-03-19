@@ -940,7 +940,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         ` : `<div style="margin-left: auto; font-size: 10px; opacity: 0.5; font-family: monospace; letter-spacing: 2px; text-transform: uppercase; color: var(--branding-text-color);">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
 
         return `
-            <div class="current-block animate-fadeIn" style="background: var(--card-bg); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; border: 1px solid var(--glow-aura);">
+            <div class="current-block animate-fadeIn" style="background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--glow-aura);">
                 <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glow-aura); padding-bottom: 0.8rem;">
                     <h2 class="current-title" style="margin: 0; color: var(--branding-text-color);">${current.name || 'Active Current'}</h2>
                     
