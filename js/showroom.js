@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 20:34:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 20:55:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -218,7 +218,10 @@ watchAuthState(async (newUser) => {
             
             // Only fetch from DB if session is empty or user has changed
             if (!currentUser || currentUser.uid !== user.uid) {
-                const profileUrl = firebaseConfig.databaseURL + "/users/" + user.uid + "/profile.json";
+                // Generate the ID token to authenticate the REST request
+                const idToken = await user.getIdToken();
+                const profileUrl = `${firebaseConfig.databaseURL}/users/${user.uid}/profile.json?auth=${idToken}`;
+
                 const response = await fetch(profileUrl);
                 let profile = await response.json();
 
@@ -285,7 +288,6 @@ watchAuthState(async (newUser) => {
         }
     }
 });
-
 // --- 3. HERO & INTERACTION ENGINE ---
 function renderHero(hero) {
     const container = document.getElementById('hero-container');
