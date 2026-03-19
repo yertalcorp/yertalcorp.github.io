@@ -224,14 +224,16 @@ watchAuthState(async (newUser) => {
                         display_name: user.displayName,
                         slug: generatedSlug,
                         arcade_logo: currentUi['default-logo'],
-                        plan_type: 'free'
+                        plan_type: 'free',
+                        email: user.email,
+                        photoURL: user.photoURL
                     };
                     
                     await fetch(profileUrl, {
                         method: 'PUT',
                         body: JSON.stringify(profile)
                     });
-                }
+                } 
                 currentUser = profile;
                 sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             }
