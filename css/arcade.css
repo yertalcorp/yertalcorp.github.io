@@ -622,7 +622,7 @@ header {
     letter-spacing: 0.12em; 
     font-size: 10px;
     color: var(--branding-text-color);
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 3px var(--glow-color);
+    text-shadow: 0 0 12px var(--text-shadow-color), 0 0 3px var(--glow-color);
     filter: brightness(1.8) contrast(1.3);
     white-space: nowrap;
 }
@@ -636,7 +636,7 @@ header {
     color: white;
     margin-bottom: 0.25rem;
     /* Decorative Gradient Text */
-    background: linear-gradient(to right, #fff, rgba(255,255,255,0.3));
+    background: linear-gradient(to right, #fff, var(--branding-text-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -651,14 +651,14 @@ header {
 }
 /* High-Density Current Headings */
 .current-title {
-    text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
-    filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));
+    text-shadow: 2px 2px 0px var(--bg-color);
+    filter: drop-shadow(0 0 5px var(--branding-text-color));
 }
 
 /* Generate Button: Metallic Glow */
 .generate-btn {
     dow: 0 0 15px var(--glow-color);
-    border: 1px solid rgba(255,255,255,0.3);
+    border: 1px solid var(--branding-text-color);
     position: relative;
     overflow: hidden;
 }
@@ -670,7 +670,7 @@ header {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+    background: linear-gradient(45deg, transparent, var(--branding-text-color), transparent);
     transform: rotate(45deg);
     transition: 0.5s;
 }
@@ -701,8 +701,8 @@ header {
 /* --- SURREAL 3D SPARK BOXES --- */
 
 .action-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--branding-text-color);
+    border: 1px solid (--branding-text-color);
     border-radius: 12px;
     padding: 1.5rem; /* Internal padding from border */
     position: relative;
@@ -715,12 +715,12 @@ header {
 
 /* Hover & 3D Boundary */
 .action-card:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: var(--branding-text-color);
     border-color: var(--glow-color);
     transform: translateY(-10px) rotateX(2deg) rotateY(-2deg);
     box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.6),
-        0 0 20px rgba(0, 242, 255, 0.1);
+        0 20px 40px var(--bg-color),
+        0 0 20px var(--card-glow-color);
     animation: spark-pulse 2s infinite ease-in-out;
 }
 
@@ -742,7 +742,7 @@ header {
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--branding-text-color);
 }
 
 .card-stats-row {
@@ -777,12 +777,12 @@ button#auth-trigger,
     font-size: 16px ;
     color: var(--branding-text-color) ;
     background: transparent ;
-    text-shadow: 0 0 8px rgba(255,255,255,0.2);
+    text-shadow: 0 0 8px var(--branding-text-color);
     font-weight: 500;
 }
 
 .current-block input::placeholder {
-    color: rgba(255, 255, 255, 0.5) ;
+    color: var(--branding-text-color) ;
     font-style: italic;
 }
 .current-block input:focus {
@@ -864,7 +864,7 @@ button:hover {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(0,242,255,0.4) 0%, transparent 70%);
+    background: radial-gradient(circle, var(--card-glow-color) 0%, transparent 70%);
     animation: rotateGlow 10s linear infinite;
     pointer-events: none;
 }
@@ -880,7 +880,7 @@ button:hover {
     top: 0; left: 0; 
     width: 100%; 
     height: 100%;
-    background: rgba(0, 8, 15, 0.98); 
+    background: var(--card-bg); 
     backdrop-filter: blur(25px); /* Increased blur to hide background artifacts */
     -webkit-backdrop-filter: blur(25px);
     display: none; 
@@ -916,7 +916,7 @@ button:hover {
     right: 20px;
     background: transparent;
     border: none;
-    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+    color: var(--text-secondary, var(--branding-text-color));
     font-size: 28px;
     line-height: 1;
     cursor: pointer;
@@ -943,8 +943,8 @@ button:hover {
 }
 
 .cat-btn {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--branding-text-color);
+    border: 1px solid var(--branding-text-color);
     color: white; padding: 10px;
     font-size: 10px; cursor: pointer;
     font-family: 'Orbitron', sans-serif;
@@ -953,7 +953,7 @@ button:hover {
 
 .cat-btn.selected {
     border-color: var(--glow-color);
-    background: rgba(0, 242, 255, 0.1);
+    background: var(--card-glow-color);
     box-shadow: 0 0 15px var(--box-shadow-color);
 }
 
@@ -992,8 +992,8 @@ button:hover {
 .tag {
     font-size: 9px;
     padding: 3px 8px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(0,242,255,0.2);
+    background: var(--branding-text-color);
+    border: 1px solid var(--card-glow-color);
     color: var(--glow-color);
     font-family: 'Orbitron', sans-serif;
 }
@@ -1004,18 +1004,18 @@ button:hover {
     padding: 2rem;
     font-family: 'monospace';
     color: var(--bg-color);
-    box-shadow: inset 0 0 30px rgba(0, 242, 255, 0.1), 0 0 15px rgba(0, 242, 255, 0.05);
+    box-shadow: inset 0 0 30px var(--card-glow-color), 0 0 15px var(--glow-color);
 }
 
 .terminal-code {
-    background: rgba(0, 242, 255, 0.05);
+    background: var(--glow-color);
     padding: 1.5rem;
     border-radius: 4px;
     color: var(--glow-color);
     font-size: 1.2rem;
     overflow-x: auto;
     border-left: 3px solid var(--glow-color);
-    text-shadow: 0 0 5px rgba(0, 242, 255, 0.5);
+    text-shadow: 0 0 5px var(--card-glow-color);
 }
 
 .terminal-btn {
@@ -1039,7 +1039,7 @@ button:hover {
 .share-hud-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: var(--bg-color);
     backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
