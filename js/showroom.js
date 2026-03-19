@@ -6,6 +6,7 @@ console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 1
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
+
     
 async function initShowroom() {
     try {
@@ -474,9 +475,13 @@ window.openAuthHUD = async (mode = 'personal') => {
   // 1. WAIT FOR FIREBASE
   const activeUser = await new Promise((resolve) => {
     const unsubscribe = watchAuthState((user) => {
-      unsubscribe(); // Stop listening after first response
-      resolve(user);
-    });
+        
+        // Safety check: Only call if it's been defined
+        if (typeof unsubscribe === 'function') {
+            unsubscribe(); 
+        }
+          resolve(user);
+        });
   });
 
   // 2. REDIRECT IF LOGGED IN
