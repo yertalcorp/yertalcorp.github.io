@@ -889,7 +889,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 
         const sparkCount = sparks.length;
         const isFull = sparkCount >= maxSparks;
-        const meterColor = isFull ? 'var(--error-color)';
+        const meterColor = isFull ? 'var(--error-color)' || #ef4444;
 
         // USER HAS MORE CAPACITY TO BUILD CURRENTS AND SPARKS
         const controls = (isOwner && !isFull) ? `
