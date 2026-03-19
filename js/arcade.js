@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:09:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:26:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -691,31 +691,62 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
     }
 };
 
-window.genLogo = (name, logoAsset) => {
-    if (logoAsset) {
-        return `<img src="${logoAsset}" alt="Brand Logo" style="height: 85%; width: auto; filter: none;">`;
+window.genLogo = (name, profilePic, isOwner) => {
+    // 1. VISITOR VIEW: Show the Owner's Profile Pic in a 3D lifted square
+    if (!isOwner && profilePic) {
+        return `
+            <div class="visitor-logo-frame" style="
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: var(--btn-gradient);
+                border-radius: 8px;
+                box-shadow: 0 8px 20px var(--button-shadow-color);
+                border: 1px solid var(--button-border-color);
+                transform: perspective(1000px) rotateX(5deg);
+                overflow: hidden;
+            ">
+                <img src="${profilePic}" alt="${name}" style="
+                    width: 90%; 
+                    height: 90%; 
+                    object-fit: cover; 
+                    border-radius: 4px;
+                ">
+            </div>
+        `;
     }
 
+    // 2. OWNER VIEW (or Fallback): Show the Cool 3D Initials Logo
     const initials = name
         ? name.split(' ').map(word => word[0]).join('').toUpperCase().substring(0, 2)
         : "YA";
 
-    // Using var(--glow-color) for the background and a semi-transparent black for depth
     return `
-        <div class="procedural-logo-tile" style="
-            background: linear-gradient(135deg, var(--glow-color) 0%, var(--branding-color-darkest) 100%);
+        <div class="owner-logo-3d" style="
+            background: var(--btn-gradient);
             width: 100%;
             height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 10px 25px var(--button-shadow-color);
+            border-radius: 4px;
+            transform: perspective(600px) rotateY(-10deg) rotateX(5deg);
+            border: 1px solid var(--button-border-color);
+            position: relative;
         ">
             <span style="
                 font-family: 'Orbitron', sans-serif; 
                 font-weight: 900; 
-                color: var(--branding-color-darkest); 
-                font-size: 1.1rem;
-                text-shadow: 0.5px 0.5px 0px var(--branding-color-lightest);
+                color: var(--button-text-color); 
+                font-size: 1.2rem;
+                letter-spacing: 1px;
+                text-shadow: 
+                    1px 1px 0px var(--button-text-shadow-color),
+                    2px 2px 0px var(--button-text-shadow-color),
+                    3px 3px 8px var(--button-border-color);
             ">
                 ${initials}
             </span>
@@ -735,8 +766,15 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     
     const isSetupComplete = profile.setup_complete === true;
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
-    const logoContent = window.genLogo(brandName, arcadeLogo);
-    
+
+    // The photoURL usually comes from the auth provider (Google/Github) 
+    // stored in the user profile object
+    const ownerPhotoUrl = profile.photoURL || profile.avatar_url; 
+
+    // Determine the logo content:
+    // Pass brandName, the provider photo, and the ownership status
+    const logoContent = window.genLogo(brandName, ownerPhotoUrl, isOwner);
+        
     header.innerHTML = `
         <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura);">
             
