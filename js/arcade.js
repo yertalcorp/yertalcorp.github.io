@@ -785,7 +785,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                 <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid var(--glow-aura); padding-left: 0.5rem; height: 16px; margin-left: 0.2rem;">
                     <a href="/index.html" title="Showroom" style="color: var(--branding-text-color); opacity: 0.7; font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-door-open"></i></a>
                     <a href="?user=${userSlug}" title="My Arcade" style="color: var(--branding-text-color); opacity: 0.7; font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
-                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--glow-color); padding: 0.15rem 0.4rem; border-radius: 3px; text-decoration: none; font-size: 7px; color: var(--branding-color-darkest); background: var(--branding-color); box-shadow: 0 0 5px var(--glow-aura); letter-spacing: 1px; font-weight: 900;"><b>HUB</b></a>
+                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--button-color); padding: 0.15rem 0.4rem; border-radius: 3px; text-decoration: none; font-size: 8px; color: var(--bg-color); background: var(--branding-color); box-shadow: 0 0 5px var(--box-shadow-color); letter-spacing: 2px; font-weight: 950; text-shadow: 0.5px 0.5px 0px var(--button-text-color), -0.5px -0.5px 0px var(--button-text-shadow-color); "><b>HUB</b></a>
                 </div>
             </div>
 
