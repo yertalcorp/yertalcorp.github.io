@@ -927,7 +927,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                 </div>
                 
                 <div class="experiment-zone">
-                    <div id="sparks-${current.id}" class="grid" style="padding: 10px;">
+                    <div id="sparks-${current.id}" class="grid" style="padding: 5px;">
                         ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id, ownerUid)).join('')}
                     </div>
                 </div>
