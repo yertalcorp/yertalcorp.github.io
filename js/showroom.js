@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 12:13:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 17:06:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -211,14 +211,15 @@ watchAuthState(async (newUser) => {
     if (user && currentAuth && currentUi) {
         try {
             let currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
-        
+            
+            // Only fetch from DB if session is empty or user has changed
             if (!currentUser || currentUser.uid !== user.uid) {
                 const profileUrl = firebaseConfig.databaseURL + "/users/" + user.uid + "/profile.json";
                 const response = await fetch(profileUrl);
                 let profile = await response.json();
 
                 if (!profile) {
-                    // Logic for new users only
+                    // CASE 1: Brand New User
                     const generatedSlug = (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-');
                     profile = {
                         display_name: user.displayName,
@@ -233,12 +234,42 @@ watchAuthState(async (newUser) => {
                         method: 'PUT',
                         body: JSON.stringify(profile)
                     });
-                } 
+                    console.log("%c [SYSTEM] NEW PROFILE CREATED ", "color: #00f2ff;");
+                } else {
+                    // CASE 2: Existing Profile - Update missing or changed Email/Photo
+                    const updates = {};
+                    
+                    // Check if email is missing or has changed
+                    if (!profile.email || (user.email && profile.email !== user.email)) {
+                        updates.email = user.email;
+                    }
+                    
+                    // Check if photoURL is missing or has changed
+                    if (!profile.photoURL || (user.photoURL && profile.photoURL !== user.photoURL)) {
+                        updates.photoURL = user.photoURL;
+                    }
+
+                    // Only send a PATCH request if there is actually something to update
+                    if (Object.keys(updates).length > 0) {
+                        console.log("%c [SYSTEM] SYNCING PROFILE ATTRIBUTES ", "color: #f6ad55;", updates);
+                        
+                        await fetch(profileUrl, {
+                            method: 'PATCH',
+                            body: JSON.stringify(updates)
+                        });
+
+                        // Sync the local profile object so sessionStorage is up to date
+                        profile = { ...profile, ...updates };
+                    }
+                }
+
                 currentUser = profile;
+                // Add the UID to the object before storing in session for consistency
+                currentUser.uid = user.uid; 
                 sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             }
 
-            // MOVE THIS HERE: Now sessionStorage is guaranteed to have the data
+            // UI is updated using the guaranteed data
             renderAuthStatus(user, currentAuth);
             console.log("%c [SYSTEM] USER RECOGNIZED | UI UPDATED ", "color: #00f2ff;");
 
