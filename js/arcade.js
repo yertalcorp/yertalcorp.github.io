@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:26:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:12:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -767,13 +767,18 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const isSetupComplete = profile.setup_complete === true;
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
-    // The photoURL usually comes from the auth provider (Google/Github) 
-    // stored in the user profile object
-    const ownerPhotoUrl = profile.photoURL || profile.avatar_url; 
+    /*
+     * LOGIC: 
+     * 1. If isOwner is true, use authUser.photoURL (Your live Firebase Auth photo).
+     * 2. If isOwner is false, we must use the photoURL stored in the pageOwner's 
+     * public profile record (synced from their provider).
+     */
+    const photoToShow = isOwner 
+        ? authUser?.photoURL 
+        : (profile.photoURL || profile.avatar_url);
 
-    // Determine the logo content:
-    // Pass brandName, the provider photo, and the ownership status
-    const logoContent = window.genLogo(brandName, ownerPhotoUrl, isOwner);
+    // Pass the determined photo to genLogo
+    const logoContent = window.genLogo(brandName, photoToShow, isOwner);
         
     header.innerHTML = `
         <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura);">
