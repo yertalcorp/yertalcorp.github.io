@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 17:06:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 18:05:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -204,7 +204,6 @@ async function renderAuthStatus(user, authData) {
     }
 }
 
-
 watchAuthState(async (newUser) => {
     user = newUser;
 
@@ -220,6 +219,9 @@ watchAuthState(async (newUser) => {
 
                 if (!profile) {
                     // CASE 1: Brand New User
+                    // LOG: Profile not detected, initiating creation
+                    **console.log("%c [SYSTEM] PROFILE NOT DETECTED | CREATING NEW ENTRY ", "color: #f6ad55;");**
+
                     const generatedSlug = (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-');
                     profile = {
                         display_name: user.displayName,
