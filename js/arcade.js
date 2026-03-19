@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 22:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -785,7 +785,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                 <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid var(--glow-aura); padding-left: 0.5rem; height: 16px; margin-left: 0.2rem;">
                     <a href="/index.html" title="Showroom" style="color: var(--branding-text-color); opacity: 0.7; font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-door-open"></i></a>
                     <a href="?user=${userSlug}" title="My Arcade" style="color: var(--branding-text-color); opacity: 0.7; font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
-                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--border-color); padding: 0.15rem 0.4rem; border-radius: 3px; text-decoration: none; background: var(--branding-color); box-shadow: 0 0 5px var(--box-shadow-color);">HUB</a>
+<a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 3px; text-decoration: none; background: var(--branding-color); color: var(--bg-color); box-shadow: 0 0 5px var(--box-shadow-color); font-size: 10px; font-weight: 900;">HUB</a>
                 </div>
             </div>
 
