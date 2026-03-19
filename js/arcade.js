@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:27:00 `, "background: var(--branding-color-darkest); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -774,7 +774,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
             
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='/index.html'">
-                    <div id="nav-logo" class="logo-container" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; flex: none; border: 1px solid var(--glow-color); border-radius: 4px; background: var(--branding-color-darkest); overflow: hidden;">
+                    <div id="nav-logo" class="logo-container" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; flex: none; border: 1px solid var(--glow-color); border-radius: 4px; background: var(--bg-color); overflow: hidden;">
                         ${logoContent}
                     </div>
                     <h1 class="metallic-text" style="font-size: 1rem; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1;">
@@ -802,13 +802,13 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
             <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
                 <div class="hidden lg:block" style="position: relative;">
                     <input type="text" placeholder="SEARCH SPARKS..." class="glass" 
-                           style="border: 1px solid var(--glow-aura); border-radius: 9999px; padding: 0.25rem 1rem; font-size: 9px; color: var(--branding-text-color); width: 9rem; outline: none; background: var(--branding-color-darkest);">
+                           style="border: 1px solid var(--glow-aura); border-radius: 9999px; padding: 0.25rem 1rem; font-size: 9px; color: var(--branding-text-color); width: 9rem; outline: none; background: var(--bg-color);">
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <div style="text-align: right;">
                         <p id="pilot-display" style="margin: 0; line-height: 1; color: var(--branding-text-color); font-weight: 800; font-size: 10px; text-transform: uppercase;">
                             ${authUser.displayName}
-                            <span style="margin-left: 4px; padding: 1px 4px; border: 1px solid var(--glow-color); border-radius: 3px; font-size: 7px; vertical-align: middle; color: var(--branding-color-darkest); background: var(--branding-color); font-weight: 900;">${profile.plan_type || 'FREE'}</span>
+                            <span style="margin-left: 4px; padding: 1px 4px; border: 1px solid var(--glow-color); border-radius: 3px; font-size: 7px; vertical-align: middle; color: var(--bg-color); background: var(--branding-color); font-weight: 900;">${profile.plan_type || 'FREE'}</span>
                         </p>
                         <button onclick="handleLogout()" 
                                 style="background: none; border: none; font-size: 8px; font-weight: 900; color: var(--glow-color); text-transform: uppercase; cursor: pointer; padding: 0; letter-spacing: 0.5px;">
@@ -826,7 +826,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
             </div>
         </nav>
         
-        <div id="engine-status-container" class="status-bar" style="border-top: 1px solid var(--glow-aura); background: var(--branding-color-darkest); padding: 5px 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <div id="engine-status-container" class="status-bar" style="border-top: 1px solid var(--glow-aura); background: var(--bg-color); padding: 5px 1.5rem; display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <div class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--glow-color); box-shadow: 0 0 10px var(--glow-color);"></div>
                 <span id="engine-status-text" style="color: var(--branding-text-color); font-weight: bold; font-size: 9px; text-shadow: 0 0 5px var(--glow-aura);">LABORATORY SYSTEM READY</span>
@@ -926,7 +926,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 
         // USER HAS MORE CAPACITY TO BUILD CURRENTS AND SPARKS
         const controls = (isOwner && !isFull) ? `
-            <div style="display: flex; align-items: center; gap: 0; margin-left: auto; background: var(--bg-color); border: 1px solid var(--glow-aura); border-radius: 4px; padding: 2px 10px; box-shadow: inset 0 0 10px var(--branding-color-darkest);">
+            <div style="display: flex; align-items: center; gap: 0; margin-left: auto; background: var(--bg-color); border: 1px solid var(--glow-aura); border-radius: 4px; padding: 2px 10px; box-shadow: inset 0 0 10px var(--bg-color);">
                 <span style="font-family: monospace; color: var(--glow-color); font-size: 10px; margin-right: 10px; opacity: 0.7; font-weight: 900; letter-spacing: 1px;">FORGE_CMD></span>
                 <input type="text" id="input-${current.id}" 
                        placeholder="TYPE A PROMPT OR PASTE A URL..." 
