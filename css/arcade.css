@@ -30,7 +30,7 @@
     margin-bottom: 4px;
     text-transform: uppercase;
     opacity: 0.9;
-    text-shadow: -0.5px -0.5px 0px rgba(var(--fg-color-high),0.3), 
+    text-shadow: -0.5px -0.5px 0px rgba(var(--bg-color-high),0.3), 
                   1px 1px 3px var(--text-shadow-color);
 }
 
@@ -94,7 +94,8 @@
 .metallic-divider {
     border: none;
     height: 1px;
-    background: var(--btn-gradient);
+    background: var(--border-color);
+    opacity: 0.5;
     margin: 10px 0;
 }
 
@@ -263,7 +264,7 @@
     font-weight: 900;
     text-align: center;
     letter-spacing: 2px;
-    background: linear-gradient(to bottom, #ffffff 20%, var(--branding-color) 50%, #888888 80%);
+    background: none;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 5px var(--branding-glow));
