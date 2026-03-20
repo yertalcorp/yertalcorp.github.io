@@ -930,7 +930,7 @@ const controls = (isOwner && !isFull) ? `
     </div>
 ` : isFull && isOwner ? `
     <div class="capacity-alert">MAX CAPACITY REACHED</div>
-` : `<div class="secure-node-label">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
+` : `<div class="secure-node-static">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
 
 return `
     <div class="current-block animate-fadeIn">
