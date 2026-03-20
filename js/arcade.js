@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1108,9 +1108,9 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                      class="spark-thumbnail"
                      onerror="this.style.display='none'; console.error('IMAGE FAILED: ${spark.id}')"
                      onload="this.style.opacity='1'; console.log('IMAGE SUCCESS: ${spark.id}')"
-                     style="position: absolute; inset: 0; width: 100%; height: 100%; min-width: 100%; min-height: 100%; object-fit: cover; opacity: 0; z-index: 1; display: block; transition: opacity 0.5s ease;">
+                     style="z-index: 1; display: block; transition: opacity 0.5s ease;">
                 
-                <div style="position: absolute; inset: 0; background: var(--glow-color); opacity: 0.02; z-index: 2; pointer-events: none;"></div>
+                <div style="position: absolute; inset: 0; background: var(--branding-color); opacity: 0.02; z-index: 2; pointer-events: none;"></div>
             </div>
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
