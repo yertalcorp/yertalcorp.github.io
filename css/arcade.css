@@ -30,7 +30,7 @@
     margin-bottom: 4px;
     text-transform: uppercase;
     opacity: 0.9;
-    text-shadow: -0.5px -0.5px 0px rgba(255,255,255,0.3), 
+    text-shadow: -0.5px -0.5px 0px rgba(var(--fg-color-high),0.3), 
                   1px 1px 3px var(--text-shadow-color);
 }
 
@@ -647,7 +647,7 @@ header {
 }
 /* High-Density Current Headings */
 .current-title {
-    text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+    text-shadow: 2px 2px 0px rgba(var(--bg-color-high),0.5);
     filter: drop-shadow(0 0 5px var(--box-shadow-color-aura));
 }
 
@@ -666,7 +666,7 @@ header {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+    background: linear-gradient(45deg, transparent, rgba(var(--fg-color-high),0.3), transparent);
     transform: rotate(45deg);
     transition: 0.5s;
 }
@@ -715,7 +715,7 @@ header {
     border-color: var(--glow-color);
     transform: translateY(-10px) rotateX(2deg) rotateY(-2deg);
     box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.6),
+        0 20px 40px rgba(var(--bg-color-high), 0.6),
         0 0 20px var(--box-shadow-color-aura);
     animation: spark-pulse 2s infinite ease-in-out;
 }
