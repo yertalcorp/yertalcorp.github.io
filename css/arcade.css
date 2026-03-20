@@ -7,6 +7,20 @@
     --glow-aura: var(--box-shadow-color-aura);
 }
 
+/* --- LAYOUT OPTIMIZATION: MAXIMIZE SPACE --- */
+
+/* 1. Shifting the Gray HUD Container (Outer Frame) */
+main.max-width-limit {
+    width: 100%;
+    max-width: 1800px; /* Kept wide */
+    margin: 0 auto;
+    
+    /* MODIFICATION: Tighter PADDING (Moving Up/Left) */
+    padding: 1.5rem 1.5rem; /* Reduced top/left padding from 6rem */
+    
+    box-sizing: border-box;
+    margin-top: -0.5rem; /* Added subtle negative margin to pull everything up */
+}
 /* --- DYNAMIC HUD LAYOUT --- */
 .hud-onboarding-grid {
     display: flex;
@@ -558,25 +572,40 @@ main.max-width-limit {
 /* Each Current is a distinct row with breathing room */
 /* --- CIRCUIT BOARD TRACKS: CURRENT BLOCKS --- */
 
+/* 2. Shifting the White Recessed Groove (Internal Frame) */
 .current-block {
-    margin-top: 0.5rem;
-    margin-bottom: 2rem;
-    width: 100%;
-    padding: 1.5rem 1rem;
-    background: var(--bg-color-low); /* Subtle depth contrast */
-    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    height: auto; 
+    min-height: 200px; 
+    overflow: visible; 
     
-    /* THEME-AGNOSTIC GROOVE: Creates a 3D "U-channel" in the panel */
+    /* MODIFICATION: Tighter INTERNAL PADDING */
+    padding: 1.5rem 1rem 1rem 1rem; /* Reduced internal padding from 2rem */
+    
+    /* MODIFICATION: PULLING UP/LEFT */
+    margin-left: -0.5rem; /* Moves the white area slightly left */
+    margin-top: 0.25rem; /* Pulls it slightly closer to the main header */
+    margin-bottom: 2rem; /* Controlled gap between the bays */
+
+    /* Re-enforcing the recessed hardware look */
+    background: var(--bg-color-low);
     border-top: 1px solid rgba(0,0,0,0.2);
     border-left: 1px solid rgba(0,0,0,0.2);
     box-shadow: 
-        inset 1px 1px 3px rgba(0,0,0,0.15),  /* Inner Shadow (Depth) */
-        0.5px 0.5px 0px rgba(255,255,255,0.1); /* Surface Highlight (Edge) */
-    
-    position: relative;
-    transition: border-color 0.3s ease;
+        inset 1px 1px 3px rgba(0,0,0,0.15), 
+        0.5px 0.5px 0px rgba(255,255,255,0.1);
+    border-radius: 8px;
+    transition: all 0.3s ease;
 }
-
+/* REFINING THE SPARK GRID FOR THE NEW TIGHTER SPACE */
+#currents-container > .current-block > .content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem; /* Reduced grid gap to match tighter container */
+    width: 100%;
+    margin-top: 0.5rem; /* Reduced top margin to pull cards up closer */
+}
 .current-block:hover {
     /* "Powering Up" effect for the specific bay */
     border-color: var(--glow-aura);
