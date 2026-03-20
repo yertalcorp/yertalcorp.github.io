@@ -758,7 +758,6 @@ height: 100%;
     color: var(--branding-text-color);
     border: none;
     border-left: 1px solid var(--glow-aura);
-    padding: 0 18px;
     font-size: 9px;
     font-weight: 900;
     cursor: pointer;
