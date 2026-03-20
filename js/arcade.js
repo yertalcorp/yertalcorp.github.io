@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:56:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1098,20 +1098,18 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
             <div class="action-card" 
                   onclick="window.location.href='${targetUrl}'"
-                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #000 !important;">
+                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #000 !important;">
                 
                 <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1.5rem; pointer-events: none;">
                     ${spark.name}
                 </h4>
-<div class="image-wrapper" style="position: absolute; inset: 0; z-index: 1;">
-    <img src="${sparkImage}" 
-         class="spark-thumbnail"
-         onerror="console.error('IMAGE FAILED: ${spark.id}')"
-         onload="console.log('IMAGE SUCCESS: ${spark.id}')"
-         style="width: 100%; height: 100%; object-fit: cover; opacity: 1; position: absolute; inset: 0; z-index: 1; display: block;">
-    
-    <div style="position: absolute; inset: 0; background: var(--glow-color); opacity: 0.02; z-index: 2;"></div>
-</div>
+                    <img src="${sparkImage}" 
+                     class="spark-thumbnail"
+                     onerror="console.error('IMAGE FAILED: ${spark.id}')"
+                     onload="console.log('IMAGE SUCCESS: ${spark.id}')"
+                     style="position: absolute; inset: 0; width: 100%; height: 100%; min-width: 100%; min-height: 100%; object-fit: cover; opacity: 1; z-index: 1; display: block;">
+                
+                <div style="position: absolute; inset: 0; background: var(--glow-color); opacity: 0.02; z-index: 2; pointer-events: none;"></div>
             </div>
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
