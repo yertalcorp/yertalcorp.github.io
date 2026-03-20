@@ -1,21 +1,9 @@
+
 /* --- SYSTEM FOUNDATION --- */
 
 :root {
     --neon-color: #00f2ff;
     --nav-font: 'Inter', sans-serif;
-    /* --- LIGHTER TINTS (Mixed with White) --- */
-    --branding-color-lightest: color-mix(in srgb, var(--branding-color), white 90%); /* Ultra light / Icon Glow */
-    --branding-color-lighter:  color-mix(in srgb, var(--branding-color), white 70%); /* Soft backgrounds */
-    --branding-color-light:    color-mix(in srgb, var(--branding-color), white 40%); /* Muted accents */
-
-    /* --- THE CORE --- */
-    --branding-color:          /* Handled by your JSON/JS applyTheme */
-
-    /* --- DARKER SHADES (Mixed with Black) --- */
-    --branding-color-dark:     color-mix(in srgb, var(--branding-color), black 30%); /* Rich borders */
-    --branding-color-darker:    color-mix(in srgb, var(--branding-color), black 60%); /* Deep contrast */
-    --branding-color-darkest:   color-mix(in srgb, var(--branding-color), black 85%); /* Deepest Contrast / Backgrounds */
-
     /* Mathematically creates a 20% transparent version of the theme's glow */
     --glow-aura: color-mix(in srgb, var(--glow-color), transparent 80%);
 }
@@ -156,7 +144,7 @@
 .ethereal-btn-xs {
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    color: var(--ethereal-button-color);
+    color: #fff;
     padding: 4px 10px;
     font-size: 8px;
     font-family: 'Orbitron', sans-serif;
@@ -276,7 +264,7 @@
     font-weight: 900;
     text-align: center;
     letter-spacing: 2px;
-    background: linear-gradient(to bottom, var(--branding-color-lightest) 20%, var(--branding-color) 50%, var(--branding-color-darkest) 80%);
+    background: linear-gradient(to bottom, #ffffff 20%, var(--branding-color) 50%, #888888 80%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 5px var(--branding-glow));
@@ -371,7 +359,7 @@
 .tutorial-next-btn {
     /* Uses the theme's specific button gradient */
     background: var(--btn-gradient);
-    color: var(--button-color); /* Ensuring visibility on dark gradients */
+    color: #fff; /* Ensuring visibility on dark gradients */
     border: none;
     padding: 10px 20px;
     font-family: var(--branding-font);
@@ -473,7 +461,7 @@
     margin: 20px auto; /* Centers the button */
     padding: 12px 40px;
     border-radius: 30px;
-    background: linear-gradient(145deg, var(--branding-color-dark), var(--branding-color-darkest));
+    background: linear-gradient(145deg, #222, #000);
     border: 1px solid var(--branding-color);
     color: var(--branding-color);
     text-transform: uppercase;
@@ -493,8 +481,8 @@
     cursor: not-allowed;
     border-style: dashed;
 }
-.text-glow-green { color: var(--glow-color); filter: drop-shadow(0 0 5px var(--glow-color)); }
-.text-dim { color: --var(--branding-color-dark); }
+.text-glow-green { color: #00ff88; filter: drop-shadow(0 0 5px #00ff88); }
+.text-dim { color: #555; }
 
 /* --- Trigger Icon --- */
 #system-menu-trigger {
@@ -582,7 +570,7 @@ main.max-width-limit {
 .current-block label {
     font-size: 13px ;
     font-weight: 900 ;
-    color: var(--branding-color-lightest) ;
+    color: #ffffff ;
     opacity: 1 ;
     letter-spacing: 0.15em;
 }
@@ -615,7 +603,7 @@ header {
     text-transform: uppercase;
     letter-spacing: 0.2em;
     font-size: 11px;
-    color: var(--branding-color-lightest);
+    color: #ffffff;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 2px var(--glow-color);
     filter: brightness(1.5);
 }
@@ -630,7 +618,7 @@ header {
     /* Reduced letter spacing for maximum density */
     letter-spacing: 0.12em; 
     font-size: 10px;
-    color: var(--branding-color-lightest);
+    color: #ffffff;
     text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 3px var(--glow-color);
     filter: brightness(1.8) contrast(1.3);
     white-space: nowrap;
@@ -710,26 +698,16 @@ header {
 /* --- SURREAL 3D SPARK BOXES --- */
 
 .action-card {
-    /* Use card-bg for a 'less light' or 'less dark' surface depending on theme */
-    background: var(--card-bg, rgba(15, 15, 15, 0.8)); 
-    
-    /* Use border-color to ensure the frame matches the theme's primary accent */
-    border: 1px solid var(--border-color, #00f2ff); 
-    
-    /* Crucial: Use text-main-color so text flips from white (Dark) to dark (Light) */
-    color: var(--text-main-color); 
-    
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 1.5rem; /* Internal padding from border */
     position: relative;
     transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
     perspective: 1000px;
     height: 100%;
     display: flex;
     flex-direction: column;
-    
-    /* Use the theme's specific shadow variable to maintain depth */
-    box-shadow: 0 4px 15px var(--card-shadow-color, rgba(0,0,0,0.3));
 }
 
 /* Hover & 3D Boundary */
@@ -794,7 +772,7 @@ button#auth-trigger,
 }
 .current-block input {
     font-size: 16px ;
-    color: var(--branding-color-lightest) ;
+    color: #ffffff ;
     background: transparent ;
     text-shadow: 0 0 8px rgba(255,255,255,0.2);
     font-weight: 500;
@@ -820,7 +798,7 @@ button:hover {
 }
 
 .spark-button:hover {
-    background: var(--branding-color-lightest) ;
+    background: #fff ;
     color: black ;
     box-shadow: 0 0 20px var(--glow-color) ;
     animation: spark-pulse 1.5s infinite;
@@ -849,7 +827,7 @@ button:hover {
 
 .ethereal-btn:hover {
     background: var(--glow-color);
-    color: var(--branding-color-darkest);
+    color: #000;
     box-shadow: 0 0 50px var(--glow-color);
     transform: translateY(-5px);
 }
@@ -1018,11 +996,11 @@ button:hover {
 }
 .logic-display {
     border: 1px solid var(--glow-color);
-    background: var(--branding-color-darkest);
+    background: #000;
     border: 1px solid var(--glow-color);
     padding: 2rem;
     font-family: 'monospace';
-    color: var(--branding-color-darkest);
+    color: #fff;
     box-shadow: inset 0 0 30px rgba(0, 242, 255, 0.1), 0 0 15px rgba(0, 242, 255, 0.05);
 }
 
@@ -1039,7 +1017,7 @@ button:hover {
 
 .terminal-btn {
     background: var(--glow-color);
-    color: var(--branding-color-darkest);
+    color: #000;
     border: none;
     padding: 5px 15px;
     font-family: 'Orbitron', sans-serif;
@@ -1049,7 +1027,7 @@ button:hover {
     cursor: pointer;
 }
 .terminal-btn:hover {
-    background: var(--branding-color-lightest);
+    background: #fff;
     box-shadow: 0 0 20px #fff;
     transform: translateY(-2px);
 }
@@ -1068,7 +1046,7 @@ button:hover {
 }
 
 .share-hud-content {
-    background: var(--branding-color-lighter);
+    background: #111;
     padding: 30px;
     border: 1px solid var(--glow-color);
     border-radius: 15px;
@@ -1085,7 +1063,7 @@ button:hover {
 }
 
 .share-grid a, .copy-link-btn {
-    color: var(--branding-color-lightest);
+    color: #f3e5ab;
     font-size: 24px;
     transition: all 0.3s ease;
     background: none;
