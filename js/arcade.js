@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1110,7 +1110,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                          onerror="console.error('IMAGE FAILED TO LOAD for Spark: ${spark.id}')"
                          onload="console.log('IMAGE LOAD SUCCESS for Spark: ${spark.id}')"
                          style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6; filter: brightness(1.2); transition: all 0.7s;">
-                    <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(var(--bg-color-high),0.9), transparent);"></div>
+                    <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(var(--branding-color),0.02), transparent);"></div>
                 </div>
             </div>
 
