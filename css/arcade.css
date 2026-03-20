@@ -638,7 +638,7 @@ main.max-width-limit {
     gap: 1.5rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--glow-aura);
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.8rem;
 }
 
 /* --- Metallic Titles & Labels --- */
@@ -675,7 +675,28 @@ main.max-width-limit {
     color: var(--branding-text-color);
     letter-spacing: 1px;
 }
+/* --- Static Secure Node (Laboratory Aesthetic) --- */
+.secure-node-static {
+    margin-left: auto; /* Aligns to the far right */
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--branding-text-color);
+    
+    /* Hardware Integration Look */
+    background: rgba(0, 0, 0, 0.2); /* Darker recessed slot */
+    border: 1px solid rgba(var(--glow-aura-rgb), 0.3);
+    border-radius: 4px;
+    padding: 4px 14px;
+    text-transform: uppercase;
+    white-space: nowrap;
 
+    /* Stamped/Etched Effect */
+    box-shadow: inset 1px 1px 3px rgba(0,0,0,0.5);
+    text-shadow: -1px -1px 0px rgba(0,0,0,0.6);
+    opacity: 0.7; /* Consistent "System Readout" dimming */
+}
 /* --- Prompt Container & Input Fixes --- */
 .current-prompt-container {
     display: flex;
@@ -686,7 +707,7 @@ main.max-width-limit {
     border-radius: 4px;
     padding: 2px 8px;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-    min-width: 400px; /* Ensures enough room for the input */
+    min-width: 450px; /* Ensures enough room for the input */
 }
 
 .current-prompt-label {
