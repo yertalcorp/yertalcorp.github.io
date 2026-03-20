@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -917,42 +917,41 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         const isFull = sparkCount >= maxSparks;
         const meterColor = isFull ? 'var(--error-color, #ef4444)' : 'var(--glow-color)';
 
-        const controls = (isOwner && !isFull) ? `
-            <div style="display: flex; align-items: center; gap: 0; margin-left: auto; background: var(--bg-color); border: 1px solid var(--glow-aura); border-radius: 4px; padding: 2px 10px; box-shadow: inset 0 0 10px var(--bg-color);">
-                <span style="font-family: monospace; color: var(--glow-color); font-size: 10px; margin-right: 10px; opacity: 0.7; font-weight: 900; letter-spacing: 1px;">FORGE_CMD></span>
-                <input type="text" id="input-${current.id}" 
-                       placeholder="TYPE A PROMPT OR PASTE A URL..." 
-                       onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}')">
-                <button onclick="window.handleCreation('${current.id}')" class="generate-btn">
-                    EXEC
-                </button>
-            </div>
-        ` : isFull && isOwner ? `
-            <div style="margin-left: auto; color: var(--error-color); font-size: 9px; font-weight: 900; letter-spacing: 1px; border: 1px solid var(--error-color); padding: 4px 10px; border-radius: 4px; background: color-mix(in srgb, var(--error-color), transparent 95%);">
-                MAX CAPACITY REACHED
-            </div>
-        ` : `<div style="margin-left: auto; font-size: 10px; opacity: 0.5; font-family: monospace; letter-spacing: 2px; text-transform: uppercase; color: var(--branding-text-color);">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
+const controls = (isOwner && !isFull) ? `
+    <div class="current-prompt-container">
+        <span class="current-prompt-label">FORGE_CMD></span>
+        <input type="text" id="input-${current.id}" 
+               class="current-prompt-input"
+               placeholder="TYPE A PROMPT OR PASTE A URL..." 
+               onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}')">
+        <button onclick="window.handleCreation('${current.id}')" class="current-prompt-exec-button">
+            EXEC
+        </button>
+    </div>
+` : isFull && isOwner ? `
+    <div class="capacity-alert">MAX CAPACITY REACHED</div>
+` : `<div class="secure-node-label">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
 
-        return `
-            <div class="current-block animate-fadeIn">
-                <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--glow-aura); padding-bottom: 0.5rem;">
-                    <h2 class="current-title">${current.name || 'Active Current'}</h2>
-                    
-                    <div style="display: flex; align-items: center; gap: 0.5rem; font-family: 'Orbitron', sans-serif; font-size: 9px; color: ${meterColor}; opacity: 0.8; letter-spacing: 1px;">
-                        <span style="opacity: 0.5;">CAPACITY:</span>
-                        <span style="font-weight: 900;">${sparkCount} / ${maxSparks}</span>
-                    </div>
-
-                    ${controls}
-                </div>
-                
-                <div class="experiment-zone">
-                    <div id="sparks-${current.id}" class="grid">
-                        ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id, ownerUid)).join('')}
-                    </div>
-                </div>
+return `
+    <div class="current-block animate-fadeIn">
+        <div class="current-header-row">
+            <h2 class="current-name">${current.name || 'Active Current'}</h2>
+            
+            <div class="current-capacity">
+                <span class="capacity-text">CAPACITY:</span>
+                <span class="current-meter">${sparkCount} / ${maxSparks}</span>
             </div>
-        `;
+
+            ${controls}
+        </div>
+        
+        <div class="experiment-zone">
+            <div id="sparks-${current.id}" class="grid">
+                ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id, ownerUid)).join('')}
+            </div>
+        </div>
+    </div>
+`;
     }).join('');
 
     if (isOwner) {
