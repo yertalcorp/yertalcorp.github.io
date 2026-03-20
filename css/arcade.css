@@ -1,11 +1,10 @@
-
 /* --- SYSTEM FOUNDATION --- */
 
 :root {
-    --neon-color: #00f2ff;
+    --neon-color: var(--branding-color);
     --nav-font: 'Inter', sans-serif;
     /* Mathematically creates a 20% transparent version of the theme's glow */
-    --glow-aura: color-mix(in srgb, var(--glow-color), transparent 80%);
+    --glow-aura: var(--box-shadow-color-aura);
 }
 
 /* --- DYNAMIC HUD LAYOUT --- */
@@ -27,7 +26,7 @@
     font-family: 'Orbitron', sans-serif;
     font-size: 9px;
     letter-spacing: 2px;
-    color: var(--branding-color, #00f2ff);
+    color: var(--branding-color);
     margin-bottom: 4px;
     text-transform: uppercase;
     opacity: 0.9;
@@ -36,7 +35,7 @@
 }
 
 .logo-upload-wrapper {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--card-bg);
     padding: 10px;
     border: 1px dashed var(--border-color);
     border-radius: 4px;
@@ -53,7 +52,7 @@
     text-align: center;
     font-size: 11px;
     font-style: italic;
-    color: var(--text-muted-color, #888);
+    color: var(--text-muted-color);
     line-height: 1.1; 
     min-height: auto; 
     margin-top: 0;
@@ -95,7 +94,7 @@
 .metallic-divider {
     border: none;
     height: 1px;
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+    background: var(--btn-gradient);
     margin: 10px 0;
 }
 
@@ -112,7 +111,7 @@
     align-items: center;
     gap: 10px;
     font-size: 10px;
-    color: var(--list-color, rgba(255, 255, 255, 0.8));
+    color: var(--text-main-color);
     margin-bottom: 6px;
 }
 
@@ -126,7 +125,7 @@
     margin-top: auto;
     padding-bottom: 5px;
     padding-top: 5px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -143,8 +142,8 @@
 /* --- EXTRA UI BUTTON --- */
 .ethereal-btn-xs {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
+    border: 1px solid var(--border-color);
+    color: var(--text-main-color);
     padding: 4px 10px;
     font-size: 8px;
     font-family: 'Orbitron', sans-serif;
@@ -154,7 +153,7 @@
 
 .ethereal-btn-xs:hover {
     border-color: var(--glow-color);
-    box-shadow: 0 0 10px var(--glow-color);
+    box-shadow: 0 0 10px var(--glow-aura);
 }
 #lab-body {
     background-color: var(--bg-color);
@@ -169,15 +168,15 @@
 
 /* The Branding / Header Section */
 .arcade-title {
-    color: var(--arcade-title-color);
+    color: var(--branding-color);
     font-family: var(--arcade-title-font);
     font-size: var(--arcade-title-size);
     font-weight: var(--arcade-title-weight);
-    text-shadow: var(--arcade-title-glow);
+    text-shadow: var(--branding-glow);
 }
 
 .arcade-subtitle {
-    color: var(--arcade-subtitle-color);
+    color: var(--text-muted-color);
     font-size: var(--arcade-subtitle-size);
     font-weight: var(--arcade-subtitle-weight);
 }
@@ -185,8 +184,8 @@
 /* Glass Panels */
 .glass-3d {
     background: var(--card-bg);
-    border: 1px solid var(--branding-color);
-    box-shadow: 0 8px 32px var(--shadow-intensity);
+    border: 1px solid var(--border-color-glow);
+    box-shadow: 0 8px 32px var(--box-shadow-color-aura);
     backdrop-filter: blur(var(--glass-blur, 10px));
 }
 /* --- System Drawer Styles --- */
@@ -198,7 +197,7 @@
     height: 100vh;
     background: var(--card-bg); /* Uses your dynamic theme color */
     backdrop-filter: blur(25px);
-    border-left: 1px solid var(--branding-color);
+    border-left: 1px solid var(--border-color-glow);
     transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 2000;
     padding: 2rem;
@@ -212,7 +211,7 @@
 .drawer-hr {
     border: none;
     height: 1px;
-    background: var(--text-muted-color);
+    background: var(--border-color);
     opacity: 0.2;
     margin: 0.5rem 1rem;
 }
@@ -227,7 +226,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 1rem;
 }
 
@@ -245,7 +244,7 @@
 }
 
 .menu-item:hover {
-    background: rgba(var(--branding-rgb, 255, 255, 255), 0.05);
+    background: var(--card-bg);
     color: var(--branding-color);
 }
 
@@ -327,7 +326,7 @@
     width: 340px;
     /* Uses the theme's card-bg and branding-color for borders */
     background: var(--card-bg);
-    border: 1px solid var(--branding-color);
+    border: 1px solid var(--border-color-glow);
     box-shadow: var(--branding-glow);
     border-radius: 4px;
     padding: 1.8rem;
@@ -344,7 +343,7 @@
     letter-spacing: 2px;
     text-transform: uppercase;
     margin-bottom: 12px;
-    border-bottom: 1px solid var(--text-muted-color);
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 8px;
 }
 
@@ -382,10 +381,10 @@
     margin-top: 0.2rem;
 }
 .plan-card {
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 0.8rem;
-    background: var(--card-bg, rgba(255, 255, 255, 0.03));
+    background: var(--card-bg);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -394,16 +393,16 @@
 }
 
 .plan-card-rounded {
-    background: var(--card-bg, rgba(15, 15, 15, 0.8));
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 20px;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .plan-card.active {
     border-color: var(--glow-color);
-    background: var(--card-glow-color, rgba(0, 242, 255, 0.05));
-    box-shadow: 0 0 15px var(--box-shadow-color, rgba(0, 242, 255, 0.1));
+    background: var(--card-bg);
+    box-shadow: 0 0 15px var(--box-shadow-color-aura);
 }
 .plan-card h3 {
     font-size: 10px;
@@ -419,7 +418,7 @@
     margin: 0 0 1.5rem 0;
     font-size: 9px;
     text-align: left;
-    color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+    color: var(--text-muted-color);
     width: 100%;
 }
 
@@ -433,7 +432,7 @@
     font-size: 11px;
     margin-top: auto;
     margin-bottom: 12px;
-    color: var(--text-main, #fff);
+    color: var(--text-main-color);
 }
 
 .plan-card input[type="radio"] {
@@ -448,7 +447,7 @@
     justify-content: center;    /* Added */
     text-align: center;
     color: var(--branding-color);
-    text-shadow: 0 0 10px var(--branding-color);
+    text-shadow: 0 0 10px var(--branding-glow);
     font-size: 1.1rem;
     font-family: var(--branding-font), 'Orbitron', sans-serif; /* Brand-aligned font */
     text-transform: uppercase;
@@ -461,17 +460,17 @@
     margin: 20px auto; /* Centers the button */
     padding: 12px 40px;
     border-radius: 30px;
-    background: linear-gradient(145deg, #222, #000);
-    border: 1px solid var(--branding-color);
-    color: var(--branding-color);
+    background: var(--btn-gradient);
+    border: 1px solid var(--border-color-glow);
+    color: #fff;
     text-transform: uppercase;
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(var(--box-shadow-color));
+    box-shadow: 0 0 10px var(--box-shadow-color-aura);
 }
 
 .tier-locked {
     filter: grayscale(1) opacity(0.4);
-    cursor: not-allowed !important;
+    cursor: not-allowed ;
 }
 
 
@@ -482,7 +481,7 @@
     border-style: dashed;
 }
 .text-glow-green { color: #00ff88; filter: drop-shadow(0 0 5px #00ff88); }
-.text-dim { color: #555; }
+.text-dim { color: var(--text-muted-color); }
 
 /* --- Trigger Icon --- */
 #system-menu-trigger {
@@ -500,12 +499,12 @@
 nav {
     display: grid;
     /* Force the branding column to shrink-wrap its content */
-    grid-template-columns: **max-content** 1fr auto; 
+    grid-template-columns: max-content 1fr auto; 
     align-items: center;
     padding: 0 1.5rem;
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--bg-color);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-color);
     height: 60px;
 }
 
@@ -519,7 +518,7 @@ nav {
 
 /* Ensure the old Hero Section is hidden to save space */
 .hero-section-old {
-    display: none !important;
+    display: none ;
 }
 /* --- THE LABORATORY LAYOUT --- */
 /* Compress the top area */
@@ -557,20 +556,20 @@ main.max-width-limit {
     margin-top: 0.5rem;
     margin-bottom: 1.5rem; /* Large gap between different currents */
     width: 100%;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid var(--border-color);
     padding-top: 0.75rem;
 }
 
 /* Tightest possible row headers */
 .current-block .flex-row {
-    margin-bottom: 0.25rem !important;
+    margin-bottom: 0.25rem ;
 }
 
 /* Increase visibility of creation controls */
 .current-block label {
     font-size: 13px ;
     font-weight: 900 ;
-    color: #ffffff ;
+    color: var(--text-main-color) ;
     opacity: 1 ;
     letter-spacing: 0.15em;
 }
@@ -586,25 +585,25 @@ header {
 .status-bar {
     margin-top: 0;
     padding: 0.1rem 1.5rem;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--card-bg);
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-color);
 }
 /* Metallic Sheen for Nav Title */
 #nav-hero-central h1 {
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    text-shadow: 0 0 10px var(--branding-glow);
     letter-spacing: -0.05em;
 }
 /* Add this to give the text that bright, metallic hardware look */
 #engine-status-text, 
 #superuser-display {
-    font-weight: 900 !important;
+    font-weight: 900 ;
     text-transform: uppercase;
     letter-spacing: 0.2em;
     font-size: 11px;
-    color: #ffffff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 2px var(--glow-color);
+    color: var(--text-main-color);
+    text-shadow: 0 0 10px var(--branding-glow), 0 0 2px var(--glow-color);
     filter: brightness(1.5);
 }
 /* Status Dot pulse */
@@ -618,8 +617,8 @@ header {
     /* Reduced letter spacing for maximum density */
     letter-spacing: 0.12em; 
     font-size: 10px;
-    color: #ffffff;
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 3px var(--glow-color);
+    color: var(--text-main-color);
+    text-shadow: 0 0 12px var(--branding-glow), 0 0 3px var(--glow-color);
     filter: brightness(1.8) contrast(1.3);
     white-space: nowrap;
 }
@@ -633,7 +632,7 @@ header {
     color: white;
     margin-bottom: 0.25rem;
     /* Decorative Gradient Text */
-    background: linear-gradient(to right, #fff, rgba(255,255,255,0.3));
+    background: linear-gradient(to right, #fff, var(--text-muted-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -649,13 +648,13 @@ header {
 /* High-Density Current Headings */
 .current-title {
     text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
-    filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));
+    filter: drop-shadow(0 0 5px var(--box-shadow-color-aura));
 }
 
 /* Generate Button: Metallic Glow */
 .generate-btn {
-    dow: 0 0 15px var(--glow-color);
-    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 0 15px var(--glow-color);
+    border: 1px solid var(--border-color-glow);
     position: relative;
     overflow: hidden;
 }
@@ -698,8 +697,8 @@ header {
 /* --- SURREAL 3D SPARK BOXES --- */
 
 .action-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 1.5rem; /* Internal padding from border */
     position: relative;
@@ -712,19 +711,19 @@ header {
 
 /* Hover & 3D Boundary */
 .action-card:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: var(--card-bg);
     border-color: var(--glow-color);
     transform: translateY(-10px) rotateX(2deg) rotateY(-2deg);
     box-shadow: 
         0 20px 40px rgba(0, 0, 0, 0.6),
-        0 0 20px rgba(0, 242, 255, 0.1);
+        0 0 20px var(--box-shadow-color-aura);
     animation: spark-pulse 2s infinite ease-in-out;
 }
 
 /* Restoring the "Light up" effect on hover since group-hover is gone */
 .action-card:hover .spark-thumbnail {
-    opacity: 0.8 !important;
-    filter: grayscale(0%) !important;
+    opacity: 0.8 ;
+    filter: grayscale(0%) ;
     transform: scale(1.05);
 }
 
@@ -739,7 +738,7 @@ header {
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
 }
 
 .card-stats-row {
@@ -755,11 +754,11 @@ header {
 button#auth-trigger, 
 .current-block button {
     padding: 12px 36px ;
-    background: var(--glow-color) ;
-    color: black ;
+    background: var(--btn-gradient) ;
+    color: white ;
     font-weight: 900 ;
     border: none ;
-    box-shadow: 0 0 20px var(--box-shadow-color);
+    box-shadow: 0 0 20px var(--box-shadow-color-aura);
     border-radius: 8px;
     text-transform: uppercase;
     font-size: 11px;
@@ -767,19 +766,19 @@ button#auth-trigger,
     transition: all 0.3s ease;
 }
 .current-block button:hover {
-    box-shadow: 0 0 35px var(--box-shadow-color);
+    box-shadow: 0 0 35px var(--box-shadow-color-aura);
     transform: translateY(-1px);
 }
 .current-block input {
     font-size: 16px ;
-    color: #ffffff ;
+    color: var(--text-main-color) ;
     background: transparent ;
-    text-shadow: 0 0 8px rgba(255,255,255,0.2);
+    text-shadow: 0 0 8px var(--text-shadow-color);
     font-weight: 500;
 }
 
 .current-block input::placeholder {
-    color: rgba(255, 255, 255, 0.5) ;
+    color: var(--text-muted-color) ;
     font-style: italic;
 }
 .current-block input:focus {
@@ -787,7 +786,7 @@ button#auth-trigger,
 }
 button:hover {
     filter: brightness(1.2);
-    box-shadow: 0 0 25px var(--box-shadow-color);
+    box-shadow: 0 0 25px var(--box-shadow-color-aura);
 }
 
 .spark-button {
@@ -822,7 +821,7 @@ button:hover {
     cursor: pointer;
     overflow: hidden;
     transition: all 0.5s ease;
-    box-shadow: 0 0 20px var(--glow-color);
+    box-shadow: 0 0 20px var(--box-shadow-color-aura);
 }
 
 .ethereal-btn:hover {
@@ -845,7 +844,7 @@ button:hover {
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 0 10px var(--glow-color);
+    box-shadow: 0 0 10px var(--box-shadow-color-aura);
     border-radius: 4px;
 }
 
@@ -861,7 +860,7 @@ button:hover {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(0,242,255,0.4) 0%, transparent 70%);
+    background: radial-gradient(circle, var(--box-shadow-color-aura) 0%, transparent 70%);
     animation: rotateGlow 10s linear infinite;
     pointer-events: none;
 }
@@ -877,7 +876,7 @@ button:hover {
     top: 0; left: 0; 
     width: 100%; 
     height: 100%;
-    background: rgba(0, 8, 15, 0.98); 
+    background: var(--bg-color); 
     backdrop-filter: blur(25px); /* Increased blur to hide background artifacts */
     -webkit-backdrop-filter: blur(25px);
     display: none; 
@@ -913,7 +912,7 @@ button:hover {
     right: 20px;
     background: transparent;
     border: none;
-    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+    color: var(--text-muted-color);
     font-size: 28px;
     line-height: 1;
     cursor: pointer;
@@ -921,7 +920,7 @@ button:hover {
     z-index: 100;
 }
 .close-hud-corner:hover {
-    color: var(--glow-color, #00f2ff);
+    color: var(--glow-color);
     transform: scale(1.1);
 }
 /* 3. Check the Animation */
@@ -940,8 +939,8 @@ button:hover {
 }
 
 .cat-btn {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     color: white; padding: 10px;
     font-size: 10px; cursor: pointer;
     font-family: 'Orbitron', sans-serif;
@@ -950,27 +949,28 @@ button:hover {
 
 .cat-btn.selected {
     border-color: var(--glow-color);
-    background: rgba(0, 242, 255, 0.1);
-    box-shadow: 0 0 15px var(--box-shadow-color);
+    background: var(--box-shadow-color-aura);
+    box-shadow: 0 0 15px var(--box-shadow-color-aura);
 }
 
 .hud-input {
     width: 100%;
-    background: color-mix(in srgb, var(--branding-color), transparent 90%);
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
     padding: 10px;
     margin-bottom: 5px;
     font-family: 'Inter', sans-serif;
+    color: var(--text-main-color);
 }
 /* Add focus state to make it look active */
 .hud-input:focus {
     outline: none;
     border-color: var(--glow-color);
-    box-shadow: 0 0 10px var(--box-shadow-color);
+    box-shadow: 0 0 10px var(--box-shadow-color-aura);
 }
 .btn-pulse {
-    background: var(--glow-color) !important;
-    color: black !important;
+    background: var(--glow-color) ;
+    color: black ;
     box-shadow: 0 0 15px var(--glow-color);
     animation: neon-flicker 2s infinite alternate;
 }
@@ -989,30 +989,29 @@ button:hover {
 .tag {
     font-size: 9px;
     padding: 3px 8px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(0,242,255,0.2);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color-glow);
     color: var(--glow-color);
     font-family: 'Orbitron', sans-serif;
 }
 .logic-display {
     border: 1px solid var(--glow-color);
     background: #000;
-    border: 1px solid var(--glow-color);
     padding: 2rem;
     font-family: 'monospace';
     color: #fff;
-    box-shadow: inset 0 0 30px rgba(0, 242, 255, 0.1), 0 0 15px rgba(0, 242, 255, 0.05);
+    box-shadow: inset 0 0 30px var(--box-shadow-color-aura), 0 0 15px var(--box-shadow-color-aura);
 }
 
 .terminal-code {
-    background: rgba(0, 242, 255, 0.05);
+    background: var(--card-bg);
     padding: 1.5rem;
     border-radius: 4px;
     color: var(--glow-color);
     font-size: 1.2rem;
     overflow-x: auto;
     border-left: 3px solid var(--glow-color);
-    text-shadow: 0 0 5px rgba(0, 242, 255, 0.5);
+    text-shadow: 0 0 5px var(--branding-glow);
 }
 
 .terminal-btn {
@@ -1036,7 +1035,7 @@ button:hover {
 .share-hud-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: var(--bg-color);
     backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
@@ -1046,12 +1045,12 @@ button:hover {
 }
 
 .share-hud-content {
-    background: #111;
+    background: var(--card-bg);
     padding: 30px;
-    border: 1px solid var(--glow-color);
+    border: 1px solid var(--border-color-glow);
     border-radius: 15px;
     text-align: center;
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 30px var(--box-shadow-color-aura);
     min-width: 300px;
 }
 
@@ -1063,7 +1062,7 @@ button:hover {
 }
 
 .share-grid a, .copy-link-btn {
-    color: #f3e5ab;
+    color: var(--branding-color);
     font-size: 24px;
     transition: all 0.3s ease;
     background: none;
@@ -1079,8 +1078,8 @@ button:hover {
 }
 
 .close-hud {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     color: white;
     padding: 8px 20px;
     border-radius: 5px;
