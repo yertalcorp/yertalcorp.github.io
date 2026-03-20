@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -940,7 +940,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                 </button>
             </div>
         ` : isFull && isOwner ? `
-            <div style="margin-left: auto; color: var(--error-color); font-size: 9px; font-weight: 900; letter-spacing: 1px; border: 1px solid var(--error-color); padding: 4px 10px; border-radius: 4px; background: color-mix(in srgb, #ef4444, transparent 95%);">
+            <div style="margin-left: auto; color: var(--error-color); font-size: 9px; font-weight: 900; letter-spacing: 1px; border: 1px solid var(--error-color); padding: 4px 10px; border-radius: 4px; background: color-mix(in srgb, var(--error-color), transparent 95%);">
                 MAX CAPACITY REACHED
             </div>
         ` : `<div style="margin-left: auto; font-size: 10px; opacity: 0.5; font-family: monospace; letter-spacing: 2px; text-transform: uppercase; color: var(--branding-text-color);">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
@@ -1032,7 +1032,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const sparkElementId = `save-btn-${spark.id}`;
     
     // 1. Core Color Palette
-    const pearlColor = "#f3e5ab";
+    const pearlColor = "var(--fg-color-mid)";
     const neonColor = "var(--glow-color)";
     const neonGlow = "drop-shadow(0 0 5px var(--glow-color))";
     
@@ -1132,7 +1132,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                             </button>
                             <button onclick="deleteSpark('${currentId}', '${spark.id}', '${visitorUid}')" title="Delete" 
                                     style="${btnStyle}" 
-                                    onmouseover="this.style.color='#ef4444'; this.style.filter='drop-shadow(0 0 8px #ef4444)'; this.style.transform='scale(1.2)';" 
+                                    onmouseover="this.style.color='var(--error-color)'; this.style.filter='drop-shadow(0 0 8px var(--error-color))'; this.style.transform='scale(1.2)';" 
                                     onmouseout="${onOut}">
                                 <i class="fas fa-trash" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
@@ -1579,7 +1579,7 @@ window.saveArcadeSettings = async () => {
 
     const arcadeName = nameInput.value.trim().toUpperCase();
     if (!arcadeName) {
-        nameInput.style.border = "1px solid var(--error-glow, #ff4444)";
+        nameInput.style.border = "1px solid var(--error-glow, --error-color)";
         return;
     }
 
