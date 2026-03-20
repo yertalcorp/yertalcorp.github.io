@@ -582,7 +582,7 @@ main.max-width-limit {
     
     /* MODIFICATION: Tighter TOP padding to pull header up */
     /* format: top | right | bottom | left */
-    padding: 0.75rem 0.75rem 0.75rem 0.75rem; 
+    padding: 0.25rem 0.25rem 0.25rem 0.25rem; 
     
     /* MODIFICATION: PULLING UP/LEFT */
     margin-left: -0.5rem; 
@@ -600,14 +600,6 @@ main.max-width-limit {
     transition: all 0.3s ease;
 }
 
-/* REFINING THE SPARK GRID FOR THE NEW TIGHTER SPACE */
-#currents-container > .current-block > .content-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem; /* Reduced grid gap to match tighter container */
-    width: 100%;
-    margin-top: 0.5rem; /* Reduced top margin to pull cards up closer */
-}
 .current-block:hover {
     /* "Powering Up" effect for the specific bay */
     border-color: var(--glow-aura);
@@ -638,7 +630,7 @@ main.max-width-limit {
     gap: 1.5rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--glow-aura);
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.5rem;
 }
 
 /* --- Metallic Titles & Labels --- */
@@ -936,15 +928,15 @@ header {
     border-radius: 12px;
     border: 1px solid rgba(var(--border-color),0.2);
     box-shadow: inset 2px 2px 8px rgba(var(--box_shadow-color),0.15); /* Creates the "recessed" look */
-    margin-top: 1rem;
-    padding: 1rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem;
     overflow: hidden; /* Clips anything outside the rounded corners */
 }
 .experiment-zone .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Adjusted for the card size in your shot */
-    gap: 1.5rem;
-    padding: 10px;
+    gap: 1rem;
+    padding: 0.5rem;
     width: 100%;
     box-sizing: border-box;
 }
