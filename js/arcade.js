@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -826,10 +826,10 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
             </div>
         </nav>
         
-        <div id="engine-status-container" class="status-bar" style="border-top: 1px solid var(--glow-aura); background: var(--bg-color); padding: 5px 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <div id="engine-status-container" class="status-bar" style="border-top: 1px solid var(--glow-color); background: rgba(var(--bg-color), 0.9); padding: 5px 1.5rem; display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--glow-color); box-shadow: 0 0 10px var(--glow-color);"></div>
-                <span id="engine-status-text" style="color: var(--branding-text-color); background: var(--bg-color-aura); font-weight: bold; font-size: 9px; text-shadow: 0 0 5px var(--glow-aura);">LABORATORY SYSTEM READY</span>
+                <div class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--glow-color); box-shadow: 0 0 10px var(--glow-color-aura);"></div>
+                <span id="engine-status-text" style="color: var(--branding-text-color); background: var(--bg-color-low); font-weight: bold; font-size: 9px; text-shadow: 0 0 5px var(--glow-aura);">LABORATORY SYSTEM READY</span>
             </div>
             <div style="font-size: 8px; font-weight: 900; color: var(--branding-color); opacity: 0.6; letter-spacing: 0.2em; text-transform: uppercase;">
                 Arcade Environment v2.0
@@ -1032,7 +1032,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const sparkElementId = `save-btn-${spark.id}`;
     
     // 1. Core Color Palette
-    const pearlColor = "var(--fg-color-mid)";
+    const pearlColor = "var(--list-color)";
     const neonColor = "var(--glow-color)";
     const neonGlow = "drop-shadow(0 0 5px var(--glow-color))";
     
