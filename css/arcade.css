@@ -631,6 +631,105 @@ main.max-width-limit {
     opacity: 0.9;
 }
 
+/* --- Header Row Structural Fix --- */
+.current-header-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--glow-aura);
+    margin-bottom: 0.75rem;
+}
+
+/* --- Metallic Titles & Labels --- */
+.current-name {
+    font-size: 0.9rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: var(--branding-text-color);
+    margin: 0;
+    /* Metallic Chrome Effect */
+    background: linear-gradient(180deg, #fff 0%, var(--branding-text-color) 45%, #222 50%, var(--branding-text-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(-1px -1px 0px rgba(0,0,0,0.5));
+}
+
+.current-capacity {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.capacity-text {
+    font-size: 9px;
+    font-weight: 900;
+    color: var(--branding-text-color);
+    text-shadow: -1px -1px 1px rgba(0,0,0,0.7);
+}
+
+.current-meter {
+    font-size: 10px;
+    font-weight: 950;
+    color: var(--branding-text-color);
+    letter-spacing: 1px;
+}
+
+/* --- Prompt Container & Input Fixes --- */
+.current-prompt-container {
+    display: flex;
+    align-items: center;
+    margin-left: auto; /* Pushes to the right */
+    background: var(--bg-color);
+    border: 1px solid var(--glow-aura);
+    border-radius: 4px;
+    padding: 2px 8px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+    min-width: 400px; /* Ensures enough room for the input */
+}
+
+.current-prompt-label {
+    font-family: monospace;
+    font-size: 10px;
+    font-weight: 900;
+    color: var(--glow-color);
+    opacity: 0.7;
+    margin-right: 8px;
+    white-space: nowrap;
+}
+
+.current-prompt-input {
+    flex-grow: 1; /* Makes the input take up available space */
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--branding-text-color);
+    font-family: var(--nav-font); /* Matches the UI theme */
+    font-size: 9px; /* Reduced from large font */
+    padding: 4px 0;
+    letter-spacing: 1px;
+}
+
+.current-prompt-exec-button {
+    background: var(--glow-color);
+    color: var(--bg-color);
+    border: none;
+    border-radius: 2px;
+    padding: 2px 10px;
+    font-size: 9px;
+    font-weight: 900;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 5px rgba(var(--glow-color-rgb), 0.3);
+}
+
+.current-prompt-exec-button:hover {
+    filter: brightness(1.2);
+    box-shadow: 0 0 10px var(--glow-color);
+}
+
 /* --- DECORATIVE HEADERS --- */
 /* Reduce space between hero and system ready line */
 header {
