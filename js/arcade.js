@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:51:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1044,6 +1044,9 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
     const sparkElementId = `save-btn-${spark.id}`;
     const sparkImage = genSparkImage(spark.image);
+
+    // 0. Debug Log: Track final image path per card
+    console.log(`[RENDER] Spark ID: ${spark.id} | Image Path Length: ${sparkImage.length} | Start: ${sparkImage.substring(0, 30)}`);
     
     // 1. Core Color Palette
     const pearlColor = "var(--list-color)";
@@ -1094,17 +1097,19 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     return `
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
             <div class="action-card" 
-                 onclick="window.location.href='${targetUrl}'"
-                 style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px;">
+                  onclick="window.location.href='${targetUrl}'"
+                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px;">
                 
                 <h4 class="metallic-text" style="position: relative; z-index: 20; text-align: center; padding: 0 1.5rem;">
                     ${spark.name}
                 </h4>
 
                 <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;">
-                    <img src="${sparkImage || '/assets/thumbnails/default.jpg'}" 
+                    <img src="${sparkImage}" 
                          class="spark-thumbnail"
-                         style="width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: grayscale(100%); transition: all 0.7s;">
+                         onerror="console.error('IMAGE FAILED TO LOAD for Spark: ${spark.id}')"
+                         onload="console.log('IMAGE LOAD SUCCESS for Spark: ${spark.id}')"
+                         style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6; filter: brightness(1.2); transition: all 0.7s;">
                     <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(var(--bg-color-high),0.9), transparent);"></div>
                 </div>
             </div>
