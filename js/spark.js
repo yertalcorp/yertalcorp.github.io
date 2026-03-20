@@ -7,6 +7,49 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
+/**
+ * Captures the raw pixel data from the game canvas.
+ * @param {HTMLCanvasElement} canvas - The active game canvas.
+ */
+function takeScreenshot(canvas) {
+    // If using Three.js, ensure 'preserveDrawingBuffer: true' was set 
+    // in the renderer, or call this inside the render loop.
+    return canvas.toDataURL('image/png');
+}
+
+/**
+ * Clips the edges and resizes a screenshot to 240x135.
+ * @param {string} dataUrl - The raw screenshot DataURL.
+ */
+async function convertScreenshotToImage(dataUrl) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const thumbCanvas = document.createElement('canvas');
+            const ctx = thumbCanvas.getContext('2d');
+
+            // Target dimensions
+            thumbCanvas.width = 240;
+            thumbCanvas.height = 135;
+
+            // Define the "Clean Clip" (shaving 5% off the edges)
+            const margin = 0.05;
+            const sx = img.width * margin;
+            const sy = img.height * margin;
+            const sw = img.width * (1 - (margin * 2));
+            const sh = img.height * (1 - (margin * 2));
+
+            // Draw the clipped portion into the 240x135 thumbnail
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 240, 135);
+
+            resolve(thumbCanvas.toDataURL('image/png'));
+        };
+        img.src = dataUrl;
+    });
+}
+
 watchAuthState(async (user) => {
     if (!user) return;
     userId = user.uid;
