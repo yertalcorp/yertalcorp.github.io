@@ -401,9 +401,13 @@
 }
 
 .plan-card.active {
-    border: 2px solid var(--glow-color);
+    border: 1px solid var(--glow-color);
     background: var(--card-bg);
-    box-shadow: 0 4px 12px var(--box-shadow-color-glow);
+    /* High-density 3D glow that works in Light and Dark */
+    box-shadow: 
+        0 0 15px var(--glow-aura),
+        inset 0 0 8px rgba(255,255,255,0.05);
+    transform: translateY(-2px);
 }
 .plan-card h3 {
     font-size: 10px;
@@ -619,8 +623,11 @@ header {
     letter-spacing: 0.12em; 
     font-size: 10px;
     color: var(--text-main-color);
-    text-shadow: none;
-    filter: none;
+    /* THEME-AGNOSTIC 3D: High-contrast specular highlight + deep pocket shadow */
+    text-shadow: 
+        -0.5px -0.5px 0px rgba(255,255,255,0.4), /* Top-left Light Catch */
+        1px 1px 2px rgba(0,0,0,0.6);             /* Bottom-right Drop Shadow */
+    filter: brightness(1.2) contrast(1.1);
     white-space: nowrap;
 }
 
@@ -645,11 +652,45 @@ header {
 
 .spark-unit {
     max-width: 100%;
+    position: relative;
+    background: var(--card-bg);
+    /* The "Bezel": Inside shadow makes the meter look recessed into the dashboard */
+    box-shadow: 
+        inset 1px 1px 3px rgba(0,0,0,0.4), 
+        0.5px 0.5px 0px rgba(255,255,255,0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 2px;
+    overflow: hidden;
+}
+/* THEME-AGNOSTIC SHINE: This adds the 3D "cylindrical" curve to any color bar */
+.spark-unit .progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.4) 0%,
+        rgba(255,255,255,0.1) 20%,
+        transparent 50%,
+        rgba(0,0,0,0.1) 90%,
+        rgba(0,0,0,0.3) 100%
+    );
+    pointer-events: none;
 }
 /* High-Density Current Headings */
 .current-title {
-    text-shadow: none;
-    filter: none;
+    /* Using a mask-based shine rather than a hardcoded color gradient */
+    background: linear-gradient(
+        to bottom, 
+        rgba(255,255,255,0.2) 0%, 
+        transparent 50%, 
+        rgba(0,0,0,0.1) 100%
+    ), var(--branding-color);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* Adds the "stamped" physical depth */
+    filter: drop-shadow(0.5px 0.5px 0px rgba(255,255,255,0.3));
 }
 
 /* Generate Button: Metallic Glow */
