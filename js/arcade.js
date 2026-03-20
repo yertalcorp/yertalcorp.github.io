@@ -1103,16 +1103,16 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                 <h4 class="metallic-text" style="position: relative; z-index: 20; text-align: center; padding: 0 1.5rem;">
                     ${spark.name}
                 </h4>
-
-                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;">
-                    <img src="${sparkImage}" 
-                         class="spark-thumbnail"
-                         onerror="console.error('IMAGE FAILED TO LOAD for Spark: ${spark.id}')"
-                         onload="console.log('IMAGE LOAD SUCCESS for Spark: ${spark.id}')"
-                         style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6; filter: brightness(1.2); transition: all 0.7s;">
-                    <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(var(--branding-color),0.02), transparent);"></div>
-                </div>
-            </div>
+<div style="position: absolute; inset: 0; z-index: 0;">
+    <img src="${sparkImage}" 
+         class="spark-thumbnail"
+         onerror="console.error('IMAGE FAILED: ${spark.id}')"
+         onload="console.log('IMAGE SUCCESS: ${spark.id}')"
+         style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6; filter: brightness(1.2); transition: all 0.7s; position: absolute; inset: 0; z-index: 1;">
+    
+    <div style="position: absolute; inset: 0; background: var(--glow-color); opacity: 0.02; z-index: 2;"></div>
+</div>
+              </div>
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
                 
