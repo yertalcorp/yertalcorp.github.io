@@ -779,24 +779,32 @@ header {
     display: block;
 }
 /* --- THE PHYSICAL SPARK GRID --- */
-
+.experiment-zone {
+    background: var(--bg-color-low); /* Ensuring the gray background is set */
+    border-radius: 12px;
+    border: 1px solid rgba(var(--border-color),0.2);
+    box-shadow: inset 2px 2px 8px rgba(var(--box_shadow-color),0.15); /* Creates the "recessed" look */
+    margin-top: 1rem;
+    padding: 1rem;
+    overflow: hidden; /* Clips anything outside the rounded corners */
+}
 .experiment-zone .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 1rem;
-    padding: 1rem;
-    /* Recessed Area for the Grid */
-    background: rgba(0,0,0,0.03); 
-    border-radius: 12px;
-    box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Adjusted for the card size in your shot */
+    gap: 1.5rem;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* --- SURREAL 3D SPARK BOXES --- */
 
 .action-card {
+    position: relative;
+    z-index: 1;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 8px;
     padding: 1.5rem; /* Internal padding from border */
     position: relative;
     transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
@@ -810,7 +818,7 @@ header {
 .action-card:hover {
     background: var(--card-bg);
     border-color: var(--glow-color);
-    transform: translateY(-10px) rotateX(2deg) rotateY(-2deg);
+    transform: translateY(-5px) rotateX(2deg) rotateY(-2deg);
     box-shadow: 
         0 20px 40px var(--box-shadow-color-glow),
         0 0 20px var(--box-shadow-color-aura);
