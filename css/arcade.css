@@ -697,60 +697,84 @@ main.max-width-limit {
     text-shadow: -1px -1px 0px rgba(0,0,0,0.6);
     opacity: 0.7; /* Consistent "System Readout" dimming */
 }
-/* --- Prompt Container & Input Fixes --- */
+
+/* --- Sleek Command Container --- */
 .current-prompt-container {
     display: flex;
     align-items: center;
-    margin-left: auto; /* Pushes to the right */
+    margin-left: auto;
     background: var(--bg-color);
     border: 1px solid var(--glow-aura);
     border-radius: 4px;
-    padding: 2px 8px;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-    min-width: 450px; /* Ensures enough room for the input */
+    padding: 0;
+    /* Uses theme bg-color for the recessed shadow depth */
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 5px rgba(var(--glow-color-rgb), 0.1);
+    min-width: 480px;
+    height: 26px; /* Slimmer profile */
+    overflow: hidden;
 }
 
 .current-prompt-label {
     font-family: monospace;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 900;
     color: var(--glow-color);
-    opacity: 0.7;
-    margin-right: 8px;
+    padding: 0 12px;
+    opacity: 0.8;
     white-space: nowrap;
+    border-right: 1px solid var(--glow-aura);
+    height: 100%;
+    display: flex;
+    align-items: center;
 }
 
 .current-prompt-input {
-    flex-grow: 1; /* Makes the input take up available space */
+    flex-grow: 1;
     background: transparent;
     border: none;
     outline: none;
     color: var(--branding-text-color);
-    font-family: var(--nav-font); /* Matches the UI theme */
-    font-size: 9px; /* Reduced from large font */
-    padding: 4px 0;
-    letter-spacing: 1px;
+    font-size: 9px; /* Reduced for sleeker look */
+    padding: 0 12px;
+    letter-spacing: 0.5px;
+    height: 100%;
 }
 
+/* --- The EXEC Button (Themed & Metallic) --- */
 .current-prompt-exec-button {
-    background: var(--glow-color);
-    color: var(--bg-color);
+    height: 100%;
+    /* Gradient using theme branding color for the "shine" */
+    background: linear-gradient(180deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        var(--bg-color) 45%, 
+        #000 55%, 
+        var(--bg-color) 100%
+    );
+    color: var(--branding-text-color);
     border: none;
-    border-radius: 2px;
-    padding: 2px 10px;
+    border-left: 1px solid var(--glow-aura);
+    padding: 0 18px;
     font-size: 9px;
     font-weight: 900;
     cursor: pointer;
-    margin-left: 8px;
-    transition: all 0.2s ease;
-    box-shadow: 0 0 5px rgba(var(--glow-color-rgb), 0.3);
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    /* Subtle glow based on theme color */
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .current-prompt-exec-button:hover {
-    filter: brightness(1.2);
-    box-shadow: 0 0 10px var(--glow-color);
+    background: var(--glow-color);
+    color: var(--bg-color); /* Contrast flip on hover */
+    box-shadow: 0 0 15px var(--glow-color);
+    border-left-color: transparent;
 }
 
+/* Fix for Placeholder color to match branding */
+.current-prompt-input::placeholder {
+    color: var(--branding-text-color);
+    opacity: 0.3;
+}
 /* --- DECORATIVE HEADERS --- */
 /* Reduce space between hero and system ready line */
 header {
