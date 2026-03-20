@@ -628,9 +628,11 @@ main.max-width-limit {
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    padding-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    padding-top: 0.25rem;
+    padding-left: 0.25rem;
     border-bottom: 1px solid var(--glow-aura);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
 }
 
 /* --- Metallic Titles & Labels --- */
