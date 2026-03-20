@@ -970,7 +970,16 @@ header {
         0 0 20px var(--box-shadow-color-aura);
     animation: spark-pulse 2s infinite ease-in-out;
 }
-
+.spark-thumbnail {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 1;
+    transition: all 0.7s;
+}
 /* Restoring the "Light up" effect on hover since group-hover is gone */
 .action-card:hover .spark-thumbnail {
     opacity: 0.8 ;
