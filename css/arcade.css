@@ -930,23 +930,40 @@ button:hover {
 }
 .hud-overlay.active { display: flex; }
 
-/* 2. Fix the Window Positioning */
 .hud-window {
-    position: relative; /* Break away from any accidental bottom-anchors */
+    position: relative;
     width: 90%;
-    top: 0; left: auto; 
     max-width: 650px;
-    margin: auto;       /* The "Safety Net" for flex centering */
+    margin: auto;
     display: flex;
     flex-direction: column;
     padding: 10px;
     box-sizing: border-box;
+    /* THEME-AGNOSTIC ALUMINUM: Multi-layered border for a beveled edge */
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 
+        0 20px 50px rgba(0,0,0,0.3),            /* Deep Floor Shadow */
+        inset 1px 1px 0px rgba(255,255,255,0.1), /* Top-Left Specular "Highlight" */
+        inset -1px -1px 0px rgba(0,0,0,0.2);     /* Bottom-Right "Recess" Shadow */
 }
 
+/* Add a subtle metallic grain/shading to the HUD Header */
 .hud-header-content {
     width: 100%;
     text-align: center;
     margin-bottom: 20px;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    /* Subtle 3D "Inward" bend */
+    background: linear-gradient(
+        to bottom, 
+        rgba(0,0,0,0.05) 0%, 
+        transparent 10%, 
+        transparent 90%, 
+        rgba(0,0,0,0.05) 100%
+    );
 }
 
 /* Floating Close Button */
@@ -985,32 +1002,54 @@ button:hover {
 .cat-btn {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    color: var(--text-main-color); padding: 10px;
-    font-size: 10px; cursor: pointer;
+    color: var(--text-main-color);
+    padding: 10px;
+    font-size: 10px;
+    cursor: pointer;
     font-family: 'Orbitron', sans-serif;
-    transition: all 0.3s;
+    border-radius: 4px;
+    /* "Raised" Button Look */
+    box-shadow: 
+        1px 1px 0px rgba(0,0,0,0.2), 
+        -0.5px -0.5px 0px rgba(255,255,255,0.1);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.cat-btn.selected {
+.cat-btn:active, .cat-btn.selected {
+    /* "Pressed-In" state */
+    transform: translateY(1px);
     border-color: var(--glow-color);
     background: var(--bg-color-mid);
-    box-shadow: 0 0 15px var(--box-shadow-color-aura);
+    box-shadow: 
+        inset 1px 1px 2px rgba(0,0,0,0.3),
+        0 0 10px var(--glow-aura);
 }
+
+/* --- TACTILE INPUTS & BUTTONS --- */
 
 .hud-input {
     width: 100%;
     background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    color: var(--text-main-color);
+    font-family: 'Inter', sans-serif;
     padding: 10px;
     margin-bottom: 5px;
-    font-family: 'Inter', sans-serif;
-    color: var(--text-main-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    /* "Engraved" Look: Sinks into the panel */
+    box-shadow: 
+        inset 1px 1px 2px rgba(0,0,0,0.2), 
+        0.5px 0.5px 0px rgba(255,255,255,0.1);
+    transition: all 0.2s ease;
 }
-/* Add focus state to make it look active */
+
 .hud-input:focus {
     outline: none;
     border-color: var(--glow-color);
-    box-shadow: 0 0 10px var(--box-shadow-color-aura);
+    /* "Glow-from-within" the engraving */
+    box-shadow: 
+        inset 0 0 8px var(--glow-aura),
+        0 0 5px var(--glow-aura);
 }
 .btn-pulse {
     background: var(--glow-color) ;
@@ -1038,13 +1077,20 @@ button:hover {
     color: var(--glow-color);
     font-family: 'Orbitron', sans-serif;
 }
+/* --- THEME-AGNOSTIC TERMINAL --- */
+
 .logic-display {
-    border: 1px solid var(--branding-color);
-    background: var(--fg-color-high);
+    border: 1px solid var(--border-color);
+    /* Mimics a physical CRT or recessed monitor screen */
+    background: #000;
     padding: 2rem;
     font-family: 'monospace';
-    color: var(--bg-color-high);
-    box-shadow: inset 0 0 30px var(--box-shadow-color-aura), 0 0 15px var(--box-shadow-color-aura);
+    color: #fff;
+    border-radius: 4px;
+    box-shadow: 
+        inset 0 0 30px rgba(0,0,0,1), 
+        inset 0 0 15px var(--glow-aura),
+        1px 1px 0px rgba(255,255,255,0.1); /* The Bezel edge */
 }
 
 .terminal-code {
