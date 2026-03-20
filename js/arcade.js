@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1013,7 +1013,7 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 
 function renderSparkCard(spark, isOwner, currentId, ownerId) {
     /* Overall Objective: Generate the HTML for a spark card with persistent 
-       neon state for likes and shares based on user history. */
+        neon state for likes and shares based on user history. */
     
     const targetUrl = `spark.html?current=${currentId}&spark=${spark.id}`;
     const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
@@ -1071,7 +1071,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                  onclick="window.location.href='${targetUrl}'"
                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px;">
                 
-                <h4 class="metallic-text" style="position: relative; z-index: 20; text-align: center; padding: 0 1.5rem; font-size: 12px; margin: 0;">
+                <h4 class="metallic-text" style="position: relative; z-index: 20; text-align: center; padding: 0 1.5rem;">
                     ${spark.name}
                 </h4>
 
@@ -1105,7 +1105,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                 </div>
 
                 <div class="interaction-row" style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%;">
-                    <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none; white-space: nowrap;">
+                    <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none;">
                         ${spark.link ? 'SOURCED' : 'FORGED'}: ${formatTimeAgo(spark.created)}
                     </div>
                     
