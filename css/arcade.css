@@ -570,23 +570,24 @@ main.max-width-limit {
     box-sizing: border-box;
 }
 /* Each Current is a distinct row with breathing room */
-/* --- CIRCUIT BOARD TRACKS: CURRENT BLOCKS --- */
 
 /* 2. Shifting the White Recessed Groove (Internal Frame) */
 .current-block {
     display: flex;
     flex-direction: column;
     height: auto; 
-    min-height: 200px; 
+    /* MODIFICATION: Reduced min-height to allow the block to hug the content */
+    min-height: 50px; 
     overflow: visible; 
     
-    /* MODIFICATION: Tighter INTERNAL PADDING */
-    padding: 1.5rem 1rem 1rem 1rem; /* Reduced internal padding from 2rem */
+    /* MODIFICATION: Tighter TOP padding to pull header up */
+    /* format: top | right | bottom | left */
+    padding: 0.75rem 0.75rem 0.75rem 0.75rem; 
     
     /* MODIFICATION: PULLING UP/LEFT */
-    margin-left: -0.5rem; /* Moves the white area slightly left */
-    margin-top: 0.25rem; /* Pulls it slightly closer to the main header */
-    margin-bottom: 2rem; /* Controlled gap between the bays */
+    margin-left: -0.5rem; 
+    margin-top: 0.1rem; /* Pulls it even closer to the status bar */
+    margin-bottom: 2rem; 
 
     /* Re-enforcing the recessed hardware look */
     background: var(--bg-color-low);
@@ -598,6 +599,7 @@ main.max-width-limit {
     border-radius: 8px;
     transition: all 0.3s ease;
 }
+
 /* REFINING THE SPARK GRID FOR THE NEW TIGHTER SPACE */
 #currents-container > .current-block > .content-grid {
     display: grid;
