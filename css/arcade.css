@@ -712,7 +712,7 @@ main.max-width-limit {
     font-family: monospace;
     font-size: 9px;
     font-weight: 900;
-    color: var(--fg-color-high);
+    color: var(--branding-color);
     padding: 0 12px;
     opacity: 0.8;
     white-space: nowrap;
@@ -731,12 +731,12 @@ main.max-width-limit {
     font-size: 9px; /* Reduced for sleeker look */
     padding: 0 12px;
     letter-spacing: 0.5px;
-    height: 90%;
+    height: 80%;
 }
 
 /* --- The EXEC Button (Themed & Metallic) --- */
 .current-prompt-exec-button {
-height: 100%;
+    height: 100%;
     /* ADDED: Flex centering to fix the "hugging the bottom" issue */
     display: flex;
     align-items: center;
