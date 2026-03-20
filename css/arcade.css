@@ -710,9 +710,9 @@ main.max-width-limit {
 
 .current-prompt-label {
     font-family: monospace;
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 900;
-    color: var(--branding-color);
+    color: var(--glow-color);
     padding: 0 12px;
     opacity: 0.8;
     white-space: nowrap;
