@@ -91,12 +91,18 @@
     margin-top: 2px;           /* Existing */
 }
 
-.metallic-divider {
+/* --- REFINED METALLIC DIVIDER --- */
+.drawer-hr, .metallic-divider {
     border: none;
-    height: 1px;
-    background: var(--border-color);
-    opacity: 0.5;
-    margin: 10px 0;
+    height: 2px;
+    /* Two-tone line: Top is dark (shadow), Bottom is light (highlight) */
+    background: linear-gradient(
+        to bottom, 
+        rgba(0,0,0,0.2) 50%, 
+        rgba(255,255,255,0.1) 50%
+    );
+    margin: 1.5rem 0;
+    opacity: 1;
 }
 
 /* --- LIST REPAIR (The "Inside" Fix) --- */
@@ -208,13 +214,6 @@
 
 .glass-drawer.active {
     right: 0;
-}
-.drawer-hr {
-    border: none;
-    height: 1px;
-    background: var(--border-color);
-    opacity: 0.2;
-    margin: 0.5rem 1rem;
 }
 
 .drawer-header {
@@ -557,27 +556,50 @@ main.max-width-limit {
     box-sizing: border-box;
 }
 /* Each Current is a distinct row with breathing room */
+/* --- CIRCUIT BOARD TRACKS: CURRENT BLOCKS --- */
+
 .current-block {
     margin-top: 0.5rem;
-    margin-bottom: 1.5rem; /* Large gap between different currents */
+    margin-bottom: 2rem;
     width: 100%;
-    border-top: 1px solid var(--border-color-aura);
-    padding-top: 0.75rem;
+    padding: 1.5rem 1rem;
+    background: var(--bg-color-low); /* Subtle depth contrast */
+    border-radius: 8px;
+    
+    /* THEME-AGNOSTIC GROOVE: Creates a 3D "U-channel" in the panel */
+    border-top: 1px solid rgba(0,0,0,0.2);
+    border-left: 1px solid rgba(0,0,0,0.2);
+    box-shadow: 
+        inset 1px 1px 3px rgba(0,0,0,0.15),  /* Inner Shadow (Depth) */
+        0.5px 0.5px 0px rgba(255,255,255,0.1); /* Surface Highlight (Edge) */
+    
+    position: relative;
+    transition: border-color 0.3s ease;
 }
 
+.current-block:hover {
+    /* "Powering Up" effect for the specific bay */
+    border-color: var(--glow-aura);
+}
 /* Tightest possible row headers */
 .current-block .flex-row {
     margin-bottom: 0.25rem ;
 }
 
 /* Increase visibility of creation controls */
+/* --- STAMPED TEXT ADJUSTMENT --- */
+
 .current-block label {
-    font-size: 13px ;
-    font-weight: 900 ;
-    color: var(--text-main-color) ;
-    opacity: 1 ;
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--text-main-color);
+    text-transform: uppercase;
     letter-spacing: 0.15em;
+    /* "Etched" into the metal look */
+    text-shadow: 0.5px 0.5px 0px rgba(255,255,255,0.2);
+    opacity: 0.9;
 }
+
 /* --- DECORATIVE HEADERS --- */
 /* Reduce space between hero and system ready line */
 header {
@@ -727,14 +749,17 @@ header {
     margin-bottom: 1rem;
     display: block;
 }
-/* --- THE SPARK GRID --- */
+/* --- THE PHYSICAL SPARK GRID --- */
 
 .experiment-zone .grid {
-    display: grid ;
-    /* Min 200px (1/2 mobile) | Max 1fr (1/6 desktop) */
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) ;
-    gap: 0.5rem ; /* Spacious gap between sparks */
-    width: 100% ;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    /* Recessed Area for the Grid */
+    background: rgba(0,0,0,0.03); 
+    border-radius: 12px;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
 }
 
 /* --- SURREAL 3D SPARK BOXES --- */
