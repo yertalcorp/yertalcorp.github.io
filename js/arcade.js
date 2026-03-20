@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -852,19 +852,15 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
     const currentsArray = currents ? Object.values(currents).filter(current => {
         const isPublic = current.privacy === 'public';
         const isTargetUnlisted = current.privacy === 'unlisted' && current.id === sharedCurrentId;
-        
-        // Viewer can see it if it's Public OR it's the specific Unlisted ID from the URL
         return isOwner || isPublic || isTargetUnlisted;
     }) : [];
     
-    // --- ARCADE SETUP USER ON THEIR ARCADE PAGE, SHOW WELCOME AND CENTRAL CREATE ARCADE BUTTON ---
+    // --- ARCADE SETUP ---
     if (currentsArray.length === 0) {
         if (isOwner) {
             const firstName = profile?.display_name?.split(' ')[0] || "Engineer";
             
-            // Check if the user has completed the initial onboarding forge
             if (profile?.setup_complete === true) {
-                // CASE: Established User, no currents (Show Tutorial/Ready state)
                 container.innerHTML = `
                     <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 6rem 2rem; border: 1px solid var(--glow-aura); border-radius: 20px; margin: 2rem; background: var(--card-bg);">
                         <h1 class="metallic-text" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--branding-text-color);">
@@ -884,7 +880,6 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                     </div>
                 `;
             } else {
-                // CASE: New User (Show Create Your Arcade button)
                 container.innerHTML = `
                     <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 8rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 2rem; background: var(--card-bg);">
                         <h1 class="metallic-text" style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem; letter-spacing: -1px; color: var(--branding-text-color);">
@@ -910,9 +905,8 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         return;
     }
 
-    // --- ACTIVE STATE LOGIC USER HAS CURRENTS ---
+    // --- ACTIVE STATE ---
     container.innerHTML = currentsArray.map(current => {
-        // 3. SPARK PRIVACY FILTERING
         const sparks = current.sparks ? Object.values(current.sparks).filter(spark => {
             const isSparkPublic = spark.privacy === 'public';
             const isSparkTargetUnlisted = spark.privacy === 'unlisted' && spark.id === sharedSparkId;
@@ -921,21 +915,15 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 
         const sparkCount = sparks.length;
         const isFull = sparkCount >= maxSparks;
-        // This tells the browser: Use --error-color. If it doesn't exist, use #ef4444.
         const meterColor = isFull ? 'var(--error-color, #ef4444)' : 'var(--glow-color)';
 
-        // USER HAS MORE CAPACITY TO BUILD CURRENTS AND SPARKS
         const controls = (isOwner && !isFull) ? `
             <div style="display: flex; align-items: center; gap: 0; margin-left: auto; background: var(--bg-color); border: 1px solid var(--glow-aura); border-radius: 4px; padding: 2px 10px; box-shadow: inset 0 0 10px var(--bg-color);">
                 <span style="font-family: monospace; color: var(--glow-color); font-size: 10px; margin-right: 10px; opacity: 0.7; font-weight: 900; letter-spacing: 1px;">FORGE_CMD></span>
                 <input type="text" id="input-${current.id}" 
                        placeholder="TYPE A PROMPT OR PASTE A URL..." 
-                       class="glass"
-                       style="background: transparent; border: none; padding: 0.5rem 0; font-size: 10px; min-width: 400px; max-width: 1200px; flex: 1; outline: none; color: var(--branding-text-color); font-family: 'Orbitron', sans-serif; letter-spacing: 2px;"
                        onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}')">
-                <button onclick="window.handleCreation('${current.id}')" 
-                        class="generate-btn"
-                        style="background: var(--glow-color); color: var(--bg-color); border: none; padding: 4px 14px; margin-left: 10px; border-radius: 2px; font-size: 9px; font-weight: 900; cursor: pointer; text-transform: uppercase; transition: all 0.3s; box-shadow: 0 0 10px var(--glow-aura);">
+                <button onclick="window.handleCreation('${current.id}')" class="generate-btn">
                     EXEC
                 </button>
             </div>
@@ -946,9 +934,9 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         ` : `<div style="margin-left: auto; font-size: 10px; opacity: 0.5; font-family: monospace; letter-spacing: 2px; text-transform: uppercase; color: var(--branding-text-color);">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
 
         return `
-            <div class="current-block animate-fadeIn" style="background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--glow-aura);">
-                <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glow-aura); padding-bottom: 0.8rem;">
-                    <h2 class="current-title" style="margin: 0; color: var(--branding-text-color);">${current.name || 'Active Current'}</h2>
+            <div class="current-block animate-fadeIn">
+                <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--glow-aura); padding-bottom: 0.5rem;">
+                    <h2 class="current-title">${current.name || 'Active Current'}</h2>
                     
                     <div style="display: flex; align-items: center; gap: 0.5rem; font-family: 'Orbitron', sans-serif; font-size: 9px; color: ${meterColor}; opacity: 0.8; letter-spacing: 1px;">
                         <span style="opacity: 0.5;">CAPACITY:</span>
@@ -959,7 +947,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                 </div>
                 
                 <div class="experiment-zone">
-                    <div id="sparks-${current.id}" class="grid" style="padding: 5px;">
+                    <div id="sparks-${current.id}" class="grid">
                         ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id, ownerUid)).join('')}
                     </div>
                 </div>
