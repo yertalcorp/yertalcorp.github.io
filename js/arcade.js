@@ -1098,7 +1098,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
             <div class="action-card" 
                   onclick="window.location.href='${targetUrl}'"
-                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
+                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
                 
                 <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1.5rem; pointer-events: none;">
                     ${spark.name}
