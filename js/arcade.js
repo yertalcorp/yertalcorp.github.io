@@ -457,7 +457,6 @@ window.copyToClipboard = (text, btn) => {
 };
 
 async function refreshUI() {
-    console.log("[SYSTEM]: INITIATING STRICT SYNC...");
     try {
         const data = await getArcadeData();
         databaseCache = data;
@@ -1017,9 +1016,6 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
  * Returns the Base64 string if present, or a formatted asset path.
  */
 function genSparkImage(sparkImageFromDB) {
-    console.log("--- genSparkImage Debug ---");
-    console.log("Raw Input from DB:", sparkImageFromDB ? sparkImageFromDB.substring(0, 50) + "..." : "EMPTY");
-
     if (!sparkImageFromDB) {
         console.warn("Result: Fallback to default.jpg");
         return 'assets/thumbnails/default.jpg';
