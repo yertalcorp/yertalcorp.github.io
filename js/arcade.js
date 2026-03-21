@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1308,58 +1308,85 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
 }
 
 /**
- * Objective: Efficient Credential Retrieval
- * Logic: Extracts both API Key and Model from the existing databaseCache.
+ * Objective: High-Availability Credential Retrieval
+ * Logic: Extracts the key from cache (or direct fetch) and resolves the model.
  */
 async function retrieveGeminiCredentials() {
     try {
-        const manifest = databaseCache?.app_manifest;
-        
+        let manifest = databaseCache?.app_manifest;
+
+        // 1. Last-resort direct fetch if cache is missing
         if (!manifest || !manifest.gkey) {
-            throw new Error("Forge manifest is missing in the db.");
+            const snap = await get(ref(db, 'app_manifest')).catch(() => null);
+            if (snap && snap.exists()) {
+                manifest = snap.val();
+                if (databaseCache) databaseCache.app_manifest = manifest;
+            }
         }
 
-        // 1. Get the Key
-        cachedGKey = manifest.gkey;
+        // 2. Critical Check
+        if (!manifest || !manifest.gkey) {
+            throw new Error("Forge manifest or GKey missing in DB.");
+        }
 
-        // 2. Resolve the Model (Pass the key to the helper)
-        const modelName = await getGeminiModel(cachedGKey);
+        const apiKey = manifest.gkey;
+        const modelName = await getGeminiModel(apiKey);
 
-        return { cachedGKey, modelName };
+        // 3. RETURN: Ensure these keys match your callGeminiAPI destructuring
+        return { apiKey, modelName };
     } catch (e) {
         console.error("[FORGE ERROR]: Failed to assemble credentials:", e);
-        return null;
+        return null; // This triggers the "AI Infrastructure Offline" error in the caller
     }
 }
 
+/**
+ * Logic: Discovers, sorts, and persists the latest Flash model version.
+ *
+ */
 async function getGeminiModel(apiKey) {
     if (databaseCache.app_manifest?.default_model) {
+        console.log("[FORGE]: Using cached model from manifest:", databaseCache.app_manifest.default_model);
         return databaseCache.app_manifest.default_model;
     }
 
     try {
-        console.log("[FORGE]: Discovering latest Flash model...");
+        console.log("[FORGE]: Discovering latest Flash model via Google API...");
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         const data = await response.json();
 
-        // 1. Filter for Flash models, but EXCLUDE generic aliases like 'gemini-flash-latest'
-        // We want specific versions for better stability.
+        if (!data.models) {
+            console.error("[FORGE]: API returned no models. Full Response:", data);
+            throw new Error("No models property in API response.");
+        }
+
+        // 1. Filter for Flash models, excluding generic aliases
         const flashModels = data.models.filter(m => 
             m.name.includes('flash') && 
             m.supportedGenerationMethods.includes('generateContent') &&
-            !m.name.endsWith('-latest') // Skip the generic alias
+            !m.name.endsWith('-latest')
         );
 
-        // 2. Sort by name descending (e.g., 2.0 comes before 1.5)
+        console.log(`[FORGE]: Found ${flashModels.length} candidate Flash models.`);
+
+        // 2. Sort by name descending (latest versions first)
         flashModels.sort((a, b) => b.name.localeCompare(a.name));
         
-        if (flashModels.length === 0) throw new Error("No Flash models found.");
+        // Print the sorted list as a table for easy verification
+        console.table(flashModels.map(m => ({ 
+            id: m.name.split('/')[1], 
+            displayName: m.displayName, 
+            version: m.version 
+        })));
+
+        if (flashModels.length === 0) throw new Error("No suitable Flash models found.");
 
         const resolvedModel = flashModels[0].name.split('/')[1];
+        console.log(`[FORGE]: Selection Logic chose: ${resolvedModel}`);
 
         // 3. PERSISTENCE
         if (resolvedModel) {
-            console.log(`[FORGE]: Resolved and persisting model: ${resolvedModel}`);
+            console.log(`[FORGE]: Persisting ${resolvedModel} to Firebase app_manifest...`);
             await update(ref(db, 'app_manifest'), {
                 default_model: resolvedModel,
                 last_model_sync: new Date().toISOString()
@@ -1371,7 +1398,7 @@ async function getGeminiModel(apiKey) {
 
         return resolvedModel;
     } catch (e) {
-        console.warn("Discovery failed, using 2026 standard fallback.", e);
+        console.warn("[FORGE]: Discovery failed. Falling back to 'gemini-3-flash'. Error:", e);
         return 'gemini-3-flash'; 
     }
 }
