@@ -22,24 +22,35 @@ export async function saveToRealtimeDB(path, data) {
     return set(ref(db, path), data);
 }
 
-// Objective: Granular Fetching with Error Buffering
-export async function getArcadeData(currentUser) {
-    const paths = ['auth_ui', 'search_index', 'settings', 'navigation', 'action-cards'];
+// Objective: Internalized Auth Context [cite: 2026-03-21]
+export async function getArcadeData() {
+    // 1. Internalize the current user from the Firebase Auth instance
+    const currentUser = auth.currentUser; 
     const data = {};
 
+    // 2. Define our targets
+    const publicPaths = ['auth_ui', 'search_index', 'settings', 'navigation', 'action-cards'];
+
     try {
-        // 1. Fetch Public Infrastructure (Non-blocking)
+        // 3. Fetch Public Nodes (with individual safety catches)
         const snapshots = await Promise.all(
-            paths.map(path => get(ref(db, path)).catch(() => null)) 
+            publicPaths.map(path => 
+                get(ref(db, path)).catch(err => {
+                    console.warn(`[SECURITY]: Access denied to ${path}. Skipping.`);
+                    return null;
+                })
+            )
         );
-        paths.forEach((path, i) => { data[path] = snapshots[i]?.val(); });
+        publicPaths.forEach((path, i) => { data[path] = snapshots[i]?.val(); });
 
-        // 2. Surgical User Fetch: Get the profile index + current user's full data
-        // We only fetch 'users' if we want the index; otherwise, fetch specific UID
-        const usersSnap = await get(ref(db, 'users')).catch(() => null);
-        data.users = usersSnap?.val() || {};
+        // 4. Fetch User Data (Specific UID if logged in, otherwise the Index)
+        if (currentUser) {
+            // Fetch the entire users node (requires the .read: auth != null rule at the users level)
+            const usersSnap = await get(ref(db, 'users')).catch(() => null);
+            data.users = usersSnap?.val() || {};
+        }
 
-        // 3. Attempt Manifest (Only works for yertalcorp@gmail.com)
+        // 5. Superuser Only: app_manifest
         if (currentUser?.email === 'yertalcorp@gmail.com') {
             const manifestSnap = await get(ref(db, 'app_manifest')).catch(() => null);
             data.app_manifest = manifestSnap?.val();
@@ -47,7 +58,7 @@ export async function getArcadeData(currentUser) {
 
         return data;
     } catch (error) {
-        console.error("Critical: Logic Error in Data Pipeline.", error);
+        console.error("Critical Failure in getArcadeData:", error);
         throw error;
     }
 }
