@@ -1310,7 +1310,7 @@ async function getGeminiModel() {
 // Gemini API Wrapper
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code';
-    const model = getGeminiModel();
+    const model = await getGeminiModel();
     const systemText = isCode 
         ? `Create a single-file HTML/JS app: ${prompt}. Variant ${val}. Return ONLY the code, no explanation.`
         : `Return a JSON array of ${val} real URLs for: ${prompt}. Format: [{"name":"", "url":""}]. Return ONLY the JSON.`;
