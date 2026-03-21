@@ -62,7 +62,7 @@ export async function getArcadeData() {
         // 4. SUPERUSER FETCH: manifest by default
            const manifestSnap = await get(ref(db, 'app_manifest')).catch(() => null);
            data.app_manifest = manifestSnap?.val();
-      
+           console.log("app_manifest found", data.app_manifest); 
         return data;
     } catch (error) {
         console.error("Critical Failure in getArcadeData Pipeline:", error);
