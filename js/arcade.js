@@ -461,7 +461,7 @@ async function refreshUI() {
 
         // 1. SILENT SEED: If logged-in user is missing, create them
         if (!data.users?.[user.uid]) {
-            await createNewProfile(user);
+            await syncUserProfile(user);
             // Refresh local cache after seeding so the rest of the function works
             const updatedUsers = await get(ref(db, 'users'));
             data.users = updatedUsers.val();
@@ -483,17 +483,44 @@ async function refreshUI() {
     }
 }
 
-// Helper to keep refreshUI clean
-async function createNewProfile(currentUser) {
-    console.log("[SYSTEM]: INITIALIZING MINIMAL IDENTITY...");
-    const cleanSlug = currentUser.displayName.toLowerCase().replace(/\s+/g, '-') + `-${Math.floor(1000 + Math.random() * 9000)}`;
-    
-    await saveToRealtimeDB(`users/${currentUser.uid}/profile`, {
-        display_name: currentUser.displayName,
-        uid: currentUser.uid,
-        slug: cleanSlug,
-        plan_type: "free"
-    });
+/**
+ * Objective: Identity Synchronization & Upsert [cite: 2026-03-21]
+ * Logic: Creates the profile if missing; updates provider-level data if existing.
+ */
+async function syncUserProfile(currentUser) {
+    const profilePath = `users/${currentUser.uid}/profile`;
+    const profileRef = ref(db, profilePath);
+
+    try {
+        // 1. Check for existing data to preserve the "Permanent Slug"
+        const snapshot = await get(profileRef);
+        const existingData = snapshot.val();
+
+        // 2. Build the update object with Provider Data
+        const updates = {
+            display_name: currentUser.displayName,
+            email: currentUser.email,
+            photoURL: currentUser.photoURL, // Dynamic provider photo
+            uid: currentUser.uid,
+            last_sync: new Date().toISOString()
+        };
+
+        // 3. SEED LOGIC: Only set these if the user is brand new
+        if (!existingData || !existingData.slug) {
+            console.log("[SYSTEM]: FIRST-TIME REGISTRATION DETECTED.");
+            updates.slug = currentUser.displayName.toLowerCase().replace(/\s+/g, '-') + 
+                           `-${Math.floor(1000 + Math.random() * 9000)}`;
+            updates.plan_type = "free";
+            updates.joined_date = new Date().toISOString();
+        }
+
+        // 4. THE UPSERT: Creates if missing, merges if existing
+        await update(profileRef, updates);
+        console.log(`[SYSTEM]: Profile synced for ${currentUser.email}`);
+
+    } catch (error) {
+        console.error("Identity Sync Failed:", error);
+    }
 }
     
 watchAuthState(async (currentUser) => {
