@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1315,7 +1315,7 @@ async function retrieveGeminiCredentials() {
     try {
         const manifest = databaseCache?.app_manifest;
         
-        if (!cachedGKey || !manifest.gkey) {
+        if (!manifest || !manifest.gkey) {
             throw new Error("Forge manifest is missing in the db.");
         }
 
