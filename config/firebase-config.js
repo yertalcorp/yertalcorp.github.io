@@ -22,30 +22,29 @@ export async function saveToRealtimeDB(path, data) {
     return set(ref(db, path), data);
 }
 
-// Objective: Granular, Error-Resistant Fetching
+// Objective: Granular, Error-Resistant Fetching [cite: 2026-03-21]
 export async function getArcadeData() {
     const currentUser = auth.currentUser;
     const urlParams = new URLSearchParams(window.location.search);
     const pageOwnerSlug = urlParams.get('user') || 'yertal-arcade';
 
     const data = {};
-    // Ensure 'app_manifest' is in this list for all authorized users
     const publicPaths = ['app_manifest', 'auth_ui', 'search_index', 'settings', 'navigation', 'action-cards', 'showcase-items'];
 
     try {
-        // 1. Fetch System Nodes (Fails gracefully per path)
+        // 1. Fetch Public Nodes (Fails gracefully if one is blocked)
         const snapshots = await Promise.all(
             publicPaths.map(path => get(ref(db, path)).catch(() => null))
         );
-        publicPaths.forEach((path, i) => { 
-            data[path] = snapshots[i]?.val(); 
-        });
+        publicPaths.forEach((path, i) => { data[path] = snapshots[i]?.val(); });
 
-        // 2. Identify Page Owner
+        // 2. Identify the Page Owner via the Search Index
+        // We look up the UID associated with the slug in the URL
         const slugToIndex = data.search_index || {};
         const ownerUid = Object.keys(slugToIndex).find(uid => slugToIndex[uid] === pageOwnerSlug);
 
-        // 3. SURGICAL FETCH: Owner Data
+        // 3. SURGICAL FETCH: Get only the Owner's Profile and infrastructure
+        // Note: We fetch specific paths because we can't read the whole user node
         if (ownerUid) {
             const [profileSnap, infraSnap] = await Promise.all([
                 get(ref(db, `users/${ownerUid}/profile`)).catch(() => null),
@@ -58,19 +57,14 @@ export async function getArcadeData() {
                     infrastructure: infraSnap?.val()
                 }
             };
-
-            // 4. VISITOR CONTEXT: Ensure logged-in user's profile is also cached
-            if (currentUser && currentUser.uid !== ownerUid) {
-                const myProfileSnap = await get(ref(db, `users/${currentUser.uid}/profile`)).catch(() => null);
-                if (myProfileSnap?.exists()) {
-                    data.users[currentUser.uid] = { profile: myProfileSnap.val() };
-                }
-            }
         }
 
-        // REMOVED: The restrictive if(currentUser?.email === 'yertalcorp@gmail.com') block
-        // The manifest is now handled in the publicPaths map above.
-
+        // 4. SUPERUSER FETCH: manifest by default
+           const manifestSnap = await get(ref(db, 'app_manifest')).catch(() => null);
+           if (!manifestSnap) {
+             data.app_manifest = manifestSnap?.val();
+           }
+        
         return data;
     } catch (error) {
         console.error("Critical Failure in getArcadeData Pipeline:", error);
