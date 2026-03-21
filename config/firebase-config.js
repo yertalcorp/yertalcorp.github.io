@@ -22,15 +22,25 @@ export async function saveToRealtimeDB(path, data) {
     return set(ref(db, path), data);
 }
 
-// Objective: Unified Data Fetcher
+// Objective: Fetch only allowed nodes to avoid Permission Denied
 export async function getArcadeData() {
-    const snapshot = await get(ref(db, '/'));
-    if (snapshot.exists()) {
-        return snapshot.val();
-    }
-    throw new Error("Could not retrieve Arcade data from Realtime DB.");
-}
+    try {
+        const paths = ['app_manifest', 'auth_ui', 'search_index', 'settings', 'users'];
+        const snapshots = await Promise.all(
+            paths.map(path => get(ref(db, path)))
+        );
 
+        const data = {};
+        paths.forEach((path, i) => {
+            data[path] = snapshots[i].val();
+        });
+
+        return data;
+    } catch (error) {
+        console.error("Critical: Security policy blocked full tree fetch.");
+        throw error;
+    }
+}
 /* Create a new user in the DB*/
 export async function initializeUserIfNeeded(user) {
     const userRef = ref(db, `users/${user.uid}`);
