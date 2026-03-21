@@ -454,60 +454,110 @@ window.copyToClipboard = (text, btn) => {
     setTimeout(() => btn.innerHTML = originalIcon, 2000);
 };
 
+/*
+ * Objective: Single Source of Truth for Rendering [cite: 2026-02-01]
+ * Logic: Fetches data, ensures user exists (Seeding), then triggers UI components.
+ */
 async function refreshUI() {
-    console.log("--- [DEBUG] refreshUI Started ---");
+    console.log("--- [SYSTEM]: refreshUI START ---");
     try {
+        // 1. DATA ACQUISITION
         const data = await getArcadeData();
         databaseCache = data;
-        console.log("[DATA]: getArcadeData loaded into cache.");
 
-        // 1. SILENT SEED: If logged-in user is missing, create them
+        // 2. SILENT SEED: Ensure the logged-in user is registered [cite: 2026-02-01]
+        // We check if the current auth UID exists in the fetched user tree
         if (!data.users?.[user.uid]) {
-            console.log(`[SEED]: User ${user.uid} not found. Syncing profile...`);
+            console.log("[SYSTEM]: User record missing. Initializing via syncUserProfile...");
             await syncUserProfile(user);
+            
+            // Refresh local cache after seeding so the rest of the function has valid data
             const updatedUsers = await get(ref(db, 'users'));
             data.users = updatedUsers.val();
+            databaseCache.users = data.users;
         }
 
+        // 3. ROUTE RESOLUTION
         const urlParams = new URLSearchParams(window.location.search);
         const pageOwnerSlug = urlParams.get('user');
-        console.log(`[UI]: Targeting Slug: "${pageOwnerSlug}"`);
 
-        // 2. Find the Page Owner in the data
+        if (!pageOwnerSlug) {
+            console.error("STRICT MODE: No slug detected in URL.");
+            return;
+        }
+
         const allUsers = data.users || {};
+        
+        // Find the owner of the page by matching the URL slug to a profile slug
         const ownerUid = Object.keys(allUsers).find(uid => 
             allUsers[uid].profile && allUsers[uid].profile.slug === pageOwnerSlug
         );
 
+        const loggedInUserRecord = allUsers[user?.uid];
+        const userSlug = loggedInUserRecord?.profile?.slug || "NO_SLUG";
+        const isOwner = (user && user.uid === ownerUid);
+
+        console.table({
+            "Page Owner Slug": pageOwnerSlug,
+            "Page Owner UID": ownerUid || "NOT_FOUND",
+            "Logged in User Slug": userSlug,
+            "Access_Level": isOwner ? "OWNER" : "VIEWER",
+        });
+
+        // 4. HANDLE MISSING OWNER
         if (!ownerUid) {
-            console.error(`[UI ERROR]: No user found with slug: ${pageOwnerSlug}`);
-            // Fallback: If owner not found, you might want to show a 404 or redirect
+            const container = document.getElementById('currents-container');
+            if (container) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 5rem 0; opacity: 0.2; font-style: italic;">
+                        STRICT MODE: No user owns the slug '${pageOwnerSlug}'.
+                    </div>`;
+            }
             return;
         }
 
-        const ownerData = allUsers[ownerUid];
-        console.log(`[UI]: Rendering data for Owner: ${ownerUid}`);
+        const pageOwnerData = allUsers[ownerUid];
+        const ownerProfile = pageOwnerData.profile || {};
+        const branding = ownerProfile.branding || {};
 
-        // 3. THE MISSING RENDER CALLS
-        // Pass the owner's profile and the current logged-in user to the TopBar
-        if (typeof renderTopBar === "function") {
-            console.log("[RENDER]: Executing renderTopBar");
-            renderTopBar(ownerData.profile, user);
+        // 5. SLUG-OWNER BRANDING & THEME [cite: 2026-02-17]
+        globalTheme = ownerProfile.theme || 'neon-dark';
+        applyTheme(globalTheme);
+        
+        document.title = `${ownerProfile.display_name || 'Arcade'} | Showroom`;
+        
+        const brandingLogo = document.getElementById('branding-logo');
+        if (brandingLogo) {
+            brandingLogo.src = branding.logo || 'assets/default-logo.png';
         }
 
-        // Pass the owner's infrastructure (currents/sparks) to the gallery
-        if (typeof renderCurrents === "function") {
-            console.log("[RENDER]: Executing renderCurrents");
-            renderCurrents(ownerData.infrastructure?.currents);
+        const brandingName = document.getElementById('branding-name');
+        if (brandingName) {
+            brandingName.textContent = ownerProfile.display_name || 'Arcade';
         }
 
-        console.log("--- [DEBUG] refreshUI Completed Successfully ---");
+        // Apply owner-specific UI colors to CSS variables
+        const ui = branding.ui_settings || {};
+        document.documentElement.style.setProperty('--neon-color', ui['color-neon'] || '#00f2ff');
+
+        // 6. COMPONENT RENDERING
+        // TopBar needs the owner data and current user context
+        renderTopBar(pageOwnerData, isOwner, user, userSlug);
+        
+        // Currents needs the infrastructure and owner profile for context
+        renderCurrents(
+            pageOwnerData?.infrastructure?.currents || {}, 
+            isOwner, 
+            ownerUid, 
+            ownerProfile
+        );
+
+        console.log("--- [SYSTEM]: refreshUI COMPLETE ---");
 
     } catch (e) {
         console.error("SYSTEM ERROR in refreshUI:", e);
     }
 }
-
 /* Synchronize the user details */
 async function syncUserProfile(currentUser) {
     const profilePath = `users/${currentUser.uid}/profile`;
