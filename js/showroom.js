@@ -10,22 +10,39 @@ let currentItems, currentAuth, currentUi, user, heroData;
     
 async function initShowroom() {
     try {
-        const response = await fetch(`${firebaseConfig.databaseURL}/.json`);
-        const data = await response.json();
-    
+        // 1. Fetch only the public nodes required for the UI
+        const paths = [
+            'navigation', 
+            'settings', 
+            'hero_section', 
+            'showcase-items', 
+            'action-cards', 
+            'auth_ui'
+        ];
+
+        // Fetch all in parallel for speed
+        const results = await Promise.all(
+            paths.map(path => 
+                fetch(`${firebaseConfig.databaseURL}/${path}.json`).then(res => res.json())
+            )
+        );
+
+        // Map results back to a data object
+        const data = {};
+        paths.forEach((path, index) => { data[path] = results[index]; });
+
         if (data && data.settings) {
-            // 2. ASSIGN values to the global variables here
+            // ... Your existing assignment logic remains the same ...
             currentItems = data.navigation.menu_items;
             currentAuth = data.auth_ui;
             currentUi = data.settings['ui-settings'];
-           
-                       
+            
             applyGlobalStyles(data.settings);
             renderBranding(data.navigation.branding);
             renderNavbar(currentItems, currentUi);
             renderHero(data.hero_section);
-                renderShowcase(data['showcase-items']);
-                renderActionCards(data['action-cards']);
+            renderShowcase(data['showcase-items']);
+            renderActionCards(data['action-cards']);
             renderFooter(data.navigation.footer);
             renderAdminGate(data.settings['ui-settings']);
             renderAuthStatus(user, currentAuth);
