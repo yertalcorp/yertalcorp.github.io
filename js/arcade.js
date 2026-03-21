@@ -455,31 +455,56 @@ window.copyToClipboard = (text, btn) => {
 };
 
 async function refreshUI() {
+    console.log("--- [DEBUG] refreshUI Started ---");
     try {
         const data = await getArcadeData();
         databaseCache = data;
+        console.log("[DATA]: getArcadeData loaded into cache.");
 
         // 1. SILENT SEED: If logged-in user is missing, create them
         if (!data.users?.[user.uid]) {
+            console.log(`[SEED]: User ${user.uid} not found. Syncing profile...`);
             await syncUserProfile(user);
-            // Refresh local cache after seeding so the rest of the function works
             const updatedUsers = await get(ref(db, 'users'));
             data.users = updatedUsers.val();
         }
 
         const urlParams = new URLSearchParams(window.location.search);
         const pageOwnerSlug = urlParams.get('user');
+        console.log(`[UI]: Targeting Slug: "${pageOwnerSlug}"`);
 
-        // ... rest of your existing logic to find ownerUid and render ...
+        // 2. Find the Page Owner in the data
         const allUsers = data.users || {};
         const ownerUid = Object.keys(allUsers).find(uid => 
             allUsers[uid].profile && allUsers[uid].profile.slug === pageOwnerSlug
         );
 
-        // [Your existing rendering code here...]
+        if (!ownerUid) {
+            console.error(`[UI ERROR]: No user found with slug: ${pageOwnerSlug}`);
+            // Fallback: If owner not found, you might want to show a 404 or redirect
+            return;
+        }
+
+        const ownerData = allUsers[ownerUid];
+        console.log(`[UI]: Rendering data for Owner: ${ownerUid}`);
+
+        // 3. THE MISSING RENDER CALLS
+        // Pass the owner's profile and the current logged-in user to the TopBar
+        if (typeof renderTopBar === "function") {
+            console.log("[RENDER]: Executing renderTopBar");
+            renderTopBar(ownerData.profile, user);
+        }
+
+        // Pass the owner's infrastructure (currents/sparks) to the gallery
+        if (typeof renderCurrents === "function") {
+            console.log("[RENDER]: Executing renderCurrents");
+            renderCurrents(ownerData.infrastructure?.currents);
+        }
+
+        console.log("--- [DEBUG] refreshUI Completed Successfully ---");
 
     } catch (e) {
-        console.error("SYSTEM ERROR:", e);
+        console.error("SYSTEM ERROR in refreshUI:", e);
     }
 }
 
@@ -516,19 +541,30 @@ async function syncUserProfile(currentUser) {
 }    
 
 watchAuthState(async (currentUser) => {
+    console.log("--- [DEBUG] watchAuthState Triggered ---");
+    
     if (!currentUser) {
+        console.warn("[AUTH]: No currentUser detected. Redirecting to index.html...");
         window.location.href = "/index.html";
         return;
     }
+    
+    console.log(`[AUTH]: Logged in as: ${currentUser.email} (${currentUser.uid})`);
     user = currentUser;
 
     // Default to the Hub if no slug is present
     const urlParams = new URLSearchParams(window.location.search);
-    if (!urlParams.get('user')) {
+    const slug = urlParams.get('user');
+    
+    if (!slug) {
+        console.log("[ROUTING]: No 'user' slug in URL. Redirecting to yertal-arcade...");
         window.location.href = "?user=yertal-arcade";
         return;
     }
 
+    console.log(`[ROUTING]: Target Page Owner Slug: "${slug}"`);
+    console.log("[UI]: Triggering refreshUI()...");
+    
     // Trigger the single source of truth
     refreshUI(); 
 });
