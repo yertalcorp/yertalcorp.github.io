@@ -1275,13 +1275,36 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
     }
 }
 
-/**
- * Fetches the current highest free-tier Flash model identifier.
- * March 2026: Points to Gemini 3 Flash.
+/*
+ * Programmatically fetches the latest available Flash model name.
+ * Uses the /v1beta/models endpoint to list all accessible models.
  */
-function getGeminiModel() {
-    // Current highest free-tier model as of March 2026
-    return 'gemini-3-flash-preview';
+async function getGeminiModel() {
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`);
+        const data = await response.json();
+
+        if (!response.ok) throw new Error("Could not list models");
+
+        // Filter for 'flash' models that support 'generateContent'
+        const flashModels = data.models.filter(m => 
+            m.name.includes('flash') && 
+            m.supportedGenerationMethods.includes('generateContent')
+        );
+
+        // Sort by name (alphabetical/numeric usually works for versioning)
+        // or just pick the first 'latest' alias if found.
+        const latestAlias = flashModels.find(m => m.name.endsWith('-latest'));
+        if (latestAlias) return latestAlias.name.split('/')[1];
+
+        // Fallback to a sorted pick if no alias is found
+        flashModels.sort((a, b) => b.name.localeCompare(a.name));
+        
+        return flashModels[0].name.split('/')[1]; // Returns e.g., 'gemini-3-flash-preview'
+    } catch (e) {
+        console.warn("Auto-fetch failed, falling back to gemini-2.5-flash", e);
+        return 'gemini-2.5-flash'; // Safe fallback
+    }
 }
 
 // Gemini API Wrapper
