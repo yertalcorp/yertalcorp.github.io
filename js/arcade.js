@@ -1315,7 +1315,7 @@ async function retrieveGeminiCredentials() {
     try {
         const manifest = databaseCache?.app_manifest;
         
-        if (!cachedGKey || !manifest.gkey) {
+        if (!cachedGKey || manifest || !manifest.gkey) {
             throw new Error("Forge manifest is missing in the db.");
         }
 
