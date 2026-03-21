@@ -10,7 +10,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 06:34:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 06:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1283,17 +1283,44 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code';
     const systemText = isCode 
-        ? `Create a single-file HTML/JS app: ${prompt}. Variant ${val}.`
-        : `Return a JSON array of ${val} real URLs for: ${prompt}. Format: [{"name":"", "url":""}]`;
+        ? `Create a single-file HTML/JS app: ${prompt}. Variant ${val}. Return ONLY the code, no explanation.`
+        : `Return a JSON array of ${val} real URLs for: ${prompt}. Format: [{"name":"", "url":""}]. Return ONLY the JSON.`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: systemText }] }] })
-    });
-    const data = await response.json();
-    const result = data.candidates[0].content.parts[0].text;
-    return isCode ? result : JSON.parse(result.replace(/```json|```/g, ''));
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: systemText }] }] })
+        });
+
+        const data = await response.json();
+
+        // Check if the API returned an error (like the 404 or 400 you saw)
+        if (!response.ok) {
+            console.error("Gemini API Error:", data);
+            throw new Error(`Gemini API ${response.status}: ${data.error?.message || 'Unknown Error'}`);
+        }
+
+        // Safeguard against missing candidates
+        if (!data.candidates || !data.candidates[0]?.content?.parts[0]?.text) {
+            console.error("Unexpected API Response Structure:", data);
+            throw new Error("Gemini returned an empty or invalid response.");
+        }
+
+        const result = data.candidates[0].content.parts[0].text;
+
+        if (isCode) {
+            // Remove markdown code blocks if the AI included them
+            return result.replace(/```html|```javascript|```/g, '').trim();
+        } else {
+            // Extract JSON from markdown blocks and parse
+            const jsonString = result.replace(/```json|```/g, '').trim();
+            return JSON.parse(jsonString);
+        }
+    } catch (error) {
+        console.error("callGeminiAPI Failed:", error);
+        throw error; // Pass the error up to the UI (handleCreation)
+    }
 }
 
 async function saveSpark(currentId, data, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg') {
