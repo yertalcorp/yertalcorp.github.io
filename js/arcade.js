@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1307,69 +1307,56 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
     }
 }
 
-/*
- * Programmatically fetches the latest available Flash model name.
- * Uses the /v1beta/models endpoint to list all accessible models.
+/**
+ * Objective: Efficient Credential Retrieval
+ * Logic: Extracts both API Key and Model from the existing databaseCache.
  */
-async function getGeminiModel() {
+async function retrieveGeminiCredentials() {
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`);
+        const manifest = databaseCache?.app_manifest;
+        
+        if (!cachedGKey || manifest || !manifest.gkey) {
+            throw new Error("Forge Manifest Missing or Corrupt.");
+        }
+
+        // 1. Get the Key
+        cachedGKey = manifest.gkey;
+
+        // 2. Resolve the Model (Pass the key to the helper)
+        const modelName = await getGeminiModel(cachedGKey);
+
+        return { cachedGKey, modelName };
+    } catch (e) {
+        console.error("[FORGE ERROR]: Failed to assemble credentials:", e);
+        return null;
+    }
+}
+/**
+ * Logic: Processes the manifest data or fetches latest model if needed.
+ */
+async function getGeminiModel(apiKey) {
+    // If the manifest already defines a specific version, use it immediately
+    if (databaseCache.app_manifest.default_model) {
+        return databaseCache.app_manifest.default_model;
+    }
+
+    try {
+        // Only fetch from Google if no default is set in your DB
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         const data = await response.json();
 
-        if (!response.ok) throw new Error("Could not list models");
-
-        // Filter for 'flash' models that support 'generateContent'
         const flashModels = data.models.filter(m => 
             m.name.includes('flash') && 
             m.supportedGenerationMethods.includes('generateContent')
         );
 
-        // Sort by name (alphabetical/numeric usually works for versioning)
-        // or just pick the first 'latest' alias if found.
         const latestAlias = flashModels.find(m => m.name.endsWith('-latest'));
         if (latestAlias) return latestAlias.name.split('/')[1];
 
-        // Fallback to a sorted pick if no alias is found
         flashModels.sort((a, b) => b.name.localeCompare(a.name));
-        
-        return flashModels[0].name.split('/')[1]; // Returns e.g., 'gemini-3-flash-preview'
+        return flashModels[0].name.split('/')[1];
     } catch (e) {
-        console.warn("Auto-fetch failed, falling back to gemini-2.5-flash", e);
-        return 'gemini-2.5-flash'; // Safe fallback
-    }
-}
-/**
- * Retrieves the Gemini API key from Firebase app_manifest
- * Returns the key string or null if unauthorized/not found
- */
-async function retrieveGeminiKey() {
-    const auth = getAuth();
-    const db = getDatabase();
-    
-    // 1. Check if a user is even logged in
-    const user = auth.currentUser;
-    if (!user) {
-        console.error("Auth Required: Please sign in to access AI features.");
-        return null;
-    }
-
-    try {
-        // 2. Point to your new descriptive path
-        const keyRef = ref(db, 'app_manifest/gkey');
-        const snapshot = await get(keyRef);
-
-        if (snapshot.exists()) {
-            const key = snapshot.val();
-            console.log("✅ System manifest loaded successfully.");
-            return key;
-        } else {
-            console.warn("⚠️ Configuration missing: gkey not found in app_manifest.");
-            return null;
-        }
-    } catch (error) {
-        // This will trigger if the user isn't authorized per your Security Rules
-        console.error("❌ Permission Denied: You do not have access to the app manifest.");
-        return null;
+        return 'gemini-3-flash'; // High-reliability fallback
     }
 }
 
@@ -1377,21 +1364,23 @@ async function retrieveGeminiKey() {
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code';
     
-    // 1. Retrieve the Dynamic Model and the Secure Key
-    const model = await getGeminiModel();
-    const dynamicKey = await retrieveGeminiKey();
-
-    if (!dynamicKey) {
+    // 1. DESTRUCTURE: Get the specific key and model from the credentials helper
+    // This avoids using "dynamicKey" as an object in the URL string.
+    const credentials = await retrieveGeminiCredentials();
+    
+    if (!credentials || !credentials.apiKey) {
         throw new Error("AI Infrastructure Offline: Could not retrieve secure access key.");
     }
+
+    const { apiKey, modelName } = credentials;
 
     const systemText = isCode 
         ? `Create a single-file HTML/JS app: ${prompt}. Variant ${val}. Return ONLY the code, no explanation.`
         : `Return a JSON array of ${val} real URLs for: ${prompt}. Format: [{"name":"", "url":""}]. Return ONLY the JSON.`;
 
     try {
-        // 2. Updated URL to use both dynamic model and the retrieved gkey
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${dynamicKey}`, {
+        // 2. USE THE EXTRACTED STRINGS: modelName and apiKey
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -1401,13 +1390,11 @@ async function callGeminiAPI(prompt, val, type) {
 
         const data = await response.json();
 
-        // Check if the API returned an error
         if (!response.ok) {
             console.error("Gemini API Error:", data);
             throw new Error(`Gemini API ${response.status}: ${data.error?.message || 'Unknown Error'}`);
         }
 
-        // Safeguard against missing candidates
         if (!data.candidates || !data.candidates[0]?.content?.parts[0]?.text) {
             console.error("Unexpected API Response Structure:", data);
             throw new Error("Gemini returned an empty or invalid response.");
@@ -1416,12 +1403,16 @@ async function callGeminiAPI(prompt, val, type) {
         const result = data.candidates[0].content.parts[0].text;
 
         if (isCode) {
-            // Remove markdown code blocks if the AI included them
             return result.replace(/```html|```javascript|```/g, '').trim();
         } else {
-            // Extract JSON from markdown blocks and parse
             const jsonString = result.replace(/```json|```/g, '').trim();
-            return JSON.parse(jsonString);
+            // Wrap in a try-catch for JSON parsing specifically to catch AI hallucinations
+            try {
+                return JSON.parse(jsonString);
+            } catch (jsonErr) {
+                console.error("JSON Parse Error on AI output:", jsonString);
+                throw new Error("AI returned invalid JSON format.");
+            }
         }
     } catch (error) {
         console.error("callGeminiAPI Failed:", error);
