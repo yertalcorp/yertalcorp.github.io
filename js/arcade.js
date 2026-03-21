@@ -701,13 +701,13 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     const brandName = profile.display_name;
     const arcadeTitle = profile.arcade_title;
     const arcadeSubtitle = profile.arcade_subtitle;
-    
+    const avatarPath = '/assets/images/avatar.jpg';
     const isSetupComplete = profile.setup_complete === true;
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
     // 1. Retrieve the photo specifically from the page owner's record
     // This is now guaranteed to exist if the owner has logged in since our update
-    const ownerPhotoUrl = profile.photoURL || profile.avatar_url; 
+    const ownerPhotoUrl = profile.photoURL || avatarPath; 
 
     // 2. Generate the 3D Logo 
     // If isOwner is false, genLogo shows the ownerPhotoUrl
