@@ -16,8 +16,7 @@ let user
 let databaseCache = {};
 let selectedCategory = null;
 let globalTheme = "neon-dark";
-const GEMINI_API_KEY = ENV.GEMINI_API_KEY;
-
+let cachedGKey = null;
 
 /*
  * Objective: Laboratory Manual / Guided Viewlets
@@ -1306,18 +1305,60 @@ async function getGeminiModel() {
         return 'gemini-2.5-flash'; // Safe fallback
     }
 }
+/**
+ * Retrieves the Gemini API key from Firebase app_manifest
+ * Returns the key string or null if unauthorized/not found
+ */
+async function retrieveGeminiKey() {
+    const auth = getAuth();
+    const db = getDatabase();
+    
+    // 1. Check if a user is even logged in
+    const user = auth.currentUser;
+    if (!user) {
+        console.error("Auth Required: Please sign in to access AI features.");
+        return null;
+    }
+
+    try {
+        // 2. Point to your new descriptive path
+        const keyRef = ref(db, 'app_manifest/gkey');
+        const snapshot = await get(keyRef);
+
+        if (snapshot.exists()) {
+            const key = snapshot.val();
+            console.log("✅ System manifest loaded successfully.");
+            return key;
+        } else {
+            console.warn("⚠️ Configuration missing: gkey not found in app_manifest.");
+            return null;
+        }
+    } catch (error) {
+        // This will trigger if the user isn't authorized per your Security Rules
+        console.error("❌ Permission Denied: You do not have access to the app manifest.");
+        return null;
+    }
+}
 
 // Gemini API Wrapper
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code';
+    
+    // 1. Retrieve the Dynamic Model and the Secure Key
     const model = await getGeminiModel();
+    const dynamicKey = await retrieveGeminiKey();
+
+    if (!dynamicKey) {
+        throw new Error("AI Infrastructure Offline: Could not retrieve secure access key.");
+    }
+
     const systemText = isCode 
         ? `Create a single-file HTML/JS app: ${prompt}. Variant ${val}. Return ONLY the code, no explanation.`
         : `Return a JSON array of ${val} real URLs for: ${prompt}. Format: [{"name":"", "url":""}]. Return ONLY the JSON.`;
 
     try {
-        // Updated URL to use the dynamic model from getGeminiModel
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
+        // 2. Updated URL to use both dynamic model and the retrieved gkey
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${dynamicKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
