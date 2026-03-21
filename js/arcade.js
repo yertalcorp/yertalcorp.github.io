@@ -1,6 +1,5 @@
 import { firebaseConfig, auth, saveToRealtimeDB, getArcadeData, db, get, set, ref, update, push, runTransaction } from '/config/firebase-config.js';
 import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
-import { ENV } from '/config/env.js';
 
 // --- ADD THE GLOBAL BRIDGE HERE ---
 window.auth = auth;
