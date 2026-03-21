@@ -22,35 +22,44 @@ export async function saveToRealtimeDB(path, data) {
     return set(ref(db, path), data);
 }
 
-// Objective: Internalized Auth Context [cite: 2026-03-21]
+// Objective: Granular, Error-Resistant Fetching [cite: 2026-03-21]
 export async function getArcadeData() {
-    // 1. Internalize the current user from the Firebase Auth instance
-    const currentUser = auth.currentUser; 
-    const data = {};
+    const currentUser = auth.currentUser;
+    const urlParams = new URLSearchParams(window.location.search);
+    const pageOwnerSlug = urlParams.get('user') || 'yertal-arcade';
 
-    // 2. Define our targets
-    const publicPaths = ['auth_ui', 'search_index', 'settings', 'navigation', 'action-cards'];
+    const data = {};
+    const publicPaths = ['auth_ui', 'search_index', 'settings', 'navigation', 'action-cards', 'showcase-items'];
 
     try {
-        // 3. Fetch Public Nodes (with individual safety catches)
+        // 1. Fetch Public Nodes (Fails gracefully if one is blocked)
         const snapshots = await Promise.all(
-            publicPaths.map(path => 
-                get(ref(db, path)).catch(err => {
-                    console.warn(`[SECURITY]: Access denied to ${path}. Skipping.`);
-                    return null;
-                })
-            )
+            publicPaths.map(path => get(ref(db, path)).catch(() => null))
         );
         publicPaths.forEach((path, i) => { data[path] = snapshots[i]?.val(); });
 
-        // 4. Fetch User Data (Specific UID if logged in, otherwise the Index)
-        if (currentUser) {
-            // Fetch the entire users node (requires the .read: auth != null rule at the users level)
-            const usersSnap = await get(ref(db, 'users')).catch(() => null);
-            data.users = usersSnap?.val() || {};
+        // 2. Identify the Page Owner via the Search Index
+        // We look up the UID associated with the slug in the URL
+        const slugToIndex = data.search_index || {};
+        const ownerUid = Object.keys(slugToIndex).find(uid => slugToIndex[uid] === pageOwnerSlug);
+
+        // 3. SURGICAL FETCH: Get only the Owner's Profile and infrastructure
+        // Note: We fetch specific paths because we can't read the whole user node
+        if (ownerUid) {
+            const [profileSnap, infraSnap] = await Promise.all([
+                get(ref(db, `users/${ownerUid}/profile`)).catch(() => null),
+                get(ref(db, `users/${ownerUid}/infrastructure`)).catch(() => null)
+            ]);
+            
+            data.users = {
+                [ownerUid]: {
+                    profile: profileSnap?.val(),
+                    infrastructure: infraSnap?.val()
+                }
+            };
         }
 
-        // 5. Superuser Only: app_manifest
+        // 4. SUPERUSER FETCH: manifest
         if (currentUser?.email === 'yertalcorp@gmail.com') {
             const manifestSnap = await get(ref(db, 'app_manifest')).catch(() => null);
             data.app_manifest = manifestSnap?.val();
@@ -58,7 +67,7 @@ export async function getArcadeData() {
 
         return data;
     } catch (error) {
-        console.error("Critical Failure in getArcadeData:", error);
+        console.error("Critical Failure in getArcadeData Pipeline:", error);
         throw error;
     }
 }
