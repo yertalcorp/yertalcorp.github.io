@@ -1275,23 +1275,36 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
     }
 }
 
+/**
+ * Fetches the current highest free-tier Flash model identifier.
+ * March 2026: Points to Gemini 3 Flash.
+ */
+function getGeminiModel() {
+    // Current highest free-tier model as of March 2026
+    return 'gemini-3-flash-preview';
+}
+
 // Gemini API Wrapper
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code';
+    const model = getGeminiModel();
     const systemText = isCode 
         ? `Create a single-file HTML/JS app: ${prompt}. Variant ${val}. Return ONLY the code, no explanation.`
         : `Return a JSON array of ${val} real URLs for: ${prompt}. Format: [{"name":"", "url":""}]. Return ONLY the JSON.`;
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        // Updated URL to use the dynamic model from getGeminiModel
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: systemText }] }] })
+            body: JSON.stringify({ 
+                contents: [{ parts: [{ text: systemText }] }] 
+            })
         });
 
         const data = await response.json();
 
-        // Check if the API returned an error (like the 404 or 400 you saw)
+        // Check if the API returned an error
         if (!response.ok) {
             console.error("Gemini API Error:", data);
             throw new Error(`Gemini API ${response.status}: ${data.error?.message || 'Unknown Error'}`);
@@ -1315,7 +1328,7 @@ async function callGeminiAPI(prompt, val, type) {
         }
     } catch (error) {
         console.error("callGeminiAPI Failed:", error);
-        throw error; // Pass the error up to the UI (handleCreation)
+        throw error;
     }
 }
 
