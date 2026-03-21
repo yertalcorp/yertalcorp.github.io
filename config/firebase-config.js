@@ -22,25 +22,36 @@ export async function saveToRealtimeDB(path, data) {
     return set(ref(db, path), data);
 }
 
-// Objective: Fetch only allowed nodes to avoid Permission Denied
-export async function getArcadeData() {
-    try {
-        const paths = ['app_manifest', 'auth_ui', 'search_index', 'settings', 'users'];
-        const snapshots = await Promise.all(
-            paths.map(path => get(ref(db, path)))
-        );
+// Objective: Granular Fetching with Error Buffering
+export async function getArcadeData(currentUser) {
+    const paths = ['auth_ui', 'search_index', 'settings', 'navigation', 'action-cards'];
+    const data = {};
 
-        const data = {};
-        paths.forEach((path, i) => {
-            data[path] = snapshots[i].val();
-        });
+    try {
+        // 1. Fetch Public Infrastructure (Non-blocking)
+        const snapshots = await Promise.all(
+            paths.map(path => get(ref(db, path)).catch(() => null)) 
+        );
+        paths.forEach((path, i) => { data[path] = snapshots[i]?.val(); });
+
+        // 2. Surgical User Fetch: Get the profile index + current user's full data
+        // We only fetch 'users' if we want the index; otherwise, fetch specific UID
+        const usersSnap = await get(ref(db, 'users')).catch(() => null);
+        data.users = usersSnap?.val() || {};
+
+        // 3. Attempt Manifest (Only works for yertalcorp@gmail.com)
+        if (currentUser?.email === 'yertalcorp@gmail.com') {
+            const manifestSnap = await get(ref(db, 'app_manifest')).catch(() => null);
+            data.app_manifest = manifestSnap?.val();
+        }
 
         return data;
     } catch (error) {
-        console.error("Critical: Security policy blocked full tree fetch.");
+        console.error("Critical: Logic Error in Data Pipeline.", error);
         throw error;
     }
 }
+
 /* Create a new user in the DB*/
 export async function initializeUserIfNeeded(user) {
     const userRef = ref(db, `users/${user.uid}`);
