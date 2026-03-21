@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1332,55 +1332,50 @@ async function retrieveGeminiCredentials() {
     }
 }
 
-/*
- * Logic: Processes manifest or fetches latest model and persists it.
- */
 async function getGeminiModel(apiKey) {
-    // 1. Check if the manifest already defines a specific version
     if (databaseCache.app_manifest?.default_model) {
         return databaseCache.app_manifest.default_model;
     }
 
     try {
-        console.log("[FORGE]: Default model missing. Discovering latest...");
+        console.log("[FORGE]: Discovering latest Flash model...");
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         const data = await response.json();
 
+        // 1. Filter for Flash models, but EXCLUDE generic aliases like 'gemini-flash-latest'
+        // We want specific versions for better stability.
         const flashModels = data.models.filter(m => 
             m.name.includes('flash') && 
-            m.supportedGenerationMethods.includes('generateContent')
+            m.supportedGenerationMethods.includes('generateContent') &&
+            !m.name.endsWith('-latest') // Skip the generic alias
         );
 
-        // Determine the best version
-        const latestAlias = flashModels.find(m => m.name.endsWith('-latest'));
-        let resolvedModel;
+        // 2. Sort by name descending (e.g., 2.0 comes before 1.5)
+        flashModels.sort((a, b) => b.name.localeCompare(a.name));
         
-        if (latestAlias) {
-            resolvedModel = latestAlias.name.split('/')[1];
-        } else {
-            flashModels.sort((a, b) => b.name.localeCompare(a.name));
-            resolvedModel = flashModels[0].name.split('/')[1];
-        }
+        if (flashModels.length === 0) throw new Error("No Flash models found.");
 
-        // 2. PERSISTENCE STEP: Save discovered model to the DB
+        const resolvedModel = flashModels[0].name.split('/')[1];
+
+        // 3. PERSISTENCE
         if (resolvedModel) {
-            console.log(`[FORGE]: Setting default_model to ${resolvedModel}`);
+            console.log(`[FORGE]: Resolved and persisting model: ${resolvedModel}`);
             await update(ref(db, 'app_manifest'), {
                 default_model: resolvedModel,
                 last_model_sync: new Date().toISOString()
             });
             
-            // Update local cache immediately so the session stays in sync
             if (!databaseCache.app_manifest) databaseCache.app_manifest = {};
             databaseCache.app_manifest.default_model = resolvedModel;
         }
 
         return resolvedModel;
     } catch (e) {
-        console.warn("Auto-fetch failed, falling back to gemini-3-flash", e);
+        console.warn("Discovery failed, using 2026 standard fallback.", e);
         return 'gemini-3-flash'; 
     }
 }
+
 // Gemini API Wrapper
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code';
@@ -1788,7 +1783,6 @@ window.saveArcadeSettings = async () => {
 
         // --- START WINDOW RELOAD SECTION ---
             await refreshUI();
-            console.log("IDENTITY_SYNC_COMPLETE: Laboratory properties updated.");
             console.log("[SYSTEM] SYNC COMPLETE. Identity Forged for:", activeUser.uid);
             console.log("[SYSTEM] CURRENT URL:", window.location.href);
         // --- END WINDOW RELOAD SECTION ---
