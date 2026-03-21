@@ -1110,7 +1110,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                      onload="this.style.opacity='1'; console.log('IMAGE SUCCESS: ${spark.id}')"
                      style="z-index: 1; display: block; transition: opacity 0.05s ease;">
                 
-                <div style="position: absolute; inset: 0; background: var(--glow-color); opacity: 0.05; z-index: 2; pointer-events: none;"></div>
+                <div style="position: absolute; inset: 0; background: var(--branding-color); opacity: 0.2; z-index: 2; pointer-events: none;"></div>
             </div>
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
