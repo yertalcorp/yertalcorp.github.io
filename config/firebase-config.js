@@ -29,7 +29,7 @@ export async function getArcadeData() {
     const pageOwnerSlug = urlParams.get('user') || 'yertal-arcade';
 
     const data = {};
-    const publicPaths = ['auth_ui', 'search_index', 'settings', 'navigation', 'action-cards', 'showcase-items'];
+    const publicPaths = ['app_manifest', 'auth_ui', 'search_index', 'settings', 'navigation', 'action-cards', 'showcase-items'];
 
     try {
         // 1. Fetch Public Nodes (Fails gracefully if one is blocked)
