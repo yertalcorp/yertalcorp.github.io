@@ -197,7 +197,7 @@ main.max-width-limit {
 }
 
 .arcade-subtitle {
-    color: var(--text-muted-color);
+    color: var(--arcade-subtitle-color);
     font-size: var(--arcade-subtitle-size);
     font-weight: var(--arcade-subtitle-weight);
 }
