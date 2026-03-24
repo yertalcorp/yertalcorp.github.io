@@ -1199,6 +1199,20 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
         </div>
     `;
 }
+
+/*
+ * Generates a concise Spark name: <CurrentName>-Spark#<DDMM-HHMM>
+ * @param {string} currentName - The name of the parent Current
+ * @returns {string}
+ */
+const generateSparkName = (currentName) => {
+    const now = new Date();
+    const datePart = now.getDate().toString().padStart(2, '0') + (now.getMonth() + 1).toString().padStart(2, '0');
+    const timePart = now.getHours().toString().padStart(2, '0') + now.getMinutes().toString().padStart(2, '0');
+    
+    return `${currentName}-Spark#${datePart}-${timePart}`;
+};
+
 // --- 4. CORE LOGIC & ACTIONS ---
 window.handleCreation = async (currentId) => {
     const promptInput = document.getElementById(`input-${currentId}`);
@@ -1233,6 +1247,22 @@ window.handleCreation = async (currentId) => {
     }
 };
 
+// --- Helper Function ---
+const generateSparkName = (currentId) => {
+    // Lookup current name from cache
+    const current = databaseCache.users?.[user.uid]?.infrastructure?.currents?.[currentId];
+    const baseName = current ? current.name : "Spark";
+    
+    const now = new Date();
+    const timestamp = now.getDate().toString().padStart(2, '0') + 
+                      (now.getMonth() + 1).toString().padStart(2, '0') + "-" + 
+                      now.getHours().toString().padStart(2, '0') + 
+                      now.getMinutes().toString().padStart(2, '0');
+
+    return `${baseName}-Spark#${timestamp}`;
+};
+
+// --- Modified CORE LOGIC ---
 async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
@@ -1257,10 +1287,9 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
 
     // 3. DETERMINE REQUESTED COUNT
     const countMatch = prompt.match(/\d+/);
-    // Use num_mass_sparks as the default if no number is found in the prompt
     let requestedCount = countMatch ? parseInt(countMatch[0]) : (planLimits.num_mass_sparks || 3);
 
-    // 4. APPLY LIMITS (Clip to remaining space)
+    // 4. APPLY LIMITS
     const finalForgeCount = Math.min(requestedCount, remainingSpace);
 
     if (finalForgeCount < requestedCount) {
@@ -1278,8 +1307,9 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
             const links = await callGeminiAPI(prompt, finalForgeCount, 'source');
             for (const item of links) {
                 await saveSpark(currentId, { 
-                    name: item.name, 
+                    name: generateSparkName(currentId), 
                     link: item.url, 
+                    prompt: prompt, // Store original prompt in its own field
                     type: 'link',
                     image: finalImageUrl
                 }, templateName, finalImageUrl);
@@ -1287,12 +1317,11 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
         } else {
             for (let i = 0; i < finalForgeCount; i++) {
                 const code = await callGeminiAPI(prompt, i, 'code');
-                // Clean the prompt text for the name if a number was manually included
-                const displayName = countMatch ? prompt.replace(countMatch[0], '').trim() : prompt;
                 
                 await saveSpark(currentId, { 
-                    name: `${displayName} #${existingCount + i + 1}`,
+                    name: `${generateSparkName(currentId)}-${i + 1}`,
                     code, 
+                    prompt: prompt, // Store original prompt in its own field
                     type: 'code',
                     image: finalImageUrl
                 }, templateName, finalImageUrl);
@@ -1307,7 +1336,7 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
     }
 }
 
-/**
+/*
  * Objective: High-Availability Credential Retrieval
  * Logic: Extracts the key from cache (or direct fetch) and resolves the model.
  */
@@ -1340,7 +1369,7 @@ async function retrieveGeminiCredentials() {
     }
 }
 
-/**
+/*
  * Logic: Discovers, sorts, and persists the latest Flash model version.
  *
  */
@@ -1463,7 +1492,7 @@ async function callGeminiAPI(prompt, val, type) {
     }
 }
 
-async function saveSpark(currentId, data, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg') {
+async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg') {
     const sparkId = `spark_${Date.now()}_${Math.floor(Math.random()*1000)}`;
     
     // UPDATED PATH: users/[UID]/infrastructure/currents/...
@@ -1476,6 +1505,7 @@ async function saveSpark(currentId, data, detectedTemplate = 'Custom', templateU
     await saveToRealtimeDB(dbPath, {
         id: sparkId,
         name: data.name || "Unnamed Spark",
+        prompt: prompt,
         owner: user.uid, // Use UID for owner check, not email
         created: Date.now(),
         template_type: detectedTemplate,
