@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1245,21 +1245,6 @@ window.handleCreation = async (currentId) => {
         // Fallback to custom if AI classification fails
         await executeMassSpark(currentId, input, 'prompt', 'Custom', '/assets/thumbnails/default.jpg');
     }
-};
-
-// --- Helper Function ---
-const generateSparkName = (currentId) => {
-    // Lookup current name from cache
-    const current = databaseCache.users?.[user.uid]?.infrastructure?.currents?.[currentId];
-    const baseName = current ? current.name : "Spark";
-    
-    const now = new Date();
-    const timestamp = now.getDate().toString().padStart(2, '0') + 
-                      (now.getMonth() + 1).toString().padStart(2, '0') + "-" + 
-                      now.getHours().toString().padStart(2, '0') + 
-                      now.getMinutes().toString().padStart(2, '0');
-
-    return `${baseName}-Spark#${timestamp}`;
 };
 
 async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
