@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1271,17 +1271,20 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
 
     // 3. DETERMINE REQUESTED COUNT
     const countMatch = prompt.match(/\d+/);
+   
+    
     // NEW LOGIC: Default to 1 if no number is mentioned.
     // If a number IS mentioned, use the plan's num_mass_sparks (or the specific number).
     let requestedCount = 1; if (countMatch) {
      const mentionedNumber = parseInt(countMatch[0]);
-     // Use the higher of the mentioned number or the plan's mass limit if the user wants "many"
-     requestedCount = Math.max(mentionedNumber, planLimits.num_mass_sparks || 3);
+     // Use the lower of the mentioned number or the plan's mass limit if the user wants "many"
+     requestedCount = Math.min(mentionedNumber, planLimits.num_mass_sparks);
     }
 
     // 4. APPLY LIMITS (Clip to remaining space)
     const finalForgeCount = Math.min(requestedCount, remainingSpace);
-
+    console.log("Number of spark Cards to be generated: ", finalForgeMatch);
+    
     if (finalForgeCount < requestedCount) {
         console.warn(`Clipping forge request from ${requestedCount} to ${finalForgeCount} due to ${planType} plan limits.`);
         status.textContent = `PLAN LIMIT REACHED: FORGING ${finalForgeCount}...`;
