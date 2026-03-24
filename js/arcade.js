@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:12:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1064,15 +1064,31 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
     }
 
     // 3. DETERMINE REQUESTED COUNT & MANUAL URLS
-    // Move extraction here to ensure manualUrls is always available for 'sourcing' mode
     const manualUrls = mode === 'sourcing' ? extractUrls(prompt) : [];
     const countMatch = prompt.match(/\d+/);
-    
     let requestedCount = 1;
-    if (manualUrls.length > 0) {
-        requestedCount = manualUrls.length;
-    } else if (countMatch) {
-        requestedCount = Math.min(parseInt(countMatch[0]), planLimits.num_mass_sparks);
+
+    if (mode === 'sourcing') {
+        /*
+         * LOGIC FOR MIXED PROMPTS:
+         * If the user provides a number AND URLs (e.g., "Find 3 like [URL]"), 
+         * we prioritize the number and use AI Sourcing.
+         * If the user ONLY provides URLs, we use the URL count and Skip AI.
+         */
+        const mentionedNumber = countMatch ? parseInt(countMatch[0]) : null;
+
+        if (manualUrls.length > 0 && !mentionedNumber) {
+            // Pure URL list: Use the count of links provided
+            requestedCount = manualUrls.length;
+        } else if (mentionedNumber) {
+            // Number exists: Use that as the target count for AI sourcing
+            requestedCount = Math.min(mentionedNumber, planLimits.num_mass_sparks);
+        }
+    } else {
+        // 'Create' mode
+        if (countMatch) {
+            requestedCount = Math.min(parseInt(countMatch[0]), planLimits.num_mass_sparks);
+        }
     }
 
     // 4. APPLY LIMITS
@@ -1084,18 +1100,24 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
         status.textContent = `FORGING ${finalForgeCount} SPARK${finalForgeCount > 1 ? 'S' : ''}...`;
     }
 
-   try {
+    try {
         const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
         const finalImageUrl = templateUrl || defaultThumb;
 
         if (mode === 'sourcing') {
             let linksToSave = [];
-            if (manualUrls.length > 0) {
+            
+            // If there's a number mentioned, we treat the URL as a reference and ask the AI
+            const isAiReferenceSearch = (manualUrls.length > 0 && countMatch);
+
+            if (manualUrls.length > 0 && !isAiReferenceSearch) {
+                // Case A: Just save the pasted links
                 linksToSave = manualUrls.slice(0, finalForgeCount).map(url => ({
                     name: generateSparkName(currentId),
                     url: url
                 }));
             } else {
+                // Case B: AI searches based on text OR reference URL
                 const aiLinks = await callGeminiAPI(prompt, finalForgeCount, 'source');
                 linksToSave = aiLinks.map(item => ({
                     name: item.name || generateSparkName(currentId),
@@ -1108,7 +1130,7 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
                 const sparkName = linksToSave.length > 1 ? `${item.name}-${i + 1}` : item.name;
                 await saveSpark(currentId, { 
                     name: sparkName, 
-                    link: item.url, // Database storage as URL
+                    link: item.url, 
                     prompt: prompt,
                     type: 'link',
                     image: finalImageUrl
@@ -1121,7 +1143,7 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
                 const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
                 await saveSpark(currentId, { 
                     name: sparkName,
-                    code: code, // Database storage as code
+                    code: code, 
                     prompt: prompt,
                     type: 'code',
                     image: finalImageUrl
