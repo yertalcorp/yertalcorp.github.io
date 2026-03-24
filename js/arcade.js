@@ -18,9 +18,12 @@ let globalTheme = "neon-dark";
 let cachedGKey = null;
 
 /*
- * Global pool for model rotation during 429 exhaustion
+ * Global Model Stats: [ ["model-name", failureCount], ... ]
+ * Replaces the old flat 'availableModels' array.
  */
-let availableModels = ['gemini-3-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b']; 
+let modelStats = []; 
+window.isInCooldown = false;
+
 let currentModelIndex = 0;
 
 /*
@@ -1085,6 +1088,13 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
     }
 
     const finalForgeCount = Math.min(requestedCount, remainingSpace);
+    
+    // Progress Helper: Prevents overwriting the Cooldown Timer
+    const updateForgeStatus = (text) => {
+        if (!window.isInCooldown) {
+            status.textContent = text;
+        }
+    };
 
     try {
         const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
@@ -1097,8 +1107,7 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
             if (manualUrls.length > 0 && !isAiReferenceSearch) {
                 linksToSave = manualUrls.slice(0, finalForgeCount).map(url => ({ name: generateSparkName(currentId), url }));
             } else {
-                // The 'callGeminiAPI' function will internally retry other models if 429 occurs
-                status.textContent = "CONSULTING MODEL POOL...";
+                updateForgeStatus("CONSULTING MODEL POOL...");
                 const aiLinks = await callGeminiAPI(prompt, finalForgeCount, 'source');
                 linksToSave = aiLinks.map(item => ({ name: item.name || generateSparkName(currentId), url: item.url }));
             }
@@ -1106,32 +1115,39 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
             for (let i = 0; i < linksToSave.length; i++) {
                 const item = linksToSave[i];
                 const sparkName = linksToSave.length > 1 ? `${item.name}-${i + 1}` : item.name;
+                
                 await saveSpark(currentId, { name: sparkName, link: item.url, prompt, type: 'link', image: finalImageUrl }, templateName, finalImageUrl);
                 
-                // Visual Progress Update
                 const progress = Math.round(((i + 1) / linksToSave.length) * 100);
-                status.textContent = `SAVING LINKS: ${progress}%`;
+                updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
             }
         } else {
-            // 'Create' mode with Progress Bar logic
+            // 'Create' mode 
             for (let i = 0; i < finalForgeCount; i++) {
                 const progress = Math.round((i / finalForgeCount) * 100);
-                status.textContent = `FORGING [${"=".repeat(i)}${"-".repeat(finalForgeCount - i)}] ${progress}%`;
+                updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
-                // If callGeminiAPI hits a 429, it switches models and retries before returning 'code' here
+                // This call may trigger the 60s cooldown internally
                 const code = await callGeminiAPI(prompt, i, 'code');
                 const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
                 
                 await saveSpark(currentId, { name: sparkName, code, prompt, type: 'code', image: finalImageUrl }, templateName, finalImageUrl);
             }
+            // Final completion update
+            updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [==========] 100%`);
         }
 
-        status.textContent = "SYSTEM READY";
-        await refreshUI(); 
+        // Delay briefly if at 100% to let the user see it before "SYSTEM READY"
+        setTimeout(async () => {
+            status.textContent = "SYSTEM READY";
+            await refreshUI(); 
+        }, 1000);
+
     } catch (e) { 
         console.error("Forge Error:", e);
-        // This only triggers if ALL models in the availableModels pool are exhausted
-        status.textContent = e.message.includes('429') ? "ALL MODELS EXHAUSTED" : "FORGE ERROR";
+        if (!window.isInCooldown) {
+            status.textContent = "FORGE ERROR";
+        }
     }
 }
 
@@ -1386,26 +1402,26 @@ async function retrieveGeminiCredentials() {
 }
 
 async function getGeminiModel(apiKey) {
-    // 1. CHECK CACHE FIRST (But we still need a pool for failover)
-    if (databaseCache.app_manifest?.default_model) {
-        console.log("[FORGE]: Using cached model from manifest:", databaseCache.app_manifest.default_model);
+    // 1. HYDRATE FROM MANIFEST
+    if (databaseCache.app_manifest?.model_pool) {
+        console.log("[FORGE]: Hydrating model pool from manifest.");
         
-        // If we have a cached list in manifest, use it to hydrate the pool
-        if (databaseCache.app_manifest.model_pool) {
-            availableModels = databaseCache.app_manifest.model_pool;
-        }
-        
+        const pool = databaseCache.app_manifest.model_pool;
+        // Map the flat DB names into our 2D tracking array
+        modelStats = pool.map(name => {
+            const existing = modelStats.find(m => m[0] === name);
+            return existing ? existing : [name, 0];
+        });
+
         return databaseCache.app_manifest.default_model;
     }
 
     try {
-        console.log("[FORGE]: Discovering Flash model collection via Google API...");
+        console.log("[FORGE]: Discovering Flash models via Google API...");
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         const data = await response.json();
 
-        if (!data.models) {
-            throw new Error("No models property in API response.");
-        }
+        if (!data.models) throw new Error("No models property in API response.");
 
         // 2. FILTER & SORT
         const flashModels = data.models.filter(m => 
@@ -1414,120 +1430,136 @@ async function getGeminiModel(apiKey) {
             !m.name.endsWith('-latest')
         );
 
-        // Sort descending (latest versions first)
+        // Sort so the newest versions are at the top initially
         flashModels.sort((a, b) => b.name.localeCompare(a.name));
 
         if (flashModels.length === 0) throw new Error("No suitable Flash models found.");
 
-        // 3. POPULATE GLOBAL POOL (Store as IDs, e.g., 'gemini-1.5-flash')
-        availableModels = flashModels.map(m => m.name.split('/')[1]);
+        // 3. INITIALIZE 2D ARRAY [[name, failures]]
+        const flatNames = flashModels.map(m => m.name.split('/')[1]);
+        modelStats = flatNames.map(name => [name, 0]);
         
-        const resolvedModel = availableModels[0];
-        console.log(`[FORGE]: Selection Logic chose primary: ${resolvedModel}`);
-        console.log(`[FORGE]: Failover Pool initialized with ${availableModels.length} models.`);
+        const resolvedModel = modelStats[0][0];
+        console.log(`[FORGE]: Primary: ${resolvedModel}. Pool:`, modelStats);
 
-        // 4. PERSISTENCE (Save both primary and the backup pool)
-        console.log(`[FORGE]: Persisting model data to Firebase...`);
+        // 4. PERSIST TO FIREBASE
         await update(ref(db, 'app_manifest'), {
             default_model: resolvedModel,
-            model_pool: availableModels, // Save the whole list for backup
+            model_pool: flatNames, 
             last_model_sync: new Date().toISOString()
         });
         
-        // Update local cache
         if (!databaseCache.app_manifest) databaseCache.app_manifest = {};
         databaseCache.app_manifest.default_model = resolvedModel;
-        databaseCache.app_manifest.model_pool = availableModels;
+        databaseCache.app_manifest.model_pool = flatNames;
 
         return resolvedModel;
     } catch (e) {
-        console.warn("[FORGE]: Discovery failed. Using hardcoded fallback pool. Error:", e);
-        return availableModels[0]; 
+        console.warn("[FORGE]: Discovery failed. Falling back to defaults.", e);
+        // Fallback pool if the API call fails
+        modelStats = [['gemini-1.5-flash', 0], ['gemini-1.5-flash-8b', 0]];
+        return modelStats[0][0]; 
     }
 }
 
-// Gemini API Wrapper with Model Rotation Failover
+/*
+ * Gemini API Wrapper: Weighted Rotation, Tie-Breaking, and Cooldown
+ */
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code';
+    const statusText = document.getElementById('engine-status-text');
+    
+    if (window.isInCooldown) {
+        throw new Error("System is currently cooling down.");
+    }
+
+    // 1. ADVANCED SORTING: Sort by failures (primary) and original index (secondary)
+    // This ensures if failures are equal, we always try the "best" model first.
+    modelStats.sort((a, b) => a[1] - b[1]);
+    
     let attempts = 0;
-    const maxRetries = availableModels.length; // Try every model in the pool once if needed
+    const maxRetries = modelStats.length;
 
-    // 1. START ATTEMPT LOOP
     while (attempts < maxRetries) {
-        // Select the model based on the current global rotation index
-        const modelName = availableModels[currentModelIndex] || 'gemini-3-flash';
-        
-        const credentials = await retrieveGeminiCredentials();
-        if (!credentials || !credentials.apiKey) {
-            throw new Error("AI Infrastructure Offline: Could not retrieve secure access key.");
-        }
-
-        const { apiKey } = credentials; // We ignore the credential's modelName and use our pool's modelName
-
-        const systemText = isCode 
-            ? `Create a single-file HTML/JS app: ${prompt}. Variant ${val}. Return ONLY the code, no explanation.`
-            : `Return a JSON array of ${val} real URLs for: ${prompt}. Format: [{"name":"", "url":""}]. Return ONLY the JSON.`;
+        const currentEntry = modelStats[attempts];
+        const modelName = currentEntry[0];
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
+            const credentials = await retrieveGeminiCredentials();
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${credentials.apiKey}`;
+
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: systemText }] }] 
+                    contents: [{ parts: [{ text: prompt }] }] 
                 })
             });
 
-            const data = await response.json();
-
-            // 2. CHECK FOR QUOTA EXHAUSTION (429)
-            if (response.status === 429) {
-                console.warn(`[FAILOVER]: Model ${modelName} exhausted (429). Rotating engines...`);
-                
-                // Increment global index to the next model for this and future calls
-                currentModelIndex = (currentModelIndex + 1) % availableModels.length;
+            // 2. ROTATION ON ANY ERROR (429, 404, 500, etc.)
+            if (!response.ok) {
+                console.warn(`[FAIL]: ${modelName} status ${response.status}.`);
+                currentEntry[1]++; // Record the failure
                 attempts++;
                 
-                // Small 200ms pause to prevent rapid-fire failures
-                await new Promise(resolve => setTimeout(resolve, 200));
-                continue; // Retry the 'while' loop with the new model index
+                // If we've exhausted the whole pool, exit the loop to trigger cooldown
+                if (attempts >= maxRetries) break;
+
+                await new Promise(r => setTimeout(r, 200));
+                continue;
             }
 
-            // 3. HANDLE OTHER API ERRORS
-            if (!response.ok) {
-                console.error("Gemini API Error:", data);
-                throw new Error(`Gemini API ${response.status}: ${data.error?.message || 'Unknown Error'}`);
-            }
-
-            // 4. VALIDATE RESPONSE STRUCTURE
-            if (!data.candidates || !data.candidates[0]?.content?.parts[0]?.text) {
-                console.error("Unexpected API Response Structure:", data);
-                throw new Error("Gemini returned an empty or invalid response.");
-            }
+            // 3. SUCCESS PATH
+            const data = await response.json();
+            
+            // Successful model gets a "reputation boost" (capped at 0)
+            if (currentEntry[1] > 0) currentEntry[1]--;
 
             const result = data.candidates[0].content.parts[0].text;
+            return isCode ? result.replace(/```html|```javascript|```/g, '').trim() 
+                          : JSON.parse(result.replace(/```json|```/g, '').trim());
 
-            // 5. PARSE OUTPUT
-            if (isCode) {
-                return result.replace(/```html|```javascript|```/g, '').trim();
-            } else {
-                const jsonString = result.replace(/```json|```/g, '').trim();
-                try {
-                    return JSON.parse(jsonString);
-                } catch (jsonErr) {
-                    console.error("JSON Parse Error on AI output:", jsonString);
-                    throw new Error("AI returned invalid JSON format.");
-                }
-            }
-
-        } catch (error) {
-            // If we've already tried rotating through models, or it's a non-429 error, throw it
-            if (attempts >= maxRetries - 1 || !error.message.includes('429')) {
-                console.error("callGeminiAPI Final Failure:", error);
-                throw error;
-            }
+        } catch (err) {
+            currentEntry[1]++;
             attempts++;
         }
     }
+
+    // 4. EXHAUSTION TRIGGER: If we reach here, every model in the pool failed.
+    console.error("CRITICAL: All models in pool failed. Triggering 60s cooldown.");
+    await initiateSystemCooldown(statusText);
+    
+    // After cooldown, we throw an error so the UI can update
+    throw new Error("All models exhausted. Restarting cycle after cooldown.");
+}
+
+/*
+ * System Cooldown & Reset Logic
+ */
+async function initiateSystemCooldown(statusElement) {
+    window.isInCooldown = true;
+    let timeLeft = 60;
+
+    return new Promise((resolve) => {
+        const timer = setInterval(() => {
+            if (statusElement) {
+                statusElement.textContent = `WAITING TO CONNECT TO MODEL... ${timeLeft}s`;
+            }
+            timeLeft--;
+
+            if (timeLeft < 0) {
+                clearInterval(timer);
+                window.isInCooldown = false;
+                
+                // RECOVERY: Reset all failure counts to 0
+                // This allows the next call to start fresh with the "best" model
+                modelStats.forEach(m => m[1] = 0);
+                
+                if (statusElement) statusElement.textContent = "SYSTEM READY";
+                resolve();
+            }
+        }, 1000);
+    });
 }
 async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg') {
     const sparkId = `spark_${Date.now()}_${Math.floor(Math.random()*1000)}`;
