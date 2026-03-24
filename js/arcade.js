@@ -18,6 +18,12 @@ let globalTheme = "neon-dark";
 let cachedGKey = null;
 
 /*
+ * Global pool for model rotation during 429 exhaustion
+ */
+let availableModels = ['gemini-3-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b']; 
+let currentModelIndex = 0;
+
+/*
  * Objective: Laboratory Manual / Guided Viewlets
  * Logic: Uses element-masking to highlight specific UI nodes.
  */
@@ -1409,65 +1415,69 @@ async function retrieveGeminiCredentials() {
 }
 
 /*
- * Logic: Discovers, sorts, and persists the latest Flash model version.
- *
+ * Global pool for model rotation during 429 exhaustion
  */
+let availableModels = ['gemini-3-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b']; 
+let currentModelIndex = 0;
+
 async function getGeminiModel(apiKey) {
+    // 1. CHECK CACHE FIRST (But we still need a pool for failover)
     if (databaseCache.app_manifest?.default_model) {
         console.log("[FORGE]: Using cached model from manifest:", databaseCache.app_manifest.default_model);
+        
+        // If we have a cached list in manifest, use it to hydrate the pool
+        if (databaseCache.app_manifest.model_pool) {
+            availableModels = databaseCache.app_manifest.model_pool;
+        }
+        
         return databaseCache.app_manifest.default_model;
     }
 
     try {
-        console.log("[FORGE]: Discovering latest Flash model via Google API...");
+        console.log("[FORGE]: Discovering Flash model collection via Google API...");
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         const data = await response.json();
 
         if (!data.models) {
-            console.error("[FORGE]: API returned no models. Full Response:", data);
             throw new Error("No models property in API response.");
         }
 
-        // 1. Filter for Flash models, excluding generic aliases
+        // 2. FILTER & SORT
         const flashModels = data.models.filter(m => 
             m.name.includes('flash') && 
             m.supportedGenerationMethods.includes('generateContent') &&
             !m.name.endsWith('-latest')
         );
 
-        console.log(`[FORGE]: Found ${flashModels.length} candidate Flash models.`);
-
-        // 2. Sort by name descending (latest versions first)
+        // Sort descending (latest versions first)
         flashModels.sort((a, b) => b.name.localeCompare(a.name));
-        
-        // Print the sorted list as a table for easy verification
-        console.table(flashModels.map(m => ({ 
-            id: m.name.split('/')[1], 
-            displayName: m.displayName, 
-            version: m.version 
-        })));
 
         if (flashModels.length === 0) throw new Error("No suitable Flash models found.");
 
-        const resolvedModel = flashModels[0].name.split('/')[1];
-        console.log(`[FORGE]: Selection Logic chose: ${resolvedModel}`);
+        // 3. POPULATE GLOBAL POOL (Store as IDs, e.g., 'gemini-1.5-flash')
+        availableModels = flashModels.map(m => m.name.split('/')[1]);
+        
+        const resolvedModel = availableModels[0];
+        console.log(`[FORGE]: Selection Logic chose primary: ${resolvedModel}`);
+        console.log(`[FORGE]: Failover Pool initialized with ${availableModels.length} models.`);
 
-        // 3. PERSISTENCE
-        if (resolvedModel) {
-            console.log(`[FORGE]: Persisting ${resolvedModel} to Firebase app_manifest...`);
-            await update(ref(db, 'app_manifest'), {
-                default_model: resolvedModel,
-                last_model_sync: new Date().toISOString()
-            });
-            
-            if (!databaseCache.app_manifest) databaseCache.app_manifest = {};
-            databaseCache.app_manifest.default_model = resolvedModel;
-        }
+        // 4. PERSISTENCE (Save both primary and the backup pool)
+        console.log(`[FORGE]: Persisting model data to Firebase...`);
+        await update(ref(db, 'app_manifest'), {
+            default_model: resolvedModel,
+            model_pool: availableModels, // Save the whole list for backup
+            last_model_sync: new Date().toISOString()
+        });
+        
+        // Update local cache
+        if (!databaseCache.app_manifest) databaseCache.app_manifest = {};
+        databaseCache.app_manifest.default_model = resolvedModel;
+        databaseCache.app_manifest.model_pool = availableModels;
 
         return resolvedModel;
     } catch (e) {
-        console.warn("[FORGE]: Discovery failed. Falling back to 'gemini-3-flash'. Error:", e);
-        return 'gemini-3-flash'; 
+        console.warn("[FORGE]: Discovery failed. Using hardcoded fallback pool. Error:", e);
+        return availableModels[0]; 
     }
 }
 
