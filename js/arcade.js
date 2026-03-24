@@ -1064,8 +1064,8 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
     }
 
     // 3. DETERMINE REQUESTED COUNT & MANUAL URLS
-    **// Move extraction here to ensure manualUrls is always available for 'sourcing' mode**
-    **const manualUrls = mode === 'sourcing' ? extractUrls(prompt) : [];**
+    // Move extraction here to ensure manualUrls is always available for 'sourcing' mode
+    const manualUrls = mode === 'sourcing' ? extractUrls(prompt) : [];
     const countMatch = prompt.match(/\d+/);
     
     let requestedCount = 1;
@@ -1108,9 +1108,9 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
                 const sparkName = linksToSave.length > 1 ? `${item.name}-${i + 1}` : item.name;
                 await saveSpark(currentId, { 
                     name: sparkName, 
-                    **link: item.url,** // Database storage as URL
+                    link: item.url, // Database storage as URL
                     prompt: prompt,
-                    **type: 'link',**
+                    type: 'link',
                     image: finalImageUrl
                 }, templateName, finalImageUrl);
             }
@@ -1121,9 +1121,9 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
                 const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
                 await saveSpark(currentId, { 
                     name: sparkName,
-                    **code: code,** // Database storage as code
+                    code: code, // Database storage as code
                     prompt: prompt,
-                    **type: 'code',**
+                    type: 'code',
                     image: finalImageUrl
                 }, templateName, finalImageUrl);
             }
