@@ -703,7 +703,8 @@ main.max-width-limit {
     padding: 0;
     /* Uses theme bg-color for the recessed shadow depth */
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 5px rgba(var(--glow-color-rgb), 0.1);
-    min-width: 480px;
+    width: 80vw; /* Set to 80% of window width */
+    min-width: 320px; /* Fallback for very narrow mobile screens */
     height: 26px; /* Slimmer profile */
     overflow: hidden;
 }
