@@ -953,7 +953,7 @@ const controls = (isOwner && !isFull) ? `
         <span class="current-prompt-label">FORGE_CMD></span>
         <input type="text" id="input-${current.id}" 
                class="current-prompt-input"
-               placeholder="TYPE A PROMPT OR PASTE A URL..." 
+               placeholder="Type e.g. Create one spark card for the top movie of 2026 or create a match the tiles game." 
                onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}')">
         <button onclick="window.handleCreation('${current.id}')" class="current-prompt-exec-button">
             EXEC
