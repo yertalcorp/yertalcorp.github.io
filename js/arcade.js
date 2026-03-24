@@ -950,7 +950,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 
 const controls = (isOwner && !isFull) ? `
     <div class="current-prompt-container">
-        <span class="current-prompt-label">FORGE_CMD></span>
+        <span class="current-prompt-label">CREATE A NEW SPARK CARD></span>
         <input type="text" id="input-${current.id}" 
                class="current-prompt-input"
                placeholder="Type your prompt or paste a URL.  Create one card for... or Source one link for..." 
