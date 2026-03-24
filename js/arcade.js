@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1051,12 +1051,11 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
-    // 1. DYNAMIC PLAN LOOKUP
+    // 1. DYNAMIC PLAN LOOKUP & CAPACITY VALIDATION
     const userProfile = databaseCache.users?.[user.uid]?.profile || {};
     const planType = userProfile.plan_type || 'free';
     const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
 
-    // 2. CAPACITY VALIDATION
     const userNode = databaseCache.users?.[user.uid];
     const currentSparks = userNode?.infrastructure?.currents?.[currentId]?.sparks || {};
     const existingCount = Object.keys(currentSparks).length;
@@ -1065,102 +1064,74 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
 
     if (remainingSpace <= 0) {
         status.textContent = `STORAGE FULL (${maxSparks}/${maxSparks})`;
-        alert(`This Current has reached its plan capacity of ${maxSparks} sparks.`);
+        alert(`Limit reached: ${maxSparks} sparks.`);
         return;
     }
 
-    // 3. DETERMINE REQUESTED COUNT & MANUAL URLS
+    // 2. COUNT LOGIC
     const manualUrls = mode === 'sourcing' ? extractUrls(prompt) : [];
     const countMatch = prompt.match(/\d+/);
     let requestedCount = 1;
 
     if (mode === 'sourcing') {
-        /*
-         * LOGIC FOR MIXED PROMPTS:
-         * If the user provides a number AND URLs (e.g., "Find 3 like [URL]"), 
-         * we prioritize the number and use AI Sourcing.
-         * If the user ONLY provides URLs, we use the URL count and Skip AI.
-         */
         const mentionedNumber = countMatch ? parseInt(countMatch[0]) : null;
-
         if (manualUrls.length > 0 && !mentionedNumber) {
-            // Pure URL list: Use the count of links provided
             requestedCount = manualUrls.length;
         } else if (mentionedNumber) {
-            // Number exists: Use that as the target count for AI sourcing
             requestedCount = Math.min(mentionedNumber, planLimits.num_mass_sparks);
         }
     } else {
-        // 'Create' mode
-        if (countMatch) {
-            requestedCount = Math.min(parseInt(countMatch[0]), planLimits.num_mass_sparks);
-        }
+        if (countMatch) requestedCount = Math.min(parseInt(countMatch[0]), planLimits.num_mass_sparks);
     }
 
-    // 4. APPLY LIMITS
     const finalForgeCount = Math.min(requestedCount, remainingSpace);
-    
-    if (finalForgeCount < requestedCount) {
-        status.textContent = `PLAN LIMIT REACHED: FORGING ${finalForgeCount}...`;
-    } else {
-        status.textContent = `FORGING ${finalForgeCount} SPARK${finalForgeCount > 1 ? 'S' : ''}...`;
-    }
 
     try {
         const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
         const finalImageUrl = templateUrl || defaultThumb;
 
         if (mode === 'sourcing') {
-            let linksToSave = [];
-            
-            // If there's a number mentioned, we treat the URL as a reference and ask the AI
             const isAiReferenceSearch = (manualUrls.length > 0 && countMatch);
+            let linksToSave = [];
 
             if (manualUrls.length > 0 && !isAiReferenceSearch) {
-                // Case A: Just save the pasted links
-                linksToSave = manualUrls.slice(0, finalForgeCount).map(url => ({
-                    name: generateSparkName(currentId),
-                    url: url
-                }));
+                linksToSave = manualUrls.slice(0, finalForgeCount).map(url => ({ name: generateSparkName(currentId), url }));
             } else {
-                // Case B: AI searches based on text OR reference URL
+                // The 'callGeminiAPI' function will internally retry other models if 429 occurs
+                status.textContent = "CONSULTING MODEL POOL...";
                 const aiLinks = await callGeminiAPI(prompt, finalForgeCount, 'source');
-                linksToSave = aiLinks.map(item => ({
-                    name: item.name || generateSparkName(currentId),
-                    url: item.url
-                }));
+                linksToSave = aiLinks.map(item => ({ name: item.name || generateSparkName(currentId), url: item.url }));
             }
 
             for (let i = 0; i < linksToSave.length; i++) {
                 const item = linksToSave[i];
                 const sparkName = linksToSave.length > 1 ? `${item.name}-${i + 1}` : item.name;
-                await saveSpark(currentId, { 
-                    name: sparkName, 
-                    link: item.url, 
-                    prompt: prompt,
-                    type: 'link',
-                    image: finalImageUrl
-                }, templateName, finalImageUrl);
+                await saveSpark(currentId, { name: sparkName, link: item.url, prompt, type: 'link', image: finalImageUrl }, templateName, finalImageUrl);
+                
+                // Visual Progress Update
+                const progress = Math.round(((i + 1) / linksToSave.length) * 100);
+                status.textContent = `SAVING LINKS: ${progress}%`;
             }
         } else {
-            // 'Create' mode - stores as code
+            // 'Create' mode with Progress Bar logic
             for (let i = 0; i < finalForgeCount; i++) {
+                const progress = Math.round((i / finalForgeCount) * 100);
+                status.textContent = `FORGING [${"=".repeat(i)}${"-".repeat(finalForgeCount - i)}] ${progress}%`;
+
+                // If callGeminiAPI hits a 429, it switches models and retries before returning 'code' here
                 const code = await callGeminiAPI(prompt, i, 'code');
                 const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
-                await saveSpark(currentId, { 
-                    name: sparkName,
-                    code: code, 
-                    prompt: prompt,
-                    type: 'code',
-                    image: finalImageUrl
-                }, templateName, finalImageUrl);
+                
+                await saveSpark(currentId, { name: sparkName, code, prompt, type: 'code', image: finalImageUrl }, templateName, finalImageUrl);
             }
         }
+
         status.textContent = "SYSTEM READY";
         await refreshUI(); 
     } catch (e) { 
         console.error("Forge Error:", e);
-        status.textContent = "FORGE ERROR"; 
+        // This only triggers if ALL models in the availableModels pool are exhausted
+        status.textContent = e.message.includes('429') ? "ALL MODELS EXHAUSTED" : "FORGE ERROR";
     }
 }
 
@@ -1481,66 +1452,89 @@ async function getGeminiModel(apiKey) {
     }
 }
 
-// Gemini API Wrapper
+// Gemini API Wrapper with Model Rotation Failover
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code';
-    
-    // 1. DESTRUCTURE: Get the specific key and model from the credentials helper
-    // This avoids using "dynamicKey" as an object in the URL string.
-    const credentials = await retrieveGeminiCredentials();
-    
-    if (!credentials || !credentials.apiKey) {
-        throw new Error("AI Infrastructure Offline: Could not retrieve secure access key.");
-    }
+    let attempts = 0;
+    const maxRetries = availableModels.length; // Try every model in the pool once if needed
 
-    const { apiKey, modelName } = credentials;
-
-    const systemText = isCode 
-        ? `Create a single-file HTML/JS app: ${prompt}. Variant ${val}. Return ONLY the code, no explanation.`
-        : `Return a JSON array of ${val} real URLs for: ${prompt}. Format: [{"name":"", "url":""}]. Return ONLY the JSON.`;
-
-    try {
-        // 2. USE THE EXTRACTED STRINGS: modelName and apiKey
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                contents: [{ parts: [{ text: systemText }] }] 
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            console.error("Gemini API Error:", data);
-            throw new Error(`Gemini API ${response.status}: ${data.error?.message || 'Unknown Error'}`);
+    // 1. START ATTEMPT LOOP
+    while (attempts < maxRetries) {
+        // Select the model based on the current global rotation index
+        const modelName = availableModels[currentModelIndex] || 'gemini-3-flash';
+        
+        const credentials = await retrieveGeminiCredentials();
+        if (!credentials || !credentials.apiKey) {
+            throw new Error("AI Infrastructure Offline: Could not retrieve secure access key.");
         }
 
-        if (!data.candidates || !data.candidates[0]?.content?.parts[0]?.text) {
-            console.error("Unexpected API Response Structure:", data);
-            throw new Error("Gemini returned an empty or invalid response.");
-        }
+        const { apiKey } = credentials; // We ignore the credential's modelName and use our pool's modelName
 
-        const result = data.candidates[0].content.parts[0].text;
+        const systemText = isCode 
+            ? `Create a single-file HTML/JS app: ${prompt}. Variant ${val}. Return ONLY the code, no explanation.`
+            : `Return a JSON array of ${val} real URLs for: ${prompt}. Format: [{"name":"", "url":""}]. Return ONLY the JSON.`;
 
-        if (isCode) {
-            return result.replace(/```html|```javascript|```/g, '').trim();
-        } else {
-            const jsonString = result.replace(/```json|```/g, '').trim();
-            // Wrap in a try-catch for JSON parsing specifically to catch AI hallucinations
-            try {
-                return JSON.parse(jsonString);
-            } catch (jsonErr) {
-                console.error("JSON Parse Error on AI output:", jsonString);
-                throw new Error("AI returned invalid JSON format.");
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: systemText }] }] 
+                })
+            });
+
+            const data = await response.json();
+
+            // 2. CHECK FOR QUOTA EXHAUSTION (429)
+            if (response.status === 429) {
+                console.warn(`[FAILOVER]: Model ${modelName} exhausted (429). Rotating engines...`);
+                
+                // Increment global index to the next model for this and future calls
+                currentModelIndex = (currentModelIndex + 1) % availableModels.length;
+                attempts++;
+                
+                // Small 200ms pause to prevent rapid-fire failures
+                await new Promise(resolve => setTimeout(resolve, 200));
+                continue; // Retry the 'while' loop with the new model index
             }
+
+            // 3. HANDLE OTHER API ERRORS
+            if (!response.ok) {
+                console.error("Gemini API Error:", data);
+                throw new Error(`Gemini API ${response.status}: ${data.error?.message || 'Unknown Error'}`);
+            }
+
+            // 4. VALIDATE RESPONSE STRUCTURE
+            if (!data.candidates || !data.candidates[0]?.content?.parts[0]?.text) {
+                console.error("Unexpected API Response Structure:", data);
+                throw new Error("Gemini returned an empty or invalid response.");
+            }
+
+            const result = data.candidates[0].content.parts[0].text;
+
+            // 5. PARSE OUTPUT
+            if (isCode) {
+                return result.replace(/```html|```javascript|```/g, '').trim();
+            } else {
+                const jsonString = result.replace(/```json|```/g, '').trim();
+                try {
+                    return JSON.parse(jsonString);
+                } catch (jsonErr) {
+                    console.error("JSON Parse Error on AI output:", jsonString);
+                    throw new Error("AI returned invalid JSON format.");
+                }
+            }
+
+        } catch (error) {
+            // If we've already tried rotating through models, or it's a non-429 error, throw it
+            if (attempts >= maxRetries - 1 || !error.message.includes('429')) {
+                console.error("callGeminiAPI Final Failure:", error);
+                throw error;
+            }
+            attempts++;
         }
-    } catch (error) {
-        console.error("callGeminiAPI Failed:", error);
-        throw error;
     }
 }
-
 async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg') {
     const sparkId = `spark_${Date.now()}_${Math.floor(Math.random()*1000)}`;
     
