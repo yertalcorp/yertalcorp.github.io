@@ -1262,7 +1262,6 @@ const generateSparkName = (currentId) => {
     return `${baseName}-Spark#${timestamp}`;
 };
 
-// --- Modified CORE LOGIC ---
 async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
@@ -1287,16 +1286,22 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
 
     // 3. DETERMINE REQUESTED COUNT
     const countMatch = prompt.match(/\d+/);
-    let requestedCount = countMatch ? parseInt(countMatch[0]) : (planLimits.num_mass_sparks || 3);
+    // NEW LOGIC: Default to 1 if no number is mentioned.
+    // If a number IS mentioned, use the plan's num_mass_sparks (or the specific number).
+    let requestedCount = 1; if (countMatch) {
+     const mentionedNumber = parseInt(countMatch[0]);
+     // Use the higher of the mentioned number or the plan's mass limit if the user wants "many"
+     requestedCount = Math.max(mentionedNumber, planLimits.num_mass_sparks || 3);
+    }
 
-    // 4. APPLY LIMITS
+    // 4. APPLY LIMITS (Clip to remaining space)
     const finalForgeCount = Math.min(requestedCount, remainingSpace);
 
     if (finalForgeCount < requestedCount) {
         console.warn(`Clipping forge request from ${requestedCount} to ${finalForgeCount} due to ${planType} plan limits.`);
         status.textContent = `PLAN LIMIT REACHED: FORGING ${finalForgeCount}...`;
     } else {
-        status.textContent = `FORGING ${finalForgeCount} SPARKS...`;
+        status.textContent = `FORGING ${finalForgeCount} SPARK${finalForgeCount > 1 ? 'S' : ''}...`;
     }
 
     try {
@@ -1309,7 +1314,7 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
                 await saveSpark(currentId, { 
                     name: generateSparkName(currentId), 
                     link: item.url, 
-                    prompt: prompt, // Store original prompt in its own field
+                    prompt: prompt,
                     type: 'link',
                     image: finalImageUrl
                 }, templateName, finalImageUrl);
@@ -1318,10 +1323,13 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
             for (let i = 0; i < finalForgeCount; i++) {
                 const code = await callGeminiAPI(prompt, i, 'code');
                 
+                // Add index only if we are forging more than one
+                const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
+                
                 await saveSpark(currentId, { 
-                    name: `${generateSparkName(currentId)}-${i + 1}`,
+                    name: sparkName,
                     code, 
-                    prompt: prompt, // Store original prompt in its own field
+                    prompt: prompt,
                     type: 'code',
                     image: finalImageUrl
                 }, templateName, finalImageUrl);
