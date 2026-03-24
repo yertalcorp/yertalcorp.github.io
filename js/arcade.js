@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:18:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1041,6 +1041,7 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
+/* executeMassSpark Function */
 async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
@@ -1063,14 +1064,15 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
     }
 
     // 3. DETERMINE REQUESTED COUNT & MANUAL URLS
-    const manualUrls = extractUrls(prompt);
+    **// Move extraction here to ensure manualUrls is always available for 'sourcing' mode**
+    **const manualUrls = mode === 'sourcing' ? extractUrls(prompt) : [];**
     const countMatch = prompt.match(/\d+/);
     
     let requestedCount = 1;
     if (manualUrls.length > 0) {
-     requestedCount = manualUrls.length;
+        requestedCount = manualUrls.length;
     } else if (countMatch) {
-     requestedCount = Math.min(parseInt(countMatch[0]), planLimits.num_mass_sparks);
+        requestedCount = Math.min(parseInt(countMatch[0]), planLimits.num_mass_sparks);
     }
 
     // 4. APPLY LIMITS
@@ -1082,56 +1084,50 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
         status.textContent = `FORGING ${finalForgeCount} SPARK${finalForgeCount > 1 ? 'S' : ''}...`;
     }
 
-    try {
+   try {
         const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
         const finalImageUrl = templateUrl || defaultThumb;
 
         if (mode === 'sourcing') {
             let linksToSave = [];
-
             if (manualUrls.length > 0) {
-             // Case A: User pasted specific URLs
-             linksToSave = manualUrls.slice(0, finalForgeCount).map(url => ({
-             name: generateSparkName(currentId),
-             url: url
-             }));
+                linksToSave = manualUrls.slice(0, finalForgeCount).map(url => ({
+                    name: generateSparkName(currentId),
+                    url: url
+                }));
             } else {
-             // Case B: AI needs to find URLs based on the prompt
-             const aiLinks = await callGeminiAPI(prompt, finalForgeCount, 'source');
-             linksToSave = aiLinks.map(item => ({
-             name: item.name || generateSparkName(currentId),
-             url: item.url
-             }));
+                const aiLinks = await callGeminiAPI(prompt, finalForgeCount, 'source');
+                linksToSave = aiLinks.map(item => ({
+                    name: item.name || generateSparkName(currentId),
+                    url: item.url
+                }));
             }
 
             for (let i = 0; i < linksToSave.length; i++) {
-             const item = linksToSave[i];
-             const sparkName = linksToSave.length > 1 ? `${item.name}-${i + 1}` : item.name;
-             
-             await saveSpark(currentId, { 
-             name: sparkName, 
-             link: item.url, 
-             prompt: prompt,
-             type: 'link',
-             image: finalImageUrl
-             }, templateName, finalImageUrl);
+                const item = linksToSave[i];
+                const sparkName = linksToSave.length > 1 ? `${item.name}-${i + 1}` : item.name;
+                await saveSpark(currentId, { 
+                    name: sparkName, 
+                    **link: item.url,** // Database storage as URL
+                    prompt: prompt,
+                    **type: 'link',**
+                    image: finalImageUrl
+                }, templateName, finalImageUrl);
             }
         } else {
-            // ... Logic for 'Create' mode (code generation) remains unchanged ...
+            // 'Create' mode - stores as code
             for (let i = 0; i < finalForgeCount; i++) {
                 const code = await callGeminiAPI(prompt, i, 'code');
                 const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
-                
                 await saveSpark(currentId, { 
                     name: sparkName,
-                    code, 
+                    **code: code,** // Database storage as code
                     prompt: prompt,
-                    type: 'code',
+                    **type: 'code',**
                     image: finalImageUrl
                 }, templateName, finalImageUrl);
             }
         }
-        
         status.textContent = "SYSTEM READY";
         await refreshUI(); 
     } catch (e) { 
@@ -1139,8 +1135,6 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
         status.textContent = "FORGE ERROR"; 
     }
 }
-
-// js/arcade.js
 
 /*
  * Processes the image field from the DB.
