@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:18:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1041,6 +1041,105 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
+async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
+    const status = document.getElementById('engine-status-text');
+    
+    // 1. DYNAMIC PLAN LOOKUP
+    const userProfile = databaseCache.users?.[user.uid]?.profile || {};
+    const planType = userProfile.plan_type || 'free';
+    const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
+
+    // 2. CAPACITY VALIDATION
+    const userNode = databaseCache.users?.[user.uid];
+    const currentSparks = userNode?.infrastructure?.currents?.[currentId]?.sparks || {};
+    const existingCount = Object.keys(currentSparks).length;
+    const maxSparks = planLimits.max_sparks_per_current;
+    const remainingSpace = maxSparks - existingCount;
+
+    if (remainingSpace <= 0) {
+        status.textContent = `STORAGE FULL (${maxSparks}/${maxSparks})`;
+        alert(`This Current has reached its plan capacity of ${maxSparks} sparks.`);
+        return;
+    }
+
+    // 3. DETERMINE REQUESTED COUNT & MANUAL URLS
+    const manualUrls = extractUrls(prompt);
+    const countMatch = prompt.match(/\d+/);
+    
+    let requestedCount = 1;
+    if (manualUrls.length > 0) {
+     requestedCount = manualUrls.length;
+    } else if (countMatch) {
+     requestedCount = Math.min(parseInt(countMatch[0]), planLimits.num_mass_sparks);
+    }
+
+    // 4. APPLY LIMITS
+    const finalForgeCount = Math.min(requestedCount, remainingSpace);
+    
+    if (finalForgeCount < requestedCount) {
+        status.textContent = `PLAN LIMIT REACHED: FORGING ${finalForgeCount}...`;
+    } else {
+        status.textContent = `FORGING ${finalForgeCount} SPARK${finalForgeCount > 1 ? 'S' : ''}...`;
+    }
+
+    try {
+        const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
+        const finalImageUrl = templateUrl || defaultThumb;
+
+        if (mode === 'sourcing') {
+            let linksToSave = [];
+
+            if (manualUrls.length > 0) {
+             // Case A: User pasted specific URLs
+             linksToSave = manualUrls.slice(0, finalForgeCount).map(url => ({
+             name: generateSparkName(currentId),
+             url: url
+             }));
+            } else {
+             // Case B: AI needs to find URLs based on the prompt
+             const aiLinks = await callGeminiAPI(prompt, finalForgeCount, 'source');
+             linksToSave = aiLinks.map(item => ({
+             name: item.name || generateSparkName(currentId),
+             url: item.url
+             }));
+            }
+
+            for (let i = 0; i < linksToSave.length; i++) {
+             const item = linksToSave[i];
+             const sparkName = linksToSave.length > 1 ? `${item.name}-${i + 1}` : item.name;
+             
+             await saveSpark(currentId, { 
+             name: sparkName, 
+             link: item.url, 
+             prompt: prompt,
+             type: 'link',
+             image: finalImageUrl
+             }, templateName, finalImageUrl);
+            }
+        } else {
+            // ... Logic for 'Create' mode (code generation) remains unchanged ...
+            for (let i = 0; i < finalForgeCount; i++) {
+                const code = await callGeminiAPI(prompt, i, 'code');
+                const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
+                
+                await saveSpark(currentId, { 
+                    name: sparkName,
+                    code, 
+                    prompt: prompt,
+                    type: 'code',
+                    image: finalImageUrl
+                }, templateName, finalImageUrl);
+            }
+        }
+        
+        status.textContent = "SYSTEM READY";
+        await refreshUI(); 
+    } catch (e) { 
+        console.error("Forge Error:", e);
+        status.textContent = "FORGE ERROR"; 
+    }
+}
+
 // js/arcade.js
 
 /*
@@ -1247,90 +1346,18 @@ window.handleCreation = async (currentId) => {
     }
 };
 
-async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
-    const status = document.getElementById('engine-status-text');
+/*
+ * Extracts valid URLs from a string based on common separators
+ * @param {string} text 
+ * @returns {string[]}
+ */
+const extractUrls = (text) => {
+    // Splits by comma, semicolon, space, or newline
+    const potentialUrls = text.split(/[\s,;\n]+/);
+    const urlPattern = /^(http|https):\/\/[^ "]+$/;
+    return potentialUrls.filter(item => urlPattern.test(item.trim()));
+};
     
-    // 1. DYNAMIC PLAN LOOKUP
-    const userProfile = databaseCache.users?.[user.uid]?.profile || {};
-    const planType = userProfile.plan_type || 'free';
-    const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
-
-    // 2. CAPACITY VALIDATION
-    const userNode = databaseCache.users?.[user.uid];
-    const currentSparks = userNode?.infrastructure?.currents?.[currentId]?.sparks || {};
-    const existingCount = Object.keys(currentSparks).length;
-    
-    const maxSparks = planLimits.max_sparks_per_current;
-    const remainingSpace = maxSparks - existingCount;
-
-    if (remainingSpace <= 0) {
-        status.textContent = `STORAGE FULL (${maxSparks}/${maxSparks})`;
-        alert(`This Current has reached its plan capacity of ${maxSparks} sparks.`);
-        return;
-    }
-
-    // 3. DETERMINE REQUESTED COUNT
-    const countMatch = prompt.match(/\d+/);
-   
-    
-    // NEW LOGIC: Default to 1 if no number is mentioned.
-    // If a number IS mentioned, use the plan's num_mass_sparks (or the specific number).
-    let requestedCount = 1; if (countMatch) {
-     const mentionedNumber = parseInt(countMatch[0]);
-     // Use the lower of the mentioned number or the plan's mass limit if the user wants "many"
-     requestedCount = Math.min(mentionedNumber, planLimits.num_mass_sparks);
-    }
-
-    // 4. APPLY LIMITS (Clip to remaining space)
-    const finalForgeCount = Math.min(requestedCount, remainingSpace);
-    console.log("Number of spark Cards to be generated: ", finalForgeMatch);
-    
-    if (finalForgeCount < requestedCount) {
-        console.warn(`Clipping forge request from ${requestedCount} to ${finalForgeCount} due to ${planType} plan limits.`);
-        status.textContent = `PLAN LIMIT REACHED: FORGING ${finalForgeCount}...`;
-    } else {
-        status.textContent = `FORGING ${finalForgeCount} SPARK${finalForgeCount > 1 ? 'S' : ''}...`;
-    }
-
-    try {
-        const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
-        const finalImageUrl = templateUrl || defaultThumb;
-
-        if (mode === 'sourcing') {
-            const links = await callGeminiAPI(prompt, finalForgeCount, 'source');
-            for (const item of links) {
-                await saveSpark(currentId, { 
-                    name: generateSparkName(currentId), 
-                    link: item.url, 
-                    prompt: prompt,
-                    type: 'link',
-                    image: finalImageUrl
-                }, templateName, finalImageUrl);
-            }
-        } else {
-            for (let i = 0; i < finalForgeCount; i++) {
-                const code = await callGeminiAPI(prompt, i, 'code');
-                
-                // Add index only if we are forging more than one
-                const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
-                
-                await saveSpark(currentId, { 
-                    name: sparkName,
-                    code, 
-                    prompt: prompt,
-                    type: 'code',
-                    image: finalImageUrl
-                }, templateName, finalImageUrl);
-            }
-        }
-        
-        status.textContent = "SYSTEM READY";
-        await refreshUI(); 
-    } catch (e) { 
-        console.error("Forge Error:", e);
-        status.textContent = "FORGE ERROR"; 
-    }
-}
 
 /*
  * Objective: High-Availability Credential Retrieval
