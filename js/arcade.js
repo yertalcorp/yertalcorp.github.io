@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:37:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1432,7 +1432,7 @@ async function getGeminiModel(apiKey) {
         const pool = databaseCache.app_manifest.model_pool;
         // Map the flat DB names into our 2D tracking array
         modelStats = pool.map(name => {
-            const existing = modelStats.find(m => m[0] === name);
+            const existing = (modelStats || []).find(m => m[0] === name);
             return existing ? existing : [name, 0];
         });
 
@@ -1496,15 +1496,26 @@ async function callGeminiAPI(prompt, val, type) {
         throw new Error("System is currently cooling down.");
     }
 
+    // --- FIX: Fetch credentials and populate modelStats BEFORE evaluating the loop ---
+    const credentials = await retrieveGeminiCredentials();
+    if (!credentials) {
+        throw new Error("Failed to retrieve Gemini credentials.");
+    }
+    // ---------------------------------------------------------------------------------
+
+    // Defensive check to make sure modelStats was successfully filled by getGeminiModel
+    if (!Array.isArray(modelStats) || modelStats.length === 0) {
+        console.error("CRITICAL: modelStats is empty. No models available to route to!");
+        throw new Error("No models available in pool. Cooldown ignored to prevent lock.");
+    }
+
     // 1. ADVANCED SORTING: Sort by failures (primary) and original index (secondary)
     // This ensures if failures are equal, we always try the "best" model first.
     modelStats.sort((a, b) => a[1] - b[1]);
     
-    // --- NEW: LOG RETRIEVED MODELS ---
     // Maps the sorted array to just display the string names of the models
     const modelNames = modelStats.map(entry => entry[0]);
     console.log("Retrieved Gemini Models in queue order:", modelNames);
-    // ---------------------------------
     
     let attempts = 0;
     const maxRetries = modelStats.length;
@@ -1514,7 +1525,7 @@ async function callGeminiAPI(prompt, val, type) {
         const modelName = currentEntry[0];
 
         try {
-            const credentials = await retrieveGeminiCredentials();
+            // Reusing the apiKey retrieved at the top of the function
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${credentials.apiKey}`;
 
             const response = await fetch(url, {
