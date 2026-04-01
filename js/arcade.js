@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:25:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1521,7 +1521,9 @@ async function callGeminiAPI(prompt, val, type) {
 
             // 2. ROTATION ON ANY ERROR (429, 404, 500, etc.)
             if (!response.ok) {
-                console.warn(`[FAIL]: ${modelName} status ${response.status}.`);
+                const errorBody = await response.text();
+                console.warn(`[FAIL]: ${modelName} failed with HTTP status ${response.status}. Reason:`, errorBody);
+                
                 currentEntry[1]++; // Record the failure
                 attempts++;
                 
@@ -1533,6 +1535,8 @@ async function callGeminiAPI(prompt, val, type) {
             }
 
             // 3. SUCCESS PATH
+            console.log(`[SUCCESS]: ${modelName} responded successfully.`);
+            
             const data = await response.json();
             
             // Successful model gets a "reputation boost" (capped at 0)
@@ -1543,6 +1547,8 @@ async function callGeminiAPI(prompt, val, type) {
                           : JSON.parse(result.replace(/```json|```/g, '').trim());
 
         } catch (err) {
+            console.error(`[CRITICAL FAIL]: ${modelName} encountered a network or code execution error:`, err);
+            
             currentEntry[1]++;
             attempts++;
         }
