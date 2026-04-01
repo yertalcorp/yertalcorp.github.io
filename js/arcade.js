@@ -1073,18 +1073,41 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
 
     // 2. COUNT LOGIC
     const manualUrls = mode === 'sourcing' ? extractUrls(prompt) : [];
-    const countMatch = prompt.match(/\d+/);
+    
+    // Remove all detected URLs from the prompt copy to ignore numbers within URLs
+    let cleanPrompt = prompt;
+    manualUrls.forEach(url => {
+        cleanPrompt = cleanPrompt.replace(url, '');
+    });
+
+    // Check for a standard digit in the clean text
+    const digitMatch = cleanPrompt.match(/\d+/);
+    let mentionedNumber = digitMatch ? parseInt(digitMatch[0], 10) : null;
+
+    // Mapping for number words if no pure digits are found
+    if (!mentionedNumber) {
+        const numberWords = { 
+            'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 
+            'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10 
+        };
+        const words = cleanPrompt.toLowerCase().match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/);
+        if (words) {
+            mentionedNumber = numberWords[words[0]];
+        }
+    }
+
     let requestedCount = 1;
 
     if (mode === 'sourcing') {
-        const mentionedNumber = countMatch ? parseInt(countMatch[0]) : null;
         if (manualUrls.length > 0 && !mentionedNumber) {
             requestedCount = manualUrls.length;
         } else if (mentionedNumber) {
             requestedCount = Math.min(mentionedNumber, planLimits.num_mass_sparks);
         }
     } else {
-        if (countMatch) requestedCount = Math.min(parseInt(countMatch[0]), planLimits.num_mass_sparks);
+        if (mentionedNumber) {
+            requestedCount = Math.min(mentionedNumber, planLimits.num_mass_sparks);
+        }
     }
 
     const finalForgeCount = Math.min(requestedCount, remainingSpace);
@@ -1101,7 +1124,7 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
         const finalImageUrl = templateUrl || defaultThumb;
 
         if (mode === 'sourcing') {
-            const isAiReferenceSearch = (manualUrls.length > 0 && countMatch);
+            const isAiReferenceSearch = (manualUrls.length > 0 && mentionedNumber);
             let linksToSave = [];
 
             if (manualUrls.length > 0 && !isAiReferenceSearch) {
