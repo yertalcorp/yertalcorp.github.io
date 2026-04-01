@@ -121,22 +121,35 @@ function renderNavbar(items, ui) {
 
 // A safe function to set the slug.
 const getSafeSlug = async (user) => {
-     // 1. Try Session storage first
-     let cached = JSON.parse(sessionStorage.getItem('currentUser'));
-     if (cached?.slug) return cached.slug;
+     // 1. Try Session storage first
+     let cached = JSON.parse(sessionStorage.getItem('currentUser'));
+     if (cached?.slug) return cached.slug;
 
-    // 2. If session empty, fetch from DB
-    console.log("Slug missing from session, fetching from Firebase...");
-    const snapshot = await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`);
-    const profile = await snapshot.json();
+    // 2. If session empty, fetch from DB
+    console.log("Slug missing from session, fetching from Firebase...");
     
-   if (profile?.slug) {
-        sessionStorage.setItem('currentUser', JSON.stringify(profile));
-        return profile.slug;
-   }
+    // Added try/catch to log errors during the fetch operation
+    try {
+        const snapshot = await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`);
+        
+        // Check if the response is ok (status in the range 200-299)
+        if (!snapshot.ok) {
+            throw new Error(`HTTP error! status: ${snapshot.status}`);
+        }
+        
+        const profile = await snapshot.json();
+            
+       if (profile?.slug) {
+            sessionStorage.setItem('currentUser', JSON.stringify(profile));
+            console.log("getSafeSlug slug retrieved from db is : ", profile.slug);
+            return profile.slug;
+       }
+    } catch (error) {
+        console.error("Error retrieving data from the db:", error);
+    }
 
-   // 3. Absolute fallback (UID is safer than Display Name)
-   return user.uid; 
+   // 3. Absolute fallback (UID is safer than Display Name)
+   return user.uid; 
 };
 
 async function renderAuthStatus(user, authData) {
