@@ -1521,7 +1521,6 @@ async function callGeminiAPI(prompt, val, type) {
     if (!credentials) {
         throw new Error("Failed to retrieve Gemini credentials.");
     }
-    // ---------------------------------------------------------------------------------
 
     // Defensive check to make sure modelStats was successfully filled by getGeminiModel
     if (!Array.isArray(modelStats) || modelStats.length === 0) {
@@ -1530,10 +1529,8 @@ async function callGeminiAPI(prompt, val, type) {
     }
 
     // 1. ADVANCED SORTING: Sort by failures (primary) and original index (secondary)
-    // This ensures if failures are equal, we always try the "best" model first.
     modelStats.sort((a, b) => a[1] - b[1]);
     
-    // Maps the sorted array to just display the string names of the models
     const modelNames = modelStats.map(entry => entry[0]);
     console.log("Retrieved Gemini Models in queue order:", modelNames);
     
@@ -1545,7 +1542,6 @@ async function callGeminiAPI(prompt, val, type) {
         const modelName = currentEntry[0];
 
         try {
-            // Reusing the apiKey retrieved at the top of the function
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${credentials.apiKey}`;
 
             const response = await fetch(url, {
@@ -1571,7 +1567,7 @@ async function callGeminiAPI(prompt, val, type) {
                 continue;
             }
 
-// 3. SUCCESS PATH
+            // 3. SUCCESS PATH
             console.log(`[SUCCESS]: ${modelName} responded successfully.`);
             
             const data = await response.json();
@@ -1584,7 +1580,7 @@ async function callGeminiAPI(prompt, val, type) {
             if (isCode) {
                 return result.replace(/```html|```javascript|```/g, '').trim();
             } else {
-                // Defensive JSON check: If it's not valid JSON, just return the raw string!
+                // Defensive JSON check
                 try {
                     return JSON.parse(result.replace(/```json|```/g, '').trim());
                 } catch (jsonErr) {
@@ -1592,8 +1588,17 @@ async function callGeminiAPI(prompt, val, type) {
                     return result.trim();
                 }
             }
+        } catch (fetchErr) {
+            // Added defensive catch for network drops
+            console.error(`[FETCH ERROR]: Failed to contact ${modelName}:`, fetchErr);
+            currentEntry[1]++;
+            attempts++;
+            if (attempts >= maxRetries) break;
+            await new Promise(r => setTimeout(r, 200));
+        }
+    } // <--- Added the missing closing bracket for the while loop here!
 
-    // 4. EXHAUSTION TRIGGER: If we reach here, every model in the pool failed.
+    // 4. EXHAUSTION TRIGGER: Only runs if the loop ends without returning a successful response!
     console.error("CRITICAL: All models in pool failed. Triggering 60s cooldown.");
     await initiateSystemCooldown(statusText);
     
