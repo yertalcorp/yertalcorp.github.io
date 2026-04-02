@@ -1398,7 +1398,6 @@ const generateSparkName = (currentName) => {
 
 function resolveCategoryFromPrompt(prompt) {
     const cleanPrompt = prompt.toLowerCase().trim();
-    // Split into words/tokens and remove punctuation
     const tokens = cleanPrompt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").split(/\s+/);
     
     console.log(`[DEBUG_REGEX]: Evaluating prompt: "${cleanPrompt}"`);
@@ -1406,40 +1405,58 @@ function resolveCategoryFromPrompt(prompt) {
     
     const presets = databaseCache.settings?.['arcade-current-types'] || [];
     
-    const matchedCategory = presets.find(category => {
-        const catId = (category.id || '').toLowerCase();
-        const catName = (category.name || '').toLowerCase();
+    // ==========================================
+    // 1. STRICT ID & NAME SCAN (First Priority)
+    // ==========================================
+    // We check this first so a name match takes priority over a generic regex trigger like "create"
+    const strictMatch = presets.find(category => {
+        const catId = (category.id || '').toLowerCase().trim();
+        const catName = (category.name || '').toLowerCase().trim();
         
-        // 1. Check ID and Name matches (both full prompt and token checks)
+        // Ensure the ID or Name is not empty and is explicitly spelled out in the prompt
         const idMatches = catId && cleanPrompt.includes(catId);
         const nameMatches = catName && cleanPrompt.includes(catName);
         
-        // 2. Check Regex match
-        let regexMatches = false;
-        if (category.regex) {
-            try {
-                const regexPattern = new RegExp(category.regex, 'i');
-                const promptHitsRegex = regexPattern.test(cleanPrompt);
-                const tokenHitsRegex = tokens.some(token => regexPattern.test(token));
-                
-                regexMatches = promptHitsRegex || tokenHitsRegex;
-            } catch (regexErr) {
-                console.warn(`[DEBUG_REGEX]: Invalid regex defined for category ${category.id}:`, regexErr);
-            }
-        }
-        
-        // If ANY of these 3 conditions match, we successfully resolved the category!
-        if (idMatches || nameMatches || regexMatches) {
+        if (idMatches || nameMatches) {
             let matchType = [];
             if (idMatches) matchType.push("ID");
             if (nameMatches) matchType.push("Name");
-            if (regexMatches) matchType.push("Regex");
             
-            console.log(`[DEBUG_REGEX]: Match found! Category [${category.name}] triggered via [${matchType.join(' + ')}]`);
+            console.log(`[DEBUG_REGEX]: Strict Match found! Category [${category.name}] triggered via [${matchType.join(' + ')}]`);
             return true;
         }
-        
         return false;
+    });
+
+    if (strictMatch) {
+        return {
+            id: strictMatch.id,
+            name: strictMatch.name,
+            logic: strictMatch.logic,
+            image: strictMatch.image
+        };
+    }
+
+    // ==========================================
+    // 2. REGEX SCAN (Second Priority)
+    // ==========================================
+    const matchedCategory = presets.find(category => {
+        if (!category.regex) return false;
+        
+        try {
+            const regexPattern = new RegExp(category.regex, 'i');
+            const promptHitsRegex = regexPattern.test(cleanPrompt);
+            const tokenHitsRegex = tokens.some(token => regexPattern.test(token));
+            
+            if (promptHitsRegex || tokenHitsRegex) {
+                console.log(`[DEBUG_REGEX]: Regex Match found! Category [${category.name}] triggered via [Regex]`);
+                return true;
+            }
+            return false;
+        } catch (regexErr) {
+            console.warn(`[DEBUG_REGEX]: Invalid regex defined for category ${category.id}:`, regexErr);
+            return false;
+        }
     });
 
     if (matchedCategory) {
@@ -1451,9 +1468,11 @@ function resolveCategoryFromPrompt(prompt) {
         };
     }
 
-    // Ultimate fallback if prompt is totally obscure
+    // ==========================================
+    // 3. ULTIMATE FALLBACK
+    // ==========================================
     console.log(`[DEBUG_REGEX]: No matches found in DB. Falling back to [Custom].`);
-    const isCreate = cleanPrompt.includes('generate') || cleanPrompt.includes('build');
+    const isCreate = cleanPrompt.includes('generate') || cleanPrompt.includes('build') || cleanPrompt.includes('create');
     return {
         id: 'custom',
         name: 'Custom',
