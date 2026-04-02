@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:51:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -963,8 +963,8 @@ const controls = (isOwner && !isFull) ? `
         <input type="text" id="input-${current.id}" 
                class="current-prompt-input"
                placeholder="Type your prompt or paste a URL.  Create one card for... or Source one link for..." 
-               onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}')">
-        <button onclick="window.handleCreation('${current.id}')" class="current-prompt-exec-button">
+               onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '$(current.name}')">
+        <button onclick="window.handleCreation('${current.id}', '${current.name}')" class="current-prompt-exec-button">
             EXEC
         </button>
     </div>
@@ -1041,6 +1041,7 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 
     await executeMassSpark(
         currentId, 
+        name,
         augmentedPrompt, 
         (logicType === 'source' ? 'sourcing' : 'prompt'), 
         template.name, 
@@ -1051,7 +1052,7 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 };
 
 /* executeMassSpark Function */
-async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
+async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
     // --------------------------------------------------------
@@ -1066,7 +1067,7 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
     // (We safely bypass this if the template doesn't have a specific name mapping)
     if (templateName && predictedType !== templateName.toLowerCase()) {
         const proceed = confirm(
-            `⚠️ Warning: This prompt looks like it belongs to [${prediction.name}], but you are trying to forge it inside a [${templateName}] board.\n\nDo you want to continue anyway?`
+            `⚠️ Warning: This prompt looks like it belongs to [${prediction.name}] current, but you are trying to forge it inside a [${currentName}] current.\n\nDo you want to continue anyway?`
         );
         
         if (!proceed) {
@@ -1365,7 +1366,7 @@ const generateSparkName = (currentName) => {
 };
 
 // --- 4. CORE LOGIC & ACTIONS ---
-window.handleCreation = async (currentId) => {
+window.handleCreation = async (currentId, currentName) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
     if (!input) return;
@@ -1387,14 +1388,14 @@ window.handleCreation = async (currentId) => {
         let mode = (template.logic === 'source' || isUrl) ? 'sourcing' : 'prompt';
 
         // Trigger the Forge
-        await executeMassSpark(currentId, input, mode, template.name, template.image);
+        await executeMassSpark(currentId, currentName, input, mode, template.name, template.image);
         
         if (promptInput) promptInput.value = '';
 
     } catch (e) {
         console.error("Creation Error:", e);
         // Fallback to custom if AI classification fails
-        await executeMassSpark(currentId, input, 'prompt', 'Custom', '/assets/thumbnails/default.jpg');
+        await executeMassSpark(currentId, currentName, input, 'prompt', 'Custom', '/assets/thumbnails/default.jpg');
     }
 };
 
@@ -1750,7 +1751,7 @@ function predictLogicType(prompt) {
     // We must parse the prompt to determine the true intent!
     let resolvedLogic = 'create'; // Default fallback for safety
     
-    if (p.includes('top') || p.includes('get') || p.includes('find') || p.includes('list') || p.includes('show me')) {
+    if (p.includes('top') || p.includes('get') || p.includes('find') || p.includes('retrieve') || p.includes('list') || p.includes('show me')) {
         resolvedLogic = 'source';
     } else if (p.includes('generate') || p.includes('create') || p.includes('build') || p.includes('design')) {
         resolvedLogic = 'create';
