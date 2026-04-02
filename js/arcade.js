@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:37:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:38:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1154,9 +1154,30 @@ const prediction = resolveCategoryFromPrompt(prompt);
                 updateForgeStatus("CONSULTING MODEL POOL...");
                 
                 // Passing activeResolution ('source') dynamically
+// Passing activeResolution ('source') dynamically
                 const aiLinks = await callGeminiAPI(prompt, finalForgeCount, activeResolution);
-                linksToSave = aiLinks.map(item => ({ name: item.name || generateSparkName(currentId), url: item.url }));
-            }
+                
+                let rawLinksArray = [];
+                
+                // 🛡️ Fallback handling if Gemini returns a string instead of an array
+                if (Array.isArray(aiLinks)) {
+                    rawLinksArray = aiLinks;
+                } else if (typeof aiLinks === 'string') {
+                    console.warn("[FORGE]: Gemini returned raw text. Forcing string-split array fallback.");
+                    
+                    // Break the string up by commas or newlines and map it to object structures
+                    rawLinksArray = aiLinks.split(/,|\n/).map(str => str.trim()).filter(Boolean).map(str => {
+                        return { name: generateSparkName(currentId), url: str };
+                    });
+                } else {
+                    rawLinksArray = []; // Ultimate empty fallback
+                }
+
+                // Now it is 100% safe to map without crashing!
+                linksToSave = rawLinksArray.map(item => ({ 
+                    name: item.name || generateSparkName(currentId), 
+                    url: item.url || item 
+                }));            }
 
             for (let i = 0; i < linksToSave.length; i++) {
                 const item = linksToSave[i];
