@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:37:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:18:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1054,7 +1054,28 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 async function executeMassSpark(currentId, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
-    // 1. DYNAMIC PLAN LOOKUP & CAPACITY VALIDATION
+    // --------------------------------------------------------
+    // 1. TIGHTENED TYPE & LOGIC CHECK
+    // --------------------------------------------------------
+    // Now returns the whole object with guaranteed 'create' or 'source' logic!
+    const prediction = predictLogicType(prompt); 
+    const predictedType = prediction.id;        // e.g., 'movies'
+    const activeResolution = prediction.logic;  // e.g., 'create' or 'source'
+    
+    // Warn the user if they are trying to put a type inside a mismatched board
+    // (We safely bypass this if the template doesn't have a specific name mapping)
+    if (templateName && predictedType !== templateName.toLowerCase()) {
+        const proceed = confirm(
+            `⚠️ Warning: This prompt looks like it belongs to [${prediction.name}], but you are trying to forge it inside a [${templateName}] board.\n\nDo you want to continue anyway?`
+        );
+        
+        if (!proceed) {
+            console.log("[FORGE]: Operation aborted by user due to type mismatch.");
+            return; 
+        }
+    }
+
+    // 2. DYNAMIC PLAN LOOKUP & CAPACITY VALIDATION
     const userProfile = databaseCache.users?.[user.uid]?.profile || {};
     const planType = userProfile.plan_type || 'free';
     const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
@@ -1071,46 +1092,41 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
         return;
     }
 
-    // 2. COUNT LOGIC
+    // --------------------------------------------------------
+    // 3. TIGHTENED COUNT LOGIC (Ignores 4-digit years like 2026)
+    // --------------------------------------------------------
     const manualUrls = mode === 'sourcing' ? extractUrls(prompt) : [];
-    
-    // Remove all detected URLs from the prompt copy to ignore numbers within URLs
     let cleanPrompt = prompt;
     manualUrls.forEach(url => {
         cleanPrompt = cleanPrompt.replace(url, '');
     });
 
-    // Check for a standard digit in the clean text
-    const digitMatch = cleanPrompt.match(/\d+/);
-    let mentionedNumber = digitMatch ? parseInt(digitMatch[0], 10) : null;
+    const numberWords = { 
+        'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 
+        'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10 
+    };
 
-    // Mapping for number words if no pure digits are found
-    if (!mentionedNumber) {
-        const numberWords = { 
-            'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 
-            'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10 
-        };
-        const words = cleanPrompt.toLowerCase().match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/);
-        if (words) {
-            mentionedNumber = numberWords[words[0]];
-        }
+    let requestedCount = 1; 
+
+    // Look for spelled-out numbers
+    const wordMatch = cleanPrompt.toLowerCase().match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/);
+    // Look ONLY for 1 or 2 digit numbers to skip 4-digit years!
+    const digitMatch = cleanPrompt.match(/\b\d{1,2}\b/);
+
+    // Prioritize manual URL count, then word matches, then digit matches
+    if (mode === 'sourcing' && manualUrls.length > 0 && !digitMatch && !wordMatch) {
+        requestedCount = manualUrls.length;
+    } else if (wordMatch) {
+        requestedCount = numberWords[wordMatch[0]];
+    } else if (digitMatch) {
+        requestedCount = parseInt(digitMatch[0], 10);
     }
 
-    let requestedCount = 1;
+    // FIXED: Global cap applies no matter how requestedCount was established
+    const cappedRequestedCount = Math.min(requestedCount, planLimits.num_mass_sparks);
 
-    if (mode === 'sourcing') {
-        if (manualUrls.length > 0 && !mentionedNumber) {
-            requestedCount = manualUrls.length;
-        } else if (mentionedNumber) {
-            requestedCount = Math.min(mentionedNumber, planLimits.num_mass_sparks);
-        }
-    } else {
-        if (mentionedNumber) {
-            requestedCount = Math.min(mentionedNumber, planLimits.num_mass_sparks);
-        }
-    }
-
-    const finalForgeCount = Math.min(requestedCount, remainingSpace);
+    // Final limit against physical storage space
+    const finalForgeCount = Math.min(cappedRequestedCount, remainingSpace);
     
     // Progress Helper: Prevents overwriting the Cooldown Timer
     const updateForgeStatus = (text) => {
@@ -1123,15 +1139,20 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
         const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
         const finalImageUrl = templateUrl || defaultThumb;
 
-        if (mode === 'sourcing') {
-            const isAiReferenceSearch = (manualUrls.length > 0 && mentionedNumber);
+        // --------------------------------------------------------
+        // 4. DIVIDE PATHS BY RESOLVED INTENT
+        // --------------------------------------------------------
+        if (activeResolution === 'source') {
+            const isAiReferenceSearch = (manualUrls.length > 0 && (digitMatch || wordMatch));
             let linksToSave = [];
 
             if (manualUrls.length > 0 && !isAiReferenceSearch) {
                 linksToSave = manualUrls.slice(0, finalForgeCount).map(url => ({ name: generateSparkName(currentId), url }));
             } else {
                 updateForgeStatus("CONSULTING MODEL POOL...");
-                const aiLinks = await callGeminiAPI(prompt, finalForgeCount, 'source');
+                
+                // Passing activeResolution ('source') dynamically
+                const aiLinks = await callGeminiAPI(prompt, finalForgeCount, activeResolution);
                 linksToSave = aiLinks.map(item => ({ name: item.name || generateSparkName(currentId), url: item.url }));
             }
 
@@ -1145,13 +1166,13 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
                 updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
             }
         } else {
-            // 'Create' mode 
+            // 'Create' mode (activeResolution === 'create')
             for (let i = 0; i < finalForgeCount; i++) {
                 const progress = Math.round((i / finalForgeCount) * 100);
                 updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
-                // This call may trigger the 60s cooldown internally
-                const code = await callGeminiAPI(prompt, i, 'code');
+                // Passing activeResolution ('create') dynamically
+                const code = await callGeminiAPI(prompt, i, activeResolution);
                 const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
                 
                 await saveSpark(currentId, { name: sparkName, code, prompt, type: 'code', image: finalImageUrl }, templateName, finalImageUrl);
@@ -1173,7 +1194,6 @@ async function executeMassSpark(currentId, prompt, mode, templateName, templateU
         }
     }
 }
-
 /*
  * Processes the image field from the DB.
  * Returns the Base64 string if present, or a formatted asset path.
@@ -1688,28 +1708,48 @@ function formatTimeAgo(timestamp) {
 // --- SMART LOGIC ASSIGNER ---
 function predictLogicType(prompt) {
     const p = prompt.toLowerCase();
-    // Use the 20 arcade-current-types to see if it's a known 'source' type first
     const types = databaseCache.settings?.['arcade-current-types'] || [];
+    
+    // Look for the matched type object from your DB list
     const matchedType = types.find(t => p.includes(t.id) || p.includes(t.name.toLowerCase()));
     
-    if (matchedType) return matchedType.logic;
+    // Scenario 1: No DB type matched at all
+    if (!matchedType) {
+        let fallbackLogic = 'hybrid';
+        if (p.includes('generate') || p.includes('create') || p.includes('build') || p.includes('design')) fallbackLogic = 'create';
+        if (p.includes('top') || p.includes('get') || p.includes('find') || p.includes('list') || p.includes('show me')) fallbackLogic = 'source';
+        
+        // If it's still hybrid after keywords, we safely default it to 'create' 
+        // to prevent callGeminiAPI from getting stuck
+        if (fallbackLogic === 'hybrid') fallbackLogic = 'create';
+        
+        return { id: 'custom', name: 'Custom', logic: fallbackLogic };
+    }
     
-    // Fallback Gemini-style keyword matching for Custom
-    if (p.includes('generate') || p.includes('create') || p.includes('build') || p.includes('design')) return 'create';
-    if (p.includes('top') || p.includes('find') || p.includes('list') || p.includes('show me')) return 'source';
-    return 'hybrid'; 
+    // Scenario 2: DB type matched, and it has a strict rule ('create' or 'source')
+    if (matchedType.logic !== 'hybrid') {
+        return matchedType; // Returns the exact object straight from the DB
+    }
+    
+    // Scenario 3: DB type matched, but the logic is 'hybrid'
+    // We must parse the prompt to determine the true intent!
+    let resolvedLogic = 'create'; // Default fallback for safety
+    
+    if (p.includes('top') || p.includes('get') || p.includes('find') || p.includes('list') || p.includes('show me')) {
+        resolvedLogic = 'source';
+    } else if (p.includes('generate') || p.includes('create') || p.includes('build') || p.includes('design')) {
+        resolvedLogic = 'create';
+    }
+    
+    console.log(`[FORGE]: Hybrid type [${matchedType.name}] resolved to logic [${resolvedLogic}] based on prompt.`);
+    
+    // Return the matched object, but with the 'logic' property strictly forced to an actionable target!
+    return {
+        ...matchedType,
+        logic: resolvedLogic
+    };
 }
-
-function closeArcadeSettings() {
-    // The function already "knows" what globalTheme is because it's in the outer scope
-    console.log("[UI]: Reverting to stored theme:", globalTheme);
-    // Apply the globalTheme
-    applyTheme(globalTheme);
-
-    const hud = document.getElementById('arcadesettings-hud');
-    if (hud) hud.classList.remove('active');
-}
-
+        
 /* * Objective: Initialize or Re-Forge Arcade Identity
  * Task: Dynamically generate HUD structure and populate with Firebase data.
  */
