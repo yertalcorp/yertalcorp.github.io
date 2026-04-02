@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1051,6 +1051,7 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
+
 async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
@@ -1061,11 +1062,17 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     const prediction = resolveCategoryFromPrompt(prompt); 
     const predictedType = prediction.id;        // Now evaluates to 'videos'!
     const activeResolution = prediction.logic;  // e.g., 'source'
+    const predictedCurrentName = prediction.name; // e.g., 'Videos'
     
     // Warn the user if they are trying to put a type inside a mismatched board
-    if (templateName && predictedType !== templateName.toLowerCase()) {
+    // Added safety check to handle cases where templateName might be null or undefined
+    const cleanTemplateName = templateName ? templateName.toLowerCase() : '';
+    
+    if (predictedType !== cleanTemplateName) {
         const proceed = confirm(
-            `⚠️ Warning: This prompt looks like it belongs to [${prediction.name}] current, but you are trying to forge it inside a [${currentName}] current.\n\nDo you want to continue anyway?`
+            `⚠️ Warning: The prompt category doesn't match the current type.\n\n` +
+            `Either change the prompt to use the current type [${currentName}] or create/use a current for [${predictedCurrentName}].\n\n` +
+            `Do you want to continue anyway?`
         );
         
         if (!proceed) {
