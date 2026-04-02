@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -2100,52 +2100,7 @@ function getThemeBrandingColor(themeId) {
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     return themes?.[themeId]?.['branding-color'] || "#00f2ff";
 }
-function resolveCategoryFromPrompt(prompt) {
-    const cleanPrompt = prompt.toLowerCase().trim();
-    // Split into words/tokens and remove punctuation
-    const tokens = cleanPrompt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").split(/\s+/);
-    
-    const presets = databaseCache.settings?.['arcade-current-types'] || [];
-    
-    // We want to find the DB entry whose regex pattern matches our prompt
-    const matchedCategory = presets.find(category => {
-        if (!category.regex) return false;
-        
-        try {
-            // Compile the stored string into a case-insensitive regex
-            const regexPattern = new RegExp(category.regex, 'i');
-            
-            // Check if the overall prompt matches the regex OR if any extracted token does
-            const promptMatches = regexPattern.test(cleanPrompt);
-            const tokenMatches = tokens.some(token => regexPattern.test(token));
-            
-            return promptMatches || tokenMatches;
-        } catch (regexErr) {
-            console.warn(`[FORGE]: Invalid regex defined for category ${category.id}:`, regexErr);
-            return false;
-        }
-    });
 
-    // If something matched, extract the ID, name, and object type!
-    if (matchedCategory) {
-        console.log(`[FORGE]: Resolved category [${matchedCategory.name}] via regex matching.`);
-        return {
-            id: matchedCategory.id,
-            name: matchedCategory.name,
-            logic: matchedCategory.logic,
-            image: matchedCategory.image
-        };
-    }
-
-    // Ultimate fallback if prompt is totally obscure
-    const isCreate = cleanPrompt.includes('generate') || cleanPrompt.includes('build');
-    return {
-        id: 'custom',
-        name: 'Custom',
-        logic: isCreate ? 'create' : 'hybrid',
-        image: '/assets/thumbnails/default.jpg'
-    };
-}
 // ----------------------------------
 window.handleCreation = handleCreation;
 // Force the function to be global so the HTML button can see it
