@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1396,7 +1396,7 @@ const generateSparkName = (currentName) => {
     return `${currentName}-Spark#${datePart}-${timePart}`;
 };
 
-function resolveCategoryFromPrompt(prompt) {
+function resolveCategoryFromPrompt(prompt, currentName) {
     const cleanPrompt = prompt.toLowerCase().trim();
     // Split into words/tokens and remove punctuation
     const tokens = cleanPrompt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").split(/\s+/);
@@ -1406,70 +1406,80 @@ function resolveCategoryFromPrompt(prompt) {
     
     const presets = databaseCache.settings?.['arcade-current-types'] || [];
     
-    // ==========================================
-    // 1. STRICT ID & NAME SCAN (First Priority)
-    // ==========================================
-    const strictMatch = presets.find(category => {
+    // ========================================================
+    // 1. ACTIVE BOARD NAME CHECK (First Priority)
+    // ========================================================
+    // Check if any whole word in the prompt matches the active current's name
+    if (currentName) {
+        const cleanCurrentName = currentName.toLowerCase().trim();
+        const currentNameRegex = new RegExp(`\\b${cleanCurrentName}\\b`, 'i');
+        
+        // Test if the prompt contains the current board's name as a whole word
+        const boardMatches = currentNameRegex.test(cleanPrompt);
+        
+        if (boardMatches) {
+            // Find that actual preset in the DB so we can return its correct image and logic
+            const matchingPreset = presets.find(p => (p.name || '').toLowerCase().trim() === cleanCurrentName);
+            
+            if (matchingPreset) {
+                console.log(`[DEBUG_REGEX]: Match found! Prompt matches active board: [${matchingPreset.name}]`);
+                return {
+                    id: matchingPreset.id,
+                    name: matchingPreset.name,
+                    logic: matchingPreset.logic,
+                    image: matchingPreset.image
+                };
+            }
+        }
+    }
+
+    // ========================================================
+    // 2. DB ID, NAME, & REGEX SCAN (Second Priority)
+    // ========================================================
+    const matchedCategory = presets.find(category => {
         const catId = (category.id || '').toLowerCase().trim();
         const catName = (category.name || '').toLowerCase().trim();
         
-        // 🔥 MODIFIED: Using regex with \b word boundaries to force WHOLE WORD matching
+        // A. Check ID match (Whole Word)
         let idMatches = false;
-        let nameMatches = false;
-
         if (catId) {
             const idRegex = new RegExp(`\\b${catId}\\b`, 'i');
             idMatches = idRegex.test(cleanPrompt);
         }
 
+        // B. Check Name match (Whole Word)
+        let nameMatches = false;
         if (catName) {
             const nameRegex = new RegExp(`\\b${catName}\\b`, 'i');
             nameMatches = nameRegex.test(cleanPrompt);
         }
         
-        if (idMatches || nameMatches) {
+        // C. Check Regex match (Whole Word)
+        let regexMatches = false;
+        if (category.regex) {
+            try {
+                const boundedRegex = `\\b(${category.regex})\\b`;
+                const regexPattern = new RegExp(boundedRegex, 'i');
+                const promptHitsRegex = regexPattern.test(cleanPrompt);
+                const tokenHitsRegex = tokens.some(token => regexPattern.test(token));
+                
+                regexMatches = promptHitsRegex || tokenHitsRegex;
+            } catch (regexErr) {
+                console.warn(`[DEBUG_REGEX]: Invalid regex defined for category ${category.id}:`, regexErr);
+            }
+        }
+        
+        // If it specifically matches the ID, Name, or defined Regex:
+        if (idMatches || nameMatches || regexMatches) {
             let matchType = [];
             if (idMatches) matchType.push("ID");
             if (nameMatches) matchType.push("Name");
+            if (regexMatches) matchType.push("Regex");
             
-            console.log(`[DEBUG_REGEX]: Strict Match found! Category [${category.name}] triggered via [${matchType.join(' + ')}]`);
+            console.log(`[DEBUG_REGEX]: DB Match found! Category [${category.name}] triggered via [${matchType.join(' + ')}]`);
             return true;
         }
         return false;
-    });
-
-    if (strictMatch) {
-        return {
-            id: strictMatch.id,
-            name: strictMatch.name,
-            logic: strictMatch.logic,
-            image: strictMatch.image
-        };
-    }
-
-    // ==========================================
-    // 2. REGEX SCAN (Second Priority)
-    // ==========================================
-    const matchedCategory = presets.find(category => {
-        if (!category.regex) return false;
-        
-        try {
-            // 🔥 MODIFIED: Wrapping your DB regex patterns in \b to force WHOLE WORD matches!
-            const boundedRegex = `\\b(${category.regex})\\b`;
-            const regexPattern = new RegExp(boundedRegex, 'i');
-            
-            const promptHitsRegex = regexPattern.test(cleanPrompt);
-            const tokenHitsRegex = tokens.some(token => regexPattern.test(token));
-            
-            if (promptHitsRegex || tokenHitsRegex) {
-                console.log(`[DEBUG_REGEX]: Regex Match found! Category [${category.name}] triggered via [Regex]`);
-                return true;
-            }
-            return false;
-        } catch (regexErr) {
-            console.warn(`[DEBUG_REGEX]: Invalid regex defined for category ${category.id}:`, regexErr);
-            return false;
-        }
     });
 
     if (matchedCategory) {
@@ -1486,7 +1496,7 @@ function resolveCategoryFromPrompt(prompt) {
     // ==========================================
     console.log(`[DEBUG_REGEX]: No matches found in DB. Falling back to [Custom].`);
     
-    // 🔥 MODIFIED: Fallbacks also use word boundaries so words like "recreate" don't trigger "create"
+    // Fallback still respects whole words
     const isCreate = /\b(generate|build|create)\b/i.test(cleanPrompt);
     
     return {
