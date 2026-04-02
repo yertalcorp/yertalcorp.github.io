@@ -1551,7 +1551,7 @@ async function callGeminiAPI(prompt, val, type) {
                 continue;
             }
 
-            // 3. SUCCESS PATH
+// 3. SUCCESS PATH
             console.log(`[SUCCESS]: ${modelName} responded successfully.`);
             
             const data = await response.json();
@@ -1560,16 +1560,18 @@ async function callGeminiAPI(prompt, val, type) {
             if (currentEntry[1] > 0) currentEntry[1]--;
 
             const result = data.candidates[0].content.parts[0].text;
-            return isCode ? result.replace(/```html|```javascript|```/g, '').trim() 
-                          : JSON.parse(result.replace(/```json|```/g, '').trim());
-
-        } catch (err) {
-            console.error(`[CRITICAL FAIL]: ${modelName} encountered a network or code execution error:`, err);
             
-            currentEntry[1]++;
-            attempts++;
-        }
-    }
+            if (isCode) {
+                return result.replace(/```html|```javascript|```/g, '').trim();
+            } else {
+                // Defensive JSON check: If it's not valid JSON, just return the raw string!
+                try {
+                    return JSON.parse(result.replace(/```json|```/g, '').trim());
+                } catch (jsonErr) {
+                    console.warn(`[FORGE]: Model returned a raw string instead of JSON. Returning raw text.`);
+                    return result.trim();
+                }
+            }
 
     // 4. EXHAUSTION TRIGGER: If we reach here, every model in the pool failed.
     console.error("CRITICAL: All models in pool failed. Triggering 60s cooldown.");
