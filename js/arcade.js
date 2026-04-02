@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:38:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1051,15 +1051,13 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
-
 async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
     // --------------------------------------------------------
     // 1. TIGHTENED TYPE & LOGIC CHECK (UPDATED TO USE REGEX!)
     // --------------------------------------------------------
-    // We call the function that actually checks the regex array!
-const prediction = resolveCategoryFromPrompt(prompt); 
+    const prediction = resolveCategoryFromPrompt(prompt); 
     const predictedType = prediction.id;        
     const activeResolution = prediction.logic;  
     const predictedCurrentName = prediction.name; // "Movies"
@@ -1077,6 +1075,7 @@ const prediction = resolveCategoryFromPrompt(prompt);
             return; 
         }
     }
+    
     // 2. DYNAMIC PLAN LOOKUP & CAPACITY VALIDATION
     const userProfile = databaseCache.users?.[user.uid]?.profile || {};
     const planType = userProfile.plan_type || 'free';
@@ -1139,10 +1138,17 @@ const prediction = resolveCategoryFromPrompt(prompt);
 
     try {
         const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
+        
+        // --------------------------------------------------------
+        // 4. PREPARE THE PARENT FALLBACK VARIABLES
+        // --------------------------------------------------------
+        // Even though its content (code/link) relates to the prompt's prediction, 
+        // we lock down the visual style and parent properties to match the current board.
         const finalImageUrl = templateUrl || defaultThumb;
+        const finalCategoryName = templateName;
 
         // --------------------------------------------------------
-        // 4. DIVIDE PATHS BY RESOLVED INTENT
+        // 5. DIVIDE PATHS BY RESOLVED INTENT
         // --------------------------------------------------------
         if (activeResolution === 'source') {
             const isAiReferenceSearch = (manualUrls.length > 0 && (digitMatch || wordMatch));
@@ -1154,7 +1160,6 @@ const prediction = resolveCategoryFromPrompt(prompt);
                 updateForgeStatus("CONSULTING MODEL POOL...");
                 
                 // Passing activeResolution ('source') dynamically
-// Passing activeResolution ('source') dynamically
                 const aiLinks = await callGeminiAPI(prompt, finalForgeCount, activeResolution);
                 
                 let rawLinksArray = [];
@@ -1177,13 +1182,15 @@ const prediction = resolveCategoryFromPrompt(prompt);
                 linksToSave = rawLinksArray.map(item => ({ 
                     name: item.name || generateSparkName(currentId), 
                     url: item.url || item 
-                }));            }
+                }));            
+            }
 
             for (let i = 0; i < linksToSave.length; i++) {
                 const item = linksToSave[i];
                 const sparkName = linksToSave.length > 1 ? `${item.name}-${i + 1}` : item.name;
                 
-                await saveSpark(currentId, { name: sparkName, link: item.url, prompt, type: 'link', image: finalImageUrl }, templateName, finalImageUrl);
+                // We pass 'currentId' but enforce the board's native 'finalCategoryName' and 'finalImageUrl'
+                await saveSpark(currentId, { name: sparkName, link: item.url, prompt, type: 'link', image: finalImageUrl }, finalCategoryName, finalImageUrl);
                 
                 const progress = Math.round(((i + 1) / linksToSave.length) * 100);
                 updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
@@ -1198,7 +1205,8 @@ const prediction = resolveCategoryFromPrompt(prompt);
                 const code = await callGeminiAPI(prompt, i, activeResolution);
                 const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
                 
-                await saveSpark(currentId, { name: sparkName, code, prompt, type: 'code', image: finalImageUrl }, templateName, finalImageUrl);
+                // We pass 'currentId' but enforce the board's native 'finalCategoryName' and 'finalImageUrl'
+                await saveSpark(currentId, { name: sparkName, code, prompt, type: 'code', image: finalImageUrl }, finalCategoryName, finalImageUrl);
             }
             // Final completion update
             updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [==========] 100%`);
@@ -1217,6 +1225,7 @@ const prediction = resolveCategoryFromPrompt(prompt);
         }
     }
 }
+
 /*
  * Processes the image field from the DB.
  * Returns the Base64 string if present, or a formatted asset path.
@@ -1397,27 +1406,40 @@ function resolveCategoryFromPrompt(prompt) {
     
     const presets = databaseCache.settings?.['arcade-current-types'] || [];
     
-    // We want to find the DB entry whose regex pattern matches our prompt
     const matchedCategory = presets.find(category => {
-        if (!category.regex) return false;
+        const catId = (category.id || '').toLowerCase();
+        const catName = (category.name || '').toLowerCase();
         
-        try {
-            // Compile the stored string into a case-insensitive regex
-            const regexPattern = new RegExp(category.regex, 'i');
-            
-            // Check if prompt or tokens hit the trigger
-            const promptMatches = regexPattern.test(cleanPrompt);
-            const tokenMatches = tokens.some(token => regexPattern.test(token));
-            
-            if (promptMatches || tokenMatches) {
-                console.log(`[DEBUG_REGEX]: Match found! Category [${category.name}] triggered by regex: /${category.regex}/i`);
-                return true;
+        // 1. Check ID and Name matches (both full prompt and token checks)
+        const idMatches = catId && cleanPrompt.includes(catId);
+        const nameMatches = catName && cleanPrompt.includes(catName);
+        
+        // 2. Check Regex match
+        let regexMatches = false;
+        if (category.regex) {
+            try {
+                const regexPattern = new RegExp(category.regex, 'i');
+                const promptHitsRegex = regexPattern.test(cleanPrompt);
+                const tokenHitsRegex = tokens.some(token => regexPattern.test(token));
+                
+                regexMatches = promptHitsRegex || tokenHitsRegex;
+            } catch (regexErr) {
+                console.warn(`[DEBUG_REGEX]: Invalid regex defined for category ${category.id}:`, regexErr);
             }
-            return false;
-        } catch (regexErr) {
-            console.warn(`[DEBUG_REGEX]: Invalid regex defined for category ${category.id}:`, regexErr);
-            return false;
         }
+        
+        // If ANY of these 3 conditions match, we successfully resolved the category!
+        if (idMatches || nameMatches || regexMatches) {
+            let matchType = [];
+            if (idMatches) matchType.push("ID");
+            if (nameMatches) matchType.push("Name");
+            if (regexMatches) matchType.push("Regex");
+            
+            console.log(`[DEBUG_REGEX]: Match found! Category [${category.name}] triggered via [${matchType.join(' + ')}]`);
+            return true;
+        }
+        
+        return false;
     });
 
     if (matchedCategory) {
