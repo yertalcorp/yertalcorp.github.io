@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:25:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1398,6 +1398,7 @@ const generateSparkName = (currentName) => {
 
 function resolveCategoryFromPrompt(prompt) {
     const cleanPrompt = prompt.toLowerCase().trim();
+    // Split into words/tokens and remove punctuation
     const tokens = cleanPrompt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").split(/\s+/);
     
     console.log(`[DEBUG_REGEX]: Evaluating prompt: "${cleanPrompt}"`);
@@ -1408,14 +1409,23 @@ function resolveCategoryFromPrompt(prompt) {
     // ==========================================
     // 1. STRICT ID & NAME SCAN (First Priority)
     // ==========================================
-    // We check this first so a name match takes priority over a generic regex trigger like "create"
     const strictMatch = presets.find(category => {
         const catId = (category.id || '').toLowerCase().trim();
         const catName = (category.name || '').toLowerCase().trim();
         
-        // Ensure the ID or Name is not empty and is explicitly spelled out in the prompt
-        const idMatches = catId && cleanPrompt.includes(catId);
-        const nameMatches = catName && cleanPrompt.includes(catName);
+        // 🔥 MODIFIED: Using regex with \b word boundaries to force WHOLE WORD matching
+        let idMatches = false;
+        let nameMatches = false;
+
+        if (catId) {
+            const idRegex = new RegExp(`\\b${catId}\\b`, 'i');
+            idMatches = idRegex.test(cleanPrompt);
+        }
+
+        if (catName) {
+            const nameRegex = new RegExp(`\\b${catName}\\b`, 'i');
+            nameMatches = nameRegex.test(cleanPrompt);
+        }
         
         if (idMatches || nameMatches) {
             let matchType = [];
@@ -1444,7 +1454,10 @@ function resolveCategoryFromPrompt(prompt) {
         if (!category.regex) return false;
         
         try {
-            const regexPattern = new RegExp(category.regex, 'i');
+            // 🔥 MODIFIED: Wrapping your DB regex patterns in \b to force WHOLE WORD matches!
+            const boundedRegex = `\\b(${category.regex})\\b`;
+            const regexPattern = new RegExp(boundedRegex, 'i');
+            
             const promptHitsRegex = regexPattern.test(cleanPrompt);
             const tokenHitsRegex = tokens.some(token => regexPattern.test(token));
             
@@ -1472,7 +1485,10 @@ function resolveCategoryFromPrompt(prompt) {
     // 3. ULTIMATE FALLBACK
     // ==========================================
     console.log(`[DEBUG_REGEX]: No matches found in DB. Falling back to [Custom].`);
-    const isCreate = cleanPrompt.includes('generate') || cleanPrompt.includes('build') || cleanPrompt.includes('create');
+    
+    // 🔥 MODIFIED: Fallbacks also use word boundaries so words like "recreate" don't trigger "create"
+    const isCreate = /\b(generate|build|create)\b/i.test(cleanPrompt);
+    
     return {
         id: 'custom',
         name: 'Custom',
