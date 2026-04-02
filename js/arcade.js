@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1381,7 +1381,7 @@ window.handleCreation = async (currentId, currentName) => {
         const isUrl = /^(http|https):\/\/[^ "]+$/.test(input);
         let mode = (resolvedCategory.logic === 'source' || isUrl) ? 'sourcing' : 'prompt';
 
-        console.log(`[FORGE]: Originating Board: "${currentBoardName}". Classified Spark Category: "${resolvedCategory.name}"`);
+        console.log(`[FORGE]: Originating Board: "${currentName}". Classified Spark Category: "${resolvedCategory.name}"`);
 
         // 3. TRIGGER MASS SPARK
         // We pass the root 'currentId' so it saves under the current board's infrastructure,
@@ -1399,7 +1399,7 @@ window.handleCreation = async (currentId, currentName) => {
 
     } catch (e) {
         console.error("Creation Error:", e);
-        await executeMassSpark(currentId, input, 'prompt', 'Custom', '/assets/thumbnails/default.jpg');
+        await executeMassSpark(currentId, currentName, input, 'prompt', 'Custom', '/assets/thumbnails/default.jpg');
     }
 };
 /*
