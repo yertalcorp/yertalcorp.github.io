@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1051,20 +1051,18 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
-/* executeMassSpark Function */
 async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
     // --------------------------------------------------------
-    // 1. TIGHTENED TYPE & LOGIC CHECK
+    // 1. TIGHTENED TYPE & LOGIC CHECK (UPDATED TO USE REGEX!)
     // --------------------------------------------------------
-    // Now returns the whole object with guaranteed 'create' or 'source' logic!
-    const prediction = predictLogicType(prompt); 
-    const predictedType = prediction.id;        // e.g., 'movies'
-    const activeResolution = prediction.logic;  // e.g., 'create' or 'source'
+    // We call the function that actually checks the regex array!
+    const prediction = resolveCategoryFromPrompt(prompt); 
+    const predictedType = prediction.id;        // Now evaluates to 'videos'!
+    const activeResolution = prediction.logic;  // e.g., 'source'
     
     // Warn the user if they are trying to put a type inside a mismatched board
-    // (We safely bypass this if the template doesn't have a specific name mapping)
     if (templateName && predictedType !== templateName.toLowerCase()) {
         const proceed = confirm(
             `⚠️ Warning: This prompt looks like it belongs to [${prediction.name}] current, but you are trying to forge it inside a [${currentName}] current.\n\nDo you want to continue anyway?`
@@ -1075,7 +1073,6 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
             return; 
         }
     }
-
     // 2. DYNAMIC PLAN LOOKUP & CAPACITY VALIDATION
     const userProfile = databaseCache.users?.[user.uid]?.profile || {};
     const planType = userProfile.plan_type || 'free';
@@ -1768,7 +1765,25 @@ function predictLogicType(prompt) {
         logic: resolvedLogic
     };
 }
+/*
+ * HUD Controls: Closes the Arcade Settings overlay
+ */
+window.closeArcadeSettings = () => {
+    const hud = document.getElementById('arcadesettings-hud');
+    
+    if (hud) {
+        // Option A: Instantly hide it
+        //hud.style.display = 'none';
         
+        // Option B: If you are using a fade-out animation in showroom_style.css or arcade.css
+        hud.classList.remove('active'); 
+        
+        console.log("[UI]: Arcade Settings HUD closed.");
+    } else {
+        console.warn("[UI]: Could not find 'arcadesettings-hud' to close.");
+    }
+};
+
 /* * Objective: Initialize or Re-Forge Arcade Identity
  * Task: Dynamically generate HUD structure and populate with Firebase data.
  */
