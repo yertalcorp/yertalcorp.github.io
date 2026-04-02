@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1361,6 +1361,59 @@ const generateSparkName = (currentName) => {
     
     return `${currentName}-Spark#${datePart}-${timePart}`;
 };
+
+function resolveCategoryFromPrompt(prompt) {
+    const cleanPrompt = prompt.toLowerCase().trim();
+    // Split into words/tokens and remove punctuation
+    const tokens = cleanPrompt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").split(/\s+/);
+    
+    console.log(`[DEBUG_REGEX]: Evaluating prompt: "${cleanPrompt}"`);
+    console.log(`[DEBUG_REGEX]: Extracted tokens:`, tokens);
+    
+    const presets = databaseCache.settings?.['arcade-current-types'] || [];
+    
+    // We want to find the DB entry whose regex pattern matches our prompt
+    const matchedCategory = presets.find(category => {
+        if (!category.regex) return false;
+        
+        try {
+            // Compile the stored string into a case-insensitive regex
+            const regexPattern = new RegExp(category.regex, 'i');
+            
+            // Check if prompt or tokens hit the trigger
+            const promptMatches = regexPattern.test(cleanPrompt);
+            const tokenMatches = tokens.some(token => regexPattern.test(token));
+            
+            if (promptMatches || tokenMatches) {
+                console.log(`[DEBUG_REGEX]: Match found! Category [${category.name}] triggered by regex: /${category.regex}/i`);
+                return true;
+            }
+            return false;
+        } catch (regexErr) {
+            console.warn(`[DEBUG_REGEX]: Invalid regex defined for category ${category.id}:`, regexErr);
+            return false;
+        }
+    });
+
+    if (matchedCategory) {
+        return {
+            id: matchedCategory.id,
+            name: matchedCategory.name,
+            logic: matchedCategory.logic,
+            image: matchedCategory.image
+        };
+    }
+
+    // Ultimate fallback if prompt is totally obscure
+    console.log(`[DEBUG_REGEX]: No matches found in DB. Falling back to [Custom].`);
+    const isCreate = cleanPrompt.includes('generate') || cleanPrompt.includes('build');
+    return {
+        id: 'custom',
+        name: 'Custom',
+        logic: isCreate ? 'create' : 'hybrid',
+        image: '/assets/thumbnails/default.jpg'
+    };
+}
 
 window.handleCreation = async (currentId, currentName) => {
     const promptInput = document.getElementById(`input-${currentId}`);
