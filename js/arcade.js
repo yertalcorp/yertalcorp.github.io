@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:04:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1058,6 +1058,7 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 function shapeAiPrompt(rawPrompt, count, mode) {
     const trimmed = rawPrompt.trim();
     console.log("In shapeAiPrompt mode=", mode);
+    
     // --------------------------------------------------------
     // SOURCING MODE
     // --------------------------------------------------------
@@ -1074,9 +1075,8 @@ Rules:
     // --------------------------------------------------------
     if (mode === 'create') {
         return `You are an expert physics-lab, world-logic, game and application developer specializing in standalone, zero-dependency web applications. Develop a visually stunning masterpiece for this prompt: "${trimmed}".
-        Rules:
-        Return ONLY fully working, pure, executable HTML code (including CSS and JS). Do not provide explanations or wrap the code inside markdown backticks.`;
-        `;
+Rules:
+Return ONLY fully working, pure, executable HTML code (including CSS and JS). Do not provide explanations or wrap the code inside markdown backticks.`;
     }
     
     return rawPrompt; 
