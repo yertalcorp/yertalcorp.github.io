@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1062,7 +1062,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     let activeResolution = prediction.logic;  
     const predictedCurrentName = prediction.name; // e.g., "Movies", "Custom"
     
-    // 🔥 NEW RULE 1: If the prompt is of 'custom' category, default to sourcing!
+    // 🔥 Custom category defaults to sourcing!
     if (predictedCurrentName.toLowerCase() === 'custom') {
         console.log("[FORGE]: Custom category detected. Defaulting to 'source' resolution.");
         activeResolution = 'source';
@@ -1122,7 +1122,6 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
         requestedCount = 1;
     }
 
-    // 🚨 NEW RULE 2: Compute target loop count using the lesser of requested count or mass spark limit
     const cappedRequestedCount = Math.min(requestedCount, planLimits.num_mass_sparks);
     const finalForgeCount = Math.min(cappedRequestedCount, remainingSpace);
 
@@ -1142,14 +1141,10 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
             const isAiReferenceSearch = (manualUrls.length > 0 && (digitMatch || wordMatch));
             let linksToSave = [];
 
-            // 🚨 NEW RULE 3: If manualUrls exist, split up the remaining prompt text!
             if (manualUrls.length > 0 && !isAiReferenceSearch) {
                 console.log("[FORGE]: Processing manual URLs and extracting surrounding text strings.");
                 
-                // Split the remaining cleaned prompt by commas or lines to isolate distinct prompt tasks
                 const textChunks = cleanPrompt.split(/,|\n/).map(str => str.trim()).filter(Boolean);
-                
-                // Map strings & URLs together up to the calculated limit (whichever is lesser)
                 const itemsCountToTake = Math.min(manualUrls.length, finalForgeCount);
                 
                 for (let i = 0; i < itemsCountToTake; i++) {
@@ -1160,7 +1155,11 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
                 }
             } else {
                 updateForgeStatus("CONSULTING MODEL POOL...");
-                const aiLinks = await callGeminiAPI(prompt, finalForgeCount, activeResolution);
+                
+                // 🧠 PROMPT INTERCEPT: Force Gemini to output a valid URL string or a clean comma-separated string of resource URLs
+                const strictSourcePrompt = `Your task is strictly to find sourcing web links or high-authority domain names for: "${prompt}". Do not write conversational filler or explanations. Return ONLY valid URLs or clean strings separated by commas.`;
+                
+                const aiLinks = await callGeminiAPI(strictSourcePrompt, finalForgeCount, activeResolution);
                 let rawLinksArray = [];
                 
                 if (Array.isArray(aiLinks)) {
@@ -1192,11 +1191,15 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
                 const progress = Math.round((i / finalForgeCount) * 100);
                 updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
-                const code = await callGeminiAPI(prompt, i, activeResolution);
+                // 🧠 PROMPT INTERCEPT: Force Gemini to execute pure standalone HTML/JS code
+                const strictCodePrompt = `Develop functional standalone web code (HTML, CSS, JS) encapsulated appropriately for this request: "${prompt}". Return ONLY the executable code block. Do not provide setup instructions, explanations, or backticks enclosing text.`;
+
+                const code = await callGeminiAPI(strictCodePrompt, i, activeResolution);
                 const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
                 
-                const isCode = code.trim().startsWith('<') || code.trim().startsWith('function') || code.trim().startsWith('const');
-                const sparkType = isCode ? 'code' : 'link';
+                // Fallback analysis to assign correct types based on the returned payload structure
+                const isCode = code.trim().startsWith('<') || code.trim().startsWith('function') || code.trim().startsWith('const') || code.trim().includes('document.');
+                
                 const payload = isCode ? { name: sparkName, code, prompt, type: 'code', image: finalImageUrl } 
                                        : { name: sparkName, link: code, prompt, type: 'link', image: finalImageUrl };
 
