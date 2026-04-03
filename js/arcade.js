@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1057,7 +1057,7 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
  */
 function shapeAiPrompt(rawPrompt, count, mode) {
     const trimmed = rawPrompt.trim();
-    
+    console.log("In shapeAiPrompt mode=", mode);
     // --------------------------------------------------------
     // SOURCING MODE
     // --------------------------------------------------------
@@ -1073,15 +1073,7 @@ Rules:
     // CREATE MODE (MASTERPIECE INSTRUCTIONS)
     // --------------------------------------------------------
     if (mode === 'create') {
-        return `You are an expert game and application developer specializing in standalone, zero-dependency web applications. Develop a visually stunning masterpiece for this prompt: "${trimmed}".
-
-Core Architectural Rules:
-1. DESIGN & FEEL: Set an expert persona and make the UI look and feel highly colourful, gradient-heavy, and futuristic. Leverage multi-layered CSS box-shadows and transforms to provide a palpable sense of physical depth. Avoid flat, boring UI.
-2. HYPER-INTERACTIVE INPUTS (CRITICAL): Mouse controls and arrow key movements are explicitly expected and mandatory. All referenced or logically implied controls (such as left-click, dragging, mouse tracking, or arrow keys for movement/steering) MUST be completely wired up, calculated, and perfectly functional. 
-3. RELIABLE BUTTONS: Every on-screen button must have active, working click event listeners bound to it. If pressed, they must trigger their intended visual effect or simulation state change without fail.
-4. DYNAMIC ACTOR INSTANTIATION: You must create, calculate, and draw the primary visual subject or interactive force requested by the user (e.g., mirrors, lenses, robots, or physics objects) FIRST in your script execution. Do not build UI sidebars or status footers and leave the center canvas empty. The subject must be actively visible on load.
-5. STANDALONE EXECUTION: The output must run flawlessly when dropped into an isolated sandbox environment. Zero external dependencies (No external scripts or styles allowed).
-6. OUTPUT FORMAT: Return ONLY pure, executable HTML code. Do not provide setup instructions, explanations, or wrap the code inside markdown backticks. Fall directly into the code.`;
+        return `You are an expert physics-lab, world-logic, game and application developer specializing in standalone, zero-dependency web applications. Develop a visually stunning masterpiece for this prompt: "${trimmed}".`;
     }
     
     return rawPrompt; 
