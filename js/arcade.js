@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1055,24 +1055,29 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     const status = document.getElementById('engine-status-text');
     
     // --------------------------------------------------------
-    // 1. TIGHTENED TYPE & LOGIC CHECK (UPDATED TO USE REGEX!)
+    // 1. TIGHTENED TYPE & LOGIC CHECK (UPDATED!)
     // --------------------------------------------------------
-    const prediction = resolveCategoryFromPrompt(prompt); 
+    // Pass currentName to prioritize the active board's name
+    const prediction = resolveCategoryFromPrompt(prompt, currentName); 
     const predictedType = prediction.id;        
     const activeResolution = prediction.logic;  
-    const predictedCurrentName = prediction.name; // "Movies"
+    const predictedCurrentName = prediction.name; // e.g., "Movies", "Custom"
     
     // Check against the actual human-readable board name rather than its lowercase ID
     if (currentName && predictedCurrentName.toLowerCase() !== currentName.toLowerCase()) {
-        const proceed = confirm(
-            `⚠️ Warning: The prompt category doesn't match the current type.\n\n` +
-            `Either change the prompt to use the current type [${currentName}] or create/use a current for [${predictedCurrentName}].\n\n` +
-            `Do you want to continue anyway?`
-        );
         
-        if (!proceed) {
-            console.log("[FORGE]: Operation aborted by user due to type mismatch.");
-            return; 
+        // 🔥 NEW RULE: If the prediction falls back to 'Custom', do NOT show the warning!
+        if (predictedCurrentName.toLowerCase() !== 'custom') {
+            const proceed = confirm(
+                `⚠️ Warning: The prompt category doesn't match the current type.\n\n` +
+                `Either change the prompt to use the current type [${currentName}] or create/use a current for [${predictedCurrentName}].\n\n` +
+                `Do you want to continue anyway?`
+            );
+            
+            if (!proceed) {
+                console.log("[FORGE]: Operation aborted by user due to type mismatch.");
+                return; 
+            }
         }
     }
     
@@ -1182,7 +1187,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
                 linksToSave = rawLinksArray.map(item => ({ 
                     name: item.name || generateSparkName(currentId), 
                     url: item.url || item 
-                }));            
+                }));                    
             }
 
             for (let i = 0; i < linksToSave.length; i++) {
