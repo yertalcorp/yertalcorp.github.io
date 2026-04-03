@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1054,11 +1054,6 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 /**
  * Shapes and secures the prompt to force Gemini to return strict results 
  * based on the active execution mode and specific board categories.
- * * @param {string} rawPrompt - The user's original unedited prompt.
- * @param {number} count - The resolved final quantity of sparks to create.
- * @param {string} mode - Execution resolution ('source' or 'create').
- * @param {string} categoryId - The board's mapped ID (e.g., 'physics-lab').
- * @returns {string} The fully formed rule set injected into Gemini's payload.
  */
 function shapeAiPrompt(rawPrompt, count, mode, categoryId) {
     const trimmed = rawPrompt.trim();
@@ -1091,7 +1086,7 @@ Rules:
                 categorySpecificRules = "Focus heavily on spatial projection and perspective. Create a dynamic wireframe, 2.5D, or isometric visual editor where users can click to build, scale, or color distinct structures.";
                 break;
             case 'robotics':
-                categorySpecificRules = "Design an active simulated machinery grid. Users should be able to input basic pathing commands, adjust physical pivot joints, or monitor 'battery' and 'CPU' metrics via an on-screen telemetry dashboard.";
+                categorySpecificRules = "Design an active simulated machinery grid. Users should be able to input basic pathing commands, adjust physical pivot joints, or monitor metrics.";
                 break;
             case 'bio-tech':
                 categorySpecificRules = "Create a vibrant particle-based ecosystem or a helix sequence editor. Let users toggle variables like mutation rates, cross-breeding percentages, or chemical interactions directly in a lab setting.";
@@ -1103,20 +1098,19 @@ Rules:
                 categorySpecificRules = "Design a highly responsive standalone interface that clearly visualizes data flow or physical logic tied directly to the user's prompt.";
         }
 
-        return `You are an expert game and application developer specializing in standalone, zero-dependency web canvas and DOM applications. Develop a visually stunning masterpiece for this prompt: "${trimmed}".
+        return `You are an expert game and application developer specializing in standalone, zero-dependency web canvas applications. Develop a visually stunning masterpiece for this prompt: "${trimmed}".
 
 Core Architectural Rules:
-1. DYNAMIC ACTOR INSTANTIATION (ABSOLUTE PRIORITY): You must create, calculate, and draw the visual subject of the user's prompt (e.g., the interactive robot, the house grid, etc.) FIRST in your script execution. Do not build UI dashboards, telemetry sidebars, or click listeners and leave the canvas empty or uninitialized. The subject MUST be visible immediately when the canvas loads.
-2. HYPER-INTERACTIVE INPUTS & LAYERS (CRITICAL): You must ensure all interactive elements function flawlessly. All buttons must have active, functioning event listeners. If mouse features like left-click, right-click (use e.preventDefault() where appropriate to avoid breaking custom logic), dragging, or arrow key controls are referenced or logically implied, they MUST be completely wired up and working. Use high z-index values on floating UI menus so canvas event listeners do not block button clicking.
+1. BAN ON EMPTY CANVASES (CRITICAL): Do not build any sidebars, telemetry terminals, UI floating windows, or text readouts first. You are STRICTLY FORBIDDEN from starting with the UI framing. You must first write the JavaScript or CSS code that instantiates and visually draws the main interactive subject (the robot, the ball, etc.) on the canvas. If the subject does not visibly render by default upon file load, the app is a total failure.
+2. HYPER-INTERACTIVE INPUTS & LAYERS (CRITICAL): You must ensure all interactive elements function flawlessly. All buttons must have active, functioning event listeners. If mouse features like left-click, right-click, dragging, or arrow key controls are referenced or logically implied, they MUST be completely wired up and working.
 3. DESIGN & DEPTH: Make apps/games look strongly 3D or 2.5D isometric. Leverage multi-layered CSS box-shadows, rich active gradients, inset shadows, borders, and subtle rotation transforms to provide a palpable sense of physical depth. Avoid flat UI.
-4. TAILORED DASHBOARD UI: Do not settle for simple inputs. You MUST build an immersive, on-screen dashboard specific to this category. [Category Strategy: ${categorySpecificRules}].
+4. TAILORED DASHBOARD UI: Once the main subject is rendered, build an immersive, on-screen dashboard specific to this category. [Category Strategy: ${categorySpecificRules}].
 5. STANDALONE EXECUTION: The output must run flawlessly when dropped into a sandboxed iframe. Zero external dependencies (No external scripts or styles allowed).
 6. OUTPUT FORMAT: Return ONLY pure, executable HTML code. Do not provide setup instructions, explanations, or wrap the code inside markdown backticks. Fall directly into the code.`;
     }
     
     return rawPrompt; 
 }
-
 async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
