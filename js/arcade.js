@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1054,6 +1054,11 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 /**
  * Shapes and secures the prompt to force Gemini to return strict results 
  * based on the active execution mode and specific board categories.
+ * * @param {string} rawPrompt - The user's original unedited prompt.
+ * @param {number} count - The resolved final quantity of sparks to create.
+ * @param {string} mode - Execution resolution ('source' or 'create').
+ * @param {string} categoryId - The board's mapped ID (e.g., 'physics-lab').
+ * @returns {string} The fully formed rule set injected into Gemini's payload.
  */
 function shapeAiPrompt(rawPrompt, count, mode, categoryId) {
     const trimmed = rawPrompt.trim();
@@ -1101,8 +1106,8 @@ Rules:
         return `You are an expert game and application developer specializing in standalone, zero-dependency web canvas and DOM applications. Develop a visually stunning masterpiece for this prompt: "${trimmed}".
 
 Core Architectural Rules:
-1. HYPER-INTERACTIVE INPUTS & LAYERS (CRITICAL): You must ensure all interactive elements function flawlessly. All buttons must have active, functioning event listeners. If mouse features like left-click, right-click (use e.preventDefault() where appropriate to avoid breaking custom logic), dragging, or arrow key controls are referenced or logically implied (such as placing or moving floor plan elements), they MUST be completely wired up and working. Use high z-index values on floating UI menus so canvas event listeners do not block button clicking.
-2. DYNAMIC ACTOR INSTANTIATION: You must ensure that the primary subject or force of the user's prompt (e.g., the base house grid, the floating ball, etc.) is actively created, rendered, and put on the screen by default. Never leave the screen completely blank waiting for the user to spawn the base asset.
+1. DYNAMIC ACTOR INSTANTIATION (ABSOLUTE PRIORITY): You must create, calculate, and draw the visual subject of the user's prompt (e.g., the interactive robot, the house grid, etc.) FIRST in your script execution. Do not build UI dashboards, telemetry sidebars, or click listeners and leave the canvas empty or uninitialized. The subject MUST be visible immediately when the canvas loads.
+2. HYPER-INTERACTIVE INPUTS & LAYERS (CRITICAL): You must ensure all interactive elements function flawlessly. All buttons must have active, functioning event listeners. If mouse features like left-click, right-click (use e.preventDefault() where appropriate to avoid breaking custom logic), dragging, or arrow key controls are referenced or logically implied, they MUST be completely wired up and working. Use high z-index values on floating UI menus so canvas event listeners do not block button clicking.
 3. DESIGN & DEPTH: Make apps/games look strongly 3D or 2.5D isometric. Leverage multi-layered CSS box-shadows, rich active gradients, inset shadows, borders, and subtle rotation transforms to provide a palpable sense of physical depth. Avoid flat UI.
 4. TAILORED DASHBOARD UI: Do not settle for simple inputs. You MUST build an immersive, on-screen dashboard specific to this category. [Category Strategy: ${categorySpecificRules}].
 5. STANDALONE EXECUTION: The output must run flawlessly when dropped into a sandboxed iframe. Zero external dependencies (No external scripts or styles allowed).
