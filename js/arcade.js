@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1054,11 +1054,14 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 
 /**
  * Shapes and secures the prompt to force Gemini to return strict results 
- * based on the active execution mode.
+ * based on the active execution mode and specific board categories.
  */
-function shapeAiPrompt(rawPrompt, count, mode) {
+function shapeAiPrompt(rawPrompt, count, mode, categoryId) {
     const trimmed = rawPrompt.trim();
     
+    // --------------------------------------------------------
+    // SOURCING MODE
+    // --------------------------------------------------------
     if (mode === 'source') {
         return `You are a high-precision data extraction tool. Extract or find exactly ${count} specific items or entities for this query: "${trimmed}".
 Rules:
@@ -1067,17 +1070,47 @@ Rules:
 3. Return ONLY a clean list separated by commas or newlines. No conversational filler, no polite greetings, no explanations.`;
     } 
     
+    // --------------------------------------------------------
+    // CREATE MODE (MASTERPIECE INSTRUCTIONS)
+    // --------------------------------------------------------
     if (mode === 'create') {
-        return `You are a professional frontend developer. Develop functional standalone web code (HTML, CSS, JS) encapsulated appropriately for this request: "${trimmed}".
-Rules:
-1. Return ONLY the pure executable code block. 
-2. Do not provide setup instructions, explanations, or wrap the code in conversational backticks (unless requested as pure JSON).
-3. The result must be immediately renderable in an isolated browser environment.`;
+        let categorySpecificRules = "";
+
+        // Inject category-specific gameplay/simulation mechanics
+        switch (categoryId) {
+            case 'physics-lab':
+                categorySpecificRules = "Develop highly accurate real-time movement, collision calculations, and a high-FPS canvas loop. Include rich manipulation sliders for gravity, wind, friction, mass, and time-scale.";
+                break;
+            case 'world-logic':
+                categorySpecificRules = "Build procedural generation mechanics (e.g., noise-generated terrain grids, cellular automata, or floating ecosystems). Users must be able to change variables to see landscape evolution.";
+                break;
+            case 'architecture':
+                categorySpecificRules = "Focus heavily on spatial projection and perspective. Create a dynamic wireframe, 2.5D, or isometric visual editor where users can click to build, scale, or color distinct structures.";
+                break;
+            case 'robotics':
+                categorySpecificRules = "Design an active simulated machinery grid. Users should be able to input basic pathing commands, adjust physical pivot joints, or monitor 'battery' and 'CPU' metrics via an on-screen telemetry dashboard.";
+                break;
+            case 'bio-tech':
+                categorySpecificRules = "Create a vibrant particle-based ecosystem or a helix sequence editor. Let users toggle variables like mutation rates, cross-breeding percentages, or chemical interactions directly in a lab setting.";
+                break;
+            case 'games':
+                categorySpecificRules = "Focus on intense interactivity and scoring. Build fluid game state management (Start, Game Over, High Score). Ensure movement and hitboxes are precise and rewarding.";
+                break;
+            default:
+                categorySpecificRules = "Design a highly responsive standalone interface that clearly visualizes data flow or physical logic tied directly to the user's prompt.";
+        }
+
+        return `You are an expert game and application developer specializing in standalone, zero-dependency web canvas and DOM applications. Develop a visually stunning masterpiece for this prompt: "${trimmed}".
+
+Core Architectural Rules:
+1. DESIGN & DEPTH: Make apps/games look strongly 3D or 2.5D isometric. Leverage multi-layered CSS box-shadows, rich active gradients, inset shadows, borders, and subtle rotation transforms to provide a palpable sense of physical depth. Avoid flat UI.
+2. TAILORED DASHBOARD UI: Do not settle for simple inputs. You MUST build an immersive, on-screen dashboard specific to this category. [Category Strategy: ${categorySpecificRules}].
+3. STANDALONE EXECUTION: The output must run flawlessly when dropped into a sandboxed iframe. Zero external dependencies (No external scripts or styles allowed).
+4. OUTPUT FORMAT: Return ONLY pure, executable HTML code. Do not provide setup instructions, explanations, or wrap the code inside markdown backticks. Fall directly into the code.`;
     }
     
-    return rawPrompt; // Fallback just in case
+    return rawPrompt; // Fallback
 }
-
 async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
@@ -1184,7 +1217,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
                 updateForgeStatus("CONSULTING MODEL POOL...");
                 
                 // 🔥 NEW HELPER FIRED: Forces Gemini to obey the prompt constraints dynamically
-                const structuredPrompt = shapeAiPrompt(prompt, finalForgeCount, 'source');
+                const structuredPrompt = shapeAiPrompt(prompt, finalForgeCount, 'source', predictedType);
                 
                 const aiLinks = await callGeminiAPI(structuredPrompt, finalForgeCount, activeResolution);
                 let rawLinksArray = [];
@@ -1219,7 +1252,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
                 updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
                 // 🔥 NEW HELPER FIRED: Forces code structure safely
-                const structuredPrompt = shapeAiPrompt(prompt, i, 'create');
+                const structuredPrompt = shapeAiPrompt(prompt, i, 'create', predictedType);
 
                 const code = await callGeminiAPI(structuredPrompt, i, activeResolution);
                 const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
