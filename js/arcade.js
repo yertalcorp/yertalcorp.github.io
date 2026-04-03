@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:59:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1119,14 +1119,22 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     const wordMatch = cleanPrompt.toLowerCase().match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/);
     // Look ONLY for 1 or 2 digit numbers to skip 4-digit years!
     const digitMatch = cleanPrompt.match(/\b\d{1,2}\b/);
+    // Let us log all the counts
+    console.log("executeMassSparks Mode is:", mode);
+    console.log("executeMassSparks wordMatch is:", wordMatch);
+    console.log("executeMassSparks digitMatch is:", digitMatch);
+    console.log("executeMassSparks manualUrls.length is:", manualUrls.length);
 
     // Prioritize manual URL count, then word matches, then digit matches
     if (mode === 'sourcing' && manualUrls.length > 0 && !digitMatch && !wordMatch) {
         requestedCount = manualUrls.length;
+        console.log("executeMassSparks if mode===sourcing requestedCount:", requestedCount);
     } else if (wordMatch) {
         requestedCount = numberWords[wordMatch[0]];
+        console.log("executeMassSparks if(wordMatch) requestedCount:", requestedCount);
     } else if (digitMatch) {
         requestedCount = parseInt(digitMatch[0], 10);
+        console.log("executeMassSparks if(digitMatch) requestedCount:", requestedCount);
     }
     console.log("The requested count of sparks is:", requestedCount);
     
