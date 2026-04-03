@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1051,18 +1051,45 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
+
+/**
+ * Shapes and secures the prompt to force Gemini to return strict results 
+ * based on the active execution mode.
+ */
+function shapeAiPrompt(rawPrompt, count, mode) {
+    const trimmed = rawPrompt.trim();
+    
+    if (mode === 'source') {
+        return `You are a high-precision data extraction tool. Extract or find exactly ${count} specific items or entities for this query: "${trimmed}".
+Rules:
+1. Do not provide high-level directory URLs like 'imdb.com', 'youtube.com', or 'wikipedia.org'.
+2. Return a specific link to an individual entity page (e.g., imdb.com/title/tt...) OR the precise, specific name of the item itself if a direct link is unavailable.
+3. Return ONLY a clean list separated by commas or newlines. No conversational filler, no polite greetings, no explanations.`;
+    } 
+    
+    if (mode === 'create') {
+        return `You are a professional frontend developer. Develop functional standalone web code (HTML, CSS, JS) encapsulated appropriately for this request: "${trimmed}".
+Rules:
+1. Return ONLY the pure executable code block. 
+2. Do not provide setup instructions, explanations, or wrap the code in conversational backticks (unless requested as pure JSON).
+3. The result must be immediately renderable in an isolated browser environment.`;
+    }
+    
+    return rawPrompt; // Fallback just in case
+}
+
 async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
     // --------------------------------------------------------
-    // 1. TIGHTENED TYPE & LOGIC CHECK (UPDATED!)
+    // 1. TIGHTENED TYPE & LOGIC CHECK
     // --------------------------------------------------------
     const prediction = resolveCategoryFromPrompt(prompt, currentName); 
     const predictedType = prediction.id;        
     let activeResolution = prediction.logic;  
-    const predictedCurrentName = prediction.name; // e.g., "Movies", "Custom"
+    const predictedCurrentName = prediction.name; 
     
-    // 🔥 Custom category defaults to sourcing!
+    // Custom category defaults to sourcing!
     if (predictedCurrentName.toLowerCase() === 'custom') {
         console.log("[FORGE]: Custom category detected. Defaulting to 'source' resolution.");
         activeResolution = 'source';
@@ -1099,7 +1126,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     // --------------------------------------------------------
     // 3. TIGHTENED COUNT LOGIC
     // --------------------------------------------------------
-    const manualUrls = extractUrls(prompt); // Extract from the raw prompt directly
+    const manualUrls = extractUrls(prompt); 
     let cleanPrompt = prompt;
     manualUrls.forEach(url => { cleanPrompt = cleanPrompt.replace(url, ''); });
 
@@ -1156,10 +1183,10 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
             } else {
                 updateForgeStatus("CONSULTING MODEL POOL...");
                 
-                // 🧠 PROMPT INTERCEPT: Force Gemini to output a valid URL string or a clean comma-separated string of resource URLs
-                const strictSourcePrompt = `Your task is strictly to find sourcing web links or high-authority domain names for: "${prompt}". Do not write conversational filler or explanations. Return ONLY valid URLs or clean strings separated by commas.`;
+                // 🔥 NEW HELPER FIRED: Forces Gemini to obey the prompt constraints dynamically
+                const structuredPrompt = shapeAiPrompt(prompt, finalForgeCount, 'source');
                 
-                const aiLinks = await callGeminiAPI(strictSourcePrompt, finalForgeCount, activeResolution);
+                const aiLinks = await callGeminiAPI(structuredPrompt, finalForgeCount, activeResolution);
                 let rawLinksArray = [];
                 
                 if (Array.isArray(aiLinks)) {
@@ -1191,13 +1218,12 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
                 const progress = Math.round((i / finalForgeCount) * 100);
                 updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
-                // 🧠 PROMPT INTERCEPT: Force Gemini to execute pure standalone HTML/JS code
-                const strictCodePrompt = `Develop functional standalone web code (HTML, CSS, JS) encapsulated appropriately for this request: "${prompt}". Return ONLY the executable code block. Do not provide setup instructions, explanations, or backticks enclosing text.`;
+                // 🔥 NEW HELPER FIRED: Forces code structure safely
+                const structuredPrompt = shapeAiPrompt(prompt, i, 'create');
 
-                const code = await callGeminiAPI(strictCodePrompt, i, activeResolution);
+                const code = await callGeminiAPI(structuredPrompt, i, activeResolution);
                 const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
                 
-                // Fallback analysis to assign correct types based on the returned payload structure
                 const isCode = code.trim().startsWith('<') || code.trim().startsWith('function') || code.trim().startsWith('const') || code.trim().includes('document.');
                 
                 const payload = isCode ? { name: sparkName, code, prompt, type: 'code', image: finalImageUrl } 
