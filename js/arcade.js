@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1051,8 +1051,7 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
-
-/*
+/**
  * Shapes and secures the prompt to force Gemini to return strict results 
  * based on the active execution mode and specific board categories.
  */
@@ -1102,14 +1101,15 @@ Rules:
         return `You are an expert game and application developer specializing in standalone, zero-dependency web canvas and DOM applications. Develop a visually stunning masterpiece for this prompt: "${trimmed}".
 
 Core Architectural Rules:
-1. CRITICAL (MANDATORY ACTOR INSTANTIATION): You must ensure that the primary subject or force of the user's prompt (e.g., the ball in a physics lab, the light beam in an optics sim, or the player in a game) is actively created, rendered, and put in motion by default. Never build the environment/UI buttons and leave the canvas empty waiting for user input to spawn the subject.
-2. DESIGN & DEPTH: Make apps/games look strongly 3D or 2.5D isometric. Leverage multi-layered CSS box-shadows, rich active gradients, inset shadows, borders, and subtle rotation transforms to provide a palpable sense of physical depth. Avoid flat UI.
-3. TAILORED DASHBOARD UI: Do not settle for simple inputs. You MUST build an immersive, on-screen dashboard specific to this category. [Category Strategy: ${categorySpecificRules}].
-4. STANDALONE EXECUTION: The output must run flawlessly when dropped into a sandboxed iframe. Zero external dependencies (No external scripts or styles allowed).
-5. OUTPUT FORMAT: Return ONLY pure, executable HTML code. Do not provide setup instructions, explanations, or wrap the code inside markdown backticks. Fall directly into the code.`;
+1. HYPER-INTERACTIVE INPUTS & LAYERS (CRITICAL): You must ensure all interactive elements function flawlessly. All buttons must have active, functioning event listeners. If mouse features like left-click, right-click (use e.preventDefault() where appropriate to avoid breaking custom logic), dragging, or arrow key controls are referenced or logically implied (such as placing or moving floor plan elements), they MUST be completely wired up and working. Use high z-index values on floating UI menus so canvas event listeners do not block button clicking.
+2. DYNAMIC ACTOR INSTANTIATION: You must ensure that the primary subject or force of the user's prompt (e.g., the base house grid, the floating ball, etc.) is actively created, rendered, and put on the screen by default. Never leave the screen completely blank waiting for the user to spawn the base asset.
+3. DESIGN & DEPTH: Make apps/games look strongly 3D or 2.5D isometric. Leverage multi-layered CSS box-shadows, rich active gradients, inset shadows, borders, and subtle rotation transforms to provide a palpable sense of physical depth. Avoid flat UI.
+4. TAILORED DASHBOARD UI: Do not settle for simple inputs. You MUST build an immersive, on-screen dashboard specific to this category. [Category Strategy: ${categorySpecificRules}].
+5. STANDALONE EXECUTION: The output must run flawlessly when dropped into a sandboxed iframe. Zero external dependencies (No external scripts or styles allowed).
+6. OUTPUT FORMAT: Return ONLY pure, executable HTML code. Do not provide setup instructions, explanations, or wrap the code inside markdown backticks. Fall directly into the code.`;
     }
     
-    return rawPrompt; // Fallback
+    return rawPrompt; 
 }
 
 async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
