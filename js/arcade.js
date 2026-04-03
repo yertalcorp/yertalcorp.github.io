@@ -1051,11 +1051,11 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
-/**
+/*
  * Shapes and secures the prompt to force Gemini to return strict results 
- * based on the active execution mode and specific board categories.
+ * based on the active execution mode.
  */
-function shapeAiPrompt(rawPrompt, count, mode, categoryId) {
+function shapeAiPrompt(rawPrompt, count, mode) {
     const trimmed = rawPrompt.trim();
     
     // --------------------------------------------------------
@@ -1073,44 +1073,20 @@ Rules:
     // CREATE MODE (MASTERPIECE INSTRUCTIONS)
     // --------------------------------------------------------
     if (mode === 'create') {
-        let categorySpecificRules = "";
-
-        switch (categoryId) {
-            case 'physics-lab':
-                categorySpecificRules = "Develop highly accurate real-time movement, collision calculations, and a high-FPS canvas loop. Include rich manipulation sliders for gravity, wind, friction, mass, and time-scale.";
-                break;
-            case 'world-logic':
-                categorySpecificRules = "Build procedural generation mechanics (e.g., noise-generated terrain grids, cellular automata, or floating ecosystems). Users must be able to change variables to see landscape evolution.";
-                break;
-            case 'architecture':
-                categorySpecificRules = "Focus heavily on spatial projection and perspective. Create a dynamic wireframe, 2.5D, or isometric visual editor where users can click to build, scale, or color distinct structures.";
-                break;
-            case 'robotics':
-                categorySpecificRules = "Design an active simulated machinery grid. Users should be able to input basic pathing commands, adjust physical pivot joints, or monitor metrics.";
-                break;
-            case 'bio-tech':
-                categorySpecificRules = "Create a vibrant particle-based ecosystem or a helix sequence editor. Let users toggle variables like mutation rates, cross-breeding percentages, or chemical interactions directly in a lab setting.";
-                break;
-            case 'games':
-                categorySpecificRules = "Focus on intense interactivity and scoring. Build fluid game state management (Start, Game Over, High Score). Ensure movement and hitboxes are precise and rewarding.";
-                break;
-            default:
-                categorySpecificRules = "Design a highly responsive standalone interface that clearly visualizes data flow or physical logic tied directly to the user's prompt.";
-        }
-
-        return `You are an expert game and application developer specializing in standalone, zero-dependency web canvas applications. Develop a visually stunning masterpiece for this prompt: "${trimmed}".
+        return `You are an expert game and application developer specializing in standalone, zero-dependency web applications. Develop a visually stunning masterpiece for this prompt: "${trimmed}".
 
 Core Architectural Rules:
-1. BAN ON EMPTY CANVASES (CRITICAL): Do not build any sidebars, telemetry terminals, UI floating windows, or text readouts first. You are STRICTLY FORBIDDEN from starting with the UI framing. You must first write the JavaScript or CSS code that instantiates and visually draws the main interactive subject (the robot, the ball, etc.) on the canvas. If the subject does not visibly render by default upon file load, the app is a total failure.
-2. HYPER-INTERACTIVE INPUTS & LAYERS (CRITICAL): You must ensure all interactive elements function flawlessly. All buttons must have active, functioning event listeners. If mouse features like left-click, right-click, dragging, or arrow key controls are referenced or logically implied, they MUST be completely wired up and working.
-3. DESIGN & DEPTH: Make apps/games look strongly 3D or 2.5D isometric. Leverage multi-layered CSS box-shadows, rich active gradients, inset shadows, borders, and subtle rotation transforms to provide a palpable sense of physical depth. Avoid flat UI.
-4. TAILORED DASHBOARD UI: Once the main subject is rendered, build an immersive, on-screen dashboard specific to this category. [Category Strategy: ${categorySpecificRules}].
-5. STANDALONE EXECUTION: The output must run flawlessly when dropped into a sandboxed iframe. Zero external dependencies (No external scripts or styles allowed).
+1. DESIGN & FEEL: Set an expert persona and make the UI look and feel highly colourful, gradient-heavy, and futuristic. Leverage multi-layered CSS box-shadows and transforms to provide a palpable sense of physical depth. Avoid flat, boring UI.
+2. HYPER-INTERACTIVE INPUTS (CRITICAL): Mouse controls and arrow key movements are explicitly expected and mandatory. All referenced or logically implied controls (such as left-click, dragging, mouse tracking, or arrow keys for movement/steering) MUST be completely wired up, calculated, and perfectly functional. 
+3. RELIABLE BUTTONS: Every on-screen button must have active, working click event listeners bound to it. If pressed, they must trigger their intended visual effect or simulation state change without fail.
+4. DYNAMIC ACTOR INSTANTIATION: You must create, calculate, and draw the primary visual subject or interactive force requested by the user (e.g., mirrors, lenses, robots, or physics objects) FIRST in your script execution. Do not build UI sidebars or status footers and leave the center canvas empty. The subject must be actively visible on load.
+5. STANDALONE EXECUTION: The output must run flawlessly when dropped into an isolated sandbox environment. Zero external dependencies (No external scripts or styles allowed).
 6. OUTPUT FORMAT: Return ONLY pure, executable HTML code. Do not provide setup instructions, explanations, or wrap the code inside markdown backticks. Fall directly into the code.`;
     }
     
     return rawPrompt; 
 }
+
 async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
