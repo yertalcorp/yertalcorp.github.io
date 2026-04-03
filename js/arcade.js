@@ -1052,7 +1052,7 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 };
 
 
-/**
+/*
  * Shapes and secures the prompt to force Gemini to return strict results 
  * based on the active execution mode and specific board categories.
  */
@@ -1076,7 +1076,6 @@ Rules:
     if (mode === 'create') {
         let categorySpecificRules = "";
 
-        // Inject category-specific gameplay/simulation mechanics
         switch (categoryId) {
             case 'physics-lab':
                 categorySpecificRules = "Develop highly accurate real-time movement, collision calculations, and a high-FPS canvas loop. Include rich manipulation sliders for gravity, wind, friction, mass, and time-scale.";
@@ -1103,14 +1102,16 @@ Rules:
         return `You are an expert game and application developer specializing in standalone, zero-dependency web canvas and DOM applications. Develop a visually stunning masterpiece for this prompt: "${trimmed}".
 
 Core Architectural Rules:
-1. DESIGN & DEPTH: Make apps/games look strongly 3D or 2.5D isometric. Leverage multi-layered CSS box-shadows, rich active gradients, inset shadows, borders, and subtle rotation transforms to provide a palpable sense of physical depth. Avoid flat UI.
-2. TAILORED DASHBOARD UI: Do not settle for simple inputs. You MUST build an immersive, on-screen dashboard specific to this category. [Category Strategy: ${categorySpecificRules}].
-3. STANDALONE EXECUTION: The output must run flawlessly when dropped into a sandboxed iframe. Zero external dependencies (No external scripts or styles allowed).
-4. OUTPUT FORMAT: Return ONLY pure, executable HTML code. Do not provide setup instructions, explanations, or wrap the code inside markdown backticks. Fall directly into the code.`;
+1. CRITICAL (MANDATORY ACTOR INSTANTIATION): You must ensure that the primary subject or force of the user's prompt (e.g., the ball in a physics lab, the light beam in an optics sim, or the player in a game) is actively created, rendered, and put in motion by default. Never build the environment/UI buttons and leave the canvas empty waiting for user input to spawn the subject.
+2. DESIGN & DEPTH: Make apps/games look strongly 3D or 2.5D isometric. Leverage multi-layered CSS box-shadows, rich active gradients, inset shadows, borders, and subtle rotation transforms to provide a palpable sense of physical depth. Avoid flat UI.
+3. TAILORED DASHBOARD UI: Do not settle for simple inputs. You MUST build an immersive, on-screen dashboard specific to this category. [Category Strategy: ${categorySpecificRules}].
+4. STANDALONE EXECUTION: The output must run flawlessly when dropped into a sandboxed iframe. Zero external dependencies (No external scripts or styles allowed).
+5. OUTPUT FORMAT: Return ONLY pure, executable HTML code. Do not provide setup instructions, explanations, or wrap the code inside markdown backticks. Fall directly into the code.`;
     }
     
     return rawPrompt; // Fallback
 }
+
 async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
