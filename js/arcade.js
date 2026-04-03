@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:59:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1112,7 +1112,8 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
         'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10 
     };
 
-    let requestedCount = 1; 
+    // 🚨 MODIFIED: Default to null instead of 1 to ensure a match actually occurs
+    let requestedCount = null; 
 
     // Look for spelled-out numbers
     const wordMatch = cleanPrompt.toLowerCase().match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/);
@@ -1126,6 +1127,12 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
         requestedCount = numberWords[wordMatch[0]];
     } else if (digitMatch) {
         requestedCount = parseInt(digitMatch[0], 10);
+    }
+    console.log("The requested count of sparks is:", requestedCount);
+    
+    // 🚨 MODIFIED: If requestedCount is still null (no valid numbers found), default to 1!
+    if (requestedCount === null) {
+        requestedCount = 1;
     }
 
     // FIXED: Global cap applies no matter how requestedCount was established
