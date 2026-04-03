@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1057,27 +1057,25 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     // --------------------------------------------------------
     // 1. TIGHTENED TYPE & LOGIC CHECK (UPDATED!)
     // --------------------------------------------------------
-    // Pass currentName to prioritize the active board's name
     const prediction = resolveCategoryFromPrompt(prompt, currentName); 
     const predictedType = prediction.id;        
-    const activeResolution = prediction.logic;  
+    let activeResolution = prediction.logic;  
     const predictedCurrentName = prediction.name; // e.g., "Movies", "Custom"
     
-    // Check against the actual human-readable board name rather than its lowercase ID
+    // 🔥 NEW RULE 1: If the prompt is of 'custom' category, default to sourcing!
+    if (predictedCurrentName.toLowerCase() === 'custom') {
+        console.log("[FORGE]: Custom category detected. Defaulting to 'source' resolution.");
+        activeResolution = 'source';
+    }
+
     if (currentName && predictedCurrentName.toLowerCase() !== currentName.toLowerCase()) {
-        
-        // 🔥 NEW RULE: If the prediction falls back to 'Custom', do NOT show the warning!
         if (predictedCurrentName.toLowerCase() !== 'custom') {
             const proceed = confirm(
                 `⚠️ Warning: The prompt category doesn't match the current type.\n\n` +
                 `Either change the prompt to use the current type [${currentName}] or create/use a current for [${predictedCurrentName}].\n\n` +
                 `Do you want to continue anyway?`
             );
-            
-            if (!proceed) {
-                console.log("[FORGE]: Operation aborted by user due to type mismatch.");
-                return; 
-            }
+            if (!proceed) return; 
         }
     }
     
@@ -1099,140 +1097,114 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     }
 
     // --------------------------------------------------------
-    // 3. TIGHTENED COUNT LOGIC (Ignores 4-digit years like 2026)
+    // 3. TIGHTENED COUNT LOGIC
     // --------------------------------------------------------
-    const manualUrls = mode === 'sourcing' ? extractUrls(prompt) : [];
+    const manualUrls = extractUrls(prompt); // Extract from the raw prompt directly
     let cleanPrompt = prompt;
-    manualUrls.forEach(url => {
-        cleanPrompt = cleanPrompt.replace(url, '');
-    });
+    manualUrls.forEach(url => { cleanPrompt = cleanPrompt.replace(url, ''); });
 
     const numberWords = { 
         'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 
         'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10 
     };
 
-    // 🚨 MODIFIED: Default to null instead of 1 to ensure a match actually occurs
     let requestedCount = null; 
-
-    // Look for spelled-out numbers
     const wordMatch = cleanPrompt.toLowerCase().match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/);
-    // Look ONLY for 1 or 2 digit numbers to skip 4-digit years!
     const digitMatch = cleanPrompt.match(/\b\d{1,2}\b/);
-    // Let us log all the counts
-    console.log("executeMassSparks Mode is:", mode);
-    console.log("executeMassSparks wordMatch is:", wordMatch);
-    console.log("executeMassSparks digitMatch is:", digitMatch);
-    console.log("executeMassSparks manualUrls.length is:", manualUrls.length);
 
-    // Prioritize manual URL count, then word matches, then digit matches
-    if (mode === 'sourcing' && manualUrls.length > 0 && !digitMatch && !wordMatch) {
-        requestedCount = manualUrls.length;
-        console.log("executeMassSparks if mode===sourcing requestedCount:", requestedCount);
-    } else if (wordMatch) {
+    if (wordMatch) {
         requestedCount = numberWords[wordMatch[0]];
-        console.log("executeMassSparks if(wordMatch) requestedCount:", requestedCount);
     } else if (digitMatch) {
         requestedCount = parseInt(digitMatch[0], 10);
-        console.log("executeMassSparks if(digitMatch) requestedCount:", requestedCount);
     }
-    console.log("The requested count of sparks is:", requestedCount);
-    
-    // 🚨 MODIFIED: If requestedCount is still null (no valid numbers found), default to 1!
+
     if (requestedCount === null) {
         requestedCount = 1;
     }
 
-    // FIXED: Global cap applies no matter how requestedCount was established
+    // 🚨 NEW RULE 2: Compute target loop count using the lesser of requested count or mass spark limit
     const cappedRequestedCount = Math.min(requestedCount, planLimits.num_mass_sparks);
-
-    // Final limit against physical storage space
     const finalForgeCount = Math.min(cappedRequestedCount, remainingSpace);
-    
-    // Progress Helper: Prevents overwriting the Cooldown Timer
+
     const updateForgeStatus = (text) => {
-        if (!window.isInCooldown) {
-            status.textContent = text;
-        }
+        if (!window.isInCooldown) status.textContent = text;
     };
 
     try {
         const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
-        
-        // --------------------------------------------------------
-        // 4. PREPARE THE PARENT FALLBACK VARIABLES
-        // --------------------------------------------------------
-        // Even though its content (code/link) relates to the prompt's prediction, 
-        // we lock down the visual style and parent properties to match the current board.
         const finalImageUrl = templateUrl || defaultThumb;
         const finalCategoryName = templateName;
 
         // --------------------------------------------------------
-        // 5. DIVIDE PATHS BY RESOLVED INTENT
+        // 5. FORGING LOGIC
         // --------------------------------------------------------
         if (activeResolution === 'source') {
             const isAiReferenceSearch = (manualUrls.length > 0 && (digitMatch || wordMatch));
             let linksToSave = [];
 
+            // 🚨 NEW RULE 3: If manualUrls exist, split up the remaining prompt text!
             if (manualUrls.length > 0 && !isAiReferenceSearch) {
-                linksToSave = manualUrls.slice(0, finalForgeCount).map(url => ({ name: generateSparkName(currentId), url }));
+                console.log("[FORGE]: Processing manual URLs and extracting surrounding text strings.");
+                
+                // Split the remaining cleaned prompt by commas or lines to isolate distinct prompt tasks
+                const textChunks = cleanPrompt.split(/,|\n/).map(str => str.trim()).filter(Boolean);
+                
+                // Map strings & URLs together up to the calculated limit (whichever is lesser)
+                const itemsCountToTake = Math.min(manualUrls.length, finalForgeCount);
+                
+                for (let i = 0; i < itemsCountToTake; i++) {
+                    linksToSave.push({
+                        name: textChunks[i] || generateSparkName(currentId),
+                        url: manualUrls[i]
+                    });
+                }
             } else {
                 updateForgeStatus("CONSULTING MODEL POOL...");
-                
-                // Passing activeResolution ('source') dynamically
                 const aiLinks = await callGeminiAPI(prompt, finalForgeCount, activeResolution);
-                
                 let rawLinksArray = [];
                 
-                // 🛡️ Fallback handling if Gemini returns a string instead of an array
                 if (Array.isArray(aiLinks)) {
                     rawLinksArray = aiLinks;
                 } else if (typeof aiLinks === 'string') {
                     console.warn("[FORGE]: Gemini returned raw text. Forcing string-split array fallback.");
-                    
-                    // Break the string up by commas or newlines and map it to object structures
-                    rawLinksArray = aiLinks.split(/,|\n/).map(str => str.trim()).filter(Boolean).map(str => {
-                        return { name: generateSparkName(currentId), url: str };
-                    });
-                } else {
-                    rawLinksArray = []; // Ultimate empty fallback
+                    rawLinksArray = aiLinks.split(/,|\n/).map(str => str.trim()).filter(Boolean);
                 }
 
-                // Now it is 100% safe to map without crashing!
-                linksToSave = rawLinksArray.map(item => ({ 
-                    name: item.name || generateSparkName(currentId), 
-                    url: item.url || item 
-                }));                    
+                linksToSave = rawLinksArray.slice(0, finalForgeCount).map(item => {
+                    const extractedName = item.name || generateSparkName(currentId);
+                    const extractedUrl = item.url || item;
+                    return { name: extractedName, url: extractedUrl };
+                });                    
             }
 
             for (let i = 0; i < linksToSave.length; i++) {
                 const item = linksToSave[i];
-                const sparkName = linksToSave.length > 1 ? `${item.name}-${i + 1}` : item.name;
+                const sparkName = linksToSave.length > 1 && item.name.startsWith('spark_') ? `${item.name}-${i + 1}` : item.name;
                 
-                // We pass 'currentId' but enforce the board's native 'finalCategoryName' and 'finalImageUrl'
                 await saveSpark(currentId, { name: sparkName, link: item.url, prompt, type: 'link', image: finalImageUrl }, finalCategoryName, finalImageUrl);
                 
                 const progress = Math.round(((i + 1) / linksToSave.length) * 100);
                 updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
             }
         } else {
-            // 'Create' mode (activeResolution === 'create')
+            // 'Create' Mode (activeResolution === 'create')
             for (let i = 0; i < finalForgeCount; i++) {
                 const progress = Math.round((i / finalForgeCount) * 100);
                 updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
-                // Passing activeResolution ('create') dynamically
                 const code = await callGeminiAPI(prompt, i, activeResolution);
                 const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
                 
-                // We pass 'currentId' but enforce the board's native 'finalCategoryName' and 'finalImageUrl'
-                await saveSpark(currentId, { name: sparkName, code, prompt, type: 'code', image: finalImageUrl }, finalCategoryName, finalImageUrl);
+                const isCode = code.trim().startsWith('<') || code.trim().startsWith('function') || code.trim().startsWith('const');
+                const sparkType = isCode ? 'code' : 'link';
+                const payload = isCode ? { name: sparkName, code, prompt, type: 'code', image: finalImageUrl } 
+                                       : { name: sparkName, link: code, prompt, type: 'link', image: finalImageUrl };
+
+                await saveSpark(currentId, payload, finalCategoryName, finalImageUrl);
             }
-            // Final completion update
             updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [==========] 100%`);
         }
 
-        // Delay briefly if at 100% to let the user see it before "SYSTEM READY"
         setTimeout(async () => {
             status.textContent = "SYSTEM READY";
             await refreshUI(); 
@@ -1240,9 +1212,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
 
     } catch (e) { 
         console.error("Forge Error:", e);
-        if (!window.isInCooldown) {
-            status.textContent = "FORGE ERROR";
-        }
+        if (!window.isInCooldown) status.textContent = "FORGE ERROR";
     }
 }
 
