@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1381,6 +1381,8 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
     const sparkElementId = `save-btn-${spark.id}`;
 
+    let finalRenderedImage = '/assets/thumbnails/default.jpg'; // Safe default
+
     try {
         const sparkImage = genSparkImage(spark.image);
 
@@ -1388,7 +1390,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
         console.log(`[RENDER] Spark ID: ${spark.id} | Image Path: ${spark.image} | Image Path Length: ${sparkImage.length} | Start: ${sparkImage.substring(0, 30)}`);
     
         // DYNAMIC FALLBACK TRIGGER
-        let finalRenderedImage = sparkImage;
+        finalRenderedImage = sparkImage;
         const defaultThumb = spark.image || '/assets/thumbnails/default.jpg';
     
         // PRE-RENDER TRY-CATCH GUARD
@@ -1403,9 +1405,11 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
         }
     } catch (error) {
         console.error(`[CRITICAL RENDER ERROR] Spark ID: ${spark.id} failed during canvas generation. Using default fallback asset.`, error);
-        finalRenderedImage = getDynamicCardCover(activeThemeData);
+        // Reverted to asset path since the theme processor failed above
+        finalRenderedImage = '/assets/thumbnails/default.jpg';
     }
 
+    // 1. Core Color Palette
     // 1. Core Color Palette
     const pearlColor = "var(--list-color)";
     const neonColor = "var(--glow-color)";
