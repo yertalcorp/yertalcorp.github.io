@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:59:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1051,37 +1051,43 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
-/*
- * Shapes and secures the prompt to force Gemini to return strict results 
- * based on the active execution mode.
- */
-function shapeAiPrompt(rawPrompt, count, mode) {
-    const trimmed = rawPrompt.trim();
-    console.log("In shapeAiPrompt mode=", mode);
+function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
+    // 1. Hand off prompt to your existing resolver to locate the matched capability
+    const matchedCategory = resolveCategoryFromPrompt(rawPrompt, activeBoardName);
     
-    // --------------------------------------------------------
-    // SOURCING MODE
-    // --------------------------------------------------------
-    if (mode === 'source') {
-        return `You are a high-precision data extraction tool. Extract or find exactly ${count} specific items or entities for this query: "${trimmed}".
-Rules:
-1. Do not provide high-level directory URLs like 'imdb.com', 'youtube.com', or 'wikipedia.org'.
-2. Return a specific link to an individual entity page (e.g., imdb.com/title/tt...) OR the precise, specific name of the item itself if a direct link is unavailable.
-3. Return ONLY a clean list separated by commas or newlines. No conversational filler, no polite greetings, no explanations.`;
-    } 
-    
-    // --------------------------------------------------------
-    // CREATE MODE (MASTERPIECE INSTRUCTIONS)
-    // --------------------------------------------------------
-    if (mode === 'create') {
-        return `You are an expert physics-lab, world-logic, game and application developer specializing in standalone, zero-dependency web applications. Develop a visually stunning masterpiece for this prompt: "${trimmed}".
-Rules:
-Return ONLY fully working, pure, executable HTML code (including CSS and JS). Do not provide explanations or wrap the code inside markdown backticks.`;
-    }
-    
-    return rawPrompt; 
-}
+    // 2. Extract the rules payload we just added to the resolver
+    const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
 
+    let expertPersona = "";
+    let systemBoundaries = "";
+
+    // 3. Fallback to resolution logic if explicit mode isn't passed
+    const activeMode = mode || matchedCategory.logic || 'hybrid';
+
+    if (activeMode === 'create') {
+        expertPersona = `You are an elite software architect and UI designer specializing in single-file HTML5 canvas applications.`;
+        systemBoundaries = `Strict constraints: Output ONLY valid, executable HTML with embedded CSS and JS in a single file. Do not use external libraries. Focus heavily on smooth high-FPS canvas operations.`;
+    } else if (activeMode === 'source') {
+        expertPersona = `You are a high-density data extraction specialist.`;
+        systemBoundaries = `Return strictly formatted arrays of data points or media links without rendering interactive simulators.`;
+    } else {
+        expertPersona = `You are an advanced full-stack assistant.`;
+        systemBoundaries = `Adapt fluidly between rendering visual tools and pulling data arrays depending strictly on the user's focus.`;
+    }
+
+    // 4. Interpolate the specific rules from your database right into the prompt
+    const fullPrompt = `
+    System: ${expertPersona}
+    ${systemBoundaries}
+    
+    Category Hard Constraints:
+    ${categoryRules}
+    
+    User Prompt: ${rawPrompt}
+    `;
+
+    return fullPrompt;
+}
 async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
@@ -1450,7 +1456,8 @@ function resolveCategoryFromPrompt(prompt, currentName) {
                     id: matchingPreset.id,
                     name: matchingPreset.name,
                     logic: matchingPreset.logic,
-                    image: matchingPreset.image
+                    image: matchingPreset.image,
+                    rules: matchingPreset.rules || ""
                 };
             }
         }
@@ -1510,7 +1517,8 @@ function resolveCategoryFromPrompt(prompt, currentName) {
             id: matchedCategory.id,
             name: matchedCategory.name,
             logic: matchedCategory.logic,
-            image: matchedCategory.image
+            image: matchedCategory.image,
+            rules: matchedCategory.rules || ""
         };
     }
 
@@ -1526,10 +1534,10 @@ function resolveCategoryFromPrompt(prompt, currentName) {
         id: 'custom',
         name: 'Custom',
         logic: isCreate ? 'create' : 'hybrid',
-        image: '/assets/thumbnails/default.jpg'
+        image: '/assets/thumbnails/default.jpg',
+        rules: "Maintain extreme flexibility. Do not enforce specialized rulesets."
     };
 }
-
 window.handleCreation = async (currentId, currentName) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
