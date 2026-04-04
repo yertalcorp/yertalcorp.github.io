@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1383,33 +1383,28 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
 
     let finalRenderedImage = '/assets/thumbnails/default.jpg'; // Safe default
 
-    try {
-        const sparkImage = genSparkImage(spark.image);
+    const sparkImage = genSparkImage(spark.image);
 
-        // 0. Debug Log: Track final image path per card
-        console.log(`[RENDER] Spark ID: ${spark.id} | Image Path: ${spark.image} | Image Path Length: ${sparkImage.length} | Start: ${sparkImage.substring(0, 30)}`);
+    // 0. Debug Log: Track final image path per card
+    console.log(`[RENDER] Spark ID: ${spark.id} | Image Path: ${spark.image} | Image Path Length: ${sparkImage.length} | Start: ${sparkImage.substring(0, 30)}`);
+   
+    // DYNAMIC FALLBACK TRIGGER
+    finalRenderedImage = sparkImage;
+    const defaultThumb = spark.image || '/assets/thumbnails/default.jpg';
     
-        // DYNAMIC FALLBACK TRIGGER
-        finalRenderedImage = sparkImage;
-        const defaultThumb = spark.image || '/assets/thumbnails/default.jpg';
-    
-        // PRE-RENDER TRY-CATCH GUARD
+    // PRE-RENDER TRY-CATCH GUARD
 
-        if (!sparkImage || spark.image === "") {
-            // Fetch the live active theme state on render
-            const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
-            const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
+    if (!sparkImage || spark.image === "") {
+       // Fetch the live active theme state on render
+       const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
+       const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
             
-            console.log(`[RENDER]: Cover fallback triggered for ${spark.id}. Generating in-memory fractal.`);
-            finalRenderedImage = getDynamicCardCover(activeThemeData);
-        }
-    } catch (error) {
-        console.error(`[CRITICAL RENDER ERROR] Spark ID: ${spark.id} failed during canvas generation. Using default fallback asset.`, error);
-        // Reverted to asset path since the theme processor failed above
-        finalRenderedImage = '/assets/thumbnails/default.jpg';
+       console.log(`[RENDER]: Cover fallback triggered for ${spark.id}. Generating in-memory fractal.`);
+       finalRenderedImage = getDynamicCardCover(activeThemeData);
     }
 
-    // 1. Core Color Palette
+    console.log("Final Rendered Image:",finalRenderedImage);
+    
     // 1. Core Color Palette
     const pearlColor = "var(--list-color)";
     const neonColor = "var(--glow-color)";
@@ -1460,7 +1455,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const activeThemeKeyForHtml = localStorage.getItem('arcade-theme') || 'neon-dark';
     const activeThemeDataForHtml = databaseCache.settings?.['themes']?.[activeThemeKeyForHtml] || {};
     
-    const inlineFallbackJS = `console.error('IMAGE NETWORK FAILED: ${spark.id}. Activating dynamic fallback...'); this.onerror=null; try { this.src=getDynamicCardCover(${JSON.stringify(activeThemeDataForHtml)}); } catch(e) { this.src=\\'/assets/thumbnails/default.jpg\\'; }`;
+    const inlineFallbackJS = `console.error('IMAGE NETWORK FAILED: ${spark.id}'); this.onerror=null; try { const tk = localStorage.getItem('arcade-theme') || 'neon-dark'; const td = databaseCache.settings['themes'][tk] || {}; this.src=getDynamicCardCover(td); } catch(e) { this.src='/assets/thumbnails/default.jpg'; }`;
 
     return `
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
