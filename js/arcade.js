@@ -1088,6 +1088,63 @@ function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
 
     return fullPrompt;
 }
+
+// UPDATED FUNCTION
+function getDynamicCardCover(themeObject) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 300; 
+    canvas.height = 180; 
+    const ctx = canvas.getContext('2d');
+    
+    // Fallback defaults if the active theme properties are somehow missing
+    const bgHigh = themeObject['bg-color-high'] || 'rgba(0, 8, 15, 1.0)';
+    const bgMid = themeObject['bg-color-mid'] || 'rgba(0, 2, 5, 1.0)';
+    const bgLow = themeObject['bg-color-low'] || 'rgba(0, 5, 10, 1.0)';
+    const glowColor = themeObject['glow-color'] || 'rgba(0, 242, 255, 1.0)';
+    
+    // 1. CREATE METALLIC GRADIENT BACKGROUND FROM THEME
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, bgLow);
+    gradient.addColorStop(0.3, bgMid);
+    gradient.addColorStop(0.5, bgHigh); // Highlight line centered
+    gradient.addColorStop(0.7, bgMid);
+    gradient.addColorStop(1, bgLow);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 2. RENDER RANDOM FRACTAL OVERLAY USING THEME GLOW
+    ctx.strokeStyle = glowColor;
+    ctx.globalAlpha = 0.12; // Ghostly, glowing fractal lines
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = glowColor;
+
+    const iterations = 1500;
+    let x = Math.random() * canvas.width;
+    let y = Math.random() * canvas.height;
+    
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    
+    for (let i = 0; i < iterations; i++) {
+        const nx = x + (Math.sin(x * 0.02 + y * 0.03) * 15);
+        const ny = y + (Math.cos(x * 0.03 - y * 0.02) * 15);
+        
+        ctx.lineTo(nx, ny);
+        x = nx;
+        y = ny;
+        
+        if (x < 0) x = canvas.width; if (x > canvas.width) x = 0;
+        if (y < 0) y = canvas.height; if (y > canvas.height) y = 0;
+    }
+    ctx.stroke();
+    
+    ctx.globalAlpha = 1.0;
+    ctx.shadowBlur = 0; 
+    
+    const finalImage = canvas.toDataURL('image/png');
+    return finalImage;
+}
 // NEW FUNCTION
 function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpace) {
     const actionVerbs = ['create', 'build', 'fetch', 'top', 'get', 'generate', 'show'];
@@ -1315,6 +1372,7 @@ function genSparkImage(sparkImageFromDB) {
     return sparkImageFromDB;
 }
 
+// FUNCTION: renderSparkCard
 function renderSparkCard(spark, isOwner, currentId, ownerId) {
     /* Overall Objective: Generate the HTML for a spark card with persistent 
         neon state for likes and shares based on user history. */
@@ -1327,6 +1385,19 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     // 0. Debug Log: Track final image path per card
     console.log(`[RENDER] Spark ID: ${spark.id} | Image Path Length: ${sparkImage.length} | Start: ${sparkImage.substring(0, 30)}`);
     
+    // DYNAMIC FALLBACK TRIGGER
+    let finalRenderedImage = sparkImage;
+    const defaultThumb = spark.image || '/assets/thumbnails/default.jpg';
+    
+    if (!sparkImage || sparkImage === defaultThumb || sparkImage.trim() === "") {
+        // Fetch the live active theme state on render
+        const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
+        const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
+        
+        console.log(`[RENDER]: Cover fallback triggered for ${spark.id}. Generating in-memory fractal.`);
+        finalRenderedImage = getDynamicCardCover(activeThemeData);
+    }
+
     // 1. Core Color Palette
     const pearlColor = "var(--list-color)";
     const neonColor = "var(--glow-color)";
@@ -1383,7 +1454,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                     ${spark.name}
                 </h4>
                 
-                <img src="${sparkImage}" 
+                <img src="${finalRenderedImage}" 
                      class="spark-thumbnail"
                      onerror="this.style.display='none'; console.error('IMAGE FAILED: ${spark.id}')"
                      onload="this.style.opacity='1'; console.log('IMAGE SUCCESS: ${spark.id}')"
