@@ -1390,8 +1390,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
    
     // DYNAMIC FALLBACK TRIGGER
     finalRenderedImage = sparkImage;
-    const defaultThumb = spark.image || '/assets/thumbnails/default.jpg';
-    
+        
     // PRE-RENDER TRY-CATCH GUARD
 
     if (!sparkImage || spark.image === "") {
