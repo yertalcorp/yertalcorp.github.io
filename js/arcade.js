@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:59:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1039,7 +1039,7 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     const finalCount = countMatch ? countMatch[0] : (limits?.num_mass_sparks || 3);
     const augmentedPrompt = countMatch ? prompt : `${prompt} ${finalCount}`;
 
-    await executeMassSpark(
+    await (
         currentId, 
         name,
         augmentedPrompt, 
@@ -1088,6 +1088,70 @@ function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
 
     return fullPrompt;
 }
+// NEW FUNCTION
+function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpace) {
+    const actionVerbs = ['create', 'build', 'fetch', 'top', 'get', 'generate', 'show'];
+    const numberWords = { 
+        'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 
+        'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10 
+    };
+
+    // 1. Strip URLs to read pure command text
+    let cleanPrompt = prompt;
+    manualUrls.forEach(url => { cleanPrompt = cleanPrompt.replace(url, ''); });
+    const words = cleanPrompt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
+
+    let requestedCount = null;
+
+    // 2. Priority Logic: Check immediately after an action word
+    for (let i = 0; i < words.length - 1; i++) {
+        const currentWord = words[i].toLowerCase();
+        
+        if (actionVerbs.includes(currentWord)) {
+            const nextWord = words[i + 1].toLowerCase();
+            
+            if (/^\d+$/.test(nextWord)) {
+                requestedCount = parseInt(nextWord, 10);
+                break;
+            } else if (numberWords[nextWord]) {
+                requestedCount = numberWords[nextWord];
+                break;
+            } else if (['a', 'an', 'the'].includes(nextWord)) {
+                requestedCount = 1;
+                break;
+            }
+        }
+    }
+
+    // 3. Fallback: Old regex search if direct priority didn't hit
+    if (requestedCount === null) {
+        const wordMatch = cleanPrompt.toLowerCase().match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/);
+        const digitMatch = cleanPrompt.match(/\b\d{1,2}\b/);
+        
+        if (wordMatch) {
+            requestedCount = numberWords[wordMatch[0]];
+        } else if (digitMatch) {
+            requestedCount = parseInt(digitMatch[0], 10);
+        } else {
+            requestedCount = 1;
+        }
+    }
+
+    // 4. Calculate bounded final counts
+    const cappedRequestedCount = Math.min(requestedCount, planLimits.num_mass_sparks);
+    const finalForgeCount = Math.min(cappedRequestedCount, remainingSpace);
+
+    // 5. Build workload collection for URLs if needed
+    const textChunks = cleanPrompt.split(/,|\n/).map(str => str.trim()).filter(Boolean);
+    
+    return {
+        count: finalForgeCount,
+        textChunks: textChunks,
+        isAiReferenceSearch: (manualUrls.length > 0 && requestedCount > 1)
+    };
+}
+
+// FUNCTION: executeMassSpark
 async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
     const status = document.getElementById('engine-status-text');
     
@@ -1099,7 +1163,6 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     let activeResolution = prediction.logic;  
     const predictedCurrentName = prediction.name; 
     
-    // Custom category defaults to sourcing!
     if (predictedCurrentName.toLowerCase() === 'custom') {
         console.log("[FORGE]: Custom category detected. Defaulting to 'source' resolution.");
         activeResolution = 'source';
@@ -1134,33 +1197,13 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     }
 
     // --------------------------------------------------------
-    // 3. TIGHTENED COUNT LOGIC
+    // 3. NEW DELEGATED COUNT & WORKLOAD LOGIC
     // --------------------------------------------------------
-    const manualUrls = extractUrls(prompt); 
-    let cleanPrompt = prompt;
-    manualUrls.forEach(url => { cleanPrompt = cleanPrompt.replace(url, ''); });
-
-    const numberWords = { 
-        'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 
-        'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10 
-    };
-
-    let requestedCount = null; 
-    const wordMatch = cleanPrompt.toLowerCase().match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/);
-    const digitMatch = cleanPrompt.match(/\b\d{1,2}\b/);
-
-    if (wordMatch) {
-        requestedCount = numberWords[wordMatch[0]];
-    } else if (digitMatch) {
-        requestedCount = parseInt(digitMatch[0], 10);
-    }
-
-    if (requestedCount === null) {
-        requestedCount = 1;
-    }
-
-    const cappedRequestedCount = Math.min(requestedCount, planLimits.num_mass_sparks);
-    const finalForgeCount = Math.min(cappedRequestedCount, remainingSpace);
+    const manualUrls = extractUrls(prompt);
+    const resolution = getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpace);
+    const finalForgeCount = resolution.count;
+    const textChunks = resolution.textChunks;
+    const isAiReferenceSearch = resolution.isAiReferenceSearch;
 
     const updateForgeStatus = (text) => {
         if (!window.isInCooldown) status.textContent = text;
@@ -1175,13 +1218,11 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
         // 5. FORGING LOGIC
         // --------------------------------------------------------
         if (activeResolution === 'source') {
-            const isAiReferenceSearch = (manualUrls.length > 0 && (digitMatch || wordMatch));
             let linksToSave = [];
 
             if (manualUrls.length > 0 && !isAiReferenceSearch) {
                 console.log("[FORGE]: Processing manual URLs and extracting surrounding text strings.");
                 
-                const textChunks = cleanPrompt.split(/,|\n/).map(str => str.trim()).filter(Boolean);
                 const itemsCountToTake = Math.min(manualUrls.length, finalForgeCount);
                 
                 for (let i = 0; i < itemsCountToTake; i++) {
@@ -1193,7 +1234,6 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
             } else {
                 updateForgeStatus("CONSULTING MODEL POOL...");
                 
-                // 🔥 NEW HELPER FIRED: Forces Gemini to obey the prompt constraints dynamically
                 const structuredPrompt = shapeAiPrompt(prompt, finalForgeCount, 'source', predictedType);
                 
                 const aiLinks = await callGeminiAPI(structuredPrompt, finalForgeCount, activeResolution);
@@ -1228,7 +1268,6 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
                 const progress = Math.round((i / finalForgeCount) * 100);
                 updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
-                // 🔥 NEW HELPER FIRED: Forces code structure safely
                 const structuredPrompt = shapeAiPrompt(prompt, i, 'create', predictedType);
 
                 const code = await callGeminiAPI(structuredPrompt, i, activeResolution);
