@@ -959,8 +959,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 
 const controls = (isOwner && !isFull) ? `
     <div class="current-prompt-container">
-    // ADDED: Dynamic Current Type Dropdown pulling from databaseCache
-          <div class="current-type-selector-wrapper" style="margin-bottom: 10px; width: 100%;">
+            <div class="current-type-selector-wrapper" style="margin-bottom: 10px; width: 100%;">
             <span class="current-prompt-label">CHOOSE TYPE></span>
             <select id="type-select-${current.id}" class="current-prompt-input" style="width: 100%; margin-top: 5px;" onchange="document.getElementById('input-${current.id}').value = this.value">
                 <option value="">-- CUSTOM PROMPT --</option>
