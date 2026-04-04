@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:37:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:55:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -878,111 +878,6 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     `;
 }
 
-// FUNCTION: renderSparkCard
-function renderSparkCard(spark, isOwner, currentId, ownerId) {
-    /* Overall Objective: Generate the HTML for a spark card with persistent 
-        neon state for likes and shares based on user history. */
-    
-    const targetUrl = `spark.html?current=${currentId}&spark=${spark.id}`;
-    const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
-    const sparkElementId = `save-btn-${spark.id}`;
-    const sparkImage = genSparkImage(spark.image);
-
-    // 0. Debug Log: Track final image path per card
-    console.log(`[RENDER] Spark ID: ${spark.id} | Image Path: ${spark.image} | Image Path Length: ${sparkImage.length} | Start: ${sparkImage.substring(0, 30)}`);
-    
-    // DYNAMIC FALLBACK TRIGGER
-    let finalRenderedImage = sparkImage;
-    const defaultThumb = spark.image || '/assets/thumbnails/default.jpg';
-    
-    // PRE-RENDER TRY-CATCH GUARD
-    try {
-        if (!sparkImage || spark.image === "" || spark.image === "/assets/thumbnails/optics_default.jpg") {
-            // Fetch the live active theme state on render
-            const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
-            const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
-            
-            console.log(`[RENDER]: Cover fallback triggered for ${spark.id}. Generating in-memory fractal.`);
-            finalRenderedImage = getDynamicCardCover(activeThemeData);
-        }
-    } catch (error) {
-        console.error(`[CRITICAL RENDER ERROR] Spark ID: ${spark.id} failed during canvas generation. Using default fallback asset.`, error);
-        finalRenderedImage = '/assets/thumbnails/default.jpg';
-    }
-
-    // 1. Core Color Palette
-    const pearlColor = "var(--list-color)";
-    const neonColor = "var(--glow-color)";
-    const neonGlow = "drop-shadow(0 0 5px var(--glow-color))";
-    
-    // 2. State Assignments (Persisting the Neon state)
-    const hasLiked = spark.stats?.likes?.users?.[visitorUid] ? true : false;
-    const likeIconColor = hasLiked ? neonColor : pearlColor;
-    const likeIconGlow = hasLiked ? neonGlow : "none";
-
-    // Task: Check if this visitor has shared this spark at least once
-    const hasShared = spark.stats?.reshares?.users?.[visitorUid] ? true : false;
-    const shareIconColor = hasShared ? neonColor : pearlColor;
-    const shareIconGlow = hasShared ? neonGlow : "none";
-
-    // Forge State Check (Internal Async)
-    if (visitorUid && !isOwner) {
-        (async () => {
-            const savedRef = ref(db, `users/${visitorUid}/infrastructure/currents/${currentId}/sparks/${spark.id}`);
-            const snapshot = await get(savedRef);
-            if (snapshot.exists()) {
-                const btn = document.getElementById(sparkElementId);
-                if (btn) {
-                    const icon = btn.querySelector('i');
-                    icon.style.color = neonColor;
-                    icon.style.filter = neonGlow;
-                    btn.style.pointerEvents = "none";
-                    btn.title = "Already in Your Arcade";
-                }
-            }
-        })();
-    }
-
-    const toolIconColor = pearlColor;
-
-    // 3. Extraction of Stats Counts
-    const viewCount = spark.stats?.views?.count || 0;
-    const likeCount = spark.stats?.likes?.count || 0;
-    const shareCount = spark.stats?.reshares?.count || 0;
-    const tipCount = spark.stats?.tips?.count || 0;
-
-    // Shared Styles
-    const btnStyle = `background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; filter: drop-shadow(0 0 2px var(--glow-color));`;
-    const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
-    const onOut = "this.style.filter='drop-shadow(0 0 2px var(--glow-color))'; this.style.transform='scale(1)';"
-    
-    // Define the emergency network fallback execution string for the inline HTML tag
-    const activeThemeKeyForHtml = localStorage.getItem('arcade-theme') || 'neon-dark';
-    const activeThemeDataForHtml = databaseCache.settings?.['themes']?.[activeThemeKeyForHtml] || {};
-    
-    const inlineFallbackJS = `console.error('IMAGE NETWORK FAILED: ${spark.id}. Activating dynamic fallback...'); this.onerror=null; try { this.src=getDynamicCardCover(${JSON.stringify(activeThemeDataForHtml)}); } catch(e) { this.src=\\'/assets/thumbnails/default.jpg\\'; }`;
-
-    return `
-        <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
-            <div class="action-card" 
-                  onclick="window.location.href='${targetUrl}'"
-                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
-                
-                <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1.5rem; pointer-events: none;">
-                    ${spark.name}
-                </h4>
-                
-                <img src="${finalRenderedImage}" 
-                       class="spark-thumbnail"
-                       onerror="this.style.display='none'; console.error('IMAGE FAILED: ${spark.id}')"
-                       onerror="${inlineFallbackJS}"
-                       onload="this.style.opacity='1'; console.log('IMAGE SUCCESS: ${spark.id}')"
-                       style="z-index: 1; display: block; transition: opacity 0.5s ease;">
-                
-                <div style="position: absolute; inset: 0; background: var(--branding-color); opacity: 0.1; z-index: 2; pointer-events: none;"></div>
-            </div>
-
-            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
 function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
     if (!container) return;
@@ -1477,6 +1372,155 @@ function genSparkImage(sparkImageFromDB) {
     return sparkImageFromDB;
 }
 
+// FUNCTION: renderSparkCard
+function renderSparkCard(spark, isOwner, currentId, ownerId) {
+    /* Overall Objective: Generate the HTML for a spark card with persistent 
+        neon state for likes and shares based on user history. */
+    
+    const targetUrl = `spark.html?current=${currentId}&spark=${spark.id}`;
+    const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
+    const sparkElementId = `save-btn-${spark.id}`;
+    const sparkImage = genSparkImage(spark.image);
+
+    // 0. Debug Log: Track final image path per card
+    console.log(`[RENDER] Spark ID: ${spark.id} | Image Path: ${spark.image} | Image Path Length: ${sparkImage.length} | Start: ${sparkImage.substring(0, 30)}`);
+    
+    // DYNAMIC FALLBACK TRIGGER
+    let finalRenderedImage = sparkImage;
+    const defaultThumb = spark.image || '/assets/thumbnails/default.jpg';
+    
+    if (!sparkImage || spark.image === "") {
+        // Fetch the live active theme state on render
+        const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
+        const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
+        
+        console.log(`[RENDER]: Cover fallback triggered for ${spark.id}. Generating in-memory fractal.`);
+        finalRenderedImage = getDynamicCardCover(activeThemeData);
+    }
+
+    // 1. Core Color Palette
+    const pearlColor = "var(--list-color)";
+    const neonColor = "var(--glow-color)";
+    const neonGlow = "drop-shadow(0 0 5px var(--glow-color))";
+    
+    // 2. State Assignments (Persisting the Neon state)
+    const hasLiked = spark.stats?.likes?.users?.[visitorUid] ? true : false;
+    const likeIconColor = hasLiked ? neonColor : pearlColor;
+    const likeIconGlow = hasLiked ? neonGlow : "none";
+
+    // Task: Check if this visitor has shared this spark at least once
+    const hasShared = spark.stats?.reshares?.users?.[visitorUid] ? true : false;
+    const shareIconColor = hasShared ? neonColor : pearlColor;
+    const shareIconGlow = hasShared ? neonGlow : "none";
+
+    // Forge State Check (Internal Async)
+    if (visitorUid && !isOwner) {
+        (async () => {
+            const savedRef = ref(db, `users/${visitorUid}/infrastructure/currents/${currentId}/sparks/${spark.id}`);
+            const snapshot = await get(savedRef);
+            if (snapshot.exists()) {
+                const btn = document.getElementById(sparkElementId);
+                if (btn) {
+                    const icon = btn.querySelector('i');
+                    icon.style.color = neonColor;
+                    icon.style.filter = neonGlow;
+                    btn.style.pointerEvents = "none";
+                    btn.title = "Already in Your Arcade";
+                }
+            }
+        })();
+    }
+
+    const toolIconColor = pearlColor;
+
+    // 3. Extraction of Stats Counts
+    const viewCount = spark.stats?.views?.count || 0;
+    const likeCount = spark.stats?.likes?.count || 0;
+    const shareCount = spark.stats?.reshares?.count || 0;
+    const tipCount = spark.stats?.tips?.count || 0;
+
+    // Shared Styles
+    const btnStyle = `background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; filter: drop-shadow(0 0 2px var(--glow-color));`;
+    const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
+    const onOut = "this.style.filter='drop-shadow(0 0 2px var(--glow-color))'; this.style.transform='scale(1)';"
+    
+    return `
+        <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
+            <div class="action-card" 
+                  onclick="window.location.href='${targetUrl}'"
+                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
+                
+                <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1.5rem; pointer-events: none;">
+                    ${spark.name}
+                </h4>
+                
+                <img src="${finalRenderedImage}" 
+                     class="spark-thumbnail"
+                     onerror="this.style.display='none'; console.error('IMAGE FAILED: ${spark.id}')"
+                     onload="this.style.opacity='1'; console.log('IMAGE SUCCESS: ${spark.id}')"
+                     style="z-index: 1; display: block; transition: opacity 0.5s ease;">
+                
+                <div style="position: absolute; inset: 0; background: var(--branding-color); opacity: 0.1; z-index: 2; pointer-events: none;"></div>
+            </div>
+
+            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
+                
+                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 8px; color: rgba(var(--fg-color-high),0.4); border-bottom: 1px solid rgba(var(--fg-color-high),0.1); width: 85%; padding-bottom: 6px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <span class="stat-views" title="Total Views">
+                        <i class="fas fa-eye" style="margin-right: 2px;"></i> 
+                        VIEWS: ${viewCount}
+                    </span>
+                    <span class="stat-likes" title="Total Likes">
+                        <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> 
+                        LIKES: ${likeCount}
+                    </span>
+                    <span class="stat-reshares" title="Total Shares">
+                        <i class="fas fa-retweet" style="margin-right: 2px;"></i> 
+                        SHARES: ${shareCount}
+                    </span>
+                    <span class="stat-tips" title="Total Tips">
+                        <i class="fas fa-coins" style="margin-right: 2px;"></i> 
+                        TIPS: ${tipCount}
+                    </span>
+                </div>
+
+                <div class="interaction-row" style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%;">
+                    <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none;">
+                        ${spark.link ? 'SOURCED' : 'FORGED'}: ${formatTimeAgo(spark.created)}
+                    </div>
+                    
+                    <div class="action-buttons" style="display: flex; gap: 0.8rem; align-items: center; justify-content: center;">
+                        <button onclick="likeSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Like" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <i class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
+                        </button>
+
+                        ${isOwner ? `
+                            <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                                <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
+                            </button>
+                            <button onclick="deleteSpark('${currentId}', '${spark.id}', '${visitorUid}')" title="Delete" 
+                                    style="${btnStyle}" 
+                                    onmouseover="this.style.color='var(--error-color)'; this.style.filter='drop-shadow(0 0 8px var(--error-color))'; this.style.transform='scale(1.2)';" 
+                                    onmouseout="${onOut}">
+                                <i class="fas fa-trash" style="font-size: 10px; color: ${toolIconColor};"></i>
+                            </button>
+                        ` : `
+                            <button id="${sparkElementId}" onclick="cloneSpark(this, '${visitorUid}', '${ownerId}', '${currentId}', '${spark.id}')" title="Save to My Arcade" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                                <i class="fas fa-save" style="font-size: 10px; color: ${toolIconColor};"></i>
+                            </button>
+                            <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                                <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
+                            </button>
+                            <button onclick="tipOwner(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Tip Jar" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                                <i class="fas fa-coins" style="font-size: 10px; color: ${toolIconColor};"></i>
+                            </button>
+                        `}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
 
 /*
  * Generates a concise Spark name: <CurrentName>-Spark#<DDMM-HHMM>
