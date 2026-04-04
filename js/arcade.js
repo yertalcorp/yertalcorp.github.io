@@ -1389,13 +1389,19 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     let finalRenderedImage = sparkImage;
     const defaultThumb = spark.image || '/assets/thumbnails/default.jpg';
     
-    if (!sparkImage || spark.image === "") {
-        // Fetch the live active theme state on render
-        const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
-        const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
-        
-        console.log(`[RENDER]: Cover fallback triggered for ${spark.id}. Generating in-memory fractal.`);
-        finalRenderedImage = getDynamicCardCover(activeThemeData);
+    // PRE-RENDER TRY-CATCH GUARD
+    try {
+        if (!sparkImage || spark.image === "" || spark.image === "/assets/thumbnails/optics_default.jpg") {
+            // Fetch the live active theme state on render
+            const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
+            const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
+            
+            console.log(`[RENDER]: Cover fallback triggered for ${spark.id}. Generating in-memory fractal.`);
+            finalRenderedImage = getDynamicCardCover(activeThemeData);
+        }
+    } catch (error) {
+        console.error(`[CRITICAL RENDER ERROR] Spark ID: ${spark.id} failed during canvas generation. Using default fallback asset.`, error);
+        finalRenderedImage = '/assets/thumbnails/default.jpg';
     }
 
     // 1. Core Color Palette
@@ -1444,6 +1450,12 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
     const onOut = "this.style.filter='drop-shadow(0 0 2px var(--glow-color))'; this.style.transform='scale(1)';"
     
+    // Define the emergency network fallback execution string for the inline HTML tag
+    const activeThemeKeyForHtml = localStorage.getItem('arcade-theme') || 'neon-dark';
+    const activeThemeDataForHtml = databaseCache.settings?.['themes']?.[activeThemeKeyForHtml] || {};
+    
+    const inlineFallbackJS = `console.error('IMAGE NETWORK FAILED: ${spark.id}. Activating dynamic fallback...'); this.onerror=null; try { this.src=getDynamicCardCover(${JSON.stringify(activeThemeDataForHtml)}); } catch(e) { this.src=\\'/assets/thumbnails/default.jpg\\'; }`;
+
     return `
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
             <div class="action-card" 
@@ -1455,10 +1467,10 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                 </h4>
                 
                 <img src="${finalRenderedImage}" 
-                     class="spark-thumbnail"
-                     onerror="this.style.display='none'; console.error('IMAGE FAILED: ${spark.id}')"
-                     onload="this.style.opacity='1'; console.log('IMAGE SUCCESS: ${spark.id}')"
-                     style="z-index: 1; display: block; transition: opacity 0.5s ease;">
+                       class="spark-thumbnail"
+                       onerror="${inlineFallbackJS}"
+                       onload="this.style.opacity='1'; console.log('IMAGE SUCCESS: ${spark.id}')"
+                       style="z-index: 1; display: block; transition: opacity 0.5s ease;">
                 
                 <div style="position: absolute; inset: 0; background: var(--branding-color); opacity: 0.1; z-index: 2; pointer-events: none;"></div>
             </div>
