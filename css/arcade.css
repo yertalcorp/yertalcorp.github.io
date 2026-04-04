@@ -737,6 +737,25 @@ main.max-width-limit {
     width: auto;
 }
 
+/* ADDED: Fix for the dropdown and option colors */
+select.current-prompt-input {
+    background-color: var(--bg-color, #0a0c10) !important;
+    color: var(--glow-color, #00f2ff) !important;
+    border: 1px solid var(--glow-color, #00f2ff);
+}
+
+select.current-prompt-input option {
+    background-color: var(--bg-color, #0a0c10) !important;
+    color: var(--glow-color, #00f2ff) !important;
+}
+
+/* Ensures styling remains intact when clicked/focused */
+select.current-prompt-input:focus {
+    background-color: var(--bg-color, #0a0c10) !important;
+    color: var(--glow-color, #00f2ff) !important;
+    outline: none;
+}
+
 /* --- The EXEC Button (Themed & Metallic) --- */
 .current-prompt-exec-button {
     height: 100%;
