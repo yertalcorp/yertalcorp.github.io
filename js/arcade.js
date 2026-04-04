@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -959,15 +959,15 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 
 const controls = (isOwner && !isFull) ? `
     <div class="current-prompt-container">
-            <div class="current-type-selector-wrapper" style="margin-bottom: 10px; width: 100%;">
-            <span class="current-prompt-label">CHOOSE TYPE></span>
-            <select id="type-select-${current.id}" class="current-prompt-input" style="width: 100%; margin-top: 5px;" onchange="document.getElementById('input-${current.id}').value = this.value">
+    <div class="current-type-selector-wrapper" style="margin-bottom: 15px; width: 100%; display: flex; flex-direction: column; align-items: flex-start;">
+            <span class="current-prompt-label" style="display: block; margin-bottom: 5px;">SELECT CAPABILITY></span>
+            <select id="type-select-${current.id}" class="current-prompt-input" style="width: max-content; max-width: 100%;" onchange="document.getElementById('input-${current.id}').value = this.value">
                 <option value="">-- CUSTOM PROMPT --</option>
                 ${(databaseCache.settings?.['arcade-current-types'] || []).map(type => `
                     <option value="${type.example_prompt}">${type.name.toUpperCase()}</option>
                 `).join('')}
             </select>
-          </div>
+        </div>
           <input type="text" id="input-${current.id}" 
                class="current-prompt-input"
                placeholder="Type your prompt or paste a URL.  Create one card for... or Source one link for..." 
