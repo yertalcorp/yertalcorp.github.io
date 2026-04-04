@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:02:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1383,13 +1383,13 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const sparkImage = genSparkImage(spark.image);
 
     // 0. Debug Log: Track final image path per card
-    console.log(`[RENDER] Spark ID: ${spark.id} | Image Path Length: ${sparkImage.length} | Start: ${sparkImage.substring(0, 30)}`);
+    console.log(`[RENDER] Spark ID: ${spark.id} | Image Path: ${spark.image} | Image Path Length: ${sparkImage.length} | Start: ${sparkImage.substring(0, 30)}`);
     
     // DYNAMIC FALLBACK TRIGGER
     let finalRenderedImage = sparkImage;
     const defaultThumb = spark.image || '/assets/thumbnails/default.jpg';
     
-    if (!sparkImage || sparkImage === defaultThumb || sparkImage.trim() === "") {
+    if (!sparkImage || spark.image === "") {
         // Fetch the live active theme state on render
         const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
         const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
