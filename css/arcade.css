@@ -755,6 +755,20 @@ select.current-prompt-input:focus {
     color: var(--glow-color, #00f2ff) !important;
     outline: none;
 }
+/* ADDED: Fix for cut-off left-aligned long text prompts */
+input.current-prompt-input {
+    text-align: left; /* Maintains default reading direction */
+    white-space: nowrap; /* Prevents text wrapping */
+    overflow: hidden; /* Clips outer bounds cleanly */
+    text-overflow: ellipsis; /* Adds '...' automatically to clipped text */
+    direction: ltr; /* Keeps text flowing left to right */
+}
+
+/* Polish: Shifts the cursor focus to the end so the user sees the active prompt tail */
+input.current-prompt-input:focus {
+    direction: ltr;
+    text-align: left;
+}
 
 /* --- The EXEC Button (Themed & Metallic) --- */
 .current-prompt-exec-button {
