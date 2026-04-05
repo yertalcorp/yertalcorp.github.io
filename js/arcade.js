@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 09:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -959,9 +959,12 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 
 const controls = (isOwner && !isFull) ? `
     <div class="current-prompt-container">
-    <div class="current-type-selector-wrapper" style="margin-bottom: 15px; width: 100%; display: flex; flex-direction: column; align-items: flex-start;">
-            <span class="current-prompt-label" style="display: block; margin-bottom: 5px;">SELECT CAPABILITY></span>
-            <select id="type-select-${current.id}" class="current-prompt-input" style="width: max-content; max-width: 100%;" onchange="document.getElementById('input-${current.id}').value = this.value">
+        <div class="current-type-selector-wrapper" style="margin-bottom: 15px; width: 100%; display: flex; flex-direction: column; align-items: flex-start;">
+            <span class="current-prompt-label" style="display: block; margin-bottom: 5px;">SELECT CURRENT TYPE></span>
+            
+            // DELETED: inp.scrollLeft = inp.scrollWidth; 
+            // ADDED: setSelectionRange(0, 0) to force the view back to the left
+            <select id="type-select-${current.id}" class="current-prompt-input" style="width: max-content; max-width: 100%;" onchange="const inp = document.getElementById('input-${current.id}'); inp.value = this.value; inp.focus(); inp.setSelectionRange(0, 0);">
                 <option value="">-- CUSTOM PROMPT --</option>
                 ${(databaseCache.settings?.['arcade-current-types'] || []).map(type => `
                     <option value="${type.example_prompt}">${type.name.toUpperCase()}</option>
