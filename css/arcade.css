@@ -695,7 +695,9 @@ main.max-width-limit {
 /* --- Sleek Command Container --- */
 .current-prompt-container {
     display: flex;
-    align-items: center;
+    width: 100%
+    gap: 15px;
+    align-items: flex-end;
     margin-left: auto;
     background: var(--bg-color);
     border: 1px solid var(--glow-aura);
@@ -708,7 +710,23 @@ main.max-width-limit {
     height: 26px; /* Slimmer profile */
     overflow: hidden;
 }
-
+/* ADDED: Forces the dropdown container to scale only to its content width */
+.current-type-selector-wrapper {
+    flex: 0 0 auto !important; /* Do not grow, do not shrink, fit content */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+/* ADDED: Keeps the select box tightly fitted to its longest option */
+.current-type-selector-wrapper select {
+    width: max-content !important;
+    max-width: 300px !important; /* Safety guard so it doesn't eat the whole row on huge text */
+}
+/* ADDED: Forces the input field to stretch and fill all remaining space */
+.current-prompt-input[type="text"] {
+    flex: 1 1 auto !important; /* Grow and shrink proportionally */
+    min-width: 150px !important; /* Guarantees it never shrinks to a tiny sliver */
+}
 .current-prompt-label {
     font-family: monospace;
     font-size: 11px;
