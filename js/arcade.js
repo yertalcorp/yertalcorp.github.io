@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1058,24 +1058,24 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 
     return currentId;
 };
-/*
- * shapeAiPrompt
- * Centralizes the global "Arcade Standard" for hydration and scope.
- */
 function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
     // 1. Locate the matched capability and its specific physics/logic rules
     const matchedCategory = resolveCategoryFromPrompt(rawPrompt, activeBoardName);
     const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
 
     // 2. Define the Professional Arcade Standard (Hydration & Scope)
-    // This is the "secret sauce" that ensures code runs after injection.
+    // Refined to ensure buttons and mouse interaction actually "link up" post-injection.
     const globalHydrationStandard = `
     MANDATORY ARCHITECTURAL RULES:
-    1. SCOPE ISOLATION: Wrap ALL JavaScript in an IIFE (Immediately Invoked Function Expression) to prevent global variable collisions.
-    2. HYDRATION READY: Ensure the script executes immediately. Do not rely on window.onload.
-    3. CONTAINER ADAPTIVE: Use container-relative sizing (e.g., parentElement.offsetWidth) rather than window.innerWidth where possible.
-    4. INTERACTION: Ensure Event Listeners for mouse/touch calculate offsets relative to the element, not the whole document.
-    5. VISUAL FIDELITY: Use requestAnimationFrame for loops. Use alpha-trailing (e.g., fillRect with 0.1 opacity) for motion blur effects.
+    1. SCOPE ISOLATION: Wrap ALL JavaScript in an IIFE.
+    2. HYDRATION READY: Script must execute immediately.
+    3. CONTAINER ADAPTIVE: Use parentElement.offsetWidth/Height for canvas scaling.
+    4. INTERACTION RIGOR: 
+       - Use 'getBoundingClientRect()' for ALL mouse/touch coordinates to ensure accuracy within the arcade's layout.
+       - Use 'addEventListener' on specific elements (e.g., the canvas or a button ID), NEVER 'window' or 'document' for primary interaction, to prevent event bubbling issues.
+    5. UI CONNECTIVITY: Ensure all <button> elements have unique IDs and that listeners are attached explicitly inside the IIFE.
+    6. VISUAL FIDELITY: Use requestAnimationFrame for loops. Use alpha-trailing (0.1 opacity) for motion blur.
+    7. PHYSICS STABILITY: For fluid/grid sims, obstacles must zero out velocity (u, v) and use a reflection step in 'set_bnd' to prevent leakage.
     `;
 
     let expertPersona = "";
@@ -1085,10 +1085,11 @@ function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
     const activeMode = mode || (matchedCategory ? matchedCategory.logic : 'hybrid');
 
     if (activeMode === 'create') {
-        expertPersona = `You are an elite software architect and UI designer specializing in high-performance, single-file HTML5 canvas applications.`;
+        expertPersona = `You are an elite software architect and computational physics specialist specializing in high-performance, single-file HTML5 canvas applications.`;
         systemBoundaries = `
         - Output ONLY valid, executable HTML with embedded CSS and JS.
-        - NO external libraries (Three.js, jQuery, etc.) unless explicitly requested.
+        - NO external libraries unless explicitly requested.
+        - All UI elements (buttons, sliders) MUST be fully functional and wired to their JS logic.
         - Focus on professional-grade math, physics, and smooth FPS.
         ${globalHydrationStandard}`;
     } else if (activeMode === 'source') {
