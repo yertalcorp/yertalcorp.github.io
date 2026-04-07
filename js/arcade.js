@@ -1818,6 +1818,8 @@ async function getGeminiModel(apiKey) {
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code';
     const statusText = document.getElementById('engine-status-text');
+
+    console.log(`callGeminiAPI: prompt: ${prompt}, val: ${val}, type:${type}`);
     
     if (window.isInCooldown) {
         throw new Error("System is currently cooling down.");
@@ -1896,7 +1898,7 @@ async function callGeminiAPI(prompt, val, type) {
                     return JSON.parse(result.replace(/```json|```/g, '').trim());
                 } catch (jsonErr) {
                     console.warn(`[FORGE]: Model returned a raw string instead of JSON. Returning raw text.`);
-                    return result.trim();
+                    return result.replace(/```[a-z]*\n?|```/gi, '').trim();
                 }
             }
 
