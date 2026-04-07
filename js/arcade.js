@@ -960,7 +960,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 const controls = (isOwner && !isFull) ? `
     <div class="current-prompt-container">
 <div class="current-type-selector-wrapper">
-    <span class="current-prompt-label" style="display: block;">SELECT CURRENT TYPE</span>
+    <span class="current-prompt-label" style="display: block; justify-items: center; font-color: var(--fg-color-high);">SELECT CURRENT TYPE</span>
     <select id="type-select-${current.id}" class="current-prompt-input" onchange="const inp = document.getElementById('input-${current.id}'); inp.value = this.value; inp.focus(); inp.scrollLeft = 0; inp.setSelectionRange(0, 0);">
         <option value="">-- CUSTOM PROMPT --</option>
         ${(databaseCache.settings?.['arcade-current-types'] || []).map(type => `
