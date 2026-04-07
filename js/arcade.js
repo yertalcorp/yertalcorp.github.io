@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:47:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 22:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1218,7 +1218,7 @@ function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpa
 }
 
 // FUNCTION: executeMassSpark
-async function executeMassSpark(currentId, currentName, prompt, mode, templateName, templateUrl) {
+async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeName, promptTypeImage) {
     const status = document.getElementById('engine-status-text');
     
     // --------------------------------------------------------
@@ -1238,8 +1238,6 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     } else {
         console.log(`[FORGE]: Using explicit category: ${currentName}`);
     }
-
-    console.log(`executeMassSpark: activeResolution(mode): ${activeResolution}`);
 
     // Safety check for category mismatch
     if (currentName && predictedCurrentName.toLowerCase() !== currentName.toLowerCase()) {
@@ -1283,8 +1281,8 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
 
     try {
         const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
-        const finalImageUrl = templateUrl || defaultThumb;
-        const finalCategoryName = templateName || predictedCurrentName;
+        const finalImageUrl = promptTypeImage || defaultThumb;
+        const finalCategoryName = promptTypeName || predictedCurrentName;
 
         // --------------------------------------------------------
         // 5. FORGING LOGIC
