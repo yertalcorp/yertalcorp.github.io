@@ -712,30 +712,29 @@ main.max-width-limit {
 }
 /* ADDED: Forces the dropdown container to scale only to its content width */
 .current-type-selector-wrapper {
-    flex: 0 0 auto !important; /* Do not grow, do not shrink, fit content */
+    flex: 0 0 auto; /* Do not grow, do not shrink, fit content */
     display: flex;
     flex-direction: column;
     align-items: flex-start;
 }
 /* ADDED: Keeps the select box tightly fitted to its longest option */
 .current-type-selector-wrapper select {
-    width: max-content !important;
-    max-width: 300px !important; /* Safety guard so it doesn't eat the whole row on huge text */
+    width: max-content;
+    max-width: 300px; /* Safety guard so it doesn't eat the whole row on huge text */
 }
 /* ADDED: Forces the input field to stretch and fill all remaining space */
 .current-prompt-input[type="text"] {
-    flex: 1 1 auto !important; /* Grow and shrink proportionally */
-    min-width: 150px !important; /* Guarantees it never shrinks to a tiny sliver */
+    flex: 1 1 auto; /* Grow and shrink proportionally */
+    min-width: 150px; /* Guarantees it never shrinks to a tiny sliver */
 }
 .current-prompt-label {
     font-family: monospace;
     font-size: 11px;
     font-weight: 900;
     color: var(--glow-color);
-    padding: 0 12px;
     opacity: 0.8;
     white-space: nowrap;
-    border-right: 1px solid var(--glow-aura);
+    border-bottom: 1px solid var(--glow-aura);
     height: 100%;
     display: flex;
     align-items: center;
@@ -746,31 +745,30 @@ main.max-width-limit {
     background: transparent;
     border: none;
     outline: none;
-    color: var(--fg-color-low);
+    color: var(--fg-color-mid);
     font-size: 9px; /* Reduced for sleeker look */
-    font-style: italic;
     padding: 0 12px;
     letter-spacing: 0.5px;
-    height: 80%;
+    height: 100%;
     width: auto;
 }
 
 /* ADDED: Fix for the dropdown and option colors */
 select.current-prompt-input {
-    background-color: var(--bg-color, #0a0c10) !important;
-    color: var(--glow-color, #00f2ff) !important;
+    background-color: var(--bg-color, #0a0c10);
+    color: var(--glow-color, #00f2ff);
     border: 1px solid var(--glow-color, #00f2ff);
 }
 
 select.current-prompt-input option {
-    background-color: var(--bg-color, #0a0c10) !important;
-    color: var(--glow-color, #00f2ff) !important;
+    background-color: var(--bg-color, #0a0c10);
+    color: var(--glow-color, #00f2ff);
 }
 
 /* Ensures styling remains intact when clicked/focused */
 select.current-prompt-input:focus {
-    background-color: var(--bg-color, #0a0c10) !important;
-    color: var(--glow-color, #00f2ff) !important;
+    background-color: var(--bg-color, #0a0c10);
+    color: var(--glow-color, #00f2ff);
     outline: none;
 }
 /* ADDED: Fix for cut-off left-aligned long text prompts */
@@ -814,7 +812,7 @@ input.current-prompt-input:focus {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
     
     /* Ensure no line-height or padding-top is pushing it down */
-    line-height: 1 !important;
+    line-height: 1;
 }
 
 .current-prompt-exec-button:hover {
