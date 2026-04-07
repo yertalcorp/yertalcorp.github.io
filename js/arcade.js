@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:47:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -971,8 +971,8 @@ const controls = (isOwner && !isFull) ? `
           <input type="text" id="input-${current.id}" 
                class="current-prompt-input"
                placeholder="Type your prompt or paste a URL..." 
-               onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '$(current.name}')">
-        <button onclick="window.handleCreation('${current.id}', '${current.name}')" class="current-prompt-exec-button">
+               onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '${current.name}', '${type.id}', '${type.name}')">
+        <button onclick="window.handleCreation('${current.id}', '${current.name}', '${type.id}', '${type.name}')" class="current-prompt-exec-button">
             EXEC
         </button>
     </div>
@@ -1222,19 +1222,26 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     const status = document.getElementById('engine-status-text');
     
     // --------------------------------------------------------
-    // 1. TIGHTENED TYPE & LOGIC CHECK
+    // 1. TIGHTENED TYPE & LOGIC CHECK (Only Guess if Custom)
     // --------------------------------------------------------
-    const prediction = resolveCategoryFromPrompt(prompt, currentName); 
-    const predictedType = prediction.id;        
-    let activeResolution = prediction.logic;  
-    const predictedCurrentName = prediction.name; 
+    let predictedType = currentId; // Default to existing ID
+    let activeResolution = mode || 'create'; // Default to current mode
+    let predictedCurrentName = currentName || 'Custom';
 
-    console.log(`executeMassSpark: activeResolution(mode): ${activeResolution}`);
-    if (predictedCurrentName.toLowerCase() === 'custom') {
-        console.log("[FORGE]: Custom category detected. Defaulting to 'source' resolution.");
-        activeResolution = 'source';
+    // Only invoke Regex if we are in a 'Custom' context or currentName is missing
+    if (!currentName || currentName.toLowerCase() === 'custom') {
+        console.log("[FORGE]: Custom category detected. Resolving via Regex...");
+        const prediction = resolveCategoryFromPrompt(prompt, currentName); 
+        predictedType = prediction.id;        
+        activeResolution = 'source'; // Custom prompts usually default to source unless specified
+        predictedCurrentName = prediction.name; 
+    } else {
+        console.log(`[FORGE]: Using explicit category: ${currentName}`);
     }
 
+    console.log(`executeMassSpark: activeResolution(mode): ${activeResolution}`);
+
+    // Safety check for category mismatch
     if (currentName && predictedCurrentName.toLowerCase() !== currentName.toLowerCase()) {
         if (predictedCurrentName.toLowerCase() !== 'custom') {
             const proceed = confirm(
@@ -1263,9 +1270,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
         return;
     }
 
-    // --------------------------------------------------------
     // 3. NEW DELEGATED COUNT & WORKLOAD LOGIC
-    // --------------------------------------------------------
     const manualUrls = extractUrls(prompt);
     const resolution = getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpace);
     const finalForgeCount = resolution.count;
@@ -1279,7 +1284,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     try {
         const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
         const finalImageUrl = templateUrl || defaultThumb;
-        const finalCategoryName = templateName;
+        const finalCategoryName = templateName || predictedCurrentName;
 
         // --------------------------------------------------------
         // 5. FORGING LOGIC
@@ -1664,43 +1669,65 @@ function resolveCategoryFromPrompt(prompt, currentName) {
         rules: "Maintain extreme flexibility. Do not enforce specialized rulesets."
     };
 }
-window.handleCreation = async (currentId, currentName) => {
+
+window.handleCreation = async (currentId, currentName, promptTypeId, promptTypeName) => {
     const promptInput = document.getElementById(`input-${currentId}`);
+    const categorySelect = document.getElementById(`select-${currentId}`); // Fetch the dropdown
     const input = promptInput ? promptInput.value.trim() : '';
+    const selectedCategoryValue = categorySelect ? categorySelect.value : 'Custom';
+
     if (!input) return;
 
     const status = document.getElementById('engine-status-text');
     status.textContent = "PROCESSING INFRASTRUCTURE...";
 
     try {
-        // 1. SILENTLY EXTRACT TOKENS & RESOLVE CATEGORY LOCALLY
-        const resolvedCategory = resolveCategoryFromPrompt(input);
+        let resolvedCategory;
+
+        // 1. SELECTIVE RESOLUTION: Only call Regex if "Custom" is selected
+        if (selectedCategoryValue === '-- CUSTOM PROMPT --' || selectedCategoryValue === '') {
+            console.log("[FORGE]: Custom Selection detected. Running Regex Resolution...");
+            resolvedCategory = resolveCategoryFromPrompt(input);
+        } else {
+            // Use the already known currentName and existing metadata
+            console.log(`[FORGE]: Explicit Selection detected: ${currentName}`);
+            resolvedCategory = {
+                name: promptTypeName,
+                id: promptTypeId,
+                logic: 'create', // Standard for arcade templates
+                image: databaseCache.infrastructure?.currents?.[promptTypeId]?.image || '/assets/thumbnails/default.jpg'
+            };
+        }
         
         // 2. LOGIC ROUTING
         const isUrl = /^(http|https):\/\/[^ "]+$/.test(input);
-        let mode = (resolvedCategory.logic === 'source' || isUrl) ? 'sourcing' : 'prompt';
+        // If it's a URL or the resolved logic says 'source', we source. 
+        // Otherwise, we treat it as a prompt-based creation.
+        let mode = (resolvedCategory.logic === 'source' || isUrl) ? 'source' : 'create';
 
-        console.log(`[FORGE]: Originating Board: "${currentName}". Classified Spark Category: "${resolvedCategory.name}"`);
+        console.log(`[FORGE]: Routing to executeMassSpark via Mode: ${mode} | Category: ${resolvedCategory.name}`);
 
         // 3. TRIGGER MASS SPARK
-        // We pass the root 'currentId' so it saves under the current board's infrastructure,
-        // but we feed it the *resolved* category's name and image!
+        // We pass the explicit mode and resolved metadata to ensure executeMassSpark
+        // doesn't have to guess either.
         await executeMassSpark(
             currentId, 
             currentName,
             input, 
             mode, 
-            resolvedCategory.name, // The new category!
-            resolvedCategory.image  // The new thumbnail!
+            resolvedCategory.name, 
+            resolvedCategory.image 
         );
         
         if (promptInput) promptInput.value = '';
 
     } catch (e) {
         console.error("Creation Error:", e);
-        await executeMassSpark(currentId, currentName, input, 'prompt', 'Custom', '/assets/thumbnails/default.jpg');
+        // Fallback to basic custom processing on error
+        await executeMassSpark(currentId, currentName, input, 'create', 'Custom', '/assets/thumbnails/default.jpg');
     }
 };
+
 /*
  * Extracts valid URLs from a string based on common separators
  * @param {string} text 
