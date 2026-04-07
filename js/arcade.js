@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:48:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:12:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1063,113 +1063,40 @@ function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
     const matchedCategory = resolveCategoryFromPrompt(rawPrompt, activeBoardName);
     const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
     const activeMode = mode || (matchedCategory ? matchedCategory.logic : 'hybrid');
+    const currentType = matchedCategory ? matchedCategory.name : "General Utility";
 
-    // 1. Define Variable: Persona
-    let persona = "";
-    if (activeMode === 'create') {
-        persona = "An elite software architect and computational physics specialist who builds high-performance, production-ready HTML5 canvas simulations.";
-    } else if (activeMode === 'source') {
-        persona = "A high-density data extraction specialist who returns strictly formatted JSON.";
-    } else {
-        persona = "An advanced full-stack assistant focused on building functional, zero-dependency web utilities.";
-    }
+    // 1. Persona Mapping
+    const personas = {
+        create: "Elite Software Architect & Physics Specialist.",
+        source: "High-density Data Extraction Expert.",
+        hybrid: "Full-stack Web Utility Developer."
+    };
+    const persona = personas[activeMode] || personas.hybrid;
 
-    // 2. Define Variable: Rules (Merged Architectural + Category-Specific)
-    const architecturalRules = `
-    - Wrap ALL JavaScript in an IIFE. No global variables.
-    - Script must execute immediately (Hydration Ready).
-    - Use 'parentElement.offsetWidth/Height' for sizing (NEVER 'window.innerWidth').
-    - Calculate mouse/touch coordinates using 'getBoundingClientRect()' minus 'rect.left/top'.
-    - Every <button> or <input> must have a unique ID and listeners attached via 'document.getElementById' in JS (NO 'onclick' attributes).
-    - Use 'requestAnimationFrame' for loops and 0.1 opacity fillRect for motion trails.
-    - Output ONLY a single-file valid HTML document with NO external libraries.
-    - ${categoryRules}`;
+    // 2. Simplified Rules
+    const rules = `
+- No external libraries/CDNs. Single-file HTML only.
+- Wrap JS in an IIFE (No global leaks).
+- Size via parentElement.offsetWidth/Height.
+- Precision coordinates via getBoundingClientRect().
+- No 'onclick' attributes; use JS EventListeners + Unique IDs.
+- Use requestAnimationFrame and motion trails.
+- ${categoryRules}`.trim();
 
-    // 3. Define Variable: Task
-    const task = rawPrompt;
-
-    // 4. Final Prompt Construction (Simplified Format)
+    // 3. Final Prompt Construction
     const fullPrompt = `
-Using the following persona: ${persona}
-
-Write HTML and javascript code for these requirements: ${task}
-
-The code must follow these rules: 
-${architecturalRules}
-
-[QUANTITY]: Generate ${count} distinct items/variations if applicable.
+- Command: Write working HTML and Javascript Code for: ${rawPrompt}
+- Persona: ${persona}
+- Model: ${currentType}
+- Task: Generate ${count} variation(s) of the requested tool.
+- Rules: 
+${rules}
+- Output Format: Strictly a single valid HTML document. No prose or explanations.
     `;
 
     return fullPrompt.trim();
 }
-function shapeAiPromptComplex(rawPrompt, count, mode, activeBoardName) {
-    // 1. Locate the matched capability and its specific physics/logic rules
-    const matchedCategory = resolveCategoryFromPrompt(rawPrompt, activeBoardName);
-    const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
 
-    // 2. Define the Professional Arcade Standard (Hydration & Scope)
-    // This version enforces strict "Functional Autonomy" to fix broken UI/Physics.
-    const globalHydrationStandard = `
-    MANDATORY ARCHITECTURAL RULES (NON-NEGOTIABLE):
-    1. SCOPE ISOLATION: Wrap ALL JavaScript in an IIFE. No global variables.
-    2. HYDRATION READY: Script must execute immediately.
-    3. CONTAINER ADAPTIVE: Use 'parentElement.offsetWidth/Height' for sizing. NEVER 'window.innerWidth'.
-    4. INTERACTION RIGOR: 
-       - Calculate mouse/touch coordinates using 'getBoundingClientRect()'. 
-       - Subtract 'rect.left' and 'rect.top' from clientX/Y to ensure precision within the arcade frame.
-    5. UI CONNECTIVITY: 
-       - Every <button> or <input> must have a unique ID.
-       - ALL EventListeners must be attached explicitly via 'document.getElementById' inside the IIFE.
-       - DO NOT use 'onclick' attributes in HTML; use JS listeners only.
-    6. VISUAL FIDELITY: Use 'requestAnimationFrame' for loops. Use 0.1 opacity fillRect for motion trails.
-    7. PHYSICS STABILITY: 
-       - Obstacles must be treated as solid boundaries in the solver.
-       - Velocity (u, v) and Density MUST be zeroed out for any cell marked as an obstacle to prevent 'ghost' leaks.
-    `;
-
-    let expertPersona = "";
-    let systemBoundaries = "";
-
-    // 3. Fallback to resolution logic if explicit mode isn't passed
-    const activeMode = mode || (matchedCategory ? matchedCategory.logic : 'hybrid');
-
-    if (activeMode === 'create') {
-        expertPersona = `You are an elite software architect and computational physics specialist. You build high-performance, production-ready HTML5 canvas simulations.`;
-        systemBoundaries = `
-        - Output ONLY a single-file valid HTML document.
-        - NO external libraries or CDNs.
-        - Every UI element must be 100% functional. A 'Reset' button must reset, and 'Obstacles' must block.
-        - Focus on professional-grade numerical stability and smooth 60 FPS.
-        ${globalHydrationStandard}`;
-    } else if (activeMode === 'source') {
-        expertPersona = `You are a high-density data extraction specialist.`;
-        systemBoundaries = `Return strictly formatted arrays or JSON. No simulators.`;
-    } else {
-        // Hybrid Mode
-        expertPersona = `You are an advanced full-stack assistant.`;
-        systemBoundaries = `
-        - If creating a tool, follow the "MANDATORY ARCHITECTURAL RULES" below strictly.
-        - Ensure all interactive elements are correctly wired to the logic.
-        ${globalHydrationStandard}`;
-    }
-
-    // 4. Final Prompt Construction
-    const fullPrompt = `
-    [SYSTEM ROLE]: ${expertPersona}
-    
-    [CORE BOUNDARIES]: 
-    ${systemBoundaries}
-    
-    [CATEGORY-SPECIFIC RULES]: 
-    ${categoryRules}
-    
-    [USER INPUT]: ${rawPrompt}
-    
-    [QUANTITY]: Generate ${count} distinct items/variations if applicable.
-    `;
-
-    return fullPrompt.trim();
-}
 // UPDATED FUNCTION
 function getDynamicCardCover(themeObject) {
     const canvas = document.createElement('canvas');
