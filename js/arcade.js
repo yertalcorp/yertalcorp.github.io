@@ -1058,24 +1058,30 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 
     return currentId;
 };
+
 function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
     // 1. Locate the matched capability and its specific physics/logic rules
     const matchedCategory = resolveCategoryFromPrompt(rawPrompt, activeBoardName);
     const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
 
     // 2. Define the Professional Arcade Standard (Hydration & Scope)
-    // Refined to ensure buttons and mouse interaction actually "link up" post-injection.
+    // This version enforces strict "Functional Autonomy" to fix broken UI/Physics.
     const globalHydrationStandard = `
-    MANDATORY ARCHITECTURAL RULES:
-    1. SCOPE ISOLATION: Wrap ALL JavaScript in an IIFE.
+    MANDATORY ARCHITECTURAL RULES (NON-NEGOTIABLE):
+    1. SCOPE ISOLATION: Wrap ALL JavaScript in an IIFE. No global variables.
     2. HYDRATION READY: Script must execute immediately.
-    3. CONTAINER ADAPTIVE: Use parentElement.offsetWidth/Height for canvas scaling.
+    3. CONTAINER ADAPTIVE: Use 'parentElement.offsetWidth/Height' for sizing. NEVER 'window.innerWidth'.
     4. INTERACTION RIGOR: 
-       - Use 'getBoundingClientRect()' for ALL mouse/touch coordinates to ensure accuracy within the arcade's layout.
-       - Use 'addEventListener' on specific elements (e.g., the canvas or a button ID), NEVER 'window' or 'document' for primary interaction, to prevent event bubbling issues.
-    5. UI CONNECTIVITY: Ensure all <button> elements have unique IDs and that listeners are attached explicitly inside the IIFE.
-    6. VISUAL FIDELITY: Use requestAnimationFrame for loops. Use alpha-trailing (0.1 opacity) for motion blur.
-    7. PHYSICS STABILITY: For fluid/grid sims, obstacles must zero out velocity (u, v) and use a reflection step in 'set_bnd' to prevent leakage.
+       - Calculate mouse/touch coordinates using 'getBoundingClientRect()'. 
+       - Subtract 'rect.left' and 'rect.top' from clientX/Y to ensure precision within the arcade frame.
+    5. UI CONNECTIVITY: 
+       - Every <button> or <input> must have a unique ID.
+       - ALL EventListeners must be attached explicitly via 'document.getElementById' inside the IIFE.
+       - DO NOT use 'onclick' attributes in HTML; use JS listeners only.
+    6. VISUAL FIDELITY: Use 'requestAnimationFrame' for loops. Use 0.1 opacity fillRect for motion trails.
+    7. PHYSICS STABILITY: 
+       - Obstacles must be treated as solid boundaries in the solver.
+       - Velocity (u, v) and Density MUST be zeroed out for any cell marked as an obstacle to prevent 'ghost' leaks.
     `;
 
     let expertPersona = "";
@@ -1085,22 +1091,22 @@ function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
     const activeMode = mode || (matchedCategory ? matchedCategory.logic : 'hybrid');
 
     if (activeMode === 'create') {
-        expertPersona = `You are an elite software architect and computational physics specialist specializing in high-performance, single-file HTML5 canvas applications.`;
+        expertPersona = `You are an elite software architect and computational physics specialist. You build high-performance, production-ready HTML5 canvas simulations.`;
         systemBoundaries = `
-        - Output ONLY valid, executable HTML with embedded CSS and JS.
-        - NO external libraries unless explicitly requested.
-        - All UI elements (buttons, sliders) MUST be fully functional and wired to their JS logic.
-        - Focus on professional-grade math, physics, and smooth FPS.
+        - Output ONLY a single-file valid HTML document.
+        - NO external libraries or CDNs.
+        - Every UI element must be 100% functional. A 'Reset' button must reset, and 'Obstacles' must block.
+        - Focus on professional-grade numerical stability and smooth 60 FPS.
         ${globalHydrationStandard}`;
     } else if (activeMode === 'source') {
         expertPersona = `You are a high-density data extraction specialist.`;
-        systemBoundaries = `Return strictly formatted arrays of data points, metadata, or media links. Do not render interactive simulators or scripts.`;
+        systemBoundaries = `Return strictly formatted arrays or JSON. No simulators.`;
     } else {
         // Hybrid Mode
-        expertPersona = `You are an advanced full-stack assistant capable of both data retrieval and tool building.`;
+        expertPersona = `You are an advanced full-stack assistant.`;
         systemBoundaries = `
-        - Adapt fluidly: If the user wants a tool, follow the "MANDATORY ARCHITECTURAL RULES" below.
-        - If the user wants data, provide structured arrays.
+        - If creating a tool, follow the "MANDATORY ARCHITECTURAL RULES" below strictly.
+        - Ensure all interactive elements are correctly wired to the logic.
         ${globalHydrationStandard}`;
     }
 
@@ -1121,7 +1127,6 @@ function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
 
     return fullPrompt.trim();
 }
-
 // UPDATED FUNCTION
 function getDynamicCardCover(themeObject) {
     const canvas = document.createElement('canvas');
