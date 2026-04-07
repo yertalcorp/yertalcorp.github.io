@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1058,43 +1058,67 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 
     return currentId;
 };
-
+/*
+ * shapeAiPrompt
+ * Centralizes the global "Arcade Standard" for hydration and scope.
+ */
 function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
-    // 1. Hand off prompt to your existing resolver to locate the matched capability
+    // 1. Locate the matched capability and its specific physics/logic rules
     const matchedCategory = resolveCategoryFromPrompt(rawPrompt, activeBoardName);
-    
-    // 2. Extract the rules payload we just added to the resolver
     const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
+
+    // 2. Define the Professional Arcade Standard (Hydration & Scope)
+    // This is the "secret sauce" that ensures code runs after injection.
+    const globalHydrationStandard = `
+    MANDATORY ARCHITECTURAL RULES:
+    1. SCOPE ISOLATION: Wrap ALL JavaScript in an IIFE (Immediately Invoked Function Expression) to prevent global variable collisions.
+    2. HYDRATION READY: Ensure the script executes immediately. Do not rely on window.onload.
+    3. CONTAINER ADAPTIVE: Use container-relative sizing (e.g., parentElement.offsetWidth) rather than window.innerWidth where possible.
+    4. INTERACTION: Ensure Event Listeners for mouse/touch calculate offsets relative to the element, not the whole document.
+    5. VISUAL FIDELITY: Use requestAnimationFrame for loops. Use alpha-trailing (e.g., fillRect with 0.1 opacity) for motion blur effects.
+    `;
 
     let expertPersona = "";
     let systemBoundaries = "";
 
     // 3. Fallback to resolution logic if explicit mode isn't passed
-    const activeMode = mode || matchedCategory.logic || 'hybrid';
+    const activeMode = mode || (matchedCategory ? matchedCategory.logic : 'hybrid');
 
     if (activeMode === 'create') {
-        expertPersona = `You are an elite software architect and UI designer specializing in single-file HTML5 canvas applications.`;
-        systemBoundaries = `Strict constraints: Output ONLY valid, executable HTML with embedded CSS and JS in a single file. Do not use external libraries. Focus heavily on smooth high-FPS canvas operations.`;
+        expertPersona = `You are an elite software architect and UI designer specializing in high-performance, single-file HTML5 canvas applications.`;
+        systemBoundaries = `
+        - Output ONLY valid, executable HTML with embedded CSS and JS.
+        - NO external libraries (Three.js, jQuery, etc.) unless explicitly requested.
+        - Focus on professional-grade math, physics, and smooth FPS.
+        ${globalHydrationStandard}`;
     } else if (activeMode === 'source') {
         expertPersona = `You are a high-density data extraction specialist.`;
-        systemBoundaries = `Return strictly formatted arrays of data points or media links without rendering interactive simulators.`;
+        systemBoundaries = `Return strictly formatted arrays of data points, metadata, or media links. Do not render interactive simulators or scripts.`;
     } else {
-        expertPersona = `You are an advanced full-stack assistant.`;
-        systemBoundaries = `Adapt fluidly between rendering visual tools and pulling data arrays depending strictly on the user's focus.`;
+        // Hybrid Mode
+        expertPersona = `You are an advanced full-stack assistant capable of both data retrieval and tool building.`;
+        systemBoundaries = `
+        - Adapt fluidly: If the user wants a tool, follow the "MANDATORY ARCHITECTURAL RULES" below.
+        - If the user wants data, provide structured arrays.
+        ${globalHydrationStandard}`;
     }
 
-    // 4. Interpolate the specific rules from your database right into the prompt
+    // 4. Final Prompt Construction
     const fullPrompt = `
-    System: ${expertPersona}
+    [SYSTEM ROLE]: ${expertPersona}
+    
+    [CORE BOUNDARIES]: 
     ${systemBoundaries}
     
-    Category Hard Constraints:
+    [CATEGORY-SPECIFIC RULES]: 
     ${categoryRules}
     
-    User Prompt: ${rawPrompt}
+    [USER INPUT]: ${rawPrompt}
+    
+    [QUANTITY]: Generate ${count} distinct items/variations if applicable.
     `;
 
-    return fullPrompt;
+    return fullPrompt.trim();
 }
 
 // UPDATED FUNCTION
