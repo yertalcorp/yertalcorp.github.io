@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:06:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1064,71 +1064,40 @@ function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
     const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
     const activeMode = mode || (matchedCategory ? matchedCategory.logic : 'hybrid');
     const currentType = matchedCategory ? matchedCategory.name : "General Utility";
+    
+    // Ensure we always ask for at least 1 variation
+    const safeCount = count > 0 ? count : 1;
 
-    // 1. Persona Mapping
+    // 1. Persona Mapping (Simplified)
     const personas = {
-        create: "Expert Full-stack Web Utility Developer, Expert Tester & Physics Specialist who creates working programs without bugs. You must verify that all buttons and mouse functions are working perfectly before giving the code.",
-        source: "High-density Data Extraction Expert.",
-        hybrid: "Expert Full-stack Web Utility Developer, Expert Tester & Physics Specialist who creates working programs without bugs. You must verify that all buttons and mouse functions are working perfectly before giving the code."
+        create: "You are an Expert Full-stack Web Developer & Physics Specialist. You deliver bug-free, standalone HTML5 utilities.",
+        source: "You are a High-density Data Extraction Expert.",
+        hybrid: "You are an Expert Full-stack Web Developer & Physics Specialist. You deliver bug-free, standalone HTML5 utilities."
     };
     const persona = personas[activeMode] || personas.hybrid;
 
-    // 2. Simplified Rules
-    const rules = `${categoryRules}`.trim();
-
-    // 3. Final Prompt Construction
-    const fullPrompt = `
-Write working HTML and Javascript Code using model: ${currentType}
-- Persona: ${persona}
-- Task: ${rawPrompt}
-- Context: ${rules}
-- Format: Working HTML and Javascript Code.
-- Count: Generate ${count} variation(s) of the task.
-    `;
-
-    return fullPrompt.trim();
-}
-
-function shapeAiPromptComplex(rawPrompt, count, mode, activeBoardName) {
-    const matchedCategory = resolveCategoryFromPrompt(rawPrompt, activeBoardName);
-    const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
-    const activeMode = mode || (matchedCategory ? matchedCategory.logic : 'hybrid');
-    const currentType = matchedCategory ? matchedCategory.name : "General Utility";
-
-    // 1. Persona Mapping
-    const personas = {
-        create: "Elite Software Architect & Physics Specialist.",
-        source: "High-density Data Extraction Expert.",
-        hybrid: "Full-stack Web Utility Developer."
-    };
-    const persona = personas[activeMode] || personas.hybrid;
-
-    // 2. Simplified Rules
-    const rules = `
-- No external libraries/CDNs. Single-file HTML only.
-- Wrap JS in an IIFE (No global leaks).
-- Size via parentElement.offsetWidth/Height.
-- Precision coordinates via getBoundingClientRect().
+    // 2. Mandatory Arcade Guardrails (Combined with category rules)
+    const mandatoryRules = `
+- Wrap ALL JS in an IIFE. No global variables.
+- Use 'parentElement.offsetWidth/Height' for sizing (NO window.innerWidth).
+- Use 'getBoundingClientRect()' for mouse coordinates.
 - No 'onclick' attributes; use JS EventListeners + Unique IDs.
-- Use requestAnimationFrame and motion trails.
+- Single-file HTML only. No external CDNs.
 - ${categoryRules}`.trim();
 
     // 3. Final Prompt Construction
     const fullPrompt = `
-- Command: Write working HTML and Javascript Code for: ${rawPrompt}
+Command: Write working HTML and Javascript Code for model: ${currentType}
 - Persona: ${persona}
-- Model: ${currentType}
-- Task: Generate ${count} variation(s) of the requested tool.
-- Rules: 
-${rules}
-- Output Format: Strictly a single valid HTML document. No prose or explanations.
+- Task: ${rawPrompt}
+- Context Rules: 
+${mandatoryRules}
+- Format: A single, functional HTML file.
+- Count: Generate ${safeCount} variation(s).
     `;
 
     return fullPrompt.trim();
 }
-
-
-
 // UPDATED FUNCTION
 function getDynamicCardCover(themeObject) {
     const canvas = document.createElement('canvas');
