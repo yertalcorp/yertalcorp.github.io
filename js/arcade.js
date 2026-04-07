@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1806,12 +1806,7 @@ async function getGeminiModel(apiKey) {
         return modelStats[0][0]; 
     }
 }
-
-/*
- * Gemini API Wrapper: Weighted Rotation, Tie-Breaking, and Cooldown
- */
 async function callGeminiAPI(prompt, val, type) {
-    // ADD: Include 'create' in the code check
     const isCode = type === 'code' || type === 'create';
     const statusText = document.getElementById('engine-status-text');
 
@@ -1821,24 +1816,18 @@ async function callGeminiAPI(prompt, val, type) {
         throw new Error("System is currently cooling down.");
     }
 
-    // --- FIX: Fetch credentials and populate modelStats BEFORE evaluating the loop ---
     const credentials = await retrieveGeminiCredentials();
     if (!credentials) {
         throw new Error("Failed to retrieve Gemini credentials.");
     }
-    // ---------------------------------------------------------------------------------
 
-    // Defensive check to make sure modelStats was successfully filled by getGeminiModel
     if (!Array.isArray(modelStats) || modelStats.length === 0) {
         console.error("CRITICAL: modelStats is empty. No models available to route to!");
         throw new Error("No models available in pool. Cooldown ignored to prevent lock.");
     }
 
-    // 1. ADVANCED SORTING: Sort by failures (primary) and original index (secondary)
-    // This ensures if failures are equal, we always try the "best" model first.
     modelStats.sort((a, b) => a[1] - b[1]);
     
-    // Maps the sorted array to just display the string names of the models
     const modelNames = modelStats.map(entry => entry[0]);
     console.log("Retrieved Gemini Models in queue order:", modelNames);
     
@@ -1850,7 +1839,6 @@ async function callGeminiAPI(prompt, val, type) {
         const modelName = currentEntry[0];
 
         try {
-            // Reusing the apiKey retrieved at the top of the function
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${credentials.apiKey}`;
 
             const response = await fetch(url, {
@@ -1861,71 +1849,82 @@ async function callGeminiAPI(prompt, val, type) {
                 })
             });
 
-            // 2. ROTATION ON ANY ERROR (429, 404, 500, etc.)
             if (!response.ok) {
                 const errorBody = await response.text();
                 console.warn(`[FAIL]: ${modelName} failed with HTTP status ${response.status}. Reason:`, errorBody);
                 
-                currentEntry[1]++; // Record the failure
+                currentEntry[1]++;
                 attempts++;
                 
-                // If we've exhausted the whole pool, exit the loop to trigger cooldown
                 if (attempts >= maxRetries) break;
 
                 await new Promise(r => setTimeout(r, 200));
                 continue;
             }
 
-            // 3. SUCCESS PATH
             console.log(`[SUCCESS]: ${modelName} responded successfully.`);
             
             const data = await response.json();
             
-            // Successful model gets a "reputation boost" (capped at 0)
             if (currentEntry[1] > 0) currentEntry[1]--;
 
             const result = data.candidates[0].content.parts[0].text;
             
-            // ADD: Robust Markdown Stripper Regex
-            const sanitized = result.replace(/^```[a-z]*\n?|```$/gi, '').trim();
+            // ADD: Enhanced Sanitization to remove Markdown and Header Text
+            let sanitized = result.replace(/^```[a-z]*\n?|```$/gi, '').trim();
+            if (isCode && (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html'))) {
+             const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
+             if (start !== -1) sanitized = sanitized.substring(start);
+            }
             
             if (isCode) {
-                // CHANGE: Return sanitized code
+                // CHANGE: Return the sanitized string
                 return sanitized;
             } else {
-                // Defensive JSON check: If it's not valid JSON, just return the raw string!
                 try {
-                    // CHANGE: Clean before parsing
+                    // CHANGE: Parse the sanitized string
                     return JSON.parse(sanitized);
                 } catch (jsonErr) {
                     console.warn(`[FORGE]: Model returned a raw string instead of JSON. Returning raw text.`);
-                    // CHANGE: Return sanitized raw text
+                    // CHANGE: Return sanitized fallback
                     return sanitized;
                 }
             }
 
         } catch (error) {
-            // CATCH BLOCK ADDED HERE
-            // This prevents the "Missing catch or finally" error and handles network drops!
             console.warn(`[FAIL]: ${modelName} hit a network or execution error:`, error);
-            
-            currentEntry[1]++; // Record the failure
+            currentEntry[1]++;
             attempts++;
-            
-            // If we've exhausted the whole pool, exit the loop to trigger cooldown
             if (attempts >= maxRetries) break;
-
             await new Promise(r => setTimeout(r, 200));
         }
-    } // WHILE LOOP CLOSED PROPERLY HERE
+    }
 
-    // 4. EXHAUSTION TRIGGER: If we reach here, every model in the pool failed.
     console.error("CRITICAL: All models in pool failed. Triggering 60s cooldown.");
     await initiateSystemCooldown(statusText);
-    
-    // After cooldown, we throw an error so the UI can update
     throw new Error("All models exhausted. Restarting cycle after cooldown.");
 }
+
+
+### The Script Re-hydrator
+Because you are injecting this HTML into a container (likely an `iframe` or a `div` in your `arcade.js`), you must manually re-trigger the script tags. In your `executeMassSpark` function (or wherever you handle the result of the API call), add this:
+
+```javascript
+// Example placement in your injection logic
+const container = document.getElementById('spark-display-area'); 
+container.innerHTML = result; // The code from callGeminiAPI
+
+// ADD THIS: Re-execute scripts manually
+const scripts = container.querySelectorAll("script");
+scripts.forEach(oldScript => {
+    const newScript = document.createElement("script");
+    // Copy all attributes (like src or type)
+    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+    // Copy the actual code content
+    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+    // Replace the dead script with the live one
+    oldScript.parentNode.replaceChild(newScript, oldScript);
+});
     
 /*
  * System Cooldown & Reset Logic
