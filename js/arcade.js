@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:12:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1096,6 +1096,75 @@ ${rules}
 
     return fullPrompt.trim();
 }
+
+function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
+    const matchedCategory = resolveCategoryFromPrompt(rawPrompt, activeBoardName);
+    const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
+    const activeMode = mode || (matchedCategory ? matchedCategory.logic : 'hybrid');
+    const currentType = matchedCategory ? matchedCategory.name : "General Utility";
+
+    // 1. Persona Mapping
+    const personas = {
+        create: "Elite Software Architect & Physics Specialist.",
+        source: "High-density Data Extraction Expert.",
+        hybrid: "Full-stack Web Utility Developer."
+    };
+    const persona = personas[activeMode] || personas.hybrid;
+
+    // 2. Simplified Rules
+    const rules = `${categoryRules}`.trim();
+
+    // 3. Final Prompt Construction
+    const fullPrompt = `
+Write working HTML and Javascript Code using model: ${currentType}
+- Persona: ${persona}
+- Task: ${rawPrompt}
+- Rules: ${rules}
+- Count: Generate ${count} variation(s) of the task.
+    `;
+
+    return fullPrompt.trim();
+}
+
+function shapeAiPromptComplex(rawPrompt, count, mode, activeBoardName) {
+    const matchedCategory = resolveCategoryFromPrompt(rawPrompt, activeBoardName);
+    const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
+    const activeMode = mode || (matchedCategory ? matchedCategory.logic : 'hybrid');
+    const currentType = matchedCategory ? matchedCategory.name : "General Utility";
+
+    // 1. Persona Mapping
+    const personas = {
+        create: "Elite Software Architect & Physics Specialist.",
+        source: "High-density Data Extraction Expert.",
+        hybrid: "Full-stack Web Utility Developer."
+    };
+    const persona = personas[activeMode] || personas.hybrid;
+
+    // 2. Simplified Rules
+    const rules = `
+- No external libraries/CDNs. Single-file HTML only.
+- Wrap JS in an IIFE (No global leaks).
+- Size via parentElement.offsetWidth/Height.
+- Precision coordinates via getBoundingClientRect().
+- No 'onclick' attributes; use JS EventListeners + Unique IDs.
+- Use requestAnimationFrame and motion trails.
+- ${categoryRules}`.trim();
+
+    // 3. Final Prompt Construction
+    const fullPrompt = `
+- Command: Write working HTML and Javascript Code for: ${rawPrompt}
+- Persona: ${persona}
+- Model: ${currentType}
+- Task: Generate ${count} variation(s) of the requested tool.
+- Rules: 
+${rules}
+- Output Format: Strictly a single valid HTML document. No prose or explanations.
+    `;
+
+    return fullPrompt.trim();
+}
+
+
 
 // UPDATED FUNCTION
 function getDynamicCardCover(themeObject) {
