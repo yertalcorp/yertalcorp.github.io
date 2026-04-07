@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 22:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 22:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -971,8 +971,8 @@ const controls = (isOwner && !isFull) ? `
           <input type="text" id="input-${current.id}" 
                class="current-prompt-input"
                placeholder="Type your prompt or paste a URL..." 
-               onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '${current.name}', '${type.id}', '${type.name}')">
-        <button onclick="window.handleCreation('${current.id}', '${current.name}', '${type.id}', '${type.name}')" class="current-prompt-exec-button">
+               onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '${current.name}')">
+        <button onclick="window.handleCreation('${current.id}', '${current.name}')" class="current-prompt-exec-button">
             EXEC
         </button>
     </div>
@@ -1668,12 +1668,14 @@ function resolveCategoryFromPrompt(prompt, currentName) {
     };
 }
 
-window.handleCreation = async (currentId, currentName, promptTypeId, promptTypeName) => {
+window.handleCreation = async (currentId, currentName) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const categorySelect = document.getElementById(`select-${currentId}`); // Fetch the dropdown
     const input = promptInput ? promptInput.value.trim() : '';
     const selectedCategoryValue = categorySelect ? categorySelect.value : 'Custom';
-
+    const selectedCurrentTypes = databaseCache.settings?.['arcade-current-types'] || [];
+    const typeMatch = currentTypes.find(t => t.name === selectedCategoryValue);
+    
     if (!input) return;
 
     const status = document.getElementById('engine-status-text');
@@ -1690,8 +1692,8 @@ window.handleCreation = async (currentId, currentName, promptTypeId, promptTypeN
             // Use the already known currentName and existing metadata
             console.log(`[FORGE]: Explicit Selection detected: ${currentName}`);
             resolvedCategory = {
-                name: promptTypeName,
-                id: promptTypeId,
+                name: typeMatch.name,
+                id: typeMatch.id,
                 logic: 'create', // Standard for arcade templates
                 image: databaseCache.infrastructure?.currents?.[promptTypeId]?.image || '/assets/thumbnails/default.jpg'
             };
