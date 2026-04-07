@@ -2,7 +2,7 @@ import { firebaseConfig, auth, db } from '/config/firebase-config.js';
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 11:38:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 11:52:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -374,11 +374,10 @@ async function renderActionCards(cards) {
         
         cardEl.innerHTML = `
             <div class="card-icon-badge flex items-center justify-center transition-transform duration-500">
-                <i class="${card.icon} text-3xl relative z-20" style="color: var(--neon-color); font-family: var(--icon-font-family); font-weight: var(--icon-font-weight);"></i>
-                <i class="${card.icon} text-3xl absolute blur-[2px] opacity-0 group-hover:opacity-70 transition-opacity duration-500 z-10" style="color: var(--neon-color); font-family: var(--icon-font-family); font-weight: var(--icon-font-weight);"></i>
-                <i class="${card.icon} text-3xl absolute translate-y-1 translate-x-1 blur-[1px] z-0" style="opacity: 0.2; font-family: var(--icon-font-family); font-weight: var(--icon-font-weight);"></i>
+                <i class="${card.icon} text-3xl relative z-20" style="color: var(--neon-color);"></i>
+                <i class="${card.icon} text-3xl absolute blur-[2px] opacity-0 group-hover:opacity-70 transition-opacity duration-500 z-10" style="color: var(--neon-color);"></i>
+                <i class="${card.icon} text-3xl absolute translate-y-1 translate-x-1 blur-[1px] z-0"style="opacity: 0.2; color: var(--neon-color);"></i>
             </div>
-
             <h3 class="mt-8 mb-1 uppercase tracking-tighter text-white text-xl" style="font-family: var(--nav-font); font-weight: var(--nav-weight); font-variation-settings: 'wght' var(--nav-weight);">${card.title}</h3>
             <p class="text-[11px] text-slate-500 mb-6 font-light leading-relaxed flex-grow">${card.desc}</p>
             <div class="flex items-center gap-2">
