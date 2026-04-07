@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:32:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1067,9 +1067,9 @@ function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
 
     // 1. Persona Mapping
     const personas = {
-        create: "Expert Full-stack Web Utility Developer & Physics Specialist.",
+        create: "Expert Full-stack Web Utility Developer, Expert Tester & Physics Specialist who creates working programs without bugs. You must verify that all buttons and mouse functions are working perfectly before giving the code.",
         source: "High-density Data Extraction Expert.",
-        hybrid: "Expert Full-stack Web Utility Developer & Physics Specialist."
+        hybrid: "Expert Full-stack Web Utility Developer, Expert Tester & Physics Specialist who creates working programs without bugs. You must verify that all buttons and mouse functions are working perfectly before giving the code."
     };
     const persona = personas[activeMode] || personas.hybrid;
 
