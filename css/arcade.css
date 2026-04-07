@@ -792,7 +792,37 @@ input.current-prompt-input:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    
+
+/* --- Thin & Graceful Scrollbar for Dropdowns --- */
+
+/* 1. Target the select element specifically for Firefox */
+select.current-prompt-input {
+    scrollbar-width: thin;
+    scrollbar-color: var(--glow-color) var(--bg-color);
+}
+
+/* 2. Target the scrollbar for Chrome, Edge, and Safari */
+/* This works on the 'size' attribute lists and standard dropdown behaviors */
+select.current-prompt-input::-webkit-scrollbar {
+    width: 4px; /* Ultra-thin for a "graceful" look */
+}
+
+select.current-prompt-input::-webkit-scrollbar-track {
+    background: var(--bg-color);
+    border-left: 1px solid var(--glow-aura); /* Subtle separation line */
+}
+
+select.current-prompt-input::-webkit-scrollbar-thumb {
+    background-color: var(--glow-color);
+    border-radius: 10px;
+    /* Adding a glow effect to the scrollbar thumb */
+    box-shadow: 0 0 5px var(--glow-color); 
+}
+
+/* 3. Handle the hover state for the scrollbar */
+select.current-prompt-input::-webkit-scrollbar-thumb:hover {
+    background-color: var(--fg-color-high); /* Brighten on hover */
+}
     /* THEMED STYLES */
     background: linear-gradient(180deg, 
         rgba(255, 255, 255, 0.1) 0%, 
