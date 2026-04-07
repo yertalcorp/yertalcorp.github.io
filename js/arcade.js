@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:48:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1060,6 +1060,49 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 };
 
 function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
+    const matchedCategory = resolveCategoryFromPrompt(rawPrompt, activeBoardName);
+    const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
+    const activeMode = mode || (matchedCategory ? matchedCategory.logic : 'hybrid');
+
+    // 1. Define Variable: Persona
+    let persona = "";
+    if (activeMode === 'create') {
+        persona = "An elite software architect and computational physics specialist who builds high-performance, production-ready HTML5 canvas simulations.";
+    } else if (activeMode === 'source') {
+        persona = "A high-density data extraction specialist who returns strictly formatted JSON.";
+    } else {
+        persona = "An advanced full-stack assistant focused on building functional, zero-dependency web utilities.";
+    }
+
+    // 2. Define Variable: Rules (Merged Architectural + Category-Specific)
+    const architecturalRules = `
+    - Wrap ALL JavaScript in an IIFE. No global variables.
+    - Script must execute immediately (Hydration Ready).
+    - Use 'parentElement.offsetWidth/Height' for sizing (NEVER 'window.innerWidth').
+    - Calculate mouse/touch coordinates using 'getBoundingClientRect()' minus 'rect.left/top'.
+    - Every <button> or <input> must have a unique ID and listeners attached via 'document.getElementById' in JS (NO 'onclick' attributes).
+    - Use 'requestAnimationFrame' for loops and 0.1 opacity fillRect for motion trails.
+    - Output ONLY a single-file valid HTML document with NO external libraries.
+    - ${categoryRules}`;
+
+    // 3. Define Variable: Task
+    const task = rawPrompt;
+
+    // 4. Final Prompt Construction (Simplified Format)
+    const fullPrompt = `
+Using the following persona: ${persona}
+
+Write HTML and javascript code for these requirements: ${task}
+
+The code must follow these rules: 
+${architecturalRules}
+
+[QUANTITY]: Generate ${count} distinct items/variations if applicable.
+    `;
+
+    return fullPrompt.trim();
+}
+function shapeAiPromptComplex(rawPrompt, count, mode, activeBoardName) {
     // 1. Locate the matched capability and its specific physics/logic rules
     const matchedCategory = resolveCategoryFromPrompt(rawPrompt, activeBoardName);
     const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
