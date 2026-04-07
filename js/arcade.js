@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:06:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -960,7 +960,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 const controls = (isOwner && !isFull) ? `
     <div class="current-prompt-container">
 <div class="current-type-selector-wrapper">
-    <span class="current-prompt-label" style="display: block; justify-items: center; font-color: var(--fg-color-high);">SELECT CURRENT TYPE</span>
+    <span class="current-prompt-label" style="display: block; justify-items: center; font-color: var(--fg-color-high);">CREATE OR SOURCE</span>
     <select id="type-select-${current.id}" class="current-prompt-input" onchange="const inp = document.getElementById('input-${current.id}'); inp.value = this.value; inp.focus(); inp.scrollLeft = 0; inp.setSelectionRange(0, 0);">
         <option value="">-- CUSTOM PROMPT --</option>
         ${(databaseCache.settings?.['arcade-current-types'] || []).map(type => `
@@ -970,7 +970,7 @@ const controls = (isOwner && !isFull) ? `
 </div>
           <input type="text" id="input-${current.id}" 
                class="current-prompt-input"
-               placeholder="Type your prompt or paste a URL.  Create one card for... or Source one link for..." 
+               placeholder="Type your prompt or paste a URL..." 
                onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '$(current.name}')">
         <button onclick="window.handleCreation('${current.id}', '${current.name}')" class="current-prompt-exec-button">
             EXEC
