@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 10:34:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -960,7 +960,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 const controls = (isOwner && !isFull) ? `
     <div class="current-prompt-container">
 <div class="current-type-selector-wrapper">
-    <span class="current-prompt-label" style="display: block; margin-bottom: 5px;">SELECT CURRENT TYPE></span>
+    <span class="current-prompt-label" style="display: block;">SELECT CURRENT TYPE</span>
     <select id="type-select-${current.id}" class="current-prompt-input" onchange="const inp = document.getElementById('input-${current.id}'); inp.value = this.value; inp.focus(); inp.scrollLeft = 0; inp.setSelectionRange(0, 0);">
         <option value="">-- CUSTOM PROMPT --</option>
         ${(databaseCache.settings?.['arcade-current-types'] || []).map(type => `
