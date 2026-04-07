@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:40:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1905,6 +1905,7 @@ async function callGeminiAPI(prompt, val, type) {
     throw new Error("All models exhausted. Restarting cycle after cooldown.");
 }
 
+/*
 // Example placement in your injection logic
 const container = document.getElementById('spark-display-area'); 
 container.innerHTML = result; // The code from callGeminiAPI
@@ -1920,7 +1921,8 @@ scripts.forEach(oldScript => {
     // Replace the dead script with the live one
     oldScript.parentNode.replaceChild(newScript, oldScript);
 });
-    
+*/
+
 /*
  * System Cooldown & Reset Logic
  */
