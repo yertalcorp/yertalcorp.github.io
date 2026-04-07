@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1227,7 +1227,8 @@ async function executeMassSpark(currentId, currentName, prompt, mode, templateNa
     const predictedType = prediction.id;        
     let activeResolution = prediction.logic;  
     const predictedCurrentName = prediction.name; 
-    
+
+    console.log(`executeMassSpark: activeResolution(mode): ${activeResolution}`);
     if (predictedCurrentName.toLowerCase() === 'custom') {
         console.log("[FORGE]: Custom category detected. Defaulting to 'source' resolution.");
         activeResolution = 'source';
@@ -1393,9 +1394,6 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
 
     const sparkImage = genSparkImage(spark.image);
 
-    // 0. Debug Log: Track final image path per card
-    console.log(`[RENDER] Spark ID: ${spark.id} | Image Path: ${spark.image} | Image Path Length: ${sparkImage.length} | Start: ${sparkImage.substring(0, 30)}`);
-   
     // DYNAMIC FALLBACK TRIGGER
     finalRenderedImage = sparkImage;
         
@@ -1406,12 +1404,9 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
        const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
        const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
             
-       console.log(`[RENDER]: Cover fallback triggered for ${spark.id}. Generating in-memory fractal.`);
        finalRenderedImage = getDynamicCardCover(activeThemeData);
     }
 
-    console.log("Final Rendered Image:",finalRenderedImage);
-    
     // 1. Core Color Palette
     const pearlColor = "var(--list-color)";
     const neonColor = "var(--glow-color)";
@@ -1477,7 +1472,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                 <img src="${finalRenderedImage}" 
                        class="spark-thumbnail"
                        onerror="${inlineFallbackJS}"
-                       onload="this.style.opacity='1'; console.log('IMAGE SUCCESS: ${spark.id}')"
+                       onload="this.style.opacity='1';"
                        style="z-index: 1; display: block; transition: opacity 0.5s ease;">
                 
                 <div style="position: absolute; inset: 0; background: var(--branding-color); opacity: 0.1; z-index: 2; pointer-events: none;"></div>
@@ -1816,7 +1811,8 @@ async function getGeminiModel(apiKey) {
  * Gemini API Wrapper: Weighted Rotation, Tie-Breaking, and Cooldown
  */
 async function callGeminiAPI(prompt, val, type) {
-    const isCode = type === 'code';
+    // ADD: Include 'create' in the code check
+    const isCode = type === 'code' || type === 'create';
     const statusText = document.getElementById('engine-status-text');
 
     console.log(`callGeminiAPI: prompt: ${prompt}, val: ${val}, type:${type}`);
@@ -1890,15 +1886,21 @@ async function callGeminiAPI(prompt, val, type) {
 
             const result = data.candidates[0].content.parts[0].text;
             
+            // ADD: Robust Markdown Stripper Regex
+            const sanitized = result.replace(/^```[a-z]*\n?|```$/gi, '').trim();
+            
             if (isCode) {
-                return result.replace(/```html|```javascript|```/g, '').trim();
+                // CHANGE: Return sanitized code
+                return sanitized;
             } else {
                 // Defensive JSON check: If it's not valid JSON, just return the raw string!
                 try {
-                    return JSON.parse(result.replace(/```json|```/g, '').trim());
+                    // CHANGE: Clean before parsing
+                    return JSON.parse(sanitized);
                 } catch (jsonErr) {
                     console.warn(`[FORGE]: Model returned a raw string instead of JSON. Returning raw text.`);
-                    return result.replace(/```[a-z]*\n?|```/gi, '').trim();
+                    // CHANGE: Return sanitized raw text
+                    return sanitized;
                 }
             }
 
@@ -1924,7 +1926,7 @@ async function callGeminiAPI(prompt, val, type) {
     // After cooldown, we throw an error so the UI can update
     throw new Error("All models exhausted. Restarting cycle after cooldown.");
 }
-
+    
 /*
  * System Cooldown & Reset Logic
  */
