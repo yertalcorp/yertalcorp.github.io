@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:55:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1100,15 +1100,28 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 };
 
 function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
-    const currentType = promptTypeObject ? promptTypeObject.name : "General Utility";
-        // Ensure we always ask for at least 1 variation
-    const safeCount = count > 0 ? count : 1;
+    const isSource = mode === 'source';
+    
+    return `
+Task: ${rawPrompt}
+Model: ${promptTypeObject?.name || "General Utility"}
+Mode: ${mode.toUpperCase()}
 
-    // Final Prompt Construction
-    const fullPrompt = `
-Write working HTML and Javascript Code for model: ${currentType} in order to achieve the following task: ${rawPrompt}. Generate ${safeCount} variation(s) of the task.
-    `;
-   return fullPrompt.trim();
+${isSource ? 
+    `Persona: You are a Data Research Agent. 
+Rules:
+- Do NOT return search engine URLs or database homepages (e.g., no imdb.com).
+- Research specific items that match the task.
+- Return ONLY a valid JSON array of objects: [{"name": "Item Name", "url": "Direct Info Link", "description": "Brief detail"}].` 
+    : 
+    `Persona: You are a Creative Developer.
+Rules:
+- Provide a standalone, working HTML/JS file.
+- Keep the UI clean, modern, and simple.`
+}
+
+Quantity: Generate ${count > 0 ? count : 1} ${isSource ? "data entries" : "code variation(s)"}.
+`.trim();
 }
 
 function shapeAiPromptComplex(rawPrompt, count, mode, currentName, promptTypeObject) {
