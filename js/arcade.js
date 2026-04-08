@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:04:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1659,9 +1659,15 @@ window.handleCreation = async (currentId, currentName) => {
     const status = document.getElementById('engine-status-text');
     status.textContent = "PROCESSING INFRASTRUCTURE...";
 
+    // Set a default resolvedCategory.
+    let resolvedCategory = {
+                name: typeMatch.name,
+                id: typeMatch.id,
+                logic: typeMatch.logic, // Standard for arcade templates
+                image: typeMatch.image || '/assets/thumbnails/default.jpg',
+                rules: typeMatch.rules
+            };
     try {
-        let resolvedCategory;
-
         // 1. SELECTIVE RESOLUTION: Only call Regex if "Custom" is selected
         if (selectedCategoryValue === '-- CUSTOM PROMPT --' || selectedCategoryValue === '') {
             console.log("[FORGE]: Custom Selection detected. Running Regex Resolution...");
@@ -1702,7 +1708,7 @@ window.handleCreation = async (currentId, currentName) => {
     } catch (e) {
         console.error("Creation Error:", e);
         // Fallback to basic custom processing on error
-        await executeMassSpark(currentId, currentName, input, mode, resolvedCategory);
+        await executeMassSpark(currentId, currentName, input, 'create', resolvedCategory);
     }
 };
 
