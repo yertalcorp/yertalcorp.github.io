@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 22:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1059,11 +1059,9 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
-function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
-    const matchedCategory = resolveCategoryFromPrompt(rawPrompt, activeBoardName);
-    const categoryRules = (matchedCategory && matchedCategory.rules) ? matchedCategory.rules : "";
-    const activeMode = mode || (matchedCategory ? matchedCategory.logic : 'hybrid');
-    const currentType = matchedCategory ? matchedCategory.name : "General Utility";
+function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
+    const categoryRules = (promptTypeObject && promptTypeObject.rules) ? promptTypeObject.rules : "";
+    const currentType = promptTypeObject ? promptTypeObject.name : "General Utility";
     
     // Ensure we always ask for at least 1 variation
     const safeCount = count > 0 ? count : 1;
@@ -1074,7 +1072,7 @@ function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
         source: "You are a High-density Data Extraction Expert.",
         hybrid: "You are an Expert Full-stack Web Developer & Physics Specialist. You deliver bug-free, standalone HTML5 utilities."
     };
-    const persona = personas[activeMode] || personas.hybrid;
+    const persona = personas[mode] || personas.hybrid;
 
     // 2. Mandatory Arcade Guardrails (Combined with category rules)
     const mandatoryRules = `
@@ -1087,7 +1085,7 @@ function shapeAiPrompt(rawPrompt, count, mode, activeBoardName) {
 
     // 3. Final Prompt Construction
     const fullPrompt = `
-Command: Write working HTML and Javascript Code for model: ${currentType}
+Write working HTML and Javascript Code for model: ${currentType}
 - Persona: ${persona}
 - Task: ${rawPrompt}
 - Context Rules: 
@@ -1218,30 +1216,14 @@ function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpa
 }
 
 // FUNCTION: executeMassSpark
-async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeName, promptTypeImage) {
+async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeObject) {
     const status = document.getElementById('engine-status-text');
+    const promptTypeName = promptTypeObject.name;
+    const promptTypeImage = promptTypeObject.image;
     
-    // --------------------------------------------------------
-    // 1. TIGHTENED TYPE & LOGIC CHECK (Only Guess if Custom)
-    // --------------------------------------------------------
-    let predictedType = currentId; // Default to existing ID
-    let activeResolution = mode || 'create'; // Default to current mode
-    let predictedCurrentName = currentName || 'Custom';
-
-    // Only invoke Regex if we are in a 'Custom' context or currentName is missing
-    if (!currentName || currentName.toLowerCase() === 'custom') {
-        console.log("[FORGE]: Custom category detected. Resolving via Regex...");
-        const prediction = resolveCategoryFromPrompt(prompt, currentName); 
-        predictedType = prediction.id;        
-        activeResolution = 'source'; // Custom prompts usually default to source unless specified
-        predictedCurrentName = prediction.name; 
-    } else {
-        console.log(`[FORGE]: Using explicit category: ${currentName}`);
-    }
-
     // Safety check for category mismatch
-    if (currentName && predictedCurrentName.toLowerCase() !== currentName.toLowerCase()) {
-        if (predictedCurrentName.toLowerCase() !== 'custom') {
+    if (currentName && promptTypeObject.name.toLowerCase() !== currentName.toLowerCase()) {
+        if (promptTypeName.toLowerCase() !== 'custom') {
             const proceed = confirm(
                 `⚠️ Warning: The prompt category doesn't match the current type.\n\n` +
                 `Either change the prompt to use the current type [${currentName}] or create/use a current for [${predictedCurrentName}].\n\n` +
@@ -1249,7 +1231,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
             );
             if (!proceed) return; 
         }
-    }
+    }// End if (currentName...
     
     // 2. DYNAMIC PLAN LOOKUP & CAPACITY VALIDATION
     const userProfile = databaseCache.users?.[user.uid]?.profile || {};
@@ -1280,14 +1262,10 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
     };
 
     try {
-        const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
-        const finalImageUrl = promptTypeImage || defaultThumb;
-        const finalCategoryName = promptTypeName || predictedCurrentName;
-
         // --------------------------------------------------------
         // 5. FORGING LOGIC
         // --------------------------------------------------------
-        if (activeResolution === 'source') {
+        if (mode === 'source') {
             let linksToSave = [];
 
             if (manualUrls.length > 0 && !isAiReferenceSearch) {
@@ -1301,12 +1279,12 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                         url: manualUrls[i]
                     });
                 }
-            } else {
+             } else { //if (manualUrls.length less than 0 but mode still 'source'
                 updateForgeStatus("CONSULTING MODEL POOL...");
                 
-                const structuredPrompt = shapeAiPrompt(prompt, finalForgeCount, 'source', predictedType);
+                const structuredPrompt = shapeAiPrompt(prompt, finalForgeCount, mode, currentName, promptTypeObject);
                 
-                const aiLinks = await callGeminiAPI(structuredPrompt, finalForgeCount, activeResolution);
+                const aiLinks = await callGeminiAPI(structuredPrompt, finalForgeCount, mode);
                 let rawLinksArray = [];
                 
                 if (Array.isArray(aiLinks)) {
@@ -1327,28 +1305,28 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 const item = linksToSave[i];
                 const sparkName = linksToSave.length > 1 && item.name.startsWith('spark_') ? `${item.name}-${i + 1}` : item.name;
                 
-                await saveSpark(currentId, { name: sparkName, link: item.url, prompt, type: 'link', image: finalImageUrl }, finalCategoryName, finalImageUrl);
+                await saveSpark(currentId, { name: sparkName, link: item.url, prompt, type: 'link', image: promptTypeImage }, promptTypeName, promptTypeImage);
                 
                 const progress = Math.round(((i + 1) / linksToSave.length) * 100);
                 updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
             }
-        } else {
-            // 'Create' Mode (activeResolution === 'create')
+        } else { // mode is create
+            // 'Create' Mode (mode === 'create')
             for (let i = 0; i < finalForgeCount; i++) {
                 const progress = Math.round((i / finalForgeCount) * 100);
                 updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
-                const structuredPrompt = shapeAiPrompt(prompt, i, 'create', predictedType);
+                const structuredPrompt = shapeAiPrompt(prompt, i, 'create', currentName, promptTypeObject);
 
-                const code = await callGeminiAPI(structuredPrompt, i, activeResolution);
+                const code = await callGeminiAPI(structuredPrompt, i, mode);
                 const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
                 
                 const isCode = code.trim().startsWith('<') || code.trim().startsWith('function') || code.trim().startsWith('const') || code.trim().includes('document.');
                 
-                const payload = isCode ? { name: sparkName, code, prompt, type: 'code', image: finalImageUrl } 
-                                       : { name: sparkName, link: code, prompt, type: 'link', image: finalImageUrl };
+                const payload = isCode ? { name: sparkName, code, prompt, type: 'code', image: promptTypeImage } 
+                                       : { name: sparkName, link: code, prompt, type: 'link', image: promptTypeImage };
 
-                await saveSpark(currentId, payload, finalCategoryName, finalImageUrl);
+                await saveSpark(currentId, payload, promptTypeName, promptTypeImage);
             }
             updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [==========] 100%`);
         }
@@ -1694,8 +1672,9 @@ window.handleCreation = async (currentId, currentName) => {
             resolvedCategory = {
                 name: typeMatch.name,
                 id: typeMatch.id,
-                logic: 'create', // Standard for arcade templates
-                image: databaseCache.infrastructure?.currents?.[promptTypeId]?.image || '/assets/thumbnails/default.jpg'
+                logic: typeMatch.logic, // Standard for arcade templates
+                image: typeMatch.image || '/assets/thumbnails/default.jpg',
+                rules: typeMatch.rules
             };
         }
         
@@ -1715,8 +1694,7 @@ window.handleCreation = async (currentId, currentName) => {
             currentName,
             input, 
             mode, 
-            resolvedCategory.name, 
-            resolvedCategory.image 
+            resolvedCategory
         );
         
         if (promptInput) promptInput.value = '';
@@ -1724,7 +1702,7 @@ window.handleCreation = async (currentId, currentName) => {
     } catch (e) {
         console.error("Creation Error:", e);
         // Fallback to basic custom processing on error
-        await executeMassSpark(currentId, currentName, input, 'create', 'Custom', '/assets/thumbnails/default.jpg');
+        await executeMassSpark(currentId, currentName, input, mode, resolvedCategory);
     }
 };
 
