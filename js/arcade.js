@@ -1674,7 +1674,7 @@ window.handleCreation = async (currentId, currentName) => {
     const input = promptInput ? promptInput.value.trim() : '';
     const selectedCategoryValue = categorySelect ? categorySelect.value : 'Custom';
     const selectedCurrentTypes = databaseCache.settings?.['arcade-current-types'] || [];
-    const typeMatch = currentTypes.find(t => t.name === selectedCategoryValue);
+    const typeMatch = selectedCurrentTypes.find(t => t.name === selectedCategoryValue);
     
     if (!input) return;
 
