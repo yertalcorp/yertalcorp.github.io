@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:34:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -878,6 +878,46 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     `;
 }
 
+window.handleCreation = async (currentId, currentName) => {
+    const promptInput = document.getElementById(`input-${currentId}`);
+    const input = promptInput ? promptInput.value.trim() : '';
+    if (!input) return;
+
+    const categorySelect = document.getElementById(`select-${currentId}`);
+    const status = document.getElementById('engine-status-text');
+    status.textContent = "PROCESSING INFRASTRUCTURE...";
+
+    let resolvedCategory;
+
+    try {
+        // Use categorySelect.value directly to determine resolution path
+        if (!categorySelect || categorySelect.value === '-- CUSTOM PROMPT --' || categorySelect.value === '') {
+            resolvedCategory = resolveCategoryFromPrompt(input);
+        } else {
+            // Access databaseCache and perform find inline
+            resolvedCategory = databaseCache.settings?.['arcade-current-types']?.find(t => t.name === categorySelect.value);
+            
+            // If find fails, fallback to regex as a last resort
+            if (!resolvedCategory) resolvedCategory = resolveCategoryFromPrompt(input);
+        }
+        
+        // Pass the resolved object directly to the engine
+        await executeMassSpark(
+            currentId, 
+            currentName, 
+            input, 
+            (resolvedCategory.logic === 'source' || /^(http|https):\/\/[^ "]+$/.test(input)) ? 'source' : 'create', 
+            resolvedCategory
+        );
+        
+        promptInput.value = '';
+
+    } catch (e) {
+        console.error("Creation Error:", e);
+        await executeMassSpark(currentId, currentName, input, 'create', { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg' });
+    }
+};
+
 function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
     if (!container) return;
@@ -1218,117 +1258,80 @@ function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpa
 // FUNCTION: executeMassSpark
 async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeObject) {
     const status = document.getElementById('engine-status-text');
-    const promptTypeName = promptTypeObject.name;
-    const promptTypeImage = promptTypeObject.image;
     
-    // Safety check for category mismatch
-    if (currentName && promptTypeObject.name.toLowerCase() !== currentName.toLowerCase()) {
-        if (promptTypeName.toLowerCase() !== 'custom') {
-            const proceed = confirm(
-                `⚠️ Warning: The prompt category doesn't match the current type.\n\n` +
-                `Either change the prompt to use the current type [${currentName}] or create/use a current for [${predictedCurrentName}].\n\n` +
-                `Do you want to continue anyway?`
-            );
-            if (!proceed) return; 
-        }
-    }// End if (currentName...
+    // 1. SAFETY CHECK
+    if (currentName && promptTypeObject.name.toLowerCase() !== currentName.toLowerCase() && promptTypeObject.name.toLowerCase() !== 'custom') {
+        if (!confirm(`⚠️ Warning: The prompt category doesn't match the current type.\n\n` +
+                     `Either change the prompt to use the current type [${currentName}] or create/use a current for [${promptTypeObject.name}].\n\n` +
+                     `Do you want to continue anyway?`)) return; 
+    }
     
-    // 2. DYNAMIC PLAN LOOKUP & CAPACITY VALIDATION
-    const userProfile = databaseCache.users?.[user.uid]?.profile || {};
-    const planType = userProfile.plan_type || 'free';
-    const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
-
-    const userNode = databaseCache.users?.[user.uid];
-    const currentSparks = userNode?.infrastructure?.currents?.[currentId]?.sparks || {};
-    const existingCount = Object.keys(currentSparks).length;
-    const maxSparks = planLimits.max_sparks_per_current;
-    const remainingSpace = maxSparks - existingCount;
+    // 2. CAPACITY VALIDATION
+    const planLimits = databaseCache.settings?.['plan_limits']?.[databaseCache.users?.[user.uid]?.profile?.plan_type || 'free'] || databaseCache.settings?.['plan_limits']?.['free'];
+    const remainingSpace = planLimits.max_sparks_per_current - Object.keys(databaseCache.users?.[user.uid]?.infrastructure?.currents?.[currentId]?.sparks || {}).length;
 
     if (remainingSpace <= 0) {
-        status.textContent = `STORAGE FULL (${maxSparks}/${maxSparks})`;
-        alert(`Limit reached: ${maxSparks} sparks.`);
+        status.textContent = `STORAGE FULL (${planLimits.max_sparks_per_current}/${planLimits.max_sparks_per_current})`;
+        alert(`Limit reached: ${planLimits.max_sparks_per_current} sparks.`);
         return;
     }
 
-    // 3. NEW DELEGATED COUNT & WORKLOAD LOGIC
+    // 3. WORKLOAD LOGIC
     const manualUrls = extractUrls(prompt);
     const resolution = getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpace);
-    const finalForgeCount = resolution.count;
-    const textChunks = resolution.textChunks;
-    const isAiReferenceSearch = resolution.isAiReferenceSearch;
 
     const updateForgeStatus = (text) => {
         if (!window.isInCooldown) status.textContent = text;
     };
 
     try {
-        // --------------------------------------------------------
-        // 5. FORGING LOGIC
-        // --------------------------------------------------------
         if (mode === 'source') {
             let linksToSave = [];
 
-            if (manualUrls.length > 0 && !isAiReferenceSearch) {
-                console.log("[FORGE]: Processing manual URLs and extracting surrounding text strings.");
-                
-                const itemsCountToTake = Math.min(manualUrls.length, finalForgeCount);
-                
-                for (let i = 0; i < itemsCountToTake; i++) {
+            if (manualUrls.length > 0 && !resolution.isAiReferenceSearch) {
+                for (let i = 0; i < Math.min(manualUrls.length, resolution.count); i++) {
                     linksToSave.push({
-                        name: textChunks[i] || generateSparkName(currentId),
+                        name: resolution.textChunks[i] || generateSparkName(currentId),
                         url: manualUrls[i]
                     });
                 }
-             } else { //if (manualUrls.length less than 0 but mode still 'source'
+            } else {
                 updateForgeStatus("CONSULTING MODEL POOL...");
+                const aiLinks = await callGeminiAPI(shapeAiPrompt(prompt, resolution.count, mode, currentName, promptTypeObject), resolution.count, mode);
                 
-                const structuredPrompt = shapeAiPrompt(prompt, finalForgeCount, mode, currentName, promptTypeObject);
-                
-                const aiLinks = await callGeminiAPI(structuredPrompt, finalForgeCount, mode);
-                let rawLinksArray = [];
-                
-                if (Array.isArray(aiLinks)) {
-                    rawLinksArray = aiLinks;
-                } else if (typeof aiLinks === 'string') {
-                    console.warn("[FORGE]: Gemini returned raw text. Forcing string-split array fallback.");
-                    rawLinksArray = aiLinks.split(/,|\n/).map(str => str.trim()).filter(Boolean);
-                }
-
-                linksToSave = rawLinksArray.slice(0, finalForgeCount).map(item => {
-                    const extractedName = item.name || generateSparkName(currentId);
-                    const extractedUrl = item.url || item;
-                    return { name: extractedName, url: extractedUrl };
-                });                    
+                linksToSave = (Array.isArray(aiLinks) ? aiLinks : (typeof aiLinks === 'string' ? aiLinks.split(/,|\n/).map(str => str.trim()).filter(Boolean) : []))
+                    .slice(0, resolution.count)
+                    .map(item => ({
+                        name: item.name || generateSparkName(currentId),
+                        url: item.url || item
+                    }));                    
             }
 
             for (let i = 0; i < linksToSave.length; i++) {
-                const item = linksToSave[i];
-                const sparkName = linksToSave.length > 1 && item.name.startsWith('spark_') ? `${item.name}-${i + 1}` : item.name;
+                const sparkName = linksToSave.length > 1 && linksToSave[i].name.startsWith('spark_') ? `${linksToSave[i].name}-${i + 1}` : linksToSave[i].name;
                 
-                await saveSpark(currentId, { name: sparkName, link: item.url, prompt, type: 'link', image: promptTypeImage }, promptTypeName, promptTypeImage);
+                await saveSpark(currentId, { name: sparkName, link: linksToSave[i].url, prompt, type: 'link', image: promptTypeObject.image }, promptTypeObject.name, promptTypeObject.image);
                 
                 const progress = Math.round(((i + 1) / linksToSave.length) * 100);
-                updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
+                updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
             }
-        } else { // mode is create
-            // 'Create' Mode (mode === 'create')
-            for (let i = 0; i < finalForgeCount; i++) {
-                const progress = Math.round((i / finalForgeCount) * 100);
-                updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
+        } else {
+            for (let i = 0; i < resolution.count; i++) {
+                const progress = Math.round((i / resolution.count) * 100);
+                updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
-                const structuredPrompt = shapeAiPrompt(prompt, i, 'create', currentName, promptTypeObject);
-
-                const code = await callGeminiAPI(structuredPrompt, i, mode);
-                const sparkName = finalForgeCount > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId);
-                
+                const code = await callGeminiAPI(shapeAiPrompt(prompt, i, 'create', currentName, promptTypeObject), i, mode);
                 const isCode = code.trim().startsWith('<') || code.trim().startsWith('function') || code.trim().startsWith('const') || code.trim().includes('document.');
                 
-                const payload = isCode ? { name: sparkName, code, prompt, type: 'code', image: promptTypeImage } 
-                                       : { name: sparkName, link: code, prompt, type: 'link', image: promptTypeImage };
-
-                await saveSpark(currentId, payload, promptTypeName, promptTypeImage);
+                await saveSpark(currentId, { 
+                    name: resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId), 
+                    [isCode ? 'code' : 'link']: code, 
+                    prompt, 
+                    type: isCode ? 'code' : 'link', 
+                    image: promptTypeObject.image 
+                }, promptTypeObject.name, promptTypeObject.image);
             }
-            updateForgeStatus(`FORGING ${finalForgeCount} SPARKS [==========] 100%`);
+            updateForgeStatus(`FORGING ${resolution.count} SPARKS [==========] 100%`);
         }
 
         setTimeout(async () => {
@@ -1341,7 +1344,6 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
         if (!window.isInCooldown) status.textContent = "FORGE ERROR";
     }
 }
-
 /*
  * Processes the image field from the DB.
  * Returns the Base64 string if present, or a formatted asset path.
@@ -1646,55 +1648,6 @@ function resolveCategoryFromPrompt(prompt, currentName) {
     };
 }
 
-window.handleCreation = async (currentId, currentName) => {
-    const promptInput = document.getElementById(`input-${currentId}`);
-    const categorySelect = document.getElementById(`select-${currentId}`); 
-    const input = promptInput ? promptInput.value.trim() : '';
-    const selectedCategoryValue = categorySelect ? categorySelect.value : '-- CUSTOM PROMPT --';
-    
-    if (!input) return;
-
-    const status = document.getElementById('engine-status-text');
-    status.textContent = "PROCESSING INFRASTRUCTURE...";
-
-    let resolvedCategory;
-
-    try {
-        // --- SINGLE POINT OF RESOLUTION ---
-        if (selectedCategoryValue === '-- CUSTOM PROMPT --' || selectedCategoryValue === '') {
-            console.log("[FORGE]: Resolving via Regex (One-time).");
-            resolvedCategory = resolveCategoryFromPrompt(input);
-        } else {
-            const selectedCurrentTypes = databaseCache.settings?.['arcade-current-types'] || [];
-            const typeMatch = selectedCurrentTypes.find(t => t.name === selectedCategoryValue);
-
-            if (typeMatch) {
-                resolvedCategory = {
-                    name: typeMatch.name,
-                    id: typeMatch.id,
-                    logic: typeMatch.logic || 'create',
-                    image: typeMatch.image || '/assets/thumbnails/default.jpg',
-                    rules: typeMatch.rules
-                };
-            } else {
-                resolvedCategory = resolveCategoryFromPrompt(input);
-            }
-        }
-        
-        const isUrl = /^(http|https):\/\/[^ "]+$/.test(input);
-        let mode = (resolvedCategory.logic === 'source' || isUrl) ? 'source' : 'create';
-
-        // Pass the fully formed object to the engine
-        await executeMassSpark(currentId, currentName, input, mode, resolvedCategory);
-        
-        if (promptInput) promptInput.value = '';
-
-    } catch (e) {
-        console.error("Creation Error:", e);
-        const fallback = { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg' };
-        await executeMassSpark(currentId, currentName, input, 'create', fallback);
-    }
-};
 
 /*
  * Extracts valid URLs from a string based on common separators
