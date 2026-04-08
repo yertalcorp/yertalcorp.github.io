@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:34:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:55:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1100,6 +1100,18 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
 };
 
 function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
+    const currentType = promptTypeObject ? promptTypeObject.name : "General Utility";
+        // Ensure we always ask for at least 1 variation
+    const safeCount = count > 0 ? count : 1;
+
+    // Final Prompt Construction
+    const fullPrompt = `
+Write working HTML and Javascript Code for model: ${currentType} in order to achieve the following task: ${rawPrompt}. Generate ${safeCount} variation(s) of the task.
+    `;
+   return fullPrompt.trim();
+}
+
+function shapeAiPromptComplex(rawPrompt, count, mode, currentName, promptTypeObject) {
     const categoryRules = (promptTypeObject && promptTypeObject.rules) ? promptTypeObject.rules : "";
     const currentType = promptTypeObject ? promptTypeObject.name : "General Utility";
     
