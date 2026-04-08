@@ -1112,12 +1112,15 @@ ${isSource ?
 Rules:
 - Do NOT return search engine URLs or database homepages (e.g., no imdb.com).
 - Research specific items that match the task.
-- Return ONLY a valid JSON array of objects: [{"name": "Item Name", "url": "Direct Info Link", "description": "Brief detail"}].` 
+- Return ONLY a valid JSON array of objects: [{"name": "Item Name", "url": "Direct Info Link", "description": "Brief detail"}].
+- ${promptTypeObject.rules}` 
     : 
     `Persona: You are a Creative Developer.
 Rules:
 - Provide a standalone, working HTML/JS file.
-- Keep the UI clean, modern, and simple.`
+- Keep the UI clean, modern, and simple.
+- Adhere to the parent page's viewport.
+- ${promptTypeObject.rules}`
 }
 
 Quantity: Generate ${count > 0 ? count : 1} ${isSource ? "data entries" : "code variation(s)"}.
