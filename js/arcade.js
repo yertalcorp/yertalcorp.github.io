@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:04:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1648,67 +1648,51 @@ function resolveCategoryFromPrompt(prompt, currentName) {
 
 window.handleCreation = async (currentId, currentName) => {
     const promptInput = document.getElementById(`input-${currentId}`);
-    const categorySelect = document.getElementById(`select-${currentId}`); // Fetch the dropdown
+    const categorySelect = document.getElementById(`select-${currentId}`); 
     const input = promptInput ? promptInput.value.trim() : '';
-    const selectedCategoryValue = categorySelect ? categorySelect.value : 'Custom';
-    const selectedCurrentTypes = databaseCache.settings?.['arcade-current-types'] || [];
-    const typeMatch = selectedCurrentTypes.find(t => t.name === selectedCategoryValue);
+    const selectedCategoryValue = categorySelect ? categorySelect.value : '-- CUSTOM PROMPT --';
     
     if (!input) return;
 
     const status = document.getElementById('engine-status-text');
     status.textContent = "PROCESSING INFRASTRUCTURE...";
 
-    // Set a default resolvedCategory.
-    let resolvedCategory = {
-                name: typeMatch.name,
-                id: typeMatch.id,
-                logic: typeMatch.logic, // Standard for arcade templates
-                image: typeMatch.image || '/assets/thumbnails/default.jpg',
-                rules: typeMatch.rules
-            };
+    let resolvedCategory;
+
     try {
-        // 1. SELECTIVE RESOLUTION: Only call Regex if "Custom" is selected
+        // --- SINGLE POINT OF RESOLUTION ---
         if (selectedCategoryValue === '-- CUSTOM PROMPT --' || selectedCategoryValue === '') {
-            console.log("[FORGE]: Custom Selection detected. Running Regex Resolution...");
+            console.log("[FORGE]: Resolving via Regex (One-time).");
             resolvedCategory = resolveCategoryFromPrompt(input);
         } else {
-            // Use the already known currentName and existing metadata
-            console.log(`[FORGE]: Explicit Selection detected: ${currentName}`);
-            resolvedCategory = {
-                name: typeMatch.name,
-                id: typeMatch.id,
-                logic: typeMatch.logic, // Standard for arcade templates
-                image: typeMatch.image || '/assets/thumbnails/default.jpg',
-                rules: typeMatch.rules
-            };
+            const selectedCurrentTypes = databaseCache.settings?.['arcade-current-types'] || [];
+            const typeMatch = selectedCurrentTypes.find(t => t.name === selectedCategoryValue);
+
+            if (typeMatch) {
+                resolvedCategory = {
+                    name: typeMatch.name,
+                    id: typeMatch.id,
+                    logic: typeMatch.logic || 'create',
+                    image: typeMatch.image || '/assets/thumbnails/default.jpg',
+                    rules: typeMatch.rules
+                };
+            } else {
+                resolvedCategory = resolveCategoryFromPrompt(input);
+            }
         }
         
-        // 2. LOGIC ROUTING
         const isUrl = /^(http|https):\/\/[^ "]+$/.test(input);
-        // If it's a URL or the resolved logic says 'source', we source. 
-        // Otherwise, we treat it as a prompt-based creation.
         let mode = (resolvedCategory.logic === 'source' || isUrl) ? 'source' : 'create';
 
-        console.log(`[FORGE]: Routing to executeMassSpark via Mode: ${mode} | Category: ${resolvedCategory.name}`);
-
-        // 3. TRIGGER MASS SPARK
-        // We pass the explicit mode and resolved metadata to ensure executeMassSpark
-        // doesn't have to guess either.
-        await executeMassSpark(
-            currentId, 
-            currentName,
-            input, 
-            mode, 
-            resolvedCategory
-        );
+        // Pass the fully formed object to the engine
+        await executeMassSpark(currentId, currentName, input, mode, resolvedCategory);
         
         if (promptInput) promptInput.value = '';
 
     } catch (e) {
         console.error("Creation Error:", e);
-        // Fallback to basic custom processing on error
-        await executeMassSpark(currentId, currentName, input, 'create', resolvedCategory);
+        const fallback = { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg' };
+        await executeMassSpark(currentId, currentName, input, 'create', fallback);
     }
 };
 
