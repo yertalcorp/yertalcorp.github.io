@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 22:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1120,6 +1120,7 @@ Rules:
 - Provide a standalone, working HTML/JS file.
 - Keep the UI clean, modern, and simple.
 - Adhere to the parent page's viewport.
+- Return ONLY a valid JSON object: {"name": "A short descriptive project title", "code": "The full HTML/JS code string"}.
 - ${promptTypeObject.rules}`
 }
 
@@ -1882,23 +1883,6 @@ async function callGeminiAPI(prompt, val, type) {
     throw new Error("All models exhausted. Restarting cycle after cooldown.");
 }
 
-/*
-// Example placement in your injection logic
-const container = document.getElementById('spark-display-area'); 
-container.innerHTML = result; // The code from callGeminiAPI
-
-// ADD THIS: Re-execute scripts manually
-const scripts = container.querySelectorAll("script");
-scripts.forEach(oldScript => {
-    const newScript = document.createElement("script");
-    // Copy all attributes (like src or type)
-    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-    // Copy the actual code content
-    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-    // Replace the dead script with the live one
-    oldScript.parentNode.replaceChild(newScript, oldScript);
-});
-*/
 
 /*
  * System Cooldown & Reset Logic
