@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:05:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1794,62 +1794,71 @@ async function retrieveGeminiCredentials() {
 }
 
 async function getGeminiModel(apiKey) {
-    // 1. HYDRATE FROM MANIFEST
+    // 1. IMMEDIATE RETURN: If modelStats is already populated, get the healthiest model.
+    if (typeof modelStats !== 'undefined' && Array.isArray(modelStats) && modelStats.length > 0) {
+        const sorted = [...modelStats].sort((a, b) => a[1] - b[1]);
+        return sorted[0][0];
+    }
+
+    // 2. HYDRATE FROM CACHE: If memory is empty, check the databaseCache object.
     if (databaseCache.app_manifest?.model_pool) {
-        console.log("[FORGE]: Hydrating model pool from manifest.");
+        console.log("[FORGE]: Hydrating model pool from manifest cache.");
         
         const pool = databaseCache.app_manifest.model_pool;
-        // Map the flat DB names into our 2D tracking array
-        modelStats = pool.map(name => {
-            const existing = (modelStats || []).find(m => m[0] === name);
-            return existing ? existing : [name, 0];
-        });
+        // Map names into our 2D tracking array [[name, failures]]
+        modelStats = pool.map(name => [name, 0]);
 
         return databaseCache.app_manifest.default_model;
     }
 
+    // 3. DISCOVERY: Only runs if both memory and cache are empty.
     try {
-        console.log("[FORGE]: Discovering Flash models via Google API...");
+        console.log("[FORGE]: Discovering models via Google API...");
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         const data = await response.json();
 
         if (!data.models) throw new Error("No models property in API response.");
 
-        // 2. FILTER & SORT
-        const flashModels = data.models.filter(m => 
-            m.name.includes('flash') && 
+        // Filter: Flash and Pro only, exclude Lite and latest aliases.
+        const filteredModels = data.models.filter(m => 
+            (m.name.includes('flash') || m.name.includes('pro')) && 
             m.supportedGenerationMethods.includes('generateContent') &&
+            !m.name.toLowerCase().includes('lite') &&
             !m.name.endsWith('-latest')
         );
 
-        // Sort so the newest versions are at the top initially
-        flashModels.sort((a, b) => b.name.localeCompare(a.name));
+        // Sort so newest versions are at the top initially.
+        filteredModels.sort((a, b) => b.name.localeCompare(a.name));
 
-        if (flashModels.length === 0) throw new Error("No suitable Flash models found.");
+        if (filteredModels.length === 0) throw new Error("No suitable models found.");
 
-        // 3. INITIALIZE 2D ARRAY [[name, failures]]
-        const flatNames = flashModels.map(m => m.name.split('/')[1]);
+        const flatNames = filteredModels.map(m => m.name.split('/')[1]);
         modelStats = flatNames.map(name => [name, 0]);
         
         const resolvedModel = modelStats[0][0];
         console.log(`[FORGE]: Primary: ${resolvedModel}. Pool:`, modelStats);
 
-        // 4. PERSIST TO FIREBASE
-        await update(ref(db, 'app_manifest'), {
+        // 4. PERSIST TO FIREBASE (Non-blocking for speed)
+        update(ref(db, 'app_manifest'), {
             default_model: resolvedModel,
             model_pool: flatNames, 
             last_model_sync: new Date().toISOString()
-        });
+        }).catch(err => console.warn("[FORGE]: Manifest sync failed", err));
         
         if (!databaseCache.app_manifest) databaseCache.app_manifest = {};
         databaseCache.app_manifest.default_model = resolvedModel;
         databaseCache.app_manifest.model_pool = flatNames;
 
         return resolvedModel;
+
     } catch (e) {
-        console.warn("[FORGE]: Discovery failed. Falling back to defaults.", e);
-        // Fallback pool if the API call fails
-        modelStats = [['gemini-1.5-flash', 0], ['gemini-1.5-flash-8b', 0]];
+        console.warn("[FORGE]: Discovery failed. Falling back to high-reasoning defaults.", e);
+        // Modern Fallback (Removed dead 1.5 versions)
+        modelStats = [
+            ['gemini-3-flash-preview', 0], 
+            ['gemini-2.5-flash', 0], 
+            ['gemini-2.5-pro', 0]
+        ];
         return modelStats[0][0]; 
     }
 }
@@ -1864,6 +1873,13 @@ async function callGeminiAPI(prompt, val, type) {
         throw new Error("System is currently cooling down.");
     }
 
+    // 1. Display fading notification
+    const note = document.createElement('div');
+    note.innerText = "Generating the spark may take a few minutes...";
+    note.style = "position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:white; padding:10px 20px; border-radius:20px; z-index:9999; transition:opacity 2s; pointer-events:none;";
+    document.body.appendChild(note);
+    setTimeout(() => { note.style.opacity = '0'; setTimeout(() => note.remove(), 2000); }, 3000);
+
     const credentials = await retrieveGeminiCredentials();
     if (!credentials) {
         throw new Error("Failed to retrieve Gemini credentials.");
@@ -1871,22 +1887,27 @@ async function callGeminiAPI(prompt, val, type) {
 
     if (!Array.isArray(modelStats) || modelStats.length === 0) {
         console.error("CRITICAL: modelStats is empty. No models available to route to!");
-        throw new Error("No models available in pool. Cooldown ignored to prevent lock.");
+        throw new Error("No models available in pool.");
     }
 
+    // Sort models by failure count (healthiest first)
     modelStats.sort((a, b) => a[1] - b[1]);
     
     const modelNames = modelStats.map(entry => entry[0]);
     console.log("Retrieved Gemini Models in queue order:", modelNames);
     
     let attempts = 0;
-    const maxRetries = modelStats.length;
+    // Set maxRetries to double the pool length so each model gets 2 chances
+    const maxRetries = modelStats.length * 2; 
 
     while (attempts < maxRetries) {
-        const currentEntry = modelStats[attempts];
+        // Use modulo to cycle through the model list a second time if needed
+        const currentEntry = modelStats[attempts % modelStats.length];
         const modelName = currentEntry[0];
 
         try {
+            if (statusText) statusText.textContent = `FORGING: ${modelName} (Attempt ${attempts + 1}/${maxRetries})`;
+
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${credentials.apiKey}`;
 
             const response = await fetch(url, {
@@ -1901,51 +1922,41 @@ async function callGeminiAPI(prompt, val, type) {
                 const errorBody = await response.text();
                 console.warn(`[FAIL]: ${modelName} failed with HTTP status ${response.status}. Reason:`, errorBody);
                 
-                currentEntry[1]++;
+                currentEntry[1]++; // Increment failure count
                 attempts++;
                 
                 if (attempts >= maxRetries) break;
-
-                await new Promise(r => setTimeout(r, 200));
+                await new Promise(r => setTimeout(r, 500));
                 continue;
             }
 
             console.log(`[SUCCESS]: ${modelName} responded successfully.`);
-            
             const data = await response.json();
             
+            // On success, heal the model's failure score
             if (currentEntry[1] > 0) currentEntry[1]--;
 
             const result = data.candidates[0].content.parts[0].text;
-            
-            // 1. INITIAL SCRUB using the utility
             let sanitized = verifyAndFixCode(result);
             
-            // 2. CONDITIONAL PARSING
             if (isCode) {
                 if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
                     const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                     if (start !== -1) sanitized = sanitized.substring(start);
                 }
-                // Final scrub of the legacy code path output
-                return verifyAndFixCode(sanitized);
+                return verifyAndFixCode(sanitized, true);
             } else {
                 try {
                     const parsed = JSON.parse(sanitized);
-
-                    // RECURSIVE SCRUB: If we received an object with a 'code' property, scrub that too
                     if (parsed && typeof parsed.code === 'string') {
                         parsed.code = verifyAndFixCode(parsed.code);
                     }
-                    
-                    // Also scrub 'url' or 'link' fields if this is a 'source' list
                     if (Array.isArray(parsed)) {
                         parsed.forEach(item => {
                             if (item.url) item.url = verifyAndFixCode(item.url);
                             if (item.code) item.code = verifyAndFixCode(item.code);
                         });
                     }
-
                     return parsed;
                 } catch (jsonErr) {
                     console.warn(`[FORGE]: JSON Parse failed. Fallback to raw text.`);
@@ -1953,7 +1964,6 @@ async function callGeminiAPI(prompt, val, type) {
                         const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                         if (start !== -1) sanitized = sanitized.substring(start);
                     }
-                    // Final scrub of the fallback text path output
                     return verifyAndFixCode(sanitized, isCode);
                 }
             }
@@ -1963,15 +1973,31 @@ async function callGeminiAPI(prompt, val, type) {
             currentEntry[1]++;
             attempts++;
             if (attempts >= maxRetries) break;
-            await new Promise(r => setTimeout(r, 200));
+            await new Promise(r => setTimeout(r, 500));
         }
     }
 
-    console.error("CRITICAL: All models in pool failed. Triggering 60s cooldown.");
-    await initiateSystemCooldown(statusText);
+    // --- COOLDOWN LOGIC ---
+    console.error("CRITICAL: All models in pool failed twice. Triggering 60s cooldown.");
+    window.isInCooldown = true;
+    let secondsLeft = 60;
+
+    await new Promise((resolve) => {
+        const timer = setInterval(() => {
+            if (statusText) statusText.textContent = `ENGINE OVERHEATED: COOLING DOWN (${secondsLeft}s)`;
+            secondsLeft--;
+            
+            if (secondsLeft < 0) {
+                clearInterval(timer);
+                window.isInCooldown = false;
+                if (statusText) statusText.textContent = "ENGINE READY";
+                resolve();
+            }
+        }, 1000);
+    });
+
     throw new Error("All models exhausted. Restarting cycle after cooldown.");
 }
-
 /*
  * System Cooldown & Reset Logic
  */
