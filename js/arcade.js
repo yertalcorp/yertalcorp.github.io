@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1333,7 +1333,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                     .slice(0, resolution.count)
                     .map(item => ({
                         name: item.name || generateSparkName(currentId),
-                        url: verifyAndFixCode(item.url || item) // VERIFY AND FIX: Scrub URL strings
+                        url: item.url || item
                     }));                    
             }
 
