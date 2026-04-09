@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:05:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1129,15 +1129,51 @@ function verifyAndFixCode(rawCode, isCodeMode = false) {
             fixed = fixed.replace('</script>', `console.warn('Yertal Verify: Class detected but no "new" keyword found in script.');<\/script>`);
         }
 
-        // --- NEW: AUDIO NULL-POINTER PROTECTION ---
-        // Prevents crashes if audio nodes are accessed before the user clicks "Start"
+        // --- NEW: SCOPE HEALER (B. The "AudioContext" Reference Bug) ---
+        // Scans for variables declared in local scope and prevents "window.var" null pointers
+        const scopeVarMatch = fixed.match(/(?:let|const|var)\s+(\w+)\s*=/g);
+        if (scopeVarMatch) {
+            scopeVarMatch.forEach(m => {
+                const varName = m.split(/\s+/)[1];
+                const windowRef = new RegExp(`window\\.${varName}(?!\\s*=)`, 'g');
+                fixed = fixed.replace(windowRef, varName); // Strip "window." to use local scope
+            });
+        }
+
+        // --- NEW: VISIBILITY HEALER (A. The "Visibility" Check) ---
+        // If the AI divides values by 100/255 for opacity, ensure source values are not too low
+        if (fixed.includes('opacity') || fixed.includes('rgba')) {
+            // Adjust opacity divisors to make low-density values visible
+            fixed = fixed.replace(/\/\s*100(?!\d)/g, '/ 40'); 
+            fixed = fixed.replace(/\/\s*255(?!\d)/g, '/ 120');
+        }
+
+        // --- NEW: COORDINATE HEALER (C. Coordinate Normalization) ---
+        // Inject rect logic into common mouse handler patterns if missing
+        if (fixed.includes('clientX') && !fixed.includes('getBoundingClientRect')) {
+            fixed = fixed.replace(/(function|const|let)\s+(\w+Mouse\w+|handle\w+|on\w+)\s*=\s*\(?(e|evt)\)?\s*=>?\s*\{|function\s+(\w+)\s*\((e|evt)\)\s*\{/g, 
+            (match, p1, p2, p3, p4, p5) => {
+                const ev = p3 || p5;
+                return `${match} const rect = (document.querySelector('canvas') || ${ev}.target).getBoundingClientRect(); const mx = ${ev}.clientX - rect.left; const my = ${ev}.clientY - rect.top; `;
+            });
+        }
+
+        // --- NEW: FIRST FRAME MANDATE (D. The "Initial Seed") ---
+        // Ensures the setup logic triggers a draw call or initialization seed
+        if (hasInit && hasLoop) {
+            const drawCall = fixed.includes('render') ? 'render();' : (fixed.includes('draw') ? 'draw();' : 'loop();');
+            if (!fixed.match(/init\s*\([^)]*\)\s*\{[^}]*(render|draw|loop|seed|spawn)/)) {
+                fixed = fixed.replace(/init\s*\([^)]*\)\s*\{/, `init() { if(typeof seed === "function") seed(); ${drawCall} `);
+            }
+        }
+
+        // --- EXISTING: AUDIO NULL-POINTER PROTECTION ---
         if (fixed.includes('AudioContext') || fixed.includes('oscillator')) {
             fixed = fixed.replace(/oscillator\.frequency/g, '(window.oscillator && window.oscillator.frequency)');
             fixed = fixed.replace(/gainNode\.gain/g, '(window.gainNode && window.gainNode.gain)');
         }
 
-        // --- NEW: MATH SAFETY (NaN Prevention) ---
-        // Prevents objects from disappearing due to division by zero in IK/Physics
+        // --- EXISTING: MATH SAFETY (NaN Prevention) ---
         fixed = fixed.replace(/Math\.sqrt\(([^)]+)\)/g, 'Math.max(0.001, Math.sqrt($1))');
 
         // --- STRUCTURAL FIXES ---
@@ -1147,7 +1183,7 @@ function verifyAndFixCode(rawCode, isCodeMode = false) {
             fixed = fixed.replace('<body>', `<body style="margin:0;overflow:hidden;"><canvas id="canvas"></canvas>`);
         }
 
-        // FIX: Force resize call inside init if missing (Critical for Viewport)
+        // FIX: Force resize call inside init if missing
         if (hasInit && hasResize && !fixed.match(/init\s*\([^)]*\)\s*\{[^}]*resize/)) {
             fixed = fixed.replace(/init\s*\([^)]*\)\s*\{/, 'init() { if(typeof resize === "function") resize(); ');
         }
@@ -1171,7 +1207,7 @@ function verifyAndFixCode(rawCode, isCodeMode = false) {
             fixed = fixed.replace('<head>', `<head><meta name="viewport" content="width=device-width, initial-scale=1.0">`);
         }
         
-        // FIX: Missing ClearRect (The "Smear" preventer)
+        // FIX: Missing ClearRect
         if (fixed.includes('.getContext') && !fixed.includes('clearRect')) {
              console.warn("VERIFY: Animation loop may be missing clearRect; trails may occur.");
         }
@@ -1179,7 +1215,6 @@ function verifyAndFixCode(rawCode, isCodeMode = false) {
 
     return fixed;
 }
-
 // UPDATED FUNCTION
 function getDynamicCardCover(themeObject) {
     const canvas = document.createElement('canvas');
