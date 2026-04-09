@@ -1339,6 +1339,28 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     
     return `
 Task: ${rawPrompt}
+${isSource ? 
+    `Source Instructions:
+- Priority: 1. License-Free/Open Source, 2. Official Trailers, 3. Most specific match.
+- Return ONLY a valid JSON array of objects: [{"name": "Item Name", "url": "Direct Info Link", "description": "Brief detail"}].` 
+    : 
+    `Implementation Instructions:
+- Goal: Generate a one-shot, stunning, production-ready interactive application for ${promptTypeObject.name}.
+- Structure: Strictly use a self-executing IIFE for high-performance encapsulation and scope safety.
+- Graphics: Use native Canvas API or WebGL for fluid, high-frame-rate visuals.
+- Requirements: Standalone HTML/JS. Ensure the first frame is rendered immediately.
+- Return ONLY a valid JSON object: {"name": "Project Title", "code": "The full HTML/JS code string"}.`
+}
+
+Quantity: Generate ${count > 0 ? count : 1} ${isSource ? "data entries" : "code variation(s)"}.
+`.trim();
+}
+
+function shapeAiPromptComplex(rawPrompt, count, mode, currentName, promptTypeObject) {
+    const isSource = mode === 'source';
+    
+    return `
+Task: ${rawPrompt}
 Model: ${promptTypeObject?.name || "General Utility"}
 Mode: ${mode.toUpperCase()}
 
