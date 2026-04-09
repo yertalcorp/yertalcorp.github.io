@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1338,7 +1338,8 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
     
     return `
-The Task is: ${rawPrompt} and the model to be used is: ${promptTypeObject.name}.
+${rawPrompt} 
+The framework is : ${promptTypeObject.name}.
 ${isSource ? 
     `Source Instructions:
 - Priority: 1. License-Free/Open Source, 2. Official Trailers or previews, 3. Most specific match.
