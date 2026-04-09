@@ -1339,7 +1339,7 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     
     return `
 ${rawPrompt} 
-The framework is : ${promptTypeObject.name}.
+Use the following model: ${promptTypeObject.name}.
 ${isSource ? 
     `Source Instructions:
 - Priority: 1. License-Free/Open Source, 2. Official Trailers or previews, 3. Most specific match.
