@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1283,6 +1283,50 @@ function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpa
         textChunks: textChunks,
         isAiReferenceSearch: (manualUrls.length > 0 && requestedCount > 1)
     };
+}
+
+function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
+    const isSource = mode === 'source';
+    
+    return `
+Task: ${rawPrompt}
+Model: ${promptTypeObject?.name || "General Utility"}
+Mode: ${mode.toUpperCase()}
+
+${isSource ? 
+    `Persona: You are a Data Research Agent. 
+Rules:
+- Do NOT return search engine URLs or database homepages (e.g., no imdb.com).
+- Research specific items that match the task.
+- Return ONLY a valid JSON array of objects: [{"name": "Item Name", "url": "Direct Info Link", "description": "Brief detail"}].
+- ${promptTypeObject.rules}` 
+    : 
+    `Persona: You are a Creative Developer.
+Rules:
+- Provide a standalone, working HTML/JS file.
+- Keep the UI clean, modern, and simple.
+- Adhere to the parent page's viewport.
+- Return ONLY a valid JSON object: {"name": "A short descriptive project title", "code": "The full HTML/JS code string"}.
+
+Runtime & Viewport Resilience:
+- Wrap all initialization logic in a window.onload or DOMContentLoaded event listener.
+- Capture canvas/window dimensions dynamically inside the init function to avoid 0x0 size errors.
+- Ensure the coordinate system remains stable by using percentages or dynamic width/height variables.
+- Implement a resize listener to update the internal state if the viewport dimensions change.
+- Request user gesture interaction before starting AudioContext to comply with browser policies.
+
+Visual Rendering & Object Logic:
+- Call the drawing/render function immediately after initialization to ensure the first frame is not blank.
+- Use high-contrast colors for objects (e.g., neon accents) to ensure visibility against dark backgrounds.
+- Explicitly clear the canvas or background on every frame to prevent "smearing" artifacts.
+- Verify that object coordinates (x, y) are initialized within the calculated width/height bounds.
+- Use distinct stroke or fill styles for every unique object type to make them visually identifiable.
+
+- ${promptTypeObject.rules}`
+}
+
+Quantity: Generate ${count > 0 ? count : 1} ${isSource ? "data entries" : "code variation(s)"}.
+`.trim();
 }
 
 // FUNCTION: executeMassSpark
