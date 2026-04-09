@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:25:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1920,10 +1920,10 @@ async function getGeminiModel(apiKey) {
         return modelStats[0][0]; 
     }
 }
-
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
     const statusText = document.getElementById('engine-status-text');
+    const progressBar = document.getElementById('engine-progress-bar');
 
     console.log(`callGeminiAPI: prompt: ${prompt}, val: ${val}, type:${type}`);
     
@@ -1955,13 +1955,19 @@ async function callGeminiAPI(prompt, val, type) {
     console.log("Retrieved Gemini Models in queue order:", modelNames);
     
     let attempts = 0;
-    // Set maxRetries to double the pool length so each model gets 2 chances
     const maxRetries = modelStats.length * 2; 
 
     while (attempts < maxRetries) {
-        // Use modulo to cycle through the model list a second time if needed
         const currentEntry = modelStats[attempts % modelStats.length];
         const modelName = currentEntry[0];
+
+        // Progress bar simulation
+        let progress = 0;
+        if (progressBar) progressBar.style.width = '0%';
+        const progressInterval = setInterval(() => {
+            progress += (95 - progress) * 0.1;
+            if (progressBar) progressBar.style.width = `${progress}%`;
+        }, 200);
 
         try {
             if (statusText) statusText.textContent = `FORGING: ${modelName} (Attempt ${attempts + 1}/${maxRetries})`;
@@ -1976,22 +1982,26 @@ async function callGeminiAPI(prompt, val, type) {
                 })
             });
 
+            clearInterval(progressInterval);
+
             if (!response.ok) {
                 const errorBody = await response.text();
                 console.warn(`[FAIL]: ${modelName} failed with HTTP status ${response.status}. Reason:`, errorBody);
                 
-                currentEntry[1]++; // Increment failure count
+                currentEntry[1]++; 
                 attempts++;
                 
+                if (progressBar) progressBar.style.width = '0%';
                 if (attempts >= maxRetries) break;
                 await new Promise(r => setTimeout(r, 500));
                 continue;
             }
 
             console.log(`[SUCCESS]: ${modelName} responded successfully.`);
+            if (progressBar) progressBar.style.width = '100%';
+            
             const data = await response.json();
             
-            // On success, heal the model's failure score
             if (currentEntry[1] > 0) currentEntry[1]--;
 
             const result = data.candidates[0].content.parts[0].text;
@@ -2027,9 +2037,11 @@ async function callGeminiAPI(prompt, val, type) {
             }
 
         } catch (error) {
+            clearInterval(progressInterval);
             console.warn(`[FAIL]: ${modelName} hit a network or execution error:`, error);
             currentEntry[1]++;
             attempts++;
+            if (progressBar) progressBar.style.width = '0%';
             if (attempts >= maxRetries) break;
             await new Promise(r => setTimeout(r, 500));
         }
@@ -2039,6 +2051,8 @@ async function callGeminiAPI(prompt, val, type) {
     console.error("CRITICAL: All models in pool failed twice. Triggering 60s cooldown.");
     window.isInCooldown = true;
     let secondsLeft = 60;
+    if (progressBar) progressBar.style.width = '100%';
+    if (progressBar) progressBar.style.backgroundColor = '#ff4444';
 
     await new Promise((resolve) => {
         const timer = setInterval(() => {
@@ -2049,6 +2063,10 @@ async function callGeminiAPI(prompt, val, type) {
                 clearInterval(timer);
                 window.isInCooldown = false;
                 if (statusText) statusText.textContent = "ENGINE READY";
+                if (progressBar) {
+                    progressBar.style.width = '0%';
+                    progressBar.style.backgroundColor = ''; // Reset to CSS default
+                }
                 resolve();
             }
         }, 1000);
@@ -2056,6 +2074,7 @@ async function callGeminiAPI(prompt, val, type) {
 
     throw new Error("All models exhausted. Restarting cycle after cooldown.");
 }
+
 /*
  * System Cooldown & Reset Logic
  */
