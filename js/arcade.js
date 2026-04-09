@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:38:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:51:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1349,24 +1349,20 @@ function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpa
 function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
     
-    return `
-${rawPrompt} 
-Use the following model: ${promptTypeObject.name}.
-${isSource ? 
-    `Source Instructions:
-- Priority: 1. License-Free/Open Source, 2. Official Trailers or previews, 3. Most specific match.
-- Return ONLY a valid JSON array of objects: [{"name": "Item Name", "url": "Direct Info Link", "description": "Brief detail"}].` 
-    : 
-    `Implementation Instructions:
-- Goal: Generate a one-shot, stunning, production-ready interactive application.
-- Structure: Strictly use a self-executing IIFE for high-performance encapsulation and scope safety.
-- Graphics: Use native Canvas API or WebGL for fluid, high-frame-rate visuals.
-- Requirements: Standalone HTML/JS. Ensure the first frame is rendered immediately.
-- Return ONLY a valid JSON object: {"name": "Project Title", "code": "The full HTML/JS code string"}.`
-}
+    const instructions = isSource ? 
+        `Source Instructions:
+        - Priority: 1. License-Free, 2. Trailers, 3. Specific matches.
+        - Format: JSON array [{"name", "url", "description"}].` : 
+        `Implementation Instructions:
+        - Goal: Bug free stunning interactive app.
+        - Structure: Self-executing IIFE, Canvas/WebGL.
+        - Format: JSON object {"name", "code"}.`;
 
-Quantity: Generate ${count > 0 ? count : 1} ${isSource ? "data entries" : "code variation(s)"}.
-`.trim();
+    return `
+        ${rawPrompt}
+        ${instructions}
+        Quantity: ${Math.max(1, count)} ${isSource ? "entries" : "code variations"}.
+    `.trim();
 }
 
 function shapeAiPromptComplex(rawPrompt, count, mode, currentName, promptTypeObject) {
