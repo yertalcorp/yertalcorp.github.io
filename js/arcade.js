@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:34:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1099,33 +1099,71 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
-function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
-    const isSource = mode === 'source';
-    
-    return `
-Task: ${rawPrompt}
-Model: ${promptTypeObject?.name || "General Utility"}
-Mode: ${mode.toUpperCase()}
+function verifyAndFixCode(rawCode, isCodeMode = false) {
+    if (!rawCode || typeof rawCode !== 'string') return "";
 
-${isSource ? 
-    `Persona: You are a Data Research Agent. 
-Rules:
-- Do NOT return search engine URLs or database homepages (e.g., no imdb.com).
-- Research specific items that match the task.
-- Return ONLY a valid JSON array of objects: [{"name": "Item Name", "url": "Direct Info Link", "description": "Brief detail"}].
-- ${promptTypeObject.rules}` 
-    : 
-    `Persona: You are a Creative Developer.
-Rules:
-- Provide a standalone, working HTML/JS file.
-- Keep the UI clean, modern, and simple.
-- Adhere to the parent page's viewport.
-- Return ONLY a valid JSON object: {"name": "A short descriptive project title", "code": "The full HTML/JS code string"}.
-- ${promptTypeObject.rules}`
-}
+    let fixed = rawCode
+        .replace(/\u00A0/g, ' ')
+        .replace(/^```[a-z]*\n?|```$/gi, '')
+        .trim();
 
-Quantity: Generate ${count > 0 ? count : 1} ${isSource ? "data entries" : "code variation(s)"}.
-`.trim();
+    // 1. Emergency Wrap: If the AI only sent JS, wrap it in HTML
+    if (!fixed.includes('<script') && (fixed.includes('function') || fixed.includes('const') || fixed.includes('let'))) {
+        fixed = `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;"><canvas id="canvas"></canvas><script>${fixed}<\/script></body></html>`;
+    }
+
+    // 2. HEALER LOGIC: Only run for code/create modes
+    if (isCodeMode) {
+        const hasScript = fixed.includes('<script');
+        const hasInit = fixed.includes('function init') || fixed.includes('const init');
+        const hasLoop = fixed.includes('function loop') || fixed.includes('const loop') || fixed.includes('function draw');
+        const hasOnLoad = fixed.includes('window.onload') || fixed.includes('addEventListener(\'load\'') || fixed.includes('DOMContentLoaded');
+        
+        // --- OBJECT VERIFICATION ---
+        // Check if classes/constructors exist but no instances are created
+        const hasClass = fixed.includes('class ') || fixed.includes('function Ball') || fixed.includes('function Particle');
+        const hasObjectArray = fixed.match(/let\s+\w+\s*=\s*\[\]/) || fixed.match(/const\s+\w+\s*=\s*\[\]/);
+        const hasInstantiation = fixed.includes('new ') || fixed.includes('.push(');
+        
+        // CHECK: Missing Objects?
+        if (hasClass && !hasInstantiation) {
+            console.warn("VERIFY: Code defines a class but appears to lack object instantiation.");
+            // We can inject a console warning into the generated code for debugging
+            fixed = fixed.replace('</script>', `console.warn('Yertal Verify: Class detected but no "new" keyword found in script.');<\/script>`);
+        }
+
+        // --- STRUCTURAL FIXES ---
+        
+        // FIX: Missing Canvas
+        if (fixed.includes('.getContext') && !fixed.includes('<canvas')) {
+            fixed = fixed.replace('<body>', `<body style="margin:0;overflow:hidden;"><canvas id="canvas"></canvas>`);
+        }
+
+        // FIX: Missing Lifecycle Runner
+        if (hasInit && hasLoop && !hasOnLoad) {
+            const runner = `\n<script>
+                window.addEventListener('load', () => { 
+                    console.log('Yertal Lifecycle: Auto-starting sequence...');
+                    if(typeof init === 'function') init(); 
+                    if(typeof loop === 'function') loop(); 
+                    else if(typeof draw === 'function') draw(); 
+                });
+            <\/script>\n`;
+            fixed = fixed.replace('</body>', `${runner}</body>`);
+        }
+
+        // FIX: Missing Viewport
+        if (!fixed.includes('viewport')) {
+            fixed = fixed.replace('<head>', `<head><meta name="viewport" content="width=device-width, initial-scale=1.0">`);
+        }
+        
+        // FIX: Missing ClearRect (The "Smear" preventer)
+        if (fixed.includes('.getContext') && !fixed.includes('clearRect')) {
+             console.warn("VERIFY: Animation loop may be missing clearRect; trails may occur.");
+        }
+    }
+
+    return fixed;
 }
 
 // UPDATED FUNCTION
@@ -1320,7 +1358,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 const sparkName = response.name || (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
                 
                 // VERIFY AND FIX: Scrub the code field explicitly
-                const sparkContent = verifyAndFixCode(response.code || response); 
+                const sparkContent = verifyAndFixCode(response.code || response, mode); 
                 
                 const isCode = typeof sparkContent === 'string' && (sparkContent.trim().startsWith('<') || sparkContent.trim().startsWith('function') || sparkContent.trim().startsWith('const') || sparkContent.trim().includes('document.'));
                 
@@ -1876,7 +1914,7 @@ async function callGeminiAPI(prompt, val, type) {
                         if (start !== -1) sanitized = sanitized.substring(start);
                     }
                     // Final scrub of the fallback text path output
-                    return verifyAndFixCode(sanitized);
+                    return verifyAndFixCode(sanitized, isCode);
                 }
             }
 
