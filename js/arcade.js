@@ -1937,7 +1937,14 @@ async function callGeminiAPI(prompt, val, type) {
     const credentials = await retrieveGeminiCredentials();
     if (!credentials) throw new Error("Failed to retrieve Gemini credentials.");
 
-    // 2. Global State Validation
+    // 2. Global State Validation & Hydration
+    // If modelStats is empty, use getGeminiModel to hydrate/discover the pool
+    if (!window.modelStats || !Array.isArray(window.modelStats) || window.modelStats.length === 0) {
+        console.log("[FORGE]: modelStats empty. Invoking getGeminiModel for hydration...");
+        await getGeminiModel(credentials.apiKey);
+    }
+
+    // Double check after hydration attempt
     if (!window.modelStats || window.modelStats.length === 0) {
         throw new Error("Model pool is empty. Please refresh or re-initialize.");
     }
@@ -2075,7 +2082,6 @@ async function callGeminiAPI(prompt, val, type) {
 
     throw new Error("All models in the pool exhausted.");
 }
-
 /*
  * System Cooldown & Reset Logic
  */
