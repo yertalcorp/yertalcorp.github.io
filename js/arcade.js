@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 22:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1128,43 +1128,6 @@ Quantity: Generate ${count > 0 ? count : 1} ${isSource ? "data entries" : "code 
 `.trim();
 }
 
-function shapeAiPromptComplex(rawPrompt, count, mode, currentName, promptTypeObject) {
-    const categoryRules = (promptTypeObject && promptTypeObject.rules) ? promptTypeObject.rules : "";
-    const currentType = promptTypeObject ? promptTypeObject.name : "General Utility";
-    
-    // Ensure we always ask for at least 1 variation
-    const safeCount = count > 0 ? count : 1;
-
-    // 1. Persona Mapping (Simplified)
-    const personas = {
-        create: "You are an Expert Full-stack Web Developer & Physics Specialist. You deliver bug-free, standalone HTML5 utilities.",
-        source: "You are a High-density Data Extraction Expert.",
-        hybrid: "You are an Expert Full-stack Web Developer & Physics Specialist. You deliver bug-free, standalone HTML5 utilities."
-    };
-    const persona = personas[mode] || personas.hybrid;
-
-    // 2. Mandatory Arcade Guardrails (Combined with category rules)
-    const mandatoryRules = `
-- Wrap ALL JS in an IIFE. No global variables.
-- Use 'parentElement.offsetWidth/Height' for sizing (NO window.innerWidth).
-- Use 'getBoundingClientRect()' for mouse coordinates.
-- No 'onclick' attributes; use JS EventListeners + Unique IDs.
-- Single-file HTML only. No external CDNs.
-- ${categoryRules}`.trim();
-
-    // 3. Final Prompt Construction
-    const fullPrompt = `
-Write working HTML and Javascript Code for model: ${currentType}
-- Persona: ${persona}
-- Task: ${rawPrompt}
-- Context Rules: 
-${mandatoryRules}
-- Format: A single, functional HTML file.
-- Count: Generate ${safeCount} variation(s).
-    `;
-
-    return fullPrompt.trim();
-}
 // UPDATED FUNCTION
 function getDynamicCardCover(themeObject) {
     const canvas = document.createElement('canvas');
@@ -1345,16 +1308,23 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
             }
         } else {
+            // CREATE MODE: Updated to handle JSON objects for smart naming
             for (let i = 0; i < resolution.count; i++) {
                 const progress = Math.round((i / resolution.count) * 100);
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
-                const code = await callGeminiAPI(shapeAiPrompt(prompt, i, 'create', currentName, promptTypeObject), i, mode);
-                const isCode = code.trim().startsWith('<') || code.trim().startsWith('function') || code.trim().startsWith('const') || code.trim().includes('document.');
+                // We pass 'source' here to trigger JSON parsing inside callGeminiAPI
+                const response = await callGeminiAPI(shapeAiPrompt(prompt, i, 'create', currentName, promptTypeObject), i, 'source');
+                
+                // Extract name from AI response or fallback to serial
+                const sparkName = response.name || (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
+                const sparkContent = response.code || response; // Use .code if object, otherwise raw string
+                
+                const isCode = typeof sparkContent === 'string' && (sparkContent.trim().startsWith('<') || sparkContent.trim().startsWith('function') || sparkContent.trim().startsWith('const') || sparkContent.trim().includes('document.'));
                 
                 await saveSpark(currentId, { 
-                    name: resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId), 
-                    [isCode ? 'code' : 'link']: code, 
+                    name: sparkName, 
+                    [isCode ? 'code' : 'link']: sparkContent, 
                     prompt, 
                     type: isCode ? 'code' : 'link', 
                     image: promptTypeObject.image 
@@ -1373,6 +1343,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
         if (!window.isInCooldown) status.textContent = "FORGE ERROR";
     }
 }
+
 /*
  * Processes the image field from the DB.
  * Returns the Base64 string if present, or a formatted asset path.
@@ -1848,23 +1819,28 @@ async function callGeminiAPI(prompt, val, type) {
 
             const result = data.candidates[0].content.parts[0].text;
             
-            // ADD: Enhanced Sanitization to remove Markdown and Header Text
+            // 1. STRIP MARKDOWN WRAPPERS (Crucial for JSON and Code)
             let sanitized = result.replace(/^```[a-z]*\n?|```$/gi, '').trim();
-            if (isCode && (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html'))) {
-             const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
-             if (start !== -1) sanitized = sanitized.substring(start);
-            }
             
+            // 2. CONDITIONAL PARSING
             if (isCode) {
-                // CHANGE: Return the sanitized string
+                // If the user still calls this with 'create'/'code', return raw string
+                if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
+                    const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
+                    if (start !== -1) sanitized = sanitized.substring(start);
+                }
                 return sanitized;
             } else {
+                // If type is 'source' (our new unified path), parse the JSON
                 try {
-                    // CHANGE: Parse the sanitized string
                     return JSON.parse(sanitized);
                 } catch (jsonErr) {
-                    console.warn(`[FORGE]: Model returned a raw string instead of JSON. Returning raw text.`);
-                    // CHANGE: Return sanitized fallback
+                    console.warn(`[FORGE]: JSON Parse failed. Fallback to raw text.`);
+                    // If it's not JSON, check if it's raw HTML that leaked through
+                    if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
+                        const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
+                        if (start !== -1) sanitized = sanitized.substring(start);
+                    }
                     return sanitized;
                 }
             }
@@ -1882,7 +1858,6 @@ async function callGeminiAPI(prompt, val, type) {
     await initiateSystemCooldown(statusText);
     throw new Error("All models exhausted. Restarting cycle after cooldown.");
 }
-
 
 /*
  * System Cooldown & Reset Logic
