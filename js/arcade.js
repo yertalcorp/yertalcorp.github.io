@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:51:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1295,7 +1295,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                     .slice(0, resolution.count)
                     .map(item => ({
                         name: item.name || generateSparkName(currentId),
-                        url: item.url || item
+                        url: verifyAndFixCode(item.url || item) // VERIFY AND FIX: Scrub URL strings
                     }));                    
             }
 
@@ -1308,7 +1308,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
             }
         } else {
-            // CREATE MODE: Updated to handle JSON objects for smart naming
+            // CREATE MODE: Handling JSON objects for smart naming and code extraction
             for (let i = 0; i < resolution.count; i++) {
                 const progress = Math.round((i / resolution.count) * 100);
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
@@ -1316,9 +1316,11 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 // We pass 'source' here to trigger JSON parsing inside callGeminiAPI
                 const response = await callGeminiAPI(shapeAiPrompt(prompt, i, 'create', currentName, promptTypeObject), i, 'source');
                 
-                // Extract name from AI response or fallback to serial
+                // Extract and SCRUB name
                 const sparkName = response.name || (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
-                const sparkContent = response.code || response; // Use .code if object, otherwise raw string
+                
+                // VERIFY AND FIX: Scrub the code field explicitly
+                const sparkContent = verifyAndFixCode(response.code || response); 
                 
                 const isCode = typeof sparkContent === 'string' && (sparkContent.trim().startsWith('<') || sparkContent.trim().startsWith('function') || sparkContent.trim().startsWith('const') || sparkContent.trim().includes('document.'));
                 
@@ -1847,7 +1849,8 @@ async function callGeminiAPI(prompt, val, type) {
                     const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                     if (start !== -1) sanitized = sanitized.substring(start);
                 }
-                return sanitized;
+                // Final scrub of the legacy code path output
+                return verifyAndFixCode(sanitized);
             } else {
                 try {
                     const parsed = JSON.parse(sanitized);
@@ -1855,6 +1858,14 @@ async function callGeminiAPI(prompt, val, type) {
                     // RECURSIVE SCRUB: If we received an object with a 'code' property, scrub that too
                     if (parsed && typeof parsed.code === 'string') {
                         parsed.code = verifyAndFixCode(parsed.code);
+                    }
+                    
+                    // Also scrub 'url' or 'link' fields if this is a 'source' list
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(item => {
+                            if (item.url) item.url = verifyAndFixCode(item.url);
+                            if (item.code) item.code = verifyAndFixCode(item.code);
+                        });
                     }
 
                     return parsed;
@@ -1864,7 +1875,8 @@ async function callGeminiAPI(prompt, val, type) {
                         const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                         if (start !== -1) sanitized = sanitized.substring(start);
                     }
-                    return sanitized;
+                    // Final scrub of the fallback text path output
+                    return verifyAndFixCode(sanitized);
                 }
             }
 
