@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1755,6 +1755,25 @@ async function getGeminiModel(apiKey) {
         return modelStats[0][0]; 
     }
 }
+
+function verifyAndFixCode(rawCode) {
+    if (!rawCode || typeof rawCode !== 'string') return "";
+
+    let fixed = rawCode
+        // 1. Remove Unicode Non-Breaking Spaces (the invisible killers)
+        .replace(/\u00A0/g, ' ')
+        // 2. Remove Markdown code fences if the AI left them in the JSON string
+        .replace(/^```[a-z]*\n?|```$/gi, '')
+        // 3. Ensure the code starts with a valid tag
+        .trim();
+
+    // 4. Emergency Wrap: If the AI only sent JS, wrap it in HTML
+    if (!fixed.includes('<script') && (fixed.includes('function') || fixed.includes('const'))) {
+        fixed = `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;"><canvas id="canvas"></canvas><script>${fixed}<\/script></body></html>`;
+    }
+
+    return fixed;
+}
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
     const statusText = document.getElementById('engine-status-text');
@@ -1819,24 +1838,28 @@ async function callGeminiAPI(prompt, val, type) {
 
             const result = data.candidates[0].content.parts[0].text;
             
-            // 1. STRIP MARKDOWN WRAPPERS (Crucial for JSON and Code)
-            let sanitized = result.replace(/^```[a-z]*\n?|```$/gi, '').trim();
+            // 1. INITIAL SCRUB using the utility
+            let sanitized = verifyAndFixCode(result);
             
             // 2. CONDITIONAL PARSING
             if (isCode) {
-                // If the user still calls this with 'create'/'code', return raw string
                 if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
                     const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                     if (start !== -1) sanitized = sanitized.substring(start);
                 }
                 return sanitized;
             } else {
-                // If type is 'source' (our new unified path), parse the JSON
                 try {
-                    return JSON.parse(sanitized);
+                    const parsed = JSON.parse(sanitized);
+
+                    // RECURSIVE SCRUB: If we received an object with a 'code' property, scrub that too
+                    if (parsed && typeof parsed.code === 'string') {
+                        parsed.code = verifyAndFixCode(parsed.code);
+                    }
+
+                    return parsed;
                 } catch (jsonErr) {
                     console.warn(`[FORGE]: JSON Parse failed. Fallback to raw text.`);
-                    // If it's not JSON, check if it's raw HTML that leaked through
                     if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
                         const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                         if (start !== -1) sanitized = sanitized.substring(start);
