@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1338,14 +1338,14 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
     
     return `
-Task: ${rawPrompt}
+The Task is: ${rawPrompt} and the model to be used is: ${promptTypeObject.name}.
 ${isSource ? 
     `Source Instructions:
-- Priority: 1. License-Free/Open Source, 2. Official Trailers, 3. Most specific match.
+- Priority: 1. License-Free/Open Source, 2. Official Trailers or previews, 3. Most specific match.
 - Return ONLY a valid JSON array of objects: [{"name": "Item Name", "url": "Direct Info Link", "description": "Brief detail"}].` 
     : 
     `Implementation Instructions:
-- Goal: Generate a one-shot, stunning, production-ready interactive application for ${promptTypeObject.name}.
+- Goal: Generate a one-shot, stunning, production-ready interactive application.
 - Structure: Strictly use a self-executing IIFE for high-performance encapsulation and scope safety.
 - Graphics: Use native Canvas API or WebGL for fluid, high-frame-rate visuals.
 - Requirements: Standalone HTML/JS. Ensure the first frame is rendered immediately.
