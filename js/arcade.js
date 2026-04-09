@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1923,70 +1923,36 @@ async function getGeminiModel(apiKey) {
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
     const statusText = document.getElementById('engine-status-text');
-    const progressBar = document.getElementById('engine-progress-bar');
 
-    if (window.isInCooldown) throw new Error("System is currently cooling down.");
-
-    // 1. Notification UI
-    const note = document.createElement('div');
-    note.innerText = "Generating the spark may take a few minutes...";
-    note.style = "position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:white; padding:10px 20px; border-radius:20px; z-index:9999; transition:opacity 2s; pointer-events:none;";
-    document.body.appendChild(note);
-    setTimeout(() => { note.style.opacity = '0'; setTimeout(() => note.remove(), 2000); }, 3000);
+    console.log(`callGeminiAPI: prompt: ${prompt}, val: ${val}, type:${type}`);
+    
+    if (window.isInCooldown) {
+        throw new Error("System is currently cooling down.");
+    }
 
     const credentials = await retrieveGeminiCredentials();
-    if (!credentials) throw new Error("Failed to retrieve Gemini credentials.");
-
-    // 2. Global State Validation & Hydration
-    // If modelStats is empty, use getGeminiModel to hydrate/discover the pool
-    if (!window.modelStats || !Array.isArray(window.modelStats) || window.modelStats.length === 0) {
-        console.log("[FORGE]: modelStats empty. Invoking getGeminiModel for hydration...");
-        await getGeminiModel(credentials.apiKey);
+    if (!credentials) {
+        throw new Error("Failed to retrieve Gemini credentials.");
     }
 
-    // Double check after hydration attempt
-    if (!window.modelStats || window.modelStats.length === 0) {
-        throw new Error("Model pool is empty. Please refresh or re-initialize.");
+    if (!Array.isArray(modelStats) || modelStats.length === 0) {
+        console.error("CRITICAL: modelStats is empty. No models available to route to!");
+        throw new Error("No models available in pool. Cooldown ignored to prevent lock.");
     }
 
-    // Sort by failure count (healthiest models first)
-    window.modelStats.sort((a, b) => a[1] - b[1]);
+    modelStats.sort((a, b) => a[1] - b[1]);
+    
+    const modelNames = modelStats.map(entry => entry[0]);
+    console.log("Retrieved Gemini Models in queue order:", modelNames);
     
     let attempts = 0;
-    const maxRetries = window.modelStats.length * 2; 
+    const maxRetries = modelStats.length;
 
     while (attempts < maxRetries) {
-        // --- SAFE PROPERTY ACCESS (Line 1962/Line 3 Fix) ---
-        const pool = window.modelStats;
-        const currentEntry = pool[attempts % pool.length];
-
-        // Guard against undefined/null entries in the array
-        if (!currentEntry || !Array.isArray(currentEntry)) {
-            console.warn(`[FORGE]: Invalid entry at pool index ${attempts % pool.length}. Skipping.`);
-            attempts++;
-            continue;
-        }
-
-        const modelName = currentEntry[0]; 
-        
-        // --- PROGRESS & STATUS CALCULATION ---
-        let internalProgress = 0;
-        if (progressBar) progressBar.style.width = '0%';
-
-        const progressInterval = setInterval(() => {
-            // Simulated logarithmic progress so it doesn't hit 100% until the fetch returns
-            internalProgress += (95 - internalProgress) * 0.1;
-            const pct = Math.floor(internalProgress);
-            
-            if (progressBar) progressBar.style.width = `${pct}%`;
-            if (statusText) {
-                // val = number of sparks/items being generated
-                statusText.textContent = `FORGING ${val} SPARK(S): [${"=".repeat(Math.floor(pct/10))}${"-".repeat(10-Math.floor(pct/10))}] ${pct}%`;
-            }
-        }, 200);
+        const currentEntry = modelStats[attempts];
+        const modelName = currentEntry[0];
 
         try {
-            console.log(`[FORGE]: Attempting spark with ${modelName}...`);
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${credentials.apiKey}`;
 
             const response = await fetch(url, {
@@ -1997,91 +1963,81 @@ async function callGeminiAPI(prompt, val, type) {
                 })
             });
 
-            clearInterval(progressInterval);
-
             if (!response.ok) {
                 const errorBody = await response.text();
-                console.warn(`[FAIL]: ${modelName} responded with ${response.status}.`);
-                currentEntry[1]++; // Increment failure score
+                console.warn(`[FAIL]: ${modelName} failed with HTTP status ${response.status}. Reason:`, errorBody);
+                
+                currentEntry[1]++;
                 attempts++;
-                if (progressBar) progressBar.style.width = '0%';
-                await new Promise(r => setTimeout(r, 500));
+                
+                if (attempts >= maxRetries) break;
+
+                await new Promise(r => setTimeout(r, 200));
                 continue;
             }
 
-            // SUCCESS STATE
-            if (progressBar) progressBar.style.width = '100%';
-            if (statusText) statusText.textContent = `FORGING ${val} SPARK(S): [==========] 100%`;
+            console.log(`[SUCCESS]: ${modelName} responded successfully.`);
             
             const data = await response.json();
             
-            // Reward the model by reducing penalty
             if (currentEntry[1] > 0) currentEntry[1]--;
 
             const result = data.candidates[0].content.parts[0].text;
+            
+            // 1. INITIAL SCRUB using the utility
             let sanitized = verifyAndFixCode(result);
             
+            // 2. CONDITIONAL PARSING
             if (isCode) {
                 if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
                     const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                     if (start !== -1) sanitized = sanitized.substring(start);
                 }
-                return verifyAndFixCode(sanitized, true);
+                // Final scrub of the legacy code path output
+                return verifyAndFixCode(sanitized);
             } else {
                 try {
                     const parsed = JSON.parse(sanitized);
-                    // Ensure internal code strings are also verified
-                    if (parsed && parsed.code) parsed.code = verifyAndFixCode(parsed.code);
+
+                    // RECURSIVE SCRUB: If we received an object with a 'code' property, scrub that too
+                    if (parsed && typeof parsed.code === 'string') {
+                        parsed.code = verifyAndFixCode(parsed.code);
+                    }
+                    
+                    // Also scrub 'url' or 'link' fields if this is a 'source' list
                     if (Array.isArray(parsed)) {
                         parsed.forEach(item => {
+                            if (item.url) item.url = verifyAndFixCode(item.url);
                             if (item.code) item.code = verifyAndFixCode(item.code);
                         });
                     }
+
                     return parsed;
                 } catch (jsonErr) {
-                    console.warn(`[FORGE]: JSON Parse fail. Using raw text fallback.`);
+                    console.warn(`[FORGE]: JSON Parse failed. Fallback to raw text.`);
+                    if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
+                        const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
+                        if (start !== -1) sanitized = sanitized.substring(start);
+                    }
+                    // Final scrub of the fallback text path output
                     return verifyAndFixCode(sanitized, isCode);
                 }
             }
 
         } catch (error) {
-            clearInterval(progressInterval);
-            console.warn(`[FAIL]: Network error on model ${modelName}:`, error);
+            console.warn(`[FAIL]: ${modelName} hit a network or execution error:`, error);
             currentEntry[1]++;
             attempts++;
-            if (progressBar) progressBar.style.width = '0%';
-            await new Promise(r => setTimeout(r, 500));
+            if (attempts >= maxRetries) break;
+            await new Promise(r => setTimeout(r, 200));
         }
     }
 
-    // --- COOLDOWN LOGIC ---
-    console.error("CRITICAL: All models in pool failed. Triggering Cooldown.");
-    window.isInCooldown = true;
-    let secondsLeft = 60;
-    if (progressBar) {
-        progressBar.style.width = '100%';
-        progressBar.style.backgroundColor = '#ff4444';
-    }
-
-    await new Promise((resolve) => {
-        const timer = setInterval(() => {
-            if (statusText) statusText.textContent = `ENGINE OVERHEATED: COOLING DOWN (${secondsLeft}s)`;
-            secondsLeft--;
-            if (secondsLeft < 0) {
-                clearInterval(timer);
-                window.isInCooldown = false;
-                if (statusText) statusText.textContent = "ENGINE READY";
-                if (progressBar) {
-                    progressBar.style.width = '0%';
-                    progressBar.style.backgroundColor = '';
-                }
-                resolve();
-            }
-        }, 1000);
-    });
-
-    throw new Error("All models in the pool exhausted.");
+    console.error("CRITICAL: All models in pool failed. Triggering 60s cooldown.");
+    await initiateSystemCooldown(statusText);
+    throw new Error("All models exhausted. Restarting cycle after cooldown.");
 }
+
 /*
  * System Cooldown & Reset Logic
  */
