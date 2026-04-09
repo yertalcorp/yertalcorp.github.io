@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:34:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1796,24 +1796,6 @@ async function getGeminiModel(apiKey) {
     }
 }
 
-function verifyAndFixCode(rawCode) {
-    if (!rawCode || typeof rawCode !== 'string') return "";
-
-    let fixed = rawCode
-        // 1. Remove Unicode Non-Breaking Spaces (the invisible killers)
-        .replace(/\u00A0/g, ' ')
-        // 2. Remove Markdown code fences if the AI left them in the JSON string
-        .replace(/^```[a-z]*\n?|```$/gi, '')
-        // 3. Ensure the code starts with a valid tag
-        .trim();
-
-    // 4. Emergency Wrap: If the AI only sent JS, wrap it in HTML
-    if (!fixed.includes('<script') && (fixed.includes('function') || fixed.includes('const'))) {
-        fixed = `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;"><canvas id="canvas"></canvas><script>${fixed}<\/script></body></html>`;
-    }
-
-    return fixed;
-}
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
     const statusText = document.getElementById('engine-status-text');
