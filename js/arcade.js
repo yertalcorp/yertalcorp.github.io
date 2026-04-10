@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1949,32 +1949,29 @@ async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
     const statusText = document.getElementById('engine-status-text');
 
-    console.log(`callGeminiAPI: prompt: ${prompt}, val: ${val}, type:${type}`);
-    
-    if (window.isInCooldown) {
-        throw new Error("System is currently cooling down.");
-    }
+    if (window.isInCooldown) throw new Error("System is currently cooling down.");
 
     const credentials = await retrieveGeminiCredentials();
-    if (!credentials) {
-        throw new Error("Failed to retrieve Gemini credentials.");
+    if (!credentials) throw new Error("Failed to retrieve Gemini credentials.");
+
+    // Create a local copy to prevent concurrent sort interference
+    const localPool = [...modelStats].sort((a, b) => a[1] - b[1]);
+    
+    if (localPool.length === 0) {
+        throw new Error("No models available in pool.");
     }
 
-    if (!Array.isArray(modelStats) || modelStats.length === 0) {
-        console.error("CRITICAL: modelStats is empty. No models available to route to!");
-        throw new Error("No models available in pool. Cooldown ignored to prevent lock.");
-    }
-
-    modelStats.sort((a, b) => a[1] - b[1]);
-    
-    const modelNames = modelStats.map(entry => entry[0]);
-    console.log("Retrieved Gemini Models in queue order:", modelNames);
-    
     let attempts = 0;
-    const maxRetries = modelStats.length;
+    const maxRetries = localPool.length;
 
     while (attempts < maxRetries) {
-        const currentEntry = modelStats[attempts];
+        // Safe access check
+        const currentEntry = localPool[attempts];
+        if (!currentEntry) {
+            attempts++;
+            continue;
+        }
+
         const modelName = currentEntry[0];
 
         try {
@@ -1989,31 +1986,25 @@ async function callGeminiAPI(prompt, val, type) {
             });
 
             if (!response.ok) {
-                const errorBody = await response.text();
-                console.warn(`[FAIL]: ${modelName} failed with HTTP status ${response.status}. Reason:`, errorBody);
+                // Find the actual global entry to increment the error count
+                const globalEntry = modelStats.find(m => m[0] === modelName);
+                if (globalEntry) globalEntry[1]++;
                 
-                currentEntry[1]++;
                 attempts++;
-                
-                if (attempts >= maxRetries) break;
-
                 await new Promise(r => setTimeout(r, 200));
                 continue;
             }
 
-            console.log(`[SUCCESS]: ${modelName} responded successfully.`);
-            
             const data = await response.json();
-            if (currentEntry[1] > 0) currentEntry[1]--;
+            
+            // Decrement error count on success
+            const globalEntry = modelStats.find(m => m[0] === modelName);
+            if (globalEntry && globalEntry[1] > 0) globalEntry[1]--;
 
             const rawResult = data.candidates[0].content.parts[0].text;
-            
-            // --- CALL 1: INITIAL SCRUB ---
-            // Removes markdown ticks and invisible characters from the whole string
             let sanitized = verifyAndFixCode(rawResult, isCode);
             
             if (isCode) {
-                // Legacy path for raw HTML/JS strings
                 if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
                     const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                     if (start !== -1) sanitized = sanitized.substring(start);
@@ -2022,21 +2013,16 @@ async function callGeminiAPI(prompt, val, type) {
             } else {
                 try {
                     const parsed = JSON.parse(sanitized);
-
-                    // --- CALL 2: PROPERTY SCRUB ---
-                    // Handle single "create" objects or "source" arrays
                     if (parsed && typeof parsed.code === 'string') {
-                        parsed.code = verifyAndFixCode(parsed.code, isCode);
+                        parsed.code = verifyAndFixCode(parsed.code, true);
                     } else if (Array.isArray(parsed)) {
                         parsed.forEach(item => {
-                            if (item.url) item.url = verifyAndFixCode(item.url, isCode);
-                            if (item.code) item.code = verifyAndFixCode(item.code, isCode);
+                            if (item.url) item.url = verifyAndFixCode(item.url);
+                            if (item.code) item.code = verifyAndFixCode(item.code, true);
                         });
                     }
-
                     return parsed;
                 } catch (jsonErr) {
-                    console.warn(`[FORGE]: JSON Parse failed. Fallback to raw text.`);
                     if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
                         const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                         if (start !== -1) sanitized = sanitized.substring(start);
@@ -2046,17 +2032,19 @@ async function callGeminiAPI(prompt, val, type) {
             }
 
         } catch (error) {
-            console.warn(`[FAIL]: ${modelName} hit a network or execution error:`, error);
-            currentEntry[1]++;
+            console.warn(`[FAIL]: ${modelName} hit an error:`, error);
+            const globalEntry = modelStats.find(m => m[0] === modelName);
+            if (globalEntry) globalEntry[1]++;
+            
             attempts++;
-            if (attempts >= maxRetries) break;
-            await new Promise(r => setTimeout(r, 200));
+            if (attempts < maxRetries) {
+                await new Promise(r => setTimeout(r, 200));
+            }
         }
     }
 
-    console.error("CRITICAL: All models in pool failed. Triggering 60s cooldown.");
     await initiateSystemCooldown(statusText);
-    throw new Error("All models exhausted. Restarting cycle after cooldown.");
+    throw new Error("All models exhausted.");
 }
 /*
  * System Cooldown & Reset Logic
