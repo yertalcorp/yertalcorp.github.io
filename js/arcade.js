@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 09:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 10:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1347,6 +1347,20 @@ function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpa
 }
 
 function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
+    const isSource = mode === 'source';
+    
+    const instructions = isSource ? 
+        `Return the most specific match in the format: JSON array [{"name", "url", "description"}].` : 
+        `Return an HTML/Javascript file in the format: JSON object {"name", "code"}.`;
+
+    return `
+        ${rawPrompt}
+        ${instructions}
+        Quantity: ${Math.max(1, count)} ${isSource ? "entries" : "code variations"}.
+    `.trim();
+}
+
+function shapeAiPromptSimple(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
     
     const instructions = isSource ? 
