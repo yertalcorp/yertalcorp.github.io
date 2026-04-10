@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:47:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1954,19 +1954,21 @@ async function callGeminiAPI(prompt, val, type) {
     const credentials = await retrieveGeminiCredentials();
     if (!credentials) throw new Error("Failed to retrieve Gemini credentials.");
 
-    // Create a local copy to prevent concurrent sort interference
-    const localPool = [...modelStats].sort((a, b) => a[1] - b[1]);
-    
-    if (localPool.length === 0) {
-        throw new Error("No models available in pool.");
+    // Check if modelStats exists, otherwise call getGeminiModel
+    if (typeof modelStats === 'undefined' || !Array.isArray(modelStats) || modelStats.length === 0) {
+        console.log("[FORGE]: modelStats empty, triggering hydration...");
+        await getGeminiModel(credentials.apiKey);
     }
 
+    // Directly sort and use modelStats
+    modelStats.sort((a, b) => a[1] - b[1]);
+    
     let attempts = 0;
-    const maxRetries = localPool.length;
+    const maxRetries = modelStats.length;
 
     while (attempts < maxRetries) {
-        // Safe access check
-        const currentEntry = localPool[attempts];
+        // Safe access check for sparse arrays
+        const currentEntry = modelStats[attempts];
         if (!currentEntry) {
             attempts++;
             continue;
@@ -1986,9 +1988,8 @@ async function callGeminiAPI(prompt, val, type) {
             });
 
             if (!response.ok) {
-                // Find the actual global entry to increment the error count
-                const globalEntry = modelStats.find(m => m[0] === modelName);
-                if (globalEntry) globalEntry[1]++;
+                // Directly increment error count on the entry
+                currentEntry[1]++;
                 
                 attempts++;
                 await new Promise(r => setTimeout(r, 200));
@@ -1997,9 +1998,8 @@ async function callGeminiAPI(prompt, val, type) {
 
             const data = await response.json();
             
-            // Decrement error count on success
-            const globalEntry = modelStats.find(m => m[0] === modelName);
-            if (globalEntry && globalEntry[1] > 0) globalEntry[1]--;
+            // Directly decrement error count on success
+            if (currentEntry[1] > 0) currentEntry[1]--;
 
             const rawResult = data.candidates[0].content.parts[0].text;
             let sanitized = verifyAndFixCode(rawResult, isCode);
@@ -2030,11 +2030,10 @@ async function callGeminiAPI(prompt, val, type) {
                     return sanitized;
                 }
             }
-
         } catch (error) {
             console.warn(`[FAIL]: ${modelName} hit an error:`, error);
-            const globalEntry = modelStats.find(m => m[0] === modelName);
-            if (globalEntry) globalEntry[1]++;
+            // Directly increment error count on the entry
+            currentEntry[1]++;
             
             attempts++;
             if (attempts < maxRetries) {
@@ -2042,10 +2041,10 @@ async function callGeminiAPI(prompt, val, type) {
             }
         }
     }
-
     await initiateSystemCooldown(statusText);
     throw new Error("All models exhausted.");
 }
+
 /*
  * System Cooldown & Reset Logic
  */
