@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:06:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:55:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1842,15 +1842,10 @@ const extractUrls = (text) => {
 };
     
 
-/*
- * Objective: High-Availability Credential Retrieval
- * Logic: Extracts the key from cache (or direct fetch) and resolves the model.
- */
 async function retrieveGeminiCredentials() {
     try {
         let manifest = databaseCache?.app_manifest;
 
-        // 1. Last-resort direct fetch if cache is missing
         if (!manifest || !manifest.gkey) {
             const snap = await get(ref(db, 'app_manifest')).catch(() => null);
             if (snap && snap.exists()) {
@@ -1859,19 +1854,25 @@ async function retrieveGeminiCredentials() {
             }
         }
 
-        // 2. Critical Check
         if (!manifest || !manifest.gkey) {
             throw new Error("Forge manifest or GKey missing in DB.");
         }
 
         const apiKey = manifest.gkey;
-        const modelName = await getGeminiModel(apiKey);
+        
+        // ONLY call getGeminiModel if the local pool OR the manifest pool is empty
+        const isPoolEmpty = !Array.isArray(modelStats) || modelStats.length === 0;
+        const isManifestPoolEmpty = !Array.isArray(manifest.model_pool) || manifest.model_pool.length === 0;
 
-        // 3. RETURN: Ensure these keys match your callGeminiAPI destructuring
-        return { apiKey, modelName };
+        if (isPoolEmpty || isManifestPoolEmpty) {
+            await getGeminiModel(apiKey);
+        }
+
+        // Return the API key; callGeminiAPI handles the iteration via modelStats
+        return { apiKey };
     } catch (e) {
         console.error("[FORGE ERROR]: Failed to assemble credentials:", e);
-        return null; // This triggers the "AI Infrastructure Offline" error in the caller
+        return null;
     }
 }
 
@@ -1955,20 +1956,13 @@ async function callGeminiAPI(prompt, val, type) {
     const credentials = await retrieveGeminiCredentials();
     if (!credentials) throw new Error("Failed to retrieve Gemini credentials.");
 
-    // Check if modelStats exists, otherwise call getGeminiModel
-    if (typeof modelStats === 'undefined' || !Array.isArray(modelStats) || modelStats.length === 0) {
-        console.log("[FORGE]: modelStats empty, triggering hydration...");
-        await getGeminiModel(credentials.apiKey);
-    }
-
-    // Directly sort and use modelStats
+    // modelStats is now guaranteed to be hydrated by retrieveGeminiCredentials if it was missing
     modelStats.sort((a, b) => a[1] - b[1]);
     
     let attempts = 0;
     const maxRetries = modelStats.length;
 
     while (attempts < maxRetries) {
-        // Safe access check for sparse arrays
         const currentEntry = modelStats[attempts];
         if (!currentEntry) {
             attempts++;
@@ -1978,9 +1972,10 @@ async function callGeminiAPI(prompt, val, type) {
         const modelName = currentEntry[0];
 
         // --- THROTTLE & STATUS UPDATE ---
-        if (statusText) statusText.innerText = `RETRIEVING MODEL ${modelName.toUpperCase()}...`;
-        // 4 second delay to respect Free Tier RPM limits
+        if (statusText) statusText.innerText = `READYING ENGINE... (4s THROTTLE)`;
         await new Promise(r => setTimeout(r, 4000));
+        
+        if (statusText) statusText.innerText = `RETRIEVING MODEL ${modelName.toUpperCase()}...`;
 
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${credentials.apiKey}`;
@@ -1994,22 +1989,14 @@ async function callGeminiAPI(prompt, val, type) {
             });
 
             if (!response.ok) {
-                // Handle Rate Limits (429) specifically if needed
-                if (response.status === 429) {
-                    console.warn(`[LIMIT]: 429 hit on ${modelName}.`);
-                }
-
-                // Directly increment error count on the entry
+                if (response.status === 429) console.warn(`[LIMIT]: 429 hit on ${modelName}.`);
                 currentEntry[1]++;
-                
                 attempts++;
                 await new Promise(r => setTimeout(r, 200));
                 continue;
             }
 
             const data = await response.json();
-            
-            // Directly decrement error count on success
             if (currentEntry[1] > 0) currentEntry[1]--;
 
             const rawResult = data.candidates[0].content.parts[0].text;
@@ -2043,13 +2030,9 @@ async function callGeminiAPI(prompt, val, type) {
             }
         } catch (error) {
             console.warn(`[FAIL]: ${modelName} hit an error:`, error);
-            // Directly increment error count on the entry
             currentEntry[1]++;
-            
             attempts++;
-            if (attempts < maxRetries) {
-                await new Promise(r => setTimeout(r, 200));
-            }
+            if (attempts < maxRetries) await new Promise(r => setTimeout(r, 200));
         }
     }
 
