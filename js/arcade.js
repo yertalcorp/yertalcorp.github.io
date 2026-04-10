@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 10:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 10:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1496,7 +1496,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 const sparkName = response.name || (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
                 
                 // VERIFY AND FIX: Scrub the code field explicitly
-                const sparkContent = verifyAndFixCode(response.code || response, mode); 
+                const sparkContent = response.code; 
                 
                 const isCode = typeof sparkContent === 'string' && (sparkContent.trim().startsWith('<') || sparkContent.trim().startsWith('function') || sparkContent.trim().startsWith('const') || sparkContent.trim().includes('document.'));
                 
@@ -2008,7 +2008,7 @@ async function callGeminiAPI(prompt, val, type) {
             
             // --- CALL 1: INITIAL SCRUB ---
             // Removes markdown ticks and invisible characters from the whole string
-            let sanitized = verifyAndFixCode(rawResult, isCode);
+            let sanitized = rawResult;
             
             if (isCode) {
                 // Legacy path for raw HTML/JS strings
@@ -2024,11 +2024,11 @@ async function callGeminiAPI(prompt, val, type) {
                     // --- CALL 2: PROPERTY SCRUB ---
                     // Handle single "create" objects or "source" arrays
                     if (parsed && typeof parsed.code === 'string') {
-                        parsed.code = verifyAndFixCode(parsed.code, true);
+                        parsed.code = verifyAndFixCode(parsed.code, isCode);
                     } else if (Array.isArray(parsed)) {
                         parsed.forEach(item => {
-                            if (item.url) item.url = verifyAndFixCode(item.url);
-                            if (item.code) item.code = verifyAndFixCode(item.code, true);
+                            if (item.url) item.url = verifyAndFixCode(item.url, isCode);
+                            if (item.code) item.code = verifyAndFixCode(item.code, isCode);
                         });
                     }
 
