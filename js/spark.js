@@ -75,9 +75,19 @@ function loadSpark(spark) {
     const container = document.getElementById('spark-content-container');
     const titleEl = document.getElementById('active-spark-name');
     const overlay = document.getElementById('spark-title-overlay');
+    const hudStatus = document.getElementById('hud-status');
+    const fallbackBtn = document.getElementById('fallback-url-btn');
     
+    // 0. Clear previous interval immediately to prevent ghost captures
+    if (thumbInterval) {
+        clearInterval(thumbInterval);
+        thumbInterval = null;
+    }
+    
+    // Clear the container to prevent overlapping iframes during rapid navigation
     container.innerHTML = '';
-    
+    if (hudStatus) hudStatus.textContent = "INITIALIZING...";
+
     // 1. Show Title Animation
     titleEl.textContent = spark.name;
     overlay.style.opacity = "1";
@@ -89,22 +99,48 @@ function loadSpark(spark) {
         if (finalUrl.includes('youtube.com/watch?v=')) {
             finalUrl = finalUrl.replace('watch?v=', 'embed/') + "?autoplay=1&mute=1";
         }
+        
         container.innerHTML = `<iframe id="content-frame" src="${finalUrl}" allow="autoplay; fullscreen"></iframe>`;
-        document.getElementById('fallback-url-btn').onclick = () => window.open(spark.link, '_blank');
-        document.getElementById('fallback-url-btn').classList.remove('hidden');
+        
+        if (fallbackBtn) {
+            fallbackBtn.onclick = () => window.open(spark.link, '_blank');
+            fallbackBtn.classList.remove('hidden');
+        }
+        
+        // Start thumbnail logic after a brief delay for external links
+        setTimeout(() => startLiveThumbnail(), 2000);
+
     } else {
         const iframe = document.createElement('iframe');
         iframe.id = "content-frame";
+        
+        // 2026-02-04: Using standard sandbox permissions to allow same-origin for html2canvas
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
         container.appendChild(iframe);
+
         const doc = iframe.contentWindow.document;
         doc.open();
-        doc.write(spark.code || '<h1>No Code Found</h1>');
+        
+        // Injecting base styles to ensure the Spark respects viewport bounds and transparency
+        const standardizedCode = `
+            <style>
+                body { margin: 0; overflow: hidden; background: transparent; }
+                canvas { display: block; width: 100vw; height: 100vh; }
+            </style>
+            ${spark.code || '<h1>No Code Found</h1>'}
+        `;
+        
+        doc.write(standardizedCode);
         doc.close();
-        document.getElementById('fallback-url-btn').classList.add('hidden');
-    }
 
-    // 3. Reset Live Thumbnail logic
-    startLiveThumbnail();
+        if (fallbackBtn) fallbackBtn.classList.add('hidden');
+
+        // 3. Reset Live Thumbnail logic - Wait for iframe load to ensure DOM is ready
+        iframe.onload = () => {
+            startLiveThumbnail();
+            if (hudStatus) hudStatus.textContent = "AUTO-CAPTURE ACTIVE";
+        };
+    }
 }
 
 function startLiveThumbnail() {
