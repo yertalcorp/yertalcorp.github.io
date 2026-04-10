@@ -7,7 +7,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-/**
+/*
  * Captures the raw pixel data from the game canvas.
  * @param {HTMLCanvasElement} canvas - The active game canvas.
  */
@@ -17,7 +17,7 @@ function takeScreenshot(canvas) {
     return canvas.toDataURL('image/png');
 }
 
-/**
+/*
  * Clips the edges and resizes a screenshot to 240x135.
  * @param {string} dataUrl - The raw screenshot DataURL.
  */
@@ -204,5 +204,55 @@ function setupInteractions() {
         if (e.key === 'ArrowLeft') navigate(-1);
         if (e.key === 'ArrowRight') navigate(1);
         if (e.key.toLowerCase() === 'z') document.body.classList.toggle('zen-active');
+    };
+}
+function toggleZen() {
+    document.body.classList.toggle('zen-active');
+}
+
+function togglePlayPause() {
+    window.dispatchEvent(new CustomEvent('toggleMedia'));
+    const icon = document.getElementById('play-icon');
+    if (icon) {
+        icon.classList.toggle('fa-play');
+        icon.classList.toggle('fa-pause');
+    }
+}
+
+function setupInteractions() {
+    // 1. Existing Navigation & Core Actions
+    document.getElementById('set-cover-btn').onclick = setPermanentCover;
+    document.getElementById('prev-zone').onclick = () => navigate(-1);
+    document.getElementById('next-zone').onclick = () => navigate(1);
+
+    // 2. Moved UI Toggles
+    document.getElementById('zen-btn').onclick = toggleZen;
+    
+    document.getElementById('play-pause-btn').onclick = (e) => {
+        e.stopPropagation();
+        togglePlayPause();
+    };
+
+    document.getElementById('spark-content-container').onclick = togglePlayPause;
+
+    // 3. Exit Logic
+    document.getElementById('exit-btn').onclick = () => {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.href = '/arcade/index.html?user=yertal-arcade';
+        }
+    };
+
+    // 4. File Upload Trigger
+    document.getElementById('thumb-trigger').onclick = () => {
+        document.getElementById('thumb-upload').click();
+    };
+    
+    // 5. Global Keyboard Shortcuts
+    window.onkeydown = (e) => {
+        if (e.key === 'ArrowLeft') navigate(-1);
+        if (e.key === 'ArrowRight') navigate(1);
+        if (e.key.toLowerCase() === 'z' || e.key === 'Escape') toggleZen();
     };
 }
