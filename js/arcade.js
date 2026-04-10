@@ -1977,6 +1977,11 @@ async function callGeminiAPI(prompt, val, type) {
 
         const modelName = currentEntry[0];
 
+        // --- THROTTLE & STATUS UPDATE ---
+        if (statusText) statusText.innerText = `RETRIEVING MODEL ${modelName.toUpperCase()}...`;
+        // 4 second delay to respect Free Tier RPM limits
+        await new Promise(r => setTimeout(r, 4000));
+
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${credentials.apiKey}`;
 
@@ -1989,6 +1994,11 @@ async function callGeminiAPI(prompt, val, type) {
             });
 
             if (!response.ok) {
+                // Handle Rate Limits (429) specifically if needed
+                if (response.status === 429) {
+                    console.warn(`[LIMIT]: 429 hit on ${modelName}.`);
+                }
+
                 // Directly increment error count on the entry
                 currentEntry[1]++;
                 
@@ -2042,6 +2052,7 @@ async function callGeminiAPI(prompt, val, type) {
             }
         }
     }
+
     await initiateSystemCooldown(statusText);
     throw new Error("All models exhausted.");
 }
