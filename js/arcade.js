@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:51:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 09:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1354,7 +1354,7 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
         - Priority: 1. License-Free, 2. Trailers, 3. Specific matches.
         - Format: JSON array [{"name", "url", "description"}].` : 
         `Implementation Instructions:
-        - Goal: Bug free stunning interactive app.
+        - Goal: Bug free stunning interactive HTML/JAVASCRIPT app.
         - Structure: Self-executing IIFE, Canvas/WebGL.
         - Format: JSON object {"name", "code"}.`;
 
@@ -1928,6 +1928,7 @@ async function getGeminiModel(apiKey) {
         return modelStats[0][0]; 
     }
 }
+
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
     const statusText = document.getElementById('engine-status-text');
@@ -1987,36 +1988,33 @@ async function callGeminiAPI(prompt, val, type) {
             console.log(`[SUCCESS]: ${modelName} responded successfully.`);
             
             const data = await response.json();
-            
             if (currentEntry[1] > 0) currentEntry[1]--;
 
-            const result = data.candidates[0].content.parts[0].text;
+            const rawResult = data.candidates[0].content.parts[0].text;
             
-            // 1. INITIAL SCRUB using the utility
-            let sanitized = verifyAndFixCode(result);
+            // --- CALL 1: INITIAL SCRUB ---
+            // Removes markdown ticks and invisible characters from the whole string
+            let sanitized = verifyAndFixCode(rawResult, isCode);
             
-            // 2. CONDITIONAL PARSING
             if (isCode) {
+                // Legacy path for raw HTML/JS strings
                 if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
                     const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                     if (start !== -1) sanitized = sanitized.substring(start);
                 }
-                // Final scrub of the legacy code path output
-                return verifyAndFixCode(sanitized);
+                return sanitized;
             } else {
                 try {
                     const parsed = JSON.parse(sanitized);
 
-                    // RECURSIVE SCRUB: If we received an object with a 'code' property, scrub that too
+                    // --- CALL 2: PROPERTY SCRUB ---
+                    // Handle single "create" objects or "source" arrays
                     if (parsed && typeof parsed.code === 'string') {
-                        parsed.code = verifyAndFixCode(parsed.code);
-                    }
-                    
-                    // Also scrub 'url' or 'link' fields if this is a 'source' list
-                    if (Array.isArray(parsed)) {
+                        parsed.code = verifyAndFixCode(parsed.code, true);
+                    } else if (Array.isArray(parsed)) {
                         parsed.forEach(item => {
                             if (item.url) item.url = verifyAndFixCode(item.url);
-                            if (item.code) item.code = verifyAndFixCode(item.code);
+                            if (item.code) item.code = verifyAndFixCode(item.code, true);
                         });
                     }
 
@@ -2027,8 +2025,7 @@ async function callGeminiAPI(prompt, val, type) {
                         const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                         if (start !== -1) sanitized = sanitized.substring(start);
                     }
-                    // Final scrub of the fallback text path output
-                    return verifyAndFixCode(sanitized, isCode);
+                    return sanitized;
                 }
             }
 
@@ -2045,7 +2042,6 @@ async function callGeminiAPI(prompt, val, type) {
     await initiateSystemCooldown(statusText);
     throw new Error("All models exhausted. Restarting cycle after cooldown.");
 }
-
 /*
  * System Cooldown & Reset Logic
  */
