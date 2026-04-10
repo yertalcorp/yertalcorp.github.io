@@ -51,26 +51,41 @@ async function convertScreenshotToImage(dataUrl) {
 }
 
 watchAuthState(async (user) => {
+    console.log("Auth State Changed. User:", user ? user.uid : "Logged Out");
     if (!user) return;
-    userId = user.uid;
 
+    userId = user.uid;
     const params = new URLSearchParams(window.location.search);
     currentId = params.get('current');
     const initialSparkId = params.get('spark');
+    
+    console.log("URL Params - Current:", currentId, "Spark:", initialSparkId);
 
     const data = await getArcadeData();
-    const sparksObj = data.users?.[userId]?.infrastructure?.currents?.[currentId]?.sparks || {};
-    
-    // Convert to array and sort by creation time
+    console.log("Full Data Received:", data);
+
+    const path = data.users?.[userId]?.infrastructure?.currents?.[currentId];
+    console.log("Target Path Object:", path);
+
+    const sparksObj = path?.sparks || {};
     allSparks = Object.values(sparksObj).sort((a, b) => (a.created || 0) - (b.created || 0));
+    
+    console.log("Sparks Array Count:", allSparks.length);
+
     currentIndex = allSparks.findIndex(s => s.id === initialSparkId);
 
     if (currentIndex !== -1) {
+        console.log("Loading Index:", currentIndex);
         loadSpark(allSparks[currentIndex]);
+    } else if (allSparks.length > 0) {
+        console.warn("Spark ID not found, defaulting to first spark.");
+        loadSpark(allSparks[0]);
+    } else {
+        console.error("No sparks found in this current.");
+        document.getElementById('active-spark-name').textContent = "EMPTY CURRENT";
     }
     setupInteractions();
 });
-
 function loadSpark(spark) {
     const container = document.getElementById('spark-content-container');
     const titleEl = document.getElementById('active-spark-name');
