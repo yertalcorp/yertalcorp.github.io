@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 10:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -2010,7 +2010,7 @@ async function callGeminiAPI(prompt, val, type) {
             
             // --- CALL 1: INITIAL SCRUB ---
             // Removes markdown ticks and invisible characters from the whole string
-            let sanitized = verifyAndFix(rawResult, isCode);
+            let sanitized = verifyAndFixCode(rawResult, isCode);
             
             if (isCode) {
                 // Legacy path for raw HTML/JS strings
