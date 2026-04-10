@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1498,7 +1498,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 const sparkName = response.name || (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
                 
                 // VERIFY AND FIX: Scrub the code field explicitly
-                const sparkContent = response.code; 
+                const sparkContent = verifyAndFixCode(response.code, mode); 
                 
                 const isCode = typeof sparkContent === 'string' && (sparkContent.trim().startsWith('<') || sparkContent.trim().startsWith('function') || sparkContent.trim().startsWith('const') || sparkContent.trim().includes('document.'));
                 
