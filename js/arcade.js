@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 10:46:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 10:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1350,8 +1350,10 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
     
     const instructions = isSource ? 
-        `Return the most specific match in the format: JSON array [{"name", "url", "description"}].` : 
-        `Write a fully working HTML/Javascript application that follows this model: ${promptTypeObject.name} and returns code in the format: JSON object {"name", "code"}.`;
+        `Return the most specific match. 
+        -Format: JSON array [{"name", "url", "description"}].` : 
+        `Write a fully working HTML/Javascript application that follows this model: ${promptTypeObject.name}.
+        -Format: JSON object {"name", "code"}.`;
 
     return `
         ${rawPrompt}.
@@ -2008,7 +2010,7 @@ async function callGeminiAPI(prompt, val, type) {
             
             // --- CALL 1: INITIAL SCRUB ---
             // Removes markdown ticks and invisible characters from the whole string
-            let sanitized = rawResult;
+            let sanitized = verifyAndFix(rawResult, isCode);
             
             if (isCode) {
                 // Legacy path for raw HTML/JS strings
