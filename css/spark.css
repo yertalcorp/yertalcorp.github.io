@@ -1,0 +1,42 @@
+/* Specific Lab Overrides */
+#spark-content-container { 
+    background: #000; 
+    width: 100vw; 
+    height: 100vh; 
+    position: relative; 
+}
+
+iframe { 
+    width: 100%; 
+    height: 100%; 
+    border: none; 
+}
+
+/* Media Control Bar */
+.media-progress-container {
+    width: 300px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+}
+
+#media-progress-bar {
+    height: 100%;
+    background: var(--neon-color);
+    width: 0%;
+    box-shadow: 0 0 10px var(--neon-color);
+}
+
+/* Zen Mode Toggle Classes */
+.zen-active .fx-glass-hud, 
+.zen-active .fx-exit-btn, 
+.zen-active #prev-zone, 
+.zen-active #next-zone, 
+.zen-active #spark-title-overlay {
+    opacity: 0 !important;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
