@@ -1936,6 +1936,7 @@ async function getGeminiModel(apiKey) {
     } catch (e) {
         console.warn("[FORGE]: Discovery failed. Falling back to high-reasoning defaults.", e);
         // Modern Fallback (Removed dead 1.5 versions)
+        // This is an array of model, failed_counts
         modelStats = [
             ['gemini-3-flash-preview', 0], 
             ['gemini-2.5-flash', 0], 
