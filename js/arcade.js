@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:55:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1550,7 +1550,12 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     /* Overall Objective: Generate the HTML for a spark card with persistent 
         neon state for likes and shares based on user history. */
     
-    const targetUrl = `spark.html?current=${currentId}&spark=${spark.id}`;
+    // Retrieve the page owner's slug from the cache using the ownerId and create the spark card's launch URL.
+    const ownerData = databaseCache?.users?.[ownerId];
+    const userSlug = ownerData?.profile?.slug;
+    const targetUrl = `spark.html?user=${userSlug}&current=${currentId}&spark=${spark.id}`;
+
+    // Now check for the visitor user's credentials.
     const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
     const sparkElementId = `save-btn-${spark.id}`;
 
