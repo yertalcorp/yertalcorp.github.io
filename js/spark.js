@@ -1,5 +1,5 @@
-import { getArcadeData, saveToRealtimeDB } from '../config/firebase-config.js';
-import { watchAuthState } from '../config/auth.js';
+import { getArcadeData, saveToRealtimeDB } from '/config/firebase-config.js';
+import { watchAuthState } from '/config/auth.js';
 
 let allSparks = [];
 let currentIndex = -1;
@@ -162,6 +162,7 @@ function startLiveThumbnail() {
     if (thumbInterval) clearInterval(thumbInterval);
     
     const canvas = document.getElementById('live-thumb-canvas');
+    if (!canvas) return; // Safety check
     const ctx = canvas.getContext('2d');
     
     // Preview cycle: attempt to snapshot the iframe every 5 seconds for the HUD
@@ -209,22 +210,16 @@ function navigate(dir) {
     loadSpark(nextSpark);
 }
 
-function setupInteractions() {
-    document.getElementById('set-cover-btn').onclick = setPermanentCover;
-    document.getElementById('prev-zone').onclick = () => navigate(-1);
-    document.getElementById('next-zone').onclick = () => navigate(1);
-    document.getElementById('zen-btn').onclick = () => document.body.classList.toggle('zen-active');
-    
-    window.onkeydown = (e) => {
-        if (e.key === 'ArrowLeft') navigate(-1);
-        if (e.key === 'ArrowRight') navigate(1);
-        if (e.key.toLowerCase() === 'z') document.body.classList.toggle('zen-active');
-    };
-}
+/*
+ * UI Toggle: Zen Mode
+ */
 function toggleZen() {
     document.body.classList.toggle('zen-active');
 }
 
+/*
+ * UI Toggle: Play/Pause Handshake
+ */
 function togglePlayPause() {
     window.dispatchEvent(new CustomEvent('toggleMedia'));
     const icon = document.getElementById('play-icon');
@@ -234,23 +229,28 @@ function togglePlayPause() {
     }
 }
 
+/*
+ * Main Interaction Binder
+ */
 function setupInteractions() {
-    // 1. Existing Navigation & Core Actions
+    // 1. Navigation & Data Persistence
     document.getElementById('set-cover-btn').onclick = setPermanentCover;
     document.getElementById('prev-zone').onclick = () => navigate(-1);
     document.getElementById('next-zone').onclick = () => navigate(1);
 
-    // 2. Moved UI Toggles
+    // 2. UI Toggles (Zen & Play/Pause)
     document.getElementById('zen-btn').onclick = toggleZen;
     
+    // Play/Pause on the specific button
     document.getElementById('play-pause-btn').onclick = (e) => {
-        e.stopPropagation();
+        e.stopPropagation(); // Prevents double-triggering the container click
         togglePlayPause();
     };
 
+    // Play/Pause by clicking the viewport itself
     document.getElementById('spark-content-container').onclick = togglePlayPause;
 
-    // 3. Exit Logic
+    // 3. Exit Logic (Handling History vs Direct Link)
     document.getElementById('exit-btn').onclick = () => {
         if (window.history.length > 1) {
             window.history.back();
@@ -259,7 +259,7 @@ function setupInteractions() {
         }
     };
 
-    // 4. File Upload Trigger
+    // 4. File Upload (Custom Thumbnail Trigger)
     document.getElementById('thumb-trigger').onclick = () => {
         document.getElementById('thumb-upload').click();
     };
