@@ -7,104 +7,14 @@
     
     <link rel="stylesheet" href="/css/system_styles.css">
     <link rel="stylesheet" href="/css/global.css">
+    **<link rel="stylesheet" href="/css/spark.css">**
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <style>
-        /* Specific Lab Overrides */
-        #spark-content-container { background: #000; width: 100vw; height: 100vh; position: relative; }
-        iframe { width: 100%; height: 100%; border: none; }
-        
-        /* Media Control Bar */
-        .media-progress-container {
-            width: 300px;
-            height: 4px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 2px;
-            position: relative;
-            cursor: pointer;
-        }
-        #media-progress-bar {
-            height: 100%;
-            background: var(--neon-color);
-            width: 0%;
-            box-shadow: 0 0 10px var(--neon-color);
-        }
-
-        /* Zen Mode Toggle Classes */
-        .zen-active .fx-glass-hud, 
-        .zen-active .fx-exit-btn, 
-        .zen-active #prev-zone, 
-        .zen-active #next-zone, 
-        .zen-active #spark-title-overlay {
-            opacity: 0 !important;
-            pointer-events: none;
-            transform: translateY(20px);
-            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-    </style>
 </head>
 <body class="bg-black m-0 p-0 overflow-hidden" id="lab-body">
-
     <div id="spark-title-overlay" class="fixed top-20 left-1/2 -translate-x-1/2 z-[10000] text-center pointer-events-none">
         <h1 id="active-spark-name" class="fx-chroma-header text-4xl font-black">Loading...</h1>
-    </div>
-
-    <button onclick="window.history.length > 1 ? window.history.back() : window.location.href='/arcade/index.html?user=yertal-arcade'" 
-            class="fx-exit-btn glass-panel text-white">
-        <i class="fas fa-arrow-left"></i>
-    </button>
-
-    <div id="prev-zone" class="fixed left-0 top-0 w-32 h-full z-[9000] group cursor-pointer flex items-center justify-start px-6">
-        <div class="opacity-0 group-hover:opacity-100 glass-panel p-4 rounded-full border border-white/10 transition-all">
-            <i class="fas fa-chevron-left text-white text-2xl"></i>
-        </div>
-    </div>
-    
-    <div id="next-zone" class="fixed right-0 top-0 w-32 h-full z-[9000] group cursor-pointer flex items-center justify-end px-6">
-        <div class="opacity-0 group-hover:opacity-100 glass-panel p-4 rounded-full border border-white/10 transition-all">
-            <i class="fas fa-chevron-right text-white text-2xl"></i>
-        </div>
-    </div>
-
-    <div id="spark-content-container" onclick="togglePlayPause()">
-        </div>
-
-    <div id="spark-hud" class="fx-glass-hud fx-neon-border">
-        
-        <div class="w-24 h-14 bg-black rounded border border-white/20 overflow-hidden relative cursor-pointer" onclick="document.getElementById('thumb-upload').click()">
-            <canvas id="live-thumb-canvas" class="w-full h-full object-cover"></canvas>
-            <input type="file" id="thumb-upload" class="hidden" accept="image/*">
-            <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/60 transition-opacity">
-                <i class="fas fa-camera text-[10px] text-white"></i>
-            </div>
-        </div>
-
-        <div class="flex flex-col gap-1">
-            <div class="flex items-center gap-3">
-                <button id="play-pause-btn" onclick="event.stopPropagation(); togglePlayPause()" class="text-white/80 hover:text-white">
-                    <i class="fas fa-play" id="play-icon"></i>
-                </button>
-
-                <div class="media-progress-container" id="progress-container">
-                    <div id="media-progress-bar"></div>
-                </div>
-
-                <div class="text-[9px] font-mono text-white/50 w-20 text-right">
-                    <span id="current-time">0:00</span> / <span id="total-duration">0:00</span>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2 mt-1">
-                <button id="set-cover-btn" class="generate-btn text-black text-[9px] font-black px-3 py-1.5 rounded uppercase tracking-tighter">
-                    Update Thumbnail
-                </button>
-                <button id="zen-btn" onclick="toggleZen()" class="glass-panel text-white/40 hover:text-white p-1.5 rounded border border-white/5">
-                    <i class="fas fa-eye-slash text-[10px]"></i>
-                </button>
-                <div id="hud-status" class="metallic-text ml-auto" style="font-size: 7px;">Viewport Ready</div>
-            </div>
-        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -112,7 +22,7 @@
     <script type="module" src="../js/spark.js"></script>
 
     <script>
-        // Keyboard Shortcuts (Zen Mode)
+        // Inline scripts for Zen and UI toggles stay here for quick DOM response
         window.addEventListener('keydown', (e) => {
             if (e.key.toLowerCase() === 'z' || e.key === 'Escape') {
                 toggleZen();
@@ -124,7 +34,6 @@
         }
 
         function togglePlayPause() {
-            // This is a bridge for spark.js to target specific iframes
             window.dispatchEvent(new CustomEvent('toggleMedia'));
             const icon = document.getElementById('play-icon');
             icon.classList.toggle('fa-play');
