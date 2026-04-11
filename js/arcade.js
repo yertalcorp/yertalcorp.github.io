@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1099,7 +1099,7 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
-function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
+function verifyAndFixCode(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
     // 1. Scrub UNICODE spaces (non-breaking spaces, etc.) and Markdown ticks
@@ -1111,7 +1111,7 @@ function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
     return fixed;
 }
 
-function verifyAndFixCode(rawCode, isCodeMode = false) {
+function verifyAndFixCodeComplex(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
     // A. Token Sanitization: Clean illegal characters and hidden control tokens
@@ -1329,13 +1329,13 @@ function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpa
     };
 }
 
-function shapeAiPromptBasic(rawPrompt, count, mode, currentName, promptTypeObject) {
+function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
     
     const instructions = isSource ? 
         `Return the most specific match. 
         -Format: JSON array [{"name", "url", "description"}].` : 
-        `Write a fully working HTML/Javascript application that follows this model: ${promptTypeObject.name}.
+        `Write a fully working HTML/Javascript application with gradient colors that follows this model: ${promptTypeObject.name}.
         -Format: JSON object {"name", "code"}.`;
 
     return `
@@ -1364,7 +1364,7 @@ function shapeAiPromptSimple(rawPrompt, count, mode, currentName, promptTypeObje
     `.trim();
 }
 
-function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
+function shapeAiPromptComplex(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
     
     return `
