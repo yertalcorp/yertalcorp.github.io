@@ -48,6 +48,13 @@ iframe {
     border-radius: 50%; 
     transition: all 0.3s ease; 
     color: var(--branding-color); 
+    opacity: 0;
+}
+
+/* Hover logic moved from HTML to CSS */
+#prev-zone:hover .nav-reveal,
+#next-zone:hover .nav-reveal {
+    opacity: 1;
 }
 
 /* HUD Viewport Aesthetics */
@@ -57,6 +64,17 @@ iframe {
     border-radius: 8px;
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
+}
+
+/* Added to match HTML reference */
+.fx-glass-hud {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fx-neon-border {
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
 }
 
 .hud-control-stack { 
@@ -80,6 +98,8 @@ iframe {
     position: relative; 
     background: #000;
     border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .thumb-hover { 
