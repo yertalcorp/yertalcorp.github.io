@@ -7,7 +7,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:32:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 17:18:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Captures the raw pixel data from the game canvas.
@@ -256,8 +256,17 @@ function togglePlayPause() {
 function setupInteractions() {
     // 1. Navigation & Data Persistence
     document.getElementById('set-cover-btn').onclick = setPermanentCover;
-    document.getElementById('prev-zone').onclick = () => navigate(-1);
-    document.getElementById('next-zone').onclick = () => navigate(1);
+    
+    // Explicit binding for side-zone navigation
+    document.getElementById('prev-zone').onclick = (e) => {
+        e.stopPropagation();
+        navigate(-1);
+    };
+    
+    document.getElementById('next-zone').onclick = (e) => {
+        e.stopPropagation();
+        navigate(1);
+    };
 
     // 2. UI Toggles (Zen & Play/Pause)
     document.getElementById('zen-btn').onclick = toggleZen;
@@ -271,13 +280,13 @@ function setupInteractions() {
     // Play/Pause by clicking the viewport itself
     document.getElementById('spark-content-container').onclick = togglePlayPause;
 
-    // 3. Exit Logic (Handling History vs Direct Link)
+    // 3. Exit Logic (Handling History vs Direct Link with User Context)
     document.getElementById('exit-btn').onclick = () => {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            window.location.href = '/arcade/index.html?user=yertal-arcade';
-        }
+        const params = new URLSearchParams(window.location.search);
+        const userSlug = params.get('user') || 'yertal-arcade';
+        
+        // Prioritize returning to the specific arcade showroom
+        window.location.href = `/arcade/index.html?user=${userSlug}`;
     };
 
     // 4. File Upload (Custom Thumbnail Trigger)
@@ -289,6 +298,7 @@ function setupInteractions() {
     window.onkeydown = (e) => {
         if (e.key === 'ArrowLeft') navigate(-1);
         if (e.key === 'ArrowRight') navigate(1);
-        if (e.key.toLowerCase() === 'z' || e.key === 'Escape') toggleZen();
+        if (e.key.toLowerCase() === 'z') toggleZen();
+        if (e.key === 'Escape') toggleZen(); 
     };
 }
