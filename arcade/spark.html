@@ -13,9 +13,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-black m-0 p-0 overflow-hidden" id="lab-body">
+<body class="bg-black m-0 p-0 overflow-hidden relative" id="lab-body">
 
-    <div id="spark-title-overlay" class="fixed top-5 left-1/2 -translate-x-1/2 z-[10000] text-center pointer-events-none">
+    <div id="spark-title-overlay" class="fixed top-5 left-1/2 z-[10000] text-center pointer-events-none">
         <h1 id="active-spark-name" class="fx-chroma-header text-4xl font-extrabold uppercase tracking-widest">Loading...</h1>
     </div>
 
@@ -37,7 +37,7 @@
 
     <div id="spark-content-container"></div>
 
-    <div id="spark-hud" class="fixed bottom-5 left-1/2 -translate-x-1/2 hud-viewport-layout">
+    <div id="spark-hud" class="fixed fx-glass-hud">
         
         <div id="thumb-trigger" class="thumb-box-viewport">
             <canvas id="live-thumb-canvas" class="w-full h-full object-cover" willReadFrequently="true"></canvas>
@@ -49,7 +49,7 @@
 
         <div class="hud-control-stack">
             <div class="hud-row">
-                <button id="play-pause-btn" class="text-white/80 hover:text-white bg-transparent border-none cursor-pointer">
+                <button id="play-pause-btn" class="text-white/80 hover:text-white bg-transparent border-none p-0 cursor-pointer">
                     <i class="fas fa-play" id="play-icon"></i>
                 </button>
 
@@ -69,7 +69,7 @@
                 <button id="zen-btn" class="glass-panel text-white/40 hover:text-white p-1.5 rounded border border-white/5">
                     <i class="fas fa-eye-slash text-[10px]"></i>
                 </button>
-                <div id="hud-status" class="status-readout-small metallic-text ml-auto">Viewport Ready</div>
+                <div id="hud-status" class="status-readout-small metallic-text ml-auto">VIEWPORT SECURED</div>
             </div>
         </div>
     </div>
