@@ -7,7 +7,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:44:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:48:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Captures the raw pixel data from the game canvas.
@@ -170,11 +170,14 @@ function wrapCodeInLaboratory(spark) {
 
             <script>
                 (function() {
-                    function forceLaboratoryFit() {
-                        const cvs = document.querySelector('canvas');
-                        if (cvs) {
+                function forceLaboratoryFit() {
+                    const cvs = document.querySelector('canvas');
+                    if (cvs) {
+                    // ADDED: Attempt to force buffer preservation if the library supports it
+                        if (cvs.getContext('webgl')) cvs.getContext('webgl', { preserveDrawingBuffer: true });
+                        if (cvs.getContext('webgl2')) cvs.getContext('webgl2', { preserveDrawingBuffer: true });
+
                             cvs.width = window.innerWidth;
-                            cvs.height = window.innerHeight;
 
                             if (typeof window.resize === 'function') window.resize();
                             if (typeof window.setup === 'function') window.setup();
