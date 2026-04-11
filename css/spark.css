@@ -185,11 +185,11 @@ iframe {
 }
 
 #prev-zone {
-    left: 0;
+    left: 30px;
 }
 
 #next-zone {
-    right: 0;
+    right: 30px;
 }
 #next-zone:hover .nav-reveal {
     opacity: 1;
@@ -298,4 +298,35 @@ iframe {
 
 #exit-btn {
     color: var(--button-text-color);
+}
+/* Container for the navigation zones */
+#spark-content-container:hover ~ .nav-zone,
+#spark-content-container:hover .nav-arrow {
+    opacity: 1 !important;
+}
+
+.nav-arrow {
+    position: absolute;
+    top: 50%; /* Height centered with viewport */
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    border: 4px solid var(--branding-color); /* Thicker circular border */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    color: var(--branding-color);
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 100;
+    opacity: 0; /* Hidden until hover over viewport */
+}
+
+.nav-arrow:hover {
+    background: var(--branding-color);
+    color: var(--bg-color);
+    box-shadow: 0 0 15px var(--box-shadow-color);
 }
