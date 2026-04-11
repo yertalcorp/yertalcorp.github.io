@@ -157,7 +157,7 @@ function loadSpark(spark) {
         const standardizedCode = `
             <style>
                 body { margin: 0; overflow: hidden; background: transparent; }
-                canvas { display: block; width: 100vw; height: 100vh; }
+                canvas { display: block; width: }
             </style>
             ${spark.code || '<h1>No Code Found</h1>'}
         `;
