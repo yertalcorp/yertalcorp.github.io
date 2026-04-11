@@ -55,6 +55,7 @@ iframe {
     border: none; 
     display: block;
     border-radius: 20px;
+    background: transparent;
 }
 
 /* --- Control Console (HUD) --- */
