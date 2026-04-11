@@ -58,6 +58,18 @@ iframe {
     font-size: 8px;
     letter-spacing: 1.2px;
 }
+/* Exit Button Hover */
+.fx-exit-btn {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fx-exit-btn:hover {
+    background: var(--branding-color);
+    color: black;
+    box-shadow: 0 0 15px var(--branding-color);
+    transform: scale(1.05);
+}
 
 /* Zen Mode Toggle Logic */
 .zen-active .fx-glass-hud, 
@@ -82,15 +94,20 @@ iframe {
 .nav-reveal { 
     padding: 15px; 
     border-radius: 50%; 
-    transition: all 0.3s ease; 
+    transform: translateX(0);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     color: var(--branding-color); 
     opacity: 0;
 }
 
 /* Hover logic moved from HTML to CSS */
-#prev-zone:hover .nav-reveal,
 #next-zone:hover .nav-reveal {
     opacity: 1;
+    transform: translateX(-10px);
+}
+#prev-zone:hover .nav-reveal {
+    opacity: 1;
+    transform: translateX(10px);
 }
 
 /* HUD Viewport Aesthetics */
