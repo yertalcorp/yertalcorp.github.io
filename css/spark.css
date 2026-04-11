@@ -205,7 +205,22 @@ iframe {
     border: none;
     z-index: 10008;
 }
-
+#spark-title-overlay {
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    white-space: nowrap;
+    display: flex;
+    justify-content: center;
+    transition: opacity 0.5s ease;
+}
+.fx-chroma-header {
+    color: var(--fg-color-high);
+    text-shadow: 0 0 15px var(--box-shadow-color-glow);
+    /* Keep your Orbitron or branding font if applicable */
+    font-family: var(--arcade-title-font); 
+}
 .zen-active #spark-hud, 
 .zen-active #exit-btn, 
 .zen-active #spark-title-overlay {
