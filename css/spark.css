@@ -94,13 +94,26 @@ iframe {
 /* --- Interactive Elements --- */
 .media-progress-container {
     height: 4px;
-    background: var(--text-muted-color);
+    background: var(--fg-color-low);
     border-radius: 2px;
     position: relative;
     cursor: pointer;
     flex-grow: 1;
 }
-
+/* Time Display Logic */
+.media-time-display {
+    width: 96px; /* equivalent to w-24 */
+    text-align: right;
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--text-muted-color);
+}
+/* Grouping for status row */
+.status-group {
+    display: flex;
+    align-items: center;
+    gap: 16px; /* equivalent to gap-4 */
+}
 #media-progress-bar {
     height: 100%;
     background: var(--branding-color);
@@ -207,6 +220,7 @@ iframe {
     overflow: hidden;
     background: #000;
     position: relative;
+    border-color:var(--border-color);
 }
 
 .thumb-hover { 
@@ -223,4 +237,19 @@ iframe {
 
 .thumb-box-viewport:hover .thumb-hover { 
     opacity: 1; 
+}
+
+#zen-btn {
+    color: var(--button-text-color);
+}
+#exit-zen-btn i {
+    color: var(--branding-color);
+}
+
+#active-spark-name {
+    color: var(--fg-color-high);
+}
+
+#exit-btn {
+    color: var(--button-text-color);
 }
