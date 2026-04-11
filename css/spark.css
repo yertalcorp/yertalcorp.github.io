@@ -150,3 +150,21 @@ iframe {
     letter-spacing: 1px;
     opacity: 0.8;
 }
+/* Specific Lab Overrides */
+.thumb-monitor-box {
+    width: 80px;
+    height: 45px;
+    position: relative;
+    background: #000;
+}
+
+.hud-control-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nav-reveal {
+    transition: all 0.3s ease;
+    color: var(--branding-color);
+}
