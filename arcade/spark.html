@@ -19,60 +19,62 @@
         <h1 id="active-spark-name" class="fx-chroma-header text-4xl font-extrabold uppercase tracking-widest">Loading...</h1>
     </div>
 
-    <button id="exit-btn" class="fixed top-5 left-5 z-[10001] fx-exit-btn glass-panel text-white">
+    <button id="exit-btn" class="fixed top-5 left-5 z-[10001] arcade-button text-white flex items-center gap-2">
         <i class="fas fa-arrow-left"></i>
+        <span class="text-[10px] font-bold uppercase">Back to Arcade</span>
     </button>
 
-    <div id="prev-zone" class="fixed left-0 top-0 w-20 h-full z-[9000] flex items-center justify-center cursor-pointer">
+    <div id="prev-zone" class="fixed left-0 top-0 w-24 h-full z-[9000] flex items-center justify-center cursor-pointer group">
         <div class="nav-reveal">
-            <i class="fas fa-chevron-left text-2xl text-white"></i>
+            <i class="fas fa-chevron-left text-3xl text-white"></i>
         </div>
     </div>
     
-    <div id="next-zone" class="fixed right-0 top-0 w-20 h-full z-[9000] flex items-center justify-center cursor-pointer">
+    <div id="next-zone" class="fixed right-0 top-0 w-24 h-full z-[9000] flex items-center justify-center cursor-pointer group">
         <div class="nav-reveal">
-            <i class="fas fa-chevron-right text-2xl text-white"></i>
+            <i class="fas fa-chevron-right text-3xl text-white"></i>
         </div>
     </div>
 
     <div id="spark-content-container"></div>
 
-<div id="spark-hud" class="fx-glass-hud fx-neon-border">
-    
-    <div id="thumb-trigger" class="thumb-box-viewport">
-        <canvas id="live-thumb-canvas" class="w-full h-full object-cover"></canvas>
-        <div class="thumb-hover"><i class="fas fa-camera"></i></div>
-    </div>
-
-    <div class="hud-control-stack">
-        <div class="hud-row">
-            <button id="play-pause-btn" class="text-white bg-transparent border-none p-0">
-                <i class="fas fa-play" id="play-icon"></i>
-            </button>
-
-            <div class="media-progress-container" id="progress-container" style="flex-grow: 1;">
-                <div id="media-progress-bar"></div>
-            </div>
-
-            <div class="text-[10px] font-mono text-white/50 w-24 text-right">
-                <span id="current-time">0:00</span> / <span id="total-duration">0:00</span>
-            </div>
+    <div id="spark-hud" class="fx-glass-hud fx-neon-border">
+        
+        <div id="thumb-trigger" class="thumb-box-viewport">
+            <canvas id="live-thumb-canvas" class="w-full h-full object-cover"></canvas>
+            <div class="thumb-hover"><i class="fas fa-camera"></i></div>
         </div>
 
-        <div class="hud-row">
-            <button id="set-cover-btn" class="generate-btn text-black text-[9px] font-bold px-4 py-1 rounded">
-                UPDATE THUMBNAIL
-            </button>
-            
-            <div class="flex items-center gap-4">
-                <button id="zen-btn" class="glass-panel text-white/40 hover:text-white p-1">
-                    <i class="fas fa-eye-slash"></i>
+        <div class="hud-control-stack">
+            <div class="hud-row">
+                <button id="play-pause-btn" class="text-white bg-transparent border-none p-0 cursor-pointer hover:scale-110 transition-transform">
+                    <i class="fas fa-play" id="play-icon"></i>
                 </button>
-                <div id="hud-status" class="status-readout-small metallic-text uppercase">Auto-Capture Active</div>
+
+                <div class="media-progress-container" id="progress-container" style="flex-grow: 1;">
+                    <div id="media-progress-bar"></div>
+                </div>
+
+                <div class="text-[10px] font-mono text-white/50 w-24 text-right">
+                    <span id="current-time">0:00</span> / <span id="total-duration">0:00</span>
+                </div>
+            </div>
+
+            <div class="hud-row">
+                <button id="set-cover-btn" class="generate-btn text-black text-[9px] font-black px-4 py-1.5 rounded uppercase tracking-tighter">
+                    Update Thumbnail
+                </button>
+                
+                <div class="flex items-center gap-4">
+                    <button id="zen-btn" class="arcade-button py-1 px-3 text-white/70 hover:text-white">
+                        <i class="fas fa-eye-slash text-xs"></i>
+                    </button>
+                    <div id="hud-status" class="status-readout-small metallic-text uppercase">Auto-Capture Active</div>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script type="module" src="/js/spark.js"></script>
