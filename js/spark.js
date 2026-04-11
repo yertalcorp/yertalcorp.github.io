@@ -7,7 +7,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:57:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:32:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Captures the raw pixel data from the game canvas.
@@ -111,50 +111,44 @@ function loadSpark(spark) {
     const hudStatus = document.getElementById('hud-status');
     const fallbackBtn = document.getElementById('fallback-url-btn');
     
-    // 0. Clear previous interval immediately to prevent ghost captures
     if (thumbInterval) {
         clearInterval(thumbInterval);
         thumbInterval = null;
     }
     
-    // Clear the container to prevent overlapping iframes during rapid navigation
+    container.style.opacity = '0';
     container.innerHTML = '';
     if (hudStatus) hudStatus.textContent = "INITIALIZING...";
 
-    // 1. Show Title Animation
     titleEl.textContent = spark.name;
     overlay.style.opacity = "1";
     setTimeout(() => { overlay.style.opacity = "0"; }, 3000);
 
-    // 2. Render Content (Source vs Code)
     if (spark.link) {
         let finalUrl = spark.link;
         if (finalUrl.includes('youtube.com/watch?v=')) {
-            finalUrl = finalUrl.replace('watch?v=', 'embed/') + "?autoplay=1&mute=1";
+            finalUrl = finalUrl.replace('watch?v=', 'embed/') + "?autoplay=1&mute=1&enablejsapi=1";
         }
         
         container.innerHTML = `<iframe id="content-frame" src="${finalUrl}" allow="autoplay; fullscreen"></iframe>`;
+        container.style.opacity = '1';
         
         if (fallbackBtn) {
             fallbackBtn.onclick = () => window.open(spark.link, '_blank');
             fallbackBtn.classList.remove('hidden');
         }
         
-        // Start thumbnail logic after a brief delay for external links
         setTimeout(() => startLiveThumbnail(), 2000);
 
     } else {
         const iframe = document.createElement('iframe');
         iframe.id = "content-frame";
-        
-        // 2026-02-04: Using standard sandbox permissions to allow same-origin for html2canvas
         iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
         container.appendChild(iframe);
 
         const doc = iframe.contentWindow.document;
         doc.open();
         
-        // Injecting base styles to ensure the Spark respects viewport bounds and transparency
         const standardizedCode = `
             <style>
                 body { margin: 0; overflow: hidden; background: transparent; }
@@ -168,8 +162,8 @@ function loadSpark(spark) {
 
         if (fallbackBtn) fallbackBtn.classList.add('hidden');
 
-        // 3. Reset Live Thumbnail logic - Wait for iframe load to ensure DOM is ready
         iframe.onload = () => {
+            container.style.opacity = '1';
             startLiveThumbnail();
             if (hudStatus) hudStatus.textContent = "AUTO-CAPTURE ACTIVE";
         };
@@ -180,30 +174,39 @@ function startLiveThumbnail() {
     if (thumbInterval) clearInterval(thumbInterval);
     
     const canvas = document.getElementById('live-thumb-canvas');
-    if (!canvas) return; // Safety check
+    if (!canvas) return; 
     const ctx = canvas.getContext('2d');
     
-    // Preview cycle: attempt to snapshot the iframe every 5 seconds for the HUD
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
     thumbInterval = setInterval(async () => {
         try {
             const shot = await html2canvas(document.getElementById('spark-content-container'), {
                 useCORS: true,
-                scale: 0.2
+                scale: 0.2,
+                backgroundColor: null
             });
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(shot, 0, 0, canvas.width, canvas.height);
-        } catch (e) { /* Content might be cross-origin protected */ }
+        } catch (e) { 
+            console.warn("Thumbnail capture paused: Cross-origin protection.");
+        }
     }, 5000);
 }
 
 async function setPermanentCover() {
     const status = document.getElementById('hud-status');
     const spark = allSparks[currentIndex];
+    
+    if (!spark) return;
     status.textContent = "SAVING COVER...";
 
     try {
         const canvas = await html2canvas(document.getElementById('spark-content-container'), {
             useCORS: true,
-            scale: 0.5
+            scale: 0.5,
+            logging: false
         });
         const imageData = canvas.toDataURL('image/jpeg', 0.8);
         const path = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}/image`;
@@ -213,7 +216,7 @@ async function setPermanentCover() {
         setTimeout(() => status.textContent = "AUTO-CAPTURE ACTIVE", 2000);
     } catch (e) {
         status.textContent = "SAVE FAILED";
-        console.error(e);
+        console.error("Manual save failed:", e);
     }
 }
 
