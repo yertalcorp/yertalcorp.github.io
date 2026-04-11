@@ -44,7 +44,7 @@ export async function getArcadeData() {
         const slugToIndex = data.search_index || {};
         console.log("getArcadeData - Search Index Snapshot:", slugToIndex);
 
-        const ownerUid = Object.keys(slugToIndex).find(uid => slugToIndex[uid] === pageOwnerSlug);
+        const ownerUid = slugToIndex[pageOwnerSlug];
         console.log("getArcadeData - Resolved ownerUid:", ownerUid);
 
         // 3. SURGICAL FETCH: Get only the Owner's Profile and infrastructure
