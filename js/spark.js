@@ -7,7 +7,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 17:18:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 20:56:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Captures the raw pixel data from the game canvas.
@@ -104,6 +104,61 @@ watchAuthState(async (user) => {
     setupInteractions();
 });
 
+/**
+ * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
+ * @param {Object} spark - The spark data object from the DB.
+ * @returns {string} - The complete HTML string for the iframe.
+ */
+function wrapCodeInLaboratory(spark) {
+    // 1. Extract the code regardless of where it's hidden in the DB object
+    const activeCode = spark.code || (spark.data ? spark.data.code : null) || spark.html || "";
+
+    // 2. Return the full standardized template
+    return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body, html { 
+                    margin: 0; padding: 0; width: 100%; height: 100%; 
+                    overflow: hidden; background: transparent; 
+                    display: flex; align-items: center; justify-content: center;
+                }
+                canvas { 
+                    display: block; 
+                    width: 100vw !important; height: 100vh !important; 
+                    image-rendering: auto; 
+                }
+            </style>
+        </head>
+        <body>
+            ${activeCode || '<div style="color:white; font-family:sans-serif;">[ SYSTEM ERROR ]: No Code Found</div>'}
+
+            <script>
+                (function() {
+                    function forceLaboratoryFit() {
+                        const cvs = document.querySelector('canvas');
+                        if (cvs) {
+                            cvs.width = window.innerWidth;
+                            cvs.height = window.innerHeight;
+                            // Call typical engine re-init hooks
+                            if (typeof window.resize === 'function') window.resize();
+                            if (typeof window.setup === 'function') window.setup();
+                            if (typeof window.init === 'function') window.init();
+                        }
+                    }
+                    window.addEventListener('load', () => {
+                        forceLaboratoryFit();
+                        setTimeout(forceLaboratoryFit, 100);
+                    });
+                    window.addEventListener('resize', forceLaboratoryFit);
+                })();
+            </script>
+        </body>
+        </html>
+    `;
+}
+
 function loadSpark(spark) {
     const container = document.getElementById('spark-content-container');
     const titleEl = document.getElementById('active-spark-name');
@@ -154,28 +209,7 @@ function loadSpark(spark) {
         doc.open();
         
         // Final construction of code to be written to iframe
-        const standardizedCode = `
-        <style>
-            body { 
-                margin: 0; 
-                padding: 0; 
-                overflow: hidden; 
-                background: #000; 
-                width: 100%; 
-                height: 100%; 
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            canvas { 
-                max-width: 100%; 
-                max-height: 100%; 
-                object-fit: contain;
-            }
-        </style>
-        ${spark.code || '<h1 style="color:white;">No Code Found</h1>'}
-        `;
-        
+        const standardizedCode = wrapCodeInLaboratory(spark);
         // DEBUG: Output the full generated code to console
         console.groupCollapsed(`%c[LAB VIEWPORT] Code Injected for: ${spark.name}`, "color: #00ff88;");
         console.log("Raw Code Structure:");
