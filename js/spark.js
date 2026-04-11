@@ -7,7 +7,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:19:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:30:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Captures the raw pixel data from the game canvas.
@@ -385,11 +385,20 @@ function setupInteractions() {
     document.getElementById('exit-btn').onclick = () => {
         const params = new URLSearchParams(window.location.search);
         const userSlug = params.get('user') || 'yertal-arcade';
-        
+    
+        // ADDED: Clear intervals to stop background processing
+        if (thumbInterval) {
+             clearInterval(thumbInterval);
+             thumbInterval = null;
+        }
+
+        // ADDED: Clear the container to stop simulation sounds/logic
+        const container = document.getElementById('spark-content-container');
+        if (container) container.innerHTML = '';
+    
         // Prioritize returning to the specific arcade showroom
         window.location.href = `/arcade/index.html?user=${userSlug}`;
     };
-
     // 4. File Upload (Custom Thumbnail Trigger)
     document.getElementById('thumb-trigger').onclick = () => {
         document.getElementById('thumb-upload').click();
