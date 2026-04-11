@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1346,7 +1346,7 @@ function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpa
     };
 }
 
-function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
+function shapeAiPromptBasic(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
     
     const instructions = isSource ? 
@@ -1400,7 +1400,8 @@ Rules:
     `Persona: You are a Creative Developer.
 Rules:
 - Provide a standalone, working HTML/JS file.
-- Keep the UI clean, modern, and simple.
+- Create a visually stunning app that makes the objects look 3D.
+- Ensure all buttons and mouse controls work as requested.
 - Adhere to the parent page's viewport.
 - Return ONLY a valid JSON object: {"name": "A short descriptive project title", "code": "The full HTML/JS code string"}.
 
