@@ -7,7 +7,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:30:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:44:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Captures the raw pixel data from the game canvas.
@@ -134,9 +134,8 @@ function wrapCodeInLaboratory(spark) {
                     /* FIXED: Apply theme background to the area around the window */
                     background-color: var(--bg-color-mid, #00080f); 
                     
-                    display: flex; 
-                    align-items: center; 
-                    justify-content: center;
+                    /* CENTERED POSITIONING */
+                    display: flex; align-items: center; justify-content: center;
                     color: var(--text-main-color, #ffffff);
                     font-family: var(--text-main-font, sans-serif);
                 }
@@ -144,8 +143,12 @@ function wrapCodeInLaboratory(spark) {
                 /* The actual simulation viewport */
                 canvas { 
                     display: block; 
-                    width: 100vw !important; 
-                    height: 100vh !important; 
+                    /* STRETCH & CENTER LOGIC */
+                    width: 100vw !important; height: 100vh !important; max-width: 100%;
+                    max-height: 100%;
+                    object-fit: contain;
+                    margin: auto;
+                    
                     image-rendering: auto; 
                     /* Ensures the canvas background doesn't overwrite our theme */
                     background: transparent !important;
