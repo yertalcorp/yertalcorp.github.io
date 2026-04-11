@@ -1523,7 +1523,7 @@ function genSparkImage(sparkImageFromDB) {
         return sparkImageFromDB;
     }
 
-    console.log("Result: Treating as standard path/URL");
+    console.log("genSparkImage: Treating the image as a standard path/URL");
     return sparkImageFromDB;
 }
 
