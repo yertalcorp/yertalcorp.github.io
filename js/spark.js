@@ -310,15 +310,24 @@ async function setPermanentCover() {
     status.textContent = "SAVING COVER...";
 
     try {
-        const canvas = await html2canvas(document.getElementById('spark-content-container'), {
+        // UPDATED: Target the iframe explicitly and enable logging for debugging
+        const iframe = document.getElementById('content-frame');
+        const canvas = await html2canvas(iframe.contentWindow.document.body, {
             useCORS: true,
             scale: 0.5,
-            logging: false
+            logging: true, // Switch to false once verified
+            allowTaint: true,
+            backgroundColor: null
         });
-        const imageData = canvas.toDataURL('image/jpeg', 0.8);
-        const path = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}/image`;
         
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        
+        // Safety check: If the image is a tiny black pixel string, abort
+        if (imageData.length < 1000) throw new Error("Blank Capture Detected");
+
+        const path = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}/image`;
         await saveToRealtimeDB(path, imageData);
+        
         status.textContent = "COVER UPDATED!";
         setTimeout(() => status.textContent = "AUTO-CAPTURE ACTIVE", 2000);
     } catch (e) {
@@ -326,7 +335,6 @@ async function setPermanentCover() {
         console.error("Manual save failed:", e);
     }
 }
-
 function navigate(dir) {
     currentIndex = (currentIndex + dir + allSparks.length) % allSparks.length;
     const nextSpark = allSparks[currentIndex];
