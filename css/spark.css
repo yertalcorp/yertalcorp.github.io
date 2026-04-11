@@ -29,7 +29,7 @@ iframe {
     box-shadow: 0 0 10px var(--neon-color);
 }
 
-/* Zen Mode Toggle Classes */
+/* Zen Mode Toggle Logic */
 .zen-active .fx-glass-hud, 
 .zen-active .fx-exit-btn, 
 .zen-active #prev-zone, 
@@ -40,69 +40,23 @@ iframe {
     transform: translateY(20px);
     transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
-/* --- 7. LABORATORY VIEWPORT & HUD LOGIC --- */
 
-/* Viewport Absolute Positioning */
-.viewport-title-pos { 
-    position: fixed; 
-    top: 20px; 
-    left: 50%; 
-    transform: translateX(-50%); 
-    z-index: 10000; 
-    pointer-events: none; 
-}
-
-.exit-pos { 
-    position: fixed; 
-    top: 20px; 
-    left: 20px; 
-    z-index: 10001; 
-}
-
-/* Navigation & Trigger Zones */
-.nav-trigger { 
-    position: fixed; 
-    top: 0; 
-    width: 80px; 
-    height: 100%; 
-    z-index: 9000; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    cursor: pointer; 
-}
-
-.left-nav { left: 0; }
-.right-nav { right: 0; }
+/* --- Laboratory Viewport Components --- */
 
 .nav-reveal { 
     padding: 15px; 
     border-radius: 50%; 
-    opacity: 0; 
-    transition: 0.3s; 
-    color: #fff; 
+    transition: all 0.3s ease; 
+    color: var(--branding-color); 
 }
 
-.nav-trigger:hover .nav-reveal { 
-    opacity: 1; 
-    transform: scale(1.1);
-}
-
-/* HUD Viewport Layout (Horizontal Bottom Bar) */
+/* HUD Viewport Aesthetics */
 .hud-viewport-layout {
-    right: auto !important; 
-    left: 50% !important;
-    bottom: 20px !important;
-    top: auto !important;
-    width: auto !important;
-    height: auto !important;
     min-width: 450px;
-    transform: translateX(-50%) !important;
-    flex-direction: row !important;
-    gap: 15px;
-    padding: 10px 20px;
     border: 1px solid var(--border-color-glow);
     border-radius: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
 }
 
 .hud-control-stack { 
@@ -125,6 +79,7 @@ iframe {
     cursor: pointer; 
     position: relative; 
     background: #000;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 .thumb-hover { 
@@ -144,27 +99,8 @@ iframe {
     opacity: 1; 
 }
 
-/* Media Transport Utilities */
 .status-readout-small {
     font-size: 8px;
     letter-spacing: 1px;
     opacity: 0.8;
-}
-/* Specific Lab Overrides */
-.thumb-monitor-box {
-    width: 80px;
-    height: 45px;
-    position: relative;
-    background: #000;
-}
-
-.hud-control-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.nav-reveal {
-    transition: all 0.3s ease;
-    color: var(--branding-color);
 }
