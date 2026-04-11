@@ -118,7 +118,8 @@ iframe {
     align-items: center; 
     justify-content: space-between; /* This stops the bunching */
     width: 100%;
-    gap: 15px;
+    gap: 20px;
+    flex-wrap: nowrap;
 }
 
 /* Prevent the monitor box from shrinking */
