@@ -111,6 +111,9 @@ function loadSpark(spark) {
     const hudStatus = document.getElementById('hud-status');
     const fallbackBtn = document.getElementById('fallback-url-btn');
     
+    // Log Spark Metadata
+    console.log(`%c[YERTAL LAB] Loading Spark: ${spark.name}`, "color: #00f2ff; font-weight: bold;");
+    
     if (thumbInterval) {
         clearInterval(thumbInterval);
         thumbInterval = null;
@@ -130,6 +133,7 @@ function loadSpark(spark) {
             finalUrl = finalUrl.replace('watch?v=', 'embed/') + "?autoplay=1&mute=1&enablejsapi=1";
         }
         
+        console.log(`[LAB VIEWPORT] Loading External Link: ${finalUrl}`);
         container.innerHTML = `<iframe id="content-frame" src="${finalUrl}" allow="autoplay; fullscreen"></iframe>`;
         container.style.opacity = '1';
         
@@ -149,6 +153,7 @@ function loadSpark(spark) {
         const doc = iframe.contentWindow.document;
         doc.open();
         
+        // Final construction of code to be written to iframe
         const standardizedCode = `
             <style>
                 body { margin: 0; overflow: hidden; background: transparent; }
@@ -157,12 +162,23 @@ function loadSpark(spark) {
             ${spark.code || '<h1>No Code Found</h1>'}
         `;
         
-        doc.write(standardizedCode);
+        // DEBUG: Output the full generated code to console
+        console.groupCollapsed(`%c[LAB VIEWPORT] Code Injected for: ${spark.name}`, "color: #00ff88;");
+        console.log("Raw Code Structure:");
+        console.log(standardizedCode);
+        console.groupEnd();
+        
+        try {
+            doc.write(standardizedCode);
+        } catch (e) {
+            console.error("[LAB VIEWPORT] Critical Error during doc.write:", e);
+        }
         doc.close();
 
         if (fallbackBtn) fallbackBtn.classList.add('hidden');
 
         iframe.onload = () => {
+            console.log("[LAB VIEWPORT] Viewport Ready: content-frame fully loaded.");
             container.style.opacity = '1';
             startLiveThumbnail();
             if (hudStatus) hudStatus.textContent = "AUTO-CAPTURE ACTIVE";
