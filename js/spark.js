@@ -183,6 +183,7 @@ function loadSpark(spark) {
         console.groupEnd();
         
         try {
+            console.log("Check visibility:", container.offsetWidth, container.offsetHeight);
             doc.write(standardizedCode);
         } catch (e) {
             console.error("[LAB VIEWPORT] Critical Error during doc.write:", e);
