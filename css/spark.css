@@ -10,15 +10,23 @@
     position: relative; 
 }
 #spark-hud {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 20px;
+    position: fixed !important;
+    bottom: 30px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    
+    /* Layout Foundation */
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 20px !important;
+    padding: 12px 24px;
     z-index: 10005;
-    min-width: 650px;
+    
+    /* Constraint - Adjust width based on your desired UI footprint */
+    width: auto;
+    min-width: 600px;
+    max-width: 90vw;
 }
 iframe { 
     width: 100%; 
@@ -54,8 +62,12 @@ iframe {
     transform: translateY(20px);
     transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
+/* Zen Mode: Correcting the transform so it doesn't jump to the left */
 .zen-active #spark-hud {
-    transform: translate(-50%, 20px);
+    opacity: 0 !important;
+    pointer-events: none;
+    transform: translate(-50%, 40px) !important; 
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 /* --- Laboratory Viewport Components --- */
 
@@ -93,31 +105,31 @@ iframe {
     box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
 }
 
+/* Ensure the control stack takes up the remaining space properly */
 .hud-control-stack { 
     display: flex; 
     flex-direction: column; 
-    gap: 4px; 
+    gap: 8px; 
     flex-grow: 1; 
 }
 
 .hud-row { 
     display: flex; 
     align-items: center; 
-    gap: 12px;
-    justify-content: space-between;
+    justify-content: space-between; /* This stops the bunching */
     width: 100%;
+    gap: 15px;
 }
 
-/* Thumbnail Monitor Box */
+/* Prevent the monitor box from shrinking */
 .thumb-box-viewport { 
-    width: 80px; 
-    height: 45px; 
-    cursor: pointer; 
-    position: relative; 
-    background: #000;
-    border: 1px solid rgba(255,255,255,0.1);
+    width: 100px !important; 
+    height: 56px !important; 
+    flex-shrink: 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 4px;
     overflow: hidden;
+    background: #000;
 }
 
 .thumb-hover { 
