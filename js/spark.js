@@ -155,11 +155,25 @@ function loadSpark(spark) {
         
         // Final construction of code to be written to iframe
         const standardizedCode = `
-            <style>
-                body { margin: 0; overflow: hidden; background: transparent; }
-                canvas { display: block; width: }
-            </style>
-            ${spark.code || '<h1>No Code Found</h1>'}
+        <style>
+            body { 
+                margin: 0; 
+                padding: 0; 
+                overflow: hidden; 
+                background: #000; 
+                width: 100%; 
+                height: 100%; 
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            canvas { 
+                max-width: 100%; 
+                max-height: 100%; 
+                object-fit: contain;
+            }
+        </style>
+        ${spark.code || '<h1 style="color:white;">No Code Found</h1>'}
         `;
         
         // DEBUG: Output the full generated code to console
