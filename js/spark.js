@@ -7,7 +7,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:48:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:03:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Captures the raw pixel data from the game canvas.
@@ -131,7 +131,7 @@ function wrapCodeInLaboratory(spark) {
                     height: 100%; 
                     overflow: hidden; 
                     
-                    /* FIXED: Apply theme background to the area around the window */
+                    /* Apply theme background to the area around the window */
                     background-color: var(--bg-color-mid, #00080f); 
                     
                     /* CENTERED POSITIONING */
@@ -178,6 +178,7 @@ function wrapCodeInLaboratory(spark) {
                         if (cvs.getContext('webgl2')) cvs.getContext('webgl2', { preserveDrawingBuffer: true });
 
                             cvs.width = window.innerWidth;
+                            cvs.height = window.innerHeight;
 
                             if (typeof window.resize === 'function') window.resize();
                             if (typeof window.setup === 'function') window.setup();
@@ -310,16 +311,26 @@ async function setPermanentCover() {
     status.textContent = "SAVING COVER...";
 
     try {
-        // UPDATED: Target the iframe explicitly and enable logging for debugging
+        // Target the iframe explicitly for the capture
         const iframe = document.getElementById('content-frame');
         const canvas = await html2canvas(iframe.contentWindow.document.body, {
             useCORS: true,
             scale: 0.5,
-            logging: true, // Switch to false once verified
+            logging: false, 
             allowTaint: true,
             backgroundColor: null
         });
         
+        // UPDATED: Render the captured image to the UI square immediately
+        const thumbCanvas = document.getElementById('live-thumb-canvas');
+        if (thumbCanvas) {
+         const thumbCtx = thumbCanvas.getContext('2d');
+         thumbCanvas.width = thumbCanvas.offsetWidth;
+         thumbCanvas.height = thumbCanvas.offsetHeight;
+         thumbCtx.clearRect(0, 0, thumbCanvas.width, thumbCanvas.height);
+         thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+        }
+
         const imageData = canvas.toDataURL('image/jpeg', 0.8);
         
         // Safety check: If the image is a tiny black pixel string, abort
@@ -335,6 +346,7 @@ async function setPermanentCover() {
         console.error("Manual save failed:", e);
     }
 }
+
 function navigate(dir) {
     currentIndex = (currentIndex + dir + allSparks.length) % allSparks.length;
     const nextSpark = allSparks[currentIndex];
