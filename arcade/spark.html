@@ -13,26 +13,30 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-black m-0 p-0 overflow-hidden relative" id="lab-body">
+<body id="lab-body">
+
+    <button id="exit-zen-btn" title="Exit Fullscreen">
+        <i class="fas fa-compress"></i>
+    </button>
 
     <div id="spark-title-overlay" class="fixed top-5 left-1/2 z-[10000] text-center pointer-events-none">
         <h1 id="active-spark-name" class="fx-chroma-header text-4xl font-extrabold uppercase tracking-widest">Loading...</h1>
     </div>
 
-    <button id="exit-btn" class="fixed top-5 left-5 z-[10001] arcade-button text-white flex items-center gap-2">
+    <button id="exit-btn" class="fixed top-5 left-5 z-[10001] arcade-button flex items-center gap-2">
         <i class="fas fa-arrow-left"></i>
         <span class="text-[10px] font-bold uppercase">Back to Arcade</span>
     </button>
 
     <div id="prev-zone" class="fixed left-0 top-0 w-24 h-full z-[9000] flex items-center justify-center cursor-pointer group">
         <div class="nav-reveal">
-            <i class="fas fa-chevron-left text-3xl text-white"></i>
+            <i class="fas fa-chevron-left text-3xl"></i>
         </div>
     </div>
     
     <div id="next-zone" class="fixed right-0 top-0 w-24 h-full z-[9000] flex items-center justify-center cursor-pointer group">
         <div class="nav-reveal">
-            <i class="fas fa-chevron-right text-3xl text-white"></i>
+            <i class="fas fa-chevron-right text-3xl"></i>
         </div>
     </div>
 
@@ -47,29 +51,29 @@
 
         <div class="hud-control-stack">
             <div class="hud-row">
-                <button id="play-pause-btn" class="text-white bg-transparent border-none p-0 cursor-pointer hover:scale-110 transition-transform">
+                <button id="play-pause-btn" class="bg-transparent border-none p-0 cursor-pointer hover:scale-110 transition-transform">
                     <i class="fas fa-play" id="play-icon"></i>
                 </button>
 
-                <div class="media-progress-container" id="progress-container" style="flex-grow: 1;">
+                <div class="media-progress-container" id="progress-container">
                     <div id="media-progress-bar"></div>
                 </div>
 
-                <div class="text-[10px] font-mono text-white/50 w-24 text-right">
+                <div class="media-time-display">
                     <span id="current-time">0:00</span> / <span id="total-duration">0:00</span>
                 </div>
             </div>
 
             <div class="hud-row">
-                <button id="set-cover-btn" class="generate-btn text-black text-[9px] font-black px-4 py-1.5 rounded uppercase tracking-tighter">
+                <button id="set-cover-btn" class="generate-btn">
                     Update Thumbnail
                 </button>
                 
-                <div class="flex items-center gap-4">
-                    <button id="zen-btn" class="arcade-button py-1 px-3 text-white/70 hover:text-white">
-                        <i class="fas fa-eye-slash text-xs"></i>
+                <div class="status-group">
+                    <button id="zen-btn" class="arcade-button py-1 px-3">
+                        <i class="fas fa-expand text-xs"></i>
                     </button>
-                    <div id="hud-status" class="status-readout-small metallic-text uppercase">Auto-Capture Active</div>
+                    <div id="hud-status" class="status-readout-small">Auto-Capture Active</div>
                 </div>
             </div>
         </div>
