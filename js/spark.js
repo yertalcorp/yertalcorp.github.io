@@ -104,53 +104,95 @@ watchAuthState(async (user) => {
     setupInteractions();
 });
 
-/**
+
+/*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
- * @param {Object} spark - The spark data object from the DB.
+ * Dynamically inherits theme colors (Neon-Dark, Autumn-Ember, etc.) 
+ * from the parent system via CSS variables.
+ * * @param {Object} spark - The spark data object from the DB.
  * @returns {string} - The complete HTML string for the iframe.
  */
 function wrapCodeInLaboratory(spark) {
-    // 1. Extract the code regardless of where it's hidden in the DB object
-    const activeCode = spark.code || (spark.data ? spark.data.code : null) || spark.html || "";
+    // 1. Extract the code from various potential DB property paths
+    const activeCode = spark.code || (spark.data ? spark.data.code : null) || spark.html || (typeof spark === 'string' ? spark : "");
 
-    // 2. Return the full standardized template
+    // 2. Return the template using CSS variables inherited from the parent context
     return `
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
+            <meta charset="UTF-8">
             <style>
                 body, html { 
-                    margin: 0; padding: 0; width: 100%; height: 100%; 
-                    overflow: hidden; background: transparent; 
-                    display: flex; align-items: center; justify-content: center;
+                    margin: 0; 
+                    padding: 0; 
+                    width: 100%; 
+                    height: 100%; 
+                    overflow: hidden; 
+                    
+                    /* Dynamically match the current theme's background */
+                    background: transparent; 
+                    
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
+                    
+                    /* Inherit main text color for fallback messages */
+                    color: var(--text-main-color, #ffffff);
+                    font-family: var(--text-main-font, sans-serif);
                 }
+
+                /* Ensure the canvas fills the laboratory window and remains theme-transparent */
                 canvas { 
                     display: block; 
-                    width: 100vw !important; height: 100vh !important; 
+                    width: 100vw !important; 
+                    height: 100vh !important; 
                     image-rendering: auto; 
+                    background: transparent !important;
+                }
+
+                .system-error {
+                    text-align: center;
+                    padding: 20px;
+                    border: 1px solid var(--error-color, red);
+                    background: var(--bg-color-low, rgba(0,0,0,0.5));
+                    color: var(--error-color, #ff4444);
                 }
             </style>
         </head>
         <body>
-            ${activeCode || '<div style="color:white; font-family:sans-serif;">[ SYSTEM ERROR ]: No Code Found</div>'}
+            ${activeCode || '<div class="system-error"><h1>[ SYSTEM ERROR ]</h1><p>No Source Code Detected</p></div>'}
 
             <script>
                 (function() {
+                    /*
+                     * Force Laboratory Fit
+                     * Synchronizes the internal canvas resolution with the theme-responsive container
+                     */
                     function forceLaboratoryFit() {
                         const cvs = document.querySelector('canvas');
                         if (cvs) {
                             cvs.width = window.innerWidth;
                             cvs.height = window.innerHeight;
-                            // Call typical engine re-init hooks
+
+                            // Standard initialization and resize hooks for generative scripts
                             if (typeof window.resize === 'function') window.resize();
                             if (typeof window.setup === 'function') window.setup();
                             if (typeof window.init === 'function') window.init();
+                            
+                            // p5.js specific handling
+                            if (typeof window.resizeCanvas === 'function') {
+                                window.resizeCanvas(window.innerWidth, window.innerHeight);
+                            }
                         }
                     }
+
                     window.addEventListener('load', () => {
                         forceLaboratoryFit();
-                        setTimeout(forceLaboratoryFit, 100);
+                        // Delay to ensure engines like Matter.js or Three.js have finalized their DOM
+                        setTimeout(forceLaboratoryFit, 150);
                     });
+
                     window.addEventListener('resize', forceLaboratoryFit);
                 })();
             </script>
@@ -158,7 +200,6 @@ function wrapCodeInLaboratory(spark) {
         </html>
     `;
 }
-
 function loadSpark(spark) {
     const container = document.getElementById('spark-content-container');
     const titleEl = document.getElementById('active-spark-name');
