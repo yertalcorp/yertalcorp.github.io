@@ -23,21 +23,21 @@
         <i class="fas fa-arrow-left"></i>
     </button>
 
-    <div id="prev-zone" class="fixed left-0 top-0 w-20 h-full z-[9000] group cursor-pointer flex items-center justify-center">
-        <div class="nav-reveal opacity-0 group-hover:opacity-100">
+    <div id="prev-zone" class="fixed left-0 top-0 w-20 h-full z-[9000] flex items-center justify-center cursor-pointer">
+        <div class="nav-reveal">
             <i class="fas fa-chevron-left text-2xl"></i>
         </div>
     </div>
     
-    <div id="next-zone" class="fixed right-0 top-0 w-20 h-full z-[9000] group cursor-pointer flex items-center justify-center">
-        <div class="nav-reveal opacity-0 group-hover:opacity-100">
+    <div id="next-zone" class="fixed right-0 top-0 w-20 h-full z-[9000] flex items-center justify-center cursor-pointer">
+        <div class="nav-reveal">
             <i class="fas fa-chevron-right text-2xl"></i>
         </div>
     </div>
 
     <div id="spark-content-container"></div>
 
-    <div id="spark-hud" class="glass-drawer active fixed bottom-5 left-1/2 -translate-x-1/2 hud-viewport-layout flex-row items-center gap-4 px-6 py-2">
+    <div id="spark-hud" class="fixed bottom-5 left-1/2 -translate-x-1/2 hud-viewport-layout fx-glass-hud fx-neon-border flex-row items-center gap-4 px-6 py-2">
         
         <div id="thumb-trigger" class="thumb-box-viewport">
             <canvas id="live-thumb-canvas" class="w-full h-full object-cover"></canvas>
