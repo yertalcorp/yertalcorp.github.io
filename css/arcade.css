@@ -977,6 +977,7 @@ header {
     border: 1px solid var(--border-color-glow);
     position: relative;
     overflow: hidden;
+    whitespace: nowrap;
 }
 
 .generate-btn:after {
