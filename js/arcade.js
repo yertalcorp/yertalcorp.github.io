@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:29:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1381,7 +1381,7 @@ function shapeAiPromptSimple(rawPrompt, count, mode, currentName, promptTypeObje
     `.trim();
 }
 
-function shapeAiPromptComplex(rawPrompt, count, mode, currentName, promptTypeObject) {
+function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
     
     return `
@@ -1392,32 +1392,30 @@ Mode: ${mode.toUpperCase()}
 ${isSource ? 
     `Persona: You are a Data Research Agent. 
 Rules:
-- Do NOT return search engine URLs or database homepages (e.g., no imdb.com).
+- Do NOT return search engine URLs or database homepages.
 - Research specific items that match the task.
 - Return ONLY a valid JSON array of objects: [{"name": "Item Name", "url": "Direct Info Link", "description": "Brief detail"}].
 - ${promptTypeObject.rules}` 
     : 
-    `Persona: You are a Creative Developer.
+    `Persona: You are a Creative Developer specializing in 3D Web Graphics.
 Rules:
 - Provide a standalone, working HTML/JS file.
-- Create a visually stunning app that makes the objects look 3D.
-- Ensure all buttons and mouse controls work as requested.
+- **3D Depth Protocol**: Use gradients, simulated drop shadows, and scale-based perspective to give flat shapes a 3D "Tactile" look.
+- **JSON Safety**: Return ONLY a valid JSON object: {"name": "Title", "code": "Code content"}. Escape all double quotes in the code string correctly.
+- Ensure all buttons and mouse/touch controls work.
 - Adhere to the parent page's viewport.
-- Return ONLY a valid JSON object: {"name": "A short descriptive project title", "code": "The full HTML/JS code string"}.
 
 Runtime & Viewport Resilience:
-- Wrap all initialization logic in a window.onload or DOMContentLoaded event listener.
-- Capture canvas/window dimensions dynamically inside the init function to avoid 0x0 size errors.
-- Ensure the coordinate system remains stable by using percentages or dynamic width/height variables.
-- Implement a resize listener to update the internal state if the viewport dimensions change.
-- Request user gesture interaction before starting AudioContext to comply with browser policies.
+- Wrap all initialization logic in window.onload.
+- Capture dimensions inside init; use window.innerWidth/Height dynamically.
+- Implement a resize listener to update canvas/simulation bounds.
+- Use requestAnimationFrame for smooth 60fps rendering.
 
 Visual Rendering & Object Logic:
-- Call the drawing/render function immediately after initialization to ensure the first frame is not blank.
-- Use high-contrast colors for objects (e.g., neon accents) to ensure visibility against dark backgrounds.
-- Explicitly clear the canvas or background on every frame to prevent "smearing" artifacts.
-- Verify that object coordinates (x, y) are initialized within the calculated width/height bounds.
-- Use distinct stroke or fill styles for every unique object type to make them visually identifiable.
+- **Depth Cues**: Objects must have a light-source origin (e.g., top-left highlight) to appear 3D.
+- Clear the canvas every frame to prevent smearing.
+- Use neon or high-chroma colors against a dark background.
+- Ensure all initial coordinates (x, y) are centered within the current viewport.
 
 - ${promptTypeObject.rules}`
 }
