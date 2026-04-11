@@ -42,6 +42,8 @@ iframe {
     border-radius: 2px;
     position: relative;
     cursor: pointer;
+    flex-grow: 1;
+    margin: 0 10px;
 }
 
 #media-progress-bar {
@@ -49,6 +51,12 @@ iframe {
     background: var(--neon-color);
     width: 0%;
     box-shadow: 0 0 10px var(--neon-color);
+}
+#hud-status {
+    min-width: 140px; /* Prevents layout shifting during status updates */
+    text-align: right;
+    font-size: 8px;
+    letter-spacing: 1.2px;
 }
 
 /* Zen Mode Toggle Logic */
@@ -118,10 +126,14 @@ iframe {
     align-items: center; 
     justify-content: space-between; /* This stops the bunching */
     width: 100%;
-    gap: 20px;
+    gap: 24px;
     flex-wrap: nowrap;
 }
-
+.generate-btn {
+    white-space: nowrap; /* Keeps "UPDATE THUMBNAIL" on one line */
+    min-width: 130px;
+    transition: all 0.2s ease;
+}
 /* Prevent the monitor box from shrinking */
 .thumb-box-viewport { 
     width: 100px !important; 
