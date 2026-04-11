@@ -28,6 +28,8 @@ export async function getArcadeData() {
     const urlParams = new URLSearchParams(window.location.search);
     const pageOwnerSlug = urlParams.get('user') || 'yertal-arcade';
 
+    console.log("getArcadeData - Target Slug:", pageOwnerSlug);
+
     const data = {};
     const publicPaths = ['app_manifest', 'auth_ui', 'search_index', 'settings', 'navigation', 'action-cards', 'showcase-items'];
 
@@ -39,12 +41,13 @@ export async function getArcadeData() {
         publicPaths.forEach((path, i) => { data[path] = snapshots[i]?.val(); });
 
         // 2. Identify the Page Owner via the Search Index
-        // We look up the UID associated with the slug in the URL
         const slugToIndex = data.search_index || {};
+        console.log("getArcadeData - Search Index Snapshot:", slugToIndex);
+
         const ownerUid = Object.keys(slugToIndex).find(uid => slugToIndex[uid] === pageOwnerSlug);
+        console.log("getArcadeData - Resolved ownerUid:", ownerUid);
 
         // 3. SURGICAL FETCH: Get only the Owner's Profile and infrastructure
-        // Note: We fetch specific paths because we can't read the whole user node
         if (ownerUid) {
             const [profileSnap, infraSnap] = await Promise.all([
                 get(ref(db, `users/${ownerUid}/profile`)).catch(() => null),
@@ -57,12 +60,17 @@ export async function getArcadeData() {
                     infrastructure: infraSnap?.val()
                 }
             };
+            console.log(`getArcadeData - Data Fetched for ${ownerUid}:`, data.users[ownerUid]);
+        } else {
+            console.warn("getArcadeData - No UID found for slug:", pageOwnerSlug);
         }
 
         // 4. SUPERUSER FETCH: manifest by default
-           const manifestSnap = await get(ref(db, 'app_manifest')).catch(() => null);
-           data.app_manifest = manifestSnap?.val();
-           console.log("app_manifest found", data.app_manifest); 
+        const manifestSnap = await get(ref(db, 'app_manifest')).catch(() => null);
+        data.app_manifest = manifestSnap?.val();
+        console.log("app_manifest found", data.app_manifest); 
+
+        console.log("getArcadeData - Final Data Object:", data);
         return data;
     } catch (error) {
         console.error("Critical Failure in getArcadeData Pipeline:", error);
