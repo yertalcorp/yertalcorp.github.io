@@ -67,7 +67,7 @@ iframe {
     align-items: center;
     gap: 20px;
     padding: 16px 32px;
-    z-index: 10005;
+    z-index: 10015;
     
     min-width: 600px;
     max-width: 85vw;
@@ -162,10 +162,34 @@ iframe {
     padding: 20px; 
     color: var(--branding-color); 
     opacity: 0;
-    transition: all 0.4s ease;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     filter: drop-shadow(0 0 8px var(--glow-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+/* Add these to your Navigation Reveal Styles section */
+
+#prev-zone, #next-zone {
+    position: fixed;
+    top: 0;
+    width: 80px; /* The hit-area width */
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10012;
+    /* Optional: background: rgba(255,0,0,0.1); // Use for debugging hit-areas */
 }
 
+#prev-zone {
+    left: 0;
+}
+
+#next-zone {
+    right: 0;
+}
 #next-zone:hover .nav-reveal {
     opacity: 1;
     transform: translateX(-15px);
@@ -182,7 +206,7 @@ iframe {
     top: 25px;
     right: 25px;
     display: none;
-    z-index: 10010;
+    z-index: 10020;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     color: var(--branding-color);
