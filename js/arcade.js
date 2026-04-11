@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:29:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -1099,7 +1099,7 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
     return currentId;
 };
 
-function verifyAndFixCode(rawCode, isCodeMode = false) {
+function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
     // 1. Scrub UNICODE spaces (non-breaking spaces, etc.) and Markdown ticks
@@ -1114,54 +1114,39 @@ function verifyAndFixCode(rawCode, isCodeMode = false) {
 function verifyAndFixCodeComplex(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
+    // A. Token Sanitization: Clean illegal characters and hidden control tokens
     let fixed = rawCode
-        .replace(/\u00A0/g, ' ')
-        .replace(/^```[a-z]*\n?|```$/gi, '')
+        .replace(/\u00A0/g, ' ') // Replace non-breaking spaces
+        .replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F]/g, "") // Remove control characters
+        .replace(/^```[a-z]*\n?|```$/gi, '') // Strip markdown blocks
         .trim();
 
-    // 1. Emergency Wrap: If the AI only sent JS, wrap it in HTML
-    if (!fixed.includes('<script') && (fixed.includes('function') || fixed.includes('const') || fixed.includes('let'))) {
-        fixed = `<!DOCTYPE html><html><body style="margin:0;overflow:hidden;"><canvas id="canvas"></canvas><script>${fixed}<\/script></body></html>`;
+    // 1. Emergency Wrap: If the AI only sent raw JS, wrap it in a proper HTML shell
+    if (!fixed.includes('<script') && (fixed.includes('function') || fixed.includes('const') || fixed.includes('let') || fixed.includes('canvas'))) {
+        fixed = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;overflow:hidden;background:#000;}canvas{display:block;width:100vw;height:100vh;}</style></head><body><canvas id="canvas"></canvas><script>${fixed}<\/script></body></html>`;
     }
 
-    // 2. HEALER LOGIC: Only run for code/create modes
+    // 2. HEALER LOGIC: Specialized for Code/Create modes
     if (isCodeMode) {
-        const hasScript = fixed.includes('<script');
+        const hasOnLoad = fixed.includes('window.onload') || 
+                         fixed.includes('addEventListener(\'load\'') || 
+                         fixed.includes('addEventListener("load"') ||
+                         fixed.includes('DOMContentLoaded');
+        
         const hasInit = fixed.includes('function init') || fixed.includes('const init');
-        const hasResize = fixed.includes('function resize') || fixed.includes('const resize');
-        const hasLoop = fixed.includes('function loop') || fixed.includes('const loop') || fixed.includes('function draw') || fixed.includes('function render');
-        const hasOnLoad = fixed.includes('window.onload') || fixed.includes('addEventListener(\'load\'') || fixed.includes('DOMContentLoaded');
-        
-        // --- OBJECT VERIFICATION ---
-        const hasClass = fixed.includes('class ') || fixed.includes('function Ball') || fixed.includes('function Particle') || fixed.includes('function Segment');
-        const hasInstantiation = fixed.includes('new ') || fixed.includes('.push(');
-        
-        if (hasClass && !hasInstantiation) {
-            console.warn("VERIFY: Code defines a class but appears to lack object instantiation.");
-            fixed = fixed.replace('</script>', `console.warn('Yertal Verify: Class detected but no "new" keyword found in script.');<\/script>`);
-        }
+        const hasLoop = fixed.match(/function (loop|draw|render|update)/) || fixed.match(/const (loop|draw|render|update)/);
 
-        // --- NEW: SCOPE HEALER (B. The "AudioContext" Reference Bug) ---
-        // Scans for variables declared in local scope and prevents "window.var" null pointers
-        const scopeVarMatch = fixed.match(/(?:let|const|var)\s+(\w+)\s*=/g);
-        if (scopeVarMatch) {
-            scopeVarMatch.forEach(m => {
-                const varName = m.split(/\s+/)[1];
-                const windowRef = new RegExp(`window\\.${varName}(?!\\s*=)`, 'g');
-                fixed = fixed.replace(windowRef, varName); // Strip "window." to use local scope
-            });
-        }
+        // --- NEW: DE-DUPLICATION GUARD ---
+        // If a lifecycle runner is already present, do NOT inject a second one
+        const needsRunner = (hasInit || hasLoop) && !hasOnLoad;
 
-        // --- NEW: VISIBILITY HEALER (A. The "Visibility" Check) ---
-        // If the AI divides values by 100/255 for opacity, ensure source values are not too low
+        // --- SCOPE & VISIBILITY HEALERS ---
         if (fixed.includes('opacity') || fixed.includes('rgba')) {
-            // Adjust opacity divisors to make low-density values visible
             fixed = fixed.replace(/\/\s*100(?!\d)/g, '/ 40'); 
             fixed = fixed.replace(/\/\s*255(?!\d)/g, '/ 120');
         }
 
-        // --- NEW: COORDINATE HEALER (C. Coordinate Normalization) ---
-        // Inject rect logic into common mouse handler patterns if missing
+        // --- COORDINATE HEALER (Bounding Rect) ---
         if (fixed.includes('clientX') && !fixed.includes('getBoundingClientRect')) {
             fixed = fixed.replace(/(function|const|let)\s+(\w+Mouse\w+|handle\w+|on\w+)\s*=\s*\(?(e|evt)\)?\s*=>?\s*\{|function\s+(\w+)\s*\((e|evt)\)\s*\{/g, 
             (match, p1, p2, p3, p4, p5) => {
@@ -1170,58 +1155,56 @@ function verifyAndFixCodeComplex(rawCode, isCodeMode = false) {
             });
         }
 
-        // --- NEW: FIRST FRAME MANDATE (D. The "Initial Seed") ---
-        // Ensures the setup logic triggers a draw call or initialization seed
-        if (hasInit && hasLoop) {
-            const drawCall = fixed.includes('render') ? 'render();' : (fixed.includes('draw') ? 'draw();' : 'loop();');
-            if (!fixed.match(/init\s*\([^)]*\)\s*\{[^}]*(render|draw|loop|seed|spawn)/)) {
-                fixed = fixed.replace(/init\s*\([^)]*\)\s*\{/, `init() { if(typeof seed === "function") seed(); ${drawCall} `);
+        // --- AUDIO & MATH PROTECTION ---
+        fixed = fixed.replace(/Math\.sqrt\(([^)]+)\)/g, 'Math.max(0.001, Math.sqrt($1))');
+        if (fixed.includes('AudioContext')) {
+            fixed = fixed.replace(/oscillator\.frequency/g, '(window.oscillator && window.oscillator.frequency)');
+        }
+
+        // --- STRUCTURAL INTEGRITY ---
+        
+        // Ensure Canvas exists if context is called
+        if (fixed.includes('.getContext') && !fixed.includes('<canvas')) {
+            if (fixed.includes('<body>')) {
+                fixed = fixed.replace('<body>', '<body><canvas id="canvas"></canvas>');
+            } else {
+                fixed = `<canvas id="canvas"></canvas>${fixed}`;
             }
         }
 
-        // --- EXISTING: AUDIO NULL-POINTER PROTECTION ---
-        if (fixed.includes('AudioContext') || fixed.includes('oscillator')) {
-            fixed = fixed.replace(/oscillator\.frequency/g, '(window.oscillator && window.oscillator.frequency)');
-            fixed = fixed.replace(/gainNode\.gain/g, '(window.gainNode && window.gainNode.gain)');
-        }
-
-        // --- EXISTING: MATH SAFETY (NaN Prevention) ---
-        fixed = fixed.replace(/Math\.sqrt\(([^)]+)\)/g, 'Math.max(0.001, Math.sqrt($1))');
-
-        // --- STRUCTURAL FIXES ---
-        
-        // FIX: Missing Canvas
-        if (fixed.includes('.getContext') && !fixed.includes('<canvas')) {
-            fixed = fixed.replace('<body>', `<body style="margin:0;overflow:hidden;"><canvas id="canvas"></canvas>`);
-        }
-
-        // FIX: Force resize call inside init if missing
-        if (hasInit && hasResize && !fixed.match(/init\s*\([^)]*\)\s*\{[^}]*resize/)) {
+        // Inject Resize into Init if missing
+        if (hasInit && fixed.includes('function resize') && !fixed.match(/init\s*\([^)]*\)\s*\{[^}]*resize/)) {
             fixed = fixed.replace(/init\s*\([^)]*\)\s*\{/, 'init() { if(typeof resize === "function") resize(); ');
         }
 
-        // FIX: Missing Lifecycle Runner
-        if (hasInit && hasLoop && !hasOnLoad) {
-            const runner = `\n<script>
-                window.addEventListener('load', () => { 
-                    console.log('Yertal Lifecycle: Auto-starting sequence...');
-                    if(typeof init === 'function') init(); 
-                    if(typeof render === 'function') render();
-                    else if(typeof loop === 'function') loop(); 
-                    else if(typeof draw === 'function') draw(); 
-                });
-            <\/script>\n`;
-            fixed = fixed.replace('</body>', `${runner}</body>`);
+        // --- FINAL LIFECYCLE INJECTION (If missing) ---
+        if (needsRunner) {
+            const runner = `
+<script id="yertal-lifecycle-runner">
+    (function() {
+        const start = () => {
+            console.log('Yertal Lifecycle: Auto-starting sequence...');
+            if(typeof init === 'function') init(); 
+            if(typeof render === 'function') render();
+            else if(typeof loop === 'function') loop(); 
+            else if(typeof draw === 'function') draw(); 
+        };
+        if (document.readyState === 'complete') start();
+        else window.addEventListener('load', start);
+    })();
+<\/script>`;
+            
+            // Inject before closing body or at the end of the string
+            if (fixed.includes('</body>')) {
+                fixed = fixed.replace('</body>', `${runner}</body>`);
+            } else {
+                fixed += runner;
+            }
         }
 
-        // FIX: Missing Viewport
-        if (!fixed.includes('viewport')) {
-            fixed = fixed.replace('<head>', `<head><meta name="viewport" content="width=device-width, initial-scale=1.0">`);
-        }
-        
-        // FIX: Missing ClearRect
-        if (fixed.includes('.getContext') && !fixed.includes('clearRect')) {
-             console.warn("VERIFY: Animation loop may be missing clearRect; trails may occur.");
+        // Meta Viewport check
+        if (!fixed.includes('<meta name="viewport"')) {
+            fixed = fixed.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1.0">');
         }
     }
 
