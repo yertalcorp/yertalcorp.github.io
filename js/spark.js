@@ -7,7 +7,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 16:47:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 10:52:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Captures the raw pixel data from the game canvas.
@@ -52,24 +52,38 @@ async function convertScreenshotToImage(dataUrl) {
     });
 }
 
+
 watchAuthState(async (user) => {
     console.log("Auth State Changed. User:", user ? user.uid : "Logged Out");
     if (!user) return;
 
-    userId = user.uid;
+    userId = user.uid; // The authenticated viewer
     const params = new URLSearchParams(window.location.search);
+    const pageOwnerSlug = params.get('user'); 
     currentId = params.get('current');
     const initialSparkId = params.get('spark');
     
-    console.log("URL Params - Current:", currentId, "Spark:", initialSparkId);
+    console.log("URL Params - User:", pageOwnerSlug, "Current:", currentId, "Spark:", initialSparkId);
 
     const data = await getArcadeData();
     console.log("Full Data Received:", data);
 
-    const path = data.users?.[userId]?.infrastructure?.currents?.[currentId];
-    console.log("Target Path Object:", path);
+    // 1. Identify the Owner UID from the surgically fetched data
+    // We grab the first key in the users object, as getArcadeData returns only the owner requested via slug
+    const ownerUid = Object.keys(data.users || {})[0];
+    
+    // 2. Resolve the path using the owner's UID rather than the viewer's UID
+    const path = data.users?.[ownerUid]?.infrastructure?.currents?.[currentId];
+    console.log("Target Path Object (Owner:", ownerUid, "):", path);
 
-    const sparksObj = path?.sparks || {};
+    if (!path) {
+        console.error("Path Resolution Failed. Mapping issue or missing 'current' in DB.");
+        document.getElementById('active-spark-name').textContent = "SPARK NOT FOUND";
+        return;
+    }
+
+    // 3. Process Sparks
+    const sparksObj = path.sparks || {};
     allSparks = Object.values(sparksObj).sort((a, b) => (a.created || 0) - (b.created || 0));
     
     console.log("Sparks Array Count:", allSparks.length);
@@ -86,8 +100,10 @@ watchAuthState(async (user) => {
         console.error("No sparks found in this current.");
         document.getElementById('active-spark-name').textContent = "EMPTY CURRENT";
     }
+    
     setupInteractions();
 });
+
 function loadSpark(spark) {
     const container = document.getElementById('spark-content-container');
     const titleEl = document.getElementById('active-spark-name');
