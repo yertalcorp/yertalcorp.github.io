@@ -7,7 +7,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:07:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:19:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Captures the raw pixel data from the game canvas.
@@ -113,16 +113,17 @@ watchAuthState(async (user) => {
  * @returns {string} - The complete HTML string for the iframe.
  */
 function wrapCodeInLaboratory(spark) {
-    // 1. Extract the code from various potential DB property paths
+    // 1. Extract the code regardless of where it's hidden in the DB object
     const activeCode = spark.code || (spark.data ? spark.data.code : null) || spark.html || (typeof spark === 'string' ? spark : "");
 
-    // 2. Return the template using CSS variables inherited from the parent context
+    // 2. Return the full standardized template with theme-aware container coloring
     return `
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <style>
+                /* The outer 'Stage' of the laboratory */
                 body, html { 
                     margin: 0; 
                     padding: 0; 
@@ -130,57 +131,51 @@ function wrapCodeInLaboratory(spark) {
                     height: 100%; 
                     overflow: hidden; 
                     
-                    /* Dynamically match the current theme's background */
-                    background: transparent; 
+                    /* FIXED: Apply theme background to the area around the window */
+                    background-color: var(--bg-color-mid, #00080f); 
                     
                     display: flex; 
                     align-items: center; 
                     justify-content: center;
-                    
-                    /* Inherit main text color for fallback messages */
                     color: var(--text-main-color, #ffffff);
                     font-family: var(--text-main-font, sans-serif);
                 }
 
-                /* Ensure the canvas fills the laboratory window and remains theme-transparent */
+                /* The actual simulation viewport */
                 canvas { 
                     display: block; 
                     width: 100vw !important; 
                     height: 100vh !important; 
                     image-rendering: auto; 
+                    /* Ensures the canvas background doesn't overwrite our theme */
                     background: transparent !important;
                 }
 
                 .system-error {
                     text-align: center;
                     padding: 20px;
-                    border: 1px solid var(--error-color, red);
-                    background: var(--bg-color-low, rgba(0,0,0,0.5));
+                    border: 2px solid var(--error-color, #ff4444);
+                    background: var(--bg-color-low, rgba(0,0,0,0.8));
                     color: var(--error-color, #ff4444);
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
                 }
             </style>
         </head>
         <body>
-            ${activeCode || '<div class="system-error"><h1>[ SYSTEM ERROR ]</h1><p>No Source Code Detected</p></div>'}
+            ${activeCode || '<div class="system-error"><h1>[ System Error ]</h1><p>Diagnostic: No Executable Code Found</p></div>'}
 
             <script>
                 (function() {
-                    /*
-                     * Force Laboratory Fit
-                     * Synchronizes the internal canvas resolution with the theme-responsive container
-                     */
                     function forceLaboratoryFit() {
                         const cvs = document.querySelector('canvas');
                         if (cvs) {
                             cvs.width = window.innerWidth;
                             cvs.height = window.innerHeight;
 
-                            // Standard initialization and resize hooks for generative scripts
                             if (typeof window.resize === 'function') window.resize();
                             if (typeof window.setup === 'function') window.setup();
                             if (typeof window.init === 'function') window.init();
-                            
-                            // p5.js specific handling
                             if (typeof window.resizeCanvas === 'function') {
                                 window.resizeCanvas(window.innerWidth, window.innerHeight);
                             }
@@ -189,7 +184,6 @@ function wrapCodeInLaboratory(spark) {
 
                     window.addEventListener('load', () => {
                         forceLaboratoryFit();
-                        // Delay to ensure engines like Matter.js or Three.js have finalized their DOM
                         setTimeout(forceLaboratoryFit, 150);
                     });
 
@@ -200,6 +194,7 @@ function wrapCodeInLaboratory(spark) {
         </html>
     `;
 }
+
 function loadSpark(spark) {
     const container = document.getElementById('spark-content-container');
     const titleEl = document.getElementById('active-spark-name');
