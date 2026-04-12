@@ -8,7 +8,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 12:04:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 12:47:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 // --- START CAPTURE & CROP STATE ---
 let currentBurstFrames = []; 
@@ -636,7 +636,24 @@ watchAuthState(async (user) => {
     
     setupInteractions();
 });
+/**
+ * Objective: Initialize HUD interactions and event listeners.
+ */
+function initSparkHUD() {
+    const reloadBtn = document.getElementById('reload-spark-btn');
+    
+    if (reloadBtn) {
+        reloadBtn.onclick = () => {
+            if (window.currentSpark) {
+                console.log("[SYSTEM] Reloading Spark...");
+                loadSpark(window.currentSpark);
+            }
+        };
+    }
+}
 
+// Call it when the script loads
+document.addEventListener('DOMContentLoaded', initSparkHUD);
 // Bind UI actions to window scope for HTML access
 window.loadSpark = loadSpark;
 window.closeBurstPicker = closeBurstPicker;
