@@ -11,10 +11,13 @@ window.get = get;
 // Build Check: Manually update the time string below when pushing new code
 console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 08:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
+/* export variables that spark.js will use */
+export let databaseCache = {};
+export let globalTheme = "neon-dark";
+
+/* local variables of entire file scope */
 let user
-let databaseCache = {};
 let selectedCategory = null;
-let globalTheme = "neon-dark";
 let cachedGKey = null;
 
 /*
