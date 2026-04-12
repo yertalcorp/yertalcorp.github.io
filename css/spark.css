@@ -234,7 +234,7 @@ iframe {
     z-index: 10008;
 }
 #spark-title-overlay {
-    top: 20px;
+    top: 10px;
     left: 50%;
     transform: translateX(-50%);
     width: auto;
