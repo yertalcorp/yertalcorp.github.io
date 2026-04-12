@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 08:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 let user
 let databaseCache = {};
@@ -883,10 +883,11 @@ window.handleCreation = async (currentId, currentName) => {
     const input = promptInput ? promptInput.value.trim() : '';
     if (!input) return;
 
-    const categorySelect = document.getElementById(`select-${currentId}`);
+    const categoryFromSelect = document.getElementById(`select-${currentId}`);
     const status = document.getElementById('engine-status-text');
     status.textContent = "PROCESSING INFRASTRUCTURE...";
 
+    const categorySelect = categoryFromSelect.trim();
     let resolvedCategory;
 
     try {
@@ -900,7 +901,7 @@ window.handleCreation = async (currentId, currentName) => {
             // If find fails, fallback to regex as a last resort
             if (!resolvedCategory) resolvedCategory = resolveCategoryFromPrompt(input);
         }
-        
+        console.log("handleCreation: Resolved current type is:", resolvedCategory);
         // Pass the resolved object directly to the engine
         await executeMassSpark(
             currentId, 
@@ -1411,13 +1412,14 @@ Quantity: Generate ${count > 0 ? count : 1} ${isSource ? "data entries" : "code 
 async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeObject) {
     const status = document.getElementById('engine-status-text');
     
-    // 1. SAFETY CHECK
+    // 1. SAFETY CHECK DISABLED FOR NOW.  LET USERS CREATE WHATEVER THEY WANT.
+    /*
     if (currentName && promptTypeObject.name.toLowerCase() !== currentName.toLowerCase() && promptTypeObject.name.toLowerCase() !== 'custom') {
         if (!confirm(`⚠️ Warning: The prompt category doesn't match the current type.\n\n` +
                      `Either change the prompt to use the current type [${currentName}] or create/use a current for [${promptTypeObject.name}].\n\n` +
                      `Do you want to continue anyway?`)) return; 
     }
-    
+    */
     // 2. CAPACITY VALIDATION
     const planLimits = databaseCache.settings?.['plan_limits']?.[databaseCache.users?.[user.uid]?.profile?.plan_type || 'free'] || databaseCache.settings?.['plan_limits']?.['free'];
     const remainingSpace = planLimits.max_sparks_per_current - Object.keys(databaseCache.users?.[user.uid]?.infrastructure?.currents?.[currentId]?.sparks || {}).length;
