@@ -1,5 +1,6 @@
 import { getArcadeData, saveToRealtimeDB } from '/config/firebase-config.js';
 import { watchAuthState } from '/config/auth.js';
+import { globalTheme, applyTheme, databaseCache } from './arcade.js';
 
 let allSparks = [];
 let currentIndex = -1;
@@ -7,7 +8,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 10:19:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 12:04:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 // --- START CAPTURE & CROP STATE ---
 let currentBurstFrames = []; 
@@ -355,12 +356,21 @@ function wrapCodeInLaboratory(spark) {
     `;
 }
 
+/**
+ * Objective: Load a specific spark into the viewport and apply owner branding.
+ */
 function loadSpark(spark) {
     const container = document.getElementById('spark-content-container');
     const titleEl = document.getElementById('active-spark-name');
     const overlay = document.getElementById('spark-title-overlay');
     const hudStatus = document.getElementById('hud-status');
     const fallbackBtn = document.getElementById('fallback-url-btn');
+    
+    // 1. IDENTITY INITIALIZATION [cite: 2026-02-17]
+    // Apply the owner's global theme variables to the document root
+    if (databaseCache) {
+        applyTheme(globalTheme);
+    }
     
     // Log Spark Metadata
     console.log(`%c[YERTAL LAB] Loading Spark: ${spark.name}`, "color: #00f2ff; font-weight: bold;");
@@ -628,6 +638,7 @@ watchAuthState(async (user) => {
 });
 
 // Bind UI actions to window scope for HTML access
+window.loadSpark = loadSpark;
 window.closeBurstPicker = closeBurstPicker;
 window.closeCropModal = closeCropModal;
 window.finalizeAndUploadCrop = finalizeAndUploadCrop;
