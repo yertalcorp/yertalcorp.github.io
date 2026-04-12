@@ -9,16 +9,56 @@ let thumbInterval = null;
 
 console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:03:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
-/*
- * Captures the raw pixel data from the game canvas.
- * @param {HTMLCanvasElement} canvas - The active game canvas.
- */
-function takeScreenshot(canvas) {
-    // If using Three.js, ensure 'preserveDrawingBuffer: true' was set 
-    // in the renderer, or call this inside the render loop.
-    return canvas.toDataURL('image/png');
+let currentBurstFrames = []; // Temporary storage for the 6 URLs
+
+async function captureBurst() {
+    const IMGBB_API_KEY = "YOUR_KEY";
+    currentBurstFrames = []; // Reset
+    const status = document.getElementById('hud-status');
+    
+    // Capture 6 frames with a 500ms gap to catch movement
+    for (let i = 0; i < 6; i++) {
+        try {
+            const iframe = document.getElementById('content-frame');
+            const canvas = await html2canvas(iframe.contentWindow.document.body, { useCORS: true, scale: 0.4 });
+            const imageData = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+
+            const formData = new FormData();
+            formData.append("image", imageData);
+
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                currentBurstFrames.push(result.data.url);
+                // Set the very first one as the immediate preview
+                if (i === 0) updateThumbCanvas(result.data.url);
+            }
+            
+            // Wait 500ms before next shot
+            await new Promise(r => setTimeout(r, 500));
+        } catch (e) {
+            console.error("Burst frame failed", e);
+        }
+    }
+    status.textContent = "BURST CAPTURE READY";
 }
 
+function updateThumbCanvas(url) {
+    const canvas = document.getElementById('live-thumb-canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = url;
+}
 /*
  * Clips the edges and resizes a screenshot to 240x135.
  * @param {string} dataUrl - The raw screenshot DataURL.
