@@ -802,29 +802,41 @@ select.current-prompt-input {
     scrollbar-color: var(--glow-color) var(--bg-color);
 }
 
-/* 2. Target the scrollbar for Chrome, Edge, and Safari */
-/* This works on the 'size' attribute lists and standard dropdown behaviors */
+/* 1. Target the scrollbar for Chrome, Edge, and Safari */
+/* The width here defines the 'thin' default state */
 select.current-prompt-input::-webkit-scrollbar {
-    width: 4px; /* Ultra-thin for a "graceful" look */
+    width: 4px; 
+    transition: width 0.3s ease; /* Smooth transition for expansion */
 }
 
+/* Expand the scrollbar width when the user hovers over the select box */
+select.current-prompt-input:hover::-webkit-scrollbar {
+    width: 8px; 
+}
+
+/* 2. Scrollbar Track */
 select.current-prompt-input::-webkit-scrollbar-track {
     background: var(--bg-color);
-    border-left: 1px solid var(--glow-aura); /* Subtle separation line */
+    border-left: 1px solid var(--glow-aura);
 }
 
+/* 3. Scrollbar Thumb (The moving part) */
 select.current-prompt-input::-webkit-scrollbar-thumb {
-    background-color: var(--glow-color);
+    background-color: var(--branding-color); /* Set to branding color */
     border-radius: 10px;
-    /* Adding a glow effect to the scrollbar thumb */
-    box-shadow: 0 0 5px var(--glow-color); 
+    /* Subtle glow using branding color */
+    box-shadow: 0 0 5px var(--branding-color);
+    transition: background-color 0.3s ease;
 }
 
-/* 3. Handle the hover state for the scrollbar */
+/* 4. Thumb Hover State */
 select.current-prompt-input::-webkit-scrollbar-thumb:hover {
-    background-color: var(--fg-color-high); /* Brighten on hover */
+    background-color: var(--fg-color-high); /* Brighten for feedback */
+    box-shadow: 0 0 10px var(--fg-color-high);
 }
-    /* THEMED STYLES */
+
+/* 5. The Select Input Themed Styles */
+select.current-prompt-input::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(180deg, 
         rgba(255, 255, 255, 0.1) 0%, 
         var(--bg-color) 45%, 
@@ -835,16 +847,16 @@ select.current-prompt-input::-webkit-scrollbar-thumb:hover {
     border: none;
     border-left: 1px solid var(--glow-aura);
     font-size: 9px;
-    font-weight: 900;
+    font-weight: 300; /* Changed from 900 to 300 for that 'sleeker' look we discussed */
+    letter-spacing: 0.5px; /* Added for the sleek aesthetic */
     cursor: pointer;
     text-transform: uppercase;
     transition: all 0.3s ease;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    
-    /* Ensure no line-height or padding-top is pushing it down */
     line-height: 1;
+    -webkit-font-smoothing: antialiased; /* Added for thinner rendering */
+    -moz-osx-font-smoothing: grayscale;
 }
-
 .current-prompt-exec-button:hover {
     background: var(--glow-color);
     color: var(--bg-color);
