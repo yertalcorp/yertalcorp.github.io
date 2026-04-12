@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1770,20 +1770,26 @@ function resolveCategoryFromPrompt(prompt, currentName) {
             nameMatches = nameRegex.test(cleanPrompt);
         }
         
-        // C. Check Regex match (Whole Word)
-        let regexMatches = false;
-        if (category.regex) {
-            try {
-                const boundedRegex = `\\b(${category.regex})\\b`;
-                const regexPattern = new RegExp(boundedRegex, 'i');
-                const promptHitsRegex = regexPattern.test(cleanPrompt);
-                const tokenHitsRegex = tokens.some(token => regexPattern.test(token));
-                
-                regexMatches = promptHitsRegex || tokenHitsRegex;
-            } catch (regexErr) {
-                console.warn(`[resolveCategoryFromPrompt]: Invalid regex defined for category ${category.id}:`, regexErr);
-            }
+// C. Check Regex match (Whole Word)
+let regexMatches = false;
+if (category.regex) {
+    try {
+        // CLEANUP: Remove leading/trailing pipes and double pipes which create "empty" matches
+        const sanitizedRegex = category.regex.replace(/^\|+|\|+$/g, '').replace(/\|\|+/g, '|');
+        
+        if (sanitizedRegex) {
+            const boundedRegex = `\\b(${sanitizedRegex})\\b`;
+            const regexPattern = new RegExp(boundedRegex, 'i');
+            
+            const promptHitsRegex = regexPattern.test(cleanPrompt);
+            const tokenHitsRegex = tokens.some(token => regexPattern.test(token));
+            
+            regexMatches = promptHitsRegex || tokenHitsRegex;
         }
+    } catch (regexErr) {
+        console.warn(`[resolveCategoryFromPrompt]: Invalid regex for ${category.id}:`, regexErr);
+    }
+}
         
         // If it specifically matches the ID, Name, or defined Regex:
         if (idMatches || nameMatches || regexMatches) {
