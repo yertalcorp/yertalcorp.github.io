@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -892,6 +892,8 @@ window.handleCreation = async (currentId, currentName) => {
 
     let resolvedCategory;
 
+    console.log("handleCreation: Selected Category is: ", categorySelect.value);
+    
     try {
         // Use categorySelect.value directly to determine resolution path
         if (!categorySelect || categorySelect.value === '-- CUSTOM PROMPT --' || categorySelect.value === '') {
@@ -999,12 +1001,12 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         const sparkCount = sparks.length;
         const isFull = sparkCount >= maxSparks;
         const meterColor = isFull ? 'var(--error-color, #ef4444)' : 'var(--glow-color)';
-
+/* the selection for the current */
 const controls = (isOwner && !isFull) ? `
     <div class="current-prompt-container">
 <div class="current-type-selector-wrapper">
     <span class="current-prompt-label" style="display: block; justify-items: center; font-color: var(--fg-color-high);">CREATE OR SOURCE</span>
-    <select id="type-select-${current.id}" class="current-prompt-input" onchange="const inp = document.getElementById('input-${current.id}'); inp.value = this.value; inp.focus(); inp.scrollLeft = 0; inp.setSelectionRange(0, 0);">
+    <select id="select-${current.id}" class="current-prompt-input" onchange="const inp = document.getElementById('input-${current.id}'); inp.value = this.value; inp.focus(); inp.scrollLeft = 0; inp.setSelectionRange(0, 0);">
         <option value="">-- CUSTOM PROMPT --</option>
         ${(databaseCache.settings?.['arcade-current-types'] || []).map(type => `
             <option value="${type.example_prompt}">${type.name.toUpperCase()}</option>
@@ -1338,7 +1340,7 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const instructions = isSource ? 
         `Return the most specific match. 
         -Format: JSON array [{"name", "url", "description"}].` : 
-        `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects that follows this model: ${promptTypeObject.name}.
+        `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects to complete the task.
         -Format: JSON object {"name", "code"} and name has maximum 3 words.`;
 
     return `
@@ -1466,7 +1468,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
             for (let i = 0; i < linksToSave.length; i++) {
                 const sparkName = linksToSave.length > 1 && linksToSave[i].name.startsWith('spark_') ? `${linksToSave[i].name}-${i + 1}` : linksToSave[i].name;
                 
-                await saveSpark(currentId, { name: sparkName, link: linksToSave[i].url, prompt, type: 'link', image: promptTypeObject.image }, promptTypeObject.name, promptTypeObject.image);
+                await saveSpark(currentId, {name: sparkName, link: linksToSave[i].url,image: promptTypeObject.image},prompt, promptTypeObject.name, promptTypeObject.image);
                 
                 const progress = Math.round(((i + 1) / linksToSave.length) * 100);
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
@@ -1488,13 +1490,17 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 
                 const isCode = typeof sparkContent === 'string' && (sparkContent.trim().startsWith('<') || sparkContent.trim().startsWith('function') || sparkContent.trim().startsWith('const') || sparkContent.trim().includes('document.'));
                 
-                await saveSpark(currentId, { 
-                    name: sparkName, 
-                    [isCode ? 'code' : 'link']: sparkContent, 
-                    prompt, 
-                    type: isCode ? 'code' : 'link', 
-                    image: promptTypeObject.image 
-                }, promptTypeObject.name, promptTypeObject.image);
+                await saveSpark(
+                    currentId, 
+                    { 
+                        name: sparkName, 
+                        [isCode ? 'code' : 'link']: sparkContent, 
+                        image: promptTypeObject.image 
+                    }, 
+                    prompt,
+                    promptTypeObject.name,
+                    promptTypeObject.image
+                );
             }
             updateForgeStatus(`FORGING ${resolution.count} SPARKS [==========] 100%`);
         }
@@ -1710,8 +1716,8 @@ function resolveCategoryFromPrompt(prompt, currentName) {
     // Split into words/tokens and remove punctuation
     const tokens = cleanPrompt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").split(/\s+/);
     
-    console.log(`[DEBUG_REGEX]: Evaluating prompt: "${cleanPrompt}"`);
-    console.log(`[DEBUG_REGEX]: Extracted tokens:`, tokens);
+    console.log(`[resolveCategoryFromPrompt]: Evaluating prompt: "${cleanPrompt}"`);
+    console.log(`[resolveCategoryFromPrompt]: Extracted tokens:`, tokens);
     
     const presets = databaseCache.settings?.['arcade-current-types'] || [];
     
@@ -1775,7 +1781,7 @@ function resolveCategoryFromPrompt(prompt, currentName) {
                 
                 regexMatches = promptHitsRegex || tokenHitsRegex;
             } catch (regexErr) {
-                console.warn(`[DEBUG_REGEX]: Invalid regex defined for category ${category.id}:`, regexErr);
+                console.warn(`[resolveCategoryFromPrompt]: Invalid regex defined for category ${category.id}:`, regexErr);
             }
         }
         
@@ -1805,7 +1811,7 @@ function resolveCategoryFromPrompt(prompt, currentName) {
     // ==========================================
     // 3. ULTIMATE FALLBACK
     // ==========================================
-    console.log(`[DEBUG_REGEX]: No matches found in DB. Falling back to [Custom].`);
+    console.log(`[resolveCategoryFromPrompt]: No matches found in DB. Falling back to [Custom].`);
     
     // Fallback still respects whole words
     const isCreate = /\b(generate|build|create)\b/i.test(cleanPrompt);
