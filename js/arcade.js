@@ -1017,7 +1017,7 @@ const controls = (isOwner && !isFull) ? `
 </div>
           <input type="text" id="input-${current.id}" 
                class="current-prompt-input"
-               placeholder="Type your prompt or paste a URL..." 
+               placeholder=" Type your prompt or paste a URL..." 
                onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '${current.name}')">
         <button onclick="window.handleCreation('${current.id}', '${current.name}')" class="current-prompt-exec-button">
             EXEC
