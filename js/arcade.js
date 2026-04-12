@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 08:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -886,11 +886,10 @@ window.handleCreation = async (currentId, currentName) => {
     const input = promptInput ? promptInput.value.trim() : '';
     if (!input) return;
 
-    const categoryFromSelect = document.getElementById(`select-${currentId}`);
+    const categorySelect = document.getElementById(`select-${currentId}`);
     const status = document.getElementById('engine-status-text');
     status.textContent = "PROCESSING INFRASTRUCTURE...";
 
-    const categorySelect = categoryFromSelect.trim();
     let resolvedCategory;
 
     try {
