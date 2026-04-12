@@ -998,7 +998,7 @@ header {
 }
 
 /* Arcade Button for HUB, spark card */
-.arcade-buttons {
+.arcade-button {
     border: 1px solid var(--border-color);
     padding: 2px 8px;
     border-radius: 3px;
@@ -1014,7 +1014,7 @@ header {
     text-align: center;
 }
 
-.arcade-buttons:hover {
+.arcade-button:hover {
     box-shadow: 0 0 12px var(--glow-color, #00f2ff);
     border-color: var(--glow-color, #00f2ff);
     transform: translateY(-1px);
