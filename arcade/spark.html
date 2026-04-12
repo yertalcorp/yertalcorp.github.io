@@ -82,21 +82,24 @@
         </div>
 
         <div class="hud-control-stack">
-            <div class="hud-row">
-                <button id="play-pause-btn" class="bg-transparent border-none p-0 cursor-pointer hover:scale-110 transition-transform">
-                    <i class="fas fa-play" id="play-icon"></i>
-                </button>
-                <button id="reload-spark-btn" class="hud-btn" title="Restart Spark">
-                    <span class="fas fa-sync">↻</span>
-                </button>
-                <div class="media-progress-container" id="progress-container">
-                    <div id="media-progress-bar"></div>
-                </div>
+<div class="hud-row">
+    <div class="flex items-center gap-4"> <button id="play-pause-btn" class="hud-icon-btn" title="Play/Pause">
+            <i class="fa-solid fa-play" id="play-icon"></i>
+        </button>
+        
+        <button id="reload-spark-btn" class="hud-icon-btn" title="Restart Spark">
+            <i class="fa-solid fa-rotate-right"></i>
+        </button>
+    </div>
 
-                <div class="media-time-display">
-                    <span id="current-time">0:00</span> / <span id="total-duration">0:00</span>
-                </div>
-            </div>
+    <div class="media-progress-container" id="progress-container">
+        <div id="media-progress-bar"></div>
+    </div>
+
+    <div class="media-time-display">
+        <span id="current-time">0:00</span> / <span id="total-duration">0:00</span>
+    </div>
+</div>
 
             <div class="hud-row">
                 <button id="set-cover-btn" class="generate-btn" onclick="openBurstPicker()">
