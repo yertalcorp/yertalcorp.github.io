@@ -5,7 +5,7 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background: radial-gradient(circle at center, var(--bg-color-low) 0%, var(--bg-color-mid) 100%);
+    background: radial-gradient(circle at center, var(--bg-color-mid) 0%, var(--bg-color-high) 100%);
     margin: 0;
     overflow: hidden;
     font-family: var(--text-main-font);
@@ -22,7 +22,7 @@
     margin-top: 20px;
     
     /* Depth and "Window" Effect */
-    border: 3px solid var(--fg-color-low);
+    border: 2px solid var(--fg-color-low);
     box-shadow: 
         0 20px 60px rgba(0, 0, 0, 0.9), /* Use standard black for depth */
         0 0 40px var(--box-shadow-color-aura),
@@ -41,10 +41,10 @@
 #spark-content-container::after {
     content: '';
     position: absolute;
-    inset: -10px;
-    border-radius: 30px;
+    inset: -2px;
+    border-radius: 24px;
     background: var(--glow-color-aura);
-    filter: blur(20px);
+    filter: blur(15px);
     z-index: -1;
     pointer-events: none;
 }
@@ -55,7 +55,6 @@ iframe {
     flex-grow: 1;
     border: none; 
     display: block;
-    border-radius: 20px;
     background: transparent;
 }
 
@@ -67,12 +66,12 @@ iframe {
     flex-direction: row;
     align-items: center;
     gap: 20px;
-    padding: 16px 32px;
+    padding: 16px 24px;
     z-index: 10015;
     
     min-width: 600px;
     max-width: 85vw;
-    border-radius: 16px;
+    border-radius: 12px;
     
     /* Themed Glassmorphism */
     background: var(--card-bg);
@@ -86,7 +85,7 @@ iframe {
 .hud-control-stack { 
     display: flex; 
     flex-direction: column; 
-    gap: 12px; 
+    gap: 8px; 
     flex-grow: 1; 
 }
 
@@ -95,17 +94,17 @@ iframe {
     align-items: center; 
     justify-content: space-between;
     width: 100%;
-    gap: 24px;
 }
 
 /* --- Interactive Elements --- */
 .media-progress-container {
     height: 4px;
-    background: var(--fg-color-low);
+    background: var(--bg-color-high);
     border-radius: 2px;
     position: relative;
     cursor: pointer;
     flex-grow: 1;
+    margin: 0 15px;
 }
 /* Time Display Logic */
 .media-time-display {
@@ -137,6 +136,7 @@ iframe {
     text-transform: uppercase;
     color: var(--fg-color-mid);
     font-weight: bold;
+    text-shadow: 0 0 8px var(--glow-color-aura);
 }
 
 /* 3D Button Styling */
@@ -149,13 +149,15 @@ iframe {
     border-radius: 4px;
     cursor: pointer;
     font-weight: 700;
-    font-size: 10px;
-    transition: transform 0.2s;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
 }
 
 .generate-btn:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.2);
+    transform: translateY(-1px);
+    filter: brightness(1.2) drop-shadow(0 0 5px var(--glow-color-aura));
 }
 
 /* Navigation Reveal Styles */
@@ -185,11 +187,11 @@ iframe {
 }
 
 #prev-zone {
-    left: 30px;
+    left: 15px;
 }
 
 #next-zone {
-    right: 30px;
+    right: 15px;
 }
 #next-zone:hover .nav-reveal {
     opacity: 1;
@@ -252,8 +254,8 @@ iframe {
 .zen-active #spark-title-overlay {
     opacity: 0;
     pointer-events: none;
-    visibility: hidden;
     transform: translateY(30px);
+    visibility:hidden;
 }
 
 /* Mini Monitor Preview */
@@ -272,13 +274,16 @@ iframe {
 .thumb-hover { 
     position: absolute; 
     inset: 0; 
-    background: rgba(0,0,0,0.7); 
+    background: rgba(0,0,0,0.8);
+    flex-direction: column;
     display: flex; 
     align-items: center; 
     justify-content: center; 
     opacity: 0; 
     transition: 0.3s; 
     color: var(--branding-color); 
+    font-size: 10px;
+    font-weight: bold;
 }
 
 .thumb-box-viewport:hover .thumb-hover { 
@@ -302,15 +307,15 @@ iframe {
 /* Container for the navigation zones */
 #spark-content-container:hover ~ .nav-zone,
 #spark-content-container:hover .nav-arrow {
-    opacity: 1 !important;
+    opacity: 0.6;
 }
 
 .nav-arrow {
     position: absolute;
     top: 50%; /* Height centered with viewport */
     transform: translateY(-50%);
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     border: 4px solid var(--branding-color); /* Thicker circular border */
     border-radius: 50%;
     display: flex;
@@ -326,7 +331,8 @@ iframe {
 }
 
 .nav-arrow:hover {
+    opacity: 1;
     background: var(--branding-color);
-    color: var(--bg-color);
-    box-shadow: 0 0 15px var(--box-shadow-color);
+    color: var(--bg-color-high);
+    box-shadow: 0 0 20px var(--glow-color);
 }
