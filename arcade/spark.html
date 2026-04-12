@@ -43,7 +43,14 @@
     </div>
 
     <div id="spark-content-container"></div>
-
+<div id="burst-picker-hud" class="fixed inset-0 bg-black/80 z-[11000] hidden flex-col items-center justify-center p-10">
+    <h2 class="text-white uppercase tracking-widest mb-6">Select Best Cover</h2>
+    <div id="burst-grid" class="flex gap-4 overflow-x-auto pb-6 max-w-full">
+        </div>
+    <div class="flex gap-4">
+        <button onclick="closeBurstPicker()" class="arcade-button">Cancel</button>
+    </div>
+</div>
     <div id="spark-hud" class="fx-glass-hud fx-neon-border">
         
         <div id="thumb-trigger" class="thumb-box-viewport">
