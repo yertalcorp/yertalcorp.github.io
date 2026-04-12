@@ -15,8 +15,8 @@
 /* The "Window to the Spark" Viewport */
 #spark-content-container { 
     position: relative;
-    width: 85vw; 
-    height: 75vh; 
+    width: 75vw; 
+    height: 65vh; 
     background: var(--bg-color); 
     border-radius: 24px;
     margin-top: 20px;
