@@ -25,7 +25,7 @@
         </h1>
     </div>
 
-    <button id="exit-btn" class="fixed top-5 left-5 z-[10001] generate-btn flex items-center gap-2">
+    <button id="exit-btn" class="fixed top-5 left-5 z-[10001] arcade-button flex items-center gap-2">
         <i class="fas fa-arrow-left"></i>
         <span class="text-[10px] font-bold uppercase">Back to Arcade</span>
     </button>
@@ -49,7 +49,7 @@
         <div id="burst-grid" class="flex gap-4 overflow-x-auto pb-6 max-w-full scrollbar-thin scrollbar-thumb-cyan-500">
             </div>
         <div class="flex gap-4 mt-4">
-            <button onclick="closeBurstPicker()" class="generate-btn border-gray-500 text-gray-400">Cancel</button>
+            <button onclick="closeBurstPicker()" class="arcade-button border-gray-500 text-gray-400">Cancel</button>
         </div>
     </div>
 
@@ -65,7 +65,7 @@
         </div>
 
         <div class="flex gap-8 mt-8">
-            <button onclick="closeCropModal()" class="generate-btn opacity-50 hover:opacity-100">Cancel</button>
+            <button onclick="closeCropModal()" class="arcade-button opacity-50 hover:opacity-100">Cancel</button>
             <button onclick="finalizeAndUploadCrop()" class="generate-btn px-12 shadow-lg">Finalize & Sync to Cloud</button>
         </div>
     </div>
@@ -107,7 +107,7 @@
                 <input type="file" id="manual-upload" style="display:none" accept="image/*">
                 
                 <div class="status-group">
-                    <button id="zen-btn" class="generate-btn py-1 px-3">
+                    <button id="zen-btn" class="arcade-button py-1 px-3">
                         <i class="fas fa-expand text-xs"></i>
                     </button>
                     <div id="hud-status" class="status-readout-small text-cyan-500/80 uppercase">Initializing...</div>
