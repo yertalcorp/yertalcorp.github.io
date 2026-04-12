@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -886,13 +886,15 @@ window.handleCreation = async (currentId, currentName) => {
     const input = promptInput ? promptInput.value.trim() : '';
     if (!input) return;
 
-    const categorySelect = document.getElementById(`select-${currentId}`);
+    const categorySelectObject = document.getElementById(`select-${currentId}`);
     const status = document.getElementById('engine-status-text');
     status.textContent = "PROCESSING INFRASTRUCTURE...";
-
+    // Access the text of the currently selected option
+    const categorySelect = categorySelectObject.options[categorySelectObject.selectedIndex].text.trim();
+    
     let resolvedCategory;
 
-    console.log("handleCreation: Selected Category is: ", categorySelect.value);
+    console.log("handleCreation: Selected Category is: ", categorySelect);
     
     try {
         // Use categorySelect.value directly to determine resolution path
