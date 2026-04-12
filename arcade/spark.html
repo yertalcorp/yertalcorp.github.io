@@ -46,7 +46,21 @@
 <div id="burst-picker-hud" class="fixed inset-0 bg-black/80 z-[11000] hidden flex-col items-center justify-center p-10">
     <h2 class="text-white uppercase tracking-widest mb-6">Select Best Cover</h2>
     <div id="burst-grid" class="flex gap-4 overflow-x-auto pb-6 max-w-full">
+    </div>
+    <div id="crop-modal" class="fixed inset-0 bg-black/90 z-[12000] hidden flex-col items-center justify-center p-5">
+    <div class="relative max-w-[80vw] max-h-[70vh] border-2 border-cyan-500/30">
+        <canvas id="crop-canvas" class="max-w-full max-h-full cursor-crosshair"></canvas>
+        
+        <div class="absolute top-2 left-2 bg-black/50 text-[10px] text-white px-2 py-1 uppercase tracking-tighter">
+            Click and drag to select crop area
         </div>
+    </div>
+
+    <div class="flex gap-6 mt-8">
+        <button onclick="closeCropModal()" class="arcade-button opacity-50">Cancel</button>
+        <button onclick="finalizeAndUploadCrop()" class="generate-btn px-10">Finalize & Sync</button>
+    </div>
+</div>
     <div class="flex gap-4">
         <button onclick="closeBurstPicker()" class="arcade-button">Cancel</button>
     </div>
