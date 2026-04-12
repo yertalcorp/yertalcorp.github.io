@@ -30,15 +30,15 @@
         <span class="text-[10px] font-bold uppercase">Back to Arcade</span>
     </button>
 
-    <div id="prev-zone" class="fixed left-0 top-0 w-24 h-full z-[9000] flex items-center justify-center cursor-pointer group">
-        <div class="nav-reveal">
-            <i class="fas fa-chevron-left text-3xl"></i>
+    <div id="prev-zone" class="fixed left-0 top-0 w-32 h-full z-[9000] flex items-center justify-center cursor-pointer group">
+        <div class="nav-arrow">
+            <i class="fas fa-chevron-left"></i>
         </div>
     </div>
     
-    <div id="next-zone" class="fixed right-0 top-0 w-24 h-full z-[9000] flex items-center justify-center cursor-pointer group">
-        <div class="nav-reveal">
-            <i class="fas fa-chevron-right text-3xl"></i>
+    <div id="next-zone" class="fixed right-0 top-0 w-32 h-full z-[9000] flex items-center justify-center cursor-pointer group">
+        <div class="nav-arrow">
+            <i class="fas fa-chevron-right"></i>
         </div>
     </div>
 
@@ -68,8 +68,14 @@
 
             <div class="hud-row">
                 <button id="set-cover-btn" class="generate-btn">
-                    Update Thumbnail
+                    Capture Live
                 </button>
+                
+                <button id="upload-trigger-btn" class="generate-btn" style="border-style: dashed;">
+                    Upload File
+                </button>
+                
+                <input type="file" id="manual-upload" style="display:none" accept="image/*">
                 
                 <div class="status-group">
                     <button id="zen-btn" class="arcade-button py-1 px-3">
