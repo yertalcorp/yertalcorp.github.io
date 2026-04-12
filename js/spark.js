@@ -8,7 +8,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 12:47:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:58:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 // --- START CAPTURE & CROP STATE ---
 let currentBurstFrames = []; 
@@ -583,8 +583,6 @@ function setupInteractions() {
     
     // Keyboard Shortcuts
     window.onkeydown = (e) => {
-        if (e.key === 'ArrowLeft') navigate(-1);
-        if (e.key === 'ArrowRight') navigate(1);
         if (e.key.toLowerCase() === 'z') toggleZen();
         if (e.key === 'Escape') toggleZen(); 
     };
