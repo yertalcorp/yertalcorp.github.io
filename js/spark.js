@@ -11,6 +11,72 @@ console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:0
 
 let currentBurstFrames = []; // Temporary storage for the 6 URLs
 
+let cropStart = null;
+let cropArea = { x: 0, y: 0, w: 0, h: 0 };
+let sourceImage = new Image();
+
+function openCropTool(imageUrl) {
+    const modal = document.getElementById('crop-modal');
+    const canvas = document.getElementById('crop-canvas');
+    const ctx = canvas.getContext('2d');
+
+    sourceImage.crossOrigin = "anonymous";
+    sourceImage.onload = () => {
+        // Match canvas to image aspect ratio
+        canvas.width = sourceImage.width;
+        canvas.height = sourceImage.height;
+        ctx.drawImage(sourceImage, 0, 0);
+        modal.classList.remove('hidden');
+        
+        // Reset crop area
+        cropArea = { x: 0, y: 0, w: canvas.width, h: canvas.height };
+    };
+    sourceImage.src = imageUrl;
+
+    // Mouse Logic for Selection
+    canvas.onmousedown = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        cropStart = { x: (e.clientX - rect.left) * (canvas.width / rect.width), 
+                      y: (e.clientY - rect.top) * (canvas.height / rect.height) };
+    };
+
+    canvas.onmousemove = (e) => {
+        if (!cropStart) return;
+        const rect = canvas.getBoundingClientRect();
+        const currentX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const currentY = (e.clientY - rect.top) * (canvas.height / rect.height);
+        
+        // Redraw image + selection rectangle
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(sourceImage, 0, 0);
+        ctx.strokeStyle = "#00f2ff";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(cropStart.x, cropStart.y, currentX - cropStart.x, currentY - cropStart.y);
+        
+        cropArea = { x: cropStart.x, y: cropStart.y, w: currentX - cropStart.x, h: currentY - cropStart.y };
+    };
+
+    canvas.onmouseup = () => { cropStart = null; };
+}
+
+async function finalizeAndUploadCrop() {
+    const finalCanvas = document.createElement('canvas');
+    const finalCtx = finalCanvas.getContext('2d');
+    
+    // Set final size to the cropped dimensions
+    finalCanvas.width = Math.abs(cropArea.w);
+    finalCanvas.height = Math.abs(cropArea.h);
+
+    finalCtx.drawImage(
+        sourceImage, 
+        cropArea.x, cropArea.y, cropArea.w, cropArea.h, // Source
+        0, 0, finalCanvas.width, finalCanvas.height    // Destination
+    );
+
+    const croppedBase64 = finalCanvas.toDataURL('image/jpeg', 0.9).split(',')[1];
+    await executeImgBBUpload(croppedBase64); // Reuse your upload logic
+    closeCropModal();
+}
 function openBurstPicker() {
     const hud = document.getElementById('burst-picker-hud');
     const grid = document.getElementById('burst-grid');
