@@ -744,10 +744,11 @@ main.max-width-limit {
     background: transparent;
     border: none;
     outline: none;
-    color: var(--fg-color-high);
+    color: var(--bg-color-low);
+    font-weight: 300;
     font-size: 9px; /* Reduced for sleeker look */
     padding: 0 12px;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     height: 100%;
     width: auto;
 }
