@@ -8,7 +8,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:58:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 19:07:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 // --- START CAPTURE & CROP STATE ---
 let currentBurstFrames = []; 
@@ -537,55 +537,114 @@ function togglePlayPause() {
     }
 }
 
-function setupInteractions() {
-    // Nav & Cover Binding
-    document.getElementById('set-cover-btn').onclick = openBurstPicker;
-    
-    document.getElementById('prev-zone').onclick = (e) => {
-        e.stopPropagation();
-        navigate(-1);
-    };
-    
-    document.getElementById('next-zone').onclick = (e) => {
-        e.stopPropagation();
-        navigate(1);
-    };
 
+/**
+ * Objective: Initialize HUD and navigation interactions.
+ * Task: Restrict navigation to mouse-only via side zones and reserve arrow keys for viewport gameplay.
+ */
+function setupInteractions() {
+    // 1. Navigation: Mouse-Only via side zones
+    const prevZone = document.getElementById('prev-zone');
+    const nextZone = document.getElementById('next-zone');
+
+    if (prevZone) {
+        prevZone.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            console.log("[NAV] Navigating to Previous Spark...");
+            navigate(-1);
+        };
+    }
+
+    if (nextZone) {
+        nextZone.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            console.log("[NAV] Navigating to Next Spark...");
+            navigate(1);
+        };
+    }
+
+    // 2. HUD & Cover Bindings
+    document.getElementById('set-cover-btn').onclick = openBurstPicker;
+    document.getElementById('thumb-trigger').onclick = openBurstPicker;
+    
     // UI Toggles
     document.getElementById('zen-btn').onclick = toggleZen;
-    document.getElementById('play-pause-btn').onclick = (e) => {
-        e.stopPropagation(); 
-        togglePlayPause();
-    };
+    
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    if (playPauseBtn) {
+        playPauseBtn.onclick = (e) => {
+            e.stopPropagation(); 
+            togglePlayPause();
+        };
+    }
 
+    // Toggle play/pause on viewport click (useful for pausing sims)
     document.getElementById('spark-content-container').onclick = togglePlayPause;
 
-    // Exit Logic
-    document.getElementById('exit-btn').onclick = () => {
-        const params = new URLSearchParams(window.location.search);
-        const userSlug = params.get('user') || 'yertal-arcade';
+    // 3. Reload Logic
+    const reloadBtn = document.getElementById('reload-spark-btn');
+    if (reloadBtn) {
+        reloadBtn.onclick = () => {
+            if (window.currentSpark) {
+                console.log("[SYSTEM] Reloading Spark...");
+                loadSpark(window.currentSpark);
+            }
+        };
+    }
+
+    // 4. Exit Logic: Return to Showroom
+    const exitBtn = document.getElementById('exit-btn');
+    if (exitBtn) {
+        exitBtn.onclick = () => {
+            const params = new URLSearchParams(window.location.search);
+            const userSlug = params.get('user') || 'yertal-arcade';
+        
+            if (thumbInterval) {
+                 clearInterval(thumbInterval);
+                 thumbInterval = null;
+            }
+
+            const container = document.getElementById('spark-content-container');
+            if (container) container.innerHTML = '';
+            
+            console.log("[SYSTEM] Exiting to Showroom...");
+            window.location.href = `/arcade/index.html?user=${userSlug}`;
+        };
+    }
+
+    // 5. Manual File Upload Trigger
+    const manualUpload = document.getElementById('manual-upload');
+    if (manualUpload) {
+        manualUpload.onchange = (e) => {
+            if (typeof handleManualUpload === 'function') {
+                handleManualUpload(e);
+            }
+        };
+    }
     
-        if (thumbInterval) {
-             clearInterval(thumbInterval);
-             thumbInterval = null;
+    // 6. Keyboard Shortcuts: Reserved for System Toggles
+    // ArrowLeft and ArrowRight are intentionally OMITTED so they pass to the game iframe.
+    window.onkeydown = (e) => {
+        const key = e.key.toLowerCase();
+        
+        // Z or Escape for Zen Mode
+        if (key === 'z' || key === 'escape') {
+            toggleZen();
         }
 
-        const container = document.getElementById('spark-content-container');
-        if (container) container.innerHTML = '';
-        window.location.href = `/arcade/index.html?user=${userSlug}`;
+        // Ctrl+R for a quick logic reset
+        if (key === 'r' && e.ctrlKey) {
+            e.preventDefault();
+            if (window.currentSpark) loadSpark(window.currentSpark);
+        }
     };
 
-    // File Upload / Trigger
-    document.getElementById('thumb-trigger').onclick = () => {
-        // Option to open picker or upload
-        openBurstPicker();
-    };
-    
-    // Keyboard Shortcuts
-    window.onkeydown = (e) => {
-        if (e.key.toLowerCase() === 'z') toggleZen();
-        if (e.key === 'Escape') toggleZen(); 
-    };
+    // 7. Auto-Focus Viewport
+    // Ensures games are playable immediately without needing an extra click
+    const iframe = document.querySelector('#spark-content-container iframe');
+    if (iframe) iframe.focus();
 }
 
 watchAuthState(async (user) => {
