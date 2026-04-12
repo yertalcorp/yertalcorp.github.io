@@ -239,7 +239,7 @@ window.saveAllSettings = async () => {
 /*
  * Objective: Apply the flattened theme properties to the document root.
  */
-function applyTheme(themeId) {
+export function applyTheme(themeId) {
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     const activeTheme = themes[themeId] || themes['neon-dark']; // Default to Neon
 
