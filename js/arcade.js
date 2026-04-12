@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -899,7 +899,7 @@ window.handleCreation = async (currentId, currentName) => {
     try {
         // Use categorySelect.value directly to determine resolution path
         if (!categorySelect || categorySelect.value === '-- CUSTOM PROMPT --' || categorySelect.value === '') {
-            resolvedCategory = resolveCategoryFromPrompt(input);
+            resolvedCategory = resolveCategoryFromPrompt(input, categorySelect);
         } else {
             // Access databaseCache and perform find inline
             resolvedCategory = databaseCache.settings?.['arcade-current-types']?.find(t => t.name === categorySelect.value);
@@ -1346,7 +1346,7 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
         -Format: JSON object {"name", "code"} and name has maximum 3 words.`;
 
     return `
-        ${rawPrompt}.
+        ${rawPrompt}. Follow this model: ${promptTypeObject.name} and use best practices.
         ${instructions}.
         Quantity: ${Math.max(1, count)} ${isSource ? "entries" : "code variations"}.
     `.trim();
