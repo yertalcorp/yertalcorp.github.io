@@ -11,6 +11,38 @@ console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:0
 
 let currentBurstFrames = []; // Temporary storage for the 6 URLs
 
+function openBurstPicker() {
+    const hud = document.getElementById('burst-picker-hud');
+    const grid = document.getElementById('burst-grid');
+    grid.innerHTML = ""; // Clear old
+
+    currentBurstFrames.forEach((url) => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = "w-40 h-40 object-cover border-2 border-transparent hover:border-cyan-400 cursor-pointer transition-all";
+        img.onclick = () => saveFinalSelection(url);
+        grid.appendChild(img);
+    });
+
+    hud.classList.remove('hidden');
+}
+
+async function saveFinalSelection(selectedUrl) {
+    const spark = allSparks[currentIndex];
+    const path = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}/imageUrl`;
+    
+    await saveToRealtimeDB(path, selectedUrl);
+    updateThumbCanvas(selectedUrl);
+    closeBurstPicker();
+    document.getElementById('hud-status').textContent = "COVER FINALIZED";
+}
+
+function closeBurstPicker() {
+    document.getElementById('burst-picker-hud').classList.add('hidden');
+}
+
+// Update your button listener
+document.getElementById('set-cover-btn').onclick = openBurstPicker;
 async function captureBurst() {
     const IMGBB_API_KEY = "YOUR_KEY";
     currentBurstFrames = []; // Reset
