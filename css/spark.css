@@ -322,7 +322,7 @@ iframe {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0,0,0,0.3);
+    background: var(--bg-color);
     color: var(--branding-color);
     font-size: 24px;
     cursor: pointer;
@@ -334,6 +334,6 @@ iframe {
 .nav-arrow:hover {
     opacity: 1;
     background: var(--branding-color);
-    color: var(--bg-color-high);
+    color: var(--fg-color-high);
     box-shadow: 0 0 20px var(--glow-color);
 }
