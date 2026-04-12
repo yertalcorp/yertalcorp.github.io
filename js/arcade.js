@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -899,13 +899,13 @@ window.handleCreation = async (currentId, currentName) => {
     try {
         // Use categorySelect.value directly to determine resolution path
         if (!categorySelect || categorySelect.value === '-- CUSTOM PROMPT --' || categorySelect.value === '') {
-            resolvedCategory = resolveCategoryFromPrompt(input, categorySelect);
+            resolvedCategory = resolveCategoryFromPrompt(input);
         } else {
             // Access databaseCache and perform find inline
             resolvedCategory = databaseCache.settings?.['arcade-current-types']?.find(t => t.name === categorySelect.value);
             
             // If find fails, fallback to regex as a last resort
-            if (!resolvedCategory) resolvedCategory = resolveCategoryFromPrompt(input);
+            if (!resolvedCategory) resolvedCategory = resolveCategoryFromPrompt(input, categorySelect);
         }
         console.log("handleCreation: Resolved current type is:", resolvedCategory);
         // Pass the resolved object directly to the engine
