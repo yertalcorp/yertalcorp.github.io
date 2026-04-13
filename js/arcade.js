@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1343,12 +1343,12 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const instructions = isSource ? 
         `Return the most specific match. 
         -Format: JSON array [{"name", "url", "description"}].` : 
-        `Write a visually stunning, fully working HTML/Javascript application with gradient colors and three dimensional objects.
+        `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
         -Format: JSON object {"name", "code"} and name has maximum 3 words.`;
 
     return `
-        ${rawPrompt} that follows this model: ${promptTypeObject.name}. 
-        ${instructions} Use best practices to create it.
+        ${rawPrompt}. Follow this model: ${promptTypeObject.name}. 
+        ${instructions}
         Quantity: ${Math.max(1, count)} ${isSource ? "entries" : "code variations"}.
     `.trim();
 }
