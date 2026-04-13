@@ -1343,7 +1343,7 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const instructions = isSource ? 
         `- Do NOT return search engine URLs or database homepages.
         - Research specific items that match the task.
-        -Format: JSON array [{"name", "url", "description"}].` : 
+        -Format: JSON array [{"name", "url", "description"}] and name has maximum 3 words.` : 
         `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
         -Format: JSON object {"name", "code"} and name has maximum 3 words.`;
 
