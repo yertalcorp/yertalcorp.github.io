@@ -1342,7 +1342,7 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const instructions = isSource ? 
         `Return the most specific match. 
         -Format: JSON array [{"name", "url", "description"}].` : 
-        `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
+        `Write a visually stunning, bright, fully working HTML/Javascript application with gradient colors and 3D objects.
         -Format: JSON object {"name", "code"} and name has maximum 3 words.`;
 
     return `
