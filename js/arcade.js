@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -902,12 +902,13 @@ window.handleCreation = async (currentId, currentName) => {
             resolvedCategory = resolveCategoryFromPrompt(input);
         } else {
             // Access databaseCache and perform find inline
-            resolvedCategory = databaseCache.settings?.['arcade-current-types']?.find(t => t.name === categorySelect.trim());
+            resolvedCategory = databaseCache.settings?.['arcade-current-types']?.find(
+            t => t.name?.trim().toLowerCase() === categorySelect.trim().toLowerCase());
             
             // If find fails, fallback to regex as a last resort
             if (!resolvedCategory) resolvedCategory = resolveCategoryFromPrompt(input, categorySelect);
         }
-        console.log("handleCreation: Resolved current type is:", resolvedCategory);
+        console.log("handleCreation: After databaseCache Lookup, Resolved current type is:", resolvedCategory?.name);
         // Pass the resolved object directly to the engine
         await executeMassSpark(
             currentId, 
