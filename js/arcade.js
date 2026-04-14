@@ -1186,6 +1186,10 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
         
         hud.dataset.mode = 'add';
         delete hud.dataset.targetId;
+        // Add these to be perfectly clean:
+        delete hud.dataset.prevName;
+        delete hud.dataset.prevType;
+        delete hud.dataset.prevPrivacy;
     }
 
     hud.style.display = 'flex';
