@@ -127,7 +127,7 @@ const getSafeSlug = async (user) => {
         if (cached?.slug) return cached.slug;
     }
 
-    console.log("getSafeSlug: Fetching via SDK for UID:", user.uid);
+    console.log("showroom.js: getSafeSlug: Fetching via SDK for UID:", user.uid);
     
     try {
         // --- THE CHANGE IS HERE ---
@@ -151,9 +151,10 @@ const getSafeSlug = async (user) => {
     }
 
     // 3. Fallback to UID (Only if SDK fails or slug is missing)
-    console.warn("getSafeSlug: Falling back to UID.");
+    console.warn("showroom.js: getSafeSlug: Couldn't find the slug so Falling back to UID.");
     return user.uid; 
 };
+
 async function renderAuthStatus(user, authData) {
     const authZone = document.getElementById('auth-zone');
     if (!authZone || !authData) return;
