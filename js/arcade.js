@@ -1175,7 +1175,7 @@ window.updateCurrent = (currentId) => {
 
 
 window.openAddCurrentHud = async (action = 'add', targetId = null) => {
-    const hud = document.getElementById('addcurrent-hud');
+    const hud = document.getElementById('add-current-hud');
     const title = hud.querySelector('.hud-title');
     const submitBtn = hud.querySelector('#submit-current-btn');
     
