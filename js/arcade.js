@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 22:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 10:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -66,7 +66,21 @@ const steps = [
         msg: "Your Laboratory is online. Start forging Currents and share your unique URL to begin growing your audience and funding."
     }
 ];
+window.submitNewCurrent = async () => {
+    const name = document.getElementById('current-name-input').value;
+    const privacy = document.getElementById('current-privacy-select').value;
+    
+    // Determine type: use select value unless 'other' is picked
+    const selectVal = document.getElementById('current-type-select').value;
+    const type = (selectVal === 'other') ? 
+                 document.getElementById('custom-type-input').value : 
+                 selectVal;
 
+    if (name && type) {
+        await addNewCurrent(name, type, privacy);
+        // Logic to close HUD and refresh UI
+    }
+};
 window.showTutorial = function() {
     tutorialIndex = 0;
     renderTutorialStep();
