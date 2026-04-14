@@ -972,7 +972,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                             IDENTITY_VERIFIED // READY_FOR_INFRASTRUCTURE
                         </p>
                         <div style="display: flex; justify-content: center; gap: 20px;">
-                            <button onclick="window.openArcadeSettings()" class="ethereal-btn-sm">
+                            <button onclick="window.openAddCurrentHud()" class="ethereal-btn-sm">
                                 <i class="fas fa-plus"></i> INITIALIZE_FIRST_CURRENT
                             </button>
                             <button onclick="window.showTutorial()" class="ethereal-btn-sm" style="opacity: 0.7;">
@@ -1067,14 +1067,41 @@ return `
     if (isOwner) {
         container.innerHTML += `
             <div style="display: flex; justify-content: center; margin-top: 3rem; padding-bottom: 5rem;">
-                <button onclick="window.openArcadeSettings()" class="terminal-btn" style="border: 1px dashed var(--glow-color); opacity: 0.6; color: var(--branding-text-color); background: var(--bg-color);">
+                <button onclick="window.openAddCurrentHud()" class="terminal-btn" style="border: 1px dashed var(--glow-color); opacity: 0.6; color: var(--branding-text-color); background: var(--bg-color);">
                     <i class="fas fa-plus"></i> INITIALIZE NEW CURRENT
                 </button>
             </div>
         `;
     }
 }
+/*
+ * Objective: Initialize and display the Add Current HUD.
+ * Populates current types from databaseCache settings.
+ */
+window.openAddCurrentHud = () => {
+    const hud = document.getElementById('add-current-hud');
+    const select = document.getElementById('current-type-select');
+    const nameInput = document.getElementById('current-name-input');
+    const customInput = document.getElementById('custom-type-input');
 
+    // 1. Reset fields
+    nameInput.value = '';
+    customInput.value = '';
+    customInput.style.display = 'none';
+
+    // 2. Populate Dropdown
+    const types = databaseCache.settings?.['arcade-current-types'] || [];
+    select.innerHTML = `
+        <option value="">-- SELECT TYPE --</option>
+        ${types.map(type => `
+            <option value="${type.id}">${type.name.toUpperCase()}</option>
+        `).join('')}
+        <option value="other">DEFINED_CUSTOM</option>
+    `;
+
+    // 3. Show HUD
+    hud.style.display = 'flex';
+};
 /*
  * Objective: Modular infrastructure generator.
  * Handles DB entry, cache update, and initial spark generation.
