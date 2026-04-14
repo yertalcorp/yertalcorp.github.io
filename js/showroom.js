@@ -1,4 +1,5 @@
-import { firebaseConfig, auth, db } from '/config/firebase-config.js';
+import { ref, set, get, push, runTransaction, auth, db, update, app } from '/config/firebase-config.js';;
+
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
