@@ -66,6 +66,30 @@ const steps = [
         msg: "Your Laboratory is online. Start forging Currents and share your unique URL to begin growing your audience and funding."
     }
 ];
+window.confirmDeleteCurrent = async (userId, currentId) => {
+    const confirmation = confirm(`Are you sure you want to delete the whole current [${currentId}]?\n\nAll associated sparks will be permanently deleted. This action cannot be undone.`);
+    
+    if (confirmation) {
+        try {
+            // 1. Database Removal
+            const dbPath = `users/${userId}/infrastructure/currents/${currentId}`;
+            await saveToRealtimeDB(dbPath, null);
+
+            // 2. Cache Cleanup
+            if (databaseCache.users?.[userId]?.infrastructure?.currents?.[currentId]) {
+                delete databaseCache.users[userId].infrastructure.currents[currentId];
+            }
+
+            // 3. UI Refresh
+            await refreshUI();
+            
+            console.log(`System: Infrastructure for ${currentId} decommissioned.`);
+        } catch (error) {
+            console.error("Critical: Deletion protocol failed.", error);
+            alert("System error: Could not decommission infrastructure.");
+        }
+    }
+};
 /*
  * Objective: Close the Add Current HUD and reset visibility.
  */
