@@ -85,7 +85,52 @@
     </footer>
     
     <script type="module" src="/js/arcade.js"></script>
+<div id="add-current-hud" class="hud-overlay" style="display: none;">
+    <div class="hud-window glass-3d animate-slideUp">
+        
+        <div class="hud-header-content">
+            <h2 class="current-title metallic-text">INITIALIZE_CURRENT</h2>
+        </div>
+        
+        <div class="hud-body">
+            <div class="hud-onboarding-grid">
+                
+                <section class="hud-step">
+                    <label class="hud-label">CURRENT_NAME</label>
+                    <input type="text" id="current-name-input" class="hud-input" placeholder="Enter name...">
+                </section>
 
+                <section class="hud-step">
+                    <label class="hud-label">CURRENT_TYPE</label>
+                    <select id="current-type-select" class="hud-select" onchange="toggleCustomType(this.value)">
+                        <option value="other">DEFINED_CUSTOM</option>
+                    </select>
+                    <input type="text" id="custom-type-input" class="hud-input" style="display:none; margin-top: 10px;" placeholder="Specify type...">
+                </section>
+
+                <section class="hud-step">
+                    <label class="hud-label">PRIVACY_PROTOCOL</label>
+                    <select id="current-privacy-select" class="hud-select">
+                        <option value="private">PRIVATE</option>
+                        <option value="unlisted">UNLISTED</option>
+                        <option value="public">PUBLIC</option>
+                    </select>
+                </section>
+
+            </div>
+        </div>
+
+        <div class="hud-footer">
+            <button class="ethereal-btn-sm" onclick="submitNewCurrent()">
+                GENERATE_INFRASTRUCTURE
+            </button>
+            <button class="ethereal-btn-sm btn-secondary" onclick="document.getElementById('add-current-hud').style.display='none'">
+                CANCEL
+            </button>
+        </div>
+
+    </div>
+</div>
     <div id="arcadesettings-hud" class="hud-overlay">
         <div class="hud-window glass-3d animate-slideUp">
             
