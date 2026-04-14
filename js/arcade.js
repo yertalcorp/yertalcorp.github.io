@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -100,47 +100,6 @@ window.closeAddCurrentHud = () => {
     }
 };
 
-window.submitNewCurrent = async () => {
-    const hud = document.getElementById('add-current-hud');
-    const nameInput = document.getElementById('current-name-input');
-    const privacyInput = document.getElementById('current-privacy-select');
-    const selectType = document.getElementById('current-type-select');
-    const customTypeInput = document.getElementById('custom-type-input');
-
-    // 1. IDENTIFY CONTEXT: Is this a new Current or an update to an old one?
-    const mode = hud.dataset.mode; // 'add' or 'update'
-    const oldCurrentId = hud.dataset.targetId; // The ID passed from window.updateCurrent()
-
-    const name = nameInput.value.trim();
-    const privacy = privacyInput.value;
-    const type = (selectType.value === 'other') ? customTypeInput.value.trim() : selectType.value;
-
-    if (!name || !type) {
-        alert("Please provide both a name and a type.");
-        return;
-    }
-
-    try {
-        /* * 2. CALL BACKEND: 
-         * We pass 'oldCurrentId' as an extra argument. 
-         * If it's null, addNewCurrent performs a standard creation.
-         */
-        await window.addNewCurrent(name, type, privacy, oldCurrentId);
-        
-        window.closeAddCurrentHud();
-        
-        // Use refreshUI for a full state sync, fallback to renderArcade
-        if (typeof window.refreshUI === 'function') {
-            await window.refreshUI(); 
-        } else if (typeof window.renderArcade === 'function') {
-            window.renderArcade(); 
-        }
-        
-    } catch (error) {
-        console.error("Failed to process infrastructure change:", error);
-        alert("Operation failed. Check console for details.");
-    }
-};
 window.showTutorial = function() {
     tutorialIndex = 0;
     renderTutorialStep();
@@ -1172,6 +1131,60 @@ window.updateCurrent = (currentId) => {
     console.log(`[ACTION]: Initiating update for Current: ${currentId}`);
     // We pass the ID so the HUD knows which record to fetch/reference
     window.openAddCurrentHud('update', currentId);
+};
+/* window.openAddCurrentHud */
+window.openAddCurrentHud = async (action = 'add', targetId = null) => {
+    const hud = document.getElementById('add-current-hud');
+    if (!hud) return;
+
+    const title = hud.querySelector('.current-title');
+    const submitBtn = document.getElementById('submit-current-btn');
+    const nameInput = document.getElementById('current-name-input');
+    const typeSelect = document.getElementById('current-type-select');
+    const typeInput = document.getElementById('current-type-input'); // The primary source
+    const privacySelect = document.getElementById('current-privacy-select');
+
+    // 1. Populate Picker Options
+    if (typeSelect) {
+        const types = databaseCache.settings?.['arcade-current-types'] || [];
+        let optionsHTML = `<option value="">-- PICK A TYPE --</option>`;
+        optionsHTML += types.map(t => 
+            `<option value="${t.name}">${t.name.toUpperCase()}</option>`
+        ).join('');
+        typeSelect.innerHTML = optionsHTML;
+    }
+
+    if (action === 'update' && targetId) {
+        if (title) title.innerText = "UPDATE_INFRASTRUCTURE";
+        if (submitBtn) submitBtn.innerText = "CONFIRM_CHANGES";
+        
+        const ownerUid = window.auth?.currentUser?.uid;
+        const currentData = databaseCache.users?.[ownerUid]?.infrastructure?.currents?.[targetId];
+
+        if (currentData) {
+            if (nameInput) nameInput.value = currentData.name || '';
+            if (typeInput) typeInput.value = currentData.type || '';
+            if (typeSelect) typeSelect.value = ''; // Keep picker neutral on load
+            if (privacySelect) privacySelect.value = currentData.privacy || 'private';
+            
+            hud.dataset.targetId = targetId;
+            hud.dataset.mode = 'update';
+        }
+    } else {
+        if (title) title.innerText = "INITIALIZE_CURRENT";
+        if (submitBtn) submitBtn.innerText = "GENERATE_INFRASTRUCTURE";
+        
+        if (nameInput) nameInput.value = '';
+        if (typeInput) typeInput.value = ''; // Blank for new
+        if (typeSelect) typeSelect.value = '';
+        if (privacySelect) privacySelect.value = 'private';
+        
+        hud.dataset.mode = 'add';
+        delete hud.dataset.targetId;
+    }
+
+    hud.style.display = 'flex';
+    hud.classList.add('active');
 };
 
 window.submitNewCurrent = async () => {
