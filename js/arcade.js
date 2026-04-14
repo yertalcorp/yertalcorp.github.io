@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:49:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1137,8 +1137,8 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 
         return `
             <div class="current-block animate-fadeIn">
-                <div class="current-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h2 class="current-name" style="margin: 0;">${current.name || 'Active Current'}</h2>
+                <div class="current-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                    <h2 class="current-name" style="margin: 0; font-size: 14px; line-height: 1;">${current.name || 'Active Current'}</h2>
                     ${!isOwner ? '' : capacityMeterHTML}
                 </div>
                 
