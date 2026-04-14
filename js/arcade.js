@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1047,51 +1047,80 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 
         const sparkCount = sparks.length;
         const isFull = sparkCount >= maxSparks;
-        const meterColor = isFull ? 'var(--error-color, #ef4444)' : 'var(--glow-color)';
-/* the selection for the current */
-const controls = (isOwner && !isFull) ? `
-    <div class="current-prompt-container">
-<div class="current-type-selector-wrapper">
-    <span class="current-prompt-label" style="display: block; justify-items: center; font-color: var(--fg-color-high);">CREATE OR SOURCE</span>
-    <select id="select-${current.id}" class="current-prompt-input" onchange="const inp = document.getElementById('input-${current.id}'); inp.value = this.value; inp.focus(); inp.scrollLeft = 0; inp.setSelectionRange(0, 0);">
-        <option value="">-- CUSTOM PROMPT --</option>
-        ${(databaseCache.settings?.['arcade-current-types'] || []).map(type => `
-            <option value="${type.example_prompt}">${type.name.toUpperCase()}</option>
-        `).join('')}
-    </select>
-</div>
-          <input type="text" id="input-${current.id}" 
-               class="current-prompt-input"
-               placeholder=" Type your prompt or paste a URL..." 
-               onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '${current.name}')">
-        <button onclick="window.handleCreation('${current.id}', '${current.name}')" class="current-prompt-exec-button">
-            EXEC
-        </button>
-    </div>
-` : isFull && isOwner ? `
-    <div class="capacity-alert">MAX CAPACITY REACHED</div>
-` : `<div class="secure-node-static">Secure_Node [${ownerUid.substring(0,8)}]</div>`;
-
-return `
-    <div class="current-block animate-fadeIn">
-        <div class="current-header-row">
-            <h2 class="current-name">${current.name || 'Active Current'}</h2>
-            
-            <div class="current-capacity">
-                <span class="capacity-text">CAPACITY:</span>
-                <span class="current-meter">${sparkCount} / ${maxSparks}</span>
-            </div>
-
-            ${controls}
-        </div>
+        const capacityPct = Math.min((sparkCount / maxSparks) * 100, 100);
         
-        <div class="experiment-zone">
-            <div id="sparks-${current.id}" class="grid">
-                ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id, ownerUid)).join('')}
+        // Dynamic Color Logic based on remaining capacity
+        let meterColor = 'var(--glow-color)';
+        if (capacityPct >= 90) {
+            meterColor = 'var(--error-color, #ef4444)';
+        } else if (capacityPct >= 80) {
+            meterColor = 'var(--warning-color, #ffcc00)';
+        }
+
+        const capacityMeterHTML = `
+            <div class="capacity-meter-wrapper" title="Sparks: ${sparkCount} / ${maxSparks}" style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-family: 'Courier New', monospace; font-size: 0.7rem; color: var(--branding-text-color);">LVL</span>
+                <div class="fuel-rail" style="width: 50px; height: 10px; background: rgba(255,255,255,0.05); border: 1px solid ${meterColor}; border-radius: 2px; overflow: hidden;">
+                    <div class="fuel-fill" style="width: ${capacityPct}%; height: 100%; background: ${meterColor}; transition: width 0.4s ease;"></div>
+                </div>
+                <span style="font-family: 'Courier New', monospace; font-size: 0.7rem; color: ${meterColor};">${sparkCount}/${maxSparks}</span>
             </div>
-        </div>
-    </div>
-`;
+        `;
+
+        const actionIcons = isOwner ? `
+            <div class="current-actions" style="display: flex; gap: 12px; margin-left: 10px; align-items: center;">
+                <i class="fas fa-sync-alt" onclick="window.updateCurrent('${current.id}')" title="Update" style="cursor: pointer; opacity: 0.6; color: var(--branding-text-color);"></i>
+                <i class="fas fa-trash-alt" onclick="window.confirmDeleteCurrent('${ownerUid}', '${current.id}')" title="Delete" style="cursor: pointer; opacity: 0.6; color: var(--error-color, #ef4444);"></i>
+            </div>
+        ` : '';
+
+        const controls = (isOwner && !isFull) ? `
+            <div class="current-prompt-container" style="display: flex; align-items: center; gap: 10px; width: 100%;">
+                <div class="current-type-selector-wrapper">
+                    <span class="current-prompt-label" style="display: block; font-size: 10px; color: var(--fg-color-high);">CREATE OR SOURCE</span>
+                    <select id="select-${current.id}" class="current-prompt-input" onchange="const inp = document.getElementById('input-${current.id}'); inp.value = this.value; inp.focus(); inp.scrollLeft = 0; inp.setSelectionRange(0, 0);">
+                        <option value="">-- CUSTOM PROMPT --</option>
+                        ${(databaseCache.settings?.['arcade-current-types'] || []).map(type => `
+                            <option value="${type.example_prompt}">${type.name.toUpperCase()}</option>
+                        `).join('')}
+                    </select>
+                </div>
+                <input type="text" id="input-${current.id}" 
+                       class="current-prompt-input"
+                       placeholder=" Type your prompt or paste a URL..." 
+                       onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '${current.name}')">
+                <button onclick="window.handleCreation('${current.id}', '${current.name}')" class="current-prompt-exec-button">EXEC</button>
+                ${actionIcons}
+            </div>
+        ` : (isFull && isOwner) ? `
+            <div class="capacity-alert-container" style="display: flex; align-items: center; gap: 15px; width: 100%;">
+                <span style="color: var(--error-color, #ef4444); font-weight: bold; font-family: 'Orbitron', sans-serif; font-size: 0.8rem;">FULL</span>
+                ${capacityMeterHTML}
+                ${actionIcons}
+            </div>
+        ` : `
+            <div class="viewer-node-status" style="display: flex; align-items: center; gap: 15px; opacity: 0.8;">
+                ${capacityMeterHTML}
+                <div class="secure-node-static">Secure_Node [${ownerUid.substring(0,8)}]</div>
+            </div>
+        `;
+
+        return `
+            <div class="current-block animate-fadeIn">
+                <div class="current-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 class="current-name" style="margin: 0;">${current.name || 'Active Current'}</h2>
+                    ${!isOwner ? '' : capacityMeterHTML}
+                </div>
+                
+                ${controls}
+                
+                <div class="experiment-zone">
+                    <div id="sparks-${current.id}" class="grid">
+                        ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id, ownerUid)).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
     }).join('');
 
     if (isOwner) {
