@@ -1006,7 +1006,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                                 <i class="fas fa-plus"></i> INITIALIZE_FIRST_CURRENT
                             </button>
                             <button onclick="window.showTutorial()" class="ethereal-btn-sm" style="opacity: 0.7;">
-                                <i class="fas fa-book-open"></i> VIEW_LAB_MANUAL
+                                <i class="fas fa-book-open"></i> VIEW_TUTORIAL
                             </button>
                         </div>
                     </div>
