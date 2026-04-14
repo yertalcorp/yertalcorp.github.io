@@ -100,14 +100,16 @@ window.closeAddCurrentHud = () => {
     }
 };
 
-/*
- * Objective: Submit data to addNewCurrent and close HUD on success.
- */
 window.submitNewCurrent = async () => {
+    const hud = document.getElementById('add-current-hud');
     const nameInput = document.getElementById('current-name-input');
     const privacyInput = document.getElementById('current-privacy-select');
     const selectType = document.getElementById('current-type-select');
     const customTypeInput = document.getElementById('custom-type-input');
+
+    // 1. IDENTIFY CONTEXT: Is this a new Current or an update to an old one?
+    const mode = hud.dataset.mode; // 'add' or 'update'
+    const oldCurrentId = hud.dataset.targetId; // The ID passed from window.updateCurrent()
 
     const name = nameInput.value.trim();
     const privacy = privacyInput.value;
@@ -119,22 +121,26 @@ window.submitNewCurrent = async () => {
     }
 
     try {
-        // 1. Call the backend logic
-        await window.addNewCurrent(name, type, privacy);
+        /* * 2. CALL BACKEND: 
+         * We pass 'oldCurrentId' as an extra argument. 
+         * If it's null, addNewCurrent performs a standard creation.
+         */
+        await window.addNewCurrent(name, type, privacy, oldCurrentId);
         
-        // 2. Close the HUD on successful submission
         window.closeAddCurrentHud();
         
-        // 3. Optional: Refresh the UI/Arcade display to show the new current
-        if (typeof window.renderArcade === 'function') {
+        // Use refreshUI for a full state sync, fallback to renderArcade
+        if (typeof window.refreshUI === 'function') {
+            await window.refreshUI(); 
+        } else if (typeof window.renderArcade === 'function') {
             window.renderArcade(); 
         }
+        
     } catch (error) {
-        console.error("Failed to initialize current:", error);
-        alert("Infrastructure generation failed. Check console for details.");
+        console.error("Failed to process infrastructure change:", error);
+        alert("Operation failed. Check console for details.");
     }
 };
-
 window.showTutorial = function() {
     tutorialIndex = 0;
     renderTutorialStep();
@@ -1205,35 +1211,51 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
 
     hud.classList.add('active');
 };
+
 /*
  * Objective: Create a new Current with specific metadata.
  */
-window.addNewCurrent = async (name, type, privacy) => {
-    // ID: lowercase of name with hyphens (e.g., "Space Dodger" -> "space-dodger")
-    const currentId = name.toLowerCase().trim().replace(/\s+/g, '-');
-    
-    const currentData = {
-        id: currentId,
-        name: name,
-        type: type,
-        privacy: privacy,
-        created: Date.now()
-    };
+window.addNewCurrent = async (name, type, privacy, oldId = null) => {
+    const activeUser = window.auth?.currentUser;
+    if (!activeUser) throw new Error("Authentication required.");
 
-    // 1. Save to Database
-    await saveToRealtimeDB(`users/${user.uid}/infrastructure/currents/${currentId}`, currentData);
-    
-    // 2. Local Cache Update
-    if (!databaseCache.users[user.uid].infrastructure) {
-        databaseCache.users[user.uid].infrastructure = { currents: {} };
+    const newId = name.toUpperCase().replace(/\s+/g, '-');
+    const basePath = `users/${activeUser.uid}/infrastructure/currents`;
+    const updates = {};
+
+    if (oldId) {
+        // UPDATE MODE: Fetch existing nested data (sparks, etc.) to ensure nothing is lost
+        const snapshot = await window.get(window.ref(window.db, `${basePath}/${oldId}`));
+        const existingData = snapshot.val() || {};
+
+        // Merge existing sparks/data with new metadata
+        updates[`${basePath}/${newId}`] = {
+            ...existingData,
+            id: newId,
+            name: name,
+            type: type,
+            privacy: privacy,
+            updated_at: Date.now()
+        };
+
+        // If the ID changed, delete the old node
+        if (newId !== oldId) {
+            updates[`${basePath}/${oldId}`] = null;
+        }
+    } else {
+        // ADD MODE: Create fresh record
+        updates[`${basePath}/${newId}`] = {
+            id: newId,
+            name: name,
+            type: type,
+            privacy: privacy,
+            created_at: Date.now()
+        };
     }
-    databaseCache.users[user.uid].infrastructure.currents[currentId] = currentData;
 
-    // 3. Close the HUD visually after success
-    document.getElementById('add-current-hud').style.display = 'none';
-
-    return currentId;
+    return window.update(window.ref(window.db), updates);
 };
+
 function verifyAndFixCode(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
