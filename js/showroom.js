@@ -120,51 +120,40 @@ function renderNavbar(items, ui) {
 }
 
 const getSafeSlug = async (user) => {
-    // 1. Session Storage Trace
+    // 1. Session Storage Trace (Keep this, it's efficient)
     let cachedStr = sessionStorage.getItem('currentUser');
-    console.log("--- [getSafeSlug Trace] ---");
-    console.log("1. Session Cache Raw:", cachedStr);
-
     if (cachedStr) {
         let cached = JSON.parse(cachedStr);
-        if (cached?.slug) {
-            console.log("2. Success: Slug found in session:", cached.slug);
-            return cached.slug;
-        }
+        if (cached?.slug) return cached.slug;
     }
 
-    // 2. Database Fetch Trace
-    const dbUrl = `${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`;
-    console.log("3. Session empty. Fetching from URL:", dbUrl);
+    console.log("getSafeSlug: Fetching via SDK for UID:", user.uid);
     
     try {
-        const response = await fetch(dbUrl);
-        console.log("4. Fetch Response Status:", response.status, response.statusText);
+        // --- THE CHANGE IS HERE ---
+        // Use the Firebase SDK instead of fetch()
+        // Ensure 'get', 'ref', and 'db' are accessible (usually from firebase-config.js)
+        const snapshot = await window.get(window.ref(window.db, `users/${user.uid}/profile`));
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const profile = await response.json();
-        console.log("5. Full Profile Object from DB:", profile);
+        if (snapshot.exists()) {
+            const profile = snapshot.val();
+            console.log("getSafeSlug: Profile retrieved:", profile);
             
-        if (profile && profile.slug) {
-            console.log("6. Success: Slug found in DB:", profile.slug);
-            // Sync session so we don't fetch next time
-            sessionStorage.setItem('currentUser', JSON.stringify(profile));
-            return profile.slug;
+            if (profile?.slug) {
+                sessionStorage.setItem('currentUser', JSON.stringify(profile));
+                return profile.slug;
+            }
         } else {
-            console.warn("7. Warning: Profile fetched, but 'slug' key is missing or null.");
+            console.warn("getSafeSlug: No profile found in DB for this UID.");
         }
     } catch (error) {
-        console.error("8. Error during fetch operation:", error);
+        console.error("getSafeSlug: SDK Error:", error);
     }
 
-    // 3. Fallback Trace
-    console.log("9. Falling back to UID:", user.uid);
+    // 3. Fallback to UID (Only if SDK fails or slug is missing)
+    console.warn("getSafeSlug: Falling back to UID.");
     return user.uid; 
 };
-
 async function renderAuthStatus(user, authData) {
     const authZone = document.getElementById('auth-zone');
     if (!authZone || !authData) return;
