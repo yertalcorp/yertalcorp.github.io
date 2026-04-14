@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 18:55:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 19:10:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -134,7 +134,7 @@ const getSafeSlug = async (user) => {
         // --- THE CHANGE IS HERE ---
         // Use the Firebase SDK instead of fetch()
         // Ensure 'get', 'ref', and 'db' are accessible (usually from firebase-config.js)
-        const snapshot = await window.get(window.ref(window.db, `users/${user.uid}/profile`));
+        const snapshot = await get(ref(db, `users/${user.uid}/profile`));
         
         if (snapshot.exists()) {
             const profile = snapshot.val();
