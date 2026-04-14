@@ -22,32 +22,37 @@ export async function saveToRealtimeDB(path, data) {
     return set(ref(db, path), data);
 }
 
-// Objective: Granular, Error-Resistant Fetching [cite: 2026-03-21]
 export async function getArcadeData() {
     const currentUser = auth.currentUser;
     const urlParams = new URLSearchParams(window.location.search);
     const pageOwnerSlug = urlParams.get('user') || 'yertal-arcade';
 
-    console.log("getArcadeData - Target Slug:", pageOwnerSlug);
-
     const data = {};
     const publicPaths = ['app_manifest', 'auth_ui', 'search_index', 'settings', 'navigation', 'action-cards', 'showcase-items'];
 
     try {
-        // 1. Fetch Public Nodes (Fails gracefully if one is blocked)
         const snapshots = await Promise.all(
             publicPaths.map(path => get(ref(db, path)).catch(() => null))
         );
         publicPaths.forEach((path, i) => { data[path] = snapshots[i]?.val(); });
 
-        // 2. Identify the Page Owner via the Search Index
         const slugToIndex = data.search_index || {};
-        console.log("getArcadeData - Search Index Snapshot:", slugToIndex);
+        
+        // 1. Primary: Look up UID via the Slug Index
+        let ownerUid = slugToIndex[pageOwnerSlug];
 
-        const ownerUid = slugToIndex[pageOwnerSlug];
-        console.log("getArcadeData - Resolved ownerUid:", ownerUid);
+        // 2. Fallback: If not in index, check if the slug IS the current UID
+        if (!ownerUid && currentUser && pageOwnerSlug === currentUser.uid) {
+            console.log("getArcadeData - Slug is the active UID. Bypassing index.");
+            ownerUid = currentUser.uid;
+        }
 
-        // 3. SURGICAL FETCH: Get only the Owner's Profile and infrastructure
+        // 3. Last Resort: If it's still not found, it might be a direct UID for another user
+        // We'll trust the parameter if it doesn't exist in our index as a slug
+        if (!ownerUid && !slugToIndex.hasOwnProperty(pageOwnerSlug)) {
+             ownerUid = pageOwnerSlug;
+        }
+
         if (ownerUid) {
             const [profileSnap, infraSnap] = await Promise.all([
                 get(ref(db, `users/${ownerUid}/profile`)).catch(() => null),
@@ -60,24 +65,17 @@ export async function getArcadeData() {
                     infrastructure: infraSnap?.val()
                 }
             };
-            console.log(`getArcadeData - Data Fetched for ${ownerUid}:`, data.users[ownerUid]);
-        } else {
-            console.warn("getArcadeData - No UID found for slug:", pageOwnerSlug);
         }
 
-        // 4. SUPERUSER FETCH: manifest by default
         const manifestSnap = await get(ref(db, 'app_manifest')).catch(() => null);
         data.app_manifest = manifestSnap?.val();
-        console.log("app_manifest found", data.app_manifest); 
 
-        console.log("getArcadeData - Final Data Object:", data);
         return data;
     } catch (error) {
         console.error("Critical Failure in getArcadeData Pipeline:", error);
         throw error;
     }
 }
-
 /* Create a new user in the DB*/
 export async function initializeUserIfNeeded(user) {
     const userRef = ref(db, `users/${user.uid}`);
