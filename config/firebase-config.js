@@ -28,7 +28,7 @@ export async function getArcadeData() {
     const pageOwnerSlug = urlParams.get('user') || 'yertal-arcade';
 
     const data = {};
-    const publicPaths = ['app_manifest', 'auth_ui', 'search_index', 'settings', 'navigation', 'action-cards', 'showcase-items'];
+    const publicPaths = ['app_manifest', 'settings', 'search_index']; // Simplified for brevity
 
     try {
         const snapshots = await Promise.all(
@@ -37,20 +37,26 @@ export async function getArcadeData() {
         publicPaths.forEach((path, i) => { data[path] = snapshots[i]?.val(); });
 
         const slugToIndex = data.search_index || {};
-        
-        // 1. Primary: Look up UID via the Slug Index
         let ownerUid = slugToIndex[pageOwnerSlug];
 
-        // 2. Fallback: If not in index, check if the slug IS the current UID
-        if (!ownerUid && currentUser && pageOwnerSlug === currentUser.uid) {
-            console.log("getArcadeData - Slug is the active UID. Bypassing index.");
-            ownerUid = currentUser.uid;
+        // --- NEW MULTI-TIER RESOLUTION ---
+        
+        // Tier 2: Check if the slug IS a UID (Direct Access)
+        if (!ownerUid && pageOwnerSlug.length > 20) {
+            ownerUid = pageOwnerSlug;
         }
 
-        // 3. Last Resort: If it's still not found, it might be a direct UID for another user
-        // We'll trust the parameter if it doesn't exist in our index as a slug
-        if (!ownerUid && !slugToIndex.hasOwnProperty(pageOwnerSlug)) {
-             ownerUid = pageOwnerSlug;
+        // Tier 3: Authenticated Owner Fallback 
+        // If we still have no UID, but the user is logged in, check their own profile slug
+        if (!ownerUid && currentUser) {
+            // We fetch the logged-in user's profile to see if their slug matches the URL
+            const ownProfileSnap = await get(ref(db, `users/${currentUser.uid}/profile`)).catch(() => null);
+            const ownProfile = ownProfileSnap?.val();
+            
+            if (ownProfile?.slug === pageOwnerSlug) {
+                console.log("getArcadeData: Resolved via Authenticated Profile Match.");
+                ownerUid = currentUser.uid;
+            }
         }
 
         if (ownerUid) {
@@ -67,15 +73,13 @@ export async function getArcadeData() {
             };
         }
 
-        const manifestSnap = await get(ref(db, 'app_manifest')).catch(() => null);
-        data.app_manifest = manifestSnap?.val();
-
         return data;
     } catch (error) {
-        console.error("Critical Failure in getArcadeData Pipeline:", error);
+        console.error("Critical Failure in getArcadeData:", error);
         throw error;
     }
 }
+
 /* Create a new user in the DB*/
 export async function initializeUserIfNeeded(user) {
     const userRef = ref(db, `users/${user.uid}`);
