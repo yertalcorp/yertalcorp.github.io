@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 10:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -66,21 +66,51 @@ const steps = [
         msg: "Your Laboratory is online. Start forging Currents and share your unique URL to begin growing your audience and funding."
     }
 ];
-window.submitNewCurrent = async () => {
-    const name = document.getElementById('current-name-input').value;
-    const privacy = document.getElementById('current-privacy-select').value;
-    
-    // Determine type: use select value unless 'other' is picked
-    const selectVal = document.getElementById('current-type-select').value;
-    const type = (selectVal === 'other') ? 
-                 document.getElementById('custom-type-input').value : 
-                 selectVal;
-
-    if (name && type) {
-        await addNewCurrent(name, type, privacy);
-        // Logic to close HUD and refresh UI
+/*
+ * Objective: Close the Add Current HUD and reset visibility.
+ */
+window.closeAddCurrentHud = () => {
+    const hud = document.getElementById('add-current-hud');
+    if (hud) {
+        hud.style.display = 'none';
     }
 };
+
+/*
+ * Objective: Submit data to addNewCurrent and close HUD on success.
+ */
+window.submitNewCurrent = async () => {
+    const nameInput = document.getElementById('current-name-input');
+    const privacyInput = document.getElementById('current-privacy-select');
+    const selectType = document.getElementById('current-type-select');
+    const customTypeInput = document.getElementById('custom-type-input');
+
+    const name = nameInput.value.trim();
+    const privacy = privacyInput.value;
+    const type = (selectType.value === 'other') ? customTypeInput.value.trim() : selectType.value;
+
+    if (!name || !type) {
+        alert("Please provide both a name and a type.");
+        return;
+    }
+
+    try {
+        // 1. Call the backend logic
+        await window.addNewCurrent(name, type, privacy);
+        
+        // 2. Close the HUD on successful submission
+        window.closeAddCurrentHud();
+        
+        // 3. Optional: Refresh the UI/Arcade display to show the new current
+        if (typeof window.renderArcade === 'function') {
+            window.renderArcade(); 
+        }
+    } catch (error) {
+        console.error("Failed to initialize current:", error);
+        alert("Infrastructure generation failed. Check console for details.");
+    }
+};
+
 window.showTutorial = function() {
     tutorialIndex = 0;
     renderTutorialStep();
