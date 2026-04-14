@@ -1083,7 +1083,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 
         const capacityMeterHTML = `
             <div class="capacity-meter-wrapper" title="Sparks: ${sparkCount} / ${maxSparks}" style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-family: 'Courier New', monospace; font-size: 0.7rem; color: var(--branding-text-color);">LVL</span>
+                <span style="font-family: 'Courier New', monospace; font-size: 0.7rem; color: var(--branding-text-color);">CAPACITY</span>
                 <div class="fuel-rail" style="width: 50px; height: 10px; background: rgba(255,255,255,0.05); border: 1px solid ${meterColor}; border-radius: 2px; overflow: hidden;">
                     <div class="fuel-fill" style="width: ${capacityPct}%; height: 100%; background: ${meterColor}; transition: width 0.4s ease;"></div>
                 </div>
