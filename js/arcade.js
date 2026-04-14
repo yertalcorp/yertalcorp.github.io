@@ -1174,46 +1174,39 @@ window.updateCurrent = (currentId) => {
     window.openAddCurrentHud('update', currentId);
 };
 
-window.openAddCurrentHud = async (action = 'add', targetId = null) => {
+window.submitNewCurrent = async () => {
+    const name = document.getElementById('current-name-input').value.trim();
+    const typeValue = document.getElementById('current-type-input').value.trim();
+    const privacy = document.getElementById('current-privacy-select').value;
+    
     const hud = document.getElementById('add-current-hud');
-    if (!hud) return;
+    const mode = hud.dataset.mode;
+    const targetId = hud.dataset.targetId;
 
-    // Direct ID/Class selectors matching your HTML
-    const title = hud.querySelector('.current-title');
-    const submitBtn = document.getElementById('submit-current-btn');
-    const nameInput = document.getElementById('current-name-input');
-    const typeSelect = document.getElementById('current-type-select');
-    const privacySelect = document.getElementById('current-privacy-select');
-
-    if (action === 'update' && targetId) {
-        if (title) title.innerText = "UPDATE_INFRASTRUCTURE";
-        if (submitBtn) submitBtn.innerText = "CONFIRM_CHANGES";
-        
-        const ownerUid = window.auth?.currentUser?.uid;
-        const currentData = databaseCache.users?.[ownerUid]?.infrastructure?.currents?.[targetId];
-
-        if (currentData) {
-            if (nameInput) nameInput.value = currentData.name || '';
-            if (typeSelect) typeSelect.value = currentData.type || '';
-            if (privacySelect) privacySelect.value = currentData.privacy || 'private';
-            
-            hud.dataset.targetId = targetId;
-            hud.dataset.mode = 'update';
-        }
-    } else {
-        if (title) title.innerText = "INITIALIZE_CURRENT";
-        if (submitBtn) submitBtn.innerText = "GENERATE_INFRASTRUCTURE";
-        if (nameInput) nameInput.value = '';
-        
-        hud.dataset.mode = 'add';
-        delete hud.dataset.targetId;
+    if (!name) {
+        alert("System requires a CURRENT_NAME to initialize.");
+        return;
     }
 
-    // Toggle visibility
-    hud.style.display = 'flex';
-    hud.classList.add('active');
-};
+    // ENFORCE FALLBACK: If blank, set to "Custom"
+    const finalType = typeValue || "Custom";
 
+    try {
+        // Your existing logic to push to Firebase
+        await window.saveCurrentToDB({
+            id: targetId, // null for 'add'
+            name: name,
+            type: finalType,
+            privacy: privacy,
+            mode: mode
+        });
+
+        window.closeAddCurrentHud();
+        await window.refreshUI();
+    } catch (e) {
+        console.error("Infrastructure Deployment Failed:", e);
+    }
+};
 /*
  * Objective: Create a new Current with specific metadata.
  */
