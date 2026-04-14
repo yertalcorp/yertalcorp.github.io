@@ -119,37 +119,50 @@ function renderNavbar(items, ui) {
     `).join('');
 }
 
-// A safe function to set the slug.
 const getSafeSlug = async (user) => {
-     // 1. Try Session storage first
-     let cached = JSON.parse(sessionStorage.getItem('currentUser'));
-     if (cached?.slug) return cached.slug;
+    // 1. Session Storage Trace
+    let cachedStr = sessionStorage.getItem('currentUser');
+    console.log("--- [getSafeSlug Trace] ---");
+    console.log("1. Session Cache Raw:", cachedStr);
 
-    // 2. If session empty, fetch from DB
-    console.log("Slug missing from session, fetching from Firebase...");
-    
-    // Added try/catch to log errors during the fetch operation
-    try {
-        const snapshot = await fetch(`${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`);
-        
-        // Check if the response is ok (status in the range 200-299)
-        if (!snapshot.ok) {
-            throw new Error(`HTTP error! status: ${snapshot.status}`);
+    if (cachedStr) {
+        let cached = JSON.parse(cachedStr);
+        if (cached?.slug) {
+            console.log("2. Success: Slug found in session:", cached.slug);
+            return cached.slug;
         }
-        
-        const profile = await snapshot.json();
-            
-       if (profile?.slug) {
-            sessionStorage.setItem('currentUser', JSON.stringify(profile));
-            console.log("getSafeSlug slug retrieved from db is : ", profile.slug);
-            return profile.slug;
-       }
-    } catch (error) {
-        console.error("Error retrieving data from the db:", error);
     }
 
-   // 3. Absolute fallback (UID is safer than Display Name)
-   return user.uid; 
+    // 2. Database Fetch Trace
+    const dbUrl = `${firebaseConfig.databaseURL}/users/${user.uid}/profile.json`;
+    console.log("3. Session empty. Fetching from URL:", dbUrl);
+    
+    try {
+        const response = await fetch(dbUrl);
+        console.log("4. Fetch Response Status:", response.status, response.statusText);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const profile = await response.json();
+        console.log("5. Full Profile Object from DB:", profile);
+            
+        if (profile && profile.slug) {
+            console.log("6. Success: Slug found in DB:", profile.slug);
+            // Sync session so we don't fetch next time
+            sessionStorage.setItem('currentUser', JSON.stringify(profile));
+            return profile.slug;
+        } else {
+            console.warn("7. Warning: Profile fetched, but 'slug' key is missing or null.");
+        }
+    } catch (error) {
+        console.error("8. Error during fetch operation:", error);
+    }
+
+    // 3. Fallback Trace
+    console.log("9. Falling back to UID:", user.uid);
+    return user.uid; 
 };
 
 async function renderAuthStatus(user, authData) {
