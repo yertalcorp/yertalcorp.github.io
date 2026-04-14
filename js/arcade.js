@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 13:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2519,7 +2519,6 @@ window.saveArcadeSettings = async () => {
     const themeSelect = document.getElementById('arcade-theme-select');
     const privacySelect = document.getElementById('arcade-privacy-select');
     const planValue = document.querySelector('input[name="arcade-plan"]:checked')?.value || 'free';
-  
 
     const arcadeName = nameInput.value.trim().toUpperCase();
     if (!arcadeName) {
@@ -2533,46 +2532,61 @@ window.saveArcadeSettings = async () => {
     try {
         const profilePath = `users/${activeUser.uid}/profile`;
         
-        // --- SAFE INITIALIZATION ---
-        // Ensure the object exists so we don't crash on read
+        // Ensure local state exists
         if (!window.pageOwnerData) window.pageOwnerData = {};
         if (!window.pageOwnerData.profile) window.pageOwnerData.profile = {};
         
         const profile = window.pageOwnerData.profile;
+        const currentSlug = profile.slug; 
+        const selectedPrivacy = privacySelect.value;
 
-        // 3. CONSTRUCT UPDATE PAYLOAD
+        // 1. CONSTRUCT UPDATE PAYLOAD
         const updates = {};
         updates[`${profilePath}/arcade_title`] = arcadeName;
         updates[`${profilePath}/arcade_subtitle`] = subtitleInput.value.trim();
         updates[`${profilePath}/theme`] = themeSelect.value;
-        updates[`${profilePath}/privacy`] = privacySelect.value;
+        updates[`${profilePath}/privacy`] = selectedPrivacy;
         updates[`${profilePath}/plan_type`] = planValue;
 
-        // 4. CONDITIONAL SETUP_COMPLETE
         if (profile.setup_complete === undefined || profile.setup_complete === null) {
             updates[`${profilePath}/setup_complete`] = true;
         }
 
-        // 5. EXECUTE UPDATE
+        // 2. GRANULAR SEARCH INDEX MANAGEMENT
+        // We only manage the index if the user has a valid slug defined
+        if (currentSlug) {
+            const indexRef = window.ref(window.db, `search_index/${currentSlug}`);
+            const indexSnap = await window.get(indexRef);
+            const existsInIndex = indexSnap.exists();
+
+            if (selectedPrivacy === 'public') {
+                // Add/Update if it's public (regardless of if it exists, to ensure it's correct)
+                updates[`search_index/${currentSlug}`] = activeUser.uid;
+                console.log(`[INDEX]: Syncing public access for ${currentSlug}`);
+            } else if (existsInIndex) {
+                // If it's private/unlisted AND currently in the index, remove it
+                updates[`search_index/${currentSlug}`] = null;
+                console.log(`[INDEX]: Removing ${currentSlug} from public directory.`);
+            }
+        }
+
+        // 3. ATOMIC EXECUTION
         await window.update(window.ref(window.db), updates);
 
-        // 6. SYNC LOCAL STATE (SAFE MAPPING)
+        // 4. SYNC LOCAL STATE
         Object.keys(updates).forEach(path => {
-            const key = path.split('/').pop();
-            // Assigning to the now-guaranteed profile object
-            window.pageOwnerData.profile[key] = updates[path];
+            if (path.startsWith(profilePath)) {
+                const key = path.split('/').pop();
+                window.pageOwnerData.profile[key] = updates[path];
+            }
         });
 
-        // 7. UI FINALIZATION
-        
+        // 5. UI REFRESH
         applyTheme(themeSelect.value);
         document.getElementById('arcadesettings-hud').classList.remove('active');
 
-        // --- START WINDOW RELOAD SECTION ---
-            await refreshUI();
-            console.log("[SYSTEM] SYNC COMPLETE. Identity Forged for:", activeUser.uid);
-            console.log("[SYSTEM] CURRENT URL:", window.location.href);
-        // --- END WINDOW RELOAD SECTION ---
+        await refreshUI();
+        console.log("[SYSTEM]: Settings Synchronized.");
 
     } catch (error) {
         console.error("FORGE_FAILURE:", error);
