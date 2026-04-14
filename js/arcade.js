@@ -1158,32 +1158,52 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
     }
 }
 /*
- * Objective: Initialize and display the Add Current HUD.
- * Populates current types from databaseCache settings.
+ * Objective: Initialize the update sequence for an existing Current.
+ * [cite: 2026-04-14]
  */
-window.openAddCurrentHud = () => {
-    const hud = document.getElementById('add-current-hud');
-    const select = document.getElementById('current-type-select');
+window.updateCurrent = (currentId) => {
+    console.log(`[ACTION]: Initiating update for Current: ${currentId}`);
+    // We pass the ID so the HUD knows which record to fetch/reference
+    window.openAddCurrentHud('update', currentId);
+};
+
+
+window.openAddCurrentHud = async (action = 'add', targetId = null) => {
+    const hud = document.getElementById('addcurrent-hud');
+    const title = hud.querySelector('.hud-title');
+    const submitBtn = hud.querySelector('#submit-current-btn');
+    
+    // Reset inputs
     const nameInput = document.getElementById('current-name-input');
-    const customInput = document.getElementById('custom-type-input');
+    const typeSelect = document.getElementById('current-type-select');
+    const privacySelect = document.getElementById('current-privacy-select');
 
-    // 1. Reset fields
-    nameInput.value = '';
-    customInput.value = '';
-    customInput.style.display = 'none';
+    if (action === 'update' && targetId) {
+        title.innerText = "UPDATE CURRENT INFRASTRUCTURE";
+        submitBtn.innerText = "CONFIRM CHANGES";
+        
+        // 1. Fetch data from local cache or DB
+        const ownerUid = window.pageOwnerData?.uid;
+        const currentData = databaseCache.users?.[ownerUid]?.infrastructure?.currents?.[targetId];
 
-    // 2. Populate Dropdown
-    const types = databaseCache.settings?.['arcade-current-types'] || [];
-    select.innerHTML = `
-        <option value="">-- SELECT TYPE --</option>
-        ${types.map(type => `
-            <option value="${type.id}">${type.name.toUpperCase()}</option>
-        `).join('')}
-        <option value="other">DEFINED_CUSTOM</option>
-    `;
+        if (currentData) {
+            nameInput.value = currentData.name || '';
+            typeSelect.value = currentData.type || 'standard';
+            privacySelect.value = currentData.privacy || 'private';
+            
+            // Store the ID we are targeting in a data attribute for the save function
+            hud.dataset.targetId = targetId;
+            hud.dataset.mode = 'update';
+        }
+    } else {
+        title.innerText = "INITIALIZE NEW CURRENT";
+        submitBtn.innerText = "CREATE CURRENT";
+        nameInput.value = '';
+        hud.dataset.mode = 'add';
+        delete hud.dataset.targetId;
+    }
 
-    // 3. Show HUD
-    hud.style.display = 'flex';
+    hud.classList.add('active');
 };
 /*
  * Objective: Create a new Current with specific metadata.
