@@ -1133,12 +1133,11 @@ window.openAddCurrentHud = () => {
     hud.style.display = 'flex';
 };
 /*
- * Objective: Modular infrastructure generator.
- * Handles DB entry, cache update, and initial spark generation.
+ * Objective: Create a new Current with specific metadata.
  */
 window.addNewCurrent = async (name, type, privacy) => {
-    // Auto-generate ID: lowercase with hyphens
-    const currentId = name.toLowerCase().replace(/\s+/g, '-');
+    // ID: lowercase of name with hyphens (e.g., "Space Dodger" -> "space-dodger")
+    const currentId = name.toLowerCase().trim().replace(/\s+/g, '-');
     
     const currentData = {
         id: currentId,
@@ -1157,9 +1156,11 @@ window.addNewCurrent = async (name, type, privacy) => {
     }
     databaseCache.users[user.uid].infrastructure.currents[currentId] = currentData;
 
+    // 3. Close the HUD visually after success
+    document.getElementById('add-current-hud').style.display = 'none';
+
     return currentId;
 };
-
 function verifyAndFixCode(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
