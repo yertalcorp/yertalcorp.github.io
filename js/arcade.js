@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 15:44:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1178,11 +1178,9 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
     const hud = document.getElementById('add-current-hud');
     if (!hud) return;
 
-    // Corrected selectors based on your provided index.html
+    // Direct ID/Class selectors matching your HTML
     const title = hud.querySelector('.current-title');
-    const footerButtons = hud.querySelectorAll('.hud-footer button');
-    const submitBtn = footerButtons[0]; // The first button in the footer
-    
+    const submitBtn = document.getElementById('submit-current-btn');
     const nameInput = document.getElementById('current-name-input');
     const typeSelect = document.getElementById('current-type-select');
     const privacySelect = document.getElementById('current-privacy-select');
@@ -1198,6 +1196,7 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
             if (nameInput) nameInput.value = currentData.name || '';
             if (typeSelect) typeSelect.value = currentData.type || '';
             if (privacySelect) privacySelect.value = currentData.privacy || 'private';
+            
             hud.dataset.targetId = targetId;
             hud.dataset.mode = 'update';
         }
@@ -1205,14 +1204,16 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
         if (title) title.innerText = "INITIALIZE_CURRENT";
         if (submitBtn) submitBtn.innerText = "GENERATE_INFRASTRUCTURE";
         if (nameInput) nameInput.value = '';
+        
         hud.dataset.mode = 'add';
         delete hud.dataset.targetId;
     }
 
-    // Ensure display is set to flex/block since your HTML has it as style="display: none;"
-    hud.style.display = 'flex'; 
+    // Toggle visibility
+    hud.style.display = 'flex';
     hud.classList.add('active');
 };
+
 /*
  * Objective: Create a new Current with specific metadata.
  */
