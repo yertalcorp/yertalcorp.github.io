@@ -103,8 +103,11 @@
     <div style="display: flex; gap: 10px;">
         <select id="current-type-select" class="hud-input" style="flex: 1;" onchange="document.getElementById('current-type-input').value = this.value">
         </select>
-        <input type="text" id="current-type-input" class="hud-input" style="flex: 1;" placeholder="Specify type...">
-    </div>
+        <input type="text" id="current-type-input" class="hud-input" 
+               value="Select a type..."
+               onfocus="if(this.value==='Select a type...') this.value='';" 
+               onblur="if(this.value==='') this.value='Select a type...';">
+        </div>
 </section>
                 <section class="hud-step">
                     <label class="hud-label">PRIVACY_PROTOCOL</label>
