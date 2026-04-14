@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1161,14 +1161,19 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
         const ownerUid = window.auth?.currentUser?.uid;
         const currentData = databaseCache.users?.[ownerUid]?.infrastructure?.currents?.[targetId];
 
+        /* --- Inside openAddCurrentHud (Update Block) --- */
         if (currentData) {
             if (nameInput) nameInput.value = currentData.name || '';
             if (typeInput) typeInput.value = currentData.type || '';
-            if (typeSelect) typeSelect.value = ''; // Keep picker neutral on load
+            if (typeSelect) typeSelect.value = ''; 
             if (privacySelect) privacySelect.value = currentData.privacy || 'private';
-            
+    
+            // THE FIX: Save the previous state for submitNewCurrent to compare against
             hud.dataset.targetId = targetId;
             hud.dataset.mode = 'update';
+            hud.dataset.prevName = (currentData.name || '').trim().toLowerCase();
+            hud.dataset.prevType = (currentData.type || '').trim().toLowerCase();
+            hud.dataset.prevPrivacy = (currentData.privacy || 'private').trim().toLowerCase();
         }
     } else {
         if (title) title.innerText = "INITIALIZE_CURRENT";
@@ -1188,38 +1193,94 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
 };
 
 window.submitNewCurrent = async () => {
-    const name = document.getElementById('current-name-input').value.trim();
-    const typeValue = document.getElementById('current-type-input').value.trim();
-    const privacy = document.getElementById('current-privacy-select').value;
-    
     const hud = document.getElementById('add-current-hud');
-    const mode = hud.dataset.mode;
-    const targetId = hud.dataset.targetId;
+    const mode = hud.dataset.mode; // 'add' or 'update'
+    const prevId = hud.dataset.targetId; // The ID before editing
+    
+    // 1. Grab current form values
+    const newName = document.getElementById('current-name-input').value.trim();
+    const newType = document.getElementById('current-type-input').value.trim() || "Custom";
+    const newPrivacy = document.getElementById('current-privacy-select').value;
 
-    if (!name) {
-        alert("System requires a CURRENT_NAME to initialize.");
+    // 2. Validation: Null Check
+    if (!newName || newName.toLowerCase() === 'null') {
+        console.warn("[SYSTEM] current name was null: Operation Aborted.");
         return;
     }
 
-    // ENFORCE FALLBACK: If blank, set to "Custom"
-    const finalType = typeValue || "Custom";
+    // 3. Identification & Comparison
+    // We assume the HUD was populated with these data attributes in openAddCurrentHud
+    const prevName = hud.dataset.prevName || '';
+    const prevType = hud.dataset.prevType || '';
+    const prevPrivacy = hud.dataset.prevPrivacy || 'private';
 
+    let finalId;
+    let nameChanged = newName !== prevName;
+
+    if (nameChanged) {
+        // Generate new ID because name changed (or it's a brand new 'add')
+        finalId = newName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    } else {
+        // No name change: preserve the existing ID
+        finalId = prevId;
+    }
+
+    // 4. Change Detection Guard
+    const hasTypeChanged = newType !== prevType;
+    const hasPrivacyChanged = newPrivacy !== prevPrivacy;
+
+    if (mode === 'update' && !nameChanged && !hasTypeChanged && !hasPrivacyChanged) {
+        console.log("[SYSTEM] No modifications detected. Deployment bypassed.");
+        window.closeAddCurrentHud();
+        return;
+    }
+
+    // 5. Database Execution
     try {
-        // Your existing logic to push to Firebase
-        await window.saveCurrentToDB({
-            id: targetId, // null for 'add'
-            name: name,
-            type: finalType,
-            privacy: privacy,
-            mode: mode
-        });
+        const ownerUid = auth.currentUser?.uid;
+        const timestamp = Date.now();
+        
+        // Prepare the data packet
+        const dataPacket = {
+            id: finalId,
+            name: newName,
+            type: newType,
+            privacy: newPrivacy,
+            last_updated: timestamp
+        };
+
+        if (mode === 'add') {
+            const path = `users/${ownerUid}/infrastructure/currents/${finalId}`;
+            await saveToRealtimeDB(path, { ...dataPacket, date_created: timestamp });
+        } else {
+            // UPDATE MODE
+            if (nameChanged) {
+                // Name changed: We must move the record (Delete old, Create new)
+                // We'll need to fetch sparks first to carry them over
+                const oldPath = `users/${ownerUid}/infrastructure/currents/${prevId}`;
+                const newPath = `users/${ownerUid}/infrastructure/currents/${finalId}`;
+                
+                // Carry over the sparks from our local cache before deleting
+                const sparks = databaseCache.users?.[ownerUid]?.infrastructure?.currents?.[prevId]?.sparks || {};
+                const originalDate = databaseCache.users?.[ownerUid]?.infrastructure?.currents?.[prevId]?.date_created || timestamp;
+
+                await saveToRealtimeDB(oldPath, null); // Remove old
+                await saveToRealtimeDB(newPath, { ...dataPacket, date_created: originalDate, sparks }); // Set new
+            } else {
+                // Only non-ID fields changed: standard update
+                const path = `users/${ownerUid}/infrastructure/currents/${prevId}`;
+                await update(ref(db, path), dataPacket);
+            }
+        }
 
         window.closeAddCurrentHud();
         await window.refreshUI();
+
     } catch (e) {
         console.error("Infrastructure Deployment Failed:", e);
     }
 };
+
 /*
  * Objective: Create a new Current with specific metadata.
  */
