@@ -13,9 +13,9 @@ export const firebaseConfig = {
   measurementId: "G-2VP21WZ4CG"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app); // Define this BEFORE the helper function
+export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getDatabase(app); // Define this BEFORE the helper function
 
 // The helper for the Arcade
 export async function saveToRealtimeDB(path, data) {
