@@ -1274,7 +1274,7 @@ window.submitNewCurrent = async () => {
         }
 
         window.closeAddCurrentHud();
-        await window.refreshUI();
+        await refreshUI();
 
     } catch (e) {
         console.error("Infrastructure Deployment Failed:", e);
