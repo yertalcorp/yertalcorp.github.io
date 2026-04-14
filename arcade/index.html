@@ -98,12 +98,14 @@
                     <input type="text" id="current-name-input" class="hud-input" placeholder="Enter name...">
                 </section>
 
-                <section class="hud-step">
-                    <label class="hud-label">CURRENT_TYPE</label>
-                    <select id="current-type-select" class="hud-input" onchange="window.toggleCustomType(this.value)"></select>
-                    <input type="text" id="custom-type-input" class="hud-input" style="display:none; margin-top: 10px;" placeholder="Specify type...">
-                </section>
-
+<section class="hud-step">
+    <label class="hud-label">CURRENT_TYPE</label>
+    <div style="display: flex; gap: 10px;">
+        <select id="current-type-select" class="hud-input" style="flex: 1;" onchange="document.getElementById('current-type-input').value = this.value">
+        </select>
+        <input type="text" id="current-type-input" class="hud-input" style="flex: 1;" placeholder="Specify type...">
+    </div>
+</section>
                 <section class="hud-step">
                     <label class="hud-label">PRIVACY_PROTOCOL</label>
                     <select id="current-privacy-select" class="hud-input">
