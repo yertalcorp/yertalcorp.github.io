@@ -1065,16 +1065,15 @@ return `
  * Objective: Modular infrastructure generator.
  * Handles DB entry, cache update, and initial spark generation.
  */
-window.addNewCurrent = async (name, type, prompt, limits) => {
-    const currentId = `current-${Date.now()}`;
-    const logicType = predictLogicType(prompt);
+window.addNewCurrent = async (name, type, privacy) => {
+    // Auto-generate ID: lowercase with hyphens
+    const currentId = name.toLowerCase().replace(/\s+/g, '-');
     
     const currentData = {
         id: currentId,
         name: name,
-        type_ref: type,
-        logic_mode: logicType,
-        privacy: 'private',
+        type: type,
+        privacy: privacy,
         created: Date.now()
     };
 
@@ -1086,23 +1085,6 @@ window.addNewCurrent = async (name, type, prompt, limits) => {
         databaseCache.users[user.uid].infrastructure = { currents: {} };
     }
     databaseCache.users[user.uid].infrastructure.currents[currentId] = currentData;
-
-    // 3. Spark Generation
-    const defaultThumb = databaseCache.settings?.['ui-settings']?.['default-thumbnail'] || '/assets/thumbnails/default.jpg';
-    const template = databaseCache.settings['arcade-current-types']?.find(t => t.id === type) || { name: 'Custom', image: defaultThumb };
-    
-    const countMatch = prompt.match(/\d+/);
-    const finalCount = countMatch ? countMatch[0] : (limits?.num_mass_sparks || 3);
-    const augmentedPrompt = countMatch ? prompt : `${prompt} ${finalCount}`;
-
-    await (
-        currentId, 
-        name,
-        augmentedPrompt, 
-        (logicType === 'source' ? 'sourcing' : 'prompt'), 
-        template.name, 
-        template.image
-    );
 
     return currentId;
 };
@@ -1394,8 +1376,8 @@ Rules:
     `Persona: You are a Creative Developer specializing in 3D Web Graphics.
 Rules:
 - Provide a standalone, working HTML/JS file.
-- **3D Depth Protocol**: Use gradients, simulated drop shadows, and scale-based perspective to give flat shapes a 3D "Tactile" look.
-- **JSON Safety**: Return ONLY a valid JSON object: {"name": "Title", "code": "Code content"}. Escape all double quotes in the code string correctly.
+- 3D Depth Protocol: Use gradients, simulated drop shadows, and scale-based perspective to give flat shapes a 3D "Tactile" look.
+- JSON Safety: Return ONLY a valid JSON object: {"name": "Title", "code": "Code content"}. Escape all double quotes in the code string correctly.
 - Ensure all buttons and mouse/touch controls work.
 - Adhere to the parent page's viewport.
 
@@ -1406,7 +1388,7 @@ Runtime & Viewport Resilience:
 - Use requestAnimationFrame for smooth 60fps rendering.
 
 Visual Rendering & Object Logic:
-- **Depth Cues**: Objects must have a light-source origin (e.g., top-left highlight) to appear 3D.
+- Depth Cues: Objects must have a light-source origin (e.g., top-left highlight) to appear 3D.
 - Clear the canvas every frame to prevent smearing.
 - Use neon or high-chroma colors against a dark background.
 - Ensure all initial coordinates (x, y) are centered within the current viewport.
