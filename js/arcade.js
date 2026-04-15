@@ -1850,7 +1850,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const inlineFallbackJS = `console.error('IMAGE NETWORK FAILED: ${spark.id}'); this.onerror=null; try { const tk = localStorage.getItem('arcade-theme') || 'neon-dark'; const td = databaseCache.settings['themes'][tk] || {}; this.src=getDynamicCardCover(td); } catch(e) { this.src='/assets/thumbnails/default.jpg'; }`;
 
     return `
-        <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
+        <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center; width: 100%;">
             <div class="action-card" 
                   onclick="window.location.href='${targetUrl}'"
                   style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
