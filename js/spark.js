@@ -8,7 +8,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 19:07:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 13:19:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 // --- START CAPTURE & CROP STATE ---
 let currentBurstFrames = []; 
@@ -18,7 +18,7 @@ let sourceImage = new Image();
 const IMGBB_API_KEY = "YOUR_KEY"; // Replace with your actual ImgBB API key
 // --- END CAPTURE & CROP STATE ---
 
-/**
+/*
  * BURST CAPTURE ENGINE
  * Captures 6 frames with a 500ms gap to catch movement for selection.
  */
@@ -70,7 +70,7 @@ async function captureBurst() {
     if (status) status.textContent = "BURST CAPTURE READY";
 }
 
-/**
+/*
  * BURST SELECTION GRID
  * Opens the HUD to pick which of the 6 shots to crop.
  */
@@ -102,7 +102,7 @@ function openBurstPicker() {
     hud.classList.remove('hidden');
 }
 
-/**
+/*
  * PRECISION CROP TOOL
  * Handles mouse logic for selecting a specific area of the capture.
  */
@@ -157,7 +157,7 @@ function openCropTool(imageUrl) {
     canvas.onmouseup = () => { cropStart = null; };
 }
 
-/**
+/*
  * FINAL UPLOAD
  * Crops the image locally and sends the final selection to ImgBB and Firebase.
  */
@@ -228,7 +228,7 @@ function updateThumbCanvas(url) {
     img.src = url;
 }
 
-/**
+/*
  * Clips the edges and resizes a screenshot to 240x135.
  * @param {string} dataUrl - The raw screenshot DataURL.
  */
@@ -261,7 +261,7 @@ async function convertScreenshotToImage(dataUrl) {
     });
 }
 
-/**
+/*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
  * @param {Object} spark - The spark data object from the DB.
  * @returns {string} - The complete HTML string for the iframe.
@@ -356,7 +356,7 @@ function wrapCodeInLaboratory(spark) {
     `;
 }
 
-/**
+/*
  * Objective: Load a specific spark into the viewport and apply owner branding.
  */
 function loadSpark(spark) {
@@ -471,7 +471,7 @@ function startLiveThumbnail() {
     }, 5000);
 }
 
-/**
+/*
  * LEGACY METHOD - Preserved for direct saves
  */
 async function setPermanentCover() {
@@ -538,7 +538,7 @@ function togglePlayPause() {
 }
 
 
-/**
+/*
  * Objective: Initialize HUD and navigation interactions.
  * Task: Restrict navigation to mouse-only via side zones and reserve arrow keys for viewport gameplay.
  */
@@ -648,7 +648,7 @@ function setupInteractions() {
 }
 
 watchAuthState(async (user) => {
-    console.log("%c[AUTH] State Changed. User:", "color: #00ff00;", user ? user.uid : "Logged Out");
+    console.log("%c[AUTH] State Changed", "color: #00ff00;");
     if (!user) return;
 
     userId = user.uid; 
@@ -656,44 +656,58 @@ watchAuthState(async (user) => {
     const pageOwnerSlug = params.get('user'); 
     currentId = params.get('current');
     const initialSparkId = params.get('spark');
-    
-    console.log(`[AUTH] URL Context -> Owner: ${pageOwnerSlug} | Current: ${currentId} | Spark: ${initialSparkId}`);
 
-    const data = await getArcadeData();
-    console.log("[DATA] Full Arcade Payload:", data);
+    // 1. Helper to scan the imported databaseCache for the slug
+    const findOwnerInCache = () => {
+        const users = databaseCache?.users || {};
+        return Object.keys(users).find(uid => users[uid].profile?.slug === pageOwnerSlug);
+    };
 
-    const ownerUid = Object.keys(data.users || {})[0];
-    const path = data.users?.[ownerUid]?.infrastructure?.currents?.[currentId];
-    console.log(`[DATA] Resolved Path for Owner (${ownerUid}):`, path);
+    let ownerUid = findOwnerInCache();
+
+    // 2. Conditional Fetch Logic
+    // If the cache is empty, or specifically doesn't have the owner we need:
+    if (!databaseCache || Object.keys(databaseCache).length === 0 || !ownerUid) {
+        console.log("[CACHE] Cache miss for owner:", pageOwnerSlug, ". Fetching...");
+        
+        // Ensure getArcadeData updates the same object reference you imported
+        const freshData = await getArcadeData(); 
+        
+        // Re-check for the owner after the fresh fetch
+        ownerUid = Object.keys(freshData?.users || {}).find(uid => 
+            freshData.users[uid].profile?.slug === pageOwnerSlug
+        );
+    } else {
+        console.log("[CACHE] Found owner in existing databaseCache:", ownerUid);
+    }
+
+    // 3. Resolve the path
+    const targetUid = ownerUid || userId;
+    const path = databaseCache.users?.[targetUid]?.infrastructure?.currents?.[currentId];
 
     if (!path) {
-        console.error("[DATA] Critical Failure: Path resolution returned null.");
+        console.error("[DATA] No record for current:", currentId);
         document.getElementById('active-spark-name').textContent = "SPARK NOT FOUND";
         return;
     }
 
-    // Process Sparks Array
+    // 4. Load the Spark
     const sparksObj = path.sparks || {};
     allSparks = Object.values(sparksObj).sort((a, b) => (a.created || 0) - (b.created || 0));
-    
-    console.log(`[DATA] Sparks inventory loaded: ${allSparks.length} items found.`);
-
     currentIndex = allSparks.findIndex(s => s.id === initialSparkId);
 
     if (currentIndex !== -1) {
-        console.log(`[LAB] Target index ${currentIndex} found. Loading...`);
         loadSpark(allSparks[currentIndex]);
     } else if (allSparks.length > 0) {
-        console.warn("[LAB] Initial Spark ID missing from current. Defaulting to index 0.");
         loadSpark(allSparks[0]);
-    } else {
+    }else {
         console.error("[LAB] No sparks in current current.");
         document.getElementById('active-spark-name').textContent = "EMPTY CURRENT";
     }
     
     setupInteractions();
 });
-/**
+/*
  * Objective: Initialize HUD interactions and event listeners.
  */
 function initSparkHUD() {
