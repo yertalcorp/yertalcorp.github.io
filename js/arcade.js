@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2461,6 +2461,8 @@ window.openArcadeSettings = () => {
     // 2. GENERATE DYNAMIC PROFILE STRUCTURE
     if (profileZone) {
         profileZone.innerHTML = `
+            /* ADD THIS HIDDEN INPUT TO STORE THE SLUG */
+            <input type="hidden" id="arcade-slug-internal" value="${profile.slug || ''}">
             <label class="hud-label-metallic">* ARCADE NAME</label>
             <input type="text" id="new-arcade-name" placeholder="e.g., Quantum Lab" class="hud-input">
             
@@ -2630,6 +2632,7 @@ window.updateLogoStatus = (input) => {
     }
 };
 
+
 window.saveArcadeSettings = async () => {
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
@@ -2654,7 +2657,9 @@ window.saveArcadeSettings = async () => {
         if (!window.pageOwnerData.profile) window.pageOwnerData.profile = {};
         
         const profile = window.pageOwnerData.profile;
-        const currentSlug = profile.slug; 
+        
+        // RECOVERY: Pull slug from state OR the hidden field created in openArcadeSettings
+        const currentSlug = profile.slug || document.getElementById('arcade-slug-internal')?.value;
         const selectedPrivacy = privacySelect.value;
 
         // 1. CONSTRUCT UPDATE PAYLOAD
@@ -2670,21 +2675,18 @@ window.saveArcadeSettings = async () => {
         }
 
         // 2. GRANULAR SEARCH INDEX MANAGEMENT
-        // We only manage the index if the user has a valid slug defined
+        // ATOMIC FIX: Removed the extra 'get' snap for speed and reliability.
         if (currentSlug) {
-            const indexRef = window.ref(window.db, `search_index/${currentSlug}`);
-            const indexSnap = await window.get(indexRef);
-            const existsInIndex = indexSnap.exists();
-
             if (selectedPrivacy === 'public') {
-                // Add/Update if it's public (regardless of if it exists, to ensure it's correct)
                 updates[`search_index/${currentSlug}`] = activeUser.uid;
                 console.log(`[INDEX]: Syncing public access for ${currentSlug}`);
-            } else if (existsInIndex) {
-                // If it's private/unlisted AND currently in the index, remove it
+            } else {
+                // Deletes the entry if it exists; ignores if it doesn't. 
                 updates[`search_index/${currentSlug}`] = null;
                 console.log(`[INDEX]: Removing ${currentSlug} from public directory.`);
             }
+        } else {
+            console.warn("[INDEX_SKIPPED]: No valid slug found for indexing.");
         }
 
         // 3. ATOMIC EXECUTION
@@ -2699,7 +2701,7 @@ window.saveArcadeSettings = async () => {
         });
 
         // 5. UI REFRESH
-        applyTheme(themeSelect.value);
+        if (typeof applyTheme === 'function') applyTheme(themeSelect.value);
         document.getElementById('arcadesettings-hud').classList.remove('active');
 
         await refreshUI();
