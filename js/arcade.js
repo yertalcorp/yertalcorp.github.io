@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 16:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2659,7 +2659,7 @@ window.saveArcadeSettings = async () => {
         const profile = window.pageOwnerData.profile;
         
         // RECOVERY: Pull slug from state OR the hidden field created in openArcadeSettings
-        const currentSlug = profile.slug || document.getElementById('arcade-slug-internal')?.value;
+        const currentSlug = profilePath.slug;
         const selectedPrivacy = privacySelect.value;
 
         // 1. CONSTRUCT UPDATE PAYLOAD
