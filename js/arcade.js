@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 17:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2462,7 +2462,6 @@ window.openArcadeSettings = () => {
     if (profileZone) {
         profileZone.innerHTML = `
             /* ADD THIS HIDDEN INPUT TO STORE THE SLUG */
-            <input type="hidden" id="arcade-slug-internal" value="${profile.slug || ''}">
             <label class="hud-label-metallic">* ARCADE NAME</label>
             <input type="text" id="new-arcade-name" placeholder="e.g., Quantum Lab" class="hud-input">
             
@@ -2632,7 +2631,6 @@ window.updateLogoStatus = (input) => {
     }
 };
 
-
 window.saveArcadeSettings = async () => {
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
@@ -2658,8 +2656,11 @@ window.saveArcadeSettings = async () => {
         
         const profile = window.pageOwnerData.profile;
         
-        // RECOVERY: Pull slug from state OR the hidden field created in openArcadeSettings
-        const currentSlug = profilePath.slug;
+        // --- RELIABLE SLUG RECOVERY ---
+        // We pull directly from the URL params (?user=slug) as the source of truth
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentSlug = urlParams.get('user') || profile.slug || window.currentPageOwnerSlug;
+        
         const selectedPrivacy = privacySelect.value;
 
         // 1. CONSTRUCT UPDATE PAYLOAD
@@ -2670,26 +2671,32 @@ window.saveArcadeSettings = async () => {
         updates[`${profilePath}/privacy`] = selectedPrivacy;
         updates[`${profilePath}/plan_type`] = planValue;
 
+        // Ensure slug is synced in the profile node if it was missing
+        if (currentSlug) {
+            updates[`${profilePath}/slug`] = currentSlug;
+        }
+
         if (profile.setup_complete === undefined || profile.setup_complete === null) {
             updates[`${profilePath}/setup_complete`] = true;
         }
 
         // 2. GRANULAR SEARCH INDEX MANAGEMENT
-        // ATOMIC FIX: Removed the extra 'get' snap for speed and reliability.
         if (currentSlug) {
             if (selectedPrivacy === 'public') {
+                // Map the slug to the active UID
                 updates[`search_index/${currentSlug}`] = activeUser.uid;
                 console.log(`[INDEX]: Syncing public access for ${currentSlug}`);
             } else {
-                // Deletes the entry if it exists; ignores if it doesn't. 
+                // Remove slug from index if private/unlisted
                 updates[`search_index/${currentSlug}`] = null;
                 console.log(`[INDEX]: Removing ${currentSlug} from public directory.`);
             }
         } else {
-            console.warn("[INDEX_SKIPPED]: No valid slug found for indexing.");
+            console.warn("[INDEX_SKIPPED]: No valid slug found in URL, Profile, or Global state.");
         }
 
         // 3. ATOMIC EXECUTION
+        // One update call handles both the user profile and the search index
         await window.update(window.ref(window.db), updates);
 
         // 4. SYNC LOCAL STATE
@@ -2705,7 +2712,7 @@ window.saveArcadeSettings = async () => {
         document.getElementById('arcadesettings-hud').classList.remove('active');
 
         await refreshUI();
-        console.log("[SYSTEM]: Settings Synchronized.");
+        console.log("[SYSTEM]: Settings and Search Index Synchronized.");
 
     } catch (error) {
         console.error("FORGE_FAILURE:", error);
