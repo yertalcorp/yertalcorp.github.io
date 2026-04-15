@@ -8,7 +8,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 13:19:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 14:41:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 // --- START CAPTURE & CROP STATE ---
 let currentBurstFrames = []; 
@@ -657,36 +657,41 @@ watchAuthState(async (user) => {
     currentId = params.get('current');
     const initialSparkId = params.get('spark');
 
-    // 1. Helper to scan the imported databaseCache for the slug
-    const findOwnerInCache = () => {
-        const users = databaseCache?.users || {};
+    // 1. Helper to scan the cache
+    const findOwnerInCache = (data) => {
+        const users = data?.users || {};
         return Object.keys(users).find(uid => users[uid].profile?.slug === pageOwnerSlug);
     };
 
-    let ownerUid = findOwnerInCache();
+    let ownerUid = findOwnerInCache(databaseCache);
 
-    // 2. Conditional Fetch Logic
-    // If the cache is empty, or specifically doesn't have the owner we need:
+    // 2. Fetch if missing
     if (!databaseCache || Object.keys(databaseCache).length === 0 || !ownerUid) {
         console.log("[CACHE] Cache miss for owner:", pageOwnerSlug, ". Fetching...");
-        
-        // Ensure getArcadeData updates the same object reference you imported
         const freshData = await getArcadeData(); 
-        
-        // Re-check for the owner after the fresh fetch
-        ownerUid = Object.keys(freshData?.users || {}).find(uid => 
-            freshData.users[uid].profile?.slug === pageOwnerSlug
-        );
-    } else {
-        console.log("[CACHE] Found owner in existing databaseCache:", ownerUid);
+        ownerUid = findOwnerInCache(freshData);
     }
 
-    // 3. Resolve the path
+    // 3. RESOLUTION LOGIC REFINEMENT
     const targetUid = ownerUid || userId;
-    const path = databaseCache.users?.[targetUid]?.infrastructure?.currents?.[currentId];
+    
+    // Check if the user record exists but infrastructure is missing
+    let userRecord = databaseCache.users?.[targetUid];
+    
+    // If the record exists but currents are missing, we might need a tiny delay 
+    // or a re-fetch if arcade.js just initialized this user.
+    if (userRecord && !userRecord.infrastructure?.currents?.[currentId]) {
+        console.warn("[DATA] Record exists but 'current' is missing. Retrying fetch...");
+        const finalCheck = await getArcadeData();
+        userRecord = finalCheck.users?.[targetUid];
+    }
+
+    const path = userRecord?.infrastructure?.currents?.[currentId];
 
     if (!path) {
-        console.error("[DATA] No record for current:", currentId);
+        console.error("[DATA] No record for current:", currentId, "for UID:", targetUid);
+        // Debug the object to see what IS there
+        console.log("[DEBUG] User Record State:", userRecord);
         document.getElementById('active-spark-name').textContent = "SPARK NOT FOUND";
         return;
     }
@@ -694,19 +699,21 @@ watchAuthState(async (user) => {
     // 4. Load the Spark
     const sparksObj = path.sparks || {};
     allSparks = Object.values(sparksObj).sort((a, b) => (a.created || 0) - (b.created || 0));
+    
+    // Use the ID from the URL or fallback to the first one
     currentIndex = allSparks.findIndex(s => s.id === initialSparkId);
 
     if (currentIndex !== -1) {
         loadSpark(allSparks[currentIndex]);
     } else if (allSparks.length > 0) {
         loadSpark(allSparks[0]);
-    }else {
-        console.error("[LAB] No sparks in current current.");
+    } else {
         document.getElementById('active-spark-name').textContent = "EMPTY CURRENT";
     }
     
     setupInteractions();
 });
+
 /*
  * Objective: Initialize HUD interactions and event listeners.
  */
