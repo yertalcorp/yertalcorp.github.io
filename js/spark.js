@@ -8,7 +8,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 14:41:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:24:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 // --- START CAPTURE & CROP STATE ---
 let currentBurstFrames = []; 
@@ -660,7 +660,11 @@ watchAuthState(async (user) => {
     // 1. Helper to scan the cache
     const findOwnerInCache = (data) => {
         const users = data?.users || {};
-        return Object.keys(users).find(uid => users[uid].profile?.slug === pageOwnerSlug);
+        // Check for explicit slug match OR fallback to the superuser ID
+        return Object.keys(users).find(uid => {
+            const profile = users[uid].profile || {};
+            return profile.slug === pageOwnerSlug || uid === 'yertal-arcade';
+        });
     };
 
     let ownerUid = findOwnerInCache(databaseCache);
@@ -672,29 +676,33 @@ watchAuthState(async (user) => {
         ownerUid = findOwnerInCache(freshData);
     }
 
-    // 3. RESOLUTION LOGIC REFINEMENT
-    const targetUid = ownerUid || userId;
-    
-    // Check if the user record exists but infrastructure is missing
-    let userRecord = databaseCache.users?.[targetUid];
-    
-    // If the record exists but currents are missing, we might need a tiny delay 
-    // or a re-fetch if arcade.js just initialized this user.
-    if (userRecord && !userRecord.infrastructure?.currents?.[currentId]) {
-        console.warn("[DATA] Record exists but 'current' is missing. Retrying fetch...");
-        const finalCheck = await getArcadeData();
-        userRecord = finalCheck.users?.[targetUid];
-    }
+// 3. RESOLUTION LOGIC REFINEMENT
+const targetUid = ownerUid || userId;
+let userRecord = databaseCache?.users?.[targetUid];
 
-    const path = userRecord?.infrastructure?.currents?.[currentId];
+// Logic change: If targetUid is found but infrastructure is missing, 
+// it's likely a partial cache. Force a refresh.
+if (!userRecord || !userRecord.infrastructure) {
+    console.log("[SYSTEM] Infrastructure missing for:", targetUid, ". Requesting sync...");
+    const freshData = await getArcadeData(); // This should hit the actual DB
+    userRecord = freshData?.users?.[targetUid];
+}
 
-    if (!path) {
-        console.error("[DATA] No record for current:", currentId, "for UID:", targetUid);
-        // Debug the object to see what IS there
-        console.log("[DEBUG] User Record State:", userRecord);
-        document.getElementById('active-spark-name').textContent = "SPARK NOT FOUND";
+// Ensure the specific current exists
+const currents = userRecord?.infrastructure?.currents || {};
+const path = currents[currentId];
+
+if (!path) {
+    // Fallback: If 'neural-void' isn't found, try to grab the first available current
+    const fallbackCurrent = Object.values(currents)[0];
+    if (fallbackCurrent) {
+        console.warn("[DATA] Redirecting to fallback current infrastructure.");
+        path = fallbackCurrent;
+    } else {
+        console.error("[DATA] No record for current:", currentId);
         return;
     }
+}
 
     // 4. Load the Spark
     const sparksObj = path.sparks || {};
