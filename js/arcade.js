@@ -1563,9 +1563,8 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
     
     const instructions = isSource ? 
-        `- Retrieve direct URLs with high resolution. Prioritize public domain or creative commons sources. Group all results by visual style and aspect ratio. Filter out broken links.
-        - Retrieve only specific items that match the task.
-        -Format: JSON array [{"name", "url", "description"}] and name has maximum 3 words.` : 
+        `- Retrieve direct URLs with high resolution for the specific items that match the task. Prioritize public domain or creative commons sources. Group all results by visual style and aspect ratio. Filter out broken links.
+         -Format: JSON array [{"name", "url", "description"}] and name has maximum 3 words.` : 
         `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
         -Format: JSON object {"name", "code"} and name has maximum 3 words.`;
 
