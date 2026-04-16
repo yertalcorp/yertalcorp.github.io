@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1561,16 +1561,32 @@ function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpa
 
 function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
-    
-    const instructions = isSource ? 
-        `- Prioritize public domain, license-free content or creative common sources.
-         - Retrieve the specific items that match the task.
-         -Format: JSON array [{"name", "url", "description"}] and name has maximum 3 words.` : 
-        `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
-        -Format: JSON object {"name", "code"} and name has maximum 3 words.`;
+    const isPictures = promptTypeObject.name === "Pictures";
+
+    let instructions = "";
+
+    if (isSource) {
+        if (isPictures) {
+            // Specific instructions for high-res, direct image links
+            instructions = `- DO NOT return website URLs or gallery pages.
+                         - ONLY return direct links to image files (ending in .jpg, .png, or .webp).
+                         - Prioritize high-resolution sources like Wikimedia Commons, Unsplash, or NASA (direct file links).
+                         - Format: JSON array [{"name", "url", "description"}] and name has maximum 3 words.`;
+        } else {
+            // Your existing stable source logic
+            instructions = `- Do NOT return search engine URLs or database homepages.
+                         - Research specific items that match the task.
+                         - Format: JSON array [{"name", "url", "description"}] and name has maximum 3 words.`;
+        }
+    } else {
+        // Your existing code generation logic
+        instructions = `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
+                     - Format: JSON object {"name", "code"} and name has maximum 3 words.`;
+    }
 
     const returnString = isSource ? 
         `${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `${rawPrompt}. Follow this model: ${promptTypeObject.name}.`;
+
     return `
         ${returnString}
         ${instructions}
