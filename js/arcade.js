@@ -1568,7 +1568,6 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     if (isSource) {
             instructions = `${promptTypeObject.rules}
                          - Format: JSON array [{"name", "url", "description"}] and name has maximum 3 words.`;
-        }
     } else {
         // Your existing code generation logic
         instructions = `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
