@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 18:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 19:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1563,13 +1563,14 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
     
     const instructions = isSource ? 
-        `- Retrieve direct URLs with high resolution for the specific items that match the task. Prioritize public domain or creative commons sources. Group all results by visual style and aspect ratio. Filter out broken links.
+        `- Prioritize public domain, license-free content or creative common sources.
+         - Retrieve the specific items that match the task.
          -Format: JSON array [{"name", "url", "description"}] and name has maximum 3 words.` : 
         `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
         -Format: JSON object {"name", "code"} and name has maximum 3 words.`;
 
     const returnString = isSource ? 
-        `Task: ${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `Task: ${rawPrompt}. Follow this model: ${promptTypeObject.name}.`;
+        `${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `${rawPrompt}. Follow this model: ${promptTypeObject.name}.`;
     return `
         ${returnString}
         ${instructions}
