@@ -2461,7 +2461,6 @@ window.openArcadeSettings = () => {
     // 2. GENERATE DYNAMIC PROFILE STRUCTURE
     if (profileZone) {
         profileZone.innerHTML = `
-            /* ADD THIS HIDDEN INPUT TO STORE THE SLUG */
             <label class="hud-label-metallic">* ARCADE NAME</label>
             <input type="text" id="new-arcade-name" placeholder="e.g., Quantum Lab" class="hud-input">
             
