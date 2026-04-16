@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:56:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1566,7 +1566,8 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     let instructions = "";
 
     if (isSource) {
-            instructions = `${promptTypeObject.rules}
+            instructions = `- Locate specific, verified items that match the task.
+                            ${promptTypeObject.rules}
                          - Format: JSON array [{"name", "url", "description"}] and name has maximum 3 words.`;
     } else {
         // Your existing code generation logic
