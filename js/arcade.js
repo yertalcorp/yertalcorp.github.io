@@ -1569,7 +1569,7 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
         -Format: JSON object {"name", "code"} and name has maximum 3 words.`;
 
     const returnString = isSource ? 
-        `${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `${rawPrompt}. Follow this model: ${promptTypeObject.name}.`;
+        `Task: ${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `Task: ${rawPrompt}. Follow this model: ${promptTypeObject.name}.`;
     return `
         ${returnString}
         ${instructions}
