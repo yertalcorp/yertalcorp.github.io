@@ -205,40 +205,48 @@ iframe {
 }
 /* Add these to your Navigation Reveal Styles section */
 
-#prev-zone, #next-zone {
+/* 1. SHARED: Defines what a "zone" looks like and how it behaves */
+.nav-zone {
     position: fixed;
-    top: 0;
-    width: 80px; /* The hit-area width */
-    height: 100vh;
+    top: 30px;
+    width: 150px;
+    height: calc(100vh - 30px);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 95000; 
+    z-index: 95000;
     pointer-events: auto;
-    /* Optional: background: rgba(255,0,0,0.1); // Use for debugging hit-areas */
 }
 
+/* 2. LEFT SIDE: Protects the "Back to Arcade" button */
 #prev-zone {
-    left: 30px;
-    /* Give the top-left corner back to the exit button */
+    left: 0;
+    /* Trims the top-left corner (0-15% of the zone's height) */
     clip-path: polygon(0% 15%, 100% 15%, 100% 100%, 0% 100%);
 }
 
+/* 3. RIGHT SIDE: Protects the "Exit Maximize" square icon */
 #next-zone {
-    right: 30px;
-}
-#next-zone:hover .nav-reveal {
-    opacity: 1;
-    transform: translateX(-15px);
+    right: 0;
+    /* Trims the top-right corner (0-15% of the zone's height) */
+    clip-path: polygon(0% 15%, 100% 15%, 100% 100%, 0% 100%);
 }
 
-#prev-zone:hover .nav-reveal {
+/* 4. ARROW VISUALS (Inversion Fix) */
+.nav-zone:hover .nav-arrow {
     opacity: 1;
-    transform: translateX(15px);
+    transform: translateY(-50%) scale(1.1);
+    background: var(--branding-color); 
+    color: #FFFFFF !important; 
+    box-shadow: 0 0 25px var(--branding-color);
 }
 
-/* --- Zen / Fullscreen States --- */
+.nav-arrow i {
+    color: inherit;
+    text-shadow: none !important;
+}/* --- Zen / Fullscreen States --- */
+
 #exit-zen-btn {
     position: fixed;
     top: 25px;
@@ -351,33 +359,26 @@ iframe {
     opacity: 0.7;
 }
 
+/* 1. Base State (Your existing code with one addition) */
 .nav-arrow {
     position: absolute;
-    top: 50%; /* Height centered with viewport */
+    top: 50%;
     transform: translateY(-50%);
     width: 50px;
     height: 50px;
-    border: 4px solid var(--branding-color); /* Thicker circular border */
+    border: 4px solid var(--branding-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--bg-color-high);
-    color: var(--branding-color);
+    color: var(--branding-color); /* Arrow icon color */
     font-size: 24px;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 0 10px var(--box-shadow-color-glow);
     z-index: 96000;
-    opacity: 0; /* Hidden by default */
+    opacity: 0;
     visibility: visible;
 }
 
-.nav-arrow:hover {
-    opacity: 1;
-    background: var(--branding-color);
-    color: var(--fg-color-high);
-    box-shadow: 0 0 20px var(--glow-color);
-}
-.nav-arrow.left { left: -30px; } /* Pull them slightly outside the box */
-.nav-arrow.right { right: -30px; }
