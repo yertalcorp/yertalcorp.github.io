@@ -871,7 +871,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
 
             <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
                 <div style="display: flex; align-items: center; gap: 0.8rem; margin-right: 0.5rem;">
-                    <i class="fa-solid fa-square-plus" title="Add Current" onclick="window.openHud()" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
+                    <i class="fa-solid fa-square-plus" title="Add Current" onclick="window.openAddCurrentHud()" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
                     <i class="fa-solid fa-circle-question" title="Help Hub" onclick="toggleDrawer('help-view')" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.4rem; position: relative;">
