@@ -148,7 +148,28 @@ function renderTutorialStep() {
         createTooltip(centerX, centerY, step);
     }
 }
+function createTooltip(x, y, step) {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tutorial-tooltip hud-panel-metallic';
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
 
+    tooltip.innerHTML = `
+        <div class="tooltip-header">
+            <span class="step-counter">STEP ${currentStep + 1}/${steps.length}</span>
+            <button onclick="endTutorial()" class="close-tutorial">&times;</button>
+        </div>
+        <h3 class="hud-title-metallic" style="font-size: 1.1rem; margin: 10px 0;">${step.title}</h3>
+        <p class="hud-subtitle-info" style="font-size: 0.9rem;">${step.content}</p>
+        <div class="tooltip-nav">
+            <button onclick="prevStep()" class="hud-button-metallic small" ${currentStep === 0 ? 'disabled' : ''}>PREV</button>
+            <button onclick="nextStep()" class="hud-button-metallic small">
+                ${currentStep === steps.length - 1 ? 'FINISH' : 'NEXT'}
+            </button>
+        </div>
+    `;
+    document.body.appendChild(tooltip);
+}
 /* Objective: Manage the System Drawer and Settings Sync 
 */
 
