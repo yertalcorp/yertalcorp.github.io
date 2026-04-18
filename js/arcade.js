@@ -1568,7 +1568,7 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     let instructions = "";
 
     if (isSource) {
-            instructions = `- Locate specific, verified items that match the task.
+            instructions = `- Research specific items that match the task.
                             ${promptTypeObject.rules}
                          - Format: JSON array [{"name", "url", "description"}] and name has maximum 3 words.`;
     } else {
@@ -1578,7 +1578,7 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     }
 
     const returnString = isSource ? 
-        `${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `${rawPrompt}. Follow this model: ${promptTypeObject.name}.`;
+        `The task: ${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `${rawPrompt}. Follow this model: ${promptTypeObject.name}.`;
 
     const fullPrompt = `
         ${returnString}
