@@ -8,7 +8,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:24:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 14:57:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 // --- START CAPTURE & CROP STATE ---
 let currentBurstFrames = []; 
@@ -594,25 +594,30 @@ function setupInteractions() {
         };
     }
 
-    // 4. Exit Logic: Return to Showroom
-    const exitBtn = document.getElementById('exit-btn');
-    if (exitBtn) {
-        exitBtn.onclick = () => {
-            const params = new URLSearchParams(window.location.search);
-            const userSlug = params.get('user') || 'yertal-arcade';
-        
-            if (thumbInterval) {
-                 clearInterval(thumbInterval);
-                 thumbInterval = null;
-            }
+// 4. Exit Logic: Return to Showroom
+const exitBtn = document.getElementById('exit-btn');
+if (exitBtn) {
+    exitBtn.onclick = (e) => {
+        // PREVENT BUBBLING: Stop the click from triggering parent or background elements
+        e.preventDefault();
+        e.stopPropagation();
 
-            const container = document.getElementById('spark-content-container');
-            if (container) container.innerHTML = '';
-            
-            console.log("[SYSTEM] Exiting to Showroom...");
-            window.location.href = `/arcade/index.html?user=${userSlug}`;
-        };
-    }
+        const params = new URLSearchParams(window.location.search);
+        const userSlug = params.get('user') || 'yertal-arcade';
+    
+        if (thumbInterval) {
+             clearInterval(thumbInterval);
+             thumbInterval = null;
+        }
+
+        const container = document.getElementById('spark-content-container');
+        if (container) container.innerHTML = '';
+        
+        console.log("[SYSTEM] Exiting to Showroom...");
+        // Use replace instead of href if you want to clear the 'lab' from history
+        window.location.href = `/arcade/index.html?user=${userSlug}`;
+    };
+}
 
     // 5. Manual File Upload Trigger
     const manualUpload = document.getElementById('manual-upload');
