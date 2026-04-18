@@ -1206,7 +1206,9 @@ button:hover {
 .ethereal-btn-sm {
     background: transparent;
     border: 1px solid var(--branding-color);
-    color: var(--branding-color);
+    color: var(--button-color);
+    font-color: var(--button-text-color);
+    button-border-color: var(--button-border-color);
     padding: 0.8rem 1.5rem;
     font-family: var(--branding-font);
     font-weight: var(--branding-weight);
