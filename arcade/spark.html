@@ -26,7 +26,7 @@
         </h1>
     </div>
 
-    <button id="exit-btn" class="fixed top-5 left-5 z-[15000] arcade-button flex items-center gap-2">
+    <button id="exit-btn" class="fixed top-5 left-5 z-[10001] arcade-button flex items-center gap-2">
         <i class="fas fa-arrow-left"></i>
         <span class="text-[10px] font-bold uppercase">Back to Arcade</span>
     </button>
@@ -48,7 +48,7 @@
     <div id="burst-picker-hud" class="fixed inset-0 bg-black/80 z-[11000] hidden flex-col items-center justify-center p-10">
         <h2 class="text-white uppercase tracking-widest mb-6 font-bold">Select Best Frame</h2>
         <div id="burst-grid" class="flex gap-4 overflow-x-auto pb-6 max-w-full scrollbar-thin scrollbar-thumb-cyan-500">
-        </div>
+            </div>
         <div class="flex gap-4 mt-4">
             <button onclick="closeBurstPicker()" class="arcade-button border-gray-500 text-gray-400">Cancel</button>
         </div>
@@ -82,44 +82,43 @@
         </div>
 
         <div class="hud-control-stack">
+<div class="hud-row">
+    <div class="flex items-center gap-4"> <button id="play-pause-btn" class="hud-icon-btn" title="Play/Pause">
+            <i class="fa-solid fa-play" id="play-icon"></i>
+        </button>
+        
+        <button id="reload-spark-btn" class="hud-icon-btn" title="Restart Spark">
+            <i class="fa-solid fa-rotate-right"></i>
+        </button>
+         <button id="zen-btn" class="arcade-button py-1 px-3">
+            <i class="fas fa-expand text-xs"></i>
+         </button>
+
+    </div>
+
+    <div class="media-progress-container" id="progress-container">
+        <div id="media-progress-bar"></div>
+    </div>
+
+    <div class="media-time-display" style="justify-content: center">
+        <span id="current-time">0:00</span>/<span id="total-duration">0:00</span>
+    </div>
+</div>
+
             <div class="hud-row">
-                <div class="flex items-center gap-3"> 
-                    <button id="play-pause-btn" class="hud-icon-btn" title="Play/Pause">
-                        <i class="fa-solid fa-play" id="play-icon"></i>
-                    </button>
-                    
-                    <button id="reload-spark-btn" class="hud-icon-btn" title="Restart Spark">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
-
-                    <button id="zen-btn" class="hud-icon-btn" title="Maximize Viewport">
-                        <i class="fas fa-expand"></i>
-                    </button>
-                </div>
-
-                <div class="flex items-center gap-2 flex-grow ml-6">
-                    <span id="current-time" class="media-time-display text-[10px] font-mono">0:00</span>
-                    <div class="media-progress-container flex-grow" id="progress-container">
-                        <div id="media-progress-bar"></div>
-                    </div>
-                    <span id="total-duration" class="media-time-display text-[10px] font-mono">0:00</span>
-                </div>
-            </div>
-
-            <div class="hud-row mt-1">
-                <div class="flex gap-4">
-                    <button id="set-cover-btn" class="generate-btn" onclick="openBurstPicker()">
-                        Capture Live
-                    </button>
-                    
-                    <button id="upload-trigger-btn" class="generate-btn" style="border-style: dashed;" onclick="document.getElementById('manual-upload').click()">
-                        Upload File
-                    </button>
-                </div>
+                <button id="set-cover-btn" class="generate-btn" onclick="openBurstPicker()">
+                    Capture Live
+                </button>
+                
+                <button id="upload-trigger-btn" class="generate-btn" style="border-style: dashed;" onclick="document.getElementById('manual-upload').click()">
+                    Upload File
+                </button>
                 
                 <input type="file" id="manual-upload" style="display:none" accept="image/*">
                 
-                <div id="hud-status" class="status-readout-small text-cyan-500/80 uppercase">Initializing...</div>
+                <div class="status-group">
+                      <div id="hud-status" class="status-readout-small text-cyan-500/80 uppercase">Initializing...</div>
+                </div>
             </div>
         </div>
     </div>
