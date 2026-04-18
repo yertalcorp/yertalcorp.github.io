@@ -191,12 +191,12 @@ iframe {
 }
 
 #prev-zone {
-    left: 0;
+    left: 30;
     clip-path: polygon(0% 15%, 100% 15%, 100% 100%, 0% 100%);
 }
 
 #next-zone {
-    right: 0;
+    right: 30;
     clip-path: polygon(0% 15%, 100% 15%, 100% 100%, 0% 100%);
 }
 
