@@ -1013,10 +1013,11 @@ header {
     transition: all 0.2s ease-in-out;
     display: inline-block;
     text-align: center;
+    gap: 5px;
 }
 
 .arcade-button:hover {
-    box-shadow: 0 0 12px var(--glow-color, #00f2ff);
+    box-shadow: 0 0 12px var(--glow-color-aura, #00f2ff);
     border-color: var(--glow-color, #00f2ff);
     transform: translateY(-1px);
 }
