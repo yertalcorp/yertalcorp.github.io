@@ -127,7 +127,7 @@ iframe {
     text-align: right;
     font-family: monospace;
     font-size: 10px;
-    color: var(--text-muted-color);
+    color: var(--text-main-color);
     display: flex;
     justify-content: center;
     align-items: center;
