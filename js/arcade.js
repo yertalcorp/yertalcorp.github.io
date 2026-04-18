@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:59:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -875,9 +875,10 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                     <i class="fa-solid fa-circle-question" title="Help Hub" onclick="toggleDrawer('help-view')" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.4rem; position: relative;">
-                    <input type="text" id="arcade-search-input" placeholder="GO TO SLUG..." class="glass" style="border: 1px solid var(--glow-aura); border-radius: 9999px; padding: 0.25rem 0.75rem; font-size: var(--nav-font-size); color: var(--branding-text-color); width: 7rem; outline: none; background: var(--bg-color);">
+                    <input type="text" id="arcade-search-input" placeholder="GO TO SLUG..." class="glass" style="border: 2px solid var(--glow-aura); border-radius: 9999px; padding: 0.25rem 0.75rem; font-size: var(--nav-font-size); color: var(--branding-text-color); width: 14rem; outline: none; background: var(--bg-color);">
                     <i class="fa-solid fa-magnifying-glass" 
                        onclick="const slug = document.getElementById('arcade-search-input').value; if(slug) window.location.href='?user=' + slug;" 
+                       onkeydown="const slug = document.getElementById('arcade-search-input').value; if(slug) window.location.href='?user=' + slug;" 
                        style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: transform 0.2s;" 
                        onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></i>
                 </div>
