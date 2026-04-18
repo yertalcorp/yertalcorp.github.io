@@ -260,12 +260,17 @@ iframe {
 }
 
 /* UI Elements and IDs */
-#zen-btn {
+#spark-btn {
     padding: 5px;
     color: var(--branding-color);
     background: var(--bg-color-high);
+    border-color: var(--glow-color);
+    cursor: pointer;
 }
-
+#spark-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.2) drop-shadow(0 0 5px var(--glow-color-aura));
+}
 #exit-btn {
     z-index: 100000;
     pointer-events: auto;
