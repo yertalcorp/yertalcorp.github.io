@@ -744,7 +744,7 @@ main.max-width-limit {
     background: transparent;
     border: none;
     outline: none;
-    color: var(--fg-color-low);
+    color: var(--text-muted-color);
     font-weight: 300;
     font-size: 9px; /* Reduced for sleeker look */
     padding: 0 12px;
