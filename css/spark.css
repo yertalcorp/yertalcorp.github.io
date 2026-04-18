@@ -212,12 +212,15 @@ iframe {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 10012;
+    z-index: 95000; 
+    pointer-events: auto;
     /* Optional: background: rgba(255,0,0,0.1); // Use for debugging hit-areas */
 }
 
 #prev-zone {
     left: 15px;
+    /* Give the top-left corner back to the exit button */
+    clip-path: polygon(0% 15%, 100% 15%, 100% 100%, 0% 100%);
 }
 
 #next-zone {
@@ -333,6 +336,8 @@ iframe {
 }
 
 #exit-btn {
+    z-index: 100000; /* Above everything */
+    pointer-events: auto;
     color: var(--button-text-color);
 }
 /* Container for the navigation zones */
@@ -358,8 +363,9 @@ iframe {
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 0 10px var(--box-shadow-color-glow);
-    z-index: 10020;
-    opacity: 0; /* Hidden until hover over viewport */
+    z-index: 96000;
+    opacity: 0; /* Hidden by default */
+    visibility: visible;
 }
 
 .nav-arrow:hover {
