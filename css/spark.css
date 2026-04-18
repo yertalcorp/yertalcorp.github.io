@@ -119,6 +119,8 @@ iframe {
     font-family: monospace;
     font-size: 10px;
     color: var(--text-muted-color);
+    justify-content: center;
+    align-items: center;
 }
 /* Grouping for status row */
 .status-group {
