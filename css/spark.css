@@ -155,7 +155,7 @@ iframe {
 
 .generate-btn {
     background: var(--btn-gradient);
-    color: var(--bg-color);
+    color: var(--text-main-color);
     border: 1px solid var(--button-border-color);
     text-shadow: 0 1px 2px var(--button-text-shadow-color);
     font-family: var(--text-main-font);
