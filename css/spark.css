@@ -261,7 +261,7 @@ iframe {
 
 /* UI Elements and IDs */
 #zen-btn {
-    padding: 2px;
+    padding: 5px;
     color: var(--branding-color);
     background: var(--bg-color-high);
 }
