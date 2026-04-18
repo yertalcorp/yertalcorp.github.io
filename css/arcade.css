@@ -979,6 +979,7 @@ header {
     position: relative;
     overflow: hidden;
     whitespace: nowrap;
+    gap: 5px;
 }
 
 .generate-btn:after {
