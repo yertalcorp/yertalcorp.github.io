@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 11:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -853,9 +853,9 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                 </div>
 
                 <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid var(--glow-aura); padding-left: 0.5rem; height: 16px; margin-left: 0.2rem;">
-                    <a href="/index.html" title="Showroom" style="color: var(--branding-text-color); opacity: 0.7; font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-door-open"></i></a>
-                    <a href="?user=${userSlug}" title="My Arcade" style="color: var(--branding-text-color); opacity: 0.7; font-size: 11px; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
-                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 3px; text-decoration: none; background: var(--branding-color); color: var(--bg-color); box-shadow: 0 0 5px var(--box-shadow-color); font-size: 10px; font-weight: 900;">HUB</a>
+                    <a href="/index.html" title="Showroom" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size);; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-door-open"></i></a>
+                    <a href="?user=${userSlug}" title="My Arcade" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size);; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
+                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 3px; text-decoration: none; background: var(--branding-color); color: var(--bg-color); box-shadow: 0 0 5px var(--box-shadow-color); font-size: var(--nav-font-size); font-weight: 900;">HUB</a>
                 </div>
             </div>
 
@@ -871,14 +871,14 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
 
             <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
                 <div style="display: flex; align-items: center; gap: 0.8rem; margin-right: 0.5rem;">
-                    <i class="fa-solid fa-square-plus" title="Add Current" onclick="window.openHud()" style="cursor: pointer; color: var(--branding-color); font-size: var(--arcade-subtitle-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
-                    <i class="fa-solid fa-circle-question" title="Help Hub" onclick="toggleDrawer('help-view')" style="cursor: pointer; color: var(--branding-color); font-size: var(--arcade-subtitle-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
+                    <i class="fa-solid fa-square-plus" title="Add Current" onclick="window.openHud()" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
+                    <i class="fa-solid fa-circle-question" title="Help Hub" onclick="toggleDrawer('help-view')" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.4rem; position: relative;">
-                    <input type="text" id="arcade-search-input" placeholder="GO TO SLUG..." class="glass" style="border: 1px solid var(--glow-aura); border-radius: 9999px; padding: 0.25rem 0.75rem; font-size: 9px; color: var(--branding-text-color); width: 7rem; outline: none; background: var(--bg-color);">
+                    <input type="text" id="arcade-search-input" placeholder="GO TO SLUG..." class="glass" style="border: 1px solid var(--glow-aura); border-radius: 9999px; padding: 0.25rem 0.75rem; font-size: var(--nav-font-size); color: var(--branding-text-color); width: 7rem; outline: none; background: var(--bg-color);">
                     <i class="fa-solid fa-magnifying-glass" 
                        onclick="const slug = document.getElementById('arcade-search-input').value; if(slug) window.location.href='?user=' + slug;" 
-                       style="cursor: pointer; color: var(--branding-color); font-size: 10px; transition: transform 0.2s;" 
+                       style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: transform 0.2s;" 
                        onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></i>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
