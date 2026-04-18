@@ -196,7 +196,7 @@ iframe {
     color: var(--branding-color); 
     opacity: 0;
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    filter: drop-shadow(0 0 8px var(--glow-color));
+    filter: drop-shadow(0 0 8px var(--glow-color-aura));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -218,13 +218,13 @@ iframe {
 }
 
 #prev-zone {
-    left: 15px;
+    left: 30px;
     /* Give the top-left corner back to the exit button */
     clip-path: polygon(0% 15%, 100% 15%, 100% 100%, 0% 100%);
 }
 
 #next-zone {
-    right: 15px;
+    right: 30px;
 }
 #next-zone:hover .nav-reveal {
     opacity: 1;
