@@ -327,11 +327,14 @@ iframe {
 }
 
 #zen-btn {
-    color: var(--button-text-color);
+    padding: 2px;
+    color: var(--branding-color);
+    background: var(--bg-color-high);
+    border-color: var(--glow-color);
 }
 #exit-zen-btn i {
     color: var(--branding-color);
-}
+ }
 
 #active-spark-name {
     color: var(--fg-color-high);
