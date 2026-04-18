@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 12:40:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -101,8 +101,18 @@ window.closeAddCurrentHud = () => {
 };
 
 window.showTutorial = function() {
-    tutorialIndex = 0;
-    renderTutorialStep();
+    // Reset state
+    currentStep = 0; 
+    
+    // Ensure the mask is visible
+    const mask = document.getElementById('tutorial-mask');
+    if (mask) mask.style.display = 'block';
+
+    // Wait for the drawer animation to finish (e.g., 300ms) 
+    // before calculating element positions
+    setTimeout(() => {
+        renderTutorialStep();
+    }, 300); 
 };
 
 function renderTutorialStep() {
