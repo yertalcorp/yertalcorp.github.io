@@ -366,6 +366,39 @@ function loadSpark(spark) {
     const hudStatus = document.getElementById('hud-status');
     const fallbackBtn = document.getElementById('fallback-url-btn');
     
+    // 0. HUD CONTROL INITIALIZATION
+    window.currentSpark = spark;
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const playIcon = document.getElementById('play-icon');
+    const curTimeEl = document.getElementById('current-time');
+    const totTimeEl = document.getElementById('total-duration');
+    const progressFill = document.getElementById('media-progress-bar');
+
+    // Reset timing and progress visuals
+    if (curTimeEl) curTimeEl.textContent = "00:00";
+    if (totTimeEl) totTimeEl.textContent = "00:00";
+    if (progressFill) progressFill.style.width = "0%";
+
+    // Intelligent Type Detection based on arcade-current-types mapping
+    // Playable: Movies, Videos, and any 'create' or 'hybrid' logic types (Simulations/Apps)
+    const playableLogic = ['create', 'hybrid', 'source']; 
+    const playableIDs = ['movies', 'videos', 'veo-video', 'arcade-logic', 'games', 'physics-lab', 'optics'];
+    
+    // Determine if the current template_type matches a playable category
+    const isPlayable = playableIDs.includes(spark.template_type?.toLowerCase()) || 
+                       (spark.link && (spark.link.includes('youtube.com') || spark.link.includes('vimeo.com')));
+
+    if (playPauseBtn) {
+        playPauseBtn.style.opacity = isPlayable ? '1' : '0.3';
+        playPauseBtn.style.pointerEvents = isPlayable ? 'auto' : 'none';
+        
+        // Ensure icon resets to pause state (assuming autoplay is standard for these sparks)
+        if (playIcon) {
+            playIcon.classList.remove('fa-play');
+            playIcon.classList.add('fa-pause');
+        }
+    }
+
     // 1. IDENTITY INITIALIZATION [cite: 2026-02-17]
     // Apply the owner's global theme variables to the document root
     if (databaseCache) {
@@ -388,6 +421,12 @@ function loadSpark(spark) {
     overlay.style.opacity = "1";
     setTimeout(() => { overlay.style.opacity = "0"; }, 3000);
 
+    // 2. RELOAD LOGIC: Re-binding the reload button to this function
+    const reloadBtn = document.getElementById('reload-spark-btn');
+    if (reloadBtn) {
+        reloadBtn.onclick = () => loadSpark(window.currentSpark);
+    }
+
     if (spark.link) {
         let finalUrl = spark.link;
         if (finalUrl.includes('youtube.com/watch?v=')) {
@@ -403,7 +442,6 @@ function loadSpark(spark) {
             fallbackBtn.classList.remove('hidden');
         }
         
-        // Start Thumbnail cycle + Burst Capture
         setTimeout(() => {
             startLiveThumbnail();
             captureBurst();
@@ -418,16 +456,14 @@ function loadSpark(spark) {
         const doc = iframe.contentWindow.document;
         doc.open();
         
-        // Final construction of code to be written to iframe
         const standardizedCode = wrapCodeInLaboratory(spark);
-        // DEBUG: Output the full generated code to console
+        
         console.groupCollapsed(`%c[LAB VIEWPORT] Code Injected for: ${spark.name}`, "color: #00ff88;");
         console.log("Raw Code Structure:");
         console.log(standardizedCode);
         console.groupEnd();
         
         try {
-            console.log("Check visibility:", container.offsetWidth, container.offsetHeight);
             doc.write(standardizedCode);
         } catch (e) {
             console.error("[LAB VIEWPORT] Critical Error during doc.write:", e);
@@ -437,7 +473,6 @@ function loadSpark(spark) {
         if (fallbackBtn) fallbackBtn.classList.add('hidden');
 
         iframe.onload = () => {
-            console.log("[LAB VIEWPORT] Viewport Ready: content-frame fully loaded.");
             container.style.opacity = '1';
             startLiveThumbnail();
             captureBurst(); 
