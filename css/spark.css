@@ -30,7 +30,7 @@
     aspect-ratio: 16/9;
     overflow: visible;
     transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 10;
+    z-index: 5;
     display: flex;
     align-items: stretch;
     justify-content: center;
@@ -123,12 +123,11 @@ iframe {
     transition: width 0.1s linear;
 }
 .media-time-display {
-    width: 96px; 
-    text-align: right;
-    font-family: monospace;
-    font-size: 10px;
-    color: var(--text-main-color);
     display: flex;
+    width: 100px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--text-main-color);
     justify-content: center;
     align-items: center;
 }
@@ -177,36 +176,37 @@ iframe {
 }
 
 /* --- Navigation System (The "Zones") --- */
+/* --- Navigation System (The "Zones") --- */
 .nav-zone {
     position: fixed;
-    top: 30px;
-    width: 150px;
-    height: calc(100vh - 30px);
+    top: 50;
+    width: 15vw; /* Responsive width */
+    height: 70vh;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 95000;
+    /* Highest priority below the Exit Button but above the Viewport */
+    z-index: 90000; 
     pointer-events: auto;
+    background: transparent; /* Ensure it's invisible but clickable */
 }
 
 #prev-zone {
-    left: 30;
-    clip-path: polygon(0% 15%, 100% 15%, 100% 100%, 0% 100%);
+    left: 0;
 }
 
 #next-zone {
-    right: 30;
-    clip-path: polygon(0% 15%, 100% 15%, 100% 100%, 0% 100%);
+    right: 0;
 }
 
 .nav-arrow {
     position: absolute;
-    top: 40%;
+    top: 50%;
     transform: translateY(-50%);
-    width: 50px;
-    height: 50px;
-    border: 4px solid var(--branding-color);
+    width: 60px;
+    height: 60px;
+    border: 3px solid var(--branding-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -215,19 +215,19 @@ iframe {
     color: var(--branding-color);
     font-size: 24px;
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 0 10px var(--box-shadow-color-glow);
-    z-index: 96000;
+    box-shadow: 0 0 15px var(--box-shadow-color-glow);
     opacity: 0;
+    pointer-events: none; /* Let clicks pass through the arrow to the zone */
 }
 
+/* Hover Logic: Targets the arrow when the zone is hovered */
 .nav-zone:hover .nav-arrow {
     opacity: 1;
     transform: translateY(-50%) scale(1.1);
     background: var(--branding-color); 
     color: #FFFFFF !important; 
-    box-shadow: 0 0 25px var(--branding-color);
+    box-shadow: 0 0 30px var(--branding-color);
 }
-
 .nav-arrow i {
     color: inherit;
     text-shadow: none !important;
@@ -271,6 +271,17 @@ iframe {
 }
 
 /* UI Elements and IDs */
+/* --- HUD & Overlay Refinements --- */
+#spark-title-overlay {
+    /* Use CSS instead of Tailwind classes for cleaner HTML */
+    position: fixed;
+    top: 10vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    pointer-events: none;
+    transition: opacity 0.8s ease;
+}
 /* --- Change #spark-btn to .spark-btn --- */
 .spark-btn {
     padding: 5px;
@@ -323,4 +334,11 @@ iframe {
 .nav-zone:hover .nav-arrow {
     opacity: 1 !important;
     transform: translateY(-50%) scale(1.1);
+}
+#upload-trigger-btn {
+    border-style: dashed;
+}
+
+#manual-upload {
+    display: none;
 }
