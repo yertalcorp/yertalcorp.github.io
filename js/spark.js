@@ -8,7 +8,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:07:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 11:05:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 // --- START CAPTURE & CROP STATE ---
 let currentBurstFrames = []; 
@@ -357,7 +357,8 @@ function wrapCodeInLaboratory(spark) {
 }
 
 /*
- * Objective: Load a specific spark into the viewport and apply owner branding.
+ * Objective: Render Spark content and reset HUD visuals.
+ * Task: Initialize playable states and reset timing/progress for the new session.
  */
 function loadSpark(spark) {
     const container = document.getElementById('spark-content-container');
@@ -374,17 +375,13 @@ function loadSpark(spark) {
     const totTimeEl = document.getElementById('total-duration');
     const progressFill = document.getElementById('media-progress-bar');
 
-    // Reset timing and progress visuals
-    if (curTimeEl) curTimeEl.textContent = "00:00";
-    if (totTimeEl) totTimeEl.textContent = "00:00";
+    // CRITICAL FOR TIMING: Reset visuals to zero state immediately
+    if (curTimeEl) curTimeEl.textContent = "0:00";
+    if (totTimeEl) totTimeEl.textContent = "0:00";
     if (progressFill) progressFill.style.width = "0%";
 
-    // Intelligent Type Detection based on arcade-current-types mapping
-    // Playable: Movies, Videos, and any 'create' or 'hybrid' logic types (Simulations/Apps)
-    const playableLogic = ['create', 'hybrid', 'source']; 
+    // Intelligent Type Detection
     const playableIDs = ['movies', 'videos', 'veo-video', 'arcade-logic', 'games', 'physics-lab', 'optics'];
-    
-    // Determine if the current template_type matches a playable category
     const isPlayable = playableIDs.includes(spark.template_type?.toLowerCase()) || 
                        (spark.link && (spark.link.includes('youtube.com') || spark.link.includes('vimeo.com')));
 
@@ -392,20 +389,18 @@ function loadSpark(spark) {
         playPauseBtn.style.opacity = isPlayable ? '1' : '0.3';
         playPauseBtn.style.pointerEvents = isPlayable ? 'auto' : 'none';
         
-        // Ensure icon resets to pause state (assuming autoplay is standard for these sparks)
+        // Default to 'Pause' icon because simulations/videos usually autoplay
         if (playIcon) {
             playIcon.classList.remove('fa-play');
             playIcon.classList.add('fa-pause');
         }
     }
 
-    // 1. IDENTITY INITIALIZATION [cite: 2026-02-17]
-    // Apply the owner's global theme variables to the document root
-    if (databaseCache) {
+    // 1. IDENTITY & THEME [cite: 2026-02-17]
+    if (typeof databaseCache !== 'undefined') {
         applyTheme(globalTheme);
     }
     
-    // Log Spark Metadata
     console.log(`%c[YERTAL LAB] Loading Spark: ${spark.name}`, "color: #00f2ff; font-weight: bold;");
     
     if (thumbInterval) {
@@ -421,19 +416,13 @@ function loadSpark(spark) {
     overlay.style.opacity = "1";
     setTimeout(() => { overlay.style.opacity = "0"; }, 3000);
 
-    // 2. RELOAD LOGIC: Re-binding the reload button to this function
-    const reloadBtn = document.getElementById('reload-spark-btn');
-    if (reloadBtn) {
-        reloadBtn.onclick = () => loadSpark(window.currentSpark);
-    }
-
+    // 2. CONTENT INJECTION
     if (spark.link) {
         let finalUrl = spark.link;
         if (finalUrl.includes('youtube.com/watch?v=')) {
             finalUrl = finalUrl.replace('watch?v=', 'embed/') + "?autoplay=1&mute=1&enablejsapi=1";
         }
         
-        console.log(`[LAB VIEWPORT] Loading External Link: ${finalUrl}`);
         container.innerHTML = `<iframe id="content-frame" src="${finalUrl}" allow="autoplay; fullscreen"></iframe>`;
         container.style.opacity = '1';
         
@@ -451,12 +440,8 @@ function loadSpark(spark) {
         const doc = iframe.contentWindow.document;
         doc.open();
         
+        // Wrap the code – ensure wrapCodeInLaboratory includes the 'TICKER_UPDATE' postMessage logic
         const standardizedCode = wrapCodeInLaboratory(spark);
-        
-        console.groupCollapsed(`%c[LAB VIEWPORT] Code Injected for: ${spark.name}`, "color: #00ff88;");
-        console.log("Raw Code Structure:");
-        console.log(standardizedCode);
-        console.groupEnd();
         
         try {
             doc.write(standardizedCode);
@@ -781,7 +766,33 @@ if (!path) {
     
     setupInteractions();
 });
+window.addEventListener('message', (event) => {
+    // 1. Security check: Ensure we have data
+    if (!event.data || event.data.type !== 'TICKER_UPDATE') return;
 
+    const { currentTime, duration } = event.data;
+    
+    // 2. Select the HTML elements from your spark.html
+    const curTimeEl = document.getElementById('current-time');
+    const totTimeEl = document.getElementById('total-duration');
+    const progressFill = document.getElementById('media-progress-bar');
+
+    // 3. Formatter: Converts seconds (65) to string (01:05)
+    const format = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // 4. Update the HUD
+    if (curTimeEl) curTimeEl.textContent = format(currentTime);
+    if (totTimeEl) totTimeEl.textContent = format(duration);
+    
+    if (progressFill && duration > 0) {
+        const percent = (currentTime / duration) * 100;
+        progressFill.style.width = `${percent}%`;
+    }
+});
 // Bind UI actions to window scope for HTML access
 window.loadSpark = loadSpark;
 window.closeBurstPicker = closeBurstPicker;
