@@ -176,33 +176,26 @@ iframe {
 }
 
 /* --- Navigation System (The "Zones") --- */
-/* --- Navigation System (The "Zones") --- */
 .nav-zone {
     position: fixed;
-    top: 50;
-    width: 15vw; /* Responsive width */
-    height: 70vh;
+    top: 80px;         /* Creates a "Safe Channel" for corner buttons */
+    bottom: 0;
+    width: 150px;      /* Explicit 150px width */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    /* Highest priority below the Exit Button but above the Viewport */
-    z-index: 90000; 
+    z-index: 95000;    /* Below exit buttons, but above content */
     pointer-events: auto;
-    background: transparent; /* Ensure it's invisible but clickable */
+    background: transparent;
 }
 
-#prev-zone {
-    left: 0;
-}
-
-#next-zone {
-    right: 0;
-}
+#prev-zone { left: 0; }
+#next-zone { right: 0; }
 
 .nav-arrow {
     position: absolute;
-    top: 50%;
+    top: 45%;
     transform: translateY(-50%);
     width: 60px;
     height: 60px;
@@ -225,12 +218,12 @@ iframe {
     opacity: 1;
     transform: translateY(-50%) scale(1.1);
     background: var(--branding-color); 
-    color: #FFFFFF !important; 
+    color: #FFFFFF; 
     box-shadow: 0 0 30px var(--branding-color);
 }
 .nav-arrow i {
     color: inherit;
-    text-shadow: none !important;
+    text-shadow: none;
 }
 
 /* --- Zen / Fullscreen States --- */
@@ -250,38 +243,46 @@ iframe {
 
 .zen-active #exit-zen-btn { display: block; }
 
-/* --- Zen / Fullscreen States --- */
 .zen-active #spark-content-container {
     position: fixed;
-    top: 50;
+    top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
     margin: 0;
     border-radius: 0;
     border: none;
-    z-index: 10; /* Lowered so it doesn't block navigation */
+    z-index: 5;                    /* Content is at the bottom layer */
 }
 
+/* Zen-Active Overrides */
+
+.zen-active #exit-zen-btn {
+    display: block;     /* Visible in Zen Mode */
+    z-index: 100200; /* Highest priority */
+}
+
+/* Logic: Hide everything except the specific Zen controls */
 .zen-active #spark-hud, 
-.zen-active #exit-btn, 
-.zen-active #spark-title-overlay {
+.zen-active #spark-title-overlay,
+.zen-active #exit-btn {
+    display: none;
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
 }
-/* Ensure zones are always above the maximized viewport */
+
+/* Ensure Nav Zones remain functional in Zen */
 .zen-active .nav-zone {
-    z-index: 10010; 
-    visibility: visible !important;
-    opacity: 1 !important;
+    z-index: 100100;               /* Above the fullscreen content */
+    display: flex;
 }
 
 /* Keep arrows functional but hidden until hover in Zen Mode */
 .zen-active .nav-arrow {
-    z-index: 10011;
+    z-index: 100101;
 }
-/* UI Elements and IDs */
+
 /* --- HUD & Overlay Refinements --- */
 #spark-title-overlay {
     /* Use CSS instead of Tailwind classes for cleaner HTML */
@@ -320,10 +321,23 @@ iframe {
 .spark-btn:active {
     transform: translateY(1px);
 }
+/* --- Corner Button Safety & Defaults --- */
+#exit-btn, #exit-zen-btn {
+    position: fixed;
+    top: 20px;
+    z-index: 100200;
+    pointer-events: auto;
+    transition: all 0.3s ease;
+}
 
 #exit-btn {
-    z-index: 100000;
-    pointer-events: auto;
+    left: 20px;
+    display: flex; /* Visible by default in Normal Mode */
+}
+
+#exit-zen-btn {
+    right: 20px;
+    display: none; /* Hidden by default in Normal Mode */
 }
 
 .thumb-box-viewport { 
@@ -343,7 +357,7 @@ iframe {
 
 /* Maintain full brightness when hovering the zone directly */
 .nav-zone:hover .nav-arrow {
-    opacity: 1 !important;
+    opacity: 1;
     transform: translateY(-50%) scale(1.1);
 }
 #upload-trigger-btn {
