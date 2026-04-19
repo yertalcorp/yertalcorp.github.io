@@ -8,7 +8,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 11:05:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 16:58:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 // --- START CAPTURE & CROP STATE ---
 let currentBurstFrames = []; 
@@ -552,11 +552,6 @@ function togglePlayPause() {
     }
 }
 
-
-/*
- * Objective: Initialize HUD and navigation interactions.
- * Task: Restrict navigation to mouse-only via side zones and reserve arrow keys for viewport gameplay.
- */
 /*
  * Objective: Initialize HUD and navigation interactions.
  * Task: Restrict navigation to mouse-only via side zones and reserve arrow keys for viewport gameplay.
@@ -595,6 +590,18 @@ function setupInteractions() {
     const zenBtn = document.getElementById('zen-btn');
     if (zenBtn) zenBtn.onclick = toggleZen;
 
+    // 3. UI Toggles & Media Controls
+    const zenBtn = document.getElementById('zen-btn');
+    if (zenBtn) zenBtn.onclick = toggleZen;
+
+    // ADD THIS: Specific handler for the Zen Exit button
+    const exitZenBtn = document.getElementById('exit-zen-btn');
+    if (exitZenBtn) {
+        exitZenBtn.onclick = (e) => {
+            e.stopPropagation(); // Prevent the click from bubbling to the container
+            toggleZen();
+        };
+    }
     const playPauseBtn = document.getElementById('play-pause-btn');
     if (playPauseBtn) {
         playPauseBtn.onclick = (e) => {
