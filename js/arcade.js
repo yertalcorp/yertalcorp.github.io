@@ -1609,14 +1609,14 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     }
 
     const returnString = isSource ? 
-        `The task: ${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `${rawPrompt}. Follow this model: ${promptTypeObject.name}.`;
+        `${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `${rawPrompt}. Follow this model: ${promptTypeObject.name}.`;
 
     const fullPrompt = `
         ${returnString}
         ${instructions}
         Quantity: ${Math.max(1, count)} ${isSource ? "entries" : "code variations"}.
     `.trim();
-    console.log(`shapeAIPrompt: Category: ${promptTypeObject.name} Prompt: ${promptTypeObject.prompt}. Full shaped Prompt: ${fullPrompt}`);
+    console.log(`shapeAIPrompt: Category: ${promptTypeObject.name} Prompt: ${rawPrompt}. Full shaped Prompt: ${fullPrompt}`);
     return fullPrompt;
 }
 
@@ -1756,7 +1756,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
             for (let i = 0; i < linksToSave.length; i++) {
                 const sparkName = linksToSave.length > 1 && linksToSave[i].name.startsWith('spark_') ? `${linksToSave[i].name}-${i + 1}` : linksToSave[i].name;
                 
-                await saveSpark(currentId, {name: sparkName, link: linksToSave[i].url,image: promptTypeObject.image},prompt, promptTypeObject.name, promptTypeObject.image, currentPrivacy);
+                await saveSpark(currentId, {name: sparkName, link: linksToSave[i].url,image: promptTypeObject.image},prompt, promptTypeObject.name, promptTypeObject.image, currentPrivacy, 'source');
                 
                 const progress = Math.round(((i + 1) / linksToSave.length) * 100);
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
@@ -1788,7 +1788,8 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                     prompt,
                     promptTypeObject.name,
                     promptTypeObject.image,
-                    currentPrivacy
+                    currentPrivacy,
+                    'create'
                 );
             }
             updateForgeStatus(`FORGING ${resolution.count} SPARKS [==========] 100%`);
@@ -2360,7 +2361,7 @@ async function initiateSystemCooldown(statusElement) {
         }, 1000);
     });
 }
-async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg', currentPrivacy) {
+async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg', currentPrivacy, logicUsed = 'create') {
     const sparkId = `spark_${Date.now()}_${Math.floor(Math.random()*1000)}`;
     
     // UPDATED PATH: users/[UID]/infrastructure/currents/...
@@ -2382,6 +2383,7 @@ async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', t
         code: data.code || null,
         link: data.link || null,
         privacy: currentPrivacy,
+        logic_used: logicUsed,
         stats: { views: 0, likes: 0, tips: 0 }
     });
 }
