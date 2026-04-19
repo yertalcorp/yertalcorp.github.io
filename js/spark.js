@@ -22,7 +22,7 @@ const IMGBB_API_KEY = "YOUR_KEY"; // Replace with your actual ImgBB API key
  * BURST CAPTURE ENGINE
  * Captures 6 frames with a 500ms gap to catch movement for selection.
  */
-async function captureBurst() {
+async function captureBurst(sparkMetaData) {
     currentBurstFrames = []; // Reset
     const status = document.getElementById('hud-status');
     
@@ -449,7 +449,7 @@ function loadSpark(spark) {
         
         setTimeout(() => {
             startLiveThumbnail();
-            captureBurst();
+            captureBurst(spark);
         }, 2000);
 
     } else {
@@ -476,7 +476,7 @@ function loadSpark(spark) {
         iframe.onload = () => {
             container.style.opacity = '1';
             startLiveThumbnail();
-            captureBurst(); 
+            captureBurst(spark); 
             if (hudStatus) hudStatus.textContent = "AUTO-CAPTURE ACTIVE";
         };
     }
