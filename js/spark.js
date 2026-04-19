@@ -437,11 +437,6 @@ function loadSpark(spark) {
         container.innerHTML = `<iframe id="content-frame" src="${finalUrl}" allow="autoplay; fullscreen"></iframe>`;
         container.style.opacity = '1';
         
-        if (fallbackBtn) {
-            fallbackBtn.onclick = () => window.open(spark.link, '_blank');
-            fallbackBtn.classList.remove('hidden');
-        }
-        
         setTimeout(() => {
             startLiveThumbnail();
             captureBurst();
@@ -618,17 +613,7 @@ function setupInteractions() {
     // Toggle play/pause on viewport click (useful for pausing sims)
     document.getElementById('spark-content-container').onclick = togglePlayPause;
 
-    // 3. Reload Logic
-    const reloadBtn = document.getElementById('reload-spark-btn');
-    if (reloadBtn) {
-        reloadBtn.onclick = () => {
-            if (window.currentSpark) {
-                console.log("[SYSTEM] Reloading Spark...");
-                loadSpark(window.currentSpark);
-            }
-        };
-    }
-
+    // 3. Reload Logic - moved to setupInteractions.
     // --- 4. Exit Logic: Return to Showroom ---
 const exitBtn = document.getElementById('exit-btn');
 if (exitBtn) {
