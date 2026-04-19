@@ -590,10 +590,6 @@ function setupInteractions() {
     const zenBtn = document.getElementById('zen-btn');
     if (zenBtn) zenBtn.onclick = toggleZen;
 
-    // 3. UI Toggles & Media Controls
-    const zenBtn = document.getElementById('zen-btn');
-    if (zenBtn) zenBtn.onclick = toggleZen;
-
     // ADD THIS: Specific handler for the Zen Exit button
     const exitZenBtn = document.getElementById('exit-zen-btn');
     if (exitZenBtn) {
