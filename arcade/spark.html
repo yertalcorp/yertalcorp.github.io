@@ -20,7 +20,7 @@
         <i class="fas fa-compress"></i>
     </button>
 
-    <div id="spark-title-overlay" class="fixed z-[10000] text-center pointer-events-none">
+    <div id="spark-title-overlay">
         <h2 id="active-spark-name" class="fx-chroma-header text-3xl font-extrabold uppercase tracking-widest">
             Loading...
         </h2>
@@ -100,7 +100,7 @@
         <div id="media-progress-bar"></div>
     </div>
 
-    <div class="media-time-display" style="justify-content: center">
+    <div class="media-time-display">
         <span id="current-time">0:00</span>/<span id="total-duration">0:00</span>
     </div>
 </div>
@@ -110,11 +110,11 @@
                     Capture Live
                 </button>
                 
-                <button id="upload-trigger-btn" class="generate-btn" style="border-style: dashed;" onclick="document.getElementById('manual-upload').click()">
+                <button id="upload-trigger-btn" class="generate-btn" onclick="document.getElementById('manual-upload').click()">
                     Upload File
                 </button>
                 
-                <input type="file" id="manual-upload" style="display:none" accept="image/*">
+                <input type="file" id="manual-upload" accept="image/*">
                 
                 <div class="status-group">
                       <div id="hud-status" class="status-readout-small text-cyan-500/80 uppercase">Initializing...</div>
