@@ -250,16 +250,17 @@ iframe {
 
 .zen-active #exit-zen-btn { display: block; }
 
+/* --- Zen / Fullscreen States --- */
 .zen-active #spark-content-container {
     position: fixed;
-    top: 0;
+    top: 50;
     left: 0;
     width: 100vw;
     height: 100vh;
     margin: 0;
     border-radius: 0;
     border: none;
-    z-index: 10008;
+    z-index: 10; /* Lowered so it doesn't block navigation */
 }
 
 .zen-active #spark-hud, 
@@ -269,7 +270,17 @@ iframe {
     pointer-events: none;
     visibility: hidden;
 }
+/* Ensure zones are always above the maximized viewport */
+.zen-active .nav-zone {
+    z-index: 10010; 
+    visibility: visible !important;
+    opacity: 1 !important;
+}
 
+/* Keep arrows functional but hidden until hover in Zen Mode */
+.zen-active .nav-arrow {
+    z-index: 10011;
+}
 /* UI Elements and IDs */
 /* --- HUD & Overlay Refinements --- */
 #spark-title-overlay {
