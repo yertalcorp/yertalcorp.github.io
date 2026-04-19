@@ -8,7 +8,7 @@ let currentId = '';
 let userId = '';
 let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 16:58:00 `, "background: var(--bg-color); color: var(--fg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 20:28:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 // --- START CAPTURE & CROP STATE ---
 let currentBurstFrames = []; 
@@ -36,19 +36,37 @@ async function captureBurst() {
                 return;
             }
 
+            // --- INVESTIGATION LOGS ---
+            console.log(`[DEBUG] Attempting Frame ${i + 1}. Iframe Source:`, iframe.src);
+            
+            try {
+                // Test accessibility to determine if CORS will block us
+                const testAccess = iframe.contentWindow.document;
+                console.log("[DEBUG] Iframe document is accessible.");
+            } catch (accessError) {
+                console.error("%c[SECURITY] CROSS-ORIGIN BLOCK detected!", "background: red; color: white;");
+                console.warn("[DEBUG] You cannot use html2canvas on this Spark because it is hosted on a different domain.");
+                if (status) status.textContent = "CAPTURE BLOCKED (CORS)";
+                return; // Exit early to prevent log spam
+            }
+            // ---------------------------
+
             if (status) status.textContent = `BURSTING ${i + 1}/6...`;
             
+            console.log(`[DEBUG] Initializing html2canvas for Frame ${i+1}...`);
             const canvas = await html2canvas(iframe.contentWindow.document.body, { 
                 useCORS: true, 
                 scale: 0.4,
-                logging: false,
+                logging: true, // Turned on for deeper internal html2canvas logs
                 backgroundColor: null
             });
             
+            console.log(`[DEBUG] Canvas generated. Converting to DataURL...`);
             const imageData = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
             const formData = new FormData();
             formData.append("image", imageData);
 
+            console.log(`[DEBUG] Uploading to ImgBB...`);
             const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
                 method: "POST",
                 body: formData
@@ -58,18 +76,21 @@ async function captureBurst() {
             if (result.success) {
                 const url = result.data.url;
                 currentBurstFrames.push(url);
-                console.log(`[CAPTURE] Frame ${i+1} uploaded: ${url}`);
+                console.log(`%c[CAPTURE] Frame ${i+1} uploaded: ${url}`, "color: #00ff00;");
                 if (i === 0) updateThumbCanvas(url);
+            } else {
+                console.error("[CAPTURE] ImgBB Upload Failed:", result);
             }
             
             await new Promise(r => setTimeout(r, 500)); 
         } catch (e) {
-            console.error("[CAPTURE] Burst frame failed", e);
+            console.error("[CAPTURE] Burst frame failed at iteration " + (i+1), e);
+            // If the first frame fails, the rest likely will too.
+            break; 
         }
     }
     if (status) status.textContent = "BURST CAPTURE READY";
 }
-
 /*
  * BURST SELECTION GRID
  * Opens the HUD to pick which of the 6 shots to crop.
