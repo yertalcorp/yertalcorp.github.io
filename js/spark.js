@@ -572,6 +572,10 @@ function togglePlayPause() {
  * Objective: Initialize HUD and navigation interactions.
  * Task: Restrict navigation to mouse-only via side zones and reserve arrow keys for viewport gameplay.
  */
+/*
+ * Objective: Initialize HUD and navigation interactions.
+ * Task: Restrict navigation to mouse-only via side zones and reserve arrow keys for viewport gameplay.
+ */
 function setupInteractions() {
     // 1. Navigation: Mouse-Only via side zones
     const prevZone = document.getElementById('prev-zone');
@@ -596,48 +600,78 @@ function setupInteractions() {
     }
 
     // 2. HUD & Cover Bindings
-    document.getElementById('set-cover-btn').onclick = openBurstPicker;
-    document.getElementById('thumb-trigger').onclick = openBurstPicker;
-    
-    // UI Toggles
-    document.getElementById('zen-btn').onclick = toggleZen;
-    
+    const setCoverBtn = document.getElementById('set-cover-btn');
+    if (setCoverBtn) setCoverBtn.onclick = openBurstPicker;
+
+    const thumbTrigger = document.getElementById('thumb-trigger');
+    if (thumbTrigger) thumbTrigger.onclick = openBurstPicker;
+
+    // 3. UI Toggles & Media Controls
+    const zenBtn = document.getElementById('zen-btn');
+    if (zenBtn) zenBtn.onclick = toggleZen;
+
     const playPauseBtn = document.getElementById('play-pause-btn');
     if (playPauseBtn) {
         playPauseBtn.onclick = (e) => {
-            e.stopPropagation(); 
+            e.stopPropagation();
             togglePlayPause();
         };
     }
 
-    // Toggle play/pause on viewport click (useful for pausing sims)
-    document.getElementById('spark-content-container').onclick = togglePlayPause;
+    // Toggle play/pause on viewport click (useful for pausing sims/videos)
+    const contentContainer = document.getElementById('spark-content-container');
+    if (contentContainer) {
+        contentContainer.onclick = (e) => {
+            // Only trigger if we aren't clicking a link/button inside
+            togglePlayPause();
+        };
+    }
 
-    // 3. Reload Logic - moved to setupInteractions.
-    // --- 4. Exit Logic: Return to Showroom ---
-const exitBtn = document.getElementById('exit-btn');
-if (exitBtn) {
-    // We use addEventListener with 'true' to trigger during the CAPTURE phase
-    exitBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    // 4. Reload Logic: Centralized binding using window.currentSpark
+    const reloadBtn = document.getElementById('reload-spark-btn');
+    if (reloadBtn) {
+        reloadBtn.onclick = () => {
+            if (window.currentSpark) {
+                console.log("[SYSTEM] Reloading Spark...");
+                loadSpark(window.currentSpark);
+            }
+        };
+    }
 
-        const params = new URLSearchParams(window.location.search);
-        const userSlug = params.get('user') || 'yertal-arcade';
-    
-        if (thumbInterval) {
-             clearInterval(thumbInterval);
-             thumbInterval = null;
-        }
+    // 5. Fallback URL Binding (External Links)
+    const fallbackBtn = document.getElementById('fallback-url-btn');
+    if (fallbackBtn) {
+        fallbackBtn.onclick = () => {
+            if (window.currentSpark && window.currentSpark.link) {
+                window.open(window.currentSpark.link, '_blank');
+            }
+        };
+    }
 
-        const container = document.getElementById('spark-content-container');
-        if (container) container.innerHTML = '';
-        
-        console.log("[SYSTEM] Exiting to Showroom...");
-        window.location.href = `/arcade/index.html?user=${userSlug}`;
-    }, true); 
-}
-    // 5. Manual File Upload Trigger
+    // 6. Exit Logic: Return to Showroom [cite: 2026-02-04]
+    const exitBtn = document.getElementById('exit-btn');
+    if (exitBtn) {
+        exitBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const params = new URLSearchParams(window.location.search);
+            const userSlug = params.get('user') || 'yertal-arcade';
+
+            if (thumbInterval) {
+                clearInterval(thumbInterval);
+                thumbInterval = null;
+            }
+
+            const container = document.getElementById('spark-content-container');
+            if (container) container.innerHTML = '';
+
+            console.log("[SYSTEM] Exiting to Showroom...");
+            window.location.href = `/arcade/index.html?user=${userSlug}`;
+        }, true); // Capture phase to ensure priority
+    }
+
+    // 7. Manual File Upload Trigger
     const manualUpload = document.getElementById('manual-upload');
     if (manualUpload) {
         manualUpload.onchange = (e) => {
@@ -646,12 +680,11 @@ if (exitBtn) {
             }
         };
     }
-    
-    // 6. Keyboard Shortcuts: Reserved for System Toggles
-    // ArrowLeft and ArrowRight are intentionally OMITTED so they pass to the game iframe.
+
+    // 8. Keyboard Shortcuts: Reserved for System Toggles
     window.onkeydown = (e) => {
         const key = e.key.toLowerCase();
-        
+
         // Z or Escape for Zen Mode
         if (key === 'z' || key === 'escape') {
             toggleZen();
@@ -662,14 +695,18 @@ if (exitBtn) {
             e.preventDefault();
             if (window.currentSpark) loadSpark(window.currentSpark);
         }
+
+        // Optional: Spacebar for Play/Pause if not in an input
+        if (key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            togglePlayPause();
+        }
     };
 
-    // 7. Auto-Focus Viewport
-    // Ensures games are playable immediately without needing an extra click
+    // 9. Auto-Focus Viewport
     const iframe = document.querySelector('#spark-content-container iframe');
     if (iframe) iframe.focus();
 }
-
 watchAuthState(async (user) => {
     console.log("%c[AUTH] State Changed", "color: #00ff00;");
     if (!user) return;
@@ -745,24 +782,6 @@ if (!path) {
     setupInteractions();
 });
 
-/*
- * Objective: Initialize HUD interactions and event listeners.
- */
-function initSparkHUD() {
-    const reloadBtn = document.getElementById('reload-spark-btn');
-    
-    if (reloadBtn) {
-        reloadBtn.onclick = () => {
-            if (window.currentSpark) {
-                console.log("[SYSTEM] Reloading Spark...");
-                loadSpark(window.currentSpark);
-            }
-        };
-    }
-}
-
-// Call it when the script loads
-document.addEventListener('DOMContentLoaded', initSparkHUD);
 // Bind UI actions to window scope for HTML access
 window.loadSpark = loadSpark;
 window.closeBurstPicker = closeBurstPicker;
