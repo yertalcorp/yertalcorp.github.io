@@ -178,8 +178,8 @@ iframe {
 /* --- Navigation System (The "Zones") --- */
 .nav-zone {
     position: fixed;
-    top: 80px;         /* Creates a "Safe Channel" for corner buttons */
-    bottom: 0;
+    top: 50px;         /* Creates a "Safe Channel" for corner buttons */
+    bottom: 50px;
     width: 150px;      /* Explicit 150px width */
     display: flex;
     align-items: center;
@@ -229,19 +229,19 @@ iframe {
 /* --- Zen / Fullscreen States --- */
 #exit-zen-btn {
     position: fixed;
-    top: 25px;
+    bottom: 25px;
     right: 25px;
     display: none;
-    z-index: 10020;
+    z-index: 100200;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     color: var(--branding-color);
     padding: 10px;
     border-radius: 8px;
     cursor: pointer;
+    pointer-events: auto;
+    transition: all 0.3s ease;
 }
-
-.zen-active #exit-zen-btn { display: block; }
 
 .zen-active #spark-content-container {
     position: fixed;
@@ -322,22 +322,14 @@ iframe {
     transform: translateY(1px);
 }
 /* --- Corner Button Safety & Defaults --- */
-#exit-btn, #exit-zen-btn {
+#exit-btn{
     position: fixed;
-    top: 20px;
+    top: 25px;
+    left: 25px;
+    display: flex;
     z-index: 100200;
     pointer-events: auto;
     transition: all 0.3s ease;
-}
-
-#exit-btn {
-    left: 20px;
-    display: flex; /* Visible by default in Normal Mode */
-}
-
-#exit-zen-btn {
-    right: 20px;
-    display: none; /* Hidden by default in Normal Mode */
 }
 
 .thumb-box-viewport { 
