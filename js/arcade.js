@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 14:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 20:49:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1601,6 +1601,34 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     if (isSource) {
             instructions = `- Research specific items that match the task.
                             ${promptTypeObject.rules}
+                         - Format: JSON array [{"name", "url", "description", "thumbnail"}] and name has maximum 3 words. The "thumbnail" must be a publicly available, high-resolution image URL relevant to the item.`;
+    } else {
+        // Your existing code generation logic
+        instructions = `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
+                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. The "thumbnail" must be a publicly available, high-resolution image URL representing the application's theme.`;
+    }
+
+    const returnString = isSource ? 
+        `${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `${rawPrompt}. Follow this model: ${promptTypeObject.name}.`;
+
+    const fullPrompt = `
+        ${returnString}
+        ${instructions}
+        Quantity: ${Math.max(1, count)} ${isSource ? "entries" : "code variations"}.
+    `.trim();
+    console.log(`shapeAIPrompt: Category: ${promptTypeObject.name} Prompt: ${rawPrompt}. Full shaped Prompt: ${fullPrompt}`);
+    return fullPrompt;
+}
+
+function shapeAiPromptPrev(rawPrompt, count, mode, currentName, promptTypeObject) {
+    const isSource = mode === 'source';
+    const isPictures = promptTypeObject.name === "Pictures";
+
+    let instructions = "";
+
+    if (isSource) {
+            instructions = `- Research specific items that match the task.
+                            ${promptTypeObject.rules}
                          - Format: JSON array [{"name", "url", "description"}] and name has maximum 3 words.`;
     } else {
         // Your existing code generation logic
@@ -1618,86 +1646,6 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     `.trim();
     console.log(`shapeAIPrompt: Category: ${promptTypeObject.name} Prompt: ${rawPrompt}. Full shaped Prompt: ${fullPrompt}`);
     return fullPrompt;
-}
-
-function shapeAiPromptBasic(rawPrompt, count, mode, currentName, promptTypeObject) {
-    const isSource = mode === 'source';
-    
-    const instructions = isSource ? 
-        `- Do NOT return search engine URLs or database homepages.
-        - Research specific items that match the task.
-        -Format: JSON array [{"name", "url", "description"}] and name has maximum 3 words.` : 
-        `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
-        -Format: JSON object {"name", "code"} and name has maximum 3 words.`;
-
-    const returnString = isSource ? 
-        `${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `${rawPrompt}. Follow this model: ${promptTypeObject.name}.`;
-    return `
-        ${returnString}
-        ${instructions}
-        Quantity: ${Math.max(1, count)} ${isSource ? "entries" : "code variations"}.
-    `.trim();
-}
-function shapeAiPromptSimple(rawPrompt, count, mode, currentName, promptTypeObject) {
-    const isSource = mode === 'source';
-    
-    const instructions = isSource ? 
-        `Source Instructions:
-        - Priority: 1. License-Free, 2. Trailers, 3. Specific matches.
-        - Format: JSON array [{"name", "url", "description"}].` : 
-        `Implementation Instructions:
-        - Goal: Bug free stunning interactive HTML/JAVASCRIPT app.
-        - Structure: Self-executing IIFE, Canvas/WebGL.
-        - Format: JSON object {"name", "code"}.`;
-
-    return `
-        ${rawPrompt}
-        ${instructions}
-        Quantity: ${Math.max(1, count)} ${isSource ? "entries" : "code variations"}.
-    `.trim();
-}
-
-function shapeAiPromptComplex(rawPrompt, count, mode, currentName, promptTypeObject) {
-    const isSource = mode === 'source';
-    
-    return `
-Task: ${rawPrompt}
-Model: ${promptTypeObject?.name || "General Utility"}
-Mode: ${mode.toUpperCase()}
-
-${isSource ? 
-    `Persona: You are a Data Research Agent. 
-Rules:
-- Do NOT return search engine URLs or database homepages.
-- Research specific items that match the task.
-- Return ONLY a valid JSON array of objects: [{"name": "Item Name", "url": "Direct Info Link", "description": "Brief detail"}].
-- ${promptTypeObject.rules}` 
-    : 
-    `Persona: You are a Creative Developer specializing in 3D Web Graphics.
-Rules:
-- Provide a standalone, working HTML/JS file.
-- 3D Depth Protocol: Use gradients, simulated drop shadows, and scale-based perspective to give flat shapes a 3D "Tactile" look.
-- JSON Safety: Return ONLY a valid JSON object: {"name": "Title", "code": "Code content"}. Escape all double quotes in the code string correctly.
-- Ensure all buttons and mouse/touch controls work.
-- Adhere to the parent page's viewport.
-
-Runtime & Viewport Resilience:
-- Wrap all initialization logic in window.onload.
-- Capture dimensions inside init; use window.innerWidth/Height dynamically.
-- Implement a resize listener to update canvas/simulation bounds.
-- Use requestAnimationFrame for smooth 60fps rendering.
-
-Visual Rendering & Object Logic:
-- Depth Cues: Objects must have a light-source origin (e.g., top-left highlight) to appear 3D.
-- Clear the canvas every frame to prevent smearing.
-- Use neon or high-chroma colors against a dark background.
-- Ensure all initial coordinates (x, y) are centered within the current viewport.
-
-- ${promptTypeObject.rules}`
-}
-
-Quantity: Generate ${count > 0 ? count : 1} ${isSource ? "data entries" : "code variation(s)"}.
-`.trim();
 }
 
 // FUNCTION: executeMassSpark
@@ -1749,14 +1697,15 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                     .slice(0, resolution.count)
                     .map(item => ({
                         name: item.name || generateSparkName(currentId),
-                        url: item.url || item
+                        url: item.url || item,
+                        image: item.thumbnail || promptTypeObject.image
                     }));                    
             }
 
             for (let i = 0; i < linksToSave.length; i++) {
                 const sparkName = linksToSave.length > 1 && linksToSave[i].name.startsWith('spark_') ? `${linksToSave[i].name}-${i + 1}` : linksToSave[i].name;
                 
-                await saveSpark(currentId, {name: sparkName, link: linksToSave[i].url,image: promptTypeObject.image},prompt, promptTypeObject.name, promptTypeObject.image, currentPrivacy);
+                await saveSpark(currentId, {name: sparkName, link: linksToSave[i].url,image: linksToSave[i].image},prompt, promptTypeObject.name, promptTypeObject.image, currentPrivacy);
                 
                 const progress = Math.round(((i + 1) / linksToSave.length) * 100);
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
@@ -1776,6 +1725,9 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 // VERIFY AND FIX: Scrub the code field explicitly
                 const sparkContent = verifyAndFixCode(response.code, mode); 
                 
+                // Extract thumbnail URL
+                const sparkImage = response.thumbnail || response.image || promptTypeObject.image;
+                
                 const isCode = typeof sparkContent === 'string' && (sparkContent.trim().startsWith('<') || sparkContent.trim().startsWith('function') || sparkContent.trim().startsWith('const') || sparkContent.trim().includes('document.'));
                 
                 await saveSpark(
@@ -1783,7 +1735,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                     { 
                         name: sparkName, 
                         [isCode ? 'code' : 'link']: sparkContent, 
-                        image: promptTypeObject.image 
+                        image: sparkImage
                     }, 
                     prompt,
                     promptTypeObject.name,
@@ -2377,7 +2329,7 @@ async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', t
         owner: user.uid, // Use UID for owner check, not email
         created: Date.now(),
         template_type: detectedTemplate,
-        image: data.image || '/assets/thumbnails/default.jpg',
+        image: data.image || templateUrl || '/assets/thumbnails/default.jpg',
         internal_rank: rank,
         code: data.code || null,
         link: data.link || null,
