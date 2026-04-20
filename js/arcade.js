@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 22:05:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 22:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1601,15 +1601,15 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     if (isSource) {
             instructions = `- Research specific items that match the task.
                             ${promptTypeObject.rules}
-                         - Format: JSON array [{"name", "url", "thumbnail"}] and name has maximum 3 words. The "thumbnail" must be a publicly available, high-resolution image URL relevant to the item.`;
+                         - Format: JSON array [{"name", "url", "thumbnail"}] and name has maximum 3 words. The thumbnail must be a publicly existing, high-resolution image URL relevant to the item.`;
     } else {
         // Your existing code generation logic
         instructions = `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
-                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. The "thumbnail" must be a publicly available, high-resolution image URL relevant to the task and model.`;
+                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. The thumbnail must be a publicly available, high-resolution image URL relevant to the task and capability.`;
     }
 
     const returnString = isSource ? 
-        `${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `${rawPrompt}. The model is: ${promptTypeObject.name}.`;
+        `${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `${rawPrompt}. Create using this capability: ${promptTypeObject.name}.`;
 
     const fullPrompt = `
         ${returnString}
