@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @ 21:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1686,25 +1686,27 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 for (let i = 0; i < Math.min(manualUrls.length, resolution.count); i++) {
                     linksToSave.push({
                         name: resolution.textChunks[i] || generateSparkName(currentId),
-                        url: manualUrls[i]
+                        url: manualUrls[i],
+                        image: promptTypeObject.image || '/assets/thumbnails/default.jpg'
                     });
                 }
             } else {
                 updateForgeStatus("CONSULTING MODEL POOL...");
                 const aiLinks = await callGeminiAPI(shapeAiPrompt(prompt, resolution.count, mode, currentName, promptTypeObject), resolution.count, mode);
-                
+
                 linksToSave = (Array.isArray(aiLinks) ? aiLinks : (typeof aiLinks === 'string' ? aiLinks.split(/,|\n/).map(str => str.trim()).filter(Boolean) : []))
                     .slice(0, resolution.count)
                     .map(item => ({
                         name: item.name || generateSparkName(currentId),
                         url: item.url || item,
-                        image: item.thumbnail || promptTypeObject.image
+                        image: item.thumbnail || promptTypeObject.image || null
                     }));                    
             }
 
             for (let i = 0; i < linksToSave.length; i++) {
                 const sparkName = linksToSave.length > 1 && linksToSave[i].name.startsWith('spark_') ? `${linksToSave[i].name}-${i + 1}` : linksToSave[i].name;
-                
+
+                console.log(`executeMassSpark spark mode=${mode} spark image URL=${linksToSave[i].image}`);
                 await saveSpark(currentId, {name: sparkName, link: linksToSave[i].url,image: linksToSave[i].image},prompt, promptTypeObject.name, promptTypeObject.image, currentPrivacy);
                 
                 const progress = Math.round(((i + 1) / linksToSave.length) * 100);
@@ -1726,8 +1728,8 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 const sparkContent = verifyAndFixCode(response.code, mode); 
                 
                 // Extract thumbnail URL
-                const sparkImage = response.thumbnail || response.image || null;
-                
+                const sparkImage = response.thumbnail || promptTypeObject.image || null;
+                console.log(`executeMassSpark spark mode=${mode} spark image URL=${sparkImage}`);
                 const isCode = typeof sparkContent === 'string' && (sparkContent.trim().startsWith('<') || sparkContent.trim().startsWith('function') || sparkContent.trim().startsWith('const') || sparkContent.trim().includes('document.'));
                 
                 await saveSpark(
