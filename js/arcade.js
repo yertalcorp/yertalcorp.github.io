@@ -1877,9 +1877,9 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                        class="spark-thumbnail"
                        onerror="${inlineFallbackJS}"
                        onload="this.style.opacity='1';"
-                       style="z-index: 1; display: block; transition: opacity 0.5s ease;">
+                       style="opacity: 0;">
                 
-                <div style="position: absolute; inset: 0; background: var(--bg-color-low); opacity: 0.2; z-index: 2; pointer-events: none;"></div>
+                <div style="position: absolute; inset: 0; background: var(--bg-color); opacity: 0.1; z-index: 2; pointer-events: none;"></div>
             </div>
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
