@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:06:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1605,7 +1605,7 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     } else {
         // Your existing code generation logic
         instructions = `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
-                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. The thumbnail must be a relevant, existing and publicly available, high-resolution image URL.`;
+                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. The thumbnail must be an existing, publicly available and high-resolution image URL relevant to the task and capability.`;
     } 
 
     const returnString = isSource ? 
