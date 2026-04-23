@@ -45,43 +45,16 @@
 
     <div id="spark-content-container"></div>
 
-    <div id="burst-picker-hud" class="fixed inset-0 bg-black/80 z-[11000] hidden flex-col items-center justify-center p-10">
-        <h2 class="text-white uppercase tracking-widest mb-6 font-bold">Select Best Frame</h2>
-        <div id="burst-grid" class="flex gap-4 overflow-x-auto pb-6 max-w-full scrollbar-thin scrollbar-thumb-cyan-500">
-            </div>
-        <div class="flex gap-4 mt-4">
-            <button onclick="closeBurstPicker()" class="arcade-button border-gray-500 text-gray-400">Cancel</button>
-        </div>
-    </div>
-
-    <div id="crop-modal" class="fixed inset-0 bg-black/95 z-[12000] hidden flex-col items-center justify-center p-5">
-        <h2 class="text-cyan-400 uppercase tracking-[0.3em] text-sm mb-4">Precision Crop Selection</h2>
-        
-        <div class="relative max-w-[85vw] max-h-[70vh] border-2 border-cyan-500/30 shadow-[0_0_30px_rgba(0,242,255,0.1)]">
-            <canvas id="crop-canvas" class="max-w-full max-h-full cursor-crosshair block"></canvas>
-            
-            <div class="absolute top-2 left-2 bg-black/70 text-[10px] text-cyan-400 px-3 py-1 uppercase tracking-widest border border-cyan-500/20">
-                Drag to define focal area
-            </div>
-        </div>
-
-        <div class="flex gap-8 mt-8">
-            <button onclick="closeCropModal()" class="arcade-button opacity-50 hover:opacity-100">Cancel</button>
-            <button onclick="finalizeAndUploadCrop()" class="generate-btn px-12 shadow-lg">Finalize & Sync to Cloud</button>
-        </div>
-    </div>
-
     <div id="spark-hud" class="fx-glass-hud fx-neon-border">
         
-        <div id="thumb-trigger" class="thumb-box-viewport group cursor-pointer" onclick="openBurstPicker()">
-            <canvas id="live-thumb-canvas" class="w-full h-full object-cover"></canvas>
-            <div class="thumb-hover flex flex-col gap-1 items-center justify-center">
-                <i class="fas fa-images"></i>
-                <span class="text-[8px] font-bold">VIEW BURST</span>
-            </div>
+    <div id="edit-spark-btn" class="thumb-box-viewport group cursor-pointer" title="Edit Spark Details">
+        <div class="flex flex-col gap-1 items-center justify-center h-full">
+            <i class="fas fa-pen-to-square text-cyan-400"></i>
+            <span class="text-[8px] font-bold text-cyan-400">EDIT SPARK</span>
         </div>
+    </div>
 
-        <div class="hud-control-stack">
+<div class="hud-control-stack">
 <div class="hud-row">
     <div class="flex items-center gap-4"> <button id="play-pause-btn" class="spark-btn" title="Play/Pause">
             <i class="fa-solid fa-play" id="play-icon"></i>
@@ -106,16 +79,7 @@
 </div>
 
             <div class="hud-row">
-                <button id="set-cover-btn" class="generate-btn" onclick="openBurstPicker()">
-                    Capture Live
-                </button>
-                
-                <button id="upload-trigger-btn" class="generate-btn" onclick="document.getElementById('manual-upload').click()">
-                    Upload File
-                </button>
-                
-                <input type="file" id="manual-upload" accept="image/*">
-                
+              
                 <div class="status-group">
                       <div id="hud-status" class="status-readout-small text-cyan-500/80 uppercase">Initializing...</div>
                 </div>
