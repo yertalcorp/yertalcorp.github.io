@@ -6,281 +6,8 @@ let allSparks = [];
 let currentIndex = -1;
 let currentId = '';
 let userId = '';
-let thumbInterval = null;
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 20:28:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
-
-// --- START CAPTURE & CROP STATE ---
-let currentBurstFrames = []; 
-let cropStart = null;
-let cropArea = { x: 0, y: 0, w: 0, h: 0 };
-let sourceImage = new Image();
-const IMGBB_API_KEY = "YOUR_KEY"; // Replace with your actual ImgBB API key
-// --- END CAPTURE & CROP STATE ---
-
-/*
- * BURST CAPTURE ENGINE
- * Captures 6 frames with a 500ms gap to catch movement for selection.
- */
-async function captureBurst(sparkMetaData) {
-    currentBurstFrames = []; // Reset
-    const status = document.getElementById('hud-status');
-    
-    console.log("%c[CAPTURE] Starting Burst Sequence...", "color: #ff00ff; font-weight: bold;");
-    
-    for (let i = 0; i < 6; i++) {
-        try {
-            const iframe = document.getElementById('content-frame');
-            if (!iframe) {
-                console.warn("[CAPTURE] No content-frame found for burst.");
-                return;
-            }
-
-            // --- INVESTIGATION LOGS ---
-            console.log(`[DEBUG] Attempting Frame ${i + 1}. Iframe Source:`, iframe.src);
-            
-            try {
-                // Test accessibility to determine if CORS will block us
-                const testAccess = iframe.contentWindow.document;
-                console.log("[DEBUG] Iframe document is accessible.");
-            } catch (accessError) {
-                console.error("%c[SECURITY] CROSS-ORIGIN BLOCK detected!", "background: red; color: white;");
-                console.warn("[DEBUG] You cannot use html2canvas on this Spark because it is hosted on a different domain.");
-                if (status) status.textContent = "CAPTURE BLOCKED (CORS)";
-                return; // Exit early to prevent log spam
-            }
-            // ---------------------------
-
-            if (status) status.textContent = `BURSTING ${i + 1}/6...`;
-            
-            console.log(`[DEBUG] Initializing html2canvas for Frame ${i+1}...`);
-            const canvas = await html2canvas(iframe.contentWindow.document.body, { 
-                useCORS: true, 
-                scale: 0.4,
-                logging: true, // Turned on for deeper internal html2canvas logs
-                backgroundColor: null
-            });
-            
-            console.log(`[DEBUG] Canvas generated. Converting to DataURL...`);
-            const imageData = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
-            const formData = new FormData();
-            formData.append("image", imageData);
-
-            console.log(`[DEBUG] Uploading to ImgBB...`);
-            const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                method: "POST",
-                body: formData
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                const url = result.data.url;
-                currentBurstFrames.push(url);
-                console.log(`%c[CAPTURE] Frame ${i+1} uploaded: ${url}`, "color: #00ff00;");
-                if (i === 0) updateThumbCanvas(url);
-            } else {
-                console.error("[CAPTURE] ImgBB Upload Failed:", result);
-            }
-            
-            await new Promise(r => setTimeout(r, 500)); 
-        } catch (e) {
-            console.error("[CAPTURE] Burst frame failed at iteration " + (i+1), e);
-            // If the first frame fails, the rest likely will too.
-            break; 
-        }
-    }
-    if (status) status.textContent = "BURST CAPTURE READY";
-}
-/*
- * BURST SELECTION GRID
- * Opens the HUD to pick which of the 6 shots to crop.
- */
-function openBurstPicker() {
-    const hud = document.getElementById('burst-picker-hud');
-    const grid = document.getElementById('burst-grid');
-    grid.innerHTML = ""; // Clear old
-
-    if (currentBurstFrames.length === 0) {
-        console.warn("[HUD] No burst frames available. Try waiting for auto-capture.");
-        if (document.getElementById('hud-status')) {
-            document.getElementById('hud-status').textContent = "NO BURST DATA";
-        }
-        return;
-    }
-
-    currentBurstFrames.forEach((url) => {
-        const img = document.createElement('img');
-        img.src = url;
-        img.className = "w-40 h-40 object-cover border-2 border-transparent hover:border-cyan-400 cursor-pointer transition-all rounded shadow-lg";
-        img.onclick = () => {
-            console.log("[HUD] Frame selected for cropping:", url);
-            closeBurstPicker();
-            openCropTool(url);
-        };
-        grid.appendChild(img);
-    });
-
-    hud.classList.remove('hidden');
-}
-
-/*
- * PRECISION CROP TOOL
- * Handles mouse logic for selecting a specific area of the capture.
- */
-function openCropTool(imageUrl) {
-    const modal = document.getElementById('crop-modal');
-    const canvas = document.getElementById('crop-canvas');
-    const ctx = canvas.getContext('2d');
-
-    sourceImage = new Image();
-    sourceImage.crossOrigin = "anonymous";
-    sourceImage.onload = () => {
-        // Match canvas to image aspect ratio
-        canvas.width = sourceImage.width;
-        canvas.height = sourceImage.height;
-        ctx.drawImage(sourceImage, 0, 0);
-        modal.classList.remove('hidden');
-        
-        // Reset crop area
-        cropArea = { x: 0, y: 0, w: canvas.width, h: canvas.height };
-    };
-    sourceImage.src = imageUrl;
-
-    // Mouse Logic for Selection
-    canvas.onmousedown = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        cropStart = { 
-            x: (e.clientX - rect.left) * scaleX, 
-            y: (e.clientY - rect.top) * scaleY 
-        };
-    };
-
-    canvas.onmousemove = (e) => {
-        if (!cropStart) return;
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const currentX = (e.clientX - rect.left) * scaleX;
-        const currentY = (e.clientY - rect.top) * scaleY;
-        
-        // Redraw image + selection rectangle
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(sourceImage, 0, 0);
-        ctx.strokeStyle = "#00f2ff";
-        ctx.lineWidth = 4;
-        ctx.strokeRect(cropStart.x, cropStart.y, currentX - cropStart.x, currentY - cropStart.y);
-        
-        cropArea = { x: cropStart.x, y: cropStart.y, w: currentX - cropStart.x, h: currentY - cropStart.y };
-    };
-
-    canvas.onmouseup = () => { cropStart = null; };
-}
-
-/*
- * FINAL UPLOAD
- * Crops the image locally and sends the final selection to ImgBB and Firebase.
- */
-async function finalizeAndUploadCrop() {
-    const status = document.getElementById('hud-status');
-    const finalCanvas = document.createElement('canvas');
-    const finalCtx = finalCanvas.getContext('2d');
-    
-    // Set final size to the cropped dimensions
-    finalCanvas.width = Math.abs(cropArea.w);
-    finalCanvas.height = Math.abs(cropArea.h);
-
-    finalCtx.drawImage(
-        sourceImage, 
-        cropArea.x, cropArea.y, cropArea.w, cropArea.h, // Source
-        0, 0, finalCanvas.width, finalCanvas.height    // Destination
-    );
-
-    try {
-        if (status) status.textContent = "SYNCING CROP...";
-        const base64Data = finalCanvas.toDataURL('image/jpeg', 0.9).split(',')[1];
-        const formData = new FormData();
-        formData.append("image", base64Data);
-
-        const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-            method: "POST",
-            body: formData
-        });
-
-        const result = await response.json();
-        if (result.success) {
-            const spark = allSparks[currentIndex];
-            const cloudUrl = result.data.url;
-            const path = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}/imageUrl`;
-            
-            await saveToRealtimeDB(path, cloudUrl);
-            updateThumbCanvas(cloudUrl);
-            
-            console.log("[CROP] Final cover saved to DB:", cloudUrl);
-            if (status) status.textContent = "COVER FINALIZED";
-            closeCropModal();
-        }
-    } catch (e) {
-        if (status) status.textContent = "SYNC FAILED";
-        console.error("[CROP] Manual save failed:", e);
-    }
-}
-
-function closeBurstPicker() {
-    document.getElementById('burst-picker-hud').classList.add('hidden');
-}
-
-function closeCropModal() {
-    document.getElementById('crop-modal').classList.add('hidden');
-}
-
-function updateThumbCanvas(url) {
-    const canvas = document.getElementById('live-thumb-canvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    };
-    img.src = url;
-}
-
-/*
- * Clips the edges and resizes a screenshot to 240x135.
- * @param {string} dataUrl - The raw screenshot DataURL.
- */
-async function convertScreenshotToImage(dataUrl) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-            const thumbCanvas = document.createElement('canvas');
-            const ctx = thumbCanvas.getContext('2d');
-
-            // Target dimensions
-            thumbCanvas.width = 240;
-            thumbCanvas.height = 135;
-
-            // Define the "Clean Clip" (shaving 5% off the edges)
-            const margin = 0.05;
-            const sx = img.width * margin;
-            const sy = img.height * margin;
-            const sw = img.width * (1 - (margin * 2));
-            const sh = img.height * (1 - (margin * 2));
-
-            // Draw the clipped portion into the 240x135 thumbnail
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 240, 135);
-
-            resolve(thumbCanvas.toDataURL('image/png'));
-        };
-        img.src = dataUrl;
-    });
-}
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:21:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -423,12 +150,7 @@ function loadSpark(spark) {
     }
     
     console.log(`%c[YERTAL LAB] Loading Spark: ${spark.name}`, "color: #00f2ff; font-weight: bold;");
-    
-    if (thumbInterval) {
-        clearInterval(thumbInterval);
-        thumbInterval = null;
-    }
-    
+        
     container.style.opacity = '0';
     container.innerHTML = '';
     if (hudStatus) hudStatus.textContent = "INITIALIZING...";
@@ -447,11 +169,6 @@ function loadSpark(spark) {
         container.innerHTML = `<iframe id="content-frame" src="${finalUrl}" allow="autoplay; fullscreen"></iframe>`;
         container.style.opacity = '1';
         
-        setTimeout(() => {
-            startLiveThumbnail();
-            captureBurst(spark);
-        }, 2000);
-
     } else {
         const iframe = document.createElement('iframe');
         iframe.id = "content-frame";
@@ -475,78 +192,8 @@ function loadSpark(spark) {
 
         iframe.onload = () => {
             container.style.opacity = '1';
-            startLiveThumbnail();
-            captureBurst(spark); 
-            if (hudStatus) hudStatus.textContent = "AUTO-CAPTURE ACTIVE";
+            if (hudStatus) hudStatus.textContent = "SPARK FULLY LOADED";
         };
-    }
-}
-
-function startLiveThumbnail() {
-    if (thumbInterval) clearInterval(thumbInterval);
-    
-    const canvas = document.getElementById('live-thumb-canvas');
-    if (!canvas) return; 
-    const ctx = canvas.getContext('2d');
-    
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-
-    thumbInterval = setInterval(async () => {
-        try {
-            const shot = await html2canvas(document.getElementById('spark-content-container'), {
-                useCORS: true,
-                scale: 0.2,
-                backgroundColor: null
-            });
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(shot, 0, 0, canvas.width, canvas.height);
-        } catch (e) { 
-            console.warn("Thumbnail capture paused: Cross-origin protection.");
-        }
-    }, 5000);
-}
-
-/*
- * LEGACY METHOD - Preserved for direct saves
- */
-async function setPermanentCover() {
-    const status = document.getElementById('hud-status');
-    const spark = allSparks[currentIndex];
-    
-    if (!spark) return;
-    status.textContent = "SAVING COVER...";
-
-    try {
-        const iframe = document.getElementById('content-frame');
-        const canvas = await html2canvas(iframe.contentWindow.document.body, {
-            useCORS: true,
-            scale: 0.5,
-            logging: false, 
-            allowTaint: true,
-            backgroundColor: null
-        });
-        
-        const thumbCanvas = document.getElementById('live-thumb-canvas');
-        if (thumbCanvas) {
-            const thumbCtx = thumbCanvas.getContext('2d');
-            thumbCanvas.width = thumbCanvas.offsetWidth;
-            thumbCanvas.height = thumbCanvas.offsetHeight;
-            thumbCtx.clearRect(0, 0, thumbCanvas.width, thumbCanvas.height);
-            thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
-        }
-
-        const imageData = canvas.toDataURL('image/jpeg', 0.8);
-        if (imageData.length < 1000) throw new Error("Blank Capture Detected");
-
-        const path = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}/image`;
-        await saveToRealtimeDB(path, imageData);
-        
-        status.textContent = "COVER UPDATED!";
-        setTimeout(() => status.textContent = "AUTO-CAPTURE ACTIVE", 2000);
-    } catch (e) {
-        status.textContent = "SAVE FAILED";
-        console.error("Manual save failed:", e);
     }
 }
 
@@ -601,12 +248,14 @@ function setupInteractions() {
     }
 
     // 2. HUD & Cover Bindings
-    const setCoverBtn = document.getElementById('set-cover-btn');
-    if (setCoverBtn) setCoverBtn.onclick = openBurstPicker;
-
-    const thumbTrigger = document.getElementById('thumb-trigger');
-    if (thumbTrigger) thumbTrigger.onclick = openBurstPicker;
-
+    // ADD: Edit Spark Binding
+    const editBtn = document.getElementById('edit-spark-btn');
+    if (editBtn) {
+        editBtn.onclick = (e) => {
+            e.stopPropagation();
+            openSparkEditor();
+        };
+    }
     // 3. UI Toggles & Media Controls
     const zenBtn = document.getElementById('zen-btn');
     if (zenBtn) zenBtn.onclick = toggleZen;
@@ -667,11 +316,6 @@ function setupInteractions() {
             const params = new URLSearchParams(window.location.search);
             const userSlug = params.get('user') || 'yertal-arcade';
 
-            if (thumbInterval) {
-                clearInterval(thumbInterval);
-                thumbInterval = null;
-            }
-
             const container = document.getElementById('spark-content-container');
             if (container) container.innerHTML = '';
 
@@ -680,17 +324,7 @@ function setupInteractions() {
         }, true); // Capture phase to ensure priority
     }
 
-    // 7. Manual File Upload Trigger
-    const manualUpload = document.getElementById('manual-upload');
-    if (manualUpload) {
-        manualUpload.onchange = (e) => {
-            if (typeof handleManualUpload === 'function') {
-                handleManualUpload(e);
-            }
-        };
-    }
-
-    // 8. Keyboard Shortcuts: Reserved for System Toggles
+   // 8. Keyboard Shortcuts: Reserved for System Toggles
     window.onkeydown = (e) => {
         const key = e.key.toLowerCase();
 
@@ -817,8 +451,96 @@ window.addEventListener('message', (event) => {
         progressFill.style.width = `${percent}%`;
     }
 });
+async function openSparkEditor() {
+    const spark = window.currentSpark;
+    if (!spark) return;
+
+    // Create Editor Overlay if it doesn't exist
+    let editorOverlay = document.getElementById('spark-editor-modal');
+    if (!editorOverlay) {
+        editorOverlay = document.createElement('div');
+        editorOverlay.id = 'spark-editor-modal';
+        editorOverlay.className = 'fixed inset-0 bg-black/95 z-[20000] flex flex-col items-center justify-center p-8';
+        document.body.appendChild(editorOverlay);
+    }
+
+    editorOverlay.innerHTML = `
+        <div class="w-full max-w-4xl">
+            <h2 class="text-cyan-400 uppercase tracking-widest mb-4 font-bold text-xl">Modify Spark: ${spark.name}</h2>
+            
+            <div class="mb-8">
+                <label class="text-[10px] text-gray-500 uppercase block mb-2">Internal Identity (Name)</label>
+                <input type="text" id="edit-name-input" value="${spark.name}" 
+                       class="w-full bg-black/50 border-b border-cyan-500/50 p-3 text-white focus:outline-none focus:border-cyan-400">
+            </div>
+
+            <label class="text-[10px] text-gray-500 uppercase block mb-4">Select New Cover (Relevant to ${spark.template_type})</label>
+            <div id="unsplash-grid" class="grid grid-cols-5 gap-3 mb-8">
+                <div class="col-span-5 text-center text-cyan-500/50 animate-pulse py-10">Fetching Assets...</div>
+            </div>
+
+            <div class="flex gap-4">
+                <button onclick="document.getElementById('spark-editor-modal').remove()" class="arcade-button opacity-50">Cancel</button>
+                <button id="save-spark-changes" class="generate-btn px-8">Save & Sync</button>
+            </div>
+        </div>
+    `;
+
+    // Fetch and Populate Images
+    const images = await fetchUnsplashCovers(spark.template_type || spark.name);
+    const grid = document.getElementById('unsplash-grid');
+    grid.innerHTML = ''; 
+
+    let selectedCover = spark.cover || '';
+
+    images.forEach(url => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'h-24 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all';
+        img.onclick = () => {
+            document.querySelectorAll('#unsplash-grid img').forEach(i => i.style.borderColor = 'transparent');
+            img.style.borderColor = 'var(--branding-color)';
+            selectedCover = url;
+        };
+        grid.appendChild(img);
+    });
+
+    // Save Logic
+    document.getElementById('save-spark-changes').onclick = async () => {
+        const newName = document.getElementById('edit-name-input').value;
+        
+        // Update Local State
+        spark.name = newName;
+        spark.cover = selectedCover;
+
+        // Sync to Firebase [cite: 2026-01-20]
+        const params = new URLSearchParams(window.location.search);
+        const currentId = params.get('current');
+        const userSlug = params.get('user') || 'yertal-arcade';
+        
+        // Construct the correct path for Firebase
+        const dbPath = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}`;
+        
+        await saveToRealtimeDB(dbPath, spark);
+        
+        // Update UI
+        document.getElementById('active-spark-name').textContent = newName;
+        document.getElementById('spark-editor-modal').remove();
+        console.log("[SYSTEM] Spark Synced Successfully.");
+    };
+}
+async function fetchUnsplashCovers(query) {
+    const ACCESS_KEY = "YOUR_UNSPLASH_ACCESS_KEY"; // Get from unsplash.com/developers
+    const url = `https://api.unsplash.com/search/photos?query=${query}&per_page=10&orientation=landscape&client_id=${ACCESS_KEY}`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.results.map(img => img.urls.regular);
+    } catch (error) {
+        console.error("[SYSTEM] Unsplash API Error:", error);
+        return [];
+    }
+}
 // Bind UI actions to window scope for HTML access
 window.loadSpark = loadSpark;
-window.closeBurstPicker = closeBurstPicker;
-window.closeCropModal = closeCropModal;
-window.finalizeAndUploadCrop = finalizeAndUploadCrop;
