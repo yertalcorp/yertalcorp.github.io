@@ -451,7 +451,6 @@ window.addEventListener('message', (event) => {
         progressFill.style.width = `${percent}%`;
     }
 });
-
 async function openSparkEditor() {
     const spark = window.currentSpark;
     if (!spark) return;
@@ -460,28 +459,17 @@ async function openSparkEditor() {
     if (!editorOverlay) {
         editorOverlay = document.createElement('div');
         editorOverlay.id = 'spark-editor-modal';
-        // Ensuring global centering via fixed positioning and flex
         editorOverlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; z-index: 10000;
         `;
         document.body.appendChild(editorOverlay);
     }
 
-    // Node ID display has been removed per your request
     editorOverlay.innerHTML = `
         <div class="hud-body-centered glass-3d w-full max-w-xl p-8">
             <h2 class="hud-title-metallic">Modify Spark</h2>
-            
             <hr class="metallic-divider w-full">
 
             <div class="hud-input-group mt-4">
@@ -490,10 +478,11 @@ async function openSparkEditor() {
             </div>
 
             <div class="hud-input-group">
-                <label class="hud-label-metallic">Visual Metadata</label>
-                <div id="unsplash-grid" class="grid grid-cols-4 gap-3 mb-6 experiment-zone min-h-[120px]">
+                <label class="hud-label-metallic">Choose Cover</label>
+                <div id="unsplash-grid" class="grid grid-cols-4 gap-3 mb-2 experiment-zone min-h-[120px]">
                     <div class="col-span-4 text-center metallic-text py-10">Scanning Assets...</div>
                 </div>
+                <div id="attribution-label" class="hud-subtitle-info text-[10px] italic mb-6 min-h-[15px]"></div>
             </div>
 
             <div class="flex gap-4 w-full justify-center">
@@ -505,69 +494,120 @@ async function openSparkEditor() {
         </div>
     `;
 
-    // Populate images with system-aware hover effects
     try {
-        const images = await fetchUnsplashCovers(spark.template_type || spark.name);
+        const searchQuery = spark.template_type || spark.name || "technology";
+        // fetchUnsplashCovers must return an array of objects: { url, photographer }
+        const images = await fetchUnsplashCovers(searchQuery); 
         const grid = document.getElementById('unsplash-grid');
+        const attrLabel = document.getElementById('attribution-label');
+        
         if (grid) {
             grid.innerHTML = '';
             if (images && images.length > 0) {
-                images.forEach(url => {
+                // Slicing to 4 images to match grid-cols-4
+                images.slice(0, 4).forEach(imgData => {
                     const img = document.createElement('img');
-                    img.src = url;
-                    img.className = 'h-20 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all duration-300';
+                    // imgData should be an object from your updated fetchUnsplashCovers
+                    img.src = imgData.url; 
+                    img.className = 'h-20 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all duration-300 shadow-lg';
+                    
                     img.onclick = () => {
+                        // UI Visual Update
                         document.querySelectorAll('#unsplash-grid img').forEach(i => i.style.borderColor = 'transparent');
                         img.style.borderColor = 'var(--branding-color)';
-                        window.selectedCover = url;
+                        
+                        // Update dynamic label
+                        attrLabel.textContent = `Photo By: ${imgData.photographer}`;
+                        
+                        // Set selection for save logic
+                        window.selectedCover = imgData.url;
+                        window.selectedPhotographer = imgData.photographer;
                     };
                     grid.appendChild(img);
                 });
             } else {
-                grid.innerHTML = '<div class="col-span-4 hud-subtitle-info">No Assets Found</div>';
+                throw new Error("Empty Assets");
             }
         }
     } catch (e) {
-        console.error("[SYSTEM] Unsplash API Error handled");
-        document.getElementById('unsplash-grid').innerHTML = '<div class="col-span-4 hud-subtitle-info">API Offline</div>';
+        console.warn("[SYSTEM] Asset API Offline. Loading local recovery library.");
+        const grid = document.getElementById('unsplash-grid');
+        const placeholders = [
+            'assets/covers/default_optics.jpg', 
+            'assets/covers/default_logic.jpg'
+        ];
+        grid.innerHTML = placeholders.map(p => `<img src="${p}" class="h-20 w-full object-cover">`).join('');
     }
 
-    // Save Logic [cite: 2026-02-04, 2026-02-17]
     document.getElementById('save-spark-changes').onclick = async () => {
         const newName = document.getElementById('edit-name-input').value;
         const params = new URLSearchParams(window.location.search);
-        const currentId = params.get('current');
+        
         const userSlug = params.get('user') || 'yertal-arcade'; 
+        const currentId = params.get('current');
+        const sparkId = params.get('spark') || spark.id;
+
+        if (!currentId || !sparkId) {
+            console.error("[CRITICAL] Missing identifiers for DB sync.");
+            return;
+        }
 
         spark.name = newName;
-        if (window.selectedCover) spark.cover = window.selectedCover;
+        if (window.selectedCover) {
+            spark.cover = window.selectedCover;
+            spark.photographer = window.selectedPhotographer; // Save attribution to DB
+        }
 
-        const dbPath = `users/${userSlug}/infrastructure/currents/${currentId}/sparks/${spark.id}`;
+        const dbPath = `users/${userSlug}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
         
         try {
-            await saveToRealtimeDB(dbPath, spark);
+            await window.saveToRealtimeDB(dbPath, spark);
             const activeHeader = document.getElementById('active-spark-name');
             if (activeHeader) activeHeader.textContent = newName;
             
             document.getElementById('spark-editor-modal').remove();
-            console.log(`[SYSTEM] Sync Success: Node metadata updated at ${dbPath}`);
+            console.log(`[DATABASE] Sync Complete: ${dbPath}`);
         } catch (error) {
-            console.error("[CRITICAL] Sync Error:", error);
+            console.error("[DATABASE] Sync Failure:", error);
         }
     };
 }
+
 async function fetchUnsplashCovers(query) {
-    const ACCESS_KEY = "YOUR_UNSPLASH_ACCESS_KEY"; // Get from unsplash.com/developers
-    const url = `https://api.unsplash.com/search/photos?query=${query}&per_page=10&orientation=landscape&client_id=${ACCESS_KEY}`;
+    // 1. Precise retrieval from the imported databaseCache
+    const ACCESS_KEY = databaseCache?.app_manifest?.unsplashkey; 
+    
+    if (!ACCESS_KEY) {
+        console.warn("[SYSTEM] Unsplash Key missing from databaseCache. Verify arcade.js sync.");
+        return [];
+    }
+
+    // 2. Prepare the request with the dynamic key and encoded query
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=10&orientation=landscape&client_id=${ACCESS_KEY}`;
 
     try {
         const response = await fetch(url);
-        const data = await response.json();
-        return data.results.map(img => img.urls.regular);
+        
+        // 3. Status Check (prevents 401/403 crashes)
+        if (!response.ok) {
+            console.error(`[SYSTEM] Unsplash API Error: ${response.status}`);
+            return [];
+        }
+
+        const dataResult = await response.json();
+        
+        // 4. Return objects to support photographer credit in openSparkEditor
+        if (dataResult && dataResult.results) {
+            return dataResult.results.map(img => ({
+                url: img.urls.regular,
+                photographer: img.user.name 
+            }));
+        }
+        
+        return [];
+        
     } catch (error) {
-        console.error("[SYSTEM] Unsplash API Error:", error);
+        console.error("[SYSTEM] Network/Fetch Error:", error);
         return [];
     }
 }
-// Bind UI actions to window scope for HTML access
-window.loadSpark = loadSpark;
