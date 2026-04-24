@@ -332,16 +332,22 @@ iframe {
     transition: all 0.3s ease;
 }
 
-.thumb-box-viewport { 
-    width: 110px; 
-    height: 62px; 
-    border: 2px solid var(--border-color);
-    border-radius: 6px;
-    overflow: hidden;
-    background: #000;
-    position: relative;
+/* Purge legacy canvas footprint and fix cursor */
+.thumb-box-viewport {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: pointer !important; /* Forces the 'hand' pointer */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
-/* Trigger arrow visibility when the main viewport is hovered */
+
+.thumb-box-viewport:hover i {
+    color: var(--branding-color);
+    filter: drop-shadow(0 0 8px var(--branding-color));
+}/* Trigger arrow visibility when the main viewport is hovered */
 #spark-content-container:hover ~ .nav-zone .nav-arrow {
     opacity: 0.6; /* Semi-transparent so it's not distracting while viewing */
     visibility: visible;
