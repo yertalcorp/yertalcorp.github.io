@@ -376,15 +376,55 @@ iframe {
 
 /* --- MODAL LAYER FIX --- */
 #spark-editor-modal {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 999999 !important; /* Force above laboratory */
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(8px);
+    position: fixed ;
+    inset: 0 ;
+    z-index: 999999 ; /* Force above laboratory */
+    background: var(--bg-color);
+    opacity: 0.95;
+    backdrop-filter: blur(var(--glass-blur, 10px))
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+}
+
+/* --- REUSING THE GILDED GLASS PANEL --- */
+.hud-body-centered {
+    /* Extending .glass-3d logic [cite: 2026-02-04] */
+    background: var(--card-bg);
+    border: 1px solid var(--border-color-glow);
+    box-shadow: 0 8px 32px var(--glow-aura); /* Using system aura */
+    border-radius: 12px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 550px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* --- REUSING LABELS & INPUTS --- */
+.hud-label-metallic {
+    /* Inherits Orbitron styles from arcade.css */
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--branding-color);
+    text-transform: uppercase;
+    text-shadow: 0.5px 0.5px 0px var(--bg-color-high);
+}
+
+.hud-input {
+    /* Matches the recessed look of the Command Container */
+    background: var(--bg-color-low);
+    border: 1px solid var(--border-color);
+    box-shadow: inset 1px 1px 3px rgba(0,0,0,0.4);
+    color: var(--text-main-color);
+    padding: 10px;
+    border-radius: 4px;
+    width: 100%;
+    font-family: var(--nav-font);
 }
 /* 3. ANIMATION: Moving dotted line effect */
 @keyframes border-crawl {
