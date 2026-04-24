@@ -451,42 +451,47 @@ window.addEventListener('message', (event) => {
         progressFill.style.width = `${percent}%`;
     }
 });
+
 async function openSparkEditor() {
     const spark = window.currentSpark;
     if (!spark) return;
 
-    // Create Editor Overlay if it doesn't exist
     let editorOverlay = document.getElementById('spark-editor-modal');
     if (!editorOverlay) {
         editorOverlay = document.createElement('div');
         editorOverlay.id = 'spark-editor-modal';
-        editorOverlay.className = 'fixed inset-0 bg-black/95 z-[20000] flex flex-col items-center justify-center p-8';
+        // Breaking out of HUD stacking with global positioning
+        editorOverlay.className = 'fixed inset-0 bg-black/95 z-[100500] flex flex-col items-center justify-center p-8';
         document.body.appendChild(editorOverlay);
     }
 
     editorOverlay.innerHTML = `
-        <div class="w-full max-w-4xl">
-            <h2 class="text-cyan-400 uppercase tracking-widest mb-4 font-bold text-xl">Modify Spark: ${spark.name}</h2>
+        <div class="hud-body-centered w-full max-w-4xl">
+            <h2 class="hud-title-metallic">Modify Spark</h2>
+            <p class="hud-subtitle-info">Current Identity: ${spark.name}</p>
             
-            <div class="mb-8">
-                <label class="text-[10px] text-gray-500 uppercase block mb-2">Internal Identity (Name)</label>
-                <input type="text" id="edit-name-input" value="${spark.name}" 
-                       class="w-full bg-black/50 border-b border-cyan-500/50 p-3 text-white focus:outline-none focus:border-cyan-400">
+            <div class="hud-input-group mt-6">
+                <label class="hud-label-metallic">Internal Identity (Name)</label>
+                <input type="text" id="edit-name-input" value="${spark.name}" class="hud-input">
             </div>
 
-            <label class="text-[10px] text-gray-500 uppercase block mb-4">Select New Cover (Relevant to ${spark.template_type})</label>
-            <div id="unsplash-grid" class="grid grid-cols-5 gap-3 mb-8">
-                <div class="col-span-5 text-center text-cyan-500/50 animate-pulse py-10">Fetching Assets...</div>
+            <div class="hud-input-group">
+                <label class="hud-label-metallic">Visual Metadata (Cover Art)</label>
+                <p class="hud-subtitle-info mb-4" style="text-align: left;">Suggested for: ${spark.template_type}</p>
+                
+                <div id="unsplash-grid" class="grid grid-cols-5 gap-3 mb-8">
+                    <div class="col-span-5 text-center text-cyan-500/50 animate-pulse py-10">Syncing with Unsplash...</div>
+                </div>
             </div>
 
             <div class="flex gap-4">
-                <button onclick="document.getElementById('spark-editor-modal').remove()" class="arcade-button opacity-50">Cancel</button>
+                <button onclick="document.getElementById('spark-editor-modal').remove()" class="arcade-button opacity-50">Abort</button>
                 <button id="save-spark-changes" class="generate-btn px-8">Save & Sync</button>
             </div>
         </div>
     `;
 
-    // Fetch and Populate Images
+    // Logic for population and saving remains the same...
     const images = await fetchUnsplashCovers(spark.template_type || spark.name);
     const grid = document.getElementById('unsplash-grid');
     grid.innerHTML = ''; 
@@ -505,28 +510,20 @@ async function openSparkEditor() {
         grid.appendChild(img);
     });
 
-    // Save Logic
     document.getElementById('save-spark-changes').onclick = async () => {
         const newName = document.getElementById('edit-name-input').value;
-        
-        // Update Local State
         spark.name = newName;
         spark.cover = selectedCover;
 
-        // Sync to Firebase [cite: 2026-01-20]
         const params = new URLSearchParams(window.location.search);
         const currentId = params.get('current');
-        const userSlug = params.get('user') || 'yertal-arcade';
-        
-        // Construct the correct path for Firebase
         const dbPath = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}`;
         
         await saveToRealtimeDB(dbPath, spark);
         
-        // Update UI
         document.getElementById('active-spark-name').textContent = newName;
         document.getElementById('spark-editor-modal').remove();
-        console.log("[SYSTEM] Spark Synced Successfully.");
+        console.log("[SYSTEM] HUD Meta-Data Updated.");
     };
 }
 async function fetchUnsplashCovers(query) {
