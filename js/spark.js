@@ -460,15 +460,27 @@ async function openSparkEditor() {
     if (!editorOverlay) {
         editorOverlay = document.createElement('div');
         editorOverlay.id = 'spark-editor-modal';
-        // Appending to body to ensure it sits above all nested containers
+        // Ensuring global centering via fixed positioning and flex
+        editorOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
         document.body.appendChild(editorOverlay);
     }
 
-    // Applying .glass-3d and .hud-body-centered for structural alignment
+    // Node ID display has been removed per your request
     editorOverlay.innerHTML = `
-        <div class="hud-body-centered glass-3d w-full max-w-2xl">
+        <div class="hud-body-centered glass-3d w-full max-w-xl p-8">
             <h2 class="hud-title-metallic">Modify Spark</h2>
-            <p class="hud-subtitle-info">Node ID: ${spark.id}</p>
             
             <hr class="metallic-divider w-full">
 
@@ -493,7 +505,7 @@ async function openSparkEditor() {
         </div>
     `;
 
-    // Populate images with safety catch for API 401/Offline states
+    // Populate images with system-aware hover effects
     try {
         const images = await fetchUnsplashCovers(spark.template_type || spark.name);
         const grid = document.getElementById('unsplash-grid');
@@ -503,7 +515,6 @@ async function openSparkEditor() {
                 images.forEach(url => {
                     const img = document.createElement('img');
                     img.src = url;
-                    // Applying hover transition to match .action-card behavior
                     img.className = 'h-20 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all duration-300';
                     img.onclick = () => {
                         document.querySelectorAll('#unsplash-grid img').forEach(i => i.style.borderColor = 'transparent');
@@ -517,36 +528,31 @@ async function openSparkEditor() {
             }
         }
     } catch (e) {
-        console.error("[SYSTEM] Unsplash API interaction failed.");
+        console.error("[SYSTEM] Unsplash API Error handled");
         document.getElementById('unsplash-grid').innerHTML = '<div class="col-span-4 hud-subtitle-info">API Offline</div>';
     }
 
-    // Robust Save Logic utilizing URL parameters for path consistency [cite: 2026-02-01, 2026-02-04]
+    // Save Logic [cite: 2026-02-04, 2026-02-17]
     document.getElementById('save-spark-changes').onclick = async () => {
         const newName = document.getElementById('edit-name-input').value;
         const params = new URLSearchParams(window.location.search);
         const currentId = params.get('current');
-        const userSlug = params.get('user') || 'yertal-arcade'; // fallback to superuser [cite: 2026-02-01]
+        const userSlug = params.get('user') || 'yertal-arcade'; 
 
-        // Update local state before sync
         spark.name = newName;
         if (window.selectedCover) spark.cover = window.selectedCover;
 
-        // Construct target path using ledger standards [cite: 2026-02-17]
         const dbPath = `users/${userSlug}/infrastructure/currents/${currentId}/sparks/${spark.id}`;
         
         try {
             await saveToRealtimeDB(dbPath, spark);
-            
-            // Immediate UI feedback
             const activeHeader = document.getElementById('active-spark-name');
             if (activeHeader) activeHeader.textContent = newName;
             
             document.getElementById('spark-editor-modal').remove();
-            console.log(`[SYSTEM] Sync Success: Node ${spark.id} updated at ${dbPath}`);
+            console.log(`[SYSTEM] Sync Success: Node metadata updated at ${dbPath}`);
         } catch (error) {
             console.error("[CRITICAL] Sync Error:", error);
-            // Revert local changes if sync fails (optional based on your IC preference)
         }
     };
 }
