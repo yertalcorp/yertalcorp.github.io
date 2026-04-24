@@ -140,7 +140,7 @@ iframe {
 }
 
 #hud-status {
-    width: 95%;
+    width: 90%;
     min-width: 160px;
     font-family: 'Courier New', monospace;
     text-align: right;
