@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:28:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 16:36:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -460,35 +460,40 @@ async function openSparkEditor() {
     if (!editorOverlay) {
         editorOverlay = document.createElement('div');
         editorOverlay.id = 'spark-editor-modal';
-        // Using body to bypass restricted HUD parent containers
+        // Appending to body to ensure it sits above all nested containers
         document.body.appendChild(editorOverlay);
     }
 
+    // Applying .glass-3d and .hud-body-centered for structural alignment
     editorOverlay.innerHTML = `
-        <div class="hud-body-centered w-full max-w-2xl">
+        <div class="hud-body-centered glass-3d w-full max-w-2xl">
             <h2 class="hud-title-metallic">Modify Spark</h2>
             <p class="hud-subtitle-info">Node ID: ${spark.id}</p>
             
-            <div class="hud-input-group mt-6">
+            <hr class="metallic-divider w-full">
+
+            <div class="hud-input-group mt-4">
                 <label class="hud-label-metallic">Internal Identity (Name)</label>
                 <input type="text" id="edit-name-input" value="${spark.name}" class="hud-input">
             </div>
 
             <div class="hud-input-group">
                 <label class="hud-label-metallic">Visual Metadata</label>
-                <div id="unsplash-grid" class="grid grid-cols-4 gap-3 mb-8 min-h-[120px]">
-                    <div class="col-span-4 text-center text-cyan-500/50 animate-pulse py-10">Syncing Assets...</div>
+                <div id="unsplash-grid" class="grid grid-cols-4 gap-3 mb-6 experiment-zone min-h-[120px]">
+                    <div class="col-span-4 text-center metallic-text py-10">Scanning Assets...</div>
                 </div>
             </div>
 
-            <div class="flex gap-4">
-                <button onclick="document.getElementById('spark-editor-modal').remove()" class="arcade-button opacity-50">Abort</button>
-                <button id="save-spark-changes" class="generate-btn px-8">Save & Sync</button>
+            <div class="flex gap-4 w-full justify-center">
+                <button onclick="document.getElementById('spark-editor-modal').remove()" 
+                        class="ethereal-btn-xs">ABORT</button>
+                <button id="save-spark-changes" 
+                        class="arcade-button px-10">SAVE & SYNC</button>
             </div>
         </div>
     `;
 
-    // Populate images with safety catch
+    // Populate images with safety catch for API 401/Offline states
     try {
         const images = await fetchUnsplashCovers(spark.template_type || spark.name);
         const grid = document.getElementById('unsplash-grid');
@@ -498,7 +503,8 @@ async function openSparkEditor() {
                 images.forEach(url => {
                     const img = document.createElement('img');
                     img.src = url;
-                    img.className = 'h-20 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400';
+                    // Applying hover transition to match .action-card behavior
+                    img.className = 'h-20 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all duration-300';
                     img.onclick = () => {
                         document.querySelectorAll('#unsplash-grid img').forEach(i => i.style.borderColor = 'transparent');
                         img.style.borderColor = 'var(--branding-color)';
@@ -511,38 +517,39 @@ async function openSparkEditor() {
             }
         }
     } catch (e) {
-        console.error("API Error handled, editor remains functional.");
+        console.error("[SYSTEM] Unsplash API interaction failed.");
         document.getElementById('unsplash-grid').innerHTML = '<div class="col-span-4 hud-subtitle-info">API Offline</div>';
     }
 
-    // Save Logic
-   // ... inside openSparkEditor save logic ...
+    // Robust Save Logic utilizing URL parameters for path consistency [cite: 2026-02-01, 2026-02-04]
     document.getElementById('save-spark-changes').onclick = async () => {
         const newName = document.getElementById('edit-name-input').value;
-    
-        // Update local object
-        spark.name = newName;
-        if (window.selectedCover) spark.cover = window.selectedCover;
-
-        // Use current URL parameters and auth state [cite: 2026-02-04]
         const params = new URLSearchParams(window.location.search);
         const currentId = params.get('current');
         const userSlug = params.get('user') || 'yertal-arcade'; // fallback to superuser [cite: 2026-02-01]
 
-        // Construct the path: user specific and retrieved from JSON context [cite: 2026-02-17]
+        // Update local state before sync
+        spark.name = newName;
+        if (window.selectedCover) spark.cover = window.selectedCover;
+
+        // Construct target path using ledger standards [cite: 2026-02-17]
         const dbPath = `users/${userSlug}/infrastructure/currents/${currentId}/sparks/${spark.id}`;
-    
+        
         try {
             await saveToRealtimeDB(dbPath, spark);
-            document.getElementById('active-spark-name').textContent = newName;
+            
+            // Immediate UI feedback
+            const activeHeader = document.getElementById('active-spark-name');
+            if (activeHeader) activeHeader.textContent = newName;
+            
             document.getElementById('spark-editor-modal').remove();
-            console.log("[SYSTEM] Spark Metadata Synced.");
+            console.log(`[SYSTEM] Sync Success: Node ${spark.id} updated at ${dbPath}`);
         } catch (error) {
-            console.error("[SYSTEM] Sync Error:", error);
+            console.error("[CRITICAL] Sync Error:", error);
+            // Revert local changes if sync fails (optional based on your IC preference)
         }
     };
 }
-
 async function fetchUnsplashCovers(query) {
     const ACCESS_KEY = "YOUR_UNSPLASH_ACCESS_KEY"; // Get from unsplash.com/developers
     const url = `https://api.unsplash.com/search/photos?query=${query}&per_page=10&orientation=landscape&client_id=${ACCESS_KEY}`;
