@@ -365,6 +365,25 @@ iframe {
     filter: drop-shadow(0 0 10px var(--branding-color));
     transform: scale(1.1);
 }
+
+.thumb-box-viewport span {
+    margin-top: 6px; /* More gap from the joystick icon */
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+/* --- MODAL LAYER FIX --- */
+#spark-editor-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 999999 !important; /* Force above laboratory */
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
 /* 3. ANIMATION: Moving dotted line effect */
 @keyframes border-crawl {
     0% { border-style: dashed; opacity: 0.8; }
