@@ -561,7 +561,7 @@ async function openSparkEditor() {
         const dbPath = `users/${userSlug}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
         
         try {
-            await window.saveToRealtimeDB(dbPath, spark);
+            await saveToRealtimeDB(dbPath, spark);
             const activeHeader = document.getElementById('active-spark-name');
             if (activeHeader) activeHeader.textContent = newName;
             
