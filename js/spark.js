@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:21:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 14:14:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -456,19 +456,21 @@ async function openSparkEditor() {
     const spark = window.currentSpark;
     if (!spark) return;
 
+    // 1. Create or Reset Editor Overlay
     let editorOverlay = document.getElementById('spark-editor-modal');
     if (!editorOverlay) {
         editorOverlay = document.createElement('div');
         editorOverlay.id = 'spark-editor-modal';
-        // Breaking out of HUD stacking with global positioning
-        editorOverlay.className = 'fixed inset-0 bg-black/95 z-[100500] flex flex-col items-center justify-center p-8';
+        // z-[100000] ensures we sit above the Laboratory Viewport
+        editorOverlay.className = 'fixed inset-0 bg-black/95 z-[100000] flex flex-col items-center justify-center p-8';
         document.body.appendChild(editorOverlay);
     }
 
+    // 2. Inject Metallic HUD Structure
     editorOverlay.innerHTML = `
         <div class="hud-body-centered w-full max-w-4xl">
             <h2 class="hud-title-metallic">Modify Spark</h2>
-            <p class="hud-subtitle-info">Current Identity: ${spark.name}</p>
+            <p class="hud-subtitle-info">Modifying: ${spark.name}</p>
             
             <div class="hud-input-group mt-6">
                 <label class="hud-label-metallic">Internal Identity (Name)</label>
@@ -476,11 +478,9 @@ async function openSparkEditor() {
             </div>
 
             <div class="hud-input-group">
-                <label class="hud-label-metallic">Visual Metadata (Cover Art)</label>
-                <p class="hud-subtitle-info mb-4" style="text-align: left;">Suggested for: ${spark.template_type}</p>
-                
-                <div id="unsplash-grid" class="grid grid-cols-5 gap-3 mb-8">
-                    <div class="col-span-5 text-center text-cyan-500/50 animate-pulse py-10">Syncing with Unsplash...</div>
+                <label class="hud-label-metallic">Cover Art (Unsplash Sync)</label>
+                <div id="unsplash-grid" class="grid grid-cols-5 gap-3 mb-8 min-h-[120px]">
+                    <div class="col-span-5 text-center text-cyan-500/50 animate-pulse py-10">Initializing Neural Link...</div>
                 </div>
             </div>
 
@@ -491,41 +491,67 @@ async function openSparkEditor() {
         </div>
     `;
 
-    // Logic for population and saving remains the same...
-    const images = await fetchUnsplashCovers(spark.template_type || spark.name);
-    const grid = document.getElementById('unsplash-grid');
-    grid.innerHTML = ''; 
+    // 3. Populate Images with Error Handling (Fixes the 401/TypeError crash)
+    try {
+        const images = await fetchUnsplashCovers(spark.template_type || spark.name);
+        const grid = document.getElementById('unsplash-grid');
+        
+        if (grid) {
+            grid.innerHTML = ''; // Clear the pulse animation
+            
+            if (images && Array.isArray(images) && images.length > 0) {
+                let selectedCover = spark.cover || '';
 
-    let selectedCover = spark.cover || '';
+                images.forEach(url => {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.className = 'h-24 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all';
+                    img.onclick = () => {
+                        document.querySelectorAll('#unsplash-grid img').forEach(i => i.style.borderColor = 'transparent');
+                        img.style.borderColor = 'var(--branding-color)';
+                        selectedCover = url;
+                    };
+                    grid.appendChild(img);
+                });
+            } else {
+                grid.innerHTML = '<div class="col-span-5 text-gray-500 text-xs uppercase text-center">No images found or API access restricted</div>';
+            }
+        }
+    } catch (err) {
+        console.error("[SYSTEM] Unsplash fetch failed, but editor remains active:", err);
+        const grid = document.getElementById('unsplash-grid');
+        if (grid) grid.innerHTML = '<div class="col-span-5 text-red-500 text-xs text-center">Unsplash Connection Offline</div>';
+    }
 
-    images.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        img.className = 'h-24 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all';
-        img.onclick = () => {
-            document.querySelectorAll('#unsplash-grid img').forEach(i => i.style.borderColor = 'transparent');
-            img.style.borderColor = 'var(--branding-color)';
-            selectedCover = url;
-        };
-        grid.appendChild(img);
-    });
-
+    // 4. Save Logic
     document.getElementById('save-spark-changes').onclick = async () => {
         const newName = document.getElementById('edit-name-input').value;
+        const finalCover = (typeof selectedCover !== 'undefined') ? selectedCover : spark.cover;
+        
+        // Update Local State
         spark.name = newName;
-        spark.cover = selectedCover;
+        spark.cover = finalCover;
 
+        // Sync to Firebase
         const params = new URLSearchParams(window.location.search);
         const currentId = params.get('current');
+        
+        // Use the globally scoped userId from auth state
         const dbPath = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}`;
         
-        await saveToRealtimeDB(dbPath, spark);
-        
-        document.getElementById('active-spark-name').textContent = newName;
-        document.getElementById('spark-editor-modal').remove();
-        console.log("[SYSTEM] HUD Meta-Data Updated.");
+        try {
+            await saveToRealtimeDB(dbPath, spark);
+            // Update UI Title immediately
+            document.getElementById('active-spark-name').textContent = newName;
+            document.getElementById('spark-editor-modal').remove();
+            console.log("[SYSTEM] Spark Metadata Synced Successfully.");
+        } catch (saveError) {
+            console.error("[SYSTEM] Sync Failed:", saveError);
+            alert("Database Sync Failed. Check Connection.");
+        }
     };
 }
+
 async function fetchUnsplashCovers(query) {
     const ACCESS_KEY = "YOUR_UNSPLASH_ACCESS_KEY"; // Get from unsplash.com/developers
     const url = `https://api.unsplash.com/search/photos?query=${query}&per_page=10&orientation=landscape&client_id=${ACCESS_KEY}`;
