@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 14:14:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 14:55:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -461,12 +461,12 @@ async function openSparkEditor() {
     if (!editorOverlay) {
         editorOverlay = document.createElement('div');
         editorOverlay.id = 'spark-editor-modal';
-        // z-[100000] ensures we sit above the Laboratory Viewport
-        editorOverlay.className = 'fixed inset-0 bg-black/95 z-[100000] flex flex-col items-center justify-center p-8';
+        // High z-index to stay above lab viewport [cite: 2026-02-04]
+        editorOverlay.className = 'fixed inset-0 bg-black/95 z-[200000] flex flex-col items-center justify-center p-8';
         document.body.appendChild(editorOverlay);
     }
 
-    // 2. Inject Metallic HUD Structure
+    // 2. Inject Metallic HUD Structure [cite: 2026-02-17]
     editorOverlay.innerHTML = `
         <div class="hud-body-centered w-full max-w-4xl">
             <h2 class="hud-title-metallic">Modify Spark</h2>
@@ -491,17 +491,16 @@ async function openSparkEditor() {
         </div>
     `;
 
-    // 3. Populate Images with Error Handling (Fixes the 401/TypeError crash)
+    let selectedCover = spark.cover || '';
+    
+    // 3. Error-Proof Image Population
     try {
         const images = await fetchUnsplashCovers(spark.template_type || spark.name);
         const grid = document.getElementById('unsplash-grid');
         
         if (grid) {
-            grid.innerHTML = ''; // Clear the pulse animation
-            
+            grid.innerHTML = ''; 
             if (images && Array.isArray(images) && images.length > 0) {
-                let selectedCover = spark.cover || '';
-
                 images.forEach(url => {
                     const img = document.createElement('img');
                     img.src = url;
@@ -518,40 +517,32 @@ async function openSparkEditor() {
             }
         }
     } catch (err) {
-        console.error("[SYSTEM] Unsplash fetch failed, but editor remains active:", err);
+        console.error("[SYSTEM] Bypass API Error:", err);
         const grid = document.getElementById('unsplash-grid');
         if (grid) grid.innerHTML = '<div class="col-span-5 text-red-500 text-xs text-center">Unsplash Connection Offline</div>';
     }
 
-    // 4. Save Logic
+    // 4. Save Logic [cite: 2026-01-20]
     document.getElementById('save-spark-changes').onclick = async () => {
         const newName = document.getElementById('edit-name-input').value;
-        const finalCover = (typeof selectedCover !== 'undefined') ? selectedCover : spark.cover;
-        
-        // Update Local State
         spark.name = newName;
-        spark.cover = finalCover;
+        spark.cover = selectedCover;
 
-        // Sync to Firebase
         const params = new URLSearchParams(window.location.search);
         const currentId = params.get('current');
-        
-        // Use the globally scoped userId from auth state
+        // Ensure userId is defined from your auth.js state [cite: 2026-02-04]
         const dbPath = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}`;
         
         try {
             await saveToRealtimeDB(dbPath, spark);
-            // Update UI Title immediately
             document.getElementById('active-spark-name').textContent = newName;
             document.getElementById('spark-editor-modal').remove();
-            console.log("[SYSTEM] Spark Metadata Synced Successfully.");
-        } catch (saveError) {
-            console.error("[SYSTEM] Sync Failed:", saveError);
-            alert("Database Sync Failed. Check Connection.");
+            console.log("[SYSTEM] Spark Metadata Updated.");
+        } catch (e) {
+            console.error("Firebase Sync Error", e);
         }
     };
 }
-
 async function fetchUnsplashCovers(query) {
     const ACCESS_KEY = "YOUR_UNSPLASH_ACCESS_KEY"; // Get from unsplash.com/developers
     const url = `https://api.unsplash.com/search/photos?query=${query}&per_page=10&orientation=landscape&client_id=${ACCESS_KEY}`;
