@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 18:45:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:20:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -224,7 +224,7 @@ function togglePlayPause() {
  * Objective: Initialize HUD and navigation interactions.
  * Task: Restrict navigation to mouse-only via side zones and reserve arrow keys for viewport gameplay.
  */
-function setupInteractions() {
+function setupInteractions(currentUid, spark) {
     // 1. Navigation: Mouse-Only via side zones
     const prevZone = document.getElementById('prev-zone');
     const nextZone = document.getElementById('next-zone');
@@ -248,13 +248,17 @@ function setupInteractions() {
     }
 
     // 2. HUD & Cover Bindings
-    // ADD: Edit Spark Binding
     const editBtn = document.getElementById('edit-spark-btn');
     if (editBtn) {
-        editBtn.onclick = (e) => {
-            e.stopPropagation();
-            openSparkEditor();
-        };
+        if (currentUid && spark && spark.owner === currentUid) {
+            editBtn.style.display = 'flex'; // Or 'block' depending on your CSS
+            editBtn.onclick = (e) => {
+                e.stopPropagation();
+                openSparkEditor();
+            };
+        } else {
+            editBtn.style.display = 'none';
+        }
     }
     // 3. UI Toggles & Media Controls
     const zenBtn = document.getElementById('zen-btn');
@@ -414,15 +418,18 @@ if (!path) {
     // Use the ID from the URL or fallback to the first one
     currentIndex = allSparks.findIndex(s => s.id === initialSparkId);
 
+    let activeSpark = null;
     if (currentIndex !== -1) {
-        loadSpark(allSparks[currentIndex]);
+        activeSpark = allSparks[currentIndex];
+        loadSpark(activeSpark);
     } else if (allSparks.length > 0) {
-        loadSpark(allSparks[0]);
+        activeSpark = allSparks[0];
+        loadSpark(activeSpark);
     } else {
         document.getElementById('active-spark-name').textContent = "EMPTY CURRENT";
     }
     
-    setupInteractions();
+    setupInteractions(user.uid, activeSpark);
 });
 window.addEventListener('message', (event) => {
     // 1. Security check: Ensure we have data
@@ -558,7 +565,7 @@ async function openSparkEditor() {
             spark.photographer = window.selectedPhotographer; // Save attribution to DB
         }
 
-        const dbPath = `users/${userSlug}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
+        const dbPath = `users/${spark.owner}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
         
         try {
             await saveToRealtimeDB(dbPath, spark);
