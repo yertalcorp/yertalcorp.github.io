@@ -131,22 +131,31 @@ iframe {
     justify-content: center;
     align-items: center;
 }
+/* 1. HUD STATUS: Centered, Bolder, with Animated Border */
+.status-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
 #hud-status {
+    width: 95%;
     min-width: 160px;
     font-family: 'Courier New', monospace;
     text-align: right;
     font-size: 9px;
-    letter-spacing: 1.5px;
+    letter-spacing: 3px;
     padding: 6px 12px;
     text-transform: uppercase;
     color: var(--fg-color-mid);
-    font-weight: bold;
+    font-weight: 800;
     text-shadow: 0 0 5px var(--box-shadow-color-glow);
-    border: 1px solid var(--fg-color-low);
+    border: 1px dashed var(--branding-color);
     border-left: 3px solid var(--branding-color);
     box-shadow: inset 0 0 8px var(--box-shadow-color-aura);
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, var(--bg-color-mid) 50%, rgba(0, 0, 0, 0.3) 100%);
+    background: rgba(0, 255, 255, 0.03);
+    animation: border-crawl 3s linear infinite;
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -338,6 +347,9 @@ iframe {
     border: none !important;
     box-shadow: none !important;
     cursor: pointer !important; /* Forces the 'hand' pointer */
+    width: auto;
+    height: auto;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -346,8 +358,16 @@ iframe {
 
 .thumb-box-viewport:hover i {
     color: var(--branding-color);
-    filter: drop-shadow(0 0 8px var(--branding-color));
-}/* Trigger arrow visibility when the main viewport is hovered */
+    filter: drop-shadow(0 0 10px var(--branding-color));
+    transform: scale(1.1);
+}
+/* 3. ANIMATION: Moving dotted line effect */
+@keyframes border-crawl {
+    0% { border-style: dashed; opacity: 0.8; }
+    50% { border-style: dotted; opacity: 1; }
+    100% { border-style: dashed; opacity: 0.8; }
+}
+/* Trigger arrow visibility when the main viewport is hovered */
 #spark-content-container:hover ~ .nav-zone .nav-arrow {
     opacity: 0.6; /* Semi-transparent so it's not distracting while viewing */
     visibility: visible;
