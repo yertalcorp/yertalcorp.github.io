@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:14:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:28:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -516,21 +516,33 @@ async function openSparkEditor() {
     }
 
     // Save Logic
+   // ... inside openSparkEditor save logic ...
     document.getElementById('save-spark-changes').onclick = async () => {
         const newName = document.getElementById('edit-name-input').value;
+    
+        // Update local object
         spark.name = newName;
         if (window.selectedCover) spark.cover = window.selectedCover;
 
-        // Firebase Sync Path
+        // Use current URL parameters and auth state [cite: 2026-02-04]
         const params = new URLSearchParams(window.location.search);
         const currentId = params.get('current');
-        const dbPath = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}`;
-        
-        await saveToRealtimeDB(dbPath, spark);
-        document.getElementById('active-spark-name').textContent = newName;
-        document.getElementById('spark-editor-modal').remove();
+        const userSlug = params.get('user') || 'yertal-arcade'; // fallback to superuser [cite: 2026-02-01]
+
+        // Construct the path: user specific and retrieved from JSON context [cite: 2026-02-17]
+        const dbPath = `users/${userSlug}/infrastructure/currents/${currentId}/sparks/${spark.id}`;
+    
+        try {
+            await saveToRealtimeDB(dbPath, spark);
+            document.getElementById('active-spark-name').textContent = newName;
+            document.getElementById('spark-editor-modal').remove();
+            console.log("[SYSTEM] Spark Metadata Synced.");
+        } catch (error) {
+            console.error("[SYSTEM] Sync Error:", error);
+        }
     };
 }
+
 async function fetchUnsplashCovers(query) {
     const ACCESS_KEY = "YOUR_UNSPLASH_ACCESS_KEY"; // Get from unsplash.com/developers
     const url = `https://api.unsplash.com/search/photos?query=${query}&per_page=10&orientation=landscape&client_id=${ACCESS_KEY}`;
