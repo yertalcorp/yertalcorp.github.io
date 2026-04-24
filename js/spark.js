@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 14:55:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:14:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -456,21 +456,18 @@ async function openSparkEditor() {
     const spark = window.currentSpark;
     if (!spark) return;
 
-    // 1. Create or Reset Editor Overlay
     let editorOverlay = document.getElementById('spark-editor-modal');
     if (!editorOverlay) {
         editorOverlay = document.createElement('div');
         editorOverlay.id = 'spark-editor-modal';
-        // High z-index to stay above lab viewport [cite: 2026-02-04]
-        editorOverlay.className = 'fixed inset-0 bg-black/95 z-[200000] flex flex-col items-center justify-center p-8';
+        // Using body to bypass restricted HUD parent containers
         document.body.appendChild(editorOverlay);
     }
 
-    // 2. Inject Metallic HUD Structure [cite: 2026-02-17]
     editorOverlay.innerHTML = `
-        <div class="hud-body-centered w-full max-w-4xl">
+        <div class="hud-body-centered w-full max-w-2xl">
             <h2 class="hud-title-metallic">Modify Spark</h2>
-            <p class="hud-subtitle-info">Modifying: ${spark.name}</p>
+            <p class="hud-subtitle-info">Node ID: ${spark.id}</p>
             
             <div class="hud-input-group mt-6">
                 <label class="hud-label-metallic">Internal Identity (Name)</label>
@@ -478,9 +475,9 @@ async function openSparkEditor() {
             </div>
 
             <div class="hud-input-group">
-                <label class="hud-label-metallic">Cover Art (Unsplash Sync)</label>
-                <div id="unsplash-grid" class="grid grid-cols-5 gap-3 mb-8 min-h-[120px]">
-                    <div class="col-span-5 text-center text-cyan-500/50 animate-pulse py-10">Initializing Neural Link...</div>
+                <label class="hud-label-metallic">Visual Metadata</label>
+                <div id="unsplash-grid" class="grid grid-cols-4 gap-3 mb-8 min-h-[120px]">
+                    <div class="col-span-4 text-center text-cyan-500/50 animate-pulse py-10">Syncing Assets...</div>
                 </div>
             </div>
 
@@ -491,56 +488,47 @@ async function openSparkEditor() {
         </div>
     `;
 
-    let selectedCover = spark.cover || '';
-    
-    // 3. Error-Proof Image Population
+    // Populate images with safety catch
     try {
         const images = await fetchUnsplashCovers(spark.template_type || spark.name);
         const grid = document.getElementById('unsplash-grid');
-        
         if (grid) {
-            grid.innerHTML = ''; 
-            if (images && Array.isArray(images) && images.length > 0) {
+            grid.innerHTML = '';
+            if (images && images.length > 0) {
                 images.forEach(url => {
                     const img = document.createElement('img');
                     img.src = url;
-                    img.className = 'h-24 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all';
+                    img.className = 'h-20 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400';
                     img.onclick = () => {
                         document.querySelectorAll('#unsplash-grid img').forEach(i => i.style.borderColor = 'transparent');
                         img.style.borderColor = 'var(--branding-color)';
-                        selectedCover = url;
+                        window.selectedCover = url;
                     };
                     grid.appendChild(img);
                 });
             } else {
-                grid.innerHTML = '<div class="col-span-5 text-gray-500 text-xs uppercase text-center">No images found or API access restricted</div>';
+                grid.innerHTML = '<div class="col-span-4 hud-subtitle-info">No Assets Found</div>';
             }
         }
-    } catch (err) {
-        console.error("[SYSTEM] Bypass API Error:", err);
-        const grid = document.getElementById('unsplash-grid');
-        if (grid) grid.innerHTML = '<div class="col-span-5 text-red-500 text-xs text-center">Unsplash Connection Offline</div>';
+    } catch (e) {
+        console.error("API Error handled, editor remains functional.");
+        document.getElementById('unsplash-grid').innerHTML = '<div class="col-span-4 hud-subtitle-info">API Offline</div>';
     }
 
-    // 4. Save Logic [cite: 2026-01-20]
+    // Save Logic
     document.getElementById('save-spark-changes').onclick = async () => {
         const newName = document.getElementById('edit-name-input').value;
         spark.name = newName;
-        spark.cover = selectedCover;
+        if (window.selectedCover) spark.cover = window.selectedCover;
 
+        // Firebase Sync Path
         const params = new URLSearchParams(window.location.search);
         const currentId = params.get('current');
-        // Ensure userId is defined from your auth.js state [cite: 2026-02-04]
         const dbPath = `users/${userId}/infrastructure/currents/${currentId}/sparks/${spark.id}`;
         
-        try {
-            await saveToRealtimeDB(dbPath, spark);
-            document.getElementById('active-spark-name').textContent = newName;
-            document.getElementById('spark-editor-modal').remove();
-            console.log("[SYSTEM] Spark Metadata Updated.");
-        } catch (e) {
-            console.error("Firebase Sync Error", e);
-        }
+        await saveToRealtimeDB(dbPath, spark);
+        document.getElementById('active-spark-name').textContent = newName;
+        document.getElementById('spark-editor-modal').remove();
     };
 }
 async function fetchUnsplashCovers(query) {
