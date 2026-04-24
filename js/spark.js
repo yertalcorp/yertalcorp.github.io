@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:35:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:05:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -501,8 +501,9 @@ async function openSparkEditor() {
         </div>
     `;
 
+    // Pass the name of the spark first, then its template type and then its prompt
     try {
-        const searchQuery = spark.template_type || spark.name || "technology";
+        const searchQuery = spark.name || spark.template_type || spark.prompt;
         // fetchUnsplashCovers must return an array of objects: { url, photographer }
         const images = await fetchUnsplashCovers(searchQuery); 
         const grid = document.getElementById('unsplash-grid');
