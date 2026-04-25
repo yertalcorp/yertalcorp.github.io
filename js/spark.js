@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 10:27:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 10:54:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -509,10 +509,12 @@ async function openSparkEditor() {
     `;
 
     try {
-        const searchQuery = spark.name || spark.template_type || spark.prompt;
-        let images = await fetchUnsplashCovers(searchQuery); 
-        
-        // --- NEW LOGIC: FIND AND INSERT DEFAULT TEMPLATE IMAGE ---
+        // Broaden the query: template_type usually yields better general results than a specific unique name
+        const searchQuery = spark.template_type || spark.name || "technology";
+        const apiImages = await fetchUnsplashCovers(searchQuery); // Combine results: API results first, then we unshift the default
+        let images = [...apiImages];
+
+        // --- FIND AND INSERT DEFAULT TEMPLATE IMAGE ---
         const types = databaseCache?.settings?.['arcade-current-types'] || {};
         const defaultTemplate = Object.values(types).find(t => t.name === spark.template_type);
         
@@ -522,7 +524,7 @@ async function openSparkEditor() {
                 photographer: "System Generated"
             });
         }
-        // ---------------------------------------------------------
+        // ----------------------------------------------
 
         const grid = document.getElementById('unsplash-grid');
         const attrLabel = document.getElementById('attribution-label');
@@ -530,14 +532,17 @@ async function openSparkEditor() {
         if (grid) {
             grid.innerHTML = '';
             if (images && images.length > 0) {
-                // Slice to 4 now that we've added the default
-                images.slice(0, 4).forEach(imgData => {
+                // Showing up to 8 images (2 rows of 4) to provide more choice
+                images.slice(0, 8).forEach(imgData => {
                     const img = document.createElement('img');
                     img.src = imgData.url; 
                     img.className = 'h-20 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all duration-300 shadow-lg';
                     
                     // Highlight if this is the currently saved image
-                    if (spark.image === imgData.url) img.style.borderColor = 'var(--branding-color)';
+                    if (spark.image === imgData.url) {
+                        img.style.borderColor = 'var(--branding-color)';
+                        attrLabel.textContent = `Photo By: ${imgData.photographer}`;
+                    }
 
                     img.onclick = () => {
                         document.querySelectorAll('#unsplash-grid img').forEach(i => i.style.borderColor = 'transparent');
@@ -550,7 +555,7 @@ async function openSparkEditor() {
                     grid.appendChild(img);
                 });
             } else {
-                throw new Error("Empty Assets");
+                grid.innerHTML = `<div class="col-span-4 text-center metallic-text py-10">No Assets Found</div>`;
             }
         }
     } catch (e) {
@@ -597,21 +602,19 @@ async function openSparkEditor() {
 }
 
 async function fetchUnsplashCovers(query) {
-    // 1. Precise retrieval from the imported databaseCache
     const ACCESS_KEY = databaseCache?.app_manifest?.unsplashkey; 
     
     if (!ACCESS_KEY) {
-        console.warn("[SYSTEM] Unsplash Key missing from databaseCache. Verify arcade.js sync.");
+        console.warn("[SYSTEM] Unsplash Key missing from databaseCache.");
         return [];
     }
 
-    // 2. Prepare the request with the dynamic key and encoded query
-    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=10&orientation=landscape&client_id=${ACCESS_KEY}`;
+    // Increased per_page to 12 to ensure we have plenty of options to slice from
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=12&orientation=landscape&client_id=${ACCESS_KEY}`;
 
     try {
         const response = await fetch(url);
         
-        // 3. Status Check (prevents 401/403 crashes)
         if (!response.ok) {
             console.error(`[SYSTEM] Unsplash API Error: ${response.status}`);
             return [];
@@ -619,7 +622,6 @@ async function fetchUnsplashCovers(query) {
 
         const dataResult = await response.json();
         
-        // 4. Return objects to support photographer credit in openSparkEditor
         if (dataResult && dataResult.results) {
             return dataResult.results.map(img => ({
                 url: img.urls.regular,
