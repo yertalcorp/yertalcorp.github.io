@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:05:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 10:27:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -249,14 +249,20 @@ function setupInteractions(currentUid, spark) {
 
     // 2. HUD & Cover Bindings
     const editBtn = document.getElementById('edit-spark-btn');
+
     if (editBtn) {
-        if (currentUid && spark && spark.owner === currentUid) {
-            editBtn.style.display = 'flex'; // Or 'block' depending on your CSS
+        // Check if the user is the owner OR the superuser
+        const isOwner = currentUid && spark && spark.owner === currentUid;
+        const isSuperUser = currentUid === 'yertal-arcade';
+
+        if (isOwner || isSuperUser) {
+            editBtn.style.display = 'flex';
             editBtn.onclick = (e) => {
                 e.stopPropagation();
                 openSparkEditor();
             };
         } else {
+            // Explicitly ensure it's hidden if the check fails (safety)
             editBtn.style.display = 'none';
         }
     }
