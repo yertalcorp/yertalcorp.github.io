@@ -219,50 +219,57 @@ window.endTutorial = function() {
     if (tooltip) tooltip.remove();
 };
     
-/* Objective: Manage the System Drawer and Settings Sync 
-*/
-
+/* * Objective: Drawer Navigation & State Management
+ * Task: Toggle visibility of static HTML sections and manage origin levels
+ */
 window.toggleDrawer = (menuType = 'main') => {
     const drawer = document.getElementById('main-drawer');
     if (!drawer) return;
 
     const isActive = drawer.classList.contains('active');
 
-    // 1. If opening for the first time, lock the origin
+    // 1. If opening fresh, lock the origin and show the correct section
     if (!isActive) {
         drawer.dataset.originMode = menuType;
-        // If they open via the '?' icon, go straight to help
         if (menuType !== 'main') {
-            showSubMenu(menuType);
+            window.showSubMenu(menuType);
         } else {
-            showMainMenu();
+            window.showMainMenu();
         }
+        drawer.classList.add('active');
     } 
     // 2. If already open and switching modes via top-bar icons
+    else if (drawer.dataset.currentMode !== menuType) {
+        drawer.dataset.originMode = menuType; // Update origin if explicitly switched via icon
+        window.showSubMenu(menuType);
+    }
+    // 3. Close the drawer if clicking the same icon/close button
     else {
-        showSubMenu(menuType);
+        drawer.classList.remove('active');
     }
 
-    drawer.classList.toggle('active');
+    drawer.dataset.currentMode = menuType;
 };
 
 window.showSubMenu = (menuType) => {
     const drawer = document.getElementById('main-drawer');
     const origin = drawer.dataset.originMode || 'main';
 
-    // Hide everything first
+    // Hide all navigation containers
     document.getElementById('drawer-main-nav').style.display = 'none';
     document.getElementById('drawer-settings').style.display = 'none';
     document.getElementById('drawer-help').style.display = 'none';
 
-    // Show selected submenu
+    // Show the specific target
     const targetSub = document.getElementById(`drawer-${menuType}`);
-    if (targetSub) targetSub.style.display = 'block';
-
-    // Hide BACK buttons if the user started at this level
-    const backBtn = targetSub.querySelector('.back-btn');
-    if (backBtn) {
-        backBtn.style.display = (origin === 'main') ? 'flex' : 'none';
+    if (targetSub) {
+        targetSub.style.display = 'block';
+        
+        // Back Button Logic: Only show if we didn't START at this menu level
+        const backBtn = targetSub.querySelector('.back-btn');
+        if (backBtn) {
+            backBtn.style.display = (origin === 'main') ? 'flex' : 'none';
+        }
     }
 };
 
@@ -271,6 +278,7 @@ window.showMainMenu = () => {
     document.getElementById('drawer-settings').style.display = 'none';
     document.getElementById('drawer-help').style.display = 'none';
 };
+
 // 3. Prefill the inputs with current cached data
 function prefillSettings() {
     const profile = databaseCache.userProfile || {};
