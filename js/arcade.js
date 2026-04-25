@@ -230,7 +230,7 @@ window.toggleDrawer = (menuType = 'main') => {
 
     // 1. Set the Origin if opening for the first time
     if (!isActive) {
-        **drawer.dataset.originMode = menuType;**
+        drawer.dataset.originMode = menuType;
         renderMainDrawer(menuType);
     } 
     // 2. If already open but switching modes (e.g., clicking Help while Settings is open)
@@ -248,7 +248,7 @@ function renderMainDrawer(menuType) {
     if (!contentContainer) return;
 
     // Use the stored origin to decide if a Back button is needed
-    **const origin = drawer.dataset.originMode || 'main';**
+    const origin = drawer.dataset.originMode || 'main';
 
     const helpSection = `
         <div class="drawer-section">
@@ -291,8 +291,8 @@ function renderMainDrawer(menuType) {
             </div>
         </div>`;
 
-    **// Back button only appears if we are in a submenu AND our starting point was 'main'**
-    **const showBackButton = (menuType !== 'main' && origin === 'main');**
+    // Back button only appears if we are in a submenu AND our starting point was 'main'
+    const showBackButton = (menuType !== 'main' && origin === 'main');
     
     const backButton = showBackButton ? `
         <div class="menu-item back-btn" onclick="renderMainDrawer('main')" style="margin-bottom: 20px; border-bottom: 1px solid var(--fg-color-low); padding-bottom: 10px;">
