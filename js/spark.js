@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 11:40:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 12:15:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -469,6 +469,10 @@ async function openSparkEditor() {
     const spark = window.currentSpark;
     if (!spark) return;
 
+    // 1. RESET GLOBAL SELECTIONS to prevent data-bleeding between sparks
+    window.selectedCover = null;
+    window.selectedPhotographer = null;
+
     let editorOverlay = document.getElementById('spark-editor-modal');
     if (!editorOverlay) {
         editorOverlay = document.createElement('div');
@@ -509,15 +513,18 @@ async function openSparkEditor() {
     `;
 
     try {
-        // Broaden the query: template_type usually yields better general results than a specific unique name
-        const searchQuery = spark.name || spark.template_type || spark.prompt || "technology";
-        const apiImages = await fetchUnsplashCovers(searchQuery); // Combine results: API results first, then we unshift the default
+        const searchQuery = spark.template_type || spark.name || "technology";
+        const apiImages = await fetchUnsplashCovers(searchQuery); 
         let images = [...apiImages];
 
         // --- FIND AND INSERT DEFAULT TEMPLATE IMAGE ---
         const types = databaseCache?.settings?.['arcade-current-types'] || {};
-        const defaultTemplate = Object.values(types).find(t => t.name.tolowercase().trim() === spark.template_type.tolowercase().trim());
-        console.log("openSparkEditor spark default image URL:", defaultTemplate.image);
+        // Note: Corrected to toLowerCase() and checked for existence of spark.template_type
+        const defaultTemplate = Object.values(types).find(t => 
+            t.name && spark.template_type && 
+            t.name.toLowerCase().trim() === spark.template_type.toLowerCase().trim()
+        );
+
         if (defaultTemplate && defaultTemplate.image) {
             images.unshift({
                 url: defaultTemplate.image,
@@ -531,14 +538,12 @@ async function openSparkEditor() {
         
         if (grid) {
             grid.innerHTML = '';
-            if (images && images.length > 0) {
-                // Showing up to 8 images (2 rows of 4) to provide more choice
+            if (images.length > 0) {
                 images.slice(0, 8).forEach(imgData => {
                     const img = document.createElement('img');
                     img.src = imgData.url; 
                     img.className = 'h-20 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all duration-300 shadow-lg';
                     
-                    // Highlight if this is the currently saved image
                     if (spark.image === imgData.url) {
                         img.style.borderColor = 'var(--branding-color)';
                         attrLabel.textContent = `Photo By: ${imgData.photographer}`;
@@ -559,13 +564,7 @@ async function openSparkEditor() {
             }
         }
     } catch (e) {
-        console.warn("[SYSTEM] Asset API Offline. Loading local recovery library.");
-        const grid = document.getElementById('unsplash-grid');
-        const placeholders = [
-            'assets/covers/default_optics.jpg', 
-            'assets/covers/default_logic.jpg'
-        ];
-        grid.innerHTML = placeholders.map(p => `<img src="${p}" class="h-20 w-full object-cover">`).join('');
+        console.warn("[SYSTEM] Asset API Offline.");
     }
 
     document.getElementById('save-spark-changes').onclick = async () => {
@@ -580,21 +579,39 @@ async function openSparkEditor() {
             return;
         }
 
-        spark.name = newName;
+        // 2. PROTECT DATA: Construct a clean update object
+        // This ensures we only change specific fields and don't overwrite template_type accidentally
+        const updateData = {
+            ...spark, // Start with original data
+            name: newName
+        };
+
         if (window.selectedCover) {
-            spark.image = window.selectedCover;
-            spark.photographer = window.selectedPhotographer; 
+            updateData.image = window.selectedCover;
+            updateData.photographer = window.selectedPhotographer; 
         }
 
         const dbPath = `users/${spark.owner}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
         
         try {
-            await saveToRealtimeDB(dbPath, spark);
+            await saveToRealtimeDB(dbPath, updateData);
+            
+            // Sync local state
+            spark.name = updateData.name;
+            if (window.selectedCover) {
+                spark.image = updateData.image;
+                spark.photographer = updateData.photographer;
+            }
+
             const activeHeader = document.getElementById('active-spark-name');
             if (activeHeader) activeHeader.textContent = newName;
             
             document.getElementById('spark-editor-modal').remove();
-            console.log(`[DATABASE] Sync Complete: ${dbPath}`);
+            
+            // 3. CLEAN UP globals after successful save
+            window.selectedCover = null;
+            window.selectedPhotographer = null;
+
         } catch (error) {
             console.error("[DATABASE] Sync Failure:", error);
         }
@@ -609,16 +626,11 @@ async function fetchUnsplashCovers(query) {
         return [];
     }
 
-    // Increased per_page to 12 to ensure we have plenty of options to slice from
     const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=12&orientation=landscape&client_id=${ACCESS_KEY}`;
 
     try {
         const response = await fetch(url);
-        
-        if (!response.ok) {
-            console.error(`[SYSTEM] Unsplash API Error: ${response.status}`);
-            return [];
-        }
+        if (!response.ok) return [];
 
         const dataResult = await response.json();
         
@@ -628,11 +640,10 @@ async function fetchUnsplashCovers(query) {
                 photographer: img.user.name 
             }));
         }
-        
         return [];
         
     } catch (error) {
-        console.error("[SYSTEM] Network/Fetch Error:", error);
+        console.error("[SYSTEM] Network Error:", error);
         return [];
     }
 }
