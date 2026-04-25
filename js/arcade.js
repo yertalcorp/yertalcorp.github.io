@@ -102,15 +102,15 @@ const steps = [
 ];
 
 window.handleTutorialTrigger = () => {
-    // 1. Close the drawer first
-    window.toggleDrawer(); 
+    // 1. Close your glass drawer
+    const drawer = document.getElementById('main-drawer');
+    if (drawer) drawer.classList.remove('active');
 
-    // 2. Wait for drawer transition (400ms) then launch
+    // 2. Wait for the 0.5s CSS transition to finish before starting spotlight
     setTimeout(() => {
         window.showTutorial();
-    }, 400); 
+    }, 500); 
 };
-
 window.showTutorial = function() {
     currentTutorialStep = 0; 
     
