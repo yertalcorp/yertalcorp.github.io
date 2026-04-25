@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @22:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @22:12:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -228,104 +228,49 @@ window.toggleDrawer = (menuType = 'main') => {
 
     const isActive = drawer.classList.contains('active');
 
-    // 1. Set the Origin if opening for the first time
+    // 1. If opening for the first time, lock the origin
     if (!isActive) {
         drawer.dataset.originMode = menuType;
-        renderMainDrawer(menuType);
+        // If they open via the '?' icon, go straight to help
+        if (menuType !== 'main') {
+            showSubMenu(menuType);
+        } else {
+            showMainMenu();
+        }
     } 
-    // 2. If already open but switching modes (e.g., clicking Help while Settings is open)
-    else if (drawer.dataset.currentMode !== menuType) {
-        renderMainDrawer(menuType);
+    // 2. If already open and switching modes via top-bar icons
+    else {
+        showSubMenu(menuType);
     }
 
-    drawer.dataset.currentMode = menuType;
-    if (!isActive) drawer.classList.add('active');
+    drawer.classList.toggle('active');
 };
 
-function renderMainDrawer(menuType) {
+window.showSubMenu = (menuType) => {
     const drawer = document.getElementById('main-drawer');
-    const contentContainer = drawer.querySelector('.drawer-content');
-    if (!contentContainer) return;
-
-    // Use the stored origin to decide if a Back button is needed
     const origin = drawer.dataset.originMode || 'main';
 
-    const helpSection = `
-        <div class="drawer-section">
-            <h4 class="drawer-header">HELP</h4>
-            <div class="menu-list">
-                <div class="menu-item" onclick="window.handleTutorialTrigger();">
-                    <span>View Tutorial</span>
-                    <i class="fas fa-play-circle"></i>
-                </div>
-                <div class="menu-item" onclick="window.openDemo(); window.toggleDrawer();">
-                    <span>System Demo</span>
-                    <i class="fas fa-video"></i>
-                </div>
-            </div>
-        </div>`;
-
-    const settingsSection = `
-        <div class="drawer-section">
-            <h4 class="drawer-header">SETTINGS</h4>
-            <div class="menu-list">
-                <div class="menu-item" onclick="openArcadeSettings()">
-                    <span>Arcade Settings</span>
-                    <i class="fas fa-vial"></i>
-                </div>
-                <div class="menu-item" onclick="openUpgradePath()">
-                    <span style="color: var(--branding-text-color); font-weight: 800;">Upgrade Plan</span>
-                    <i class="fas fa-bolt" style="color: var(--branding-color);"></i>
-                </div>
-            </div>
-        </div>`;
-
-    const performanceSection = `
-        <div class="drawer-section">
-            <h4 class="drawer-header">PERFORMANCE</h4>
-            <div class="menu-list">
-                <div class="menu-item" onclick="window.location.href='/analytics.html'">
-                    <span>Analytics</span>
-                    <i class="fas fa-chart-line"></i>
-                </div>
-            </div>
-        </div>`;
-
-    // Back button only appears if we are in a submenu AND our starting point was 'main'
-    const showBackButton = (menuType !== 'main' && origin === 'main');
-    
-    const backButton = showBackButton ? `
-        <div class="menu-item back-btn" onclick="renderMainDrawer('main')" style="margin-bottom: 20px; border-bottom: 1px solid var(--fg-color-low); padding-bottom: 10px;">
-            <i class="fas fa-chevron-left"></i> <span style="font-size: 10px; opacity: 0.7;">BACK TO OVERVIEW</span>
-        </div>` : "";
-
-    let html = "";
-    if (menuType === 'help') {
-        html = backButton + helpSection;
-    } else if (menuType === 'settings') {
-        html = backButton + settingsSection;
-    } else {
-        html = helpSection + `<hr class="drawer-hr">` + settingsSection + `<hr class="drawer-hr">` + performanceSection;
-    }
-
-    contentContainer.innerHTML = html;
-}
-
-// 2. Navigation between Main and Sub-menus
-window.showSubMenu = (menuId) => {
+    // Hide everything first
     document.getElementById('drawer-main-nav').style.display = 'none';
-    document.querySelectorAll('.sub-menu').forEach(m => m.style.display = 'none');
-    document.getElementById(`drawer-${menuId}`).style.display = 'block';
-    
-    // Pre-fill settings if opening settings
-    if(menuId === 'settings') prefillSettings();
+    document.getElementById('drawer-settings').style.display = 'none';
+    document.getElementById('drawer-help').style.display = 'none';
+
+    // Show selected submenu
+    const targetSub = document.getElementById(`drawer-${menuType}`);
+    if (targetSub) targetSub.style.display = 'block';
+
+    // Hide BACK buttons if the user started at this level
+    const backBtn = targetSub.querySelector('.back-btn');
+    if (backBtn) {
+        backBtn.style.display = (origin === 'main') ? 'flex' : 'none';
+    }
 };
 
 window.showMainMenu = () => {
-    document.querySelectorAll('.sub-menu').forEach(m => m.style.display = 'none');
     document.getElementById('drawer-main-nav').style.display = 'block';
+    document.getElementById('drawer-settings').style.display = 'none';
+    document.getElementById('drawer-help').style.display = 'none';
 };
-
 // 3. Prefill the inputs with current cached data
 function prefillSettings() {
     const profile = databaseCache.userProfile || {};
