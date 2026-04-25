@@ -107,7 +107,10 @@ window.showTutorial = function() {
     // Ensure the mask is visible
     const mask = document.getElementById('tutorial-mask');
     if (mask) mask.style.display = 'block';
-
+    if (!mask) {
+        console.error("Tutorial Mask not found in DOM.");
+        return;
+    }
     // Wait for the drawer animation to finish (e.g., 300ms) 
     // before calculating element positions
     setTimeout(() => {
