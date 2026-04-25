@@ -314,31 +314,37 @@ main.max-width-limit {
     margin-bottom: 1.5rem;
     text-transform: uppercase;
 }
-
 /* --- THEME_AWARE_TUTORIAL_OS --- */
-#tutorial-mask {
+.tutorial-mask {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    /* Pulls directly from the theme's bg-color */
     background: var(--bg-color); 
-    opacity: 0.6;
-    backdrop-filter: blur(2px);
+    opacity: 0; /* Start invisible */
+    backdrop-filter: blur(0px); /* Start sharp */
     z-index: 9998;
     pointer-events: none;
     transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+    
     /* Dynamic Keyhole */
     mask-image: radial-gradient(circle at var(--x) var(--y), transparent var(--r), black var(--r));
     -webkit-mask-image: radial-gradient(circle at var(--x) var(--y), transparent var(--r), black var(--r));
 }
 
+/* Active State */
+.tutorial-mask.active {
+    opacity: 0.6;
+    backdrop-filter: blur(2px);
+    pointer-events: auto; 
+}
+
 .tutorial-tooltip {
     position: fixed;
     z-index: 9999;
+    display: none; /* Keep hidden until step is triggered */
     width: 340px;
-    /* Uses the theme's card-bg and branding-color for borders */
     background: var(--card-bg);
     border: 1px solid var(--border-color-glow);
     box-shadow: 0 10px 30px var(--box-shadow-color);
@@ -348,6 +354,10 @@ main.max-width-limit {
     color: var(--text-main-color);
     pointer-events: auto;
     transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.tutorial-tooltip.active {
+    display: block;
 }
 
 .tutorial-tooltip h3 {
@@ -1506,5 +1516,4 @@ button:hover {
     font-size: 10px;
     letter-spacing: 1px;
 }
-
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
