@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 10:54:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 11:40:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -510,14 +510,14 @@ async function openSparkEditor() {
 
     try {
         // Broaden the query: template_type usually yields better general results than a specific unique name
-        const searchQuery = spark.template_type || spark.name || "technology";
+        const searchQuery = spark.name || spark.template_type || spark.prompt || "technology";
         const apiImages = await fetchUnsplashCovers(searchQuery); // Combine results: API results first, then we unshift the default
         let images = [...apiImages];
 
         // --- FIND AND INSERT DEFAULT TEMPLATE IMAGE ---
         const types = databaseCache?.settings?.['arcade-current-types'] || {};
-        const defaultTemplate = Object.values(types).find(t => t.name === spark.template_type);
-        
+        const defaultTemplate = Object.values(types).find(t => t.name.tolowercase().trim() === spark.template_type.tolowercase().trim());
+        console.log("openSparkEditor spark default image URL:", defaultTemplate.image);
         if (defaultTemplate && defaultTemplate.image) {
             images.unshift({
                 url: defaultTemplate.image,
