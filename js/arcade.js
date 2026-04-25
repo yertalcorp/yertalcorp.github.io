@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:02:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -29,6 +29,39 @@ window.isInCooldown = false;
 
 let currentModelIndex = 0;
 
+window.confirmDeleteCurrent = async (userId, currentId) => {
+    const confirmation = confirm(`Are you sure you want to delete the whole current [${currentId}]?\n\nAll associated sparks will be permanently deleted. This action cannot be undone.`);
+    
+    if (confirmation) {
+        try {
+            // 1. Database Removal
+            const dbPath = `users/${userId}/infrastructure/currents/${currentId}`;
+            await saveToRealtimeDB(dbPath, null);
+
+            // 2. Cache Cleanup
+            if (databaseCache.users?.[userId]?.infrastructure?.currents?.[currentId]) {
+                delete databaseCache.users[userId].infrastructure.currents[currentId];
+            }
+
+            // 3. UI Refresh
+            await refreshUI();
+            
+            console.log(`System: Infrastructure for ${currentId} decommissioned.`);
+        } catch (error) {
+            console.error("Critical: Deletion protocol failed.", error);
+            alert("System error: Could not decommission infrastructure.");
+        }
+    }
+};
+/*
+ * Objective: Close the Add Current HUD and reset visibility.
+ */
+window.closeAddCurrentHud = () => {
+    const hud = document.getElementById('add-current-hud');
+    if (hud) {
+        hud.style.display = 'none';
+    }
+};
 /*
  * Objective: Laboratory Manual / Guided Viewlets
  * Logic: Uses element-masking to highlight specific UI nodes.
@@ -66,39 +99,6 @@ const steps = [
         msg: "Your Laboratory is online. Start forging Currents and share your unique URL to begin growing your audience and funding."
     }
 ];
-window.confirmDeleteCurrent = async (userId, currentId) => {
-    const confirmation = confirm(`Are you sure you want to delete the whole current [${currentId}]?\n\nAll associated sparks will be permanently deleted. This action cannot be undone.`);
-    
-    if (confirmation) {
-        try {
-            // 1. Database Removal
-            const dbPath = `users/${userId}/infrastructure/currents/${currentId}`;
-            await saveToRealtimeDB(dbPath, null);
-
-            // 2. Cache Cleanup
-            if (databaseCache.users?.[userId]?.infrastructure?.currents?.[currentId]) {
-                delete databaseCache.users[userId].infrastructure.currents[currentId];
-            }
-
-            // 3. UI Refresh
-            await refreshUI();
-            
-            console.log(`System: Infrastructure for ${currentId} decommissioned.`);
-        } catch (error) {
-            console.error("Critical: Deletion protocol failed.", error);
-            alert("System error: Could not decommission infrastructure.");
-        }
-    }
-};
-/*
- * Objective: Close the Add Current HUD and reset visibility.
- */
-window.closeAddCurrentHud = () => {
-    const hud = document.getElementById('add-current-hud');
-    if (hud) {
-        hud.style.display = 'none';
-    }
-};
 
 window.showTutorial = function() {
     // Reset state
