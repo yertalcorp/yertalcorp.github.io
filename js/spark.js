@@ -458,6 +458,7 @@ window.addEventListener('message', (event) => {
         progressFill.style.width = `${percent}%`;
     }
 });
+
 async function openSparkEditor() {
     const spark = window.currentSpark;
     if (!spark) return;
@@ -501,33 +502,42 @@ async function openSparkEditor() {
         </div>
     `;
 
-    // Pass the name of the spark first, then its template type and then its prompt
     try {
         const searchQuery = spark.name || spark.template_type || spark.prompt;
-        // fetchUnsplashCovers must return an array of objects: { url, photographer }
-        const images = await fetchUnsplashCovers(searchQuery); 
+        let images = await fetchUnsplashCovers(searchQuery); 
+        
+        // --- NEW LOGIC: FIND AND INSERT DEFAULT TEMPLATE IMAGE ---
+        const types = databaseCache?.settings?.['arcade-current-types'] || {};
+        const defaultTemplate = Object.values(types).find(t => t.name === spark.template_type);
+        
+        if (defaultTemplate && defaultTemplate.image) {
+            images.unshift({
+                url: defaultTemplate.image,
+                photographer: "System Generated"
+            });
+        }
+        // ---------------------------------------------------------
+
         const grid = document.getElementById('unsplash-grid');
         const attrLabel = document.getElementById('attribution-label');
         
         if (grid) {
             grid.innerHTML = '';
             if (images && images.length > 0) {
-                // Slicing to 4 images to match grid-cols-4
+                // Slice to 4 now that we've added the default
                 images.slice(0, 4).forEach(imgData => {
                     const img = document.createElement('img');
-                    // imgData should be an object from your updated fetchUnsplashCovers
                     img.src = imgData.url; 
                     img.className = 'h-20 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all duration-300 shadow-lg';
                     
+                    // Highlight if this is the currently saved image
+                    if (spark.image === imgData.url) img.style.borderColor = 'var(--branding-color)';
+
                     img.onclick = () => {
-                        // UI Visual Update
                         document.querySelectorAll('#unsplash-grid img').forEach(i => i.style.borderColor = 'transparent');
                         img.style.borderColor = 'var(--branding-color)';
-                        
-                        // Update dynamic label
                         attrLabel.textContent = `Photo By: ${imgData.photographer}`;
                         
-                        // Set selection for save logic
                         window.selectedCover = imgData.url;
                         window.selectedPhotographer = imgData.photographer;
                     };
@@ -551,7 +561,6 @@ async function openSparkEditor() {
         const newName = document.getElementById('edit-name-input').value;
         const params = new URLSearchParams(window.location.search);
         
-        const userSlug = params.get('user') || 'yertal-arcade'; 
         const currentId = params.get('current');
         const sparkId = params.get('spark') || spark.id;
 
@@ -563,7 +572,7 @@ async function openSparkEditor() {
         spark.name = newName;
         if (window.selectedCover) {
             spark.image = window.selectedCover;
-            spark.photographer = window.selectedPhotographer; // Save attribution to DB
+            spark.photographer = window.selectedPhotographer; 
         }
 
         const dbPath = `users/${spark.owner}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
