@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @22:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -101,13 +101,26 @@ const steps = [
     }
 ];
 
+window.handleTutorialTrigger = () => {
+    // 1. Close the drawer first
+    window.toggleDrawer(); 
+
+    // 2. Wait for drawer transition (400ms) then launch
+    setTimeout(() => {
+        window.showTutorial();
+    }, 400); 
+};
+
 window.showTutorial = function() {
-    // Reset state
     currentTutorialStep = 0; 
     
-    // Ensure the mask is visible
     const mask = document.querySelector('.tutorial-mask');
-    if (mask) mask.classList.add('active');
+    if (mask) {
+        mask.classList.add('active');
+        // Reset coordinates to clear any previous spotlight
+        mask.style.setProperty('--r', '0px');
+    }
+    
     if (!mask) {
         console.error("Tutorial Mask not found in DOM.");
         return;
@@ -117,7 +130,6 @@ window.showTutorial = function() {
         renderTutorialStep();
     }, 300); 
 };
-
 // --- arcade.js ---
 
 function renderTutorialStep() {
@@ -210,48 +222,50 @@ window.endTutorial = function() {
 /* Objective: Manage the System Drawer and Settings Sync 
 */
 
-// 1. Toggle Drawer Visibility
-/* * Objective: Unified Drawer Toggle
- * Task: Toggle 'active' class and inject menu content
- */
-window.toggleDrawer = () => {
+window.toggleDrawer = (menuType = 'main') => {
     const drawer = document.getElementById('main-drawer');
     if (!drawer) return;
 
-    // Only populate if we are opening it (not active yet)
-    if (!drawer.classList.contains('active')) {
-        renderSettingsDrawer(); 
+    const isActive = drawer.classList.contains('active');
+
+    // 1. Set the Origin if opening for the first time
+    if (!isActive) {
+        **drawer.dataset.originMode = menuType;**
+        renderMainDrawer(menuType);
+    } 
+    // 2. If already open but switching modes (e.g., clicking Help while Settings is open)
+    else if (drawer.dataset.currentMode !== menuType) {
+        renderMainDrawer(menuType);
     }
 
-    drawer.classList.toggle('active');
+    drawer.dataset.currentMode = menuType;
+    if (!isActive) drawer.classList.add('active');
 };
 
-function renderSettingsDrawer() {
-    const contentContainer = document.querySelector('#main-drawer .drawer-content'); 
-    // Adjust selector above if your drawer content div has a different ID/Class
+function renderMainDrawer(menuType) {
+    const drawer = document.getElementById('main-drawer');
+    const contentContainer = drawer.querySelector('.drawer-content');
     if (!contentContainer) return;
 
-    contentContainer.innerHTML = `
+    // Use the stored origin to decide if a Back button is needed
+    **const origin = drawer.dataset.originMode || 'main';**
+
+    const helpSection = `
         <div class="drawer-section">
             <h4 class="drawer-header">HELP</h4>
             <div class="menu-list">
-                <div class="menu-item" onclick="window.toggleDrawer(); window.showTutorial();">
+                <div class="menu-item" onclick="window.handleTutorialTrigger();">
                     <span>View Tutorial</span>
                     <i class="fas fa-play-circle"></i>
                 </div>
-                <div class="menu-item" onclick="openHelpSearch()">
-                    <span>Search Help Topics</span>
-                    <i class="fas fa-search"></i>
-                </div>
-                <div class="menu-item" onclick="startAutomatedSupport()">
-                    <span>Chat for Support</span>
-                    <i class="fas fa-robot"></i>
+                <div class="menu-item" onclick="window.openDemo(); window.toggleDrawer();">
+                    <span>System Demo</span>
+                    <i class="fas fa-video"></i>
                 </div>
             </div>
-        </div>
+        </div>`;
 
-        <hr class="drawer-hr">
-
+    const settingsSection = `
         <div class="drawer-section">
             <h4 class="drawer-header">SETTINGS</h4>
             <div class="menu-list">
@@ -261,13 +275,12 @@ function renderSettingsDrawer() {
                 </div>
                 <div class="menu-item" onclick="openUpgradePath()">
                     <span style="color: var(--branding-text-color); font-weight: 800;">Upgrade Plan</span>
-                    <i class="fas fa-bolt" style="color: var(--branding-color); text-shadow: 0 0 8px var(--glow-color);"></i>
+                    <i class="fas fa-bolt" style="color: var(--branding-color);"></i>
                 </div>
             </div>
-        </div>
+        </div>`;
 
-        <hr class="drawer-hr">
-
+    const performanceSection = `
         <div class="drawer-section">
             <h4 class="drawer-header">PERFORMANCE</h4>
             <div class="menu-list">
@@ -276,9 +289,28 @@ function renderSettingsDrawer() {
                     <i class="fas fa-chart-line"></i>
                 </div>
             </div>
-        </div>
-    `;
+        </div>`;
+
+    **// Back button only appears if we are in a submenu AND our starting point was 'main'**
+    **const showBackButton = (menuType !== 'main' && origin === 'main');**
+    
+    const backButton = showBackButton ? `
+        <div class="menu-item back-btn" onclick="renderMainDrawer('main')" style="margin-bottom: 20px; border-bottom: 1px solid var(--fg-color-low); padding-bottom: 10px;">
+            <i class="fas fa-chevron-left"></i> <span style="font-size: 10px; opacity: 0.7;">BACK TO OVERVIEW</span>
+        </div>` : "";
+
+    let html = "";
+    if (menuType === 'help') {
+        html = backButton + helpSection;
+    } else if (menuType === 'settings') {
+        html = backButton + settingsSection;
+    } else {
+        html = helpSection + `<hr class="drawer-hr">` + settingsSection + `<hr class="drawer-hr">` + performanceSection;
+    }
+
+    contentContainer.innerHTML = html;
 }
+
 // 2. Navigation between Main and Sub-menus
 window.showSubMenu = (menuId) => {
     document.getElementById('drawer-main-nav').style.display = 'none';
@@ -930,7 +962,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
             <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
                 <div style="display: flex; align-items: center; gap: 0.8rem; margin-right: 0.5rem;">
                     <i class="fa-solid fa-square-plus" title="Add Current" onclick="window.openAddCurrentHud()" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
-                    <i class="fa-solid fa-circle-question" title="Help Hub" onclick="toggleDrawer('help-view')" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
+                    <i class="fa-solid fa-circle-question" title="Help Hub" onclick="window.toggleDrawer('help')" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.4rem; position: relative;">
                     <input type="text" id="arcade-search-input" placeholder="GO TO SLUG..." class="glass" style="border: 2px solid var(--glow-aura); border-radius: 9999px; padding: 0.25rem 0.75rem; font-size: var(--nav-font-size); color: var(--branding-text-color); width: 9rem; outline: none; background: var(--bg-color);">
@@ -954,7 +986,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                     <img src="${authUser.photoURL}" alt="Pilot Avatar" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; border: 2px solid var(--glow-color); box-shadow: 0 0 10px var(--glow-aura); object-fit: cover;">
                     
                     ${(isOwner && isSetupComplete) ? `
-                    <div id="system-menu-trigger" onclick="toggleDrawer()" style="cursor: pointer; padding-left: 0.5rem; color: var(--branding-color); font-size: 1.1rem; transition: transform 0.3s;">
+                    <div id="system-menu-trigger" onclick="window.toggleDrawer('main')" style="cursor: pointer; padding-left: 0.5rem; color: var(--branding-color); font-size: 1.1rem; transition: transform 0.3s;">
                         <i class="fa-solid fa-ellipsis-vertical"></i>
                     </div>
                     ` : ''}
