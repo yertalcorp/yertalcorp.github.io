@@ -613,7 +613,8 @@ async function openSparkEditor() {
             // 3. CLEAN UP globals after successful save
             window.selectedCover = null;
             window.selectedPhotographer = null;
-
+            const hudStatus = document.getElementById('hud-status');
+            if (hudStatus) hudStatus.textContent = "SPARK CHANGES UPDATED...";
         } catch (error) {
             console.error("[DATABASE] Sync Failure:", error);
         }
