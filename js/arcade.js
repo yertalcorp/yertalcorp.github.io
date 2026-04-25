@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:33:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -33,7 +33,7 @@ let currentModelIndex = 0;
  * Objective: Laboratory Manual / Guided Viewlets
  * Logic: Uses element-masking to highlight specific UI nodes.
  */
-let tutorialIndex = 0;
+let currentTutorialStep = 0;
 const steps = [
     {
         target: null,
@@ -102,7 +102,7 @@ window.closeAddCurrentHud = () => {
 
 window.showTutorial = function() {
     // Reset state
-    currentStep = 0; 
+    currentTutorialStep = 0; 
     
     // Ensure the mask is visible
     const mask = document.getElementById('tutorial-mask');
@@ -116,7 +116,7 @@ window.showTutorial = function() {
 };
 
 function renderTutorialStep() {
-    const step = steps[currentStep];
+    const step = steps[currentTutorialStep];
     const mask = document.getElementById('tutorial-mask');
     const existingTooltip = document.querySelector('.tutorial-tooltip');
     if (existingTooltip) existingTooltip.remove();
@@ -166,15 +166,15 @@ function createTooltip(x, y, step) {
 
     tooltip.innerHTML = `
         <div class="tooltip-header">
-            <span class="step-counter">STEP ${currentStep + 1}/${steps.length}</span>
+            <span class="step-counter">STEP ${currentTutorialStep + 1}/${steps.length}</span>
             <button onclick="endTutorial()" class="close-tutorial">&times;</button>
         </div>
         <h3 class="hud-title-metallic" style="font-size: 1.1rem; margin: 10px 0;">${step.title}</h3>
         <p class="hud-subtitle-info" style="font-size: 0.9rem;">${step.content}</p>
         <div class="tooltip-nav">
-            <button onclick="prevStep()" class="hud-button-metallic small" ${currentStep === 0 ? 'disabled' : ''}>PREV</button>
+            <button onclick="prevStep()" class="hud-button-metallic small" ${currentTutorialStep === 0 ? 'disabled' : ''}>PREV</button>
             <button onclick="nextStep()" class="hud-button-metallic small">
-                ${currentStep === steps.length - 1 ? 'FINISH' : 'NEXT'}
+                ${currentTutorialStep === steps.length - 1 ? 'FINISH' : 'NEXT'}
             </button>
         </div>
     `;
