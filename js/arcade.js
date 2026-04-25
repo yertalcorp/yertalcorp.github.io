@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:02:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -62,6 +62,7 @@ window.closeAddCurrentHud = () => {
         hud.style.display = 'none';
     }
 };
+
 /*
  * Objective: Laboratory Manual / Guided Viewlets
  * Logic: Uses element-masking to highlight specific UI nodes.
@@ -71,32 +72,32 @@ const steps = [
     {
         target: null,
         title: "ARCADE_INIT",
-        msg: "Welcome to your Node. This is a versatile showroom for your projects, a social hub for friends, or a business storefront where you can collect tips and funding."
+        content: "Welcome to your Node. This is a versatile showroom for your projects, a social hub for friends, or a business storefront where you can collect tips and funding."
     },
     {
         target: ".settings-trigger", // Assuming three dots
         title: "OS_PREFERENCES",
-        msg: "Access System Settings to change themes (like Autumn Ember) or upgrade plans. Business Plans allow you to rebrand 'Tips' to 'Funds' or 'Purchase' to match your shop."
+        content: "Access System Settings to change themes (like Autumn Ember) or upgrade plans. Business Plans allow you to rebrand 'Tips' to 'Funds' or 'Purchase' to match your shop."
     },
     {
         target: ".terminal-btn", 
         title: "INFRASTRUCTURE",
-        msg: "Initialize a 'Current' to organize your work. You can Add, Rename (Update), or Decommission (Delete) Currents to manage your lab's data streams."
+        content: "Initialize a 'Current' to organize your work. You can Add, Rename (Update), or Decommission (Delete) Currents to manage your lab's data streams."
     },
     {
         target: ".generate-btn",
         title: "FORGE_GENERATION",
-        msg: "This is the Forge. Paste a URL to scrape content or type a prompt—try: 'Top 3 movies for the current year'—to generate a Spark instantly."
+        content: "This is the Forge. Paste a URL to scrape content or type a prompt—try: 'Top 3 movies for the current year'—to generate a Spark instantly."
     },
     {
         target: ".spark-stats-row", // Target the icons/stats row on a card
         title: "ENGAGEMENT_PROTOCOLS",
-        msg: "Interact with Sparks via Save, Share, or Tip. In Business mode, these interactions become your revenue stream for tips or product funding."
+        content: "Interact with Sparks via Save, Share, or Tip. In Business mode, these interactions become your revenue stream for tips or product funding."
     },
     {
         target: null,
         title: "SYSTEM_READY",
-        msg: "Your Laboratory is online. Start forging Currents and share your unique URL to begin growing your audience and funding."
+        content: "Your Laboratory is online. Start forging Currents and share your unique URL to begin growing your audience and funding."
     }
 ];
 
@@ -105,62 +106,79 @@ window.showTutorial = function() {
     currentTutorialStep = 0; 
     
     // Ensure the mask is visible
-    const mask = document.getElementById('tutorial-mask');
-    if (mask) mask.style.display = 'block';
+    const mask = document.querySelector('.tutorial-mask');
+    if (mask) mask.classList.add('active');
     if (!mask) {
         console.error("Tutorial Mask not found in DOM.");
         return;
     }
-    // Wait for the drawer animation to finish (e.g., 300ms) 
-    // before calculating element positions
+
     setTimeout(() => {
         renderTutorialStep();
     }, 300); 
 };
 
 function renderTutorialStep() {
-    const step = steps[currentTutorialStep];
-    const mask = document.getElementById('tutorial-mask');
+    const step = steps[currentTutorialTutorialStep];
+    const mask = document.querySelector('.tutorial-mask');
     const existingTooltip = document.querySelector('.tutorial-tooltip');
     if (existingTooltip) existingTooltip.remove();
 
     if (!step) {
-        if (mask) mask.remove();
+        endTutorial();
         return;
     }
 
     const targetEl = step.target ? document.querySelector(step.target) : null;
     
     if (targetEl) {
-        // --- SPOTLIGHT STATE ---
         const rect = targetEl.getBoundingClientRect();
         const x = rect.left + rect.width / 2;
         const y = rect.top + rect.height / 2;
-        // Radius based on element size + padding
         const r = Math.max(rect.width, rect.height) / 1.5 + 15;
 
         mask.style.setProperty('--x', `${x}px`);
         mask.style.setProperty('--y', `${y}px`);
         mask.style.setProperty('--r', `${r}px`);
 
-        // Position tooltip near the element, but check for screen overflow
         const spaceBelow = window.innerHeight - rect.bottom;
         const tooltipX = Math.min(rect.left, window.innerWidth - 360);
         const tooltipY = spaceBelow > 250 ? rect.bottom + 25 : rect.top - 250;
         
         createTooltip(tooltipX, tooltipY, step);
     } else {
-        // --- CENTERED STATE (Intro/Outro) ---
-        // Hide the spotlight by setting radius to 0
         mask.style.setProperty('--r', `0px`);
         
-        // Center the tooltip exactly
-        const centerX = (window.innerWidth / 2) - 170; // Half of tooltip width
+        const centerX = (window.innerWidth / 2) - 170; 
         const centerY = (window.innerHeight / 2) - 100;
         
         createTooltip(centerX, centerY, step);
     }
 }
+
+window.nextStep = function() {
+    currentTutorialStep++;
+    if (currentTutorialStep < steps.length) {
+        renderTutorialStep();
+    } else {
+        endTutorial();
+    }
+};
+
+window.prevStep = function() {
+    if (currentTutorialStep > 0) {
+        currentTutorialStep--;
+        renderTutorialStep();
+    }
+};
+
+window.endTutorial = function() {
+    const mask = document.querySelector('.tutorial-mask');
+    const tooltip = document.querySelector('.tutorial-tooltip');
+    if (mask) mask.classList.remove('active');
+    if (tooltip) tooltip.remove();
+};
+    
 function createTooltip(x, y, step) {
     const tooltip = document.createElement('div');
     tooltip.className = 'tutorial-tooltip hud-panel-metallic';
@@ -183,6 +201,7 @@ function createTooltip(x, y, step) {
     `;
     document.body.appendChild(tooltip);
 }
+
 /* Objective: Manage the System Drawer and Settings Sync 
 */
 
