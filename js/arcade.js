@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:34:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -190,8 +190,8 @@ function createTooltip(x, y, step) {
             <span class="step-counter">STEP ${currentTutorialStep + 1}/${steps.length}</span>
             <button onclick="window.endTutorial()" class="close-tutorial">&times;</button>
         </div>
-        <h3 class="hud-title-metallic" style="font-size: 1.1rem; margin: 10px 0;">${step.title}</h3>
-        <p class="hud-subtitle-info" style="font-size: 0.9rem;">${step.msg}</p> <div class="tooltip-nav">
+        <h3 class="hud-title-metallic" style="font-size: 1.5rem; margin: 10px 0;">${step.title}</h3>
+        <p class="hud-subtitle-info" style="font-size: 0.9rem;">${step.content}</p> <div class="tooltip-nav">
             <button onclick="window.prevStep()" class="hud-button-metallic small" ${currentTutorialStep === 0 ? 'disabled' : ''}>PREV</button>
             <button onclick="window.nextStep()" class="hud-button-metallic small">
                 ${currentTutorialStep === steps.length - 1 ? 'FINISH' : 'NEXT'}
