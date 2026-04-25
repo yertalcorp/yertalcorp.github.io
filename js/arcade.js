@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:34:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -181,25 +181,37 @@ window.endTutorial = function() {
     
 function createTooltip(x, y, step) {
     const tooltip = document.createElement('div');
-    tooltip.className = 'tutorial-tooltip active hud-panel-metallic'; // Added 'active' to match CSS
+    tooltip.className = 'tutorial-tooltip active hud-panel-metallic';
+    
     tooltip.style.left = `${x}px`;
     tooltip.style.top = `${y}px`;
 
+    // Improved Layout & Spacing
+    tooltip.style.display = 'flex';
+    tooltip.style.flexDirection = 'column';
+    tooltip.style.gap = '1.2rem';
+    tooltip.style.padding = '1.8rem';
+
     tooltip.innerHTML = `
-        <div class="tooltip-header">
-            <span class="step-counter">STEP ${currentTutorialStep + 1}/${steps.length}</span>
-            <button onclick="window.endTutorial()" class="close-tutorial">&times;</button>
+        <div class="tooltip-header" style="display: flex; justify-content: space-between; align-items: center; opacity: 0.6; font-size: 10px; letter-spacing: 1px;">
+            <span class="step-counter">PHASE_${currentTutorialStep + 1} // ${steps.length}</span>
+            <button onclick="window.endTutorial()" class="close-tutorial" style="background:none; border:none; color:inherit; cursor:pointer; font-size: 1.2rem;">&times;</button>
         </div>
-        <h3 class="hud-title-metallic" style="font-size: 1.5rem; margin: 10px 0;">${step.title}</h3>
-        <p class="hud-subtitle-info" style="font-size: 0.9rem;">${step.content}</p> <div class="tooltip-nav">
+        
+        <h3 class="hud-title-metallic" style="margin: 0; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">${step.title}</h3>
+        
+        <p class="hud-subtitle-info" style="margin: 0; font-size: 0.95rem; line-height: 1.6;">${step.content}</p>
+
+        <div class="tooltip-nav" style="display: flex; gap: 12px; margin-top: 5px;">
             <button onclick="window.prevStep()" class="hud-button-metallic small" ${currentTutorialStep === 0 ? 'disabled' : ''}>PREV</button>
-            <button onclick="window.nextStep()" class="hud-button-metallic small">
-                ${currentTutorialStep === steps.length - 1 ? 'FINISH' : 'NEXT'}
+            <button onclick="window.nextStep()" class="hud-button-metallic small" style="flex-grow: 1;">
+                ${currentTutorialStep === steps.length - 1 ? 'FINISH_INIT' : 'NEXT_PHASE'}
             </button>
         </div>
     `;
     document.body.appendChild(tooltip);
 }
+
 /* Objective: Manage the System Drawer and Settings Sync 
 */
 
