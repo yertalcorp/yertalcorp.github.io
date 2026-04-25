@@ -72,7 +72,7 @@ const steps = [
     {
         target: null,
         title: "ARCADE_INIT",
-        content: "Welcome to your Node. This is a versatile showroom for your projects, a social hub for friends, or a business storefront where you can collect tips and funding."
+        content: "Welcome to your Arcade. This is a versatile showroom for your projects, a social hub for friends, or a business storefront where you can collect tips and funding."
     },
     {
         target: ".settings-trigger", // Assuming three dots
