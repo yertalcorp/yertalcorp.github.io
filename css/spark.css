@@ -148,7 +148,7 @@ iframe {
     letter-spacing: 3px;
     padding: 10px;
     text-transform: uppercase;
-    color: var(--fg-color-mid);
+    color: var(--fg-color-high);
     font-weight: 800;
     text-shadow: 0 0 8px var(--bg-color), 0 0 2px #000;
     border: 3px dashed var(--glow-color);
