@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -118,6 +118,8 @@ window.showTutorial = function() {
     }, 300); 
 };
 
+// --- arcade.js ---
+
 function renderTutorialStep() {
     const step = steps[currentTutorialStep];
     const mask = document.querySelector('.tutorial-mask');
@@ -125,7 +127,7 @@ function renderTutorialStep() {
     if (existingTooltip) existingTooltip.remove();
 
     if (!step) {
-        endTutorial();
+        window.endTutorial();
         return;
     }
 
@@ -142,20 +144,46 @@ function renderTutorialStep() {
         mask.style.setProperty('--r', `${r}px`);
 
         const spaceBelow = window.innerHeight - rect.bottom;
-        const tooltipX = Math.min(rect.left, window.innerWidth - 360);
-        const tooltipY = spaceBelow > 250 ? rect.bottom + 25 : rect.top - 250;
+        const tooltipX = Math.min(rect.left, window.innerWidth - 400);
+        const tooltipY = spaceBelow > 300 ? rect.bottom + 25 : rect.top - 300;
         
         createTooltip(tooltipX, tooltipY, step);
     } else {
         mask.style.setProperty('--r', `0px`);
         
-        const centerX = (window.innerWidth / 2) - 170; 
-        const centerY = (window.innerHeight / 2) - 100;
+        // Centering logic for Intro/Outro
+        const centerX = (window.innerWidth / 2) - 190; 
+        const centerY = (window.innerHeight / 2) - 120;
         
         createTooltip(centerX, centerY, step);
     }
 }
 
+function createTooltip(x, y, step) {
+    const tooltip = document.createElement('div');
+    // Matches your CSS exactly
+    tooltip.className = 'tutorial-tooltip active'; tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+
+    tooltip.innerHTML = `
+        <div class="tooltip-header">
+            <span>PHASE_${currentTutorialStep + 1} // ${steps.length}</span>
+            <button onclick="window.endTutorial()" class="close-tutorial">&times;</button>
+        </div>
+        
+        <h3>${step.title}</h3>
+        
+        <p>${step.content}</p>
+
+        <div class="tooltip-nav" style="display: flex; gap: 12px;">
+            <button onclick="window.prevStep()" class="tutorial-next-btn" style="clip-path: none; flex: 1;" ${currentTutorialStep === 0 ? 'disabled' : ''}>PREV</button>
+            <button onclick="window.nextStep()" class="tutorial-next-btn" style="flex: 2;">
+                ${currentTutorialStep === steps.length - 1 ? 'FINISH_INIT' : 'NEXT_PHASE'}
+            </button>
+        </div>
+    `;
+    document.body.appendChild(tooltip);
+}
 window.nextStep = function() {
     currentTutorialStep++;
     if (currentTutorialStep < steps.length) {
@@ -179,39 +207,6 @@ window.endTutorial = function() {
     if (tooltip) tooltip.remove();
 };
     
-function createTooltip(x, y, step) {
-    const tooltip = document.createElement('div');
-    tooltip.className = 'tutorial-tooltip active hud-panel-metallic';
-    
-    tooltip.style.left = `${x}px`;
-    tooltip.style.top = `${y}px`;
-
-    // Improved Layout & Spacing
-    tooltip.style.display = 'flex';
-    tooltip.style.flexDirection = 'column';
-    tooltip.style.gap = '1.2rem';
-    tooltip.style.padding = '1.8rem';
-
-    tooltip.innerHTML = `
-        <div class="tooltip-header" style="display: flex; justify-content: space-between; align-items: center; opacity: 0.6; font-size: 10px; letter-spacing: 1px;">
-            <span class="step-counter">PHASE_${currentTutorialStep + 1} // ${steps.length}</span>
-            <button onclick="window.endTutorial()" class="close-tutorial" style="background:none; border:none; color:inherit; cursor:pointer; font-size: 1.2rem;">&times;</button>
-        </div>
-        
-        <h3 class="hud-title-metallic" style="margin: 0; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">${step.title}</h3>
-        
-        <p class="hud-subtitle-info" style="margin: 0; font-size: 0.95rem; line-height: 1.6;">${step.content}</p>
-
-        <div class="tooltip-nav" style="display: flex; gap: 12px; margin-top: 5px;">
-            <button onclick="window.prevStep()" class="hud-button-metallic small" ${currentTutorialStep === 0 ? 'disabled' : ''}>PREV</button>
-            <button onclick="window.nextStep()" class="hud-button-metallic small" style="flex-grow: 1;">
-                ${currentTutorialStep === steps.length - 1 ? 'FINISH_INIT' : 'NEXT_PHASE'}
-            </button>
-        </div>
-    `;
-    document.body.appendChild(tooltip);
-}
-
 /* Objective: Manage the System Drawer and Settings Sync 
 */
 
