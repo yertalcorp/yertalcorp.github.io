@@ -346,14 +346,20 @@ main.max-width-limit {
     display: none; /* Keep hidden until step is triggered */
     width: 340px;
     background: var(--card-bg);
-    border: 1px solid var(--border-color-glow);
-    box-shadow: 0 10px 30px var(--box-shadow-color);
+    border: 1px solid var(--branding-color);
+    box-shadow: 0 20px 50px var(--box-shadow-color), 0 0 15px rgba(0, 255, 0, 0.15);
+    backdrop-filter: blur(12px);
     border-radius: 4px;
     padding: 1.8rem;
     font-family: var(--text-main-font);
     color: var(--text-main-color);
     pointer-events: auto;
     transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.tutorial-tooltip .hud-subtitle-info {
+    color: var(--text-main-color);
+    opacity: 0.9;
+    font-weight: 300;
 }
 
 .tutorial-tooltip.active {
