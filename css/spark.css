@@ -150,8 +150,8 @@ iframe {
     text-transform: uppercase;
     color: var(--fg-color-mid);
     font-weight: 800;
-    text-shadow: 0 0 8px var(--branding-color), 0 0 2px #000;
-    border: 3px dashed var(--branding-color);
+    text-shadow: 0 0 8px var(--bg-color), 0 0 2px #000;
+    border: 3px dashed var(--glow-color);
     box-shadow: inset 0 0 8px var(--box-shadow-color-aura);
     background: rgba(0, 255, 255, 0.03);
     animation: border-crawl 3s linear infinite;
@@ -344,8 +344,8 @@ iframe {
 /* Purge legacy canvas footprint and fix cursor */
 .thumb-box-viewport {
     font-size: 1.6rem;
-    color: var(--branding-color);
-    filter: drop-shadow(0 0 5px var(--branding-color));
+    color: var(--fg-color-low);
+    filter: drop-shadow(0 0 5px var(--bg-color));
     background: transparent ;
     border: none ;
     box-shadow: none ;
@@ -363,8 +363,8 @@ iframe {
     transition: transform 0.2s ease;
 }
 .thumb-box-viewport:hover i {
-    color: var(--branding-color);
-    filter: drop-shadow(0 0 10px var(--branding-color));
+    color: var(--glow-color);
+    filter: drop-shadow(0 0 10px var(--bg-color));
     transform: scale(1.1);
 }
 
