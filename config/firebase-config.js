@@ -74,7 +74,7 @@ export async function getArcadeData() {
                 }
             };
         }
-
+        console.log(`getArcadeData chat_config object is ${data.chat_config}`);
         return data;
     } catch (error) {
         console.error("Critical Failure in getArcadeData:", error);
