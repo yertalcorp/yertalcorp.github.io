@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @22:12:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @08:37:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -143,10 +143,11 @@ function renderTutorialStep() {
         return;
     }
 
+    // Handle Spotlight (Mask)
     const targetEl = step.target ? document.querySelector(step.target) : null;
-    
     if (targetEl) {
         const rect = targetEl.getBoundingClientRect();
+        // getBoundingClientRect is relative to viewport, which matches fixed mask
         const x = rect.left + rect.width / 2;
         const y = rect.top + rect.height / 2;
         const r = Math.max(rect.width, rect.height) / 1.5 + 15;
@@ -158,27 +159,28 @@ function renderTutorialStep() {
         mask.style.setProperty('--r', `0px`);
     }
 
-    // CALCULATE % PROGRESSION
+    // FIXED TOP-CENTERED POSITIONING
     const totalSteps = steps.length;
-    const startPercent = 10; // Start near left edge
-    const endPercent = 90; // End near right edge
-    const currentPercent = startPercent + (currentTutorialStep * ((endPercent - startPercent) / (totalSteps - 1)));
+    const startPercent = 15;
+    const endPercent = 85;
+    const horizontalPercent = startPercent + (currentTutorialStep * ((endPercent - startPercent) / (totalSteps - 1)));
 
-    // On mobile, we usually want it centered (50%) because the screen is narrow.
-    // On desktop, we follow the horizontal progression.
-    const finalLeft = window.innerWidth < 600 ? 50 : currentPercent;
+    // For Mobile: Always center horizontally (50%)
+    // For Desktop: Progress horizontally
+    const finalLeft = window.innerWidth < 600 ? 50 : horizontalPercent;
     
-    createTooltip(finalLeft, 50, step); // Passing percentages now
+    // Y-Position: Fixed at 25% from top to avoid scrolling issues
+    const finalTop = 25; createTooltip(finalLeft, finalTop, step);
 }
 
 function createTooltip(percentX, percentY, step) {
     const tooltip = document.createElement('div');
     tooltip.className = 'tutorial-tooltip active';
     
-    // Use transform translate to keep it centered on its own anchor point
+    // Apply viewport-relative percentage coordinates
     tooltip.style.left = `${percentX}%`;
     tooltip.style.top = `${percentY}%`;
-    tooltip.style.transform = 'translate(-50%, -50%)';
+    tooltip.style.transform = 'translate(-50%, 0)'; /* Anchor from top-center */
 
     tooltip.innerHTML = `
         <div class="tooltip-header">
@@ -198,6 +200,7 @@ function createTooltip(percentX, percentY, step) {
     `;
     document.body.appendChild(tooltip);
 }
+
 window.nextStep = function() {
     currentTutorialStep++;
     if (currentTutorialStep < steps.length) {
