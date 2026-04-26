@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2472,7 +2472,7 @@ window.closeArcadeSettings = () => {
 };
 
 /* * Objective: Initialize or Re-Forge Arcade Identity
- * Task: Dynamically generate HUD structure and populate with Firebase data from cache.
+ * Task: Dynamically generate HUD structure, populate from cache, and ensure Close UI is present.
  */
 window.openArcadeSettings = () => {
     const hud = document.getElementById('arcadesettings-hud');
@@ -2538,31 +2538,31 @@ window.openArcadeSettings = () => {
             themeSelect.appendChild(opt);
         });
 
-        // Set current theme or default
         const activeThemeId = isSetup ? (profile.theme || 'spring-bloom') : 'spring-bloom';
         themeSelect.value = activeThemeId;
         
-        // Listen for changes and apply theme immediately for live preview
         themeSelect.onchange = (e) => {
             if (typeof applyTheme === 'function') applyTheme(e.target.value);
-            
-            // Sync button text color on change
             const selectedTheme = themes[e.target.value];
             if (selectedTheme && selectedTheme['button-text-color'] && submitBtn) {
                 submitBtn.style.color = selectedTheme['button-text-color'];
             }
         };
 
-        // Apply theme immediately on HUD open
         if (typeof applyTheme === 'function') applyTheme(activeThemeId);
     }
 
-    // 5. METALLIC HEADER REFINEMENT
+    // 5. METALLIC HEADER REFINEMENT (WITH CANCEL BUTTON)
     const hudHeader = hud.querySelector('.hud-header-content');
     if (hudHeader) {
         hudHeader.innerHTML = `
-            <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE LABORATORY' : 'INITIALIZE YOUR ARCADE'}</h2>
-            <p class="hud-subtitle-info">${isSetup ? 'Syncing Profile Data...' : 'Establish Your Arcade to Start Creating'}</p>
+            <div class="hud-header-text">
+                <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE LABORATORY' : 'INITIALIZE YOUR ARCADE'}</h2>
+                <p class="hud-subtitle-info">${isSetup ? 'Syncing Profile Data...' : 'Establish Your Arcade to Start Creating'}</p>
+            </div>
+            <button onclick="closeArcadeSettings()" class="close-hud-corner" aria-label="Close Settings">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         `;
     }
 
@@ -2629,7 +2629,6 @@ window.openArcadeSettings = () => {
         submitBtn.style.display = "block";
         submitBtn.style.margin = "30px auto 10px auto";
 
-        // Apply contrast fix for specific themes from the start
         const activeTheme = themes?.[themeSelect.value];
         if (activeTheme && activeTheme['button-text-color']) {
             submitBtn.style.color = activeTheme['button-text-color'];
@@ -2638,7 +2637,6 @@ window.openArcadeSettings = () => {
     
     hud.classList.add('active');
 };
-
 /*
  * Objective: Retrieve dynamic limits based on the user's plan_type.
  */
