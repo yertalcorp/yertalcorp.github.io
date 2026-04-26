@@ -1609,6 +1609,8 @@ button:hover {
     flex-direction: column;
     z-index: 1000;
     overflow: hidden;
+    display: none;
+    animation: navFadeIn 0.3s ease-out;
 }
 
 .navigator-header {
@@ -1622,7 +1624,10 @@ button:hover {
     justify-content: space-between;
     align-items: center;
 }
-
+.navigator-header i:hover {
+    color: var(--error-color);
+    filter: drop-shadow(0 0 5px var(--error-color));
+}
 .navigator-body {
     padding: 18px;
     color: var(--text-main-color);
@@ -1671,5 +1676,9 @@ button:hover {
     outline: none;
     border-color: var(--glow-color);
     box-shadow: 0 0 5px var(--glow-color-aura);
+}
+@keyframes navFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
