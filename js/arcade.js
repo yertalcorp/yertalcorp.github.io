@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:31:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:59:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -105,14 +105,21 @@ window.handleMenuTrigger = (type) => {
     const drawer = document.getElementById('main-drawer');
     if (drawer) drawer.classList.remove('active');
 
+    // 1. Check if the cache exists
+    if (!window.databaseCache) {
+        console.error("Navigator Error: databaseCache is not initialized yet.");
+        return;
+    }
+
     setTimeout(() => {
         switch (type) {
             case 'chat':
-                // Accessing the global cache directly
+                // 2. Safely extract chat_config
                 const chatData = window.databaseCache.chat_config;
 
-                if (!chatData) {
-                    console.error("Navigator: chat_config not found in databaseCache.");
+                if (!chatData || !chatData.nodes) {
+                    console.error("Navigator Error: chat_config is missing from databaseCache.");
+                    // Optional: Show a small toast to the user "System loading..."
                     return;
                 }
 
@@ -128,6 +135,7 @@ window.handleMenuTrigger = (type) => {
         }
     }, 500);
 };
+
 window.showTutorial = function() {
     currentTutorialStep = 0; 
     
