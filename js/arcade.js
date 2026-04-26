@@ -154,37 +154,39 @@ function renderTutorialStep() {
         mask.style.setProperty('--x', `${x}px`);
         mask.style.setProperty('--y', `${y}px`);
         mask.style.setProperty('--r', `${r}px`);
-
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const tooltipX = Math.min(rect.left, window.innerWidth - 400);
-        const tooltipY = spaceBelow > 300 ? rect.bottom + 25 : rect.top - 300;
-        
-        createTooltip(tooltipX, tooltipY, step);
     } else {
         mask.style.setProperty('--r', `0px`);
-        
-        // Centering logic for Intro/Outro
-        const centerX = (window.innerWidth / 2) - 190; 
-        const centerY = (window.innerHeight / 2) - 120;
-        
-        createTooltip(centerX, centerY, step);
     }
+
+    // CALCULATE % PROGRESSION
+    const totalSteps = steps.length;
+    const startPercent = 10; // Start near left edge
+    const endPercent = 90; // End near right edge
+    const currentPercent = startPercent + (currentTutorialStep * ((endPercent - startPercent) / (totalSteps - 1)));
+
+    // On mobile, we usually want it centered (50%) because the screen is narrow.
+    // On desktop, we follow the horizontal progression.
+    const finalLeft = window.innerWidth < 600 ? 50 : currentPercent;
+    
+    createTooltip(finalLeft, 50, step); // Passing percentages now
 }
 
-function createTooltip(x, y, step) {
+function createTooltip(percentX, percentY, step) {
     const tooltip = document.createElement('div');
-    // Matches your CSS exactly
-    tooltip.className = 'tutorial-tooltip active'; tooltip.style.left = `${x}px`;
-    tooltip.style.top = `${y}px`;
+    tooltip.className = 'tutorial-tooltip active';
+    
+    // Use transform translate to keep it centered on its own anchor point
+    tooltip.style.left = `${percentX}%`;
+    tooltip.style.top = `${percentY}%`;
+    tooltip.style.transform = 'translate(-50%, -50%)';
 
     tooltip.innerHTML = `
         <div class="tooltip-header">
-            <span>PHASE_${currentTutorialStep + 1} // ${steps.length}</span>
+            <span class="metallic-text">PHASE_${currentTutorialStep + 1} // ${steps.length}</span>
             <button onclick="window.endTutorial()" class="close-tutorial">&times;</button>
         </div>
         
         <h3>${step.title}</h3>
-        
         <p>${step.content}</p>
 
         <div class="tooltip-nav" style="display: flex; gap: 12px;">
