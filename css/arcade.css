@@ -1594,4 +1594,63 @@ button:hover {
     font-size: 10px;
     letter-spacing: 1px;
 }
+/* --- Yertal Navigator Component --- */
+.yertal-navigator-widget {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 340px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px var(--card-shadow-color);
+    font-family: var(--text-main-font);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.navigator-header {
+    background: var(--btn-gradient);
+    padding: 12px 16px;
+    font-family: var(--branding-font);
+    font-size: 16px;
+    color: var(--branding-text-color);
+    border-bottom: 1px solid var(--button-border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navigator-body {
+    padding: 18px;
+    color: var(--text-main-color);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.navigator-question {
+    margin-bottom: 15px;
+    font-weight: var(--text-main-weight);
+    line-height: 1.5;
+}
+
+.navigator-option {
+    background: var(--button-color);
+    color: var(--button-text-color);
+    border: 1px solid var(--button-border-color);
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: transform 0.1s ease, filter 0.2s ease;
+    text-shadow: 0 1px 2px var(--button-text-shadow-color);
+}
+
+.navigator-option:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
