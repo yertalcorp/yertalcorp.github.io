@@ -369,10 +369,11 @@ main.max-width-limit {
     max-height: 80vh;
     overflow-y: auto;
     box-sizing: border-box;
-    background: var(--card-bg);
-    border: 1px solid var(--branding-color);
-    box-shadow: 0 20px 50px var(--box-shadow-color), 0 0 15px var(--glow-color-aura); /* Layered depth */
-    backdrop-filter: blur(15px);
+    background: color-mix(in srgb, var(--branding-color), transparent 80%);
+    border: 1px solid color-mix(in srgb, var(--branding-color), transparent 50%);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3), 0 0 15px var(--glow-color-aura); /* Layered depth */
+    backdrop-filter: blur(20px) brightness(1.1) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) brightness(1.1) saturate(150%);
     border-radius: 8px; /* Slightly tighter than 12px for technical feel */
     padding: 2rem;
     font-family: var(--text-main-font);
@@ -422,20 +423,21 @@ main.max-width-limit {
 
 /* 3. Text Components: Reusing your font/color variables */
 .tutorial-tooltip h3 {
-    color: var(--branding-color);
+    color: var(--button-text-color);
     font-family: var(--branding-font);
     font-size: 14px;
     letter-spacing: 2px;
     text-transform: uppercase;
     margin: 0 0 12px 0;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid color-mix(in srgb, var(--button-text-color), transparent 70%);
+    text-shadow: 0.5px 0.5px 0px rgba(255, 255, 255, 0.2);
     padding-bottom: 8px;
 }
 
 .tutorial-tooltip p {
-    color: var(--text-main-color);
+    color: var(--button-text-color);
     font-size: var(--text-main-size);
-    font-weight: var(--text-main-weight);
+    font-weight: 500;
     line-height: 1.6;
     margin: 0 0 24px 0;
 }
