@@ -2819,6 +2819,31 @@ class ArcadeNavigator {
             this.renderNode(this.currentNode);
         }
     }
+    // Add these methods to your ArcadeNavigator class in arcade.js
+
+    renderMessageForm() {
+        const container = document.getElementById('yertal-nav-container');
+        const body = container.querySelector('.navigator-body');
+    
+        body.innerHTML = `
+            <div class="navigator-question">Please enter your message below. Our team will get back to you via your registered email.</div>
+            <textarea id="nav-message-input" class="nav-textarea" placeholder="Type your message..."></textarea>
+            <button class="navigator-option" onclick="navigatorAgent.submitPriorityMessage()">Submit Message</button>
+            <button class="navigator-option" style="opacity: 0.7" onclick="navigatorAgent.renderNode('start')">Cancel</button>
+            `;
+    }
+
+    submitPriorityMessage() {
+        const message = document.getElementById('nav-message-input').value;
+        if (!message) return alert("Please enter a message.");
+
+        // This is where you would hook into your Firebase 'config/firebase-config.js'
+        console.log("Saving to Firebase...", message);
+    
+        const body = document.querySelector('.navigator-body');
+        body.innerHTML = `<div class="navigator-question">Thank you! Your priority message has been sent to the lab.</div>
+                      <button class="navigator-option" onclick="navigatorAgent.renderNode('start')">Return to Start</button>`;
+    }
 }
 // ----------------------------------
 window.handleCreation = handleCreation;
