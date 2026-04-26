@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @11:47:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @11:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2483,8 +2483,9 @@ window.openArcadeSettings = () => {
     const isSetup = profile.hasOwnProperty('setup_complete') && profile.setup_complete === true;
     
     // 1. Check at the moment the script loads
-    console.log("Global Scope Check - Profile:", typeof profile !== 'undefined' ? profile : "NOT DEFINED YET");
-
+    console.log("openArcadeSettings - Profile:", typeof profile !== 'undefined' ? profile : "NOT DEFINED YET");
+    console.log("openArcadeSettings - setup_complete:", isSetup);
+    
     // Target the dynamic zones defined in index.html
     const profileZone = document.getElementById('arcade-profile-zone');
     const planZone = document.getElementById('plan-selection-zone');
