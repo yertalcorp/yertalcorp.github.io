@@ -170,7 +170,7 @@ function renderTutorialStep() {
     const finalLeft = window.innerWidth < 600 ? 50 : horizontalPercent;
     
     // Y-Position: Fixed at 25% from top to avoid scrolling issues
-    const finalTop = 25; createTooltip(finalLeft, finalTop, step);
+    const finalTop = 10; createTooltip(finalLeft, finalTop, step);
 }
 
 function createTooltip(percentX, percentY, step) {
