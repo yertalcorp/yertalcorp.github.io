@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @11:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2472,20 +2472,24 @@ window.closeArcadeSettings = () => {
 };
 
 /* * Objective: Initialize or Re-Forge Arcade Identity
- * Task: Dynamically generate HUD structure and populate with Firebase data.
+ * Task: Dynamically generate HUD structure and populate with Firebase data from cache.
  */
 window.openArcadeSettings = () => {
     const hud = document.getElementById('arcadesettings-hud');
     if (!hud) return;
 
     // 1. IDENTITY & STATE CHECK
-    const profile = (window.pageOwnerData && window.pageOwnerData.profile) ? window.pageOwnerData.profile : {};
+    const currentUid = window.auth?.currentUser?.uid;
+    
+    // Retrieve profile from databaseCache as the Source of Truth
+    const profile = (databaseCache.users && currentUid && databaseCache.users[currentUid]) 
+                    ? databaseCache.users[currentUid].profile 
+                    : {};
+
     const isSetup = profile.hasOwnProperty('setup_complete') && profile.setup_complete === true;
     
-    // 1. Check at the moment the script loads
-    console.log("openArcadeSettings - Profile:", typeof profile !== 'undefined' ? profile : "NOT DEFINED YET");
-    console.log("openArcadeSettings - setup_complete:", isSetup);
-    
+    console.log("openArcadeSettings - Profile Source:", isSetup ? "DATABASE_CACHE" : "NEW_USER");
+
     // Target the dynamic zones defined in index.html
     const profileZone = document.getElementById('arcade-profile-zone');
     const planZone = document.getElementById('plan-selection-zone');
@@ -2518,12 +2522,12 @@ window.openArcadeSettings = () => {
     const privacySelect = document.getElementById('arcade-privacy-select');
     const submitBtn = document.getElementById('submit-onboarding');
 
-    // Sync values from Profile
+    // 3. PRE-POPULATE FIELDS FROM CACHE
     if (nameInput) nameInput.value = isSetup ? (profile.arcade_title || '') : '';
     if (subtitleInput) subtitleInput.value = isSetup ? (profile.arcade_subtitle || '') : '';
     if (privacySelect) privacySelect.value = isSetup ? (profile.privacy || 'public') : 'public';
 
-    // Populate Themes
+    // 4. POPULATE THEMES & APPLY INITIAL STYLE
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     if (themes && themeSelect) {
         themeSelect.innerHTML = ''; 
@@ -2533,24 +2537,36 @@ window.openArcadeSettings = () => {
             opt.textContent = themes[id].name.replace(/_/g, ' ').toUpperCase();
             themeSelect.appendChild(opt);
         });
-        themeSelect.value = isSetup ? (profile.theme || 'neon-dark') : 'neon-dark';
-        themeSelect.onchange = (e) => applyTheme(e.target.value);
-        applyTheme(themeSelect.value);
+
+        // Set current theme or default
+        const activeThemeId = isSetup ? (profile.theme || 'spring-bloom') : 'spring-bloom';
+        themeSelect.value = activeThemeId;
+        
+        // Listen for changes and apply theme immediately for live preview
+        themeSelect.onchange = (e) => {
+            if (typeof applyTheme === 'function') applyTheme(e.target.value);
+            
+            // Sync button text color on change
+            const selectedTheme = themes[e.target.value];
+            if (selectedTheme && selectedTheme['button-text-color'] && submitBtn) {
+                submitBtn.style.color = selectedTheme['button-text-color'];
+            }
+        };
+
+        // Apply theme immediately on HUD open
+        if (typeof applyTheme === 'function') applyTheme(activeThemeId);
     }
 
-    // 3. METALLIC HEADER REFINEMENT
-    const hudHeader = hud.querySelector('.hud-header');
+    // 5. METALLIC HEADER REFINEMENT
+    const hudHeader = hud.querySelector('.hud-header-content');
     if (hudHeader) {
         hudHeader.innerHTML = `
-            <div class="hud-header-content">
-                <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE LABORATORY' : 'INITIALIZE YOUR ARCADE'}</h2>
-                <p class="hud-subtitle-info">${isSetup ? 'Syncing Profile Data...' : 'Establish Your Arcade to Start Creating'}</p>
-            </div>
-            <button onclick="closeArcadeSettings()" class="close-hud-corner">&times;</button>
+            <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE LABORATORY' : 'INITIALIZE YOUR ARCADE'}</h2>
+            <p class="hud-subtitle-info">${isSetup ? 'Syncing Profile Data...' : 'Establish Your Arcade to Start Creating'}</p>
         `;
     }
 
-    // 4. DYNAMIC 3-COLUMN PLAN GRID GENERATION
+    // 6. DYNAMIC PLAN GRID GENERATION
     const allPlans = databaseCache.settings?.plan_limits;
     if (allPlans && planZone) {
         planZone.innerHTML = `
@@ -2564,9 +2580,6 @@ window.openArcadeSettings = () => {
             const plan = allPlans[planId];
             const userCurrentPlan = profile.plan_type || 'free';
             const isActive = (planId === userCurrentPlan);
-            
-            console.log(`[Plan Forge] ID: ${planId} | Identity: ${plan.identity} | Cost: ${plan.cost}`);
-            
             const canSelect = (plan.enabled === true) || isActive;
 
             const planBox = document.createElement('div');
@@ -2575,27 +2588,22 @@ window.openArcadeSettings = () => {
             planBox.innerHTML = `
                 <div class="plan-box-inner">
                     <div class="tier-identity-metallic">${(planId).toUpperCase()}-TIER</div>
-                     <div class="tier-pitch">${plan.identity.toUpperCase()}</div>
+                    <div class="tier-pitch">${plan.identity.toUpperCase()}</div>
                     <div class="tier-pitch">${plan.pitch}</div>
-                    
                     <div class="tier-pricing">
                         <div class="price-main">
                             $${plan.cost}<small>/mo</small> 
-                                <span class="price-annual" style="margin-left: 15px;">$${plan.cost * 10}<small>/yr</small></span>
+                            <span class="price-annual" style="margin-left: 15px;">$${plan.cost * 10}<small>/yr</small></span>
                         </div>                    
                     </div>
-
                     <ul class="tier-specs-list">
                         <li><i class="fa-solid fa-folder"></i> <b>${plan.max_currents}</b> Topics</li>
                         <li><i class="fa-solid fa-microchip"></i> <b>${plan.max_sparks_per_current}</b> Action Cards</li>
-                        <li><i class="fa-solid fa-wand-magic-sparkles"></i> <b>${plan.num_mass_sparks}</b> Cards/Prompt</li>
                         <hr class="metallic-divider">
                         <li><i class="fa-solid ${plan.analytics_enabled ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Analytics</li>
-                        <li><i class="fa-solid ${plan.priority_support ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Priority Support</li>
                         <li><i class="fa-solid ${plan.monetization === 'sales' ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Direct Sales</li>
                     </ul>
                 </div>
-                
                 <div class="plan-radio-dock">
                     <input type="radio" name="arcade-plan" id="radio-${planId}" value="${planId}" 
                         ${isActive ? 'checked' : ''} 
@@ -2611,16 +2619,21 @@ window.openArcadeSettings = () => {
                     planBox.querySelector('input').checked = true;
                 };
             }
-
             planContainer.appendChild(planBox);
         });
     }
 
-    // 5. BUTTON & HUD ACTIVATION
+    // 7. BUTTON CONFIGURATION & VISIBILITY
     if (submitBtn) {
         submitBtn.innerText = isSetup ? "UPDATE IDENTITY" : "ESTABLISH IDENTITY";
         submitBtn.style.display = "block";
         submitBtn.style.margin = "30px auto 10px auto";
+
+        // Apply contrast fix for specific themes from the start
+        const activeTheme = themes?.[themeSelect.value];
+        if (activeTheme && activeTheme['button-text-color']) {
+            submitBtn.style.color = activeTheme['button-text-color'];
+        }
     }
     
     hud.classList.add('active');
