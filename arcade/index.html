@@ -39,28 +39,16 @@
 
         <div id="drawer-settings" class="sub-menu" style="display:none;">
             <div class="back-btn" onclick="showMainMenu()"><i class="fa-solid fa-chevron-left"></i> BACK</div>
-            
+    
             <div class="settings-group">
-                <label class="metallic-text">DISPLAY NAME</label>
-                <input type="text" id="set-display-name" class="hud-input">
-                
-                <label class="metallic-text">ARCADE TITLE</label>
-                <input type="text" id="set-arcade-title" class="hud-input">
-                
-                <label class="metallic-text">SUBTITLE</label>
-                <input type="text" id="set-arcade-subtitle" class="hud-input">
+                <div class="menu-item" onclick="openArcadeSettings()">
+                    <i class="fa-solid fa-palette"></i> UPDATE_ARCADE_IDENTITY
+                </div>
 
-                <label class="metallic-text">PRIVACY</label>
-                <input type="text" id="set-arcade-privacy" class="hud-input">
-
-                <label class="metallic-text">THEME</label>
-                <select id="set-arcade-theme" class="hud-input">
-                </select>
+                <div id="admin-settings-trigger" class="menu-item" onclick="openAdminSettings()" style="display:none;">
+                    <i class="fa-solid fa-shield-halved"></i> ADMIN_SETTINGS
+                </div>
             </div>
-
-            <button class="ethereal-btn-sm" onclick="saveAllSettings()" style="width: 100%; margin-top: 20px;">
-                COMMIT_CHANGES
-            </button>
         </div>
 
         <div id="drawer-help" class="sub-menu" style="display:none;">
