@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:31:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -101,16 +101,39 @@ const steps = [
     }
 ];
 
-window.handleTutorialTrigger = () => {
-    // 1. Close your glass drawer
+window.handleMenuTrigger = (type) => {
+    // 1. Close the main glass drawer
     const drawer = document.getElementById('main-drawer');
     if (drawer) drawer.classList.remove('active');
 
-    // 2. Wait for the 0.5s CSS transition to finish before starting spotlight
+    // 2. Wait for the 0.5s CSS transition to finish
     setTimeout(() => {
-        window.showTutorial();
-    }, 500); 
+        switch (type) {
+            case 'tutorial':
+                if (typeof window.showTutorial === 'function') {
+                    window.showTutorial();
+                }
+                break;
+
+            case 'chat':
+                // Initialize and open the Navigator Chat Agent
+                if (!window.navigatorAgent) {
+                    // Assuming yertalDB is your JSON DB object
+                    window.navigatorAgent = new ArcadeNavigator(yertalDB);
+                }
+                window.navigatorAgent.initChatAgent();
+                break;
+
+            case 'topics':
+                console.log("System Topics HUD logic goes here.");
+                break;
+
+            default:
+                console.warn("Unknown trigger type:", type);
+        }
+    }, 500);
 };
+
 window.showTutorial = function() {
     currentTutorialStep = 0; 
     
