@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:29:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -115,7 +115,7 @@ window.handleMenuTrigger = (type) => {
         switch (type) {
             case 'chat':
                 // 2. Safely extract chat_config
-                const chatData = window.databaseCache.chat_config;
+                const chatData = databaseCache.chat_config;
 
                 if (!chatData || !chatData.nodes) {
                     console.error("Navigator Error: chat_config is missing from databaseCache.");
@@ -436,8 +436,8 @@ window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
 
             // 3. Cache Synchronization
             try {
-                if (window.databaseCache?.users?.[ownerUid]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
-                    window.databaseCache.users[ownerUid].infrastructure.currents[currentId].sparks[sparkId].stats.likes = updated;
+                if (databaseCache?.users?.[ownerUid]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
+                    databaseCache.users[ownerUid].infrastructure.currents[currentId].sparks[sparkId].stats.likes = updated;
                 }
             } catch (e) {}
         }
@@ -506,8 +506,8 @@ window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
                 setNeonFeedback();
                 
                 try {
-                    if (window.databaseCache?.users?.[ownerId]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
-                        window.databaseCache.users[ownerId].infrastructure.currents[currentId].sparks[sparkId].stats.forges = updated;
+                    if (databaseCache?.users?.[ownerId]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
+                        databaseCache.users[ownerId].infrastructure.currents[currentId].sparks[sparkId].stats.forges = updated;
                     }
                 } catch (e) {}
             }
