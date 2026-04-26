@@ -1352,7 +1352,6 @@ button:hover {
     position: relative;
     width: 90%;
     max-width: 650px;
-    margin: auto;
     display: flex;
     flex-direction: column;
     padding: 10px;
