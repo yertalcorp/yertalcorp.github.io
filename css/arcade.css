@@ -1329,6 +1329,8 @@ button:hover {
 }
 
 /* 1. Ensure the overlay is a Flex Sandbox */
+
+/* 1. Ensure the overlay is a Flex Sandbox */
 .hud-overlay {
     position: fixed;
     top: 0; left: 0; 
@@ -1338,9 +1340,11 @@ button:hover {
     backdrop-filter: blur(25px); /* Increased blur to hide background artifacts */
     -webkit-backdrop-filter: blur(25px);
     display: none; 
-    align-items: center;      /* Vertical Center */
+    align-items: flex-start; /* Changed from center to top */
+    padding-top: 5vh; /* Added 5% viewport height padding for breathing room */
     justify-content: center;   /* Horizontal Center */
     z-index: 10000;            /* Bump this up to be safe */
+    overflow-y: auto; /* Ensure user can scroll if the HUD is long */
 }
 .hud-overlay.active { display: flex; }
 
