@@ -115,7 +115,7 @@ window.handleMenuTrigger = (type) => {
         switch (type) {
             case 'chat':
                 // 2. Safely extract chat_config
-                const chatData = databaseCache.chat_config;
+                const chatData = databaseCache?.chat_config;
 
                 if (!chatData || !chatData.nodes) {
                     console.error("Navigator Error: chat_config is missing from databaseCache.");
