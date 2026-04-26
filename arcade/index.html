@@ -53,9 +53,9 @@
 
         <div id="drawer-help" class="sub-menu" style="display:none;">
             <div class="back-btn" onclick="showMainMenu()"><i class="fa-solid fa-chevron-left"></i> BACK</div>
-            <div class="menu-item"><i class="fa-solid fa-comments"></i> <span class="metallic-text">CHAT</span></div>
-            <div class="menu-item" onclick="window.handleTutorialTrigger()"><i class="fa-solid fa-book-open"></i><span class="metallic-text">TUTORIAL</span></div>
-            <div class="menu-item"><i class="fa-solid fa-circle-info"></i> <span class="metallic-text">SYSTEM_TOPICS</span></div>
+            <div class="menu-item" onclick="window.handleMenuTrigger('chat')"><i class="fa-solid fa-comments"></i> <span class="metallic-text">CHAT</span></div>
+            <div class="menu-item" onclick="window.handleMenuTrigger('tutorial')"><i class="fa-solid fa-book-open"></i><span class="metallic-text">TUTORIAL</span></div>
+            <div class="menu-item" onclick="window.handleMenuTrigger('topics')"><i class="fa-solid fa-circle-info"></i> <span class="metallic-text">SYSTEM_TOPICS</span></div>
         </div>
         <div class="menu-item" id="main-analytics-trigger" onclick="openAnalyticsHUD()" style="display:none;">
             <i class="fa-solid fa-chart-line"></i> <span class="metallic-text">ANALYTICS</span>
