@@ -102,38 +102,32 @@ const steps = [
 ];
 
 window.handleMenuTrigger = (type) => {
-    // 1. Close the main glass drawer
     const drawer = document.getElementById('main-drawer');
     if (drawer) drawer.classList.remove('active');
 
-    // 2. Wait for the 0.5s CSS transition to finish
     setTimeout(() => {
         switch (type) {
-            case 'tutorial':
-                if (typeof window.showTutorial === 'function') {
-                    window.showTutorial();
-                }
-                break;
-
             case 'chat':
-                // Initialize and open the Navigator Chat Agent
+                // Accessing the global cache directly
+                const chatData = window.databaseCache.chat_config;
+
+                if (!chatData) {
+                    console.error("Navigator: chat_config not found in databaseCache.");
+                    return;
+                }
+
                 if (!window.navigatorAgent) {
-                    // Assuming yertalDB is your JSON DB object
-                    window.navigatorAgent = new ArcadeNavigator(yertalDB);
+                    window.navigatorAgent = new ArcadeNavigator(chatData);
                 }
                 window.navigatorAgent.initChatAgent();
                 break;
 
-            case 'topics':
-                console.log("System Topics HUD logic goes here.");
+            case 'tutorial':
+                if (typeof window.showTutorial === 'function') window.showTutorial();
                 break;
-
-            default:
-                console.warn("Unknown trigger type:", type);
         }
     }, 500);
 };
-
 window.showTutorial = function() {
     currentTutorialStep = 0; 
     
@@ -2855,41 +2849,40 @@ closeNavigator() {
 
 submitPriorityMessage() {
     const message = document.getElementById('nav-message-input').value;
-    if (!message) return;
+    if (!message.trim()) return;
 
-    // Logic to send to your backend/Firebase would go here
-    console.log("Priority Message Collected:", message);
+    // Placeholder for your Firebase push logic (Firestore or Realtime DB)
+    console.log("Saving Message:", message);
 
     const body = document.querySelector('.navigator-body');
     body.innerHTML = `
-        <div class="navigator-question">Message received. Our engineers will review this shortly.</div>
-        <div class="navigator-option" onclick="navigatorAgent.renderNode('start')">Return to Start</div>
+        <div class="navigator-question">Thank you. Your message has been logged for review.</div>
+        <button class="navigator-option" onclick="navigatorAgent.renderNode('start')">Return to Start</button>
     `;
 }
     processSelection(option) {
-        if (option.action === 'link') {
-            window.open(option.url, '_blank');
-        } else if (option.action === 'collect_message') {
-            // Placeholder for the message collection form
-            this.renderMessageForm();
-        } else if (option.next) {
-            this.currentNode = option.next;
-            this.renderNode(this.currentNode);
-        }
+    if (option.action === 'link') {
+        window.open(option.url, '_blank');
+    } else if (option.action === 'collect_message') {
+        this.renderMessageForm();
+    } else if (option.next) {
+        this.currentNode = option.next;
+        this.renderNode(this.currentNode);
     }
+}
     // Add these methods to your ArcadeNavigator class in arcade.js
 
     renderMessageForm() {
-        const container = document.getElementById('yertal-nav-container');
-        const body = container.querySelector('.navigator-body');
+    const container = document.getElementById('yertal-nav-container');
+    const body = container.querySelector('.navigator-body');
     
-        body.innerHTML = `
-            <div class="navigator-question">Please enter your message below. Our team will get back to you via your registered email.</div>
-            <textarea id="nav-message-input" class="nav-textarea" placeholder="Type your message..."></textarea>
-            <button class="navigator-option" onclick="navigatorAgent.submitPriorityMessage()">Submit Message</button>
-            <button class="navigator-option" style="opacity: 0.7" onclick="navigatorAgent.renderNode('start')">Cancel</button>
-            `;
-    }
+    body.innerHTML = `
+        <div class="navigator-question">Please enter your priority message below:</div>
+        <textarea id="nav-message-input" class="nav-textarea" placeholder="Describe the issue or request..."></textarea>
+        <button class="navigator-option" onclick="navigatorAgent.submitPriorityMessage()">Send Message</button>
+        <button class="navigator-option" style="opacity:0.6" onclick="navigatorAgent.renderNode('start')">Back</button>
+    `;
+}
 
  }
 // ----------------------------------
