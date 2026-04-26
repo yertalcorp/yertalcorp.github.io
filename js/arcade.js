@@ -2799,38 +2799,73 @@ class ArcadeNavigator {
         this.history = [];
     }
 
+    // Inside your ArcadeNavigator class in arcade.js
+
     initChatAgent() {
-        const widget = document.createElement('div');
-        widget.id = 'yertal-nav-container';
-        widget.className = 'yertal-navigator-widget';
-        document.body.appendChild(widget);
+        let widget = document.getElementById('yertal-nav-container');
+    
+        // Create it if it doesn't exist
+        if (!widget) {
+            widget = document.createElement('div');
+            widget.id = 'yertal-nav-container';
+            widget.className = 'yertal-navigator-widget';
+            document.body.appendChild(widget);
+        }
+    
+        // Show it and reset to start or current node
+        widget.style.display = 'flex';
+        widget.style.animation = 'fadeIn 0.3s ease-in-out';
         this.renderNode(this.currentNode);
     }
 
-    renderNode(nodeId) {
-        const node = this.nodes[nodeId];
-        const container = document.getElementById('yertal-nav-container');
-        
-        container.innerHTML = `
-            <div class="navigator-header">
-                <span>${this.setup.agent_name}</span>
-            </div>
-            <div class="navigator-body">
-                <div class="navigator-question">${node.question}</div>
-                <div id="nav-options"></div>
-            </div>
-        `;
+// Inside your ArcadeNavigator class in arcade.js
 
-        const optionsBox = container.querySelector('#nav-options');
-        Object.entries(node.options).forEach(([key, data]) => {
-            const btn = document.createElement('div');
-            btn.className = 'navigator-option';
-            btn.innerText = data.text;
-            btn.onclick = () => this.processSelection(data);
-            optionsBox.appendChild(btn);
-        });
+renderNode(nodeId) {
+    const node = this.nodes[nodeId];
+    const container = document.getElementById('yertal-nav-container');
+    
+    // Dynamically inject the agent name from your DB setup
+    container.innerHTML = `
+        <div class="navigator-header">
+            <span>${this.setup.agent_name}</span>
+            <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="navigatorAgent.closeNavigator()"></i>
+        </div>
+        <div class="navigator-body">
+            <div class="navigator-question">${node.question}</div>
+            <div id="nav-options"></div>
+        </div>
+    `;
+
+    const optionsBox = container.querySelector('#nav-options');
+    Object.entries(node.options).forEach(([key, data]) => {
+        const btn = document.createElement('div');
+        btn.className = 'navigator-option';
+        btn.innerText = data.text;
+        btn.onclick = () => this.processSelection(data);
+        optionsBox.appendChild(btn);
+    });
+}
+
+closeNavigator() {
+    const widget = document.getElementById('yertal-nav-container');
+    if (widget) {
+        widget.style.display = 'none';
     }
+}
 
+submitPriorityMessage() {
+    const message = document.getElementById('nav-message-input').value;
+    if (!message) return;
+
+    // Logic to send to your backend/Firebase would go here
+    console.log("Priority Message Collected:", message);
+
+    const body = document.querySelector('.navigator-body');
+    body.innerHTML = `
+        <div class="navigator-question">Message received. Our engineers will review this shortly.</div>
+        <div class="navigator-option" onclick="navigatorAgent.renderNode('start')">Return to Start</div>
+    `;
+}
     processSelection(option) {
         if (option.action === 'link') {
             window.open(option.url, '_blank');
@@ -2856,18 +2891,7 @@ class ArcadeNavigator {
             `;
     }
 
-    submitPriorityMessage() {
-        const message = document.getElementById('nav-message-input').value;
-        if (!message) return alert("Please enter a message.");
-
-        // This is where you would hook into your Firebase 'config/firebase-config.js'
-        console.log("Saving to Firebase...", message);
-    
-        const body = document.querySelector('.navigator-body');
-        body.innerHTML = `<div class="navigator-question">Thank you! Your priority message has been sent to the lab.</div>
-                      <button class="navigator-option" onclick="navigatorAgent.renderNode('start')">Return to Start</button>`;
-    }
-}
+ }
 // ----------------------------------
 window.handleCreation = handleCreation;
 // Force the function to be global so the HTML button can see it
