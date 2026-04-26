@@ -30,7 +30,7 @@ export async function getArcadeData() {
     const pageOwnerSlug = urlParams.get('user') || 'yertal-arcade';
 
     const data = {};
-    const publicPaths = ['app_manifest', 'settings', 'search_index']; // Simplified for brevity
+    const publicPaths = ['app_manifest', 'chat_config', 'settings', 'search_index']; // Simplified for brevity
 
     try {
         const snapshots = await Promise.all(
