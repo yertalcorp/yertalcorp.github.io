@@ -394,6 +394,17 @@ main.max-width-limit {
     letter-spacing: 1px;
 }
 
+/* Update the phase indicator within the header */
+.tooltip-header span {
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 11px; /* Slightly larger for legibility */
+    color: var(--branding-color);
+    text-shadow: -0.5px -0.5px 0px rgba(255,255,255,0.4), 1px 1px 2px rgba(0,0,0,0.6);
+    filter: brightness(1.3) contrast(1.2);
+    opacity: 1 !important; /* Overriding the 0.7 opacity in .tooltip-header */
+}
 .close-tutorial {
     background: none;
     border: none;
