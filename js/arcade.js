@@ -2768,7 +2768,58 @@ function getThemeBrandingColor(themeId) {
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     return themes?.[themeId]?.['branding-color'] || "#00f2ff";
 }
+class ArcadeNavigator {
+    constructor(dbData) {
+        this.nodes = dbData.nodes;
+        this.setup = dbData.setup;
+        this.currentNode = dbData.setup.initial_node;
+        this.history = [];
+    }
 
+    initChatAgent() {
+        const widget = document.createElement('div');
+        widget.id = 'yertal-nav-container';
+        widget.className = 'yertal-navigator-widget';
+        document.body.appendChild(widget);
+        this.renderNode(this.currentNode);
+    }
+
+    renderNode(nodeId) {
+        const node = this.nodes[nodeId];
+        const container = document.getElementById('yertal-nav-container');
+        
+        container.innerHTML = `
+            <div class="navigator-header">
+                <span>${this.setup.agent_name}</span>
+            </div>
+            <div class="navigator-body">
+                <div class="navigator-question">${node.question}</div>
+                <div id="nav-options"></div>
+            </div>
+        `;
+
+        const optionsBox = container.querySelector('#nav-options');
+        Object.entries(node.options).forEach(([key, data]) => {
+            const btn = document.createElement('div');
+            btn.className = 'navigator-option';
+            btn.innerText = data.text;
+            btn.onclick = () => this.processSelection(data);
+            optionsBox.appendChild(btn);
+        });
+    }
+
+    processSelection(option) {
+        if (option.action === 'link') {
+            window.open(option.url, '_blank');
+        } else if (option.action === 'collect_message') {
+            // Placeholder for the message collection form
+            this.renderMessageForm();
+        } else if (option.next) {
+            this.currentNode = option.next;
+            this.renderNode(this.currentNode);
+        }
+    }
+}
 // ----------------------------------
 window.handleCreation = handleCreation;
 // Force the function to be global so the HTML button can see it
