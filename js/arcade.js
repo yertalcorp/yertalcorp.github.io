@@ -1646,8 +1646,8 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
                          - Format: JSON array [{"name", "url", "thumbnail"}] and name has maximum 3 words. The thumbnail must be a publicly existing, high-resolution image URL relevant to the item.`;
     } else {
         // Your existing code generation logic
-        instructions = `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
-                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. The thumbnail perfectly represents the application.`;
+        instructions = `Write a visually stunning, fully working HTML/Javascript application.
+                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. Fetch a thumbnail that represents the application.`;
     } 
 
     const returnString = isSource ? 
