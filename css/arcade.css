@@ -1607,6 +1607,8 @@ button:hover {
     flex-direction: column;
     z-index: 9999;
     overflow: hidden;
+    opacity: 0; /* Start hidden for the animation */
+    pointer-events: none;
     animation: navFadeIn 0.3s ease-out;
 }
 
