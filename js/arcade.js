@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @18:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @18:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2794,23 +2794,22 @@ function getThemeBrandingColor(themeId) {
     return themes?.[themeId]?.['branding-color'] || "#00f2ff";
 }
 
-/* Chat interface Classes and Functions */
-// In your Javascript file
-function handleLauncherClick() {
+/* Chat interface Classes and Functions */// Add this to the bottom of your script or within your init scope
+window.handleLauncherClick = function() {
  const chatData = databaseCache?.chat_config;
- 
- if (!window.navigatorAgent && chatData) {
-     window.navigatorAgent = new ArcadeNavigator(chatData);
-     window.navigatorAgent.initChatAgent();
- }
- 
- if (window.navigatorAgent) {
-     window.navigatorAgent.toggleNavigator();
- } else {
-     console.error("Navigator not ready: databaseCache missing chat_config");
- }
-}
 
+ if (!window.navigatorAgent && chatData) {
+ console.log("Initializing Navigator Agent via Launcher...");
+ window.navigatorAgent = new ArcadeNavigator(chatData);
+ window.navigatorAgent.initChatAgent();
+ }
+
+ if (window.navigatorAgent) {
+ window.navigatorAgent.toggleNavigator();
+ } else {
+ console.error("Launcher Error: chat_config not loaded yet.");
+ }
+};
 class ArcadeNavigator {
     constructor(dbData) {
         console.log("ArcadeNavigator: Initializing with data:", dbData);
