@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:55:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:02:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2874,18 +2874,19 @@ toggleNavigator() {
         this.closeNavigator();
     }
 }
-closeNavigator() {
-    const widget = document.getElementById('yertal-nav-container');
-    const launcherIcon = document.querySelector('#yertal-nav-launcher i');
+    closeNavigator() {
+        const widget = document.getElementById('yertal-nav-container');
+        const launcherIcon = document.querySelector('#yertal-nav-launcher i');
     
-    if (widget) {
-        widget.style.display = 'none';
-        if (launcherIcon) {
-            launcherIcon.classList.remove('fa-xmark');
-            launcherIcon.classList.add('fa-comment-dots');
+        if (widget) {
+            widget.style.display = 'none';
+            // Only reset the icon, don't hide the launcher div!
+            if (launcherIcon) {
+                launcherIcon.classList.remove('fa-xmark');
+                launcherIcon.classList.add('fa-comment-dots');
+            }
         }
     }
-}
     submitPriorityMessage() {
     const message = document.getElementById('nav-message-input').value;
     if (!message.trim()) return;
