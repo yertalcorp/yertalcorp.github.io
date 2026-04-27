@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:51:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @17:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -123,10 +123,10 @@ window.handleMenuTrigger = (type) => {
                     return;
                 }
 
-                if (!navigatorAgent) {
-                    navigatorAgent = new ArcadeNavigator(chatData);
+                if (!window.navigatorAgent) {
+                    window.navigatorAgent = new ArcadeNavigator(chatData);
                 }
-                navigatorAgent.initChatAgent();
+                window.navigatorAgent.initChatAgent();
                 break;
 
             case 'tutorial':
@@ -2869,7 +2869,7 @@ renderNode(nodeId) {
     container.innerHTML = `
         <div class="navigator-header">
             <span>${this.setup.agent_name}</span>
-            <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="navigatorAgent.closeNavigator()"></i>
+            <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="window.navigatorAgent.closeNavigator()"></i>
         </div>
         <div class="navigator-body">
             <div class="navigator-question">${node.question}</div>
@@ -2909,7 +2909,7 @@ renderNode(nodeId) {
     const body = document.querySelector('.navigator-body');
     body.innerHTML = `
         <div class="navigator-question">Thank you. Your message has been logged for review.</div>
-        <button class="navigator-option" onclick="navigatorAgent.renderNode('start')">Return to Start</button>
+        <button class="navigator-option" onclick="window.navigatorAgent.renderNode('start')">Return to Start</button>
     `;
 }
     processSelection(option) {
@@ -2933,8 +2933,8 @@ renderNode(nodeId) {
         body.innerHTML = `
             <div class="navigator-question">Please enter your priority message below:</div>
             <textarea id="nav-message-input" class="nav-textarea" placeholder="Describe the issue or request..."></textarea>
-            <button class="navigator-option" onclick="navigatorAgent.submitPriorityMessage()">Send Message</button>
-            <button class="navigator-option" style="opacity:0.6" onclick="navigatorAgent.renderNode('start')">Back</button>
+            <button class="navigator-option" onclick="window.navigatorAgent.submitPriorityMessage()">Send Message</button>
+            <button class="navigator-option" style="opacity:0.6" onclick="window.navigatorAgent.renderNode('start')">Back</button>
         `;
     }
 }
