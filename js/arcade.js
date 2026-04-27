@@ -2937,6 +2937,12 @@ renderNode(nodeId) {
         `;
     }
 }
+// Inside your database initialization or at the bottom of arcade.js
+// Where you create the agent:
+const navigatorAgent = new ArcadeNavigator(dbData);
+
+// ADD THIS LINE IMMEDIATELY AFTER:
+window.navigatorAgent = navigatorAgent;
 // ----------------------------------
 window.handleCreation = handleCreation;
 // Force the function to be global so the HTML button can see it
