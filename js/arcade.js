@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:25:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2793,8 +2793,11 @@ function getThemeBrandingColor(themeId) {
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     return themes?.[themeId]?.['branding-color'] || "#00f2ff";
 }
+
+/* Chat interface */
 class ArcadeNavigator {
     constructor(dbData) {
+        console.log("ArcadeNavigator: Initializing with data:", dbData);
         this.nodes = dbData.nodes;
         this.setup = dbData.setup;
         this.currentNode = dbData.setup.initial_node;
@@ -2804,10 +2807,12 @@ class ArcadeNavigator {
     // Inside your ArcadeNavigator class in arcade.js
 
     initChatAgent() {
+        console.log("ArcadeNavigator: initChatAgent called. Current Node:", this.currentNode);
         let widget = document.getElementById('yertal-nav-container');
     
         // Create it if it doesn't exist
         if (!widget) {
+            console.log("ArcadeNavigator: Widget container not found, creating 'yertal-nav-container'...");
             widget = document.createElement('div');
             widget.id = 'yertal-nav-container';
             widget.className = 'yertal-navigator-widget';
@@ -2823,7 +2828,14 @@ class ArcadeNavigator {
 // Inside your ArcadeNavigator class in arcade.js
 
 renderNode(nodeId) {
+    console.log("ArcadeNavigator: Rendering node ->", nodeId);
     const node = this.nodes[nodeId];
+    
+    if (!node) {
+        console.error("ArcadeNavigator: Node ID '" + nodeId + "' not found in dbData.nodes!");
+        return;
+    }
+
     const container = document.getElementById('yertal-nav-container');
     
     // Dynamically inject the agent name from your DB setup
@@ -2849,6 +2861,7 @@ renderNode(nodeId) {
 }
 
 closeNavigator() {
+    console.log("ArcadeNavigator: Closing navigator.");
     const widget = document.getElementById('yertal-nav-container');
     if (widget) {
         widget.style.display = 'none';
@@ -2869,6 +2882,7 @@ submitPriorityMessage() {
     `;
 }
     processSelection(option) {
+    console.log("ArcadeNavigator: Option selected:", option);
     if (option.action === 'link') {
         window.open(option.url, '_blank');
     } else if (option.action === 'collect_message') {
@@ -2881,18 +2895,18 @@ submitPriorityMessage() {
     // Add these methods to your ArcadeNavigator class in arcade.js
 
     renderMessageForm() {
-    const container = document.getElementById('yertal-nav-container');
-    const body = container.querySelector('.navigator-body');
+        console.log("ArcadeNavigator: Rendering priority message form.");
+        const container = document.getElementById('yertal-nav-container');
+        const body = container.querySelector('.navigator-body');
     
-    body.innerHTML = `
-        <div class="navigator-question">Please enter your priority message below:</div>
-        <textarea id="nav-message-input" class="nav-textarea" placeholder="Describe the issue or request..."></textarea>
-        <button class="navigator-option" onclick="navigatorAgent.submitPriorityMessage()">Send Message</button>
-        <button class="navigator-option" style="opacity:0.6" onclick="navigatorAgent.renderNode('start')">Back</button>
-    `;
+        body.innerHTML = `
+            <div class="navigator-question">Please enter your priority message below:</div>
+            <textarea id="nav-message-input" class="nav-textarea" placeholder="Describe the issue or request..."></textarea>
+            <button class="navigator-option" onclick="navigatorAgent.submitPriorityMessage()">Send Message</button>
+            <button class="navigator-option" style="opacity:0.6" onclick="navigatorAgent.renderNode('start')">Back</button>
+        `;
+    }
 }
-
- }
 // ----------------------------------
 window.handleCreation = handleCreation;
 // Force the function to be global so the HTML button can see it
