@@ -1593,10 +1593,30 @@ button:hover {
     letter-spacing: 1px;
 }
 /* --- Yertal Navigator Component --- */
+
+/* Launcher: Match the working tooltip logic */
+.navigator-launcher {
+    position: fixed !important;
+    bottom: 5% !important;   /* Using percentages like your tutorial */
+    right: 5% !important;
+    width: 60px !important;
+    height: 60px !important;
+    background: var(--btn-gradient);
+    border-radius: 50%;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    cursor: pointer;
+    
+    /* Ensure it is ABOVE the tutorial mask */
+    z-index: 20000 !important; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
 .yertal-navigator-widget {
     position: fixed;
-    bottom: 95px;
-    right: 25px;
+    bottom: 15%;
+    right: 5%;
     min-width: 380px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -1605,43 +1625,15 @@ button:hover {
     font-family: var(--text-main-font);
     display: none;
     flex-direction: column;
-    z-index: 10000;
+    z-index: 20001;
     overflow: hidden;
     opacity: 0; /* Start hidden for the animation */
     pointer-events: none;
     animation: navFadeIn 0.3s ease-out;
 }
-.navigator-launcher {
-    /* FORCE Viewport Anchor */
-    position: fixed ;
-    bottom: 25px ;
-    right: 25px ;
-    
-    /* RESET Flexbox Interference */
-    top: auto ;
-    left: auto ;
-    margin: 0 ;
-    transform: none ;
 
-    /* Sizing & Shape */
-    width: 60px ;
-    height: 60px ;
-    border-radius: 50% ;
-    
-    /* Visuals */
-    background: var(--btn-gradient) ;
-    color: white ;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-    cursor: pointer ;
-    
-    /* Layering */
-    z-index: 999999 ;
-    
-    /* Center the Icon inside the circle */
-    display: flex ;
-    justify-content: center ;
-    align-items: center ;
-    font-size: 24px ;
+.yertal-navigator-widget.active {
+    display: flex !important;
 }
 
 /* Ensure the icon is centered */
