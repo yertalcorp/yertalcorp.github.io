@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @17:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:04:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2795,7 +2795,6 @@ function getThemeBrandingColor(themeId) {
 }
 
 /* Chat interface */
-
 class ArcadeNavigator {
     constructor(dbData) {
         console.log("ArcadeNavigator: Initializing with data:", dbData);
@@ -2807,47 +2806,27 @@ class ArcadeNavigator {
 
     // Inside your ArcadeNavigator class in arcade.js
 
-initChatAgent() {
-        console.log("ArcadeNavigator: initChatAgent firing...");
+    initChatAgent() {
+        console.log("ArcadeNavigator: initChatAgent called.");
         let widget = document.getElementById('yertal-nav-container');
     
         if (!widget) {
+            console.log("ArcadeNavigator: Widget not found in HTML, creating dynamically...");
             widget = document.createElement('div');
             widget.id = 'yertal-nav-container';
             widget.className = 'yertal-navigator-widget';
             document.body.appendChild(widget);
         }
     
-        // Show it and reset to start or current node
+        // Ensure it's visible and animated
         widget.style.display = 'flex';
-        widget.style.animation = 'navFadeIn 0.3s ease-out';
+        widget.style.opacity = '1';
+        widget.style.pointerEvents = 'all';
+        
         this.renderNode(this.currentNode);
     }
 
-    toggleNavigator() {
-        const widget = document.getElementById('yertal-nav-container');
-        const launcherIcon = document.querySelector('#yertal-nav-launcher i');
-        const isHidden = !widget || widget.style.display === 'none' || widget.style.display === '';
-
-        if (isHidden) {
-            launcherIcon.className = 'fa-solid fa-xmark';
-            this.initChatAgent();
-        } else {
-            launcherIcon.className = 'fa-solid fa-comment-dots';
-            this.closeNavigator();
-        }
-    }
-
-    closeNavigator() {
-        const widget = document.getElementById('yertal-nav-container');
-        const launcherIcon = document.querySelector('#yertal-nav-launcher i');
-        if (widget) {
-            widget.style.display = 'none';
-        }
-        if (launcherIcon) {
-            launcherIcon.className = 'fa-solid fa-comment-dots';
-        }
-    }
+// Inside your ArcadeNavigator class in arcade.js
 
 renderNode(nodeId) {
     console.log("ArcadeNavigator: Rendering node ->", nodeId);
@@ -2869,7 +2848,7 @@ renderNode(nodeId) {
     container.innerHTML = `
         <div class="navigator-header">
             <span>${this.setup.agent_name}</span>
-            <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="window.navigatorAgent.closeNavigator()"></i>
+            <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="navigatorAgent.closeNavigator()"></i>
         </div>
         <div class="navigator-body">
             <div class="navigator-question">${node.question}</div>
@@ -2886,19 +2865,33 @@ renderNode(nodeId) {
         optionsBox.appendChild(btn);
     });
 }
-    closeNavigator() {
-        const widget = document.getElementById('yertal-nav-container');
-        const launcherIcon = document.querySelector('#yertal-nav-launcher i');
+toggleNavigator() {
+    const widget = document.getElementById('yertal-nav-container');
+    const launcherIcon = document.querySelector('#yertal-nav-launcher i');
+    const isHidden = widget.style.display === 'none' || widget.style.display === '';
+
+    if (isHidden) {
+        launcherIcon.classList.remove('fa-comment-dots');
+        launcherIcon.classList.add('fa-xmark');
+        this.initChatAgent(); 
+    } else {
+        launcherIcon.classList.remove('fa-xmark');
+        launcherIcon.classList.add('fa-comment-dots');
+        this.closeNavigator();
+    }
+}
+closeNavigator() {
+    const widget = document.getElementById('yertal-nav-container');
+    const launcherIcon = document.querySelector('#yertal-nav-launcher i');
     
-        if (widget) {
-            widget.style.display = 'none';
-            // Only reset the icon, don't hide the launcher div!
-            if (launcherIcon) {
-                launcherIcon.classList.remove('fa-xmark');
-                launcherIcon.classList.add('fa-comment-dots');
-            }
+    if (widget) {
+        widget.style.display = 'none';
+        if (launcherIcon) {
+            launcherIcon.classList.remove('fa-xmark');
+            launcherIcon.classList.add('fa-comment-dots');
         }
     }
+}
     submitPriorityMessage() {
     const message = document.getElementById('nav-message-input').value;
     if (!message.trim()) return;
@@ -2909,7 +2902,7 @@ renderNode(nodeId) {
     const body = document.querySelector('.navigator-body');
     body.innerHTML = `
         <div class="navigator-question">Thank you. Your message has been logged for review.</div>
-        <button class="navigator-option" onclick="window.navigatorAgent.renderNode('start')">Return to Start</button>
+        <button class="navigator-option" onclick="navigatorAgent.renderNode('start')">Return to Start</button>
     `;
 }
     processSelection(option) {
@@ -2933,16 +2926,11 @@ renderNode(nodeId) {
         body.innerHTML = `
             <div class="navigator-question">Please enter your priority message below:</div>
             <textarea id="nav-message-input" class="nav-textarea" placeholder="Describe the issue or request..."></textarea>
-            <button class="navigator-option" onclick="window.navigatorAgent.submitPriorityMessage()">Send Message</button>
-            <button class="navigator-option" style="opacity:0.6" onclick="window.navigatorAgent.renderNode('start')">Back</button>
+            <button class="navigator-option" onclick="navigatorAgent.submitPriorityMessage()">Send Message</button>
+            <button class="navigator-option" style="opacity:0.6" onclick="navigatorAgent.renderNode('start')">Back</button>
         `;
     }
 }
-// Retrieve the data...
-const navigatorAgent = new ArcadeNavigator(dbData);
-// ADD THIS LINE IMMEDIATELY AFTER TO FIX THE REFERENCE ERROR:
-window.navigatorAgent = navigatorAgent;
-
 // ----------------------------------
 window.handleCreation = handleCreation;
 // Force the function to be global so the HTML button can see it
