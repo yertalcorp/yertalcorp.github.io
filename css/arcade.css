@@ -1594,46 +1594,52 @@ button:hover {
 }
 /* --- Yertal Navigator Component --- */
 
-/* Launcher: Match the working tooltip logic */
+/* --- Yertal Navigator Component --- */
 .navigator-launcher {
-    position: fixed !important;
-    bottom: 5% !important;   /* Using percentages like your tutorial */
-    right: 5% !important;
-    width: 60px !important;
-    height: 60px !important;
+    position: fixed ;
+    bottom: 25px ;
+    right: 25px ;
+    left: auto ;
+    top: auto ;
+    width: 60px ;
+    height: 60px ;
+    margin: 0 ;
+    transform: none ;
     background: var(--btn-gradient);
+    border: 1px solid var(--button-border-color);
     border-radius: 50%;
-    display: flex !important;
+    display: flex;
     justify-content: center;
     align-items: center;
-    color: white;
+    color: var(--branding-text-color);
+    font-size: 24px;
     cursor: pointer;
-    
-    /* Ensure it is ABOVE the tutorial mask */
-    z-index: 20000 !important; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    box-shadow: 0 8px 32px var(--card-shadow-color);
+    z-index: 999999 ;
+    transition: transform 0.2s ease, filter 0.2s ease;
 }
+
+/* --- The Widget Window --- */
 .yertal-navigator-widget {
-    position: fixed;
-    bottom: 15%;
-    right: 5%;
-    min-width: 380px;
+    position: fixed ;
+    bottom: 95px ;
+    right: 25px ;
+    left: auto ;
+    top: auto ;
+    width: 340px ;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     box-shadow: 0 8px 32px var(--card-shadow-color);
     font-family: var(--text-main-font);
-    display: none;
+    display: none; /* JS will toggle this to flex */
     flex-direction: column;
-    z-index: 20001;
+    z-index: 999998 ;
     overflow: hidden;
-    opacity: 0; /* Start hidden for the animation */
-    pointer-events: none;
     animation: navFadeIn 0.3s ease-out;
 }
-
 .yertal-navigator-widget.active {
-    display: flex !important;
+    display: flex ;
 }
 
 /* Ensure the icon is centered */
