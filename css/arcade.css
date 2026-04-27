@@ -1629,42 +1629,40 @@ button:hover {
 /* --- The Widget Window --- */
 .yertal-navigator-widget {
     position: fixed;
-    /* Calculated to sit ABOVE the launcher. 
-       Launcher top (35%) minus widget height (approx 450px) minus a 20px gap. */
-    top: calc(35% - 470px); right: 30px;
-    bottom: auto;
-    transform: none;
+    /* Positions it above the launcher (35% top) */
+    top: auto;
+    bottom: calc(65% + 10px); /* 100% - 35% = 65% from bottom, plus gap */
+    right: 30px;
     width: 340px;
-    background: var(--bg-color-mid); /* Using solid mid-tone for better contrast */
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    z-index: 1000000; /* Higher than launcher to ensure visibility */
+    z-index: 1000000;
     display: none; 
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 40px var(--card-shadow-color);
 }
 
 .navigator-option {
-    /* Using FG variables for high legibility */
-    background: var(--fg-color-low);
-    color: var(--fg-color-high);
-    border: 1px solid var(--fg-color-mid);
+    /* Back to your original branding variables */
+    background: var(--btn-gradient);
+    color: var(--button-text-color);
+    border: 1px solid var(--button-border-color);
+    text-shadow: 0 1px 2px var(--button-text-shadow-color);
     padding: 10px 14px;
     margin-bottom: 8px;
     border-radius: 6px;
     cursor: pointer;
     font-size: 13px;
-    transition: all 0.2s ease;
-    text-shadow: none; /* Removing shadow for cleaner text */
+    transition: transform 0.1s ease, filter 0.2s ease;
 }
 
 .navigator-option:hover {
-    background: var(--fg-color-mid);
-    color: var(--bg-color-high);
-    filter: brightness(1.2);
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    color: var(--glow-color-aura);
 }
-
 .yertal-navigator-widget.active {
     display: flex;
 }
