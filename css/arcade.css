@@ -380,7 +380,7 @@ main.max-width-limit {
     color: var(--text-main-color);
     pointer-events: auto;
     transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-    transform: translate(-50%, 0) !important;
+    transform: translate(-50%, 0) ;
 }
 
 .tutorial-tooltip.active {
@@ -1611,26 +1611,33 @@ button:hover {
     pointer-events: none;
     animation: navFadeIn 0.3s ease-out;
 }
-/* The Floating Button */
 .navigator-launcher {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    width: 60px;
-    height: 60px;
+    position: fixed ;
+    bottom: 25px ;
+    right: 25px ;
+    width: 60px ;
+    height: 60px ;
     background: var(--btn-gradient);
     border-radius: 50%;
-    display: flex;
+    display: flex ;
     justify-content: center;
     align-items: center;
     color: white;
     font-size: 24px;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    z-index: 100000; /* Highest priority */
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    z-index: 100000 ;
+    transition: transform 0.2s ease;
 }
 
+/* Ensure the icon is centered */
+.navigator-launcher i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
 .navigator-launcher:hover {
     transform: scale(1.1);
 }
