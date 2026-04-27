@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:51:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2795,9 +2795,6 @@ function getThemeBrandingColor(themeId) {
 }
 
 /* Chat interface */
-const navigatorAgent = new ArcadeNavigator(dbData);
-// ADD THIS LINE IMMEDIATELY AFTER TO FIX THE REFERENCE ERROR:
-window.navigatorAgent = navigatorAgent;
 
 class ArcadeNavigator {
     constructor(dbData) {
@@ -2941,7 +2938,10 @@ renderNode(nodeId) {
         `;
     }
 }
-
+// Retrieve the data...
+const navigatorAgent = new ArcadeNavigator(dbData);
+// ADD THIS LINE IMMEDIATELY AFTER TO FIX THE REFERENCE ERROR:
+window.navigatorAgent = navigatorAgent;
 
 // ----------------------------------
 window.handleCreation = handleCreation;
