@@ -1592,52 +1592,56 @@ button:hover {
     font-size: 10px;
     letter-spacing: 1px;
 }
+/* --- Yertal Navigator Launcher --- */
 .navigator-launcher {
-    position: fixed;
-    top: 30%;
-    right: 25px;
-    bottom: auto; /* Clears previous bottom logic */
+    position: fixed; /* LOCK TO SCREEN */
+    top: 35%; /* PULLED DOWN A BIT (from 30% to 35%) */
+    right: 30px;
+    bottom: auto;
     left: auto;
-    width: 60px;
-    height: 60px;
+    
+    width: 65px;        /* Slightly larger bubble */
+    height: 65px;
     background: var(--btn-gradient);
     border: 1px solid var(--button-border-color);
     border-radius: 50%;
+    
     display: flex;
     justify-content: center;
     align-items: center;
-    color: var(--branding-text-color);
-    z-index: 999999; /* Keeps it above all sparks */
+    
+    z-index: 999999; /* Stay above sparks */
     cursor: pointer;
+    box-shadow: 0 8px 32px var(--card-shadow-color);
 }
+
+/* --- THE CLOUD ICON (Targeting the FontAwesome icon) --- */
+.navigator-launcher i {
+    font-size: 32px; /* INCREASED ICON SIZE */
+    color: var(--branding-text-color);
+    pointer-events: none; /* Ensures click goes to the bubble */
+}
+
+/* --- The Widget Window --- */
 .yertal-navigator-widget {
-    position: fixed;
-    top: calc(30% + 75px); /* Opens directly below the bubble */
-    right: 25px;
+    position: fixed; /* LOCK TO SCREEN */
+    top: calc(35% + 75px); /* Match the launcher's new 35% top */
+    right: 30px;
     bottom: auto;
-    left: auto;
+    
     width: 340px;
-    z-index: 999998;
-    display: none; /* JS will toggle this */
-    flex-direction: column;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
+    z-index: 999998;
+    display: none; 
+    flex-direction: column;
+    overflow: hidden;
 }
-
 .yertal-navigator-widget.active {
     display: flex;
 }
 
-/* Ensure the icon is centered */
-.navigator-launcher i {
-    display: inline-block;
-    pointer-events: none;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-}
 .navigator-launcher:hover {
     transform: scale(1.1);
 }
