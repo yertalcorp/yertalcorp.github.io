@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:02:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2809,7 +2809,6 @@ class ArcadeNavigator {
 initChatAgent() {
     let widget = document.getElementById('yertal-nav-container');
     
-    // Safety check if someone deletes the HTML div
     if (!widget) {
         widget = document.createElement('div');
         widget.id = 'yertal-nav-container';
@@ -2817,7 +2816,10 @@ initChatAgent() {
         document.body.appendChild(widget);
     }
 
+    // Force visibility settings to match the working tutorial logic
     widget.style.display = 'flex';
+    widget.classList.add('active'); // Add this to match your tutorial pattern
+    
     this.renderNode(this.currentNode);
 }
     // Inside your ArcadeNavigator class in arcade.js
