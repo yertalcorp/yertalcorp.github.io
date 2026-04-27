@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:25:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2838,6 +2838,11 @@ renderNode(nodeId) {
 
     const container = document.getElementById('yertal-nav-container');
     
+    // Ensure container is visible when rendering
+    if (container.style.display === 'none') {
+        container.style.display = 'flex';
+    }
+
     // Dynamically inject the agent name from your DB setup
     container.innerHTML = `
         <div class="navigator-header">
@@ -2859,7 +2864,6 @@ renderNode(nodeId) {
         optionsBox.appendChild(btn);
     });
 }
-
 closeNavigator() {
     console.log("ArcadeNavigator: Closing navigator.");
     const widget = document.getElementById('yertal-nav-container');
