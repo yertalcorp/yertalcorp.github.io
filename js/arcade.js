@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2807,18 +2807,22 @@ class ArcadeNavigator {
     // Inside your ArcadeNavigator class in arcade.js
 
 initChatAgent() {
-    let widget = document.getElementById('yertal-nav-container');
-    if (!widget) {
-        widget = document.createElement('div');
-        widget.id = 'yertal-nav-container';
-        widget.className = 'yertal-navigator-widget';
-        document.body.appendChild(widget);
-    }
+        console.log("ArcadeNavigator: initChatAgent firing...");
+        let widget = document.getElementById('yertal-nav-container');
     
-    // Explicitly ensure display: flex is applied on top of the 'none'
-    widget.style.display = 'flex';
-    this.renderNode(this.currentNode);
-}
+        if (!widget) {
+            widget = document.createElement('div');
+            widget.id = 'yertal-nav-container';
+            widget.className = 'yertal-navigator-widget';
+            document.body.appendChild(widget);
+        }
+    
+        // Show it and reset to start or current node
+        widget.style.display = 'flex';
+        widget.style.animation = 'navFadeIn 0.3s ease-out';
+        this.renderNode(this.currentNode);
+    }
+
     toggleNavigator() {
         const widget = document.getElementById('yertal-nav-container');
         const launcherIcon = document.querySelector('#yertal-nav-launcher i');
