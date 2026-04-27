@@ -1643,7 +1643,7 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     if (isSource) {
             instructions = `- Research specific items that match the task.
                             ${promptTypeObject.rules}
-                         - Format: JSON array [{"name", "url", "thumbnail"}] and name has maximum 3 words. The thumbnail must be a publicly existing, high-resolution image URL relevant to the item.`;
+                         - Format: JSON array [{"name", "url", "thumbnail"}] and name has maximum 3 words. Fetch a thumbnail that represents the item.`;
     } else {
         // Your existing code generation logic
         instructions = `Write a visually stunning, fully working HTML/Javascript application.
