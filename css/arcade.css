@@ -1612,39 +1612,42 @@ button:hover {
     animation: navFadeIn 0.3s ease-out;
 }
 .navigator-launcher {
-    /* Critical Positioning */
-    position: fixed !important;
-    bottom: 25px !important;
-    right: 25px !important;
+    /* FORCE Viewport Anchor */
+    position: fixed ;
+    bottom: 25px ;
+    right: 25px ;
     
-    /* Reset any inherited centering */
-    left: auto !important;
-    top: auto !important;
-    margin: 0 !important;
-    transform: none !important;
+    /* RESET Flexbox Interference */
+    top: auto ;
+    left: auto ;
+    margin: 0 ;
+    transform: none ;
 
-    /* Sizing & Appearance */
-    width: 60px !important;
-    height: 60px !important;
-    background: var(--btn-gradient);
-    border-radius: 50%;
-    display: flex !important;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    /* Sizing & Shape */
+    width: 60px ;
+    height: 60px ;
+    border-radius: 50% ;
     
-    /* Layering: Higher than intent-modal (1000) */
-    z-index: 10000 !important; 
+    /* Visuals */
+    background: var(--btn-gradient) ;
+    color: white ;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    cursor: pointer ;
     
-    transition: transform 0.2s ease;
+    /* Layering */
+    z-index: 999999 ;
+    
+    /* Center the Icon inside the circle */
+    display: flex ;
+    justify-content: center ;
+    align-items: center ;
+    font-size: 24px ;
 }
 
 /* Ensure the icon is centered */
 .navigator-launcher i {
-    display: flex;
+    display: inline-block;
+    pointer-events: none;
     align-items: center;
     justify-content: center;
     width: 100%;
