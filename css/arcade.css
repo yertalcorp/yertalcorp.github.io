@@ -380,7 +380,7 @@ main.max-width-limit {
     color: var(--text-main-color);
     pointer-events: auto;
     transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-    transform: translate(-50%, 0) ;
+    transform: translate(-50%, 0);
 }
 
 .tutorial-tooltip.active {
@@ -410,7 +410,7 @@ main.max-width-limit {
     color: var(--branding-color);
     text-shadow: text-shadow: 1px 1px 0px rgba(0,0,0,0.9);
     filter: brightness(1.5) contrast(1.2);
-    opacity: 1 ; /* Overriding the 0.7 opacity in .tooltip-header */
+    opacity: 1; /* Overriding the 0.7 opacity in .tooltip-header */
 }
 .close-tutorial {
     background: none;
@@ -573,7 +573,7 @@ main.max-width-limit {
 
 .tier-locked {
     filter: grayscale(1) opacity(0.4);
-    cursor: not-allowed ;
+    cursor: not-allowed;
 }
 
 
@@ -621,28 +621,28 @@ nav {
 
 /* Ensure the old Hero Section is hidden to save space */
 .hero-section-old {
-    display: none ;
+    display: none;
 }
 /* --- THE LABORATORY LAYOUT --- */
 /* Compress the top area */
 main {
-    padding-top: 0.5rem ;
+    padding-top: 0.5rem;
 }
 
 
 /* Industrial Heading Style */
 #hero-heading {
-    font-size: 2.5rem ; /* Reduced from 4.5rem */
+    font-size: 2.5rem; /* Reduced from 4.5rem */
     line-height: 1;
     letter-spacing: -0.02em;
-    margin-bottom: 0 ;
+    margin-bottom: 0;
 }
 
 /* Pull the subheading closer */
 #hero-subheading {
-    font-size: 0.8rem ;
-    margin-top: -0.2rem ;
-    margin-bottom: 0 ;
+    font-size: 0.8rem;
+    margin-top: -0.2rem;
+    margin-bottom: 0;
     opacity: 0.8;
     text-transform: uppercase;
 }
@@ -691,7 +691,7 @@ main.max-width-limit {
 }
 /* Tightest possible row headers */
 .current-block .flex-row {
-    margin-bottom: 0.25rem ;
+    margin-bottom: 0.25rem;
 }
 
 /* Increase visibility of creation controls */
@@ -945,8 +945,8 @@ select.current-prompt-input::-webkit-scrollbar-thumb:hover {
 /* --- DECORATIVE HEADERS --- */
 /* Reduce space between hero and system ready line */
 header {
-    margin-bottom: 0px ;
-    padding-bottom: 0px ;
+    margin-bottom: 0px;
+    padding-bottom: 0px;
 }
 
 /* Ensure the status bar (System Ready) sits tight against the header */
@@ -967,7 +967,7 @@ header {
 /* Add this to give the text that bright, metallic hardware look */
 #engine-status-text, 
 #superuser-display {
-    font-weight: 900 ;
+    font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.2em;
     font-size: 11px;
@@ -1011,7 +1011,7 @@ header {
 
 /* Hide the 1/48 counter as requested */
 .current-block h2 span {
-    display: none ;
+    display: none;
 }
 
 .spark-unit {
@@ -1177,8 +1177,8 @@ header {
 }
 /* Restoring the "Light up" effect on hover since group-hover is gone */
 .action-card:hover .spark-thumbnail {
-    opacity: 0.8 ;
-    filter: grayscale(0%) ;
+    opacity: 0.8;
+    filter: grayscale(0%);
     transform: scale(1.05);
 }
 
@@ -1198,22 +1198,22 @@ header {
 }
 
 .card-stats-row {
-    display: flex ;
-    flex-direction: row ;
-    justify-content: space-between ;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
     margin-top: 0.25rem;
-    border: none ;
+    border: none;
 }
 
 /* --- DECORATIVE BUTTONS --- */
 
 button#auth-trigger, 
 .current-block button {
-    padding: 12px 36px ;
-    background: var(--btn-gradient) ;
+    padding: 12px 36px;
+    background: var(--btn-gradient);
     color: var(--button-text-color); 
-    font-weight: 900 ;
-    border: none ;
+    font-weight: 900;
+    border: none;
     box-shadow: 0 0 20px var(--box-shadow-color-aura);
     border-radius: 8px;
     text-transform: uppercase;
@@ -1226,15 +1226,15 @@ button#auth-trigger,
     transform: translateY(-1px);
 }
 .current-block input {
-    font-size: 16px ;
-    color: var(--text-main-color) ;
-    background: transparent ;
+    font-size: 16px;
+    color: var(--text-main-color);
+    background: transparent;
     text-shadow: none;
     font-weight: 500;
 }
 
 .current-block input::placeholder {
-    color: var(--text-muted-color) ;
+    color: var(--text-muted-color);
     font-style: italic;
 }
 .current-block input:focus {
@@ -1246,16 +1246,16 @@ button:hover {
 }
 
 .spark-button {
-    padding: 6px 20px ;
-    height: auto ;
+    padding: 6px 20px;
+    height: auto;
     min-width: 100px;
-    transition: all 0.3s ease ;
+    transition: all 0.3s ease;
 }
 
 .spark-button:hover {
     background: var(--bg-color-high); 
     color: var(--fg-color-high); 
-    box-shadow: 0 0 20px var(--glow-color) ;
+    box-shadow: 0 0 20px var(--glow-color);
     animation: spark-pulse 1.5s infinite;
 }
 
@@ -1467,7 +1467,7 @@ button:hover {
         0 0 5px var(--glow-aura);
 }
 .btn-pulse {
-    background: var(--glow-color) ;
+    background: var(--glow-color);
     color: var(--bg-color-high); 
     box-shadow: 0 0 15px var(--glow-color);
     animation: neon-flicker 2s infinite alternate;
@@ -1536,7 +1536,7 @@ button:hover {
     transform: translateY(-2px);
 }
 /* --- UTILITIES --- */
-.hidden { display: none ; }
+.hidden { display: none; }
 .share-hud-overlay {
     position: fixed;
     inset: 0;
@@ -1592,19 +1592,14 @@ button:hover {
     font-size: 10px;
     letter-spacing: 1px;
 }
-/* --- Yertal Navigator Component --- */
-
-/* --- Yertal Navigator Component --- */
-/* --- The Widget Window --- */
-/* --- Yertal Navigator Component --- */
 .navigator-launcher {
-    position: fixed !important; /* Locks it to the screen, not the page */
-    bottom: 25px !important; /* Distance from the bottom edge of the window */
-    right: 25px !important; /* Distance from the right edge of the window */
-    left: auto !important;
-    top: auto !important;
-    width: 60px !important;
-    height: 60px !important;
+    position: fixed;
+    top: 30%;
+    right: 25px;
+    bottom: auto; /* Clears previous bottom logic */
+    left: auto;
+    width: 60px;
+    height: 60px;
     background: var(--btn-gradient);
     border: 1px solid var(--button-border-color);
     border-radius: 50%;
@@ -1612,33 +1607,26 @@ button:hover {
     justify-content: center;
     align-items: center;
     color: var(--branding-text-color);
-    font-size: 24px;
+    z-index: 999999; /* Keeps it above all sparks */
     cursor: pointer;
-    box-shadow: 0 8px 32px var(--card-shadow-color);
-    z-index: 999999 !important; /* Higher than everything else */
-    transition: transform 0.2s ease, filter 0.2s ease;
 }
-
 .yertal-navigator-widget {
-    position: fixed !important; /* Keeps the chat window following the screen */
-    bottom: 95px !important; /* Sits exactly above the launcher */
-    right: 25px !important;
-    left: auto !important;
-    top: auto !important;
-    width: 340px !important;
+    position: fixed;
+    top: calc(30% + 75px); /* Opens directly below the bubble */
+    right: 25px;
+    bottom: auto;
+    left: auto;
+    width: 340px;
+    z-index: 999998;
+    display: none; /* JS will toggle this */
+    flex-direction: column;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    box-shadow: 0 8px 32px var(--card-shadow-color);
-    font-family: var(--text-main-font);
-    display: none;
-    flex-direction: column;
-    z-index: 999998 !important;
-    overflow: hidden;
-    animation: navFadeIn 0.3s ease-out;
 }
+
 .yertal-navigator-widget.active {
-    display: flex ;
+    display: flex;
 }
 
 /* Ensure the icon is centered */
