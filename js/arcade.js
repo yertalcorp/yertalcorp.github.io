@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:51:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:04:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2865,14 +2865,35 @@ renderNode(nodeId) {
         optionsBox.appendChild(btn);
     });
 }
-closeNavigator() {
-    console.log("ArcadeNavigator: Closing navigator.");
+toggleNavigator() {
     const widget = document.getElementById('yertal-nav-container');
-    if (widget) {
-        widget.style.display = 'none';
+    const launcherIcon = document.querySelector('#yertal-nav-launcher i');
+    const isHidden = widget.style.display === 'none' || widget.style.display === '';
+
+    if (isHidden) {
+        launcherIcon.classList.remove('fa-comments');
+        launcherIcon.classList.add('fa-xmark');
+        this.initChatAgent(); 
+    } else {
+        launcherIcon.classList.remove('fa-xmark');
+        launcherIcon.classList.add('fa-comments');
+        this.closeNavigator();
     }
 }
 
+closeNavigator() {
+    const widget = document.getElementById('yertal-nav-container');
+    const launcherIcon = document.querySelector('#yertal-nav-launcher i');
+    
+    if (widget) {
+        widget.style.display = 'none';
+        // Ensure icon resets if closed via the 'X' inside the header too
+        if (launcherIcon) {
+            launcherIcon.classList.remove('fa-xmark');
+            launcherIcon.classList.add('fa-comments');
+        }
+    }
+}
 submitPriorityMessage() {
     const message = document.getElementById('nav-message-input').value;
     if (!message.trim()) return;
