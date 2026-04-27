@@ -2807,22 +2807,46 @@ class ArcadeNavigator {
     // Inside your ArcadeNavigator class in arcade.js
 
 initChatAgent() {
-    let widget = document.getElementById('yertal-nav-container');
+        console.log("ArcadeNavigator: initChatAgent firing...");
+        let widget = document.getElementById('yertal-nav-container');
     
-    if (!widget) {
-        widget = document.createElement('div');
-        widget.id = 'yertal-nav-container';
-        widget.className = 'yertal-navigator-widget';
-        document.body.appendChild(widget);
+        if (!widget) {
+            widget = document.createElement('div');
+            widget.id = 'yertal-nav-container';
+            widget.className = 'yertal-navigator-widget';
+            document.body.appendChild(widget);
+        }
+    
+        // Show it and reset to start or current node
+        widget.style.display = 'flex';
+        widget.style.animation = 'navFadeIn 0.3s ease-out';
+        this.renderNode(this.currentNode);
     }
 
-    // Force visibility settings to match the working tutorial logic
-    widget.style.display = 'flex';
-    widget.classList.add('active'); // Add this to match your tutorial pattern
-    
-    this.renderNode(this.currentNode);
-}
-    // Inside your ArcadeNavigator class in arcade.js
+    toggleNavigator() {
+        const widget = document.getElementById('yertal-nav-container');
+        const launcherIcon = document.querySelector('#yertal-nav-launcher i');
+        const isHidden = !widget || widget.style.display === 'none' || widget.style.display === '';
+
+        if (isHidden) {
+            launcherIcon.className = 'fa-solid fa-xmark';
+            this.initChatAgent();
+        } else {
+            launcherIcon.className = 'fa-solid fa-comment-dots';
+            this.closeNavigator();
+        }
+    }
+
+    closeNavigator() {
+        const widget = document.getElementById('yertal-nav-container');
+        const launcherIcon = document.querySelector('#yertal-nav-launcher i');
+        if (widget) {
+            widget.style.display = 'none';
+        }
+        if (launcherIcon) {
+            launcherIcon.className = 'fa-solid fa-comment-dots';
+        }
+    }
 
 renderNode(nodeId) {
     console.log("ArcadeNavigator: Rendering node ->", nodeId);
@@ -2860,21 +2884,6 @@ renderNode(nodeId) {
         btn.onclick = () => this.processSelection(data);
         optionsBox.appendChild(btn);
     });
-}
-toggleNavigator() {
-    const widget = document.getElementById('yertal-nav-container');
-    const launcherIcon = document.querySelector('#yertal-nav-launcher i');
-    const isHidden = widget.style.display === 'none' || widget.style.display === '';
-
-    if (isHidden) {
-        launcherIcon.classList.remove('fa-comment-dots');
-        launcherIcon.classList.add('fa-xmark');
-        this.initChatAgent(); 
-    } else {
-        launcherIcon.classList.remove('fa-xmark');
-        launcherIcon.classList.add('fa-comment-dots');
-        this.closeNavigator();
-    }
 }
     closeNavigator() {
         const widget = document.getElementById('yertal-nav-container');
