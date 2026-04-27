@@ -2871,30 +2871,28 @@ toggleNavigator() {
     const isHidden = widget.style.display === 'none' || widget.style.display === '';
 
     if (isHidden) {
-        launcherIcon.classList.remove('fa-comments');
+        launcherIcon.classList.remove('fa-comment-dots');
         launcherIcon.classList.add('fa-xmark');
         this.initChatAgent(); 
     } else {
         launcherIcon.classList.remove('fa-xmark');
-        launcherIcon.classList.add('fa-comments');
+        launcherIcon.classList.add('fa-comment-dots');
         this.closeNavigator();
     }
 }
-
 closeNavigator() {
     const widget = document.getElementById('yertal-nav-container');
     const launcherIcon = document.querySelector('#yertal-nav-launcher i');
     
     if (widget) {
         widget.style.display = 'none';
-        // Ensure icon resets if closed via the 'X' inside the header too
         if (launcherIcon) {
             launcherIcon.classList.remove('fa-xmark');
-            launcherIcon.classList.add('fa-comments');
+            launcherIcon.classList.add('fa-comment-dots');
         }
     }
 }
-submitPriorityMessage() {
+    submitPriorityMessage() {
     const message = document.getElementById('nav-message-input').value;
     if (!message.trim()) return;
 
