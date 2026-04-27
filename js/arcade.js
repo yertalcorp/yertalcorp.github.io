@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:51:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2807,21 +2807,21 @@ class ArcadeNavigator {
     // Inside your ArcadeNavigator class in arcade.js
 
     initChatAgent() {
-        console.log("ArcadeNavigator: initChatAgent called. Current Node:", this.currentNode);
+        console.log("ArcadeNavigator: initChatAgent called.");
         let widget = document.getElementById('yertal-nav-container');
     
-        // Create it if it doesn't exist
         if (!widget) {
-            console.log("ArcadeNavigator: Widget container not found, creating 'yertal-nav-container'...");
+            console.log("ArcadeNavigator: Widget not found in HTML, creating dynamically...");
             widget = document.createElement('div');
             widget.id = 'yertal-nav-container';
             widget.className = 'yertal-navigator-widget';
             document.body.appendChild(widget);
         }
     
-        // Show it and reset to start or current node
+        // Ensure it's visible and animated
         widget.style.display = 'flex';
-        widget.style.animation = 'fadeIn 0.3s ease-in-out';
+        widget.style.opacity = '1';
+        
         this.renderNode(this.currentNode);
     }
 
