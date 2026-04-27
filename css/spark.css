@@ -44,7 +44,13 @@
     height: 100% ;
     border-radius: inherit; /* Inherits the 24px radius (or 0px when maximized) */
 }
-
+/* Ensure the iframe itself inherits the shape */
+#spark-content-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: inherit; /* Syncs corners with the parent container */
+}
 #spark-content-container::after {
     content: '';
     position: absolute;
