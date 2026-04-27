@@ -1647,7 +1647,7 @@ button:hover {
 .navigator-option {
     /* Back to your original branding variables */
     background: var(--btn-gradient);
-    color: var(--bg-color);
+    color: var(--button-text-color);
     border: 1px solid var(--button-border-color);
     text-shadow: 0 1px 2px var(--button-text-shadow-color);
     padding: 10px 14px;
