@@ -1643,11 +1643,11 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     if (isSource) {
             instructions = `- Research specific items that match the task.
                             ${promptTypeObject.rules}
-                         - Format: JSON array [{"name", "url", "thumbnail"}] and name has maximum 3 words. Fetch a thumbnail that represents the item.`;
+                         - Format: JSON array [{"name", "url", "thumbnail"}] and name has maximum 3 words. Fetch a thumbnail that matches the name.`;
     } else {
         // Your existing code generation logic
-        instructions = `Write a visually stunning, fully working HTML/Javascript application.
-                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. Fetch a thumbnail that represents the application.`;
+        instructions = `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
+                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. Fetch a thumbnail that matches the application.`;
     } 
 
     const returnString = isSource ? 
