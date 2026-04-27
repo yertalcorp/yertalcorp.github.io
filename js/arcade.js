@@ -2796,6 +2796,9 @@ function getThemeBrandingColor(themeId) {
 
 /* Chat interface */
 const navigatorAgent = new ArcadeNavigator(dbData);
+// ADD THIS LINE IMMEDIATELY AFTER TO FIX THE REFERENCE ERROR:
+window.navigatorAgent = navigatorAgent;
+
 class ArcadeNavigator {
     constructor(dbData) {
         console.log("ArcadeNavigator: Initializing with data:", dbData);
