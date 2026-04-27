@@ -2807,22 +2807,18 @@ class ArcadeNavigator {
     // Inside your ArcadeNavigator class in arcade.js
 
 initChatAgent() {
-        console.log("ArcadeNavigator: initChatAgent firing...");
-        let widget = document.getElementById('yertal-nav-container');
-    
-        if (!widget) {
-            widget = document.createElement('div');
-            widget.id = 'yertal-nav-container';
-            widget.className = 'yertal-navigator-widget';
-            document.body.appendChild(widget);
-        }
-    
-        // Show it and reset to start or current node
-        widget.style.display = 'flex';
-        widget.style.animation = 'navFadeIn 0.3s ease-out';
-        this.renderNode(this.currentNode);
+    let widget = document.getElementById('yertal-nav-container');
+    if (!widget) {
+        widget = document.createElement('div');
+        widget.id = 'yertal-nav-container';
+        widget.className = 'yertal-navigator-widget';
+        document.body.appendChild(widget);
     }
-
+    
+    // Explicitly ensure display: flex is applied on top of the 'none'
+    widget.style.display = 'flex';
+    this.renderNode(this.currentNode);
+}
     toggleNavigator() {
         const widget = document.getElementById('yertal-nav-container');
         const launcherIcon = document.querySelector('#yertal-nav-launcher i');
