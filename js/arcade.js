@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @18:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:29:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2798,21 +2798,25 @@ window.handleLauncherClick = function() {
     const chatData = databaseCache?.chat_config;
 
     if (!window.navigatorAgent && chatData) {
-        // 1. Create the instance
         window.navigatorAgent = new ArcadeNavigator(chatData);
-        // 2. Initialize it
         window.navigatorAgent.initChatAgent();
         
-        // 3. FORCE toggle immediately on this same click
+        // Use a small delay to let the DOM settle
         setTimeout(() => {
-         if (window.navigatorAgent) window.navigatorAgent.toggleNavigator();
-        }, 50); return;
+            const widget = document.querySelector('.yertal-navigator-widget');
+            if (widget) {
+                // Force it open directly to avoid the "flicker" of a toggle conflict
+                widget.classList.add('active');
+                // Also update the icon manually so it's in sync
+                const icon = document.querySelector('.navigator-launcher i');
+                if (icon) icon.className = 'fa-solid fa-xmark';
+            }
+        }, 50);
+        return;
     }
 
     if (window.navigatorAgent) {
         window.navigatorAgent.toggleNavigator();
-    } else {
-        console.error("Launcher Error: chat_config not loaded yet.");
     }
 };
 
