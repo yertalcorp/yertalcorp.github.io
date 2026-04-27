@@ -1594,12 +1594,15 @@ button:hover {
 }
 /* --- Yertal Navigator Launcher --- */
 .navigator-launcher {
+    /* Cage Breakers: Prevents parents from breaking 'fixed' position */
+    transform: none;
+    will-change: auto;
+
     position: fixed; /* LOCK TO SCREEN */
     top: 35%; /* PULLED DOWN A BIT (from 30% to 35%) */
     right: 30px;
     bottom: auto;
     left: auto;
-    
     width: 65px;        /* Slightly larger bubble */
     height: 65px;
     background: var(--btn-gradient);
@@ -1617,6 +1620,7 @@ button:hover {
 
 /* --- THE CLOUD ICON (Targeting the FontAwesome icon) --- */
 .navigator-launcher i {
+    display: block;
     font-size: 32px; /* INCREASED ICON SIZE */
     color: var(--branding-text-color);
     pointer-events: none; /* Ensures click goes to the bubble */
@@ -1628,7 +1632,7 @@ button:hover {
     top: calc(35% + 75px); /* Match the launcher's new 35% top */
     right: 30px;
     bottom: auto;
-    
+    transform: none;
     width: 340px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
