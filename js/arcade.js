@@ -2821,6 +2821,7 @@ class ArcadeNavigator {
         // Ensure it's visible and animated
         widget.style.display = 'flex';
         widget.style.opacity = '1';
+        widget.style.pointerEvents = 'all';
         
         this.renderNode(this.currentNode);
     }
