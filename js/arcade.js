@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -123,10 +123,10 @@ window.handleMenuTrigger = (type) => {
                     return;
                 }
 
-                if (!window.navigatorAgent) {
-                    window.navigatorAgent = new ArcadeNavigator(chatData);
+                if (!navigatorAgent) {
+                    navigatorAgent = new ArcadeNavigator(chatData);
                 }
-                window.navigatorAgent.initChatAgent();
+                navigatorAgent.initChatAgent();
                 break;
 
             case 'tutorial':
@@ -2795,6 +2795,7 @@ function getThemeBrandingColor(themeId) {
 }
 
 /* Chat interface */
+const navigatorAgent = new ArcadeNavigator(dbData);
 class ArcadeNavigator {
     constructor(dbData) {
         console.log("ArcadeNavigator: Initializing with data:", dbData);
@@ -2937,12 +2938,8 @@ renderNode(nodeId) {
         `;
     }
 }
-// Inside your database initialization or at the bottom of arcade.js
-// Where you create the agent:
-const navigatorAgent = new ArcadeNavigator(dbData);
 
-// ADD THIS LINE IMMEDIATELY AFTER:
-window.navigatorAgent = navigatorAgent;
+
 // ----------------------------------
 window.handleCreation = handleCreation;
 // Force the function to be global so the HTML button can see it
