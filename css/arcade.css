@@ -1595,9 +1595,9 @@ button:hover {
 /* --- Yertal Navigator Component --- */
 .yertal-navigator-widget {
     position: fixed;
-    bottom: 25px;
+    bottom: 95px;
     right: 25px;
-    width: 340px;
+    min-width: 380px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -1610,6 +1610,29 @@ button:hover {
     opacity: 0; /* Start hidden for the animation */
     pointer-events: none;
     animation: navFadeIn 0.3s ease-out;
+}
+/* The Floating Button */
+.navigator-launcher {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    background: var(--btn-gradient);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 100000; /* Highest priority */
+    transition: transform 0.2s ease;
+}
+
+.navigator-launcher:hover {
+    transform: scale(1.1);
 }
 
 .navigator-header {
