@@ -1661,7 +1661,8 @@ button:hover {
 .navigator-option:hover {
     filter: brightness(1.1);
     transform: translateY(-1px);
-    color: var(--glow-color-aura);
+    color: var(--bg-color);
+    background: var(--glow-color);
 }
 .yertal-navigator-widget.active {
     display: flex;
