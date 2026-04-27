@@ -1595,16 +1595,16 @@ button:hover {
 /* --- Yertal Navigator Component --- */
 
 /* --- Yertal Navigator Component --- */
+/* --- The Widget Window --- */
+/* --- Yertal Navigator Component --- */
 .navigator-launcher {
-    position: fixed ;
-    bottom: 25px ;
-    right: 25px ;
-    left: auto ;
-    top: auto ;
-    width: 60px ;
-    height: 60px ;
-    margin: 0 ;
-    transform: none ;
+    position: fixed !important; /* Locks it to the screen, not the page */
+    bottom: 25px !important; /* Distance from the bottom edge of the window */
+    right: 25px !important; /* Distance from the right edge of the window */
+    left: auto !important;
+    top: auto !important;
+    width: 60px !important;
+    height: 60px !important;
     background: var(--btn-gradient);
     border: 1px solid var(--button-border-color);
     border-radius: 50%;
@@ -1615,26 +1615,25 @@ button:hover {
     font-size: 24px;
     cursor: pointer;
     box-shadow: 0 8px 32px var(--card-shadow-color);
-    z-index: 999999 ;
+    z-index: 999999 !important; /* Higher than everything else */
     transition: transform 0.2s ease, filter 0.2s ease;
 }
 
-/* --- The Widget Window --- */
 .yertal-navigator-widget {
-    position: fixed ;
-    bottom: 95px ;
-    right: 25px ;
-    left: auto ;
-    top: auto ;
-    width: 340px ;
+    position: fixed !important; /* Keeps the chat window following the screen */
+    bottom: 95px !important; /* Sits exactly above the launcher */
+    right: 25px !important;
+    left: auto !important;
+    top: auto !important;
+    width: 340px !important;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     box-shadow: 0 8px 32px var(--card-shadow-color);
     font-family: var(--text-main-font);
-    display: none; /* JS will toggle this to flex */
+    display: none;
     flex-direction: column;
-    z-index: 999998 ;
+    z-index: 999998 !important;
     overflow: hidden;
     animation: navFadeIn 0.3s ease-out;
 }
