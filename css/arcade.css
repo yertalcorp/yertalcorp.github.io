@@ -1605,7 +1605,7 @@ button:hover {
     font-family: var(--text-main-font);
     display: flex;
     flex-direction: column;
-    z-index: 99999;
+    z-index: 9999;
     overflow: hidden;
     animation: navFadeIn 0.3s ease-out;
 }
