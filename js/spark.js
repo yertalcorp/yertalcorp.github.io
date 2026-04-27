@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 12:18:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:47:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -33,70 +33,54 @@ function wrapCodeInLaboratory(spark) {
                     height: 100%; 
                     overflow: hidden; 
                     
-                    /* Apply theme background to the area around the window */
-                    background-color: var(--bg-color-mid, #00080f); 
+                    /* Background is transparent to show the #spark-content-container theme */
+                    background: transparent; 
                     
                     /* CENTERED POSITIONING */
-                    display: flex; align-items: center; justify-content: center;
-                    color: var(--text-main-color, #ffffff);
-                    font-family: var(--text-main-font, sans-serif);
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
                 }
 
-                /* The actual simulation viewport */
+                /* The actual simulation viewport - LIQUID SCALING */
                 canvas { 
-                    display: block; 
-                    /* STRETCH & CENTER LOGIC */
-                    width: 100vw !important; height: 100vh !important; max-width: 100%;
-                    max-height: 100%;
+                    display: block !important; 
+                    width: 100vw !important; 
+                    height: 100vh !important;
                     object-fit: contain;
-                    margin: auto;
-                    
-                    image-rendering: auto; 
-                    /* Ensures the canvas background doesn't overwrite our theme */
                     background: transparent !important;
                 }
 
-                .system-error {
-                    text-align: center;
-                    padding: 20px;
-                    border: 2px solid var(--error-color, #ff4444);
-                    background: var(--bg-color-low, rgba(0,0,0,0.8));
-                    color: var(--error-color, #ff4444);
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
+                #user-code-wrapper {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
                 }
             </style>
         </head>
         <body>
-            ${activeCode || '<div class="system-error"><h1>[ System Error ]</h1><p>Diagnostic: No Executable Code Found</p></div>'}
+            <div id="user-code-wrapper">
+                ${activeCode}
+            </div>
 
             <script>
                 (function() {
-                function forceLaboratoryFit() {
-                    const cvs = document.querySelector('canvas');
-                    if (cvs) {
-                    // ADDED: Attempt to force buffer preservation if the library supports it
-                        if (cvs.getContext('webgl')) cvs.getContext('webgl', { preserveDrawingBuffer: true });
-                        if (cvs.getContext('webgl2')) cvs.getContext('webgl2', { preserveDrawingBuffer: true });
-
-                            cvs.width = window.innerWidth;
-                            cvs.height = window.innerHeight;
-
-                            if (typeof window.resize === 'function') window.resize();
-                            if (typeof window.setup === 'function') window.setup();
-                            if (typeof window.init === 'function') window.init();
-                            if (typeof window.resizeCanvas === 'function') {
-                                window.resizeCanvas(window.innerWidth, window.innerHeight);
-                            }
-                        }
+                    // Re-broadcasts the resize event to trigger internal engine updates (Three.js/P5)
+                    function notifySimulationOfResize() {
+                        window.dispatchEvent(new Event('resize'));
                     }
 
+                    // Initial trigger to snap content to the container
                     window.addEventListener('load', () => {
-                        forceLaboratoryFit();
-                        setTimeout(forceLaboratoryFit, 150);
+                        notifySimulationOfResize();
+                        // Brief delay to account for CSS transition start
+                        setTimeout(notifySimulationOfResize, 50); 
                     });
 
-                    window.addEventListener('resize', forceLaboratoryFit);
+                    // Listens for the container/window changing (Zen mode toggle)
+                    window.addEventListener('resize', notifySimulationOfResize);
                 })();
             </script>
         </body>
