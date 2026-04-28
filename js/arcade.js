@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:38:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -28,6 +28,22 @@ let modelStats = [];
 window.isInCooldown = false;
 
 let currentModelIndex = 0;
+// FUNCTION: handleSparkLaunch
+window.handleSparkLaunch = async function(sparkId, ownerId, targetUrl) {
+    console.log(`🚀 Launching Spark: ${sparkId}`);
+
+    try {
+        // 1. Await the view update completely before moving
+        // We pass 'currentId' which should be available in your showroom scope
+        await window.updateSparkViews(ownerId, currentId, sparkId, 'IN'); 
+        console.log("✅ View Logged");
+    } catch (err) {
+        console.warn("View tracking failed, but proceeding to launch:", err);
+    }
+
+    // 2. ONLY navigate after the promise has resolved or failed
+    window.location.href = targetUrl;
+};
 
 window.confirmDeleteCurrent = async (userId, currentId) => {
     const confirmation = confirm(`Are you sure you want to delete the whole current [${currentId}]?\n\nAll associated sparks will be permanently deleted. This action cannot be undone.`);
@@ -1972,23 +1988,6 @@ function genSparkImage(sparkImageFromDB) {
     console.log("genSparkImage: Treating the image as a standard path/URL");
     return sparkImageFromDB;
 }
-// FUNCTION: handleSparkLaunch
-// FUNCTION: handleSparkLaunch
-window.handleSparkLaunch = async function(sparkId, ownerId, targetUrl) {
-    console.log(`🚀 Launching Spark: ${sparkId}`);
-
-    try {
-        // 1. Await the view update completely before moving
-        // We pass 'currentId' which should be available in your showroom scope
-        await window.updateSparkViews(ownerId, currentId, sparkId, 'IN'); 
-        console.log("✅ View Logged");
-    } catch (err) {
-        console.warn("View tracking failed, but proceeding to launch:", err);
-    }
-
-    // 2. ONLY navigate after the promise has resolved or failed
-    window.location.href = targetUrl;
-};
 
 // FUNCTION: renderSparkCard
 function renderSparkCard(spark, isOwner, currentId, ownerId) {
