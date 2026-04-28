@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1957,10 +1957,11 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const toolIconColor = pearlColor;
 
     // 3. Extraction of Stats Counts
-    const viewCount = spark.stats?.views?.count || 0;
+    const viewCount = spark.stats?.views?.total_count || 0;
     const likeCount = spark.stats?.likes?.count || 0;
     const shareCount = spark.stats?.reshares?.count || 0;
     const tipCount = spark.stats?.tips?.count || 0;
+    const feedbackCount = spark.stats?.feedback?.count || 0;
 
     // Shared Styles
     const btnStyle = `background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; filter: drop-shadow(0 0 2px var(--glow-color));`;
@@ -2003,6 +2004,10 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                         <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> 
                         LIKES: ${likeCount}
                     </span>
+                    <span class="stat-feedback" title="Total Feedback">
+                        <i class="fas fa-comment-dots" style="margin-right: 2px;"></i> 
+                        CHAT: ${feedbackCount}
+                    </span>
                     <span class="stat-reshares" title="Total Shares">
                         <i class="fas fa-retweet" style="margin-right: 2px;"></i> 
                         SHARES: ${shareCount}
@@ -2021,6 +2026,10 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                     <div class="action-buttons" style="display: flex; gap: 0.8rem; align-items: center; justify-content: center;">
                         <button onclick="likeSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Like" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                             <i class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
+                        </button>
+
+                        <button onclick="openFeedback('${ownerId}', '${currentId}', '${spark.id}')" title="Leave Feedback" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <i class="fas fa-comment" style="font-size: 10px; color: ${toolIconColor};"></i>
                         </button>
 
                         ${isOwner ? `
