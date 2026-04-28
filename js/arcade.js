@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:38:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @18:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -42,10 +42,11 @@ window.handleSparkLaunch = async function(sparkId, ownerId, targetUrl) {
     }
 
     // 2. ONLY navigate after the promise has resolved or failed
-    window.location.href = targetUrl;
+    // Temporarily disable this.
+    //window.location.href = targetUrl;
 };
 
-window.confirmDeleteCurrent = async (userId, currentId) => {
+window.confirmDeleteCurrent = async (userId, curre//ntId) => {
     const confirmation = confirm(`Are you sure you want to delete the whole current [${currentId}]?\n\nAll associated sparks will be permanently deleted. This action cannot be undone.`);
     
     if (confirmation) {
