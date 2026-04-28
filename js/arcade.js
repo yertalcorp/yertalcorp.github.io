@@ -77,7 +77,7 @@ const steps = [
     {
         target: ".settings-trigger", // Assuming three dots
         title: "OS_PREFERENCES",
-        content: "Access System Settings to change themes (like Autumn Ember) or upgrade plans. Business Plans allow you to rebrand 'Tips' to 'Funds' or 'Purchase' to match your shop."
+        content: "Access System Settings to change themes (like Autumn Ember) or upgrade plans. Business Plans allow you to rebrand 'Tips' to 'Sales' to match your shop."
     },
     {
         target: ".terminal-btn", 
@@ -92,7 +92,7 @@ const steps = [
     {
         target: ".spark-stats-row", // Target the icons/stats row on a card
         title: "ENGAGEMENT_PROTOCOLS",
-        content: "Interact with Sparks via Save, Share, or Tip. In Business mode, these interactions become your revenue stream for tips or product funding."
+        content: "Interact with Sparks via Save, Share, or Tip. In Business mode, these interactions become your revenue stream for sales or product funding."
     },
     {
         target: null,
@@ -391,7 +391,7 @@ const playClickSound = () => {
 // Transaction routines to update Spark stats
 async function updateSparkTransaction(sparkId, txData) {
     const txId = `tx_${Date.now()}`;
-    const sparkStatsPath = `infrastructure/currents/${currentId}/sparks/${sparkId}/stats/tips`;
+    const sparkStatsPath = `infrastructure/currents/${currentId}/sparks/${sparkId}/stats/transactions`;
 
     const updates = {};
     updates[`${sparkStatsPath}/ledger/${txId}`] = {
@@ -865,7 +865,7 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
                 created: Date.now(),
                 stats: {
                     views: { count: 0, total_count: 0, last_viewed: saveDate, monthly_ledger: {} },
-                    tips: { count: 0, total_amount: 0, ledger: {} },
+                    transactions: { count: 0, total_amount: 0, ledger: {} },
                     likes: { count: 0, users: {} },
                     reshares: { count: 0, users: {} },
                     forges: { count: 0, users: {} },
@@ -2444,7 +2444,7 @@ async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', t
         code: data.code || null,
         link: data.link || null,
         privacy: currentPrivacy,
-        stats: { views: 0, likes: 0, tips: 0 }
+        stats: { views: 0, likes: 0, transactions: 0 }
     });
 }
 
