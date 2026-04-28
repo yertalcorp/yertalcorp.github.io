@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:06:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -474,7 +474,7 @@ window.payOwner = function(btn, ownerId, currentId, sparkId) {
     const fixedPrice = spark.price || 0;
 
     const hudHtml = `
-        <div id="payment-hud" class="hud-overlay" style="display: flex; align-items: flex-start; justify-content: center; padding-top: 10vh;" onclick="if(event.target === this) this.remove()">
+        <div id="payment-hud" data-target-id="${sparkId}" class="hud-overlay" style="display: flex; align-items: flex-start; justify-content: center; padding-top: 10vh;" onclick="if(event.target === this) this.remove()">
             <div class="hud-onboarding-grid" style="background: var(--bg-color-low); border: 1px solid var(--branding-color); padding: 2rem; border-radius: 12px; width: 340px; text-align: center; gap: 1.2rem; box-shadow: 0 0 20px var(--glow-aura);">
                 
                 <div class="metallic-text" style="font-size: 10px; opacity: 0.8;">
@@ -559,19 +559,34 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
 
     try {
         await update(ref(db), updates);
-        btn.innerText = "TRANSACTION COMPLETE";
+        btn.innerText = "PAYMENT COMPLETE";
         btn.style.color = "#00ff00";
         
-        setTimeout(() => paymentHud.remove(), 1500);
         
         // Update the UI in the stats row
-        const tipsElement = document.querySelector(`#tips-stat-${sparkId}`);
-        if (tipsElement) {
-            let currentTips = parseInt(tipsElement.innerText) || 0;
-            tipsElement.innerText = currentTips + amount;
-        }
+        // Locate the card using the ID stored on the HUD
+        const hud = document.getElementById('payment-hud');
+        const sparkId = hud.getAttribute('data-target-id');
+        const card = document.querySelector(`[data-spark-id="${sparkId}"]`);
+        const txLabel = card.querySelector('.stat-transactions');
+            
+        if (txLabel) {
+            // Assuming 'type' is passed to sendPayment (e.g., 'sale' or 'tip')
+            const labelText = type === 'sale' ? 'SALES' : 'TIPS';
+            const iconClass = type === 'sale' ? 'fa-shopping-cart' : 'fa-hand-holding-usd';
+    
+            // Calculate new total (extracting number from current text)
+            const currentText = txLabel.innerText.split(': ')[1] || "0";
+            const newTotal = parseFloat(currentText.replace(/,/g, '')) + amount;
 
-        console.log("✅ Tip logged and UI updated");
+            txLabel.innerHTML = `
+             <i class="fas ${iconClass}" style="margin-right: 2px;"></i> 
+             ${labelText}: ${newTotal.toLocaleString('en-IN')}
+             `;
+            console.log("✅ Tip logged and UI updated");
+        }
+        setTimeout(() => paymentHud.remove(), 1500);
+
     } catch (err) {
         console.error("Payment sync failed:", err);
         btn.innerText = "RETRY";
