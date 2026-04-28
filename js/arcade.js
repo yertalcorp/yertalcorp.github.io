@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2160,7 +2160,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                             <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
                             </button>
-                            <button onclick="window.payOwner(this, '${ownerId}', '${currentId}', '${sparkId}')" 
+                            <button onclick="window.payOwner(this, '${ownerId}', '${currentId}', '${spark.id}')" 
                                     title="${txActionTitle}" 
                                     style="${btnStyle}" 
                                     onmouseover="${onHover}" 
