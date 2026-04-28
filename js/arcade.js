@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -390,28 +390,17 @@ const playClickSound = () => {
 
 // Transaction routines to update Spark stats
 async function updateSparkTransaction(sparkId, txData) {
-    const { amount, currency, senderId, recipientId, country, isBusiness } = txData;
     const txId = `tx_${Date.now()}`;
-    const timestamp = new Date().toISOString();
-    const monthKey = timestamp.slice(0, 7);
-
-    const updates = {};
     const sparkStatsPath = `infrastructure/currents/${currentId}/sparks/${sparkId}/stats/tips`;
 
-    // 1. Update Spark's Internal Ledger
+    const updates = {};
     updates[`${sparkStatsPath}/ledger/${txId}`] = {
-        amt: amount,
-        ts: timestamp,
-        uid: senderId,
-        type: isBusiness ? "sale" : "tip"
+        amt: txData.amount,
+        ts: new Date().toISOString(),
+        uid: txData.senderId,
+        type: txData.isBusiness ? "sale" : "tip"
     };
-    updates[`${sparkStatsPath}/total_amount`] = firebase.database.ServerValue.increment(amount);
-
-    // 2. Update Global/User Analytics (Task 2 & 5.1)
-    const geoPath = `analytics/transactions/monthly/${monthKey}/${country}`;
-    updates[`${geoPath}/volume`] = firebase.database.ServerValue.increment(amount);
-    updates[`${geoPath}/count`] = firebase.database.ServerValue.increment(1);
-    updates[`users/${recipientId}/stats/revenue`] = firebase.database.ServerValue.increment(amount);
+    updates[`${sparkStatsPath}/total_amount`] = firebase.database.ServerValue.increment(txData.amount);
 
     return db.ref().update(updates);
 }
@@ -435,27 +424,18 @@ async function updateSparkFeedback(sparkId, userId, comment) {
 
 async function updateSparkViews(sparkId, country) {
     const now = new Date();
-    const day = now.toISOString().split('T')[0];
-    const month = day.slice(0, 7);
-    const year = day.slice(0, 4);
-
+    const month = now.toISOString().slice(0, 7);
     const sparkPath = `infrastructure/currents/${currentId}/sparks/${sparkId}/stats/views`;
-    const updates = {};
 
-    // Spark-Local Stats
+    const updates = {};
     updates[`${sparkPath}/total_count`] = firebase.database.ServerValue.increment(1);
     updates[`${sparkPath}/last_viewed`] = now.toISOString();
     updates[`${sparkPath}/monthly_ledger/${month}/total`] = firebase.database.ServerValue.increment(1);
     updates[`${sparkPath}/monthly_ledger/${month}/geo/${country}`] = firebase.database.ServerValue.increment(1);
 
-    // Global Analytics (By Country/Time)
-    const globalBase = `analytics/views`;
-    updates[`${globalBase}/daily/${day}/${country}`] = firebase.database.ServerValue.increment(1);
-    updates[`${globalBase}/monthly/${month}/${country}`] = firebase.database.ServerValue.increment(1);
-    updates[`${globalBase}/annual/${year}/${country}`] = firebase.database.ServerValue.increment(1);
-
     return db.ref().update(updates);
 }
+    
 window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
     // 1. Internal Safety Check
     if (!auth.currentUser || !ownerUid || ownerUid === "undefined") return;
@@ -1903,31 +1883,34 @@ async function handleSparkLaunch(sparkId, ownerId, url) {
 // FUNCTION: renderSparkCard
 function renderSparkCard(spark, isOwner, currentId, ownerId) {
     /* Overall Objective: Generate the HTML for a spark card with persistent 
-        neon state for likes and shares based on user history. */
+        neon state for likes and shares, and dynamic monetization labels based on plan type. */
     
-    // Retrieve the page owner's slug from the cache using the ownerId and create the spark card's launch URL.
+    // Retrieve the page owner's metadata from the cache
     const ownerData = databaseCache?.users?.[ownerId];
     const userSlug = ownerData?.profile?.slug;
     const targetUrl = `spark.html?user=${userSlug}&current=${currentId}&spark=${spark.id}`;
+
+    // Retrieve Monetization settings based on the owner's plan_type
+    const ownerPlanKey = ownerData?.profile?.plan_type || 'free';
+    const planLimits = databaseCache.settings?.['plan_types']?.[ownerPlanKey] || {};
+    
+    // Logic for Sales vs Tips branding
+    const isSalesMode = planLimits.monetization === 'sales';
+    const txLabel = isSalesMode ? 'SALES' : 'TIPS';
+    const txIcon = isSalesMode ? 'fa-shopping-cart' : 'fa-coins';
+    const txActionTitle = isSalesMode ? 'Purchase' : 'Tip Jar';
 
     // Now check for the visitor user's credentials.
     const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
     const sparkElementId = `save-btn-${spark.id}`;
 
-    let finalRenderedImage = '/assets/thumbnails/default.jpg'; // Safe default
-
+    let finalRenderedImage = '/assets/thumbnails/default.jpg'; 
     const sparkImage = genSparkImage(spark.image);
-
-    // DYNAMIC FALLBACK TRIGGER
     finalRenderedImage = sparkImage;
         
-    // PRE-RENDER TRY-CATCH GUARD
-
     if (!sparkImage || spark.image === "") {
-       // Fetch the live active theme state on render
        const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
        const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
-            
        finalRenderedImage = getDynamicCardCover(activeThemeData);
     }
 
@@ -1941,7 +1924,6 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const likeIconColor = hasLiked ? neonColor : pearlColor;
     const likeIconGlow = hasLiked ? neonGlow : "none";
 
-    // Task: Check if this visitor has shared this spark at least once
     const hasShared = spark.stats?.reshares?.users?.[visitorUid] ? true : false;
     const shareIconColor = hasShared ? neonColor : pearlColor;
     const shareIconGlow = hasShared ? neonGlow : "none";
@@ -1966,11 +1948,11 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
 
     const toolIconColor = pearlColor;
 
-    // 3. Extraction of Stats Counts
+    // 3. Extraction of Stats Counts (Corrected paths)
     const viewCount = spark.stats?.views?.total_count || 0;
     const likeCount = spark.stats?.likes?.count || 0;
     const shareCount = spark.stats?.reshares?.count || 0;
-    const tipCount = spark.stats?.tips?.count || 0;
+    const transactionCount = spark.stats?.transactions?.count || 0;
     const feedbackCount = spark.stats?.feedback?.count || 0;
 
     // Shared Styles
@@ -1978,10 +1960,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
     const onOut = "this.style.filter='drop-shadow(0 0 2px var(--glow-color))'; this.style.transform='scale(1)';"
     
-    // Define the emergency network fallback execution string for the inline HTML tag
     const activeThemeKeyForHtml = localStorage.getItem('arcade-theme') || 'neon-dark';
-    const activeThemeDataForHtml = databaseCache.settings?.['themes']?.[activeThemeKeyForHtml] || {};
-    
     const inlineFallbackJS = `console.error('IMAGE NETWORK FAILED: ${spark.id}'); this.onerror=null; try { const tk = localStorage.getItem('arcade-theme') || 'neon-dark'; const td = databaseCache.settings['themes'][tk] || {}; this.src=getDynamicCardCover(td); } catch(e) { this.src='/assets/thumbnails/default.jpg'; }`;
 
     return `
@@ -2022,9 +2001,9 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                         <i class="fas fa-retweet" style="margin-right: 2px;"></i> 
                         SHARES: ${shareCount}
                     </span>
-                    <span class="stat-tips" title="Total Tips">
-                        <i class="fas fa-coins" style="margin-right: 2px;"></i> 
-                        TIPS: ${tipCount}
+                    <span class="stat-transactions" title="Total ${txLabel}">
+                        <i class="fas ${txIcon}" style="margin-right: 2px;"></i> 
+                        ${txLabel}: ${transactionCount}
                     </span>
                 </div>
 
@@ -2059,8 +2038,8 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                             <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
                             </button>
-                            <button onclick="tipOwner(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Tip Jar" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas fa-coins" style="font-size: 10px; color: ${toolIconColor};"></i>
+                            <button onclick="tipOwner(this, '${ownerId}', '${currentId}', '${spark.id}')" title="${txActionTitle}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                                <i class="fas ${txIcon}" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                         `}
                     </div>
