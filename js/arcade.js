@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @09:46:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -388,6 +388,74 @@ const playClickSound = () => {
     audio.play().catch(e => console.log("Audio play blocked by browser"));
 };
 
+// Transaction routines to update Spark stats
+async function updateSparkTransaction(sparkId, txData) {
+    const { amount, currency, senderId, recipientId, country, isBusiness } = txData;
+    const txId = `tx_${Date.now()}`;
+    const timestamp = new Date().toISOString();
+    const monthKey = timestamp.slice(0, 7);
+
+    const updates = {};
+    const sparkStatsPath = `infrastructure/currents/${currentId}/sparks/${sparkId}/stats/tips`;
+
+    // 1. Update Spark's Internal Ledger
+    updates[`${sparkStatsPath}/ledger/${txId}`] = {
+        amt: amount,
+        ts: timestamp,
+        uid: senderId,
+        type: isBusiness ? "sale" : "tip"
+    };
+    updates[`${sparkStatsPath}/total_amount`] = firebase.database.ServerValue.increment(amount);
+
+    // 2. Update Global/User Analytics (Task 2 & 5.1)
+    const geoPath = `analytics/transactions/monthly/${monthKey}/${country}`;
+    updates[`${geoPath}/volume`] = firebase.database.ServerValue.increment(amount);
+    updates[`${geoPath}/count`] = firebase.database.ServerValue.increment(1);
+    updates[`users/${recipientId}/stats/revenue`] = firebase.database.ServerValue.increment(amount);
+
+    return db.ref().update(updates);
+}
+
+async function updateSparkFeedback(sparkId, userId, comment) {
+    const timestamp = new Date().toISOString();
+    const sparkStatsPath = `infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback`;
+
+    const updates = {};
+    const entryId = db.ref(sparkStatsPath).child('entries').push().key;
+
+    updates[`${sparkStatsPath}/count`] = firebase.database.ServerValue.increment(1);
+    updates[`${sparkStatsPath}/entries/${entryId}`] = {
+        uid: userId,
+        text: comment,
+        ts: timestamp
+    };
+
+    return db.ref().update(updates);
+}
+
+async function updateSparkViews(sparkId, country) {
+    const now = new Date();
+    const day = now.toISOString().split('T')[0];
+    const month = day.slice(0, 7);
+    const year = day.slice(0, 4);
+
+    const sparkPath = `infrastructure/currents/${currentId}/sparks/${sparkId}/stats/views`;
+    const updates = {};
+
+    // Spark-Local Stats
+    updates[`${sparkPath}/total_count`] = firebase.database.ServerValue.increment(1);
+    updates[`${sparkPath}/last_viewed`] = now.toISOString();
+    updates[`${sparkPath}/monthly_ledger/${month}/total`] = firebase.database.ServerValue.increment(1);
+    updates[`${sparkPath}/monthly_ledger/${month}/geo/${country}`] = firebase.database.ServerValue.increment(1);
+
+    // Global Analytics (By Country/Time)
+    const globalBase = `analytics/views`;
+    updates[`${globalBase}/daily/${day}/${country}`] = firebase.database.ServerValue.increment(1);
+    updates[`${globalBase}/monthly/${month}/${country}`] = firebase.database.ServerValue.increment(1);
+    updates[`${globalBase}/annual/${year}/${country}`] = firebase.database.ServerValue.increment(1);
+
+    return db.ref().update(updates);
+}
 window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
     // 1. Internal Safety Check
     if (!auth.currentUser || !ownerUid || ownerUid === "undefined") return;
