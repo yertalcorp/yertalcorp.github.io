@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:06:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -572,8 +572,8 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
             
         if (txLabel) {
             // Assuming 'type' is passed to sendPayment (e.g., 'sale' or 'tip')
-            const labelText = type === 'sale' ? 'SALES' : 'TIPS';
-            const iconClass = type === 'sale' ? 'fa-shopping-cart' : 'fa-hand-holding-usd';
+            const labelText = mode === 'sale' ? 'SALES' : 'TIPS';
+            const iconClass = mode === 'sale' ? 'fa-shopping-cart' : 'fa-hand-holding-usd';
     
             // Calculate new total (extracting number from current text)
             const currentText = txLabel.innerText.split(': ')[1] || "0";
