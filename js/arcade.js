@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:38:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -422,20 +422,22 @@ async function updateSparkFeedback(sparkId, userId, comment) {
     return db.ref().update(updates);
 }
 
-async function updateSparkViews(sparkId, country) {
+window.updateSparkViews = async function(ownerId, currentId, sparkId, country = 'IN') {
     const now = new Date();
     const month = now.toISOString().slice(0, 7);
-    const sparkPath = `infrastructure/currents/${currentId}/sparks/${sparkId}/stats/views`;
+    // Path must include the ownerId to reach the correct user node
+    const sparkPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/views`;
 
     const updates = {};
-    updates[`${sparkPath}/total_count`] = firebase.database.ServerValue.increment(1);
+    // Use the modular increment() function
+    updates[`${sparkPath}/total_count`] = increment(1);
     updates[`${sparkPath}/last_viewed`] = now.toISOString();
-    updates[`${sparkPath}/monthly_ledger/${month}/total`] = firebase.database.ServerValue.increment(1);
-    updates[`${sparkPath}/monthly_ledger/${month}/geo/${country}`] = firebase.database.ServerValue.increment(1);
+    updates[`${sparkPath}/monthly_ledger/${month}/total`] = increment(1);
+    updates[`${sparkPath}/monthly_ledger/${month}/geo/${country}`] = increment(1);
 
-    return db.ref().update(updates);
-}
-    
+    return update(ref(db), updates);
+}    
+
 window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
     // 1. Internal Safety Check
     if (!auth.currentUser || !ownerUid || ownerUid === "undefined") return;
@@ -1870,30 +1872,23 @@ function genSparkImage(sparkImageFromDB) {
     return sparkImageFromDB;
 }
 // FUNCTION: handleSparkLaunch
-// Objective: Log the view and redirect the user to the spark's dedicated page.
+// FUNCTION: handleSparkLaunch
 window.handleSparkLaunch = async function(sparkId, ownerId, targetUrl) {
     console.log(`🚀 Launching Spark: ${sparkId}`);
 
     try {
-        // Increment the view count in Firebase before navigating
-        const viewRef = ref(db, `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/views`);
-        
-        const updates = {};
-        updates['total_count'] = increment(1);
-        updates['last_viewed'] = new Date().toISOString();
-        
-        // Optional: If you want to keep the monthly ledger we saw in your JSON
-        const monthYear = new Date().toISOString().slice(0, 7); // "2026-04"
-        updates[`monthly_ledger/${monthYear}/total`] = increment(1);
-
-        await update(viewRef, updates);
+        // 1. Await the view update completely before moving
+        // We pass 'currentId' which should be available in your showroom scope
+        await window.updateSparkViews(ownerId, currentId, sparkId, 'IN'); 
+        console.log("✅ View Logged");
     } catch (err) {
         console.warn("View tracking failed, but proceeding to launch:", err);
     }
 
-    // Navigate to the target URL
+    // 2. ONLY navigate after the promise has resolved or failed
     window.location.href = targetUrl;
 };
+
 // FUNCTION: renderSparkCard
 function renderSparkCard(spark, isOwner, currentId, ownerId) {
     /* Overall Objective: Generate the HTML for a spark card with persistent 
