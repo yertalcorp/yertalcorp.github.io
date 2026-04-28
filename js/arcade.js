@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1869,17 +1869,31 @@ function genSparkImage(sparkImageFromDB) {
     console.log("genSparkImage: Treating the image as a standard path/URL");
     return sparkImageFromDB;
 }
-// Launch the Spark Card and update number of views
-async function handleSparkLaunch(sparkId, ownerId, url) {
-    try {
-        const country = await getCountryCode(); // Get the geo-data
-        await updateSparkViews(sparkId, country); // Update stats & analytics
-    } catch (e) {
-        console.warn("Analytics failed, but continuing launch...");
-    }
-    window.location.href = url; // Proceed to the simulation
-}
+// FUNCTION: handleSparkLaunch
+// Objective: Log the view and redirect the user to the spark's dedicated page.
+window.handleSparkLaunch = async function(sparkId, ownerId, targetUrl) {
+    console.log(`🚀 Launching Spark: ${sparkId}`);
 
+    try {
+        // Increment the view count in Firebase before navigating
+        const viewRef = ref(db, `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/views`);
+        
+        const updates = {};
+        updates['total_count'] = increment(1);
+        updates['last_viewed'] = new Date().toISOString();
+        
+        // Optional: If you want to keep the monthly ledger we saw in your JSON
+        const monthYear = new Date().toISOString().slice(0, 7); // "2026-04"
+        updates[`monthly_ledger/${monthYear}/total`] = increment(1);
+
+        await update(viewRef, updates);
+    } catch (err) {
+        console.warn("View tracking failed, but proceeding to launch:", err);
+    }
+
+    // Navigate to the target URL
+    window.location.href = targetUrl;
+};
 // FUNCTION: renderSparkCard
 function renderSparkCard(spark, isOwner, currentId, ownerId) {
     /* Overall Objective: Generate the HTML for a spark card with persistent 
@@ -1966,7 +1980,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     return `
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center; width: 100%;">
             <div class="action-card" 
-                  onclick="handleSparkLaunch('${spark.id}', '${ownerId}', '${targetUrl}')"
+                  onclick="window.handleSparkLaunch('${spark.id}', '${ownerId}', '${targetUrl}')"
                   style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
                 
                 <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1.5rem; pointer-events: none;">
@@ -3024,6 +3038,7 @@ closeNavigator() {
 }
 // ----------------------------------
 window.handleCreation = handleCreation;
+window.handleSparkLaunch = handleSparkLaunch;
 // Force the function to be global so the HTML button can see it
 window.closeArcadeSettings = closeArcadeSettings;
 // At the bottom of arcade.js
