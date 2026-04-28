@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -19,6 +19,7 @@ export let globalTheme = "neon-dark";
 let user
 let selectedCategory = null;
 let cachedGKey = null;
+let MAXTIP = 100000;
 
 /*
  * Global Model Stats: [ ["model-name", failureCount], ... ]
@@ -533,7 +534,7 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
     if (!amount || amount <= 0) return alert("Invalid amount.");
     
     // Only enforce a cap on Tips to prevent errors; Sales are uncapped
-    if (mode === 'tip' && amount > 100000) {
+    if (mode === 'tip' && amount > MAXTIP) {
         return alert("For security, tips are capped at ₹1,00,000. For larger amounts, please contact the merchant.");
     }
 
@@ -562,6 +563,15 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
         btn.style.color = "#00ff00";
         
         setTimeout(() => paymentHud.remove(), 1500);
+        
+        // Update the UI in the stats row
+        const tipsElement = document.querySelector(`#tips-stat-${sparkId}`);
+        if (tipsElement) {
+            let currentTips = parseInt(tipsElement.innerText) || 0;
+            tipsElement.innerText = currentTips + amount;
+        }
+
+        console.log("✅ Tip logged and UI updated");
     } catch (err) {
         console.error("Payment sync failed:", err);
         btn.innerText = "RETRY";
