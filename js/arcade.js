@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -474,7 +474,7 @@ window.payOwner = function(btn, ownerId, currentId, sparkId) {
     const fixedPrice = spark.price || 0;
 
     const hudHtml = `
-        <div id="payment-hud" class="hud-overlay" style="display: flex; align-items: center; justify-content: center;" onclick="if(event.target === this) this.remove()">
+        <div id="payment-hud" class="hud-overlay" style="display: flex; align-items: flex-start; justify-content: center; padding-top: 10vh;" onclick="if(event.target === this) this.remove()">
             <div class="hud-onboarding-grid" style="background: var(--bg-color-low); border: 1px solid var(--branding-color); padding: 2rem; border-radius: 12px; width: 340px; text-align: center; gap: 1.2rem; box-shadow: 0 0 20px var(--glow-aura);">
                 
                 <div class="metallic-text" style="font-size: 10px; opacity: 0.8;">
