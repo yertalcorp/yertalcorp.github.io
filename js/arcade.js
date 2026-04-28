@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:38:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:55:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -437,6 +437,82 @@ window.updateSparkViews = async function(ownerId, currentId, sparkId, country = 
 
     return update(ref(db), updates);
 }    
+// FUNCTION: payOwner
+// Objective: Launch the payment HUD using existing CSS classes and generic naming
+window.payOwner = function(btn, ownerId, currentId, sparkId) {
+    const visitorUid = auth.currentUser?.uid;
+    if (!visitorUid) return alert("Please log in to support creators!");
+
+    // These values will eventually come from your JSON config for 'tips' or 'sales'
+    const displayAmt = "₹125.00"; 
+    const numericAmt = 15;
+
+    const hudHtml = `
+        <div id="payment-hud" class="hud-overlay" style="display: flex; align-items: center; justify-content: center;" onclick="if(event.target === this) this.remove()">
+            <div class="hud-onboarding-grid" style="background: var(--bg-color-low); border: 1px solid var(--branding-color); padding: 2rem; border-radius: 12px; width: 300px; text-align: center; gap: 1.5rem; box-shadow: 0 0 20px var(--glow-aura);">
+                
+                <div class="metallic-text" style="font-size: 10px; opacity: 0.8;">SECURE TRANSACTION</div>
+                
+                <div class="metallic-text" style="font-size: 2.5rem; color: var(--branding-color);">
+                    ${displayAmt}
+                </div>
+                
+                <p class="metallic-text" style="font-size: 11px; opacity: 0.6; text-transform: none;">
+                    Finalize your transaction for this Spark
+                </p>
+
+                <button class="ethereal-btn-sm" 
+                        onclick="window.sendPayment('${ownerId}', '${currentId}', '${sparkId}', ${numericAmt})"
+                        style="width: 100%; margin-top: 10px; height: 40px; font-size: 12px;">
+                    MAKE PAYMENT
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', hudHtml);
+};
+
+// FUNCTION: sendPayment
+// Objective: Update the transactions ledger and refresh UI
+window.sendPayment = async function(ownerId, currentId, sparkId, amount) {
+    const visitorUid = auth.currentUser?.uid;
+    const paymentHud = document.getElementById('payment-hud');
+    const btn = paymentHud.querySelector('button');
+    
+    // UI Feedback using existing styles
+    btn.innerText = "PROCESSING...";
+    btn.style.opacity = "0.5";
+    btn.disabled = true;
+
+    const txId = "tx_" + Date.now();
+    const path = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/transactions`;
+
+    const updates = {};
+    updates[`${path}/ledger/${txId}`] = {
+        amt: amount,
+        ts: new Date().toISOString(),
+        uid: visitorUid
+    };
+    updates[`${path}/total_amount`] = increment(amount);
+    updates[`${path}/count`] = increment(1);
+
+    try {
+        await update(ref(db), updates);
+        
+        btn.innerText = "SUCCESS!";
+        btn.style.color = "var(--branding-color)";
+        btn.style.opacity = "1";
+        
+        setTimeout(() => {
+            paymentHud.remove();
+        }, 1200);
+
+    } catch (err) {
+        console.error("Payment sync failed:", err);
+        btn.innerText = "ERROR";
+        btn.style.color = "var(--error-color)";
+    }
+};
 
 window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
     // 1. Internal Safety Check
@@ -2047,10 +2123,14 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                             <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
                             </button>
-                            <button onclick="tipOwner(this, '${ownerId}', '${currentId}', '${spark.id}')" title="${txActionTitle}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas ${txIcon}" style="font-size: 10px; color: ${toolIconColor};"></i>
-                            </button>
-                        `}
+                            <button onclick="window.payOwner(this, '${ownerId}', '${currentId}', '${sparkId}')" 
+                                    title="${txActionTitle}" 
+                                    style="${btnStyle}" 
+                                    onmouseover="${onHover}" 
+                                    onmouseout="${onOut}">
+                                    <i class="fas ${txIcon}" style="font-size: 10px; color: ${toolIconColor};"></i>
+                            </button>                        
+                            `}
                     </div>
                 </div>
             </div>
@@ -3034,6 +3114,7 @@ closeNavigator() {
 // ----------------------------------
 window.handleCreation = handleCreation;
 window.handleSparkLaunch = handleSparkLaunch;
+window.payOwner = payOwner;
 // Force the function to be global so the HTML button can see it
 window.closeArcadeSettings = closeArcadeSettings;
 // At the bottom of arcade.js
