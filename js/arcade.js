@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @18:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -35,6 +35,7 @@ window.handleSparkLaunch = async function(currentId, sparkId, ownerId, targetUrl
     try {
         // 1. Await the view update completely before moving
         // We pass 'currentId' which should be available in your showroom scope
+        console.log(`handleSparkLaunch: ownerId: ${ownerId}, currentId: ${currentId}, sparkId: ${sparkId}`);
         await window.updateSparkViews(ownerId, currentId, sparkId, 'IN'); 
         console.log("✅ View Logged");
     } catch (err) {
