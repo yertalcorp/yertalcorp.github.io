@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @18:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @18:38:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -29,7 +29,7 @@ window.isInCooldown = false;
 
 let currentModelIndex = 0;
 // FUNCTION: handleSparkLaunch
-window.handleSparkLaunch = async function(sparkId, ownerId, targetUrl) {
+window.handleSparkLaunch = async function(currentId, sparkId, ownerId, targetUrl) {
     console.log(`🚀 Launching Spark: ${sparkId}`);
 
     try {
@@ -2076,7 +2076,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     return `
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center; width: 100%;">
             <div class="action-card" 
-                  onclick="window.handleSparkLaunch('${spark.id}', '${ownerId}', '${targetUrl}')"
+                  onclick="window.handleSparkLaunch('${currentId}', '${spark.id}', '${ownerId}', '${targetUrl}')"
                   style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
                 
                 <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1.5rem; pointer-events: none;">
