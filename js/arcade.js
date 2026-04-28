@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:46:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @08:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1643,11 +1643,11 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     if (isSource) {
             instructions = `- Research specific items that match the task.
                             ${promptTypeObject.rules}
-                         - Format: JSON array [{"name", "url", "thumbnail"}] and name has maximum 3 words. The thumbnail is an existing and high-resolution image that represents the item.`;
+                         - Format: JSON array [{"name", "url", "thumbnail"}] and name has maximum 3 words. The thumbnail is an existing and high resolution image.`;
     } else {
         // Your existing code generation logic
         instructions = `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
-                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. The thumbnail is an image that represents the application.`;
+                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. The thumbnail represents the application.`;
     } 
 
     const returnString = isSource ? 
