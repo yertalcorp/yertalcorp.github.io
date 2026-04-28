@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:55:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -438,33 +438,45 @@ window.updateSparkViews = async function(ownerId, currentId, sparkId, country = 
     return update(ref(db), updates);
 }    
 // FUNCTION: payOwner
-// Objective: Launch the payment HUD using existing CSS classes and generic naming
 window.payOwner = function(btn, ownerId, currentId, sparkId) {
-    const visitorUid = auth.currentUser?.uid;
-    if (!visitorUid) return alert("Please log in to support creators!");
-
-    // These values will eventually come from your JSON config for 'tips' or 'sales'
-    const displayAmt = "₹125.00"; 
-    const numericAmt = 15;
+    const spark = databaseCache.users[ownerId].infrastructure.currents[currentId].sparks[sparkId];
+    const isSale = spark.monetization_type === 'sales';
+    const fixedPrice = spark.price || 0;
 
     const hudHtml = `
         <div id="payment-hud" class="hud-overlay" style="display: flex; align-items: center; justify-content: center;" onclick="if(event.target === this) this.remove()">
-            <div class="hud-onboarding-grid" style="background: var(--bg-color-low); border: 1px solid var(--branding-color); padding: 2rem; border-radius: 12px; width: 300px; text-align: center; gap: 1.5rem; box-shadow: 0 0 20px var(--glow-aura);">
+            <div class="hud-onboarding-grid" style="background: var(--bg-color-low); border: 1px solid var(--branding-color); padding: 2rem; border-radius: 12px; width: 340px; text-align: center; gap: 1.2rem; box-shadow: 0 0 20px var(--glow-aura);">
                 
-                <div class="metallic-text" style="font-size: 10px; opacity: 0.8;">SECURE TRANSACTION</div>
-                
-                <div class="metallic-text" style="font-size: 2.5rem; color: var(--branding-color);">
-                    ${displayAmt}
+                <div class="metallic-text" style="font-size: 10px; opacity: 0.8;">
+                    ${isSale ? 'PREMIUM ACQUISITION' : 'SUPPORT CREATOR'}
                 </div>
                 
-                <p class="metallic-text" style="font-size: 11px; opacity: 0.6; text-transform: none;">
-                    Finalize your transaction for this Spark
-                </p>
+                <div id="amount-display" class="metallic-text" style="font-size: 2.5rem; color: var(--branding-color);">
+                    ₹${isSale ? fixedPrice.toLocaleString('en-IN') : '0'}
+                </div>
 
+                ${!isSale ? `
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+                        ${[25, 50, 100, 500].map(amt => `
+                            <div class="navigator-option" style="margin:0; padding: 5px 12px;" onclick="setPaymentAmount(${amt})">₹${amt}</div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+
+                <div class="hud-step">
+                    <label class="hud-label-metallic">AMOUNT (INR)</label>
+                    <input type="number" id="payment-input" class="hud-input" 
+                           value="${isSale ? fixedPrice : ''}" 
+                           ${isSale ? 'readonly' : ''} 
+                           placeholder="Enter amount..."
+                           oninput="updateDisplay(this.value)"
+                           style="text-align: center; font-family: 'Orbitron'; color: var(--branding-color);">
+                </div>
+                
                 <button class="ethereal-btn-sm" 
-                        onclick="window.sendPayment('${ownerId}', '${currentId}', '${sparkId}', ${numericAmt})"
-                        style="width: 100%; margin-top: 10px; height: 40px; font-size: 12px;">
-                    MAKE PAYMENT
+                        onclick="window.sendPayment('${ownerId}', '${currentId}', '${sparkId}', '${isSale ? 'sale' : 'tip'}')"
+                        style="width: 100%; height: 45px; font-size: 13px; margin-top: 10px;">
+                    CONFIRM TRANSACTION
                 </button>
             </div>
         </div>
@@ -472,16 +484,34 @@ window.payOwner = function(btn, ownerId, currentId, sparkId) {
     document.body.insertAdjacentHTML('beforeend', hudHtml);
 };
 
-// FUNCTION: sendPayment
-// Objective: Update the transactions ledger and refresh UI
-window.sendPayment = async function(ownerId, currentId, sparkId, amount) {
+// UI Helper: Sync bubble click with input
+window.setPaymentAmount = function(amt) {
+    const input = document.getElementById('payment-input');
+    input.value = amt;
+    updateDisplay(amt);
+};
+
+// UI Helper: Sync display text with input
+window.updateDisplay = function(val) {
+    document.getElementById('amount-display').innerText = `₹${val || 0}`;
+};
+window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
+    const amount = parseFloat(document.getElementById('payment-input').value);
     const visitorUid = auth.currentUser?.uid;
     const paymentHud = document.getElementById('payment-hud');
-    const btn = paymentHud.querySelector('button');
+
+    // Validation
+    if (!amount || amount <= 0) return alert("Invalid amount.");
     
-    // UI Feedback using existing styles
-    btn.innerText = "PROCESSING...";
-    btn.style.opacity = "0.5";
+    // Only enforce a cap on Tips to prevent errors; Sales are uncapped
+    if (mode === 'tip' && amount > 100000) {
+        return alert("For security, tips are capped at ₹1,00,000. For larger amounts, please contact the merchant.");
+    }
+
+    if (!visitorUid) return alert("Please log in to complete your purchase.");
+
+    const btn = paymentHud.querySelector('button');
+    btn.innerText = "AUTHORIZING...";
     btn.disabled = true;
 
     const txId = "tx_" + Date.now();
@@ -491,26 +521,21 @@ window.sendPayment = async function(ownerId, currentId, sparkId, amount) {
     updates[`${path}/ledger/${txId}`] = {
         amt: amount,
         ts: new Date().toISOString(),
-        uid: visitorUid
+        uid: visitorUid,
+        type: mode // Explicitly log if it was a tip or sale
     };
     updates[`${path}/total_amount`] = increment(amount);
-    updates[`${path}/count`] = increment(1);
 
     try {
         await update(ref(db), updates);
+        btn.innerText = "TRANSACTION COMPLETE";
+        btn.style.color = "#00ff00";
         
-        btn.innerText = "SUCCESS!";
-        btn.style.color = "var(--branding-color)";
-        btn.style.opacity = "1";
-        
-        setTimeout(() => {
-            paymentHud.remove();
-        }, 1200);
-
+        setTimeout(() => paymentHud.remove(), 1500);
     } catch (err) {
         console.error("Payment sync failed:", err);
-        btn.innerText = "ERROR";
-        btn.style.color = "var(--error-color)";
+        btn.innerText = "RETRY";
+        btn.disabled = false;
     }
 };
 
@@ -2037,7 +2062,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     const viewCount = spark.stats?.views?.total_count || 0;
     const likeCount = spark.stats?.likes?.count || 0;
     const shareCount = spark.stats?.reshares?.count || 0;
-    const transactionCount = spark.stats?.transactions?.count || 0;
+    const transactionAmt = spark.stats?.transactions?.total_amount || 0;
     const feedbackCount = spark.stats?.feedback?.count || 0;
 
     // Shared Styles
@@ -2088,7 +2113,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                     </span>
                     <span class="stat-transactions" title="Total ${txLabel}">
                         <i class="fas ${txIcon}" style="margin-right: 2px;"></i> 
-                        ${txLabel}: ${transactionCount}
+                        ${txLabel}: ${transactionAmt}
                     </span>
                 </div>
 
