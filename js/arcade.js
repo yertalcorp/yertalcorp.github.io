@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:18:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -28,23 +28,34 @@ let modelStats = [];
 window.isInCooldown = false;
 
 let currentModelIndex = 0;
-// FUNCTION: handleSparkLaunch
+
+window.getUserCountry = async function() {
+    try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        return data.country_code || 'US'; 
+    } catch (err) {
+        console.warn("Country lookup failed, defaulting to US", err);
+        return 'US';
+    }
+};
+
 window.handleSparkLaunch = async function(currentId, sparkId, ownerId, targetUrl) {
     console.log(`🚀 Launching Spark: ${sparkId}`);
 
     try {
-        // 1. Await the view update completely before moving
-        // We pass 'currentId' which should be available in your showroom scope
+        const country = await window.getUserCountry();
         console.log(`handleSparkLaunch: ownerId: ${ownerId}, currentId: ${currentId}, sparkId: ${sparkId}`);
-        await window.updateSparkViews(ownerId, currentId, sparkId, 'IN'); 
+        
+        // Pass the dynamic country variable instead of 'IN'
+        await window.updateSparkViews(ownerId, currentId, sparkId, country); 
         console.log("✅ View Logged");
     } catch (err) {
         console.warn("View tracking failed, but proceeding to launch:", err);
     }
-
     // 2. ONLY navigate after the promise has resolved or failed
-    // Temporarily disable this.
-    // window.location.href = targetUrl;
+    // Disable this if the view count has issues, otherwise you cannot see logs
+    window.location.href = targetUrl;
 };
 
 window.confirmDeleteCurrent = async (userId, currentId) => {
