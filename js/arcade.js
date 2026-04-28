@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1889,6 +1889,16 @@ function genSparkImage(sparkImageFromDB) {
     console.log("genSparkImage: Treating the image as a standard path/URL");
     return sparkImageFromDB;
 }
+// Launch the Spark Card and update number of views
+async function handleSparkLaunch(sparkId, ownerId, url) {
+    try {
+        const country = await getCountryCode(); // Get the geo-data
+        await updateSparkViews(sparkId, country); // Update stats & analytics
+    } catch (e) {
+        console.warn("Analytics failed, but continuing launch...");
+    }
+    window.location.href = url; // Proceed to the simulation
+}
 
 // FUNCTION: renderSparkCard
 function renderSparkCard(spark, isOwner, currentId, ownerId) {
@@ -1977,7 +1987,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     return `
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center; width: 100%;">
             <div class="action-card" 
-                  onclick="window.location.href='${targetUrl}'"
+                  onclick="handleSparkLaunch('${spark.id}', '${ownerId}', '${targetUrl}')"
                   style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
                 
                 <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1.5rem; pointer-events: none;">
