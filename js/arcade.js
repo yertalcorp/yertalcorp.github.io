@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @11:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2301,7 +2301,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                             <i class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
                         </button>
 
-                        <button onclick="openFeedback('${ownerId}', '${currentId}', '${spark.id}')" title="Leave Feedback" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                        <button onclick="openFeedback(event, '${ownerId}', '${currentId}', '${spark.id}')" title="Leave Feedback" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                             <i class="fas fa-comment" style="font-size: 10px; color: ${toolIconColor};"></i>
                         </button>
 
