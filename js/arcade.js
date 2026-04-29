@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -594,10 +594,6 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
     }
 };
 
-/*
- * Objective: Refine Feedback HUD with moderation controls and author editing.
- * Task: Integrate permission-based action buttons using existing ethereal classes.
- */
 window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     if (event && event.stopPropagation) event.stopPropagation();
     
@@ -619,7 +615,7 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     const panel = document.createElement('div');
     panel.className = 'navigator-body feedback-panel'; 
     panel.style.position = 'absolute';
-    panel.style.width = '400px'; // Slightly wider to accommodate action buttons
+    panel.style.width = '400px'; 
     panel.style.zIndex = '2000';
     
     if (rect) {
@@ -640,7 +636,7 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
              <button class="navigator-option sz-md" style="width:100%; margin-top:15px; font-weight:bold; border-radius: 8px;" 
                 onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')">SUBMIT FEEDBACK</button>
              
-             <div id="feedback-list" style="margin-top:20px; max-height:220px; overflow-y:auto; border-top:1px solid var(--fg-color-low); padding-top:15px; padding-right: 5px;">
+             <div id="feedback-list" style="margin-top:20px; max-height:220px; overflow-y: scroll !important; border-top:1px solid var(--fg-color-low); padding: 15px 10px 30px 0;">
                 <div class="sz-xs" style="opacity:0.6; text-align:center;">SCANNING ARCHIVES...</div>
              </div>
 
@@ -671,21 +667,18 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
             const row = document.createElement('div');
             row.style.cssText = "margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;";
             
-            // Generate Action Buttons using existing ethereal-btn-sm
             let actionsHtml = `<div style="display: flex; gap: 6px;">`;
-            
             if (isAuthor) {
                 actionsHtml += `
-                    <button class="ethereal-btn-sm feedback-action-square" title="Edit Feedback"
-                        onclick="editFeedbackPrompt('${ownerId}', '${currentId}', '${sparkId}', '${key}')">
+                    <button class="ethereal-btn-sm feedback-action-square" title="Edit"
+                        onclick="window.editFeedbackPrompt('${ownerId}', '${currentId}', '${sparkId}', '${key}')">
                         <i class="fas fa-pen"></i>
                     </button>`;
             }
-            
             if (isOwner || isAuthor) {
                 actionsHtml += `
-                    <button class="ethereal-btn-sm feedback-action-square btn-delete-x" title="Delete Feedback"
-                        onclick="deleteFeedback('${ownerId}', '${currentId}', '${sparkId}', '${key}')">
+                    <button class="ethereal-btn-sm feedback-action-square btn-delete-x" title="Delete"
+                        onclick="window.deleteFeedback('${ownerId}', '${currentId}', '${sparkId}', '${key}')">
                         <i class="fas fa-times"></i>
                     </button>`;
             }
@@ -701,10 +694,80 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
             listContainer.appendChild(row);
         });
         
-        // Ensure scroll to bottom after render
         setTimeout(() => {
             listContainer.scrollTop = listContainer.scrollHeight;
         }, 100);
+    }
+};
+
+/**
+ * Objective: Remove feedback and decrement UI spark card count.
+ * Task: Transactional delete + DOM update for the numeric stat.
+ */
+window.deleteFeedback = async (ownerId, currentId, sparkId, entryKey) => {
+    if (!confirm("Permanently delete this transmission?")) return;
+    
+    const path = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback`;
+    const feedbackRef = ref(db, path);
+
+    try {
+        await runTransaction(feedbackRef, (currentData) => {
+            if (currentData && currentData.entries && currentData.entries[entryKey]) {
+                delete currentData.entries[entryKey];
+                // Decrease count, ensuring it never goes below 0
+                currentData.count = Math.max(0, (currentData.count || 1) - 1);
+            }
+            return currentData;
+        });
+
+        // --- UI SYNC: Update the Spark Card Count ---
+        const card = document.querySelector(`.spark-card[data-spark-id="${sparkId}"]`);
+        if (card) {
+            const label = card.querySelector('.stat-feedback');
+            if (label) {
+                const currentText = label.innerText.replace(/[^0-9]/g, '');
+                const newCount = Math.max(0, (parseInt(currentText) || 1) - 1);
+                label.innerHTML = `<i class="fas fa-comment"></i> FEEDBACK: ${newCount}`;
+            }
+        }
+
+        // Refresh the HUD to show updated list
+        window.openFeedback(null, ownerId, currentId, sparkId); 
+    } catch (e) {
+        console.error("Deletion failed:", e);
+    }
+};
+
+/**
+ * Objective: Open inline edit mode within the HUD.
+ */
+window.editFeedbackPrompt = (ownerId, currentId, sparkId, entryKey) => {
+    const textDiv = document.getElementById(`text-${entryKey}`);
+    const originalText = textDiv.innerText;
+    
+    textDiv.innerHTML = `
+        <textarea id="edit-area-${entryKey}" class="nav-textarea sz-xs" style="height:60px; margin-top:5px; border: 1px solid var(--branding-color);">${originalText}</textarea>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="ethereal-btn-sm sz-xs" style="padding: 4px 10px;" onclick="window.saveEdit('${ownerId}', '${currentId}', '${sparkId}', '${entryKey}')">SAVE</button>
+            <button class="ethereal-btn-sm sz-xs" style="padding: 4px 10px; border-color: var(--error-color); color: var(--error-color);" onclick="window.openFeedback(null, '${ownerId}', '${currentId}', '${sparkId}')">CANCEL</button>
+        </div>
+    `;
+};
+
+/**
+ * Objective: Save edited feedback to Firebase.
+ */
+window.saveEdit = async (ownerId, currentId, sparkId, entryKey) => {
+    const newMessage = document.getElementById(`edit-area-${entryKey}`).value.trim();
+    if (!newMessage) return;
+
+    const path = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback/entries/${entryKey}/message`;
+    
+    try {
+        await set(ref(db, path), newMessage);
+        window.openFeedback(null, ownerId, currentId, sparkId);
+    } catch (e) {
+        console.error("Edit failed:", e);
     }
 };
 window.submitSparkFeedback = async (ownerId, currentId, sparkId) => {
