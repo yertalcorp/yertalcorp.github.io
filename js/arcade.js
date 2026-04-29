@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -594,9 +594,9 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
     }
 };
 
-/**
- * Objective: Refine Feedback HUD aesthetics based on user screenshot.
- * Task: Center title, increase overlay opacity, and apply custom scrollbar logic.
+/*
+ * Objective: Enhance HUD definition and border visibility.
+ * Task: 70% opacity, glow border, and minimized scrollbar logic.
  */
 window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     if (event && event.stopPropagation) event.stopPropagation();
@@ -612,9 +612,9 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
         document.body.appendChild(hudOverlay);
     }
     
-    // MODIFICATION: Increased opacity (0.5) and slightly more blur (6px)
-    hudOverlay.style.backdropFilter = 'blur(6px)';
-    hudOverlay.style.background = 'rgba(0,0,0,0.5)'; 
+    // Increased opacity to 70% for better separation
+    hudOverlay.style.backdropFilter = 'blur(8px)';
+    hudOverlay.style.background = 'rgba(0,0,0,0.7)'; 
     hudOverlay.style.display = 'block';
 
     const panel = document.createElement('div');
@@ -624,17 +624,22 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     panel.style.left = `${rect.left}px`;
     panel.style.top = `${rect.bottom + window.scrollY + 10}px`;
     
+    // NEW: Distinct Glow Border and Shadow
+    panel.style.border = '1px solid var(--branding-color)';
+    panel.style.boxShadow = '0 0 15px var(--glow-aura), 0 0 30px rgba(0,0,0,0.8)';
+    panel.style.background = 'var(--bg-color)'; // Solid background to contrast with overlay
+
     panel.innerHTML = `
-        <div class="navigator-header" style="justify-content: center; position: relative;">
+        <div class="navigator-header" style="justify-content: center; position: relative; border-bottom: 1px solid var(--fg-color-low);">
             <span class="hud-title sz-sm">SPARK FEEDBACK</span>
             <i class="fas fa-times" style="position: absolute; right: 10px; cursor:pointer" 
                onclick="document.getElementById('spark-feedback-overlay').remove()"></i>
         </div>
         <div style="padding:15px;">
-             <div class="sz-xs" style="margin-bottom: 8px; color: var(--fg-color-mid); text-align: center;">Kindly enter your feedback:</div>
-             <textarea id="feedback-msg" class="nav-textarea sz-sm" placeholder="Type your thoughts here..." style="height: 70px;"></textarea>
+             <div class="sz-xs" style="margin-bottom: 8px; color: var(--fg-color-mid); text-align: center; font-style: italic;">Kindly enter your feedback:</div>
+             <textarea id="feedback-msg" class="nav-textarea sz-sm" placeholder="Type your thoughts here..." style="height: 70px; border: 1px solid var(--fg-color-low);"></textarea>
              
-             <button class="navigator-option sz-md" style="width:100%; margin-top:12px; font-weight:bold;" 
+             <button class="navigator-option sz-md" style="width:100%; margin-top:12px; font-weight:bold; box-shadow: 0 0 5px var(--glow-aura);" 
                 onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')">SUBMIT FEEDBACK</button>
              
              <div id="feedback-list" style="margin-top:20px; max-height:180px; overflow-y:auto; border-top:1px solid var(--fg-color-low); padding-top:15px;">
@@ -642,13 +647,13 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
              </div>
 
              <button class="navigator-option sz-sm" 
-                style="width:100%; margin-top:15px; background:transparent; border: 1px solid var(--error-color); color: var(--error-color); opacity: 0.8;" 
+                style="width:100%; margin-top:15px; background:transparent; border: 1px solid var(--error-color); color: var(--error-color); opacity: 0.7;" 
                 onclick="document.getElementById('spark-feedback-overlay').remove()">CLOSE</button>
         </div>
     `;
     hudOverlay.appendChild(panel);
 
-    // [Database fetch logic remains the same as previous version]
+    // Fetch and Populate (Logic remains consistent)
     const feedbackPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback/entries`;
     const snapshot = await get(ref(db, feedbackPath));
     const entries = snapshot.val() || {};
@@ -658,16 +663,15 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     const sortedKeys = Object.keys(entries).sort();
 
     if (sortedKeys.length === 0) {
-        listContainer.innerHTML = '<div class="sz-sm" style="opacity:0.5; text-align:center; font-style:italic; padding: 10px;">There is no feedback yet.</div>';
+        listContainer.innerHTML = '<div class="sz-sm" style="opacity:0.5; text-align:center; padding: 10px;">There is no feedback yet.</div>';
     } else {
         sortedKeys.forEach(key => {
             const e = entries[key];
             const row = document.createElement('div');
             row.style.marginBottom = '12px';
-            row.style.padding = '0 5px';
             row.innerHTML = `
                 <div class="hud-label-metallic sz-xs" style="color:var(--branding-color); font-size:8px; margin-bottom:2px;">${e.userName}</div>
-                <div class="sz-sm" style="color:var(--text-main-color); line-height:1.3; opacity:0.9;">${e.message}</div>
+                <div class="sz-sm" style="color:var(--text-main-color); line-height:1.3;">${e.message}</div>
             `;
             listContainer.appendChild(row);
         });
