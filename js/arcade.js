@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:59:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @17:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -649,18 +649,18 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
                onclick="document.getElementById('spark-feedback-overlay').remove()"></i>
         </div>
         <div style="padding:15px;">
-             <div class="sz-xs" style="margin-bottom: 5px; color: var(--fg-color-mid); text-align: center;">Kindly enter your feedback:</div>
+             <div class="sz-xs" style="margin-bottom: 3px; color: var(--fg-color-mid); text-align: center;">Kindly enter your feedback:</div>
              <textarea id="feedback-msg" class="nav-textarea sz-xs" placeholder="Type your thoughts here..." style="height: 60px;"></textarea>
              
              <button class="navigator-option sz-md" style="width:100%; margin-top:10px; font-weight:bold;" 
                 onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')">SUBMIT FEEDBACK</button>
-             
-             <div id="feedback-list" style="margin-top:15px; height: 180px; overflow-y: auto !important; border-top:1px solid var(--fg-color-low); padding: 10px 5px 0 0;">
+             <div class="sz-xs" style="margin-bottom: 3px; color: var(--fg-color-mid); text-align: center;">View All Feedback</div>
+             <div id="feedback-list" style="margin:5px; height: 180px; overflow-y: auto !important; border-top:1px solid var(--fg-color-low); padding: 10px 5px 0 0;">
                 <div class="sz-xs" style="opacity:0.6; text-align:center;">SCANNING ARCHIVES...</div>
              </div>
 
              <button class="navigator-option sz-sm" 
-                style="width:100%; margin-top:10px; background:transparent; border: 1px solid var(--error-color); color: var(--error-color);" 
+                style="width:100%; margin:10px; background:transparent; border: 1px solid var(--error-color); color: var(--error-color);" 
                 onclick="document.getElementById('spark-feedback-overlay').remove()">CLOSE</button>
         </div>
     `;
