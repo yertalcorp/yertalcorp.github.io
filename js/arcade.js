@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:34:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2124,6 +2124,68 @@ function shapeAiPromptPrev(rawPrompt, count, mode, currentName, promptTypeObject
     return fullPrompt;
 }
 
+/*
+ * Task: Launch the HUD on EXEC click and cycle status messages.
+ */
+async function triggerExecHUD() {
+    const overlay = document.querySelector('.hud-overlay');
+    const hudWindow = document.querySelector('.hud-window');
+    
+    // Set up the internal content using your existing hud-window class
+    hudWindow.innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+            <div class="hud-spinner-metallic"></div>
+            <div id="succession-text" class="hud-message-fader">Initializing Forge...</div>
+        </div>
+    `;
+    
+    overlay.classList.add('active'); 
+    
+    const messages = [
+        "Generating the Spark could take a few minutes...",
+        "We will let you know when it is ready...",
+        "Do not close the window or click anywhere else until finished...",
+        "Check the status bar on the top left for status..."
+    ];
+    
+    let msgIndex = 0;
+    const textEl = document.getElementById('succession-text');
+
+    const intervalId = setInterval(() => {
+        textEl.classList.remove('active');
+        setTimeout(() => {
+            if (msgIndex < messages.length) {
+                textEl.innerText = messages[msgIndex];
+                textEl.classList.add('active');
+                msgIndex++;
+            } else {
+                msgIndex = 0; // Loop if LLM is slow
+            }
+        }, 800);
+    }, 5000);
+
+    return intervalId;
+}
+
+/*
+ * Task: Minimal HUD teardown.
+ */
+function closeExecHUD(intervalId) {
+    clearInterval(intervalId);
+    const textEl = document.getElementById('succession-text');
+    
+    textEl.classList.remove('active');
+    setTimeout(() => {
+        textEl.innerText = "The Spark is Ready!";
+        textEl.classList.add('active');
+        
+        // Final fade out of the overlay
+        setTimeout(() => {
+            document.querySelector('.hud-overlay').classList.remove('active');
+        }, 1500);
+    }, 800);
+}
+
 // FUNCTION: executeMassSpark
 async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeObject, currentPrivacy) {
     const status = document.getElementById('engine-status-text');
@@ -2153,7 +2215,8 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
     const updateForgeStatus = (text) => {
         if (!window.isInCooldown) status.textContent = text;
     };
-
+    // START STATUS HUD
+    const hudInterval = await triggerExecHUD();
     try {
         if (mode === 'source') {
             let linksToSave = [];
@@ -2226,12 +2289,16 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
 
         setTimeout(async () => {
             status.textContent = "SYSTEM READY";
+            // CLOSE HUD (It stays quiet while refreshUI runs in the background)
+            closeExecHUD(hudInterval);
             await refreshUI(); 
         }, 1000);
 
     } catch (e) { 
         console.error("Forge Error:", e);
         if (!window.isInCooldown) status.textContent = "FORGE ERROR";
+        // CLOSE HUD (It stays quiet while refreshUI runs in the background)
+        closeExecHUD(hudInterval);
     }
 }
 
