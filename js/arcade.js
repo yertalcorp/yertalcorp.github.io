@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -594,11 +594,9 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
     }
 };
 
-/*
- * Objective: Open positioned HUD with restored "Cute Inbox" layout.
- * Tasks: 
- * 1. Implement Date-based keys for database.
- * 2. Restore secondary CLOSE button and "No feedback" message.
+/**
+ * Objective: Refine Feedback HUD aesthetics based on user screenshot.
+ * Task: Center title, increase overlay opacity, and apply custom scrollbar logic.
  */
 window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     if (event && event.stopPropagation) event.stopPropagation();
@@ -614,8 +612,9 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
         document.body.appendChild(hudOverlay);
     }
     
-    hudOverlay.style.backdropFilter = 'blur(4px)';
-    hudOverlay.style.background = 'rgba(0,0,0,0.3)';
+    // MODIFICATION: Increased opacity (0.5) and slightly more blur (6px)
+    hudOverlay.style.backdropFilter = 'blur(6px)';
+    hudOverlay.style.background = 'rgba(0,0,0,0.5)'; 
     hudOverlay.style.display = 'block';
 
     const panel = document.createElement('div');
@@ -624,15 +623,15 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     panel.style.width = '380px';
     panel.style.left = `${rect.left}px`;
     panel.style.top = `${rect.bottom + window.scrollY + 10}px`;
-    panel.style.boxShadow = '0 10px 30px var(--box-shadow-color-glow)';
     
     panel.innerHTML = `
-        <div class="navigator-header">
-            <span class="metallic-text sz-sm">SPARK FEEDBACK</span>
-            <i class="fas fa-times" style="cursor:pointer" onclick="document.getElementById('spark-feedback-overlay').remove()"></i>
+        <div class="navigator-header" style="justify-content: center; position: relative;">
+            <span class="hud-title sz-sm">SPARK FEEDBACK</span>
+            <i class="fas fa-times" style="position: absolute; right: 10px; cursor:pointer" 
+               onclick="document.getElementById('spark-feedback-overlay').remove()"></i>
         </div>
         <div style="padding:15px;">
-             <div class="sz-xs" style="margin-bottom: 8px; color: var(--fg-color-mid);">Kindly enter your feedback:</div>
+             <div class="sz-xs" style="margin-bottom: 8px; color: var(--fg-color-mid); text-align: center;">Kindly enter your feedback:</div>
              <textarea id="feedback-msg" class="nav-textarea sz-sm" placeholder="Type your thoughts here..." style="height: 70px;"></textarea>
              
              <button class="navigator-option sz-md" style="width:100%; margin-top:12px; font-weight:bold;" 
@@ -643,39 +642,38 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
              </div>
 
              <button class="navigator-option sz-sm" 
-                style="width:100%; margin-top:15px; background:transparent; border: 1px solid var(--error-color); color: var(--error-color);" 
+                style="width:100%; margin-top:15px; background:transparent; border: 1px solid var(--error-color); color: var(--error-color); opacity: 0.8;" 
                 onclick="document.getElementById('spark-feedback-overlay').remove()">CLOSE</button>
         </div>
     `;
     hudOverlay.appendChild(panel);
 
-    // Fetch and populate chronological list
+    // [Database fetch logic remains the same as previous version]
     const feedbackPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback/entries`;
     const snapshot = await get(ref(db, feedbackPath));
     const entries = snapshot.val() || {};
     const listContainer = panel.querySelector('#feedback-list');
     listContainer.innerHTML = '';
 
-    const sortedKeys = Object.keys(entries).sort(); // Numerical sort for Date timestamps
+    const sortedKeys = Object.keys(entries).sort();
 
     if (sortedKeys.length === 0) {
-        listContainer.innerHTML = '<div class="sz-sm" style="opacity:0.5; text-align:center; font-style:italic; padding: 10px;">There is no feedback yet. Be the first to share your thoughts!</div>';
+        listContainer.innerHTML = '<div class="sz-sm" style="opacity:0.5; text-align:center; font-style:italic; padding: 10px;">There is no feedback yet.</div>';
     } else {
         sortedKeys.forEach(key => {
             const e = entries[key];
             const row = document.createElement('div');
-            row.style.marginBottom = '15px';
+            row.style.marginBottom = '12px';
+            row.style.padding = '0 5px';
             row.innerHTML = `
-                <div class="hud-label-metallic sz-xs" style="color:var(--branding-color); font-size:9px;">${e.userName}</div>
-                <div class="sz-sm" style="color:var(--text-main-color); line-height:1.4; opacity:0.9;">${e.message}</div>
+                <div class="hud-label-metallic sz-xs" style="color:var(--branding-color); font-size:8px; margin-bottom:2px;">${e.userName}</div>
+                <div class="sz-sm" style="color:var(--text-main-color); line-height:1.3; opacity:0.9;">${e.message}</div>
             `;
             listContainer.appendChild(row);
         });
-        // Scroll to bottom so latest is visible
         listContainer.scrollTop = listContainer.scrollHeight;
     }
 };
-
 
 window.submitSparkFeedback = async (ownerId, currentId, sparkId) => {
     const msgInput = document.getElementById('feedback-msg');
