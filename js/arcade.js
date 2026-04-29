@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @11:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -594,6 +594,98 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
     }
 };
 
+/* * Objective: Open Feedback HUD and manage Spark Stats 
+ */
+window.openFeedback = async (ownerId, currentId, sparkId) => {
+    // 1. Initial UI Setup
+    const hud = document.createElement('div');
+    hud.id = 'spark-feedback-hud';
+    hud.className = 'share-hud-overlay'; // Reusing your existing overlay class
+    
+    // 2. Fetch Existing Feedback
+    const feedbackPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback/entries`;
+    const snapshot = await get(ref(db, feedbackPath));
+    const entries = snapshot.val() || {};
+    
+    // Sort entries by timestamp (keys are usually push IDs or timestamps)
+    const sortedEntries = Object.values(entries).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    hud.innerHTML = `
+        <div class="share-hud-content" style="max-width: 450px; width: 90%;">
+            <h4 class="metallic-text" style="font-size: 14px; margin-bottom: 10px;">SPARK FEEDBACK</h4>
+            
+            <div class="feedback-input-zone" style="margin-bottom: 20px; border-bottom: 1px solid var(--glow-aura); padding-bottom: 15px;">
+                <textarea id="feedback-msg" class="nav-textarea" placeholder="Leave your feedback..." style="width: 100%; height: 60px; margin-bottom: 10px;"></textarea>
+                <button class="navigator-option" onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')" style="width: 100%;">SUBMIT FEEDBACK</button>
+            </div>
+
+            <div id="feedback-list" style="max-height: 250px; overflow-y: auto; text-align: left;">
+                ${sortedEntries.length > 0 ? sortedEntries.map(e => `
+                    <div style="margin-bottom: 12px; font-size: 11px;">
+                        <span style="color: var(--branding-color); font-weight: bold;">${e.userName || 'Anonymous'}:</span>
+                        <p style="margin: 2px 0; opacity: 0.8;">${e.message}</p>
+                    </div>
+                `).join('') : '<p style="opacity: 0.4; text-align: center; font-style: italic;">No feedback yet.</p>'}
+            </div>
+
+            <button onclick="this.closest('.share-hud-overlay').remove()" class="close-hud" style="margin-top: 15px;">CLOSE</button>
+        </div>
+    `;
+    document.body.appendChild(hud);
+};
+
+/* * Objective: Save feedback and increment spark card stats
+ */
+window.submitSparkFeedback = async (ownerId, currentId, sparkId) => {
+    const msgInput = document.getElementById('feedback-msg');
+    const message = msgInput.value.trim();
+
+    if (!message) return; // Silent exit if empty
+
+    const visitorUid = auth.currentUser?.uid || "anonymous";
+    const visitorName = auth.currentUser?.displayName || "Visitor";
+    const feedbackRef = ref(db, `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback`);
+
+    try {
+        await runTransaction(feedbackRef, (currentData) => {
+            if (!currentData) currentData = { count: 0, entries: {} };
+            if (!currentData.entries) currentData.entries = {};
+
+            // 1. Add Entry
+            const newEntryKey = `entry_${Date.now()}`;
+            currentData.entries[newEntryKey] = {
+                uid: visitorUid,
+                userName: visitorName,
+                message: message,
+                date: new Date().toISOString()
+            };
+
+            // 2. Increment Count
+            currentData.count = (currentData.count || 0) + 1;
+
+            return currentData;
+        });
+
+        // 3. UI Update: Find the card and increment the label
+        const card = document.querySelector(`.spark-card[data-spark-id="${sparkId}"]`);
+        if (card) {
+            const feedbackLabel = card.querySelector('.stat-feedback'); // Assuming class name from pattern
+            if (feedbackLabel) {
+                // Parse existing numeric value and increment
+                const currentCount = parseInt(feedbackLabel.innerText.replace(/[^0-9]/g, '')) || 0;
+                feedbackLabel.innerHTML = `<i class="fas fa-comment"></i> FEEDBACK: ${currentCount + 1}`;
+            }
+        }
+
+        // Close HUD after success
+        document.getElementById('spark-feedback-hud').remove();
+        console.log("Feedback logged and stats synchronized.");
+
+    } catch (e) {
+        console.error("Feedback Protocol Failed:", e);
+    }
+};
+        
 window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
     // 1. Internal Safety Check
     if (!auth.currentUser || !ownerUid || ownerUid === "undefined") return;
