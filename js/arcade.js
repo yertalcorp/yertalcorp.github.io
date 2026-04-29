@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -594,15 +594,16 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
     }
 };
 
-/*
- * Objective: Enhance HUD definition and border visibility.
- * Task: 70% opacity, glow border, and minimized scrollbar logic.
+/**
+ * Objective: Anchor HUD to the TOP of the spark card with enhanced depth.
+ * Task: 60% transparency, rounded corners, and elevated shadow.
  */
 window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     if (event && event.stopPropagation) event.stopPropagation();
     
-    const target = event?.currentTarget || event?.target;
-    const rect = target.getBoundingClientRect();
+    // Get the Spark Card container (the parent of the button)
+    const card = event.target.closest('.spark-card');
+    const rect = card ? card.getBoundingClientRect() : event.currentTarget.getBoundingClientRect();
 
     let hudOverlay = document.getElementById('spark-feedback-overlay');
     if (!hudOverlay) {
@@ -612,48 +613,46 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
         document.body.appendChild(hudOverlay);
     }
     
-    // Increased opacity to 70% for better separation
-    hudOverlay.style.backdropFilter = 'blur(8px)';
-    hudOverlay.style.background = 'rgba(0,0,0,0.7)'; 
+    // 60% Transparency as requested (0.6)
+    hudOverlay.style.backdropFilter = 'blur(5px)';
+    hudOverlay.style.background = 'rgba(0,0,0,0.6)'; 
     hudOverlay.style.display = 'block';
 
     const panel = document.createElement('div');
-    panel.className = 'navigator-body';
+    panel.className = 'navigator-body feedback-panel'; // Using the new CSS class
     panel.style.position = 'absolute';
     panel.style.width = '380px';
-    panel.style.left = `${rect.left}px`;
-    panel.style.top = `${rect.bottom + window.scrollY + 10}px`;
+    panel.style.zIndex = '2000';
     
-    // NEW: Distinct Glow Border and Shadow
-    panel.style.border = '1px solid var(--branding-color)';
-    panel.style.boxShadow = '0 0 15px var(--glow-aura), 0 0 30px rgba(0,0,0,0.8)';
-    panel.style.background = 'var(--bg-color)'; // Solid background to contrast with overlay
+    // ALIGNMENT: Match the top of the card
+    panel.style.left = `${rect.left}px`;
+    panel.style.top = `${rect.top + window.scrollY}px`; 
 
     panel.innerHTML = `
-        <div class="navigator-header" style="justify-content: center; position: relative; border-bottom: 1px solid var(--fg-color-low);">
+        <div class="navigator-header" style="justify-content: center; position: relative; border-bottom: 1px solid var(--fg-color-low); padding: 12px;">
             <span class="hud-title sz-sm">SPARK FEEDBACK</span>
-            <i class="fas fa-times" style="position: absolute; right: 10px; cursor:pointer" 
+            <i class="fas fa-times" style="position: absolute; right: 15px; cursor:pointer" 
                onclick="document.getElementById('spark-feedback-overlay').remove()"></i>
         </div>
-        <div style="padding:15px;">
-             <div class="sz-xs" style="margin-bottom: 8px; color: var(--fg-color-mid); text-align: center; font-style: italic;">Kindly enter your feedback:</div>
-             <textarea id="feedback-msg" class="nav-textarea sz-sm" placeholder="Type your thoughts here..." style="height: 70px; border: 1px solid var(--fg-color-low);"></textarea>
+        <div style="padding:20px;">
+             <div class="sz-xs" style="margin-bottom: 10px; color: var(--fg-color-mid); text-align: center; opacity: 0.8;">Kindly enter your feedback:</div>
+             <textarea id="feedback-msg" class="nav-textarea sz-sm" placeholder="Type your thoughts here..." style="height: 80px; border-radius: 8px;"></textarea>
              
-             <button class="navigator-option sz-md" style="width:100%; margin-top:12px; font-weight:bold; box-shadow: 0 0 5px var(--glow-aura);" 
+             <button class="navigator-option sz-md" style="width:100%; margin-top:15px; font-weight:bold; border-radius: 8px;" 
                 onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')">SUBMIT FEEDBACK</button>
              
-             <div id="feedback-list" style="margin-top:20px; max-height:180px; overflow-y:auto; border-top:1px solid var(--fg-color-low); padding-top:15px;">
+             <div id="feedback-list" style="margin-top:20px; max-height:200px; overflow-y:auto; border-top:1px solid var(--fg-color-low); padding-top:15px;">
                 <div class="sz-xs" style="opacity:0.6; text-align:center;">SCANNING ARCHIVES...</div>
              </div>
 
              <button class="navigator-option sz-sm" 
-                style="width:100%; margin-top:15px; background:transparent; border: 1px solid var(--error-color); color: var(--error-color); opacity: 0.7;" 
+                style="width:100%; margin-top:15px; background:transparent; border: 1px solid var(--error-color); color: var(--error-color); border-radius: 8px;" 
                 onclick="document.getElementById('spark-feedback-overlay').remove()">CLOSE</button>
         </div>
     `;
     hudOverlay.appendChild(panel);
 
-    // Fetch and Populate (Logic remains consistent)
+    // [Database fetch logic]
     const feedbackPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback/entries`;
     const snapshot = await get(ref(db, feedbackPath));
     const entries = snapshot.val() || {};
@@ -663,15 +662,15 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     const sortedKeys = Object.keys(entries).sort();
 
     if (sortedKeys.length === 0) {
-        listContainer.innerHTML = '<div class="sz-sm" style="opacity:0.5; text-align:center; padding: 10px;">There is no feedback yet.</div>';
+        listContainer.innerHTML = '<div class="sz-sm" style="opacity:0.5; text-align:center; padding: 15px; font-style: italic;">There is no feedback yet.</div>';
     } else {
         sortedKeys.forEach(key => {
             const e = entries[key];
             const row = document.createElement('div');
-            row.style.marginBottom = '12px';
+            row.style.marginBottom = '14px';
             row.innerHTML = `
-                <div class="hud-label-metallic sz-xs" style="color:var(--branding-color); font-size:8px; margin-bottom:2px;">${e.userName}</div>
-                <div class="sz-sm" style="color:var(--text-main-color); line-height:1.3;">${e.message}</div>
+                <div class="hud-label-metallic sz-xs" style="color:var(--branding-color); font-size:8px; margin-bottom:3px;">${e.userName}</div>
+                <div class="sz-sm" style="color:var(--text-main-color); line-height:1.4; opacity:0.95;">${e.message}</div>
             `;
             listContainer.appendChild(row);
         });
