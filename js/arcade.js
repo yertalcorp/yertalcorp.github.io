@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2273,7 +2273,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                     </span>
                     <span class="stat-feedback" title="Total Feedback">
                         <i class="fas fa-comment-dots" style="margin-right: 2px;"></i> 
-                        CHATS: ${feedbackCount}
+                        FEEDBACK: ${feedbackCount}
                     </span>
                     <span class="stat-reshares" title="Total Shares">
                         <i class="fas fa-retweet" style="margin-right: 2px;"></i> 
