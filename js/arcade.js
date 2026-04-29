@@ -596,42 +596,86 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
 
 /* * Objective: Open Feedback HUD and manage Spark Stats 
  */
-window.openFeedback = async (ownerId, currentId, sparkId) => {
-    // 1. Initial UI Setup
-    const hud = document.createElement('div');
-    hud.id = 'spark-feedback-hud';
-    hud.className = 'share-hud-overlay'; // Reusing your existing overlay class
+/*
+ * Opens Feedback HUD anchored to the spark card.
+ * @param {Event} event - The click event to determine position.
+ */
+window.openFeedback = async (event, ownerId, currentId, sparkId) => {
+    // Prevent event bubbling
+    event.stopPropagation();
     
-    // 2. Fetch Existing Feedback
+    // 1. Get the position of the clicked button
+    const rect = event.currentTarget.getBoundingClientRect();
+    
+    // 2. Create/Setup Overlay (The "Blur" Layer)
+    let hudOverlay = document.getElementById('spark-feedback-overlay');
+    if (!hudOverlay) {
+        hudOverlay = document.createElement('div');
+        hudOverlay.id = 'spark-feedback-overlay';
+        hudOverlay.className = 'share-hud-overlay'; // Reusing existing class
+        document.body.appendChild(hudOverlay);
+    }
+    
+    // Soften the backdrop filter dynamically
+    hudOverlay.style.backdropFilter = 'blur(4px)'; 
+    hudOverlay.style.background = 'rgba(0,0,0,0.3)'; // Darken slightly
+    hudOverlay.style.display = 'block';
+
+    // 3. Create the HUD Content
+    hudOverlay.innerHTML = ''; // Clear previous
+    const panel = document.createElement('div');
+    panel.className = 'navigator-body';
+    panel.style.position = 'absolute';
+    panel.style.zIndex = '1001';
+    panel.style.width = '350px';
+    panel.style.background = 'var(--bg-color-mid)';
+    panel.style.border = '1px solid var(--border-color)';
+    panel.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+    panel.style.borderRadius = '8px';
+
+    // Calculate vertical position (Try to place it above, fallback to below)
+    const spaceAbove = rect.top;
+    if (spaceAbove > 400) {
+        panel.style.top = `${rect.top + window.scrollY - 380}px`;
+    } else {
+        panel.style.top = `${rect.bottom + window.scrollY + 10}px`;
+    }
+    
+    // Anchor to the left of the button
+    panel.style.left = `${rect.left}px`;
+
+    // 4. Populate Header & Content
+    panel.innerHTML = `
+        <div class="navigator-header">
+            <span class="metallic-text sz-sm">SPARK FEEDBACK</span>
+            <i class="fas fa-times" style="cursor:pointer" onclick="document.getElementById('spark-feedback-overlay').style.display='none'"></i>
+        </div>
+        <div style="padding:15px;">
+            <textarea id="feedback-msg" class="nav-textarea sz-sm" placeholder="Transmit thought..."></textarea>
+            <button class="navigator-option sz-md" style="width:100%; margin-top:10px;" 
+                onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')">SUBMIT</button>
+            <div id="feedback-list" style="margin-top:15px; max-height:200px; overflow-y:auto;">
+                </div>
+        </div>
+    `;
+
+    hudOverlay.appendChild(panel);
+
+    // Fetch and render feedback messages (Simplified loop)
     const feedbackPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback/entries`;
     const snapshot = await get(ref(db, feedbackPath));
     const entries = snapshot.val() || {};
+    const listContainer = panel.querySelector('#feedback-list');
     
-    // Sort entries by timestamp (keys are usually push IDs or timestamps)
-    const sortedEntries = Object.values(entries).sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    hud.innerHTML = `
-        <div class="share-hud-content" style="max-width: 450px; width: 90%;">
-            <h4 class="metallic-text" style="font-size: 14px; margin-bottom: 10px;">SPARK FEEDBACK</h4>
-            
-            <div class="feedback-input-zone" style="margin-bottom: 20px; border-bottom: 1px solid var(--glow-aura); padding-bottom: 15px;">
-                <textarea id="feedback-msg" class="nav-textarea" placeholder="Leave your feedback..." style="width: 100%; height: 60px; margin-bottom: 10px;"></textarea>
-                <button class="navigator-option" onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')" style="width: 100%;">SUBMIT FEEDBACK</button>
-            </div>
-
-            <div id="feedback-list" style="max-height: 250px; overflow-y: auto; text-align: left;">
-                ${sortedEntries.length > 0 ? sortedEntries.map(e => `
-                    <div style="margin-bottom: 12px; font-size: 11px;">
-                        <span style="color: var(--branding-color); font-weight: bold;">${e.userName || 'Anonymous'}:</span>
-                        <p style="margin: 2px 0; opacity: 0.8;">${e.message}</p>
-                    </div>
-                `).join('') : '<p style="opacity: 0.4; text-align: center; font-style: italic;">No feedback yet.</p>'}
-            </div>
-
-            <button onclick="this.closest('.share-hud-overlay').remove()" class="close-hud" style="margin-top: 15px;">CLOSE</button>
-        </div>
-    `;
-    document.body.appendChild(hud);
+    Object.values(entries).reverse().forEach(e => {
+        const row = document.createElement('div');
+        row.style.marginBottom = '10px';
+        row.innerHTML = `
+            <div class="hud-label-metallic sz-xs" style="color:var(--fg-color-high)">${e.userName || 'ANON'}</div>
+            <div class="sz-sm" style="color:var(--text-main-color); opacity:0.9">${e.message}</div>
+        `;
+        listContainer.appendChild(row);
+    });
 };
 
 /* * Objective: Save feedback and increment spark card stats
