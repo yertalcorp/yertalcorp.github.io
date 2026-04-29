@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -722,7 +722,7 @@ window.submitSparkFeedback = async (ownerId, currentId, sparkId) => {
         }
 
         // Close HUD after success
-        document.getElementById('spark-feedback-hud').remove();
+        document.getElementById('spark-feedback-overlay').remove();
         console.log("Feedback logged and stats synchronized.");
 
     } catch (e) {
