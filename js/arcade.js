@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:24:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -594,13 +594,32 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
     }
 };
 
+/**
+ * Objective: Persist HUD position across refreshes and fix scroll logic.
+ * Task: Capture coordinates, clear inner panel, and redraw in situ.
+ */
 window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     if (event && event.stopPropagation) event.stopPropagation();
     
-    const card = event?.target?.closest('.spark-card');
-    const rect = card ? card.getBoundingClientRect() : event?.currentTarget?.getBoundingClientRect();
-
     let hudOverlay = document.getElementById('spark-feedback-overlay');
+    let existingPanel = document.querySelector('.feedback-panel');
+    
+    // 1. RECORD EXACT POSITION
+    let leftPos, topPos;
+
+    if (existingPanel) {
+        // Grab exact current location before we remove it
+        leftPos = existingPanel.style.left;
+        topPos = existingPanel.style.top;
+        existingPanel.remove(); // Kill the old version to prevent stacking
+    } else if (event) {
+        // First time opening: Calculate from the spark card
+        const card = event.target.closest('.spark-card');
+        const rect = card ? card.getBoundingClientRect() : event.currentTarget.getBoundingClientRect();
+        leftPos = `${rect.left}px`;
+        topPos = `${rect.top + window.scrollY}px`;
+    }
+
     if (!hudOverlay) {
         hudOverlay = document.createElement('div');
         hudOverlay.id = 'spark-feedback-overlay';
@@ -618,10 +637,9 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     panel.style.width = '400px'; 
     panel.style.zIndex = '2000';
     
-    if (rect) {
-        panel.style.left = `${rect.left}px`;
-        panel.style.top = `${rect.top + window.scrollY}px`; 
-    }
+    // 2. APPLY THE EXACT CAPTURED POSITION
+    panel.style.left = leftPos;
+    panel.style.top = topPos;
 
     panel.innerHTML = `
         <div class="navigator-header" style="justify-content: center; position: relative; border-bottom: 1px solid var(--fg-color-low); padding: 12px;">
@@ -636,7 +654,7 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
              <button class="navigator-option sz-md" style="width:100%; margin-top:15px; font-weight:bold; border-radius: 8px;" 
                 onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')">SUBMIT FEEDBACK</button>
              
-             <div id="feedback-list" style="margin-top:20px; max-height:220px; overflow-y: scroll !important; border-top:1px solid var(--fg-color-low); padding: 15px 10px 30px 0;">
+             <div id="feedback-list" style="margin-top:20px; height: 220px; overflow-y: auto !important; border-top:1px solid var(--fg-color-low); padding: 15px 10px 10px 0;">
                 <div class="sz-xs" style="opacity:0.6; text-align:center;">SCANNING ARCHIVES...</div>
              </div>
 
@@ -669,18 +687,10 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
             
             let actionsHtml = `<div style="display: flex; gap: 6px;">`;
             if (isAuthor) {
-                actionsHtml += `
-                    <button class="ethereal-btn-sm feedback-action-square" title="Edit"
-                        onclick="window.editFeedbackPrompt('${ownerId}', '${currentId}', '${sparkId}', '${key}')">
-                        <i class="fas fa-pen"></i>
-                    </button>`;
+                actionsHtml += `<button class="ethereal-btn-sm feedback-action-square" onclick="window.editFeedbackPrompt('${ownerId}', '${currentId}', '${sparkId}', '${key}')"><i class="fas fa-pen"></i></button>`;
             }
             if (isOwner || isAuthor) {
-                actionsHtml += `
-                    <button class="ethereal-btn-sm feedback-action-square btn-delete-x" title="Delete"
-                        onclick="window.deleteFeedback('${ownerId}', '${currentId}', '${sparkId}', '${key}')">
-                        <i class="fas fa-times"></i>
-                    </button>`;
+                actionsHtml += `<button class="ethereal-btn-sm feedback-action-square btn-delete-x" onclick="window.deleteFeedback('${ownerId}', '${currentId}', '${sparkId}', '${key}')"><i class="fas fa-times"></i></button>`;
             }
             actionsHtml += `</div>`;
 
@@ -696,7 +706,7 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
         
         setTimeout(() => {
             listContainer.scrollTop = listContainer.scrollHeight;
-        }, 100);
+        }, 50);
     }
 };
 
