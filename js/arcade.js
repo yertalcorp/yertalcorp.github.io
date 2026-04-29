@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -594,16 +594,15 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
     }
 };
 
-/**
- * Objective: Anchor HUD to the TOP of the spark card with enhanced depth.
- * Task: 60% transparency, rounded corners, and elevated shadow.
+/*
+ * Objective: Refine Feedback HUD with moderation controls and author editing.
+ * Task: Integrate permission-based action buttons using existing ethereal classes.
  */
 window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     if (event && event.stopPropagation) event.stopPropagation();
     
-    // Get the Spark Card container (the parent of the button)
-    const card = event.target.closest('.spark-card');
-    const rect = card ? card.getBoundingClientRect() : event.currentTarget.getBoundingClientRect();
+    const card = event?.target?.closest('.spark-card');
+    const rect = card ? card.getBoundingClientRect() : event?.currentTarget?.getBoundingClientRect();
 
     let hudOverlay = document.getElementById('spark-feedback-overlay');
     if (!hudOverlay) {
@@ -613,20 +612,20 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
         document.body.appendChild(hudOverlay);
     }
     
-    // 60% Transparency as requested (0.6)
-    hudOverlay.style.backdropFilter = 'blur(5px)';
+    hudOverlay.style.backdropFilter = 'blur(6px)';
     hudOverlay.style.background = 'rgba(0,0,0,0.6)'; 
     hudOverlay.style.display = 'block';
 
     const panel = document.createElement('div');
-    panel.className = 'navigator-body feedback-panel'; // Using the new CSS class
+    panel.className = 'navigator-body feedback-panel'; 
     panel.style.position = 'absolute';
-    panel.style.width = '380px';
+    panel.style.width = '400px'; // Slightly wider to accommodate action buttons
     panel.style.zIndex = '2000';
     
-    // ALIGNMENT: Match the top of the card
-    panel.style.left = `${rect.left}px`;
-    panel.style.top = `${rect.top + window.scrollY}px`; 
+    if (rect) {
+        panel.style.left = `${rect.left}px`;
+        panel.style.top = `${rect.top + window.scrollY}px`; 
+    }
 
     panel.innerHTML = `
         <div class="navigator-header" style="justify-content: center; position: relative; border-bottom: 1px solid var(--fg-color-low); padding: 12px;">
@@ -641,7 +640,7 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
              <button class="navigator-option sz-md" style="width:100%; margin-top:15px; font-weight:bold; border-radius: 8px;" 
                 onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')">SUBMIT FEEDBACK</button>
              
-             <div id="feedback-list" style="margin-top:20px; max-height:200px; overflow-y:auto; border-top:1px solid var(--fg-color-low); padding-top:15px;">
+             <div id="feedback-list" style="margin-top:20px; max-height:220px; overflow-y:auto; border-top:1px solid var(--fg-color-low); padding-top:15px; padding-right: 5px;">
                 <div class="sz-xs" style="opacity:0.6; text-align:center;">SCANNING ARCHIVES...</div>
              </div>
 
@@ -652,13 +651,14 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     `;
     hudOverlay.appendChild(panel);
 
-    // [Database fetch logic]
     const feedbackPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback/entries`;
     const snapshot = await get(ref(db, feedbackPath));
     const entries = snapshot.val() || {};
     const listContainer = panel.querySelector('#feedback-list');
     listContainer.innerHTML = '';
 
+    const currentUserId = auth.currentUser?.uid;
+    const isOwner = currentUserId === ownerId;
     const sortedKeys = Object.keys(entries).sort();
 
     if (sortedKeys.length === 0) {
@@ -666,18 +666,47 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     } else {
         sortedKeys.forEach(key => {
             const e = entries[key];
+            const isAuthor = currentUserId === e.uid;
+
             const row = document.createElement('div');
-            row.style.marginBottom = '14px';
+            row.style.cssText = "margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;";
+            
+            // Generate Action Buttons using existing ethereal-btn-sm
+            let actionsHtml = `<div style="display: flex; gap: 6px;">`;
+            
+            if (isAuthor) {
+                actionsHtml += `
+                    <button class="ethereal-btn-sm feedback-action-square" title="Edit Feedback"
+                        onclick="editFeedbackPrompt('${ownerId}', '${currentId}', '${sparkId}', '${key}')">
+                        <i class="fas fa-pen"></i>
+                    </button>`;
+            }
+            
+            if (isOwner || isAuthor) {
+                actionsHtml += `
+                    <button class="ethereal-btn-sm feedback-action-square btn-delete-x" title="Delete Feedback"
+                        onclick="deleteFeedback('${ownerId}', '${currentId}', '${sparkId}', '${key}')">
+                        <i class="fas fa-times"></i>
+                    </button>`;
+            }
+            actionsHtml += `</div>`;
+
             row.innerHTML = `
-                <div class="hud-label-metallic sz-xs" style="color:var(--branding-color); font-size:8px; margin-bottom:3px;">${e.userName}</div>
-                <div class="sz-sm" style="color:var(--text-main-color); line-height:1.4; opacity:0.95;">${e.message}</div>
+                <div style="flex: 1;">
+                    <div class="hud-label-metallic" style="font-size: 8px; margin-bottom: 2px;">${e.userName}</div>
+                    <div class="sz-sm" style="color:var(--text-main-color); line-height:1.4; opacity:0.95;" id="text-${key}">${e.message}</div>
+                </div>
+                ${actionsHtml}
             `;
             listContainer.appendChild(row);
         });
-        listContainer.scrollTop = listContainer.scrollHeight;
+        
+        // Ensure scroll to bottom after render
+        setTimeout(() => {
+            listContainer.scrollTop = listContainer.scrollHeight;
+        }, 100);
     }
 };
-
 window.submitSparkFeedback = async (ownerId, currentId, sparkId) => {
     const msgInput = document.getElementById('feedback-msg');
     const message = msgInput.value.trim();
