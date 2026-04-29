@@ -1723,7 +1723,6 @@ button:hover {
 }
 /* Feedback and Chats */
 /* --- HUD REFINEMENTS --- */
-/* --- HUD REFINEMENTS --- */
 .hud-title {
     font-family: 'Orbitron', sans-serif;
     color: var(--branding-color);
@@ -1734,18 +1733,31 @@ button:hover {
     font-weight: 700;
     text-transform: uppercase;
 }
-
-/* Minimize Scrollbar intrusion */
-#feedback-list::-webkit-scrollbar {
-    width: 3px; /* Even thinner */
+.navigator-body.feedback-panel {
+    border-radius: 12px; /* Smoother, rounded corners */
+    border: 1px solid var(--branding-color);
+    /* Thick "Atmospheric" Shadow: Glow + Deep Depth */
+    box-shadow: 
+        0 0 20px var(--glow-aura), 
+        0 30px 60px rgba(0,0,0,0.9), 
+        0 10px 20px rgba(0,0,0,0.5);
+    background: var(--bg-color);
+    overflow: hidden; /* Ensures content follows rounded corners */
 }
+
+/* Slim Scrollbar Refinement */
+#feedback-list::-webkit-scrollbar {
+    width: 2px;
+}
+#feedback-list::-webkit-scrollbar-thumb {
+    background: var(--fg-color-low);
+    border-radius: 10px;
+}
+
 #feedback-list::-webkit-scrollbar-track {
     background: rgba(0,0,0,0.1); /* Almost invisible */
 }
-#feedback-list::-webkit-scrollbar-thumb {
-    background: var(--bg-color-low); /* Matches the UI background */
-    border-radius: 5px;
-}
+
 #feedback-list:hover::-webkit-scrollbar-thumb {
     background: var(--branding-color); /* Only pops on hover */
 }
