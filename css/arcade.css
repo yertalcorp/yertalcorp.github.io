@@ -1747,20 +1747,33 @@ button:hover {
 
 /* Slim Scrollbar Refinement */
 #feedback-list::-webkit-scrollbar {
-    width: 2px;
+    width: 4px;
 }
 #feedback-list::-webkit-scrollbar-thumb {
-    background: var(--fg-color-low);
-    border-radius: 10px;
+    background: transparent;
 }
 
 #feedback-list::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.1); /* Almost invisible */
+    background: transparent; /* Almost invisible */
 }
 
-#feedback-list:hover::-webkit-scrollbar-thumb {
-    background: var(--branding-color); /* Only pops on hover */
+/* Appears only when the list or the panel is hovered */
+#feedback-list:hover::-webkit-scrollbar-thumb,
+.feedback-panel:hover #feedback-list::-webkit-scrollbar-thumb {
+    background: var(--branding-color);
+    box-shadow: 0 0 5px var(--glow-aura);
 }
+/* --- ACTION SQUARE REUSE --- */
+.feedback-action-square {
+    width: 28px;
+    height: 28px;
+    padding: 0 !important; /* Overriding default ethereal padding */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+.btn-delete-x { border-color: var(--error-color) !important; color: var(--error-color) !important; }
 @keyframes navFadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
