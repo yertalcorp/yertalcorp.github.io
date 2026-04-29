@@ -1801,15 +1801,20 @@ button:hover {
 /* HUD SPINNING STATUS AFTER PROMPT EXEC */
 /* --- EXEC HUD SPINNER --- */
 .hud-spinner-metallic {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 30px;
+    width: 55px;
+    height: 55px;
+    margin: 0 auto 25px;
     border: 3px solid rgba(255, 255, 255, 0.05);
     border-top: 3px solid var(--branding-color);
     border-radius: 50%;
     /* Creates a "pulsing glow" while spinning */
     box-shadow: 0 0 15px var(--glow-aura);
-    animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    filter: drop-shadow(0 0 8px var(--glow-aura));
+    animation: spin-metallic 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes spin-metallic {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 /* --- MESSAGE SUCCESSION UTILITY --- */
 .hud-message-fader {
@@ -1818,8 +1823,8 @@ button:hover {
     color: var(--branding-color);
     text-shadow: 0 0 10px var(--glow-aura);
     opacity: 0;
-    transition: opacity 0.8s ease-in-out, transform 0.8s ease-out;
-    transform: translateY(10px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+    transform: translateY(5px);
 }
 
 .hud-message-fader.active {
