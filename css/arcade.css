@@ -1722,58 +1722,82 @@ button:hover {
     box-shadow: 0 0 5px var(--glow-color-aura);
 }
 /* Feedback and Chats */
-/* --- HUD REFINEMENTS --- */
-.hud-title {
+/* --- FEEDBACK HUD REFINEMENTS --- */
+
+/* 1. Optimized Title: Reusing metallic-text logic to save space */
+.feedback-panel .metallic-text {
     font-family: 'Orbitron', sans-serif;
     color: var(--branding-color);
-    text-align: center;
-    width: 100%;
-    letter-spacing: 3px;
-    text-shadow: 0 0 10px var(--branding-color); /* Stronger glow */
+    letter-spacing: 2px;
     font-weight: 700;
     text-transform: uppercase;
+    font-size: 10px; /* Reduced size for space density */
+    text-shadow: 0 0 8px var(--branding-color);
 }
+
+/* 2. Panel Shell: Elevated depth and rounded corners */
 .navigator-body.feedback-panel {
-    border-radius: 12px; /* Smoother, rounded corners */
+    border-radius: 12px;
     border: 1px solid var(--branding-color);
+    background: var(--bg-color);
     /* Thick "Atmospheric" Shadow: Glow + Deep Depth */
     box-shadow: 
         0 0 20px var(--glow-aura), 
         0 30px 60px rgba(0,0,0,0.9), 
         0 10px 20px rgba(0,0,0,0.5);
-    background: var(--bg-color);
-    overflow: hidden; /* Ensures content follows rounded corners */
+    overflow: hidden; /* Clips content to rounded corners */
+    padding: 12px !important; /* Tighter internal padding */
 }
 
-/* Slim Scrollbar Refinement */
+/* 3. Ghost Scrollbar Logic: Strictly for the feedback list */
+#feedback-list {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: transparent transparent;
+}
+
 #feedback-list::-webkit-scrollbar {
     width: 4px;
 }
-#feedback-list::-webkit-scrollbar-thumb {
+
+#feedback-list::-webkit-scrollbar-track {
     background: transparent;
 }
 
-#feedback-list::-webkit-scrollbar-track {
-    background: transparent; /* Almost invisible */
+#feedback-list::-webkit-scrollbar-thumb {
+    background: transparent; /* Invisible by default */
+    border-radius: 10px;
+    transition: background 0.3s ease;
 }
 
-/* Appears only when the list or the panel is hovered */
-#feedback-list:hover::-webkit-scrollbar-thumb,
-.feedback-panel:hover #feedback-list::-webkit-scrollbar-thumb {
+/* Scrollbar becomes visible only when the panel or list is hovered */
+.feedback-panel:hover #feedback-list::-webkit-scrollbar-thumb,
+#feedback-list:hover::-webkit-scrollbar-thumb {
     background: var(--branding-color);
     box-shadow: 0 0 5px var(--glow-aura);
 }
-/* --- ACTION SQUARE REUSE --- */
+
+/* 4. Action Square Reuse: Densified ethereal-btn-sm */
 .feedback-action-square {
-    width: 28px;
-    height: 28px;
-    padding: 0 !important; /* Overriding default ethereal padding */
+    width: 24px; /* Slightly reduced for density */
+    height: 24px;
+    padding: 0 !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 9px;
+    flex-shrink: 0; /* Prevents square from squishing */
 }
-.btn-delete-x { border-color: var(--error-color) !important; color: var(--error-color) !important; }
+
+/* Specific button variants */
+.btn-delete-x { 
+    border-color: var(--error-color) !important; 
+    color: var(--error-color) !important; 
+}
+
+.btn-delete-x:hover {
+    background: rgba(255, 77, 77, 0.1) !important;
+    box-shadow: 0 0 8px var(--error-color);
+}
 @keyframes navFadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
