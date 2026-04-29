@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @17:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @17:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -654,8 +654,7 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
              
              <button class="navigator-option sz-md" style="width:100%; margin-top:10px; font-weight:bold;" 
                 onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')">SUBMIT FEEDBACK</button>
-             <div class="sz-xs" style="margin-bottom: 3px; color: var(--fg-color-mid); text-align: center;">View All Feedback</div>
-             <div id="feedback-list" style="margin:5px; height: 180px; overflow-y: auto !important; border-top:1px solid var(--fg-color-low); padding: 10px 5px 0 0;">
+               <div id="feedback-list" style="margin:5px; height: 180px; overflow-y: auto !important; border-top:1px solid var(--fg-color-low); padding: 10px 5px 0 0;">
                 <div class="sz-xs" style="opacity:0.6; text-align:center;">SCANNING ARCHIVES...</div>
              </div>
 
