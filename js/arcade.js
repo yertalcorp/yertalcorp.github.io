@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:24:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -595,76 +595,70 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
 };
 
 /**
- * Objective: Persist HUD position across refreshes and fix scroll logic.
- * Task: Capture coordinates, clear inner panel, and redraw in situ.
+ * Objective: Refine HUD density based on screenshot analysis.
+ * Task: Apply metallic title, reduce vertical spacing, and anchor to spark top.
  */
 window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     if (event && event.stopPropagation) event.stopPropagation();
     
+    // Position Calculation: Anchor to the spark card container, not the button
+    const card = event.target.closest('.spark-card');
+    const rect = card ? card.getBoundingClientRect() : event.currentTarget.getBoundingClientRect();
+
     let hudOverlay = document.getElementById('spark-feedback-overlay');
-    let existingPanel = document.querySelector('.feedback-panel');
-    
-    // 1. RECORD EXACT POSITION
-    let leftPos, topPos;
-
-    if (existingPanel) {
-        // Grab exact current location before we remove it
-        leftPos = existingPanel.style.left;
-        topPos = existingPanel.style.top;
-        existingPanel.remove(); // Kill the old version to prevent stacking
-    } else if (event) {
-        // First time opening: Calculate from the spark card
-        const card = event.target.closest('.spark-card');
-        const rect = card ? card.getBoundingClientRect() : event.currentTarget.getBoundingClientRect();
-        leftPos = `${rect.left}px`;
-        topPos = `${rect.top + window.scrollY}px`;
-    }
-
     if (!hudOverlay) {
         hudOverlay = document.createElement('div');
         hudOverlay.id = 'spark-feedback-overlay';
         hudOverlay.className = 'share-hud-overlay'; 
         document.body.appendChild(hudOverlay);
+    } else {
+        // --- MODIFICATION: ANTI-STACKING FIX ---
+        // Clear all previous children of the overlay before drawing the new one
+        hudOverlay.innerHTML = '';
     }
     
+    // Refine overlay appearance (slightly less blur for density)
     hudOverlay.style.backdropFilter = 'blur(6px)';
     hudOverlay.style.background = 'rgba(0,0,0,0.6)'; 
     hudOverlay.style.display = 'block';
 
     const panel = document.createElement('div');
+    // Reusing standard navigator-body class, but applying unique ID for specific scrolling
     panel.className = 'navigator-body feedback-panel'; 
     panel.style.position = 'absolute';
-    panel.style.width = '400px'; 
-    panel.style.zIndex = '2000';
+    panel.style.width = '380px';
     
-    // 2. APPLY THE EXACT CAPTURED POSITION
-    panel.style.left = leftPos;
-    panel.style.top = topPos;
+    // Apply Positioning directly, adding 10px breathing room from the side
+    panel.style.left = `${rect.left + 10}px`;
+    panel.style.top = `${rect.top + window.scrollY}px`; 
+    panel.style.boxShadow = '0 10px 30px rgba(0,0,0,0.8), 0 0 15px var(--glow-color-aura)';
 
+    // Densified Inner HTML with Metallic Title
     panel.innerHTML = `
-        <div class="navigator-header" style="justify-content: center; position: relative; border-bottom: 1px solid var(--fg-color-low); padding: 12px;">
-            <span class="hud-title sz-sm">SPARK FEEDBACK</span>
-            <i class="fas fa-times" style="position: absolute; right: 15px; cursor:pointer" 
+        <div class="navigator-header" style="justify-content: center; position: relative; padding: 10px;">
+            <span class="metallic-text sz-sm">SPARK FEEDBACK</span>
+            <i class="fas fa-times" style="position: absolute; right: 10px; cursor:pointer" 
                onclick="document.getElementById('spark-feedback-overlay').remove()"></i>
         </div>
-        <div style="padding:20px;">
-             <div class="sz-xs" style="margin-bottom: 10px; color: var(--fg-color-mid); text-align: center; opacity: 0.8;">Kindly enter your feedback:</div>
-             <textarea id="feedback-msg" class="nav-textarea sz-sm" placeholder="Type your thoughts here..." style="height: 80px; border-radius: 8px;"></textarea>
+        <div style="padding:15px;">
+             <div class="sz-xs" style="margin-bottom: 5px; color: var(--fg-color-mid); text-align: center;">Kindly enter your feedback:</div>
+             <textarea id="feedback-msg" class="nav-textarea sz-xs" placeholder="Type your thoughts here..." style="height: 60px;"></textarea>
              
-             <button class="navigator-option sz-md" style="width:100%; margin-top:15px; font-weight:bold; border-radius: 8px;" 
+             <button class="navigator-option sz-md" style="width:100%; margin-top:10px; font-weight:bold;" 
                 onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')">SUBMIT FEEDBACK</button>
              
-             <div id="feedback-list" style="margin-top:20px; height: 220px; overflow-y: auto !important; border-top:1px solid var(--fg-color-low); padding: 15px 10px 10px 0;">
+             <div id="feedback-list" style="margin-top:15px; max-height:180px; overflow-y: auto !important; border-top:1px solid var(--fg-color-low); padding-top:10px; padding-right: 5px;">
                 <div class="sz-xs" style="opacity:0.6; text-align:center;">SCANNING ARCHIVES...</div>
              </div>
 
              <button class="navigator-option sz-sm" 
-                style="width:100%; margin-top:15px; background:transparent; border: 1px solid var(--error-color); color: var(--error-color); border-radius: 8px;" 
+                style="width:100%; margin-top:10px; background:transparent; border: 1px solid var(--error-color); color: var(--error-color);" 
                 onclick="document.getElementById('spark-feedback-overlay').remove()">CLOSE</button>
         </div>
     `;
     hudOverlay.appendChild(panel);
 
+    // Database fetching remains the same, just rendering inside the dense panel
     const feedbackPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback/entries`;
     const snapshot = await get(ref(db, feedbackPath));
     const entries = snapshot.val() || {};
@@ -673,19 +667,25 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
 
     const currentUserId = auth.currentUser?.uid;
     const isOwner = currentUserId === ownerId;
-    const sortedKeys = Object.keys(entries).sort();
+    const sortedKeys = Object.keys(entries).sort(); // Simple alphabetical date keys sort naturally
 
     if (sortedKeys.length === 0) {
-        listContainer.innerHTML = '<div class="sz-sm" style="opacity:0.5; text-align:center; padding: 15px; font-style: italic;">There is no feedback yet.</div>';
+        listContainer.innerHTML = '<div class="sz-sm" style="opacity:0.5; text-align:center; padding: 10px; font-style: italic;">There is no feedback yet. Be the first to share your thoughts!</div>';
     } else {
         sortedKeys.forEach(key => {
             const e = entries[key];
             const isAuthor = currentUserId === e.uid;
 
             const row = document.createElement('div');
-            row.style.cssText = "margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;";
+            // MODIFICATION: Reduce gap between entries (12px -> 8px)
+            row.style.marginBottom = '8px';
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.alignItems = 'flex-start';
+            row.style.gap = '8px';
             
-            let actionsHtml = `<div style="display: flex; gap: 6px;">`;
+            // Reusing ethereal-btn-sm for moderation action squares
+            let actionsHtml = `<div style="display: flex; gap: 4px;">`;
             if (isAuthor) {
                 actionsHtml += `<button class="ethereal-btn-sm feedback-action-square" onclick="window.editFeedbackPrompt('${ownerId}', '${currentId}', '${sparkId}', '${key}')"><i class="fas fa-pen"></i></button>`;
             }
@@ -694,19 +694,22 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
             }
             actionsHtml += `</div>`;
 
+            // MODIFICATION: Minimized gap between user name and message
             row.innerHTML = `
                 <div style="flex: 1;">
-                    <div class="hud-label-metallic" style="font-size: 8px; margin-bottom: 2px;">${e.userName}</div>
-                    <div class="sz-sm" style="color:var(--text-main-color); line-height:1.4; opacity:0.95;" id="text-${key}">${e.message}</div>
+                    <div class="hud-label-metallic sz-xs" style="color:var(--branding-color); font-size:8px; margin-bottom:1px;">${e.userName}</div>
+                    <div class="sz-sm" style="color:var(--text-main-color); line-height:1.2; opacity:0.95;" id="text-${key}">${e.message}</div>
                 </div>
                 ${actionsHtml}
             `;
             listContainer.appendChild(row);
         });
         
-        setTimeout(() => {
-            listContainer.scrollTop = listContainer.scrollHeight;
-        }, 50);
+        // --- ADDED: ENSURE THIN SCROLLBAR APPEARS ON HOVER ---
+        listContainer.classList.add('navigator-list-scrollbar');
+
+        // Scroll to the latest feedback (bottom)
+        listContainer.scrollTop = listContainer.scrollHeight;
     }
 };
 
