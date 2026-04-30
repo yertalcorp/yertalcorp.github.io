@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @18:51:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2075,17 +2075,17 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     let instructions = "";
 
     if (isSource) {
-            instructions = `- Research specific items that match the task.
+            instructions = `- Research specific items that match the task. Do not return database home pages.
                             ${promptTypeObject.rules}
-                         - Format: JSON array [{"name", "url", "thumbnail"}] and name has maximum 3 words. The thumbnail is a URL for an existing and high resolution image that represents the item. Do not fetch images from Amazon.`;
+                         - Format: JSON array [{"name", "url", "thumbnail"}] and name has maximum 3 words. The thumbnail is a publicly available and high resolution image that represents the item. Confirm the links to the item and the thumbnail exist in your latest index.`;
     } else {
         // Your existing code generation logic
         instructions = `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
-                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. The thumbnail is a url for an existing image that represents the application's theme.`;
+                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. The thumbnail is an image that perfectly represents the application.`;
     } 
 
     const returnString = isSource ? 
-        `${rawPrompt}. Category to locate: ${promptTypeObject.name}.`: `${rawPrompt}. Use this capability: ${promptTypeObject.name}.`;
+        `Objective: ${rawPrompt}. Category to locate: ${promptTypeObject.name}.`: `${rawPrompt}. Use this capability: ${promptTypeObject.name}.`;
 
     const fullPrompt = `
         ${returnString}
