@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @22:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @22:49:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3056,10 +3056,10 @@ async function callProviderAPI(prompt, val, type) {
             let rawResult = data.result;
 
             if (!rawResult) throw new Error("Empty response content from Proxy.");
-
+            console.log("callProviderAPI rawResult=", rawResult);
             // Initial cleaning of markdown fences
             let sanitized = verifyAndFixCode(rawResult, isCode);
-
+            console.log("callProviderAPI sanitized Code=", sanitized);
             // Handle Structured JSON Responses (Auto-extraction logic)
             if (!isCode || sanitized.trim().startsWith('{') || sanitized.includes('{')) {
                 try {
