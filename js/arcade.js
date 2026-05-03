@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:05:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2190,15 +2190,7 @@ function closeExecHUD(intervalId) {
 async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeObject, currentPrivacy) {
     const status = document.getElementById('engine-status-text');
     
-    // 1. SAFETY CHECK DISABLED FOR NOW.  LET USERS CREATE WHATEVER THEY WANT.
-    /*
-    if (currentName && promptTypeObject.name.toLowerCase() !== currentName.toLowerCase() && promptTypeObject.name.toLowerCase() !== 'custom') {
-        if (!confirm(`⚠️ Warning: The prompt category doesn't match the current type.\n\n` +
-                     `Either change the prompt to use the current type [${currentName}] or create/use a current for [${promptTypeObject.name}].\n\n` +
-                     `Do you want to continue anyway?`)) return; 
-    }
-    */
-    // 2. CAPACITY VALIDATION
+    // 1. CAPACITY VALIDATION
     const planLimits = databaseCache.settings?.['plan_limits']?.[databaseCache.users?.[user.uid]?.profile?.plan_type || 'free'] || databaseCache.settings?.['plan_limits']?.['free'];
     const remainingSpace = planLimits.max_sparks_per_current - Object.keys(databaseCache.users?.[user.uid]?.infrastructure?.currents?.[currentId]?.sparks || {}).length;
 
@@ -2208,13 +2200,14 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
         return;
     }
 
-    // 3. WORKLOAD LOGIC
+    // 2. WORKLOAD LOGIC
     const manualUrls = extractUrls(prompt);
     const resolution = getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpace);
 
     const updateForgeStatus = (text) => {
         if (!window.isInCooldown) status.textContent = text;
     };
+
     // START STATUS HUD
     const hudInterval = await triggerExecHUD();
     try {
@@ -2231,7 +2224,9 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 }
             } else {
                 updateForgeStatus("CONSULTING MODEL POOL...");
-                const aiLinks = await callGeminiAPI(shapeAiPrompt(prompt, resolution.count, mode, currentName, promptTypeObject), resolution.count, mode);
+                
+                // Replaced callGeminiAPI with callProviderAPI
+                const aiLinks = await callProviderAPI(shapeAiPrompt(prompt, resolution.count, mode, currentName, promptTypeObject), resolution.count, mode);
 
                 linksToSave = (Array.isArray(aiLinks) ? aiLinks : (typeof aiLinks === 'string' ? aiLinks.split(/,|\n/).map(str => str.trim()).filter(Boolean) : []))
                     .slice(0, resolution.count)
@@ -2246,7 +2241,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 const sparkName = linksToSave.length > 1 && linksToSave[i].name.startsWith('spark_') ? `${linksToSave[i].name}-${i + 1}` : linksToSave[i].name;
 
                 console.log(`executeMassSpark spark mode=${mode} spark image URL=${linksToSave[i].image}`);
-                await saveSpark(currentId, {name: sparkName, link: linksToSave[i].url,image: linksToSave[i].image},prompt, promptTypeObject.name, promptTypeObject.image, currentPrivacy);
+                await saveSpark(currentId, {name: sparkName, link: linksToSave[i].url, image: linksToSave[i].image}, prompt, promptTypeObject.name, promptTypeObject.image, currentPrivacy);
                 
                 const progress = Math.round(((i + 1) / linksToSave.length) * 100);
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
@@ -2257,8 +2252,9 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 const progress = Math.round((i / resolution.count) * 100);
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
-                // We pass 'source' here to trigger JSON parsing inside callGeminiAPI
-                const response = await callGeminiAPI(shapeAiPrompt(prompt, i, 'create', currentName, promptTypeObject), i, 'source');
+                // Replaced callGeminiAPI with callProviderAPI
+                // We pass 'source' here to trigger JSON parsing inside callProviderAPI
+                const response = await callProviderAPI(shapeAiPrompt(prompt, i, 'create', currentName, promptTypeObject), i, 'source');
                 
                 // Extract and SCRUB name
                 const sparkName = response.name || (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
@@ -2289,7 +2285,6 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
 
         setTimeout(async () => {
             status.textContent = "SYSTEM READY";
-            // CLOSE HUD (It stays quiet while refreshUI runs in the background)
             closeExecHUD(hudInterval);
             await refreshUI(); 
         }, 1000);
@@ -2297,11 +2292,9 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
     } catch (e) { 
         console.error("Forge Error:", e);
         if (!window.isInCooldown) status.textContent = "FORGE ERROR";
-        // CLOSE HUD (It stays quiet while refreshUI runs in the background)
         closeExecHUD(hudInterval);
     }
 }
-
 /*
  * Processes the image field from the DB.
  * Returns the Base64 string if present, or a formatted asset path.
