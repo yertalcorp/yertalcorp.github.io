@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2975,7 +2975,6 @@ async function callProviderAPI(prompt, val, type) {
 
     if (statusText) statusText.innerText = "FORGING SPARK [-----] 0%";
 
-    // Ensure hydration exists but do not re-hydrate every call
     if (!window.modelStats || Object.keys(window.modelStats).length === 0) {
         await retrieveProvider();
     }
@@ -2986,7 +2985,6 @@ async function callProviderAPI(prompt, val, type) {
         throw new Error("No enabled models found.");
     }
 
-    // Cooldown check: Are all candidates failing equally?
     const firstFail = candidates[0].failures;
     if (candidates.length > 1 && candidates.every(c => c.failures === firstFail && c.failures > 0)) {
         console.warn("[FORGE]: Global failure detected across pool.");
@@ -3001,6 +2999,12 @@ async function callProviderAPI(prompt, val, type) {
         const { provider, model, config, statRef } = candidates[attempts];
         const progress = Math.floor((attempts / maxAttempts) * 100);
         
+        // Only resolve the Model Name placeholder; API_KEY resolution is handled by the Proxy
+        **let finalExecutionUrl = config.execution_url;**
+        **if (provider === 'google') {**
+            **finalExecutionUrl = finalExecutionUrl.replace('MODEL_NAME', model);**
+        **}**
+
         console.log(`[FORGE]: Attempt ${attempts + 1}/${maxAttempts} | ${provider.toUpperCase()} : ${model}`);
         
         if (statusText) {
@@ -3013,7 +3017,7 @@ async function callProviderAPI(prompt, val, type) {
                 body: JSON.stringify({
                     provider_name: provider,
                     key: config.key, 
-                    execution_url: config.execution_url,
+                    **execution_url: finalExecutionUrl,**
                     model: model,
                     prompt: prompt
                 })
@@ -3032,7 +3036,6 @@ async function callProviderAPI(prompt, val, type) {
 
             if (!rawResult) throw new Error("Empty response content.");
 
-            // Reward stability
             if (statRef[1] > 0) statRef[1]--;
 
             return verifyAndFixCode(rawResult, isCode);
@@ -3040,7 +3043,6 @@ async function callProviderAPI(prompt, val, type) {
         } catch (error) {
             console.error(`[FORGE FAIL]: ${model} encountered an error:`, error.message);
             
-            // Log failure via the shared pointer to modelStats
             statRef[1]++; 
 
             if (statusText) {
@@ -3056,7 +3058,6 @@ async function callProviderAPI(prompt, val, type) {
     await initiateSystemCooldown(statusText);
     throw new Error("All model attempts exhausted.");
 }
-
 
 async function retrieveProvider() {
     console.log("[FORGE]: Syncing with Firebase Manifest...");
