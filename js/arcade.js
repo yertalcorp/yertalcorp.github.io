@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @17:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @17:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2964,6 +2964,9 @@ async function callGeminiAPI(prompt, val, type) {
 }
 
 async function callProviderAPI(prompt, val, type) {
+    console.log("[Forge-Trace] Entering callProviderAPI");
+    console.log("[Forge-Trace] Current modelStats State:", JSON.parse(JSON.stringify(modelStats)));
+
     const isCode = type === 'code' || type === 'create';
     const poolType = isCode ? 'create' : 'source';
     const statusText = document.getElementById('engine-status-text');
@@ -2971,11 +2974,15 @@ async function callProviderAPI(prompt, val, type) {
 
     // 1. Gather all enabled providers from the manifest
     const providers = databaseCache.app_manifest?.llm_providers || [];
+    console.log(`[Forge-Trace] Found ${providers.length} providers in manifest.`);
+
     let candidates = [];
     
     // 2. Build the candidate list from modelStats
     providers.filter(p => p.enabled).forEach(p => {
         const pool = modelStats[p.provider_name]?.[poolType] || [];
+        console.log(`[Forge-Trace] Provider: ${p.provider_name} | Enabled: ${p.enabled} | Pool (${poolType}) size: ${pool.length}`);
+        
         pool.forEach(stat => {
             candidates.push({ 
                 provider: p.provider_name, 
@@ -2989,25 +2996,31 @@ async function callProviderAPI(prompt, val, type) {
 
     // 3. Sort candidates: prioritized by lowest failure count
     candidates.sort((a, b) => a.failures - b.failures);
-
     console.log(`[Forge] Starting API Routing. Candidates available: ${candidates.length}`);
+    if (candidates.length === 0) {
+        console.error("[Forge-Trace] ERROR: No candidates generated. Check if providers are 'enabled' in manifest and exist in modelStats.");
+    }
 
     let attempts = 0;
 
-    // 4. Iterate through ALL candidates in the collection
     while (attempts < candidates.length) {
         const { provider, model, config, statRef } = candidates[attempts];
         
+        // Detailed log of exactly what is being attempted
+        console.log(`%c[Forge-Attempt] ${attempts + 1}/${candidates.length}`, "color: #007bff; font-weight: bold;");
+        console.log(` > Provider: ${provider}`);
+        console.log(` > Model: ${model}`);
+        console.log(` > Endpoint: ${config.execution_url}`);
+        console.log(` > API Key (Snippet): ${config.key ? config.key.substring(0, 6) + "..." : "MISSING"}`);
+
         if (statusText) {
             statusText.innerText = `ROUTING TO ${provider.toUpperCase()} (${model})...`;
         }
 
-        console.log(`[Forge] Attempt ${attempts + 1}/${candidates.length}: Using ${provider} - ${model}`);
-
         try {
+            console.log(`[Forge-Fetch] Dispatching to Proxy...`);
             const response = await fetch(PROXY_GATEWAY_URL, {
                 method: 'POST',
-                // Sending as text/plain to avoid CORS preflight issues common with GAS
                 body: JSON.stringify({
                     provider_name: provider,
                     key: config.key, 
@@ -3017,45 +3030,41 @@ async function callProviderAPI(prompt, val, type) {
                 })
             });
 
-            // Handle HTTP-level errors (404, 500, 429)
+            console.log(`[Forge-Fetch] HTTP Response Status: ${response.status} ${response.statusText}`);
+
             if (!response.ok) {
                 const errorBody = await response.text();
                 throw new Error(`HTTP ${response.status}: ${errorBody || 'No response body'}`);
             }
 
             const data = await response.json();
+            console.log(`[Forge-Fetch] JSON Data Received:`, data);
 
-            // Handle Proxy-level or Provider-level logic errors
             if (data.error) {
                 throw new Error(`Provider Error: ${JSON.stringify(data.error)}`);
             }
 
-            // Successful Response Parsing
             let rawResult = (provider === 'google')
                 ? data.candidates?.[0]?.content?.parts?.[0]?.text
                 : data.choices?.[0]?.message?.content;
 
             if (!rawResult) {
-                throw new Error("Malformed Response: Content is empty or undefined.");
+                console.error("[Forge-Trace] Parsing failed. Object structure:", data);
+                throw new Error("Malformed Response: Content path not found in JSON.");
             }
 
-            console.log(`[Forge] Success! Response received from ${provider}.`);
+            console.log(`%c[Forge] Success! Response length: ${rawResult.length} chars`, "color: #28a745;");
 
-            // On success, slightly decrement failure count to "reward" the model
             if (statRef[1] > 0) statRef[1]--;
-
             return verifyAndFixCode(rawResult, isCode);
 
         } catch (error) {
-            // Increment failure count for this specific model in modelStats
             statRef[1]++; 
-            
-            console.error(`[Forge] Failover Triggered! ${provider} (${model}) failed.`);
-            console.error(`[Forge] Error Detail:`, error.message);
+            console.error(`%c[Forge-Error] Attempt ${attempts + 1} Failed`, "color: #dc3545; font-weight: bold;");
+            console.error(` > Message: ${error.message}`);
 
             attempts++;
 
-            // Wait briefly before trying the next model to avoid rapid-fire spamming
             if (attempts < candidates.length) {
                 const backoff = 1000 * attempts; 
                 console.warn(`[Forge] Retrying next candidate in ${backoff}ms...`);
@@ -3064,8 +3073,7 @@ async function callProviderAPI(prompt, val, type) {
         }
     }
 
-    // 5. If loop completes without returning, all models failed
-    console.error("[Forge] CRITICAL: All LLM providers and models in the pool have failed.");
+    console.error("%c[Forge] CRITICAL: All LLM providers and models in the pool have failed.", "background: red; color: white; font-size: 14px;");
     throw new Error("Critical: Failover exhausted.");
 }
 
