@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:34:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -706,7 +706,7 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     }
 };
 
-/**
+/*
  * Objective: Remove feedback and decrement UI spark card count.
  * Task: Transactional delete + DOM update for the numeric stat.
  */
@@ -744,7 +744,7 @@ window.deleteFeedback = async (ownerId, currentId, sparkId, entryKey) => {
     }
 };
 
-/**
+/*
  * Objective: Open inline edit mode within the HUD.
  */
 window.editFeedbackPrompt = (ownerId, currentId, sparkId, entryKey) => {
@@ -760,7 +760,7 @@ window.editFeedbackPrompt = (ownerId, currentId, sparkId, entryKey) => {
     `;
 };
 
-/**
+/*
  * Objective: Save edited feedback to Firebase.
  */
 window.saveEdit = async (ownerId, currentId, sparkId, entryKey) => {
@@ -2669,62 +2669,45 @@ async function retrieveGeminiCredentials() {
         return null;
     }
 }
+
 async function retrieveLLMCredentials(providerName) {
     try {
         let manifest = databaseCache?.app_manifest;
-
-        // 1. Ensure manifest is loaded
         if (!manifest) {
             const snap = await get(ref(db, 'app_manifest')).catch(() => null);
             if (snap && snap.exists()) {
                 manifest = snap.val();
-                if (databaseCache) databaseCache.app_manifest = manifest;
+                databaseCache.app_manifest = manifest;
             }
         }
 
-        if (!manifest || !manifest.llm_providers) {
-            throw new Error("Forge manifest or LLM providers missing in DB.");
-        }
-
-        // 2. Find the specific provider configuration
-        const providerConfig = manifest.llm_providers.find(p => p.provider_name === providerName);
+        const providerConfig = manifest?.llm_providers?.find(p => p.provider_name === providerName);
         
         if (!providerConfig || !providerConfig.enabled) {
             console.warn(`[FORGE]: Provider ${providerName} is missing or disabled.`);
             return null;
         }
 
-        // 3. Extract the API key (mapped to the provider name in your manifest)
-        // Note: Assumes key naming convention like 'gkey', 'groq_key', 'sarvam_key', etc.
         const keyMap = { google: 'gkey', groq: 'groq_key', deepseek: 'ds_key', sarvam: 'sarvam_key', cerebras: 'c_key', openai: 'o_key' };
         const apiKey = manifest[keyMap[providerName]];
 
-        if (!apiKey) {
-            throw new Error(`API Key for ${providerName} missing in manifest.`);
+        if (!apiKey) throw new Error(`API Key for ${providerName} missing.`);
+
+        // Check if we need to populate modelStats
+        const isLocalPoolEmpty = !modelStats[providerName] || 
+                                 modelStats[providerName].source.length === 0;
+
+        if (isLocalPoolEmpty) {
+            await refreshProviderModels(providerName, apiKey);
         }
 
-        // 4. Check if pools are empty to trigger discovery/refresh
-        // Uses modelStats (local) and the provider-specific pool (manifest)
-        const isLocalPoolEmpty = !Array.isArray(modelStats) || modelStats.length === 0;
-        const isProviderPoolEmpty = !providerConfig.model_pools || 
-                                    (!Array.isArray(providerConfig.model_pools.source) && 
-                                     !Array.isArray(providerConfig.model_pools.create));
-
-        if (isLocalPoolEmpty || isProviderPoolEmpty) {
-            // refreshProviderModels would be your generalized version of getGeminiModel
-            await refreshProviderModels(providerName, apiKey, providerConfig.model_discovery_api);
-        }
-
-        return { 
-            apiKey, 
-            config: providerConfig 
-        };
-
+        return { apiKey, config: providerConfig };
     } catch (e) {
-        console.error(`[FORGE ERROR]: Failed to assemble credentials for ${providerName}:`, e);
+        console.error(`[FORGE ERROR]: Credentials failure for ${providerName}:`, e);
         return null;
     }
 }
+
 async function getGeminiModel(apiKey) {
     // 1. IMMEDIATE RETURN: If modelStats is already populated, get the healthiest model.
     if (typeof modelStats !== 'undefined' && Array.isArray(modelStats) && modelStats.length > 0) {
@@ -2796,7 +2779,7 @@ async function getGeminiModel(apiKey) {
     }
 }
 
-/**
+/*
  * Objective: Discover and validate free-tier models, preventing "junk" names in DB.
  * Task: Fetch, validate against known stable patterns, score, and sync.
  */
@@ -2871,7 +2854,7 @@ async function refreshProviderModels(providerName, apiKey) {
     }
 }
 
-/**
+/*
  * Overall Objective: Log model failures without interrupting the user experience.
  */
 function handleModelError(providerName, poolType, modelName, statusCode) {
@@ -2888,7 +2871,7 @@ function handleModelError(providerName, poolType, modelName, statusCode) {
     }
 }
 
-/**
+/*
  * Objective: Pick the model with the absolute lowest failure count across all enabled providers.
  */
 function getBestModel(poolType) {
@@ -3006,10 +2989,6 @@ async function callGeminiAPI(prompt, val, type) {
     throw new Error("All models exhausted.");
 }
 
-/**
- * Overall Objective: Execute LLM prompts across multiple enabled providers.
- * Task: Select the healthiest model, construct provider-specific payloads, and handle failover.
- */
 async function callProviderAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
     const poolType = (type === 'create' || type === 'code') ? 'create' : 'source';
@@ -3017,8 +2996,6 @@ async function callProviderAPI(prompt, val, type) {
 
     if (window.isInCooldown) throw new Error("System is currently cooling down.");
 
-    // 1. Gather all potential candidates across all enabled providers
-    // Based on our getBestModel logic: candidates = [{provider, model, failures, config}]
     let candidates = [];
     const enabled = databaseCache.app_manifest.llm_providers.filter(p => p.enabled);
     
@@ -3030,16 +3007,15 @@ async function callProviderAPI(prompt, val, type) {
                 model: stat[0],
                 failures: stat[1],
                 config: p,
-                statRef: stat // Reference to the actual [name, count] array for updating
+                statRef: stat 
             });
         });
     });
 
-    // 2. Sort by failure count (healthiest first)
     candidates.sort((a, b) => a.failures - b.failures);
 
     let attempts = 0;
-    const maxRetries = Math.min(candidates.length, 5); // Don't loop forever if everything is down
+    const maxRetries = Math.min(candidates.length, 5);
 
     while (attempts < maxRetries) {
         const current = candidates[attempts];
@@ -3051,8 +3027,11 @@ async function callProviderAPI(prompt, val, type) {
         if (statusText) statusText.innerText = `RETRIEVING [${provider.toUpperCase()}] ${model.toUpperCase()}...`;
 
         try {
-            // 3. Resolve URL and Headers
-            const apiKey = await retrieveProviderKey(provider); // Your existing key retrieval logic
+            // Updated to use your unified credential retriever
+            const credentials = await retrieveLLMCredentials(provider);
+            if (!credentials) throw new Error("Could not resolve credentials.");
+
+            const { apiKey } = credentials;
             const url = config.prompt_execution_api.url
                 .replace('API_KEY', apiKey)
                 .replace('MODEL_NAME', model);
@@ -3060,18 +3039,9 @@ async function callProviderAPI(prompt, val, type) {
             const headers = { ...config.prompt_execution_api.headers };
             for (let h in headers) headers[h] = headers[h].replace('API_KEY', apiKey);
 
-            // 4. Construct Provider-Specific Body
-            let body = {};
-            if (provider === 'google') {
-                body = { contents: [{ parts: [{ text: prompt }] }] };
-            } else {
-                // OpenAI/Groq/DeepSeek Standard
-                body = {
-                    model: model,
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: isCode ? 0.2 : 0.7
-                };
-            }
+            let body = (provider === 'google') 
+                ? { contents: [{ parts: [{ text: prompt }] }] }
+                : { model: model, messages: [{ role: "user", content: prompt }], temperature: isCode ? 0.2 : 0.7 };
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -3080,44 +3050,32 @@ async function callProviderAPI(prompt, val, type) {
             });
 
             if (!response.ok) {
-                console.warn(`[LIMIT]: ${response.status} hit on ${model} (${provider}).`);
-                statRef[1]++; // Increment failure count in modelStats
+                statRef[1]++;
                 attempts++;
                 continue;
             }
 
             const data = await response.json();
-            
-            // Success: Gently reduce failure count (rewards stability)
             if (statRef[1] > 0) statRef[1]--;
 
-            // 5. Extract Result based on Provider Schema
             let rawResult = (provider === 'google')
                 ? data.candidates[0].content.parts[0].text
                 : data.choices[0].message.content;
 
-            // 6. Sanitization & Verification Logic
             let sanitized = verifyAndFixCode(rawResult, isCode);
             
             if (isCode) {
-                if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
-                    const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
-                    if (start !== -1) sanitized = sanitized.substring(start);
+                if (sanitized.includes('<html')) {
+                    const start = sanitized.indexOf('<html');
+                    sanitized = sanitized.substring(start);
                 }
                 return sanitized;
             } else {
                 try {
                     const parsed = JSON.parse(sanitized);
-                    // Nested code fixing for complex JSON structures
-                    if (parsed?.code) parsed.code = verifyAndFixCode(parsed.code, true);
-                    if (Array.isArray(parsed)) {
-                        parsed.forEach(item => {
-                            if (item.code) item.code = verifyAndFixCode(item.code, true);
-                        });
-                    }
                     return parsed;
                 } catch (jsonErr) {
-                    return sanitized; // Fallback to raw text if JSON fails
+                    return sanitized;
                 }
             }
 
@@ -3130,6 +3088,36 @@ async function callProviderAPI(prompt, val, type) {
 
     await initiateSystemCooldown(statusText);
     throw new Error("Multi-Provider failover exhausted.");
+}
+
+/*
+ * Task: Iterate through all providers in the manifest and initialize those marked as enabled.
+ */
+async function retrieveProvider() {
+    try {
+        let manifest = databaseCache?.app_manifest;
+        if (!manifest) {
+            const snap = await get(ref(db, 'app_manifest')).catch(() => null);
+            if (snap && snap.exists()) {
+                manifest = snap.val();
+                databaseCache.app_manifest = manifest;
+            }
+        }
+
+        if (!manifest || !manifest.llm_providers) return;
+
+        // Filter for only enabled providers
+        const enabledProviders = manifest.llm_providers.filter(p => p.enabled);
+
+        // Initialize each enabled provider
+        for (const provider of enabledProviders) {
+            console.log(`[FORGE]: Initializing provider: ${provider.provider_name}`);
+            // This will trigger refreshProviderModels if modelStats is empty for this provider
+            await retrieveLLMCredentials(provider.provider_name);
+        }
+    } catch (e) {
+        console.error("[FORGE ERROR]: Failed to bulk retrieve providers:", e);
+    }
 }
 /*
  * System Cooldown & Reset Logic
