@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:49:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:44:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2684,30 +2684,22 @@ async function retrieveLLMCredentials(providerName) {
         const providerConfig = manifest?.llm_providers?.find(p => p.provider_name === providerName);
         
         if (!providerConfig || !providerConfig.enabled) {
-            console.warn(`[FORGE]: Provider ${providerName} is missing or disabled.`);
             return null;
         }
 
-        // UPDATED: Now retrieving the key directly from the provider object
-        const apiKey = providerConfig.key;
-
-        if (!apiKey) throw new Error(`API Key for ${providerName} missing in provider object.`);
-
-        // Check if we need to populate modelStats
-        const isLocalPoolEmpty = !modelStats[providerName] || 
-                                 modelStats[providerName].source.length === 0;
+        const proxyKey = providerConfig.key; // This is the Y-Key
+        const isLocalPoolEmpty = !modelStats[providerName] || modelStats[providerName].source.length === 0;
 
         if (isLocalPoolEmpty) {
-            await refreshProviderModels(providerName, apiKey);
+            await refreshProviderModels(providerName, proxyKey);
         }
 
-        return { apiKey, config: providerConfig };
+        return { proxyKey, config: providerConfig };
     } catch (e) {
         console.error(`[FORGE ERROR]: Credentials failure for ${providerName}:`, e);
         return null;
     }
 }
-
 
 async function getGeminiModel(apiKey) {
     // 1. IMMEDIATE RETURN: If modelStats is already populated, get the healthiest model.
@@ -2780,61 +2772,38 @@ async function getGeminiModel(apiKey) {
     }
 }
 
-/*
- * Objective: Discover and validate free-tier models, preventing "junk" names in DB.
- * Task: Fetch, validate against known stable patterns, score, and sync.
- */
-async function refreshProviderModels(providerName, apiKey) {
-    const config = databaseCache.app_manifest?.llm_providers?.find(p => p.provider_name === providerName);
+async function refreshProviderModels(providerName, proxyKey) {
+    const providers = databaseCache.app_manifest?.llm_providers;
+    const config = providers?.find(p => p.provider_name === providerName);
     if (!config) return null;
 
     try {
-        const url = config.model_discovery_api.url.replace('API_KEY', apiKey);
-        
-        // UPDATED: Using discovery_api headers specifically
-        const headers = { ...config.model_discovery_api.headers };
-        for (let k in headers) { 
-            headers[k] = headers[k].replace('API_KEY', apiKey); 
-        }
-
-        const res = await fetch(url, { method: 'GET', headers });
+        const url = config.model_discovery_api.replace('API_KEY', proxyKey);
+        const res = await fetch(url, { method: 'GET' });
         const data = await res.json();
 
-        // 1. Raw Extraction
         let rawNames = (providerName === 'google') 
             ? data.models?.filter(m => m.supportedGenerationMethods.includes('generateContent')).map(m => m.name.split('/')[1])
             : data.data?.map(m => m.id);
 
-        if (!rawNames || rawNames.length === 0) throw new Error("No raw models returned from API.");
+        if (!rawNames || rawNames.length === 0) throw new Error("No models found.");
 
-        // 2. STRICT VALIDATION: Block internal, embedding, or deprecated names
         const blacklist = ['embedding', 'aqa', 'vision', 'latest', 'lite', 'deprecated', 'experimental'];
         const validatedModels = rawNames.filter(name => {
             const n = name.toLowerCase();
             return !blacklist.some(term => n.includes(term)) && !n.endsWith('-latest');
         });
 
-        if (validatedModels.length === 0) throw new Error("No valid models passed strict filter.");
-
-        // 3. Scoring Logic (Updated for 2026 models like Llama 4 Scout and Gemini 3)
         const categorize = (name) => {
             const n = name.toLowerCase();
-            // Create Tier: Pro models and high-parameter counts (70b, 105b, r1, v4)
-            if (n.includes('pro') || n.includes('reasoner') || n.includes('70b') || n.includes('v4') || n.includes('r1')) return 'create';
-            // Source Tier: Speed/Efficiency (Flash, Instant, Scout, 8b, 17b)
-            if (n.includes('flash') || n.includes('instant') || n.includes('scout') || n.includes('8b')) return 'source';
+            if (n.includes('pro') || n.includes('reasoner') || n.includes('70b') || n.includes('105b') || n.includes('v4')) return 'create';
             return 'source';
         };
 
-        const sourcePool = validatedModels.filter(m => categorize(m) === 'source')
-            .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
-
-        const createPool = validatedModels.filter(m => categorize(m) === 'create')
-            .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
-
+        const sourcePool = validatedModels.filter(m => categorize(m) === 'source').sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+        const createPool = validatedModels.filter(m => categorize(m) === 'create').sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
         const finalCreate = createPool.length > 0 ? [...createPool, ...sourcePool] : sourcePool;
 
-        // 4. Update modelStats (Preserve existing failure counts if model exists)
         if (!modelStats[providerName]) modelStats[providerName] = { source: [], create: [] };
         
         const updatePoolStats = (newNames, existingStats) => {
@@ -2844,46 +2813,46 @@ async function refreshProviderModels(providerName, apiKey) {
             });
         };
 
-        modelStats[providerName].source = updatePoolStats(sourcePool, modelStats[providerName].source || []);
-        modelStats[providerName].create = updatePoolStats(finalCreate, modelStats[providerName].create || []);
+        modelStats[providerName].source = updatePoolStats(sourcePool, modelStats[providerName].source);
+        modelStats[providerName].create = updatePoolStats(finalCreate, modelStats[providerName].create);
 
-        // 5. Sync Clean Data to Firebase
-        // Find index to update correct array element if necessary, or update by provider name if structured as object
-        update(ref(db, `app_manifest/llm_providers/${providerName}`), {
-            model_pools: { source: sourcePool, create: finalCreate },
-            last_sync: new Date().toISOString()
-        });
+        const providerIndex = providers.findIndex(p => p.provider_name === providerName);
+        if (providerIndex !== -1) {
+            update(ref(db, `app_manifest/llm_providers/${providerIndex}`), {
+                model_pools: { create: finalCreate, source: sourcePool },
+                last_sync: new Date().toISOString()
+            });
+        }
 
         return sourcePool[0];
-
     } catch (e) {
-        console.warn(`[FORGE]: Discovery failed for ${providerName}.`, e);
+        console.warn(`[FORGE]: Using existing pool for ${providerName}.`);
         return config.default_model;
     }
 }
+
 /*
  * Overall Objective: Log model failures without interrupting the user experience.
  */
 function handleModelError(providerName, poolType, modelName, statusCode) {
-    // Only track "Hard" failures or "Rate Limits" (429/500/503)
     if (statusCode === 429 || statusCode >= 500) {
         const pool = modelStats[providerName]?.[poolType];
         if (pool) {
             const entry = pool.find(m => m[0] === modelName);
             if (entry) {
-                entry[1] += 1; // Increment failure count
-                console.warn(`[FORGE]: Failure recorded for ${modelName} (${providerName}). Count: ${entry[1]}`);
+                entry[1] += 1;
+                console.warn(`[FORGE]: Logged failure for ${modelName}.`);
             }
         }
     }
 }
 
-/*
- * Objective: Pick the model with the absolute lowest failure count across all enabled providers.
- */
 function getBestModel(poolType) {
     const candidates = [];
-    const enabled = databaseCache.app_manifest.llm_providers.filter(p => p.enabled);
+    const manifest = databaseCache.app_manifest;
+    if (!Array.isArray(manifest)) return null;
+
+    const enabled = manifest.filter(p => p.enabled);
 
     enabled.forEach(p => {
         const pool = modelStats[p.provider_name]?.[poolType] || [];
@@ -2891,13 +2860,11 @@ function getBestModel(poolType) {
             candidates.push({
                 provider: p.provider_name,
                 model: stat[0],
-                failures: stat[1],
-                config: p
+                failures: stat[1]
             });
         });
     });
 
-    // Pick the winner: Lowest failure count first, then latest version
     candidates.sort((a, b) => a.failures - b.failures || b.model.localeCompare(a.model, { numeric: true }));
 
     return candidates[0] || null;
@@ -2998,108 +2965,58 @@ async function callGeminiAPI(prompt, val, type) {
 
 async function callProviderAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
-    const poolType = (type === 'create' || type === 'code') ? 'create' : 'source';
+    const poolType = isCode ? 'create' : 'source';
     const statusText = document.getElementById('engine-status-text');
+    const PROXY_GATEWAY_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
 
-    if (window.isInCooldown) throw new Error("System is currently cooling down.");
-
+    const providers = databaseCache.app_manifest?.llm_providers || [];
     let candidates = [];
-    const enabled = databaseCache.app_manifest.llm_providers.filter(p => p.enabled);
     
-    enabled.forEach(p => {
+    providers.filter(p => p.enabled).forEach(p => {
         const pool = modelStats[p.provider_name]?.[poolType] || [];
         pool.forEach(stat => {
-            candidates.push({
-                provider: p.provider_name,
-                model: stat[0],
-                failures: stat[1],
-                config: p,
-                statRef: stat 
-            });
+            candidates.push({ provider: p.provider_name, model: stat[0], failures: stat[1], config: p, statRef: stat });
         });
     });
 
     candidates.sort((a, b) => a.failures - b.failures);
-
     let attempts = 0;
-    const maxRetries = Math.min(candidates.length, 5);
 
-    while (attempts < maxRetries) {
-        const current = candidates[attempts];
-        const { provider, model, config, statRef } = current;
-
-        if (statusText) statusText.innerText = `THROTTLING ENGINE... (4s)`;
-        await new Promise(r => setTimeout(r, 4000));
-        
-        if (statusText) statusText.innerText = `RETRIEVING [${provider.toUpperCase()}] ${model.toUpperCase()}...`;
+    while (attempts < Math.min(candidates.length, 5)) {
+        const { provider, model, config, statRef } = candidates[attempts];
+        if (statusText) statusText.innerText = `ROUTING TO ${provider.toUpperCase()}...`;
 
         try {
-            // Updated to use your unified credential retriever
-            const credentials = await retrieveLLMCredentials(provider);
-            if (!credentials) throw new Error("Could not resolve credentials.");
-
-            const { apiKey } = credentials;
-            const url = config.prompt_execution_api.url
-                .replace('API_KEY', apiKey)
-                .replace('MODEL_NAME', model);
-
-            const headers = { ...config.prompt_execution_api.headers };
-            for (let h in headers) headers[h] = headers[h].replace('API_KEY', apiKey);
-
-            let body = (provider === 'google') 
-                ? { contents: [{ parts: [{ text: prompt }] }] }
-                : { model: model, messages: [{ role: "user", content: prompt }], temperature: isCode ? 0.2 : 0.7 };
-
-            const response = await fetch(url, {
+            const response = await fetch(PROXY_GATEWAY_URL, {
                 method: 'POST',
-                headers: headers,
-                body: JSON.stringify(body)
+                body: JSON.stringify({
+                    provider_name: provider,
+                    key: config.key, 
+                    execution_url: config.execution_url,
+                    model: model,
+                    prompt: prompt
+                })
             });
 
-            if (!response.ok) {
-                statRef[1]++;
-                attempts++;
-                continue;
-            }
-
             const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
             if (statRef[1] > 0) statRef[1]--;
 
             let rawResult = (provider === 'google')
                 ? data.candidates[0].content.parts[0].text
                 : data.choices[0].message.content;
 
-            let sanitized = verifyAndFixCode(rawResult, isCode);
-            
-            if (isCode) {
-                if (sanitized.includes('<html')) {
-                    const start = sanitized.indexOf('<html');
-                    sanitized = sanitized.substring(start);
-                }
-                return sanitized;
-            } else {
-                try {
-                    const parsed = JSON.parse(sanitized);
-                    return parsed;
-                } catch (jsonErr) {
-                    return sanitized;
-                }
-            }
-
+            return verifyAndFixCode(rawResult, isCode);
         } catch (error) {
-            console.warn(`[FAIL]: ${model} (${provider}) error:`, error);
             statRef[1]++;
             attempts++;
+            await new Promise(r => setTimeout(r, 1500));
         }
     }
-
-    await initiateSystemCooldown(statusText);
-    throw new Error("Multi-Provider failover exhausted.");
+    throw new Error("Critical: Failover exhausted.");
 }
 
-/*
- * Task: Iterate through all providers in the manifest and initialize those marked as enabled.
- */
 async function retrieveProvider() {
     try {
         let manifest = databaseCache?.app_manifest;
@@ -3111,21 +3028,19 @@ async function retrieveProvider() {
             }
         }
 
-        if (!manifest || !manifest.llm_providers) return;
+        if (!Array.isArray(manifest)) return;
 
-        // Filter for only enabled providers
-        const enabledProviders = manifest.llm_providers.filter(p => p.enabled);
+        const enabledProviders = manifest.filter(p => p.enabled);
 
-        // Initialize each enabled provider
         for (const provider of enabledProviders) {
-            console.log(`[FORGE]: Initializing provider: ${provider.provider_name}`);
-            // This will trigger refreshProviderModels if modelStats is empty for this provider
+            console.log(`[FORGE]: Initializing ${provider.provider_name}`);
             await retrieveLLMCredentials(provider.provider_name);
         }
     } catch (e) {
-        console.error("[FORGE ERROR]: Failed to bulk retrieve providers:", e);
+        console.error("[FORGE ERROR]: Bulk retrieval failed:", e);
     }
 }
+
 /*
  * System Cooldown & Reset Logic
  */
