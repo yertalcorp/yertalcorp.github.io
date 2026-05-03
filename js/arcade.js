@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3000,10 +3000,10 @@ async function callProviderAPI(prompt, val, type) {
         const progress = Math.floor((attempts / maxAttempts) * 100);
         
         // Only resolve the Model Name placeholder; API_KEY resolution is handled by the Proxy
-        **let finalExecutionUrl = config.execution_url;**
-        **if (provider === 'google') {**
-            **finalExecutionUrl = finalExecutionUrl.replace('MODEL_NAME', model);**
-        **}**
+        let finalExecutionUrl = config.execution_url;
+        if (provider === 'google') {
+            finalExecutionUrl = finalExecutionUrl.replace('MODEL_NAME', model);
+        }
 
         console.log(`[FORGE]: Attempt ${attempts + 1}/${maxAttempts} | ${provider.toUpperCase()} : ${model}`);
         
@@ -3017,7 +3017,7 @@ async function callProviderAPI(prompt, val, type) {
                 body: JSON.stringify({
                     provider_name: provider,
                     key: config.key, 
-                    **execution_url: finalExecutionUrl,**
+                    execution_url: finalExecutionUrl,
                     model: model,
                     prompt: prompt
                 })
