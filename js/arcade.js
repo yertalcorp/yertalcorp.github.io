@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:04:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2963,38 +2963,45 @@ async function callProviderAPI(prompt, val, type) {
     const statusText = document.getElementById('engine-status-text');
     const PROXY_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbxS39QVHMsDqHgTgpNFWuMAZyS3lkPnd5ST9JhnoDKUu8etB1buYT3hq2A1ykWiKzu8/exec";
 
-    if (window.isInCooldown) throw new Error("System is currently cooling down.");
+    if (window.isInCooldown) {
+        console.warn("[FORGE]: Blocked - System is currently in cooldown.");
+        if (statusText) statusText.innerText = "SYSTEM IN COOLDOWN - PLEASE WAIT";
+        throw new Error("System is currently cooling down.");
+    }
 
-    // 1. Initial State
     if (statusText) statusText.innerText = "FORGING SPARK [-----] 0%";
 
-    // 2. Ensure modelStats is hydrated
-    if (Object.keys(window.modelStats).length === 0) {
+    if (!window.modelStats || Object.keys(window.modelStats).length === 0) {
+        console.log("[FORGE]: modelStats empty. Initializing hydration...");
         await retrieveProvider();
     }
 
-    // 3. Get candidates and check for System Cooldown condition
     let candidates = getBestModels(poolType);
-    if (candidates.length === 0) throw new Error("No active models.");
+    if (candidates.length === 0) {
+        console.error("[FORGE]: No candidates found for pool:", poolType);
+        throw new Error("No enabled models found.");
+    }
 
-    // Logic: If all candidates have the same failure count > 0, system is failing globally
     const firstFailCount = candidates[0].failures;
     const allSameFailure = candidates.length > 1 && candidates.every(c => c.failures === firstFailCount && c.failures > 0);
 
     if (allSameFailure) {
-        await initiateSystemCoolDown(statusText);
-        throw new Error("System Cooldown: All models showing equal failure rates.");
+        console.warn("[FORGE]: Global failure state detected across all models.");
+        await initiateSystemCooldown(statusText);
+        throw new Error("Initiating cooldown: Global failure rate detected.");
     }
 
     let attempts = 0;
-    const maxAttempts = Math.min(candidates.length, 3); // Try top 3 best models
+    const maxAttempts = Math.min(candidates.length, 3); 
 
     while (attempts < maxAttempts) {
         const { provider, model, config } = candidates[attempts];
+        const progress = Math.floor((attempts / maxAttempts) * 100);
         
-        // Update Status for attempt
+        console.log(`[FORGE]: Attempt ${attempts + 1}/${maxAttempts} using ${provider}:${model}`);
+        
         if (statusText) {
-            statusText.innerText = `FORGING SPARK [---  ] ${Math.floor((attempts/3)*100)}%\nRetrieving ${provider.toUpperCase()} ${model}...`;
+            statusText.innerText = `FORGING SPARK [---  ] ${progress}%\nRetrieving ${provider.toUpperCase()} ${model}...`;
         }
 
         try {
@@ -3009,41 +3016,52 @@ async function callProviderAPI(prompt, val, type) {
                 })
             });
 
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+            
             const data = await response.json();
-            if (data.error) throw new Error(data.error);
+            if (data.error) throw new Error(JSON.stringify(data.error));
 
-            // SUCCESS PATH
+            console.log(`[FORGE SUCCESS]: ${model} responded successfully.`);
             if (statusText) statusText.innerText = "SPARK FORGE SUCCESSFUL [======] 100%";
-
+            
             let rawResult = (provider === 'google')
                 ? data.candidates?.[0]?.content?.parts?.[0]?.text
                 : data.choices?.[0]?.message?.content;
 
-            // Reward model
-            if (modelStats[provider][model] > 0) modelStats[provider][model]--;
+            if (!rawResult) throw new Error("Empty response body.");
+
+            if (modelStats[provider][model] > 0) {
+                modelStats[provider][model]--;
+                console.log(`[FORGE]: Rewarding ${model}. New failure count: ${modelStats[provider][model]}`);
+            }
 
             return verifyAndFixCode(rawResult, isCode);
 
         } catch (error) {
-            console.error(`[FORGE]: ${model} failed:`, error.message);
+            console.error(`[FORGE FAIL]: ${model} failed. Error:`, error.message);
             
-            // Log failure in modelStats
             handleModelError(provider, model);
 
-            // Display Error in Status Bar for 2 seconds
-            if (statusText) statusText.innerText = `FORGE ERROR: ${model} failed. Retrying...`;
+            if (statusText) {
+                statusText.innerText = `FORGE ERROR: ${error.message.substring(0, 30)}...`;
+            }
+            
+            // Wait 2 seconds for the user to read the error
             await new Promise(r => setTimeout(r, 2000));
 
             attempts++;
+            if (attempts < maxAttempts) {
+                console.log(`[FORGE]: Retrying with candidate #${attempts + 1}...`);
+            }
         }
     }
 
-    // Exhaustion Path
-    if (statusText) statusText.innerText = "FORGE ERROR: ALL ATTEMPTS FAILED.";
+    console.error("[FORGE CRITICAL]: All attempts exhausted. Entering Cooldown.");
+    if (statusText) statusText.innerText = "FORGE ERROR: ATTEMPTS EXHAUSTED.";
     await initiateSystemCooldown(statusText);
-    throw new Error("Critical: Failover exhausted.");
+    throw new Error("Critical: All model attempts failed.");
 }
+
 async function retrieveProvider() {
     try {
         let manifest = databaseCache.app_manifest;
