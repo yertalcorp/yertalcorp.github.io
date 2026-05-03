@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:44:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:49:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2967,7 +2967,7 @@ async function callProviderAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
     const poolType = isCode ? 'create' : 'source';
     const statusText = document.getElementById('engine-status-text');
-    const PROXY_GATEWAY_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+    const PROXY_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbyO5zUbvS_LzHbe354r8cNSlTUuLsE9jMdBpehSMq8/exec";
 
     const providers = databaseCache.app_manifest?.llm_providers || [];
     let candidates = [];
