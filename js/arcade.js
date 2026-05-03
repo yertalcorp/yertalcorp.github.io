@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:34:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:55:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1838,7 +1838,7 @@ window.addNewCurrent = async (name, type, privacy, oldId = null) => {
     return window.update(window.ref(window.db), updates);
 };
 
-function verifyAndFixCode(rawCode, isCodeMode = false) {
+function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
     // 1. Scrub UNICODE spaces (non-breaking spaces, etc.) and Markdown ticks
@@ -1850,6 +1850,23 @@ function verifyAndFixCode(rawCode, isCodeMode = false) {
     return fixed;
 }
 
+function verifyAndFixCode(rawCode, isCodeMode = false) {
+    if (!rawCode || typeof rawCode !== 'string') return "";
+
+    // 1. Scrub UNICODE spaces and Markdown ticks
+    let fixed = rawCode
+        .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
+        .replace(/^```[a-z]*\n?|```$/gi, '')
+        .trim();
+
+    // 2. If it's HTML code, ensure we start at the doctype
+    if (isCodeMode && (fixed.includes('<!DOCTYPE') || fixed.includes('<html'))) {
+        const start = Math.max(fixed.indexOf('<!DOCTYPE'), fixed.indexOf('<html'));
+        if (start !== -1) fixed = fixed.substring(start);
+    }
+
+    return fixed;
+}
 function verifyAndFixCodeComplex(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
