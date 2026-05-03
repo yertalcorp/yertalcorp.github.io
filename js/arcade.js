@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:34:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:49:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2688,10 +2688,10 @@ async function retrieveLLMCredentials(providerName) {
             return null;
         }
 
-        const keyMap = { google: 'gkey', groq: 'groq_key', deepseek: 'ds_key', sarvam: 'sarvam_key', cerebras: 'c_key', openai: 'o_key' };
-        const apiKey = manifest[keyMap[providerName]];
+        // UPDATED: Now retrieving the key directly from the provider object
+        const apiKey = providerConfig.key;
 
-        if (!apiKey) throw new Error(`API Key for ${providerName} missing.`);
+        if (!apiKey) throw new Error(`API Key for ${providerName} missing in provider object.`);
 
         // Check if we need to populate modelStats
         const isLocalPoolEmpty = !modelStats[providerName] || 
@@ -2707,6 +2707,7 @@ async function retrieveLLMCredentials(providerName) {
         return null;
     }
 }
+
 
 async function getGeminiModel(apiKey) {
     // 1. IMMEDIATE RETURN: If modelStats is already populated, get the healthiest model.
@@ -2789,8 +2790,12 @@ async function refreshProviderModels(providerName, apiKey) {
 
     try {
         const url = config.model_discovery_api.url.replace('API_KEY', apiKey);
-        const headers = { ...config.prompt_execution_api.headers };
-        for (let k in headers) { headers[k] = headers[k].replace('API_KEY', apiKey); }
+        
+        // UPDATED: Using discovery_api headers specifically
+        const headers = { ...config.model_discovery_api.headers };
+        for (let k in headers) { 
+            headers[k] = headers[k].replace('API_KEY', apiKey); 
+        }
 
         const res = await fetch(url, { method: 'GET', headers });
         const data = await res.json();
@@ -2799,6 +2804,8 @@ async function refreshProviderModels(providerName, apiKey) {
         let rawNames = (providerName === 'google') 
             ? data.models?.filter(m => m.supportedGenerationMethods.includes('generateContent')).map(m => m.name.split('/')[1])
             : data.data?.map(m => m.id);
+
+        if (!rawNames || rawNames.length === 0) throw new Error("No raw models returned from API.");
 
         // 2. STRICT VALIDATION: Block internal, embedding, or deprecated names
         const blacklist = ['embedding', 'aqa', 'vision', 'latest', 'lite', 'deprecated', 'experimental'];
@@ -2837,10 +2844,11 @@ async function refreshProviderModels(providerName, apiKey) {
             });
         };
 
-        modelStats[providerName].source = updatePoolStats(sourcePool, modelStats[providerName].source);
-        modelStats[providerName].create = updatePoolStats(finalCreate, modelStats[providerName].create);
+        modelStats[providerName].source = updatePoolStats(sourcePool, modelStats[providerName].source || []);
+        modelStats[providerName].create = updatePoolStats(finalCreate, modelStats[providerName].create || []);
 
         // 5. Sync Clean Data to Firebase
+        // Find index to update correct array element if necessary, or update by provider name if structured as object
         update(ref(db, `app_manifest/llm_providers/${providerName}`), {
             model_pools: { source: sourcePool, create: finalCreate },
             last_sync: new Date().toISOString()
@@ -2853,7 +2861,6 @@ async function refreshProviderModels(providerName, apiKey) {
         return config.default_model;
     }
 }
-
 /*
  * Overall Objective: Log model failures without interrupting the user experience.
  */
