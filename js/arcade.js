@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2843,25 +2843,30 @@ function handleModelError(providerName, modelName) {
 
 function getBestModels(poolType) {
     const candidates = [];
-    const providers = databaseCache.app_manifest?.llm_providers || [];
+    const manifest = databaseCache.app_manifest;
 
-    providers.filter(p => p.enabled).forEach(p => {
-        // Only look at models designated for this specific pool (create or source)
-        const modelsInPool = (poolType === 'create') ? p.models_create : p.models_source;
+    if (!manifest || !window.modelStats) return [];
+
+    Object.keys(window.modelStats).forEach(providerName => {
+        const providerConfig = manifest.llm_providers.find(p => p.provider_name === providerName);
         
-        modelsInPool?.forEach(modelName => {
-            const failures = modelStats[p.provider_name]?.[modelName] ?? 0;
-            candidates.push({
-                provider: p.provider_name,
-                model: modelName,
-                failures: failures,
-                config: p
+        // Only include if provider is enabled in manifest
+        if (providerConfig && providerConfig.enabled) {
+            const pool = window.modelStats[providerName][poolType] || [];
+            pool.forEach(stat => {
+                candidates.push({
+                    provider: providerName,
+                    model: stat[0],   // Model Name
+                    failures: stat[1], // Current Failure Count
+                    config: providerConfig,
+                    statRef: stat     // Pointer to [name, count] for updates
+                });
             });
-        });
+        }
     });
 
-    // Sort by failures ascending
-    return candidates.sort((a, b) => a.failures - b.failures);
+    // Sort: Least failures first, then alphabetical by model name
+    return candidates.sort((a, b) => a.failures - b.failures || a.model.localeCompare(b.model));
 }
 
 async function callGeminiAPI(prompt, val, type) {
@@ -2964,41 +2969,39 @@ async function callProviderAPI(prompt, val, type) {
     const PROXY_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbxS39QVHMsDqHgTgpNFWuMAZyS3lkPnd5ST9JhnoDKUu8etB1buYT3hq2A1ykWiKzu8/exec";
 
     if (window.isInCooldown) {
-        console.warn("[FORGE]: Blocked - System is currently in cooldown.");
-        if (statusText) statusText.innerText = "SYSTEM IN COOLDOWN - PLEASE WAIT";
-        throw new Error("System is currently cooling down.");
+        console.warn("[FORGE]: Execution blocked by Cooldown.");
+        throw new Error("System is cooling down.");
     }
 
     if (statusText) statusText.innerText = "FORGING SPARK [-----] 0%";
 
+    // Ensure hydration exists but do not re-hydrate every call
     if (!window.modelStats || Object.keys(window.modelStats).length === 0) {
-        console.log("[FORGE]: modelStats empty. Initializing hydration...");
         await retrieveProvider();
     }
 
     let candidates = getBestModels(poolType);
     if (candidates.length === 0) {
-        console.error("[FORGE]: No candidates found for pool:", poolType);
+        console.error(`[FORGE]: No models available for pool: ${poolType}`);
         throw new Error("No enabled models found.");
     }
 
-    const firstFailCount = candidates[0].failures;
-    const allSameFailure = candidates.length > 1 && candidates.every(c => c.failures === firstFailCount && c.failures > 0);
-
-    if (allSameFailure) {
-        console.warn("[FORGE]: Global failure state detected across all models.");
+    // Cooldown check: Are all candidates failing equally?
+    const firstFail = candidates[0].failures;
+    if (candidates.length > 1 && candidates.every(c => c.failures === firstFail && c.failures > 0)) {
+        console.warn("[FORGE]: Global failure detected across pool.");
         await initiateSystemCooldown(statusText);
-        throw new Error("Initiating cooldown: Global failure rate detected.");
+        throw new Error("Initiating System Cooldown.");
     }
 
     let attempts = 0;
-    const maxAttempts = Math.min(candidates.length, 3); 
+    const maxAttempts = Math.min(candidates.length, 3);
 
     while (attempts < maxAttempts) {
-        const { provider, model, config } = candidates[attempts];
+        const { provider, model, config, statRef } = candidates[attempts];
         const progress = Math.floor((attempts / maxAttempts) * 100);
         
-        console.log(`[FORGE]: Attempt ${attempts + 1}/${maxAttempts} using ${provider}:${model}`);
+        console.log(`[FORGE]: Attempt ${attempts + 1}/${maxAttempts} | ${provider.toUpperCase()} : ${model}`);
         
         if (statusText) {
             statusText.innerText = `FORGING SPARK [---  ] ${progress}%\nRetrieving ${provider.toUpperCase()} ${model}...`;
@@ -3016,53 +3019,47 @@ async function callProviderAPI(prompt, val, type) {
                 })
             });
 
-            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
-            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             if (data.error) throw new Error(JSON.stringify(data.error));
 
-            console.log(`[FORGE SUCCESS]: ${model} responded successfully.`);
+            console.log(`[FORGE SUCCESS]: Response received from ${model}`);
             if (statusText) statusText.innerText = "SPARK FORGE SUCCESSFUL [======] 100%";
             
             let rawResult = (provider === 'google')
                 ? data.candidates?.[0]?.content?.parts?.[0]?.text
                 : data.choices?.[0]?.message?.content;
 
-            if (!rawResult) throw new Error("Empty response body.");
+            if (!rawResult) throw new Error("Empty response content.");
 
-            if (modelStats[provider][model] > 0) {
-                modelStats[provider][model]--;
-                console.log(`[FORGE]: Rewarding ${model}. New failure count: ${modelStats[provider][model]}`);
-            }
+            // Reward stability
+            if (statRef[1] > 0) statRef[1]--;
 
             return verifyAndFixCode(rawResult, isCode);
 
         } catch (error) {
-            console.error(`[FORGE FAIL]: ${model} failed. Error:`, error.message);
+            console.error(`[FORGE FAIL]: ${model} encountered an error:`, error.message);
             
-            handleModelError(provider, model);
+            // Log failure via the shared pointer to modelStats
+            statRef[1]++; 
 
             if (statusText) {
                 statusText.innerText = `FORGE ERROR: ${error.message.substring(0, 30)}...`;
             }
             
-            // Wait 2 seconds for the user to read the error
             await new Promise(r => setTimeout(r, 2000));
-
             attempts++;
-            if (attempts < maxAttempts) {
-                console.log(`[FORGE]: Retrying with candidate #${attempts + 1}...`);
-            }
         }
     }
 
-    console.error("[FORGE CRITICAL]: All attempts exhausted. Entering Cooldown.");
-    if (statusText) statusText.innerText = "FORGE ERROR: ATTEMPTS EXHAUSTED.";
+    console.error("[FORGE CRITICAL]: All attempts failed.");
     await initiateSystemCooldown(statusText);
-    throw new Error("Critical: All model attempts failed.");
+    throw new Error("All model attempts exhausted.");
 }
 
+
 async function retrieveProvider() {
+    console.log("[FORGE]: Syncing with Firebase Manifest...");
     try {
         let manifest = databaseCache.app_manifest;
         if (!manifest) {
@@ -3073,24 +3070,33 @@ async function retrieveProvider() {
             }
         }
 
-        const providers = manifest?.llm_providers || [];
-        providers.forEach(p => {
-            if (p.enabled && !modelStats[p.provider_name]) {
-                modelStats[p.provider_name] = {};
-                // Combine create and source models into the flat model lookup
-                const allModels = [...(p.models_create || []), ...(p.models_source || [])];
-                allModels.forEach(modelName => {
-                    modelStats[p.provider_name][modelName] = 0; // Initialize failure count
-                });
+        if (!manifest || !Array.isArray(manifest.llm_providers)) {
+            console.error("[FORGE]: Invalid or missing manifest providers.");
+            return false;
+        }
+
+        // Fresh hydration of modelStats based on the nested JSON structure
+        window.modelStats = {};
+
+        manifest.llm_providers.forEach(p => {
+            if (p.enabled) {
+                console.log(`[FORGE]: Registering Provider: ${p.provider_name.toUpperCase()}`);
+                
+                const pools = p.model_pools || {};
+                window.modelStats[p.provider_name] = {
+                    create: (pools.create || []).map(m => [m, 0]),
+                    source: (pools.source || []).map(m => [m, 0])
+                };
             }
         });
+
+        console.log("[FORGE]: modelStats Hydrated:", window.modelStats);
         return true;
     } catch (e) {
         console.error("[FORGE ERROR]: Hydration failed:", e);
         return false;
     }
 }
-
 /*
  * System Cooldown & Reset Logic
  */
