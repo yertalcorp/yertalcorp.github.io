@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:55:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @22:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2984,6 +2984,7 @@ async function callGeminiAPI(prompt, val, type) {
  * - Delegate URL resolution and API keys to the Proxy.
  * - Log raw LLM output for debugging.
  * - Parse nested JSON if the LLM returns structured data.
+ * - Explicitly log extracted fields for executeMassSpark validation.
  */
 async function callProviderAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
@@ -3022,7 +3023,6 @@ async function callProviderAPI(prompt, val, type) {
         const { provider, model, config, statRef } = candidates[attempts];
         const progress = Math.floor((attempts / maxAttempts) * 100);
         
-        // Let the Apps Script Proxy handle ALL string replacements for Google
         let finalExecutionUrl = config.execution_url;
 
         console.log(`[FORGE]: Attempt ${attempts + 1}/${maxAttempts} | ${provider.toUpperCase()} : ${model}`);
@@ -3037,7 +3037,7 @@ async function callProviderAPI(prompt, val, type) {
                 body: JSON.stringify({
                     provider_name: provider,
                     key: config.key, 
-                    execution_url: finalExecutionUrl, // Pass raw template to proxy
+                    execution_url: finalExecutionUrl,
                     model: model,
                     prompt: prompt
                 })
@@ -3056,49 +3056,56 @@ async function callProviderAPI(prompt, val, type) {
 
             if (!rawResult) throw new Error("Empty response content.");
 
-            // --- LOGGING DATA FROM LLM ---
-            if (isCode) {
-                console.log(`[LLM CODE OUTPUT]:`, rawResult.substring(0, 200) + "...");
-            } else {
-                console.log(`[LLM LINK/SOURCE OUTPUT]:`, rawResult);
-            }
-
-            if (statRef[1] > 0) statRef[1]--;
-
-            // Sanitize initial result
+            // Initial sanitization (removing markdown backticks etc)
             let sanitized = verifyAndFixCode(rawResult, isCode);
 
-            // Handle Structured JSON Responses (Matches callGeminiAPI logic)
-            if (!isCode) {
+            // Handle Structured JSON Responses
+            if (!isCode || sanitized.trim().startsWith('{')) {
                 try {
                     const parsed = JSON.parse(sanitized);
-                    if (parsed && typeof parsed.code === 'string') {
-                        console.log("[FORGE]: Extracted 'code' property from JSON object.");
-                        parsed.code = verifyAndFixCode(parsed.code, true);
-                    } else if (Array.isArray(parsed)) {
-                        console.log("[FORGE]: Processing JSON array of items.");
-                        parsed.forEach(item => {
+                    console.log("[FORGE]: JSON object detected. Validating fields for DB save...");
+
+                    // --- EXTRACTION LOGGING FOR EXECUTE_MASS_SPARK ---
+                    const processItem = (item, index = 0) => {
+                        const name = item.name || "N/A";
+                        const link = item.url || item.link || "N/A";
+                        const thumbnail = item.thumbnail || item.image || "N/A";
+                        const codeSnippet = item.code ? `${item.code.substring(0, 50)}...` : "N/A";
+
+                        console.log(`[DATA EXTRACTION][Item ${index}]:`, {
+                            extracted_name: name,
+                            extracted_link: link,
+                            extracted_thumbnail: thumbnail,
+                            extracted_code_preview: codeSnippet
+                        });
+                    };
+
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach((item, i) => {
                             if (item.url) item.url = verifyAndFixCode(item.url);
                             if (item.code) item.code = verifyAndFixCode(item.code, true);
+                            processItem(item, i);
                         });
+                    } else {
+                        if (parsed.code) parsed.code = verifyAndFixCode(parsed.code, true);
+                        processItem(parsed);
                     }
+                    
                     return parsed; 
                 } catch (jsonErr) {
-                    // Not JSON, fall back to HTML/Text cleaning
-                    if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
-                        const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
-                        if (start !== -1) sanitized = sanitized.substring(start);
-                    }
-                    return sanitized;
+                    // Not valid JSON, fall back to string processing
+                    console.warn("[FORGE]: Response is not JSON. Falling back to raw text/code.");
                 }
             }
 
-            // For explicit code mode, ensure we return clean HTML/JS
+            // Cleanup for raw HTML/JS output
             if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
                 const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                 if (start !== -1) sanitized = sanitized.substring(start);
             }
             
+            console.log(`[DATA EXTRACTION][Raw]: Content Length: ${sanitized.length}`);
+            if (statRef[1] > 0) statRef[1]--;
             return sanitized;
 
         } catch (error) {
@@ -3118,6 +3125,7 @@ async function callProviderAPI(prompt, val, type) {
     await initiateSystemCooldown(statusText);
     throw new Error("All model attempts exhausted.");
 }
+
 async function retrieveProvider() {
     console.log("[FORGE]: Syncing with Firebase Manifest...");
     try {
