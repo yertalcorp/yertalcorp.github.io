@@ -1,5 +1,30 @@
 All notable changes to the Yertal Arcade platform are documented below. This project follows a date-based release schedule.
+[2026-05-03] - API Routing & Failover Overhaul
+Objective: Transition to a manifest-driven, multi-provider failover system with live health tracking.
 
+Added:
+
+modelStats global state object for tracking failure counts per provider and model.
+
+getBestModels function to dynamically select the healthiest available LLM.
+
+handleModelError to increment failure counts and trigger failover routing.
+
+Visual status bar logic within callProviderAPI (Progress %, 2s error display).
+
+Updated:
+
+callProviderAPI: Integrated multi-model retry logic (top 3 candidates).
+
+initiateSystemCooldown: Updated to 60s and modified to reset the new nested modelStats object structure.
+
+retrieveProvider: Now acts as a combined hydration engine for credentials and model stats.
+
+Fixed:
+
+Redundant database calls: The system now checks databaseCache.app_manifest before hitting Firebase.
+
+Silent Failures: Implemented console logging ([FORGE], [FORGE SUCCESS], [FORGE FAIL]) for real-time debugging.
 [2026-04-29] - Engagement & Moderation
 Added
 Feedback HUD: Launched a real-time communication layer allowing users to add, edit, and delete feedback on Spark cards.
