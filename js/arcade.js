@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:53:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @17:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2969,26 +2969,45 @@ async function callProviderAPI(prompt, val, type) {
     const statusText = document.getElementById('engine-status-text');
     const PROXY_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbxS39QVHMsDqHgTgpNFWuMAZyS3lkPnd5ST9JhnoDKUu8etB1buYT3hq2A1ykWiKzu8/exec";
 
+    // 1. Gather all enabled providers from the manifest
     const providers = databaseCache.app_manifest?.llm_providers || [];
     let candidates = [];
     
+    // 2. Build the candidate list from modelStats
     providers.filter(p => p.enabled).forEach(p => {
         const pool = modelStats[p.provider_name]?.[poolType] || [];
         pool.forEach(stat => {
-            candidates.push({ provider: p.provider_name, model: stat[0], failures: stat[1], config: p, statRef: stat });
+            candidates.push({ 
+                provider: p.provider_name, 
+                model: stat[0], 
+                failures: stat[1], 
+                config: p, 
+                statRef: stat 
+            });
         });
     });
 
+    // 3. Sort candidates: prioritized by lowest failure count
     candidates.sort((a, b) => a.failures - b.failures);
+
+    console.log(`[Forge] Starting API Routing. Candidates available: ${candidates.length}`);
+
     let attempts = 0;
 
-    while (attempts < Math.min(candidates.length, 5)) {
+    // 4. Iterate through ALL candidates in the collection
+    while (attempts < candidates.length) {
         const { provider, model, config, statRef } = candidates[attempts];
-        if (statusText) statusText.innerText = `ROUTING TO ${provider.toUpperCase()}...`;
+        
+        if (statusText) {
+            statusText.innerText = `ROUTING TO ${provider.toUpperCase()} (${model})...`;
+        }
+
+        console.log(`[Forge] Attempt ${attempts + 1}/${candidates.length}: Using ${provider} - ${model}`);
 
         try {
             const response = await fetch(PROXY_GATEWAY_URL, {
                 method: 'POST',
+                // Sending as text/plain to avoid CORS preflight issues common with GAS
                 body: JSON.stringify({
                     provider_name: provider,
                     key: config.key, 
@@ -2998,22 +3017,55 @@ async function callProviderAPI(prompt, val, type) {
                 })
             });
 
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
+            // Handle HTTP-level errors (404, 500, 429)
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorBody || 'No response body'}`);
+            }
 
+            const data = await response.json();
+
+            // Handle Proxy-level or Provider-level logic errors
+            if (data.error) {
+                throw new Error(`Provider Error: ${JSON.stringify(data.error)}`);
+            }
+
+            // Successful Response Parsing
+            let rawResult = (provider === 'google')
+                ? data.candidates?.[0]?.content?.parts?.[0]?.text
+                : data.choices?.[0]?.message?.content;
+
+            if (!rawResult) {
+                throw new Error("Malformed Response: Content is empty or undefined.");
+            }
+
+            console.log(`[Forge] Success! Response received from ${provider}.`);
+
+            // On success, slightly decrement failure count to "reward" the model
             if (statRef[1] > 0) statRef[1]--;
 
-            let rawResult = (provider === 'google')
-                ? data.candidates[0].content.parts[0].text
-                : data.choices[0].message.content;
-
             return verifyAndFixCode(rawResult, isCode);
+
         } catch (error) {
-            statRef[1]++;
+            // Increment failure count for this specific model in modelStats
+            statRef[1]++; 
+            
+            console.error(`[Forge] Failover Triggered! ${provider} (${model}) failed.`);
+            console.error(`[Forge] Error Detail:`, error.message);
+
             attempts++;
-            await new Promise(r => setTimeout(r, 1500));
+
+            // Wait briefly before trying the next model to avoid rapid-fire spamming
+            if (attempts < candidates.length) {
+                const backoff = 1000 * attempts; 
+                console.warn(`[Forge] Retrying next candidate in ${backoff}ms...`);
+                await new Promise(r => setTimeout(r, backoff));
+            }
         }
     }
+
+    // 5. If loop completes without returning, all models failed
+    console.error("[Forge] CRITICAL: All LLM providers and models in the pool have failed.");
     throw new Error("Critical: Failover exhausted.");
 }
 
