@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2085,34 +2085,31 @@ function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpa
     };
 }
 
-function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
+// FUNCTION: shapeAiPrompt
+function shapeAiPrompt(providerName, rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
-    let instructions = "";
+    
+    // 1. DYNAMIC LOOKUP: Locate the provider in the manifest
+    const manifest = databaseCache.settings?.app_manifest?.llm_providers || [];
+    const providerConfig = manifest.find(p => p.provider_name === providerName);
+    
+    // 2. EXTRACTION: Pull the raw instructions from the JSON
+    const systemInstructions = providerConfig 
+        ? (isSource ? providerConfig.source_instructions : providerConfig.create_instructions) 
+        : "";
 
-    if (isSource) {
-        instructions = `- Find valid items for this task. Avoid homepages.
-                         ${promptTypeObject.rules}
-                       - Format: JSON array [{"name", "url", "thumbnail"}] (max 3-word names). Confirm links exist.`;
-    } else {
-        // Inside shapeAiPrompt - for the 'else' (code generation) block:
-        instructions = `Write a ultra-minimalist HTML/JS app. 
-               - CRITICAL: Keep <style> under 15 lines. No gradients.
-               - Use a single <script> for all logic.
-               - NO comments, NO descriptions.
-               - Format: JSON object {"name", "code", "thumbnail"}.`;
-        } 
-
-    const returnString = isSource ? 
-        `Task: ${rawPrompt}. Category: ${promptTypeObject.name}.`: 
-        `${rawPrompt}. Capability: ${promptTypeObject.name}.`;
-
+    // 3. ASSEMBLE FINAL PROMPT
+    // Pure Intent + Provider-specific JSON logic + Quantity
     const fullPrompt = `
-        ${returnString}
-        ${instructions}
-        Quantity: ${Math.max(1, count)} ${isSource ? "entries" : "version"}.
+        PROMPT: ${rawPrompt}
+        
+        INSTRUCTIONS:
+        ${systemInstructions}
+        
+        QUANTITY: ${Math.max(1, count)}
     `.trim();
 
-    console.log(`[SHAPER]: Simplified prompt length: ${fullPrompt.length} chars`);
+    console.log(`[SHAPER]: Raw prompt assembled for ${providerName}.`);
     return fullPrompt;
 }
 
@@ -2273,7 +2270,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
             } else {
                 updateForgeStatus("CONSULTING MODEL POOL...");
                 
-                const aiLinks = await callProviderAPI(shapeAiPrompt(prompt, resolution.count, mode, currentName, promptTypeObject), resolution.count, mode);
+                const aiLinks = await callProviderAPI(prompt, currentName, promptTypeObject, resolution.count, mode);
 
                 // ENHANCED: Normalization for multiple model response formats
                 linksToSave = (Array.isArray(aiLinks) ? aiLinks : (typeof aiLinks === 'string' ? aiLinks.split(/,|\n/).map(str => str.trim()).filter(Boolean) : []))
@@ -2300,7 +2297,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 const progress = Math.round((i / resolution.count) * 100);
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
-                const response = await callProviderAPI(shapeAiPrompt(prompt, i, 'create', currentName, promptTypeObject), i, 'source');
+                const response = await callProviderAPI(prompt, currentName, promptTypeObject, i, mode);
                 
                 const sparkName = response.name || (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
                 
@@ -3018,7 +3015,7 @@ async function callGeminiAPI(prompt, val, type) {
  * - Parse standardized response from Apps Script Proxy.
  * - Extract and log fields for executeMassSpark validation.
  */
-async function callProviderAPI(prompt, val, type) {
+async function callProviderAPI(prompt, currentName, promptTypeObject, val, type) {
     const isCode = type === 'code' || type === 'create';
     const poolType = isCode ? 'create' : 'source';
     const statusText = document.getElementById('engine-status-text');
@@ -3060,7 +3057,8 @@ async function callProviderAPI(prompt, val, type) {
         if (statusText) {
             statusText.innerText = `FORGING SPARK [---  ] ${progress}%\nRetrieving ${provider.toUpperCase()} ${model}...`;
         }
-
+        // create the actual final prompt first by shaping it.
+        const finalPrompt = shapeAiPrompt(provider, prompt, val, type, currentName, promptTypeObject);
         try {
             const response = await fetch(PROXY_GATEWAY_URL, {
                 method: 'POST',
@@ -3069,7 +3067,7 @@ async function callProviderAPI(prompt, val, type) {
                     key: config.key, 
                     execution_url: config.execution_url,
                     model: model,
-                    prompt: prompt
+                    prompt: finalPrompt
                 })
             });
 
