@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @09:51:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @10:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2087,6 +2087,35 @@ function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpa
 
 function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
+    let instructions = "";
+
+    if (isSource) {
+        instructions = `- Find valid items for this task. Avoid homepages.
+                         ${promptTypeObject.rules}
+                       - Format: JSON array [{"name", "url", "thumbnail"}] (max 3-word names). Confirm links exist.`;
+    } else {
+        // Reduced complexity to save tokens
+        instructions = `Write a single-file, modern HTML/JS application using clean CSS. 
+                       - Logic must be complete. Use CDNs for heavy libraries.
+                       - Format: JSON object {"name", "code", "thumbnail"} (max 3-word names).`;
+    } 
+
+    const returnString = isSource ? 
+        `Task: ${rawPrompt}. Category: ${promptTypeObject.name}.`: 
+        `${rawPrompt}. Capability: ${promptTypeObject.name}.`;
+
+    const fullPrompt = `
+        ${returnString}
+        ${instructions}
+        Quantity: ${Math.max(1, count)} ${isSource ? "entries" : "version"}.
+    `.trim();
+
+    console.log(`[SHAPER]: Simplified prompt length: ${fullPrompt.length} chars`);
+    return fullPrompt;
+}
+
+function shapeAiPromptBasic(rawPrompt, count, mode, currentName, promptTypeObject) {
+    const isSource = mode === 'source';
     const isPictures = promptTypeObject.name === "Pictures";
 
     let instructions = "";
@@ -2113,7 +2142,7 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
     return fullPrompt;
 }
 
-function shapeAiPromptPrev(rawPrompt, count, mode, currentName, promptTypeObject) {
+function shapeAiPromptComplex(rawPrompt, count, mode, currentName, promptTypeObject) {
     const isSource = mode === 'source';
     const isPictures = promptTypeObject.name === "Pictures";
 
