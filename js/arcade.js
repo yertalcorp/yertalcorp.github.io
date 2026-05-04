@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:31:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3192,8 +3192,8 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
  * Objective: Sync LLM configuration with Firebase and hydrate failure tracking.
  * Tasks: 
  * - Retrieve manifest from cache or Firebase.
- * - Map providers and models to the global modelStats object.
- * - Preserve existing failure counts by avoiding re-initialization.
+ * - Correctly parse the flat array structure of model_pools.
+ * - Preserve existing failure counts in the global modelStats object.
  */
 async function retrieveProvider() {
     console.log("[FORGE]: Syncing with Firebase Manifest...");
@@ -3212,24 +3212,31 @@ async function retrieveProvider() {
             return false;
         }
 
-        // Fresh hydration commented out to preserve persistent failure stats
-        // modelStats = {}; 
+        // Ensure modelStats is an object, not an array, to support key-value mapping
+        if (!modelStats || Array.isArray(modelStats)) {
+            modelStats = {};
+        }
 
         manifest.llm_providers.forEach(p => {
+            // Only hydrate providers that are marked as enabled in the manifest
             if (p.enabled) {
                 const pName = p.provider_name;
                 
-                // Initialize provider object if it doesn't exist
                 if (!modelStats[pName]) {
-                    console.log(`[FORGE]: Registering New Provider: ${pName.toUpperCase()}`);
+                    console.log(`[FORGE]: Registering Provider: ${pName.toUpperCase()}`);
                     modelStats[pName] = {};
                 }
                 
                 const pools = p.model_pools || {};
-                const allModels = [...(pools.create || []), ...(pools.source || [])];
+                
+                // Combine both create and source pools to ensure all possible models are tracked
+                const allModels = [
+                    ...(pools.create || []), 
+                    ...(pools.source || [])
+                ];
                 
                 allModels.forEach(modelName => {
-                    // Only initialize to 0 if the model isn't already being tracked
+                    // Initialize to 0 only if not already tracked (persistence)
                     if (modelStats[pName][modelName] === undefined) {
                         modelStats[pName][modelName] = 0;
                     }
@@ -3237,13 +3244,14 @@ async function retrieveProvider() {
             }
         });
 
-        console.log("[FORGE]: modelStats Synced (Persistent):", modelStats);
+        console.log("[FORGE]: modelStats Hydrated:", modelStats);
         return true;
     } catch (e) {
         console.error("[FORGE ERROR]: Hydration failed:", e);
         return false;
     }
 }
+
 /*
  * System Cooldown & Reset Logic
  */
