@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2273,15 +2273,15 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
             } else {
                 updateForgeStatus("CONSULTING MODEL POOL...");
                 
-                // Replaced callGeminiAPI with callProviderAPI
                 const aiLinks = await callProviderAPI(shapeAiPrompt(prompt, resolution.count, mode, currentName, promptTypeObject), resolution.count, mode);
 
+                // ENHANCED: Normalization for multiple model response formats
                 linksToSave = (Array.isArray(aiLinks) ? aiLinks : (typeof aiLinks === 'string' ? aiLinks.split(/,|\n/).map(str => str.trim()).filter(Boolean) : []))
                     .slice(0, resolution.count)
                     .map(item => ({
                         name: item.name || generateSparkName(currentId),
-                        url: item.url || item,
-                        image: item.thumbnail || promptTypeObject.image || null
+                        url: item.url || item.link || (typeof item === 'string' ? item : "N/A"),
+                        image: item.thumbnail || item.image || item.img || promptTypeObject.image || null
                     }));                    
             }
 
@@ -2295,24 +2295,24 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
             }
         } else {
-            // CREATE MODE: Handling JSON objects for smart naming and code extraction
+            // CREATE MODE
             for (let i = 0; i < resolution.count; i++) {
                 const progress = Math.round((i / resolution.count) * 100);
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
 
-                // Replaced callGeminiAPI with callProviderAPI
-                // We pass 'source' here to trigger JSON parsing inside callProviderAPI
                 const response = await callProviderAPI(shapeAiPrompt(prompt, i, 'create', currentName, promptTypeObject), i, 'source');
                 
-                // Extract and SCRUB name
                 const sparkName = response.name || (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
                 
-                // VERIFY AND FIX: Scrub the code field explicitly
-                const sparkContent = verifyAndFixCode(response.code, mode); 
+                // ENHANCED: Extract content with fallback to link/url fields if code is missing
+                const rawContent = response.code || response.url || response.link;
+                const sparkContent = verifyAndFixCode(rawContent, mode); 
                 
-                // Extract thumbnail URL
-                const sparkImage = response.thumbnail || promptTypeObject.image || null;
+                // ENHANCED: Normalize thumbnail keys
+                const sparkImage = response.thumbnail || response.image || response.img || promptTypeObject.image || null;
+                
                 console.log(`executeMassSpark spark mode=${mode} spark image URL=${sparkImage}`);
+                
                 const isCode = typeof sparkContent === 'string' && (sparkContent.trim().startsWith('<') || sparkContent.trim().startsWith('function') || sparkContent.trim().startsWith('const') || sparkContent.trim().includes('document.'));
                 
                 await saveSpark(
@@ -2343,6 +2343,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
         closeExecHUD(hudInterval);
     }
 }
+
 /*
  * Processes the image field from the DB.
  * Returns the Base64 string if present, or a formatted asset path.
@@ -3083,26 +3084,34 @@ async function callProviderAPI(prompt, val, type) {
             console.log(`[FORGE SUCCESS]: Response received from ${model}`);
             if (statusText) statusText.innerText = "SPARK FORGE SUCCESSFUL [======] 100%";
             
-            // Use the standardized 'result' field from your new Apps Script
+            // Use the standardized 'result' field from your Apps Script
             let rawResult = data.result;
 
             if (!rawResult) throw new Error("Empty response content from Proxy.");
             console.log("callProviderAPI rawResult=", rawResult);
+
             // Initial cleaning of markdown fences
             let sanitized = verifyAndFixCode(rawResult, isCode);
             console.log("callProviderAPI sanitized Code=", sanitized);
+
             // Handle Structured JSON Responses (Auto-extraction logic)
-            if (!isCode || sanitized.trim().startsWith('{') || sanitized.includes('{')) {
+            // Modified: Check for presence of braces even if type is 'code' to catch JSON-wrapped code
+            if (!isCode || sanitized.includes('{')) {
                 try {
                     let jsonToParse = sanitized.trim();
                     
-                    // AGGRESSIVE EXTRACTION: Find the first '{' and last '}' to skip conversational filler
-                    const firstBrace = jsonToParse.indexOf('{');
-                    const lastBrace = jsonToParse.lastIndexOf('}');
-                    
-                    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-                        jsonToParse = jsonToParse.substring(firstBrace, lastBrace + 1);
-                        console.log("[FORGE]: Isolated JSON block from result.");
+                    // AGGRESSIVE EXTRACTION: Isolate block within first '{' and last '}' or '[' and ']'
+                    const jsonMatch = jsonToParse.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+                    if (jsonMatch) {
+                        jsonToParse = jsonMatch[0];
+                        console.log("[FORGE]: Isolated JSON block from result via Regex.");
+                    } else {
+                        // Fallback to manual indices if regex fails
+                        const firstBrace = jsonToParse.indexOf('{');
+                        const lastBrace = jsonToParse.lastIndexOf('}');
+                        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                            jsonToParse = jsonToParse.substring(firstBrace, lastBrace + 1);
+                        }
                     }
 
                     const parsed = JSON.parse(jsonToParse);
@@ -3111,8 +3120,8 @@ async function callProviderAPI(prompt, val, type) {
                     const processItem = (item, index = 0) => {
                         // Normalize keys so executeMassSpark always finds what it needs
                         item.name = item.name || item.title || "Untitled Spark";
-                        item.url = item.url || item.link || "N/A";
-                        item.thumbnail = item.thumbnail || item.image || item.img || null;
+                        item.url = item.url || item.link || item.href || "N/A";
+                        item.thumbnail = item.thumbnail || item.image || item.img || item.pic || null;
                         
                         if (item.code) item.code = verifyAndFixCode(item.code, true);
 
@@ -3134,11 +3143,11 @@ async function callProviderAPI(prompt, val, type) {
                     return parsed; 
 
                 } catch (jsonErr) {
-                    console.warn("[FORGE]: JSON Extraction failed. Falling back to raw content.");
+                    console.warn("[FORGE]: JSON Extraction failed. Falling back to raw content.", jsonErr);
                 }
             }
 
-            // Cleanup for raw HTML/JS output if not JSON
+            // Cleanup for raw HTML/JS output if not JSON or JSON parsing failed
             if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
                 const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
                 if (start !== -1) sanitized = sanitized.substring(start);
@@ -3165,7 +3174,6 @@ async function callProviderAPI(prompt, val, type) {
     await initiateSystemCooldown(statusText);
     throw new Error("All model attempts exhausted.");
 }
-
 async function retrieveProvider() {
     console.log("[FORGE]: Syncing with Firebase Manifest...");
     try {
