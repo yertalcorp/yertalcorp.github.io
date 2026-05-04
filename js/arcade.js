@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2887,9 +2887,10 @@ function handleModelError(providerName, modelName) {
     }
 }
 
+// FUNCTION: getBestModels
 function getBestModels(poolType) {
     const candidates = [];
-    const manifest = databaseCache.app_manifest;
+    const manifest = databaseCache.settings?.app_manifest; // Ensure correct path
 
     if (!manifest || !window.modelStats) return [];
 
@@ -2911,8 +2912,15 @@ function getBestModels(poolType) {
         }
     });
 
-    // Sort: Least failures first, then alphabetical by model name
-    return candidates.sort((a, b) => a.failures - b.failures || a.model.localeCompare(b.model));
+    // PRIMARY LOGIC: 
+    // 1. Sort by least failures (Ascending: 0, 1, 2...)
+    // 2. If failures are equal, use alphabetical order for stability.
+    return candidates.sort((a, b) => {
+        if (a.failures !== b.failures) {
+            return a.failures - b.failures;
+        }
+        return a.model.localeCompare(b.model);
+    });
 }
 
 async function callGeminiAPI(prompt, val, type) {
