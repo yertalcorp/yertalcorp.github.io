@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2890,40 +2890,51 @@ function handleModelError(providerName, modelName) {
 }
 
 // FUNCTION: getBestModels
-function getBestModels(poolType) {
-    const candidates = [];
-    const manifest = databaseCache.app_manifest; // Fixed: Back to the root!
-
-    if (!manifest || !window.modelStats) {
-        console.error("[FORGE]: Manifest or modelStats missing.", { manifest: !!manifest, stats: !!window.modelStats });
-        return [];
+async function getBestModels(poolType) {
+    // 1. Initial Hydration: check the global variable directly
+    if (!modelStats || Object.keys(modelStats).length === 0) {
+        console.log(`[FORGE]: modelStats empty, retrieving providers...`);
+        await retrieveProvider();
     }
 
-    Object.keys(window.modelStats).forEach(providerName => {
-        // Find provider config regardless of case
+    let candidates = [];
+    const manifest = databaseCache.app_manifest;
+
+    // 2. Build Candidate List from the global modelStats
+    Object.keys(modelStats).forEach(providerName => {
         const providerConfig = manifest.llm_providers.find(p => 
             p.provider_name.toUpperCase() === providerName.toUpperCase()
         );
         
-        // Only include if provider exists and is enabled
         if (providerConfig && providerConfig.enabled) {
-            const pool = window.modelStats[providerName][poolType] || [];
+            const pool = modelStats[providerName][poolType] || [];
             pool.forEach(stat => {
                 candidates.push({
                     provider: providerName,
-                    model: stat[0],   // Model Name
-                    failures: stat[1], // Current Failure Count
+                    model: stat[0],
+                    failures: stat[1],
                     config: providerConfig,
-                    statRef: stat     // Pointer to [name, count]
+                    statRef: stat // Keep a reference to the actual array [name, count]
                 });
             });
         }
     });
 
-    // Sort: Least failures first, then alphabetical by model name
+    if (candidates.length === 0) return [];
+
+    // 3. Logic: If ALL models have failed, reset counts to 0 and return them all
+    const allFailed = candidates.every(c => c.failures > 0);
+    if (allFailed) {
+        console.warn(`[FORGE]: All models failed. Resetting counts to circulate again.`);
+        candidates.forEach(c => {
+            c.statRef[1] = 0; // Reset the count in the global modelStats
+            c.failures = 0;   // Reset local copy for sorting
+        });
+    }
+
+    // 4. Return sorted by least failures (the reset models will now have 0)
     return candidates.sort((a, b) => a.failures - b.failures || a.model.localeCompare(b.model));
 }
-
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
     const statusText = document.getElementById('engine-status-text');
@@ -3016,6 +3027,7 @@ async function callGeminiAPI(prompt, val, type) {
     await initiateSystemCooldown(statusText);
     throw new Error("All models exhausted.");
 }
+
 /*
  * Objective: Primary Gateway for all LLM providers (Google, Sarvam, etc.)
  * Tasks: 
@@ -3023,6 +3035,7 @@ async function callGeminiAPI(prompt, val, type) {
  * - Log raw LLM output for debugging.
  * - Parse standardized response from Apps Script Proxy.
  * - Extract and log fields for executeMassSpark validation.
+ * - Double-circulation logic with 30s timeouts and handleModelError.
  */
 async function callProviderAPI(prompt, currentName, promptTypeObject, val, type) {
     const isCode = type === 'code' || type === 'create';
@@ -3032,155 +3045,156 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
 
     if (window.isInCooldown) {
         console.warn("[FORGE]: Execution blocked by Cooldown.");
+        if (statusText) statusText.innerText = "System is cooling down. Please wait.";
         throw new Error("System is cooling down.");
     }
 
     if (statusText) statusText.innerText = "FORGING SPARK [-----] 0%";
 
-    if (!window.modelStats || Object.keys(window.modelStats).length === 0) {
+    // Ensure modelStats is hydrated
+    if (!modelStats || Object.keys(modelStats).length === 0) {
         await retrieveProvider();
     }
 
-    let candidates = getBestModels(poolType);
+    // getBestModels handles the "if failures exist, reset and return" logic
+    let candidates = await getBestModels(poolType);
     if (candidates.length === 0) {
         console.error(`[FORGE]: No models available for pool: ${poolType}`);
         throw new Error("No enabled models found.");
     }
 
-    const firstFail = candidates[0].failures;
-    if (candidates.length > 1 && candidates.every(c => c.failures === firstFail && c.failures > 0)) {
-        console.warn("[FORGE]: Global failure detected across pool.");
-        await initiateSystemCooldown(statusText);
-        throw new Error("Initiating System Cooldown.");
-    }
+    let circulationCount = 0;
+    const maxCirculations = 2; // Circulate through the full model list twice
 
-    let attempts = 0;
-    const maxAttempts = Math.min(candidates.length, 3);
-
-    while (attempts < maxAttempts) {
-        const { provider, model, config, statRef } = candidates[attempts];
-        const progress = Math.floor((attempts / maxAttempts) * 100);
-        
-        console.log(`[FORGE]: Attempt ${attempts + 1}/${maxAttempts} | ${provider.toUpperCase()} : ${model}`);
-        
-        if (statusText) {
-            statusText.innerText = `FORGING SPARK [---  ] ${progress}%\nRetrieving ${provider.toUpperCase()} ${model}...`;
-        }
-        // create the actual final prompt first by shaping it.
-        const finalPrompt = shapeAiPrompt(provider, prompt, val, type, currentName, promptTypeObject);
-        try {
-            const response = await fetch(PROXY_GATEWAY_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    provider_name: provider,
-                    key: config.key, 
-                    execution_url: config.execution_url,
-                    model: model,
-                    prompt: finalPrompt
-                })
-            });
-
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
+    while (circulationCount < maxCirculations) {
+        for (let i = 0; i < candidates.length; i++) {
+            const { provider, model, config, statRef } = candidates[i];
+            const progress = Math.floor(((circulationCount * candidates.length + i) / (maxCirculations * candidates.length)) * 100);
             
-            // Check for Gateway/Provider errors standardized by the Proxy
-            if (data.success === false) {
-                throw new Error(data.error + (data.detail ? ": " + data.detail : ""));
-            }
-
-            console.log(`[FORGE SUCCESS]: Response received from ${model}`);
-            if (statusText) statusText.innerText = "SPARK FORGE SUCCESSFUL [======] 100%";
+            console.log(`[FORGE]: Round ${circulationCount + 1} | Attempting ${provider.toUpperCase()} : ${model}`);
             
-            // Use the standardized 'result' field from your Apps Script
-            let rawResult = data.result;
-
-            if (!rawResult) throw new Error("Empty response content from Proxy.");
-            console.log("callProviderAPI rawResult=", rawResult);
-
-            // Initial cleaning of markdown fences
-            let sanitized = verifyAndFixCode(rawResult, isCode);
-            console.log("callProviderAPI sanitized Code=", sanitized);
-
-            // Handle Structured JSON Responses (Auto-extraction logic)
-            // Modified: Check for presence of braces even if type is 'code' to catch JSON-wrapped code
-            if (!isCode || sanitized.includes('{')) {
-                try {
-                    let jsonToParse = sanitized.trim();
-                    
-                    // AGGRESSIVE EXTRACTION: Isolate block within first '{' and last '}' or '[' and ']'
-                    const jsonMatch = jsonToParse.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
-                    if (jsonMatch) {
-                        jsonToParse = jsonMatch[0];
-                        console.log("[FORGE]: Isolated JSON block from result via Regex.");
-                    } else {
-                        // Fallback to manual indices if regex fails
-                        const firstBrace = jsonToParse.indexOf('{');
-                        const lastBrace = jsonToParse.lastIndexOf('}');
-                        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-                            jsonToParse = jsonToParse.substring(firstBrace, lastBrace + 1);
-                        }
-                    }
-
-                    const parsed = JSON.parse(jsonToParse);
-                    console.log("[FORGE]: JSON object detected. Extracting fields...");
-
-                    const processItem = (item, index = 0) => {
-                        // Normalize keys so executeMassSpark always finds what it needs
-                        item.name = item.name || item.title || "Untitled Spark";
-                        item.url = item.url || item.link || item.href || "N/A";
-                        item.thumbnail = item.thumbnail || item.image || item.img || item.pic || null;
-                        
-                        if (item.code) item.code = verifyAndFixCode(item.code, true);
-
-                        console.log(`[DATA EXTRACTION][Item ${index}]:`, {
-                            name: item.name,
-                            url: item.url,
-                            thumb: item.thumbnail,
-                            hasCode: !!item.code
-                        });
-                    };
-
-                    if (Array.isArray(parsed)) {
-                        parsed.forEach((item, i) => processItem(item, i));
-                    } else {
-                        processItem(parsed);
-                    }
-                    
-                    if (statRef[1] > 0) statRef[1]--;
-                    return parsed; 
-
-                } catch (jsonErr) {
-                    console.warn("[FORGE]: JSON Extraction failed. Falling back to raw content.", jsonErr);
-                }
-            }
-
-            // Cleanup for raw HTML/JS output if not JSON or JSON parsing failed
-            if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
-                const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
-                if (start !== -1) sanitized = sanitized.substring(start);
-            }
-            
-            console.log(`[DATA EXTRACTION][Raw]: Content Length: ${sanitized.length}`);
-            if (statRef[1] > 0) statRef[1]--;
-            return sanitized;
-
-        } catch (error) {
-            console.error(`[FORGE FAIL]: ${model} encountered an error:`, error.message);
-            statRef[1]++; 
-
             if (statusText) {
-                statusText.innerText = `FORGE ERROR: ${error.message.substring(0, 30)}...`;
+                // Single line status update
+                statusText.innerText = `FORGING SPARK [---] ${progress}% | Retrieving ${provider.toUpperCase()} ${model}...`;
             }
+
+            const finalPrompt = shapeAiPrompt(provider, prompt, val, type, currentName, promptTypeObject);
             
-            await new Promise(r => setTimeout(r, 2000));
-            attempts++;
+            // 30-Second Timeout Logic
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+            try {
+                const response = await fetch(PROXY_GATEWAY_URL, {
+                    method: 'POST',
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        provider_name: provider,
+                        key: config.key, 
+                        execution_url: config.execution_url,
+                        model: model,
+                        prompt: finalPrompt
+                    })
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                
+                if (data.success === false) {
+                    throw new Error(data.error + (data.detail ? ": " + data.detail : ""));
+                }
+
+                console.log(`[FORGE SUCCESS]: Response received from ${model}`);
+                if (statusText) statusText.innerText = "SPARK FORGE SUCCESSFUL [======] 100% | Finalizing data...";
+                
+                let rawResult = data.result;
+                if (!rawResult) throw new Error("Empty response content from Proxy.");
+
+                let sanitized = verifyAndFixCode(rawResult, isCode);
+
+                // Handle Structured JSON Responses (Auto-extraction logic)
+                if (!isCode || sanitized.includes('{')) {
+                    try {
+                        let jsonToParse = sanitized.trim();
+                        const jsonMatch = jsonToParse.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+                        if (jsonMatch) {
+                            jsonToParse = jsonMatch[0];
+                        } else {
+                            const firstBrace = jsonToParse.indexOf('{');
+                            const lastBrace = jsonToParse.lastIndexOf('}');
+                            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                                jsonToParse = jsonToParse.substring(firstBrace, lastBrace + 1);
+                            }
+                        }
+
+                        const parsed = JSON.parse(jsonToParse);
+                        
+                        const processItem = (item, index = 0) => {
+                            item.name = item.name || item.title || "Untitled Spark";
+                            item.url = item.url || item.link || item.href || "N/A";
+                            item.thumbnail = item.thumbnail || item.image || item.img || item.pic || null;
+                            if (item.code) item.code = verifyAndFixCode(item.code, true);
+                        };
+
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach((item, idx) => processItem(item, idx));
+                        } else {
+                            processItem(parsed);
+                        }
+                        
+                        statRef[1] = 0; // Success: Reset failure count locally
+                        return parsed; 
+
+                    } catch (jsonErr) {
+                        console.warn("[FORGE]: JSON Extraction failed. Falling back to raw content.", jsonErr);
+                    }
+                }
+
+                // Final cleanup for raw content
+                if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
+                    const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
+                    if (start !== -1) sanitized = sanitized.substring(start);
+                }
+                
+                statRef[1] = 0; // Success: Reset failure count
+                return sanitized;
+
+            } catch (error) {
+                clearTimeout(timeoutId);
+                const isTimeout = error.name === 'AbortError';
+                const errorMsg = isTimeout ? "30s Timeout" : error.message;
+                
+                console.error(`[FORGE FAIL]: ${model} encountered an error:`, errorMsg);
+                
+                // Use the standardized error handler
+                handleModelError(provider, model);
+                // Synchronize candidate's local statRef with the new global count
+                statRef[1] = modelStats[provider][model] || statRef[1] + 1;
+
+                if (statusText) {
+                    statusText.innerText = `FORGE ATTEMPT FAILED: ${provider} ${model} - ${errorMsg.substring(0, 30)}... Trying next.`;
+                }
+                
+                await new Promise(r => setTimeout(r, 1500));
+            }
         }
+        circulationCount++;
     }
 
-    console.error("[FORGE CRITICAL]: All attempts failed.");
+    console.error("[FORGE CRITICAL]: All attempts failed across two full circulations.");
+    if (statusText) statusText.innerText = "CRITICAL FAILURE: All models exhausted. Initiating Cooldown.";
     await initiateSystemCooldown(statusText);
-    throw new Error("All model attempts exhausted.");
+    throw new Error("All model attempts exhausted after two full circulations.");
 }
+/*
+ * Objective: Sync LLM configuration with Firebase and hydrate failure tracking.
+ * Tasks: 
+ * - Retrieve manifest from cache or Firebase.
+ * - Map providers and models to the global modelStats object.
+ * - Preserve existing failure counts by avoiding re-initialization.
+ */
 async function retrieveProvider() {
     console.log("[FORGE]: Syncing with Firebase Manifest...");
     try {
@@ -3198,22 +3212,32 @@ async function retrieveProvider() {
             return false;
         }
 
-        // Fresh hydration of modelStats based on the nested JSON structure
-        window.modelStats = {};
+        // Fresh hydration commented out to preserve persistent failure stats
+        // modelStats = {}; 
 
         manifest.llm_providers.forEach(p => {
             if (p.enabled) {
-                console.log(`[FORGE]: Registering Provider: ${p.provider_name.toUpperCase()}`);
+                const pName = p.provider_name;
+                
+                // Initialize provider object if it doesn't exist
+                if (!modelStats[pName]) {
+                    console.log(`[FORGE]: Registering New Provider: ${pName.toUpperCase()}`);
+                    modelStats[pName] = {};
+                }
                 
                 const pools = p.model_pools || {};
-                window.modelStats[p.provider_name] = {
-                    create: (pools.create || []).map(m => [m, 0]),
-                    source: (pools.source || []).map(m => [m, 0])
-                };
+                const allModels = [...(pools.create || []), ...(pools.source || [])];
+                
+                allModels.forEach(modelName => {
+                    // Only initialize to 0 if the model isn't already being tracked
+                    if (modelStats[pName][modelName] === undefined) {
+                        modelStats[pName][modelName] = 0;
+                    }
+                });
             }
         });
 
-        console.log("[FORGE]: modelStats Hydrated:", window.modelStats);
+        console.log("[FORGE]: modelStats Synced (Persistent):", modelStats);
         return true;
     } catch (e) {
         console.error("[FORGE ERROR]: Hydration failed:", e);
@@ -3239,10 +3263,10 @@ async function initiateSystemCooldown(statusElement) {
                 window.isInCooldown = false;
                 
                 // RECOVERY: Reset all failure counts in the new object structure
-                if (window.modelStats) {
-                    Object.keys(window.modelStats).forEach(provider => {
-                        Object.keys(window.modelStats[provider]).forEach(model => {
-                            window.modelStats[provider][model] = 0;
+                if (modelStats) {
+                    Object.keys(modelStats).forEach(provider => {
+                        Object.keys(modelStats[provider]).forEach(model => {
+                            modelStats[provider][model] = 0;
                         });
                     });
                 }
