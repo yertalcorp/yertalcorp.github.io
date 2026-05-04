@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @10:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2094,11 +2094,13 @@ function shapeAiPrompt(rawPrompt, count, mode, currentName, promptTypeObject) {
                          ${promptTypeObject.rules}
                        - Format: JSON array [{"name", "url", "thumbnail"}] (max 3-word names). Confirm links exist.`;
     } else {
-        // Reduced complexity to save tokens
-        instructions = `Write a single-file, modern HTML/JS application using clean CSS. 
-                       - Logic must be complete. Use CDNs for heavy libraries.
-                       - Format: JSON object {"name", "code", "thumbnail"} (max 3-word names).`;
-    } 
+        // Inside shapeAiPrompt - for the 'else' (code generation) block:
+        instructions = `Write a ultra-minimalist HTML/JS app. 
+               - CRITICAL: Keep <style> under 15 lines. No gradients.
+               - Use a single <script> for all logic.
+               - NO comments, NO descriptions.
+               - Format: JSON object {"name", "code", "thumbnail"}.`;
+        } 
 
     const returnString = isSource ? 
         `Task: ${rawPrompt}. Category: ${promptTypeObject.name}.`: 
