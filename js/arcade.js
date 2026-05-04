@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2889,40 +2889,54 @@ function handleModelError(providerName, modelName) {
 
 // FUNCTION: getBestModels
 function getBestModels(poolType) {
+    console.log(`[DEBUG getBestModels]: Starting search for pool: ${poolType}`);
     const candidates = [];
-    const manifest = databaseCache.settings?.app_manifest; // Ensure correct path
+    
+    // Check manifest path (Common point of failure)
+    const manifest = databaseCache.settings?.app_manifest; 
+    if (!manifest) {
+        console.error("[DEBUG getBestModels]: FAILED - manifest is missing from databaseCache.settings.app_manifest");
+        return [];
+    }
 
-    if (!manifest || !window.modelStats) return [];
+    if (!window.modelStats) {
+        console.error("[DEBUG getBestModels]: FAILED - window.modelStats is not initialized");
+        return [];
+    }
+
+    console.log("[DEBUG getBestModels]: Providers in Manifest:", manifest.llm_providers.map(p => `${p.provider_name} (Enabled: ${p.enabled})`));
 
     Object.keys(window.modelStats).forEach(providerName => {
-        const providerConfig = manifest.llm_providers.find(p => p.provider_name === providerName);
+        const providerConfig = manifest.llm_providers.find(p => p.provider_name.toUpperCase() === providerName.toUpperCase());
         
-        // Only include if provider is enabled in manifest
-        if (providerConfig && providerConfig.enabled) {
+        if (!providerConfig) {
+            console.warn(`[DEBUG getBestModels]: Provider ${providerName} found in stats but MISSING from manifest config.`);
+            return;
+        }
+
+        if (providerConfig.enabled) {
             const pool = window.modelStats[providerName][poolType] || [];
+            console.log(`[DEBUG getBestModels]: Checking ${providerName} pool:`, pool);
+
             pool.forEach(stat => {
                 candidates.push({
                     provider: providerName,
                     model: stat[0],   // Model Name
                     failures: stat[1], // Current Failure Count
                     config: providerConfig,
-                    statRef: stat     // Pointer to [name, count] for updates
+                    statRef: stat     
                 });
             });
+        } else {
+            console.log(`[DEBUG getBestModels]: Skipping ${providerName} (Disabled in manifest)`);
         }
     });
 
-    // PRIMARY LOGIC: 
-    // 1. Sort by least failures (Ascending: 0, 1, 2...)
-    // 2. If failures are equal, use alphabetical order for stability.
-    return candidates.sort((a, b) => {
-        if (a.failures !== b.failures) {
-            return a.failures - b.failures;
-        }
-        return a.model.localeCompare(b.model);
-    });
+    console.log(`[DEBUG getBestModels]: Total Candidates Found: ${candidates.length}`);
+
+    // Sort: Least failures first, then alphabetical
+    return candidates.sort((a, b) => a.failures - b.failures || a.model.localeCompare(b.model));
 }
-
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
     const statusText = document.getElementById('engine-status-text');
