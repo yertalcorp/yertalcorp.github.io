@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1883,23 +1883,16 @@ function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
 }
 /*
  * Objective: Extract structured name, code, and thumbnail from messy LLM responses.
- * Tasks: Identify JSON objects via key-aware regex, normalize fields, and handle hybrid fallbacks.
- */
-/*
- * Objective: Extract structured name, code, and thumbnail from messy LLM responses.
- * Tasks: Support multi-item generation (arrays) while isolating JSON from conversational text.
+ * Tasks: Support multi-item generation, handle backtick strings, and isolate JSON.
  */
 function extractSparkData(rawResult, isCode) {
-    // 1. GHOST CHECK: Ensure rawResult exists before chaining methods
     if (!rawResult || typeof rawResult !== 'string') return null;
 
-    // 2. PRE-SCRUB: Remove Markdown fences using a single chain
     let jsonToParse = rawResult.trim()
         .replace(/```json/gi, '')
-        .replace(/```/g, '') // FIXED: Removed the rogue newline here
+        .replace(/```/g, '')
         .trim();
 
-    // 3. ISOLATE: Find the outer boundaries of the JSON content
     const firstBrace = jsonToParse.indexOf('{');
     const firstBracket = jsonToParse.indexOf('[');
     
@@ -1914,10 +1907,22 @@ function extractSparkData(rawResult, isCode) {
     const lastBracket = jsonToParse.lastIndexOf(']');
     const endIdx = Math.max(lastBrace, lastBracket);
 
-    console.log("extractSparkData scrubbedResult=", jsonToParse);
-
     if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
         let jsonCandidate = jsonToParse.substring(startIdx, endIdx + 1);
+
+        // --- SANITIZER: Handle LLM backtick pollution ---
+        // This regex looks for "code": `...` and converts it to valid JSON "code": "..."
+        if (jsonCandidate.includes('`')) {
+            jsonCandidate = jsonCandidate.replace(/":\s*`([\s\S]*?)`/g, (match, content) => {
+                // Escape backslashes, double quotes, and newlines for JSON compatibility
+                const sanitized = content
+                    .replace(/\\/g, '\\\\')
+                    .replace(/"/g, '\\"')
+                    .replace(/\n/g, '\\n')
+                    .replace(/\r/g, '\\r');
+                return `": "${sanitized}"`;
+            });
+        }
 
         try {
             const parsed = JSON.parse(jsonCandidate);
@@ -1929,28 +1934,26 @@ function extractSparkData(rawResult, isCode) {
                 
                 if (isCode) {
                     let contentToFix = item.code || item.url || "";
-                    // verifyAndFixCode cleans internal JS/HTML
                     item.code = verifyAndFixCode(contentToFix, true);
                 }
             };
 
-            // FEATURE: Handle Multiple Items (The "Top 3 Movies" logic)
             if (Array.isArray(parsed)) {
                 parsed.forEach(processItem);
             } else {
                 processItem(parsed);
             }
             
-            console.log("extractSparkData parsed Data=", parsed);
             return parsed; 
         } catch (e) {
-            console.warn("[EXTRACTOR]: JSON parse failed. Response might be malformed.", e);
+            console.warn("[EXTRACTOR]: JSON parse failed after sanitization.", e);
         }
     }
 
-    // 4. FALLBACK: Raw text mode if no structural JSON found
     return isCode ? verifyAndFixCode(rawResult, true) : rawResult;
 }
+
+
 function verifyAndFixCodePrevious(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
