@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:25:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3119,12 +3119,14 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
                         prompt: finalPrompt
                     })
                 });
-                console.log("callProviderAPI: response=", response);
-
+ 
                 clearTimeout(timeoutId);
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
+                
+                // --- DEBUG LOG: Proxy Output ---
+                console.log(`[DEBUG] Raw Proxy JSON from ${model}:`, data);
                 
                 if (data.success === false) {
                     throw new Error(data.error + (data.detail ? ": " + data.detail : ""));
@@ -3135,6 +3137,9 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
                 
                 let rawResult = data.result;
                 if (!rawResult) throw new Error("Empty response content from Proxy.");
+
+                // --- DEBUG LOG: LLM Output before sanitization ---
+                console.log(`[DEBUG] Raw LLM Text Content:`, rawResult);
 
                 let sanitized = verifyAndFixCode(rawResult, isCode);
 
@@ -3152,6 +3157,9 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
                                 jsonToParse = jsonToParse.substring(firstBrace, lastBrace + 1);
                             }
                         }
+
+                        // --- DEBUG LOG: The final string being parsed ---
+                        console.log(`[DEBUG] String being sent to JSON.parse:`, jsonToParse);
 
                         const parsed = JSON.parse(jsonToParse);
                         
@@ -3173,6 +3181,8 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
 
                     } catch (jsonErr) {
                         console.warn("[FORGE]: JSON Extraction failed. Falling back to raw content.", jsonErr);
+                        // --- DEBUG LOG: Why it failed ---
+                        console.log(`[DEBUG] Content that failed to parse:`, sanitized);
                     }
                 }
 
@@ -3212,6 +3222,7 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
     await initiateSystemCooldown(statusText);
     throw new Error("All model attempts exhausted after two full circulations.");
 }
+
 async function retrieveProvider() {
     console.log("[FORGE]: Syncing with Firebase Manifest...");
     try {
