@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @17:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2761,141 +2761,7 @@ const extractUrls = (text) => {
 };
     
 
-async function retrieveGeminiCredentials() {
-    try {
-        let manifest = databaseCache?.app_manifest;
 
-        if (!manifest || !manifest.gkey) {
-            const snap = await get(ref(db, 'app_manifest')).catch(() => null);
-            if (snap && snap.exists()) {
-                manifest = snap.val();
-                if (databaseCache) databaseCache.app_manifest = manifest;
-            }
-        }
-
-        if (!manifest || !manifest.gkey) {
-            throw new Error("Forge manifest or GKey missing in DB.");
-        }
-
-        const apiKey = manifest.gkey;
-        
-        // ONLY call getGeminiModel if the local pool OR the manifest pool is empty
-        const isPoolEmpty = !Array.isArray(modelStats) || modelStats.length === 0;
-        const isManifestPoolEmpty = !Array.isArray(manifest.model_pool) || manifest.model_pool.length === 0;
-
-        if (isPoolEmpty || isManifestPoolEmpty) {
-            await getGeminiModel(apiKey);
-        }
-
-        // Return the API key; callGeminiAPI handles the iteration via modelStats
-        return { apiKey };
-    } catch (e) {
-        console.error("[FORGE ERROR]: Failed to assemble credentials:", e);
-        return null;
-    }
-}
-
-async function retrieveLLMCredentials(providerName) {
-    try {
-        let manifest = databaseCache?.app_manifest;
-        if (!manifest) {
-            const snap = await get(ref(db, 'app_manifest')).catch(() => null);
-            if (snap && snap.exists()) {
-                manifest = snap.val();
-                databaseCache.app_manifest = manifest;
-            }
-        }
-
-        const providerConfig = manifest?.llm_providers?.find(p => p.provider_name === providerName);
-        
-        if (!providerConfig || !providerConfig.enabled) {
-            return null;
-        }
-
-        const proxyKey = providerConfig.key; // This is the Y-Key
-        const isLocalPoolEmpty = !modelStats[providerName] || modelStats[providerName].source.length === 0;
-
-        if (isLocalPoolEmpty) {
-            await refreshProviderModels(providerName, proxyKey);
-        }
-
-        return { proxyKey, config: providerConfig };
-    } catch (e) {
-        console.error(`[FORGE ERROR]: Credentials failure for ${providerName}:`, e);
-        return null;
-    }
-}
-
-async function getGeminiModel(apiKey) {
-    // 1. IMMEDIATE RETURN: If modelStats is already populated, get the healthiest model.
-    if (typeof modelStats !== 'undefined' && Array.isArray(modelStats) && modelStats.length > 0) {
-        const sorted = [...modelStats].sort((a, b) => a[1] - b[1]);
-        return sorted[0][0];
-    }
-
-    // 2. HYDRATE FROM CACHE: If memory is empty, check the databaseCache object.
-    if (databaseCache.app_manifest?.model_pool) {
-        console.log("[FORGE]: Hydrating model pool from manifest cache.");
-        
-        const pool = databaseCache.app_manifest.model_pool;
-        // Map names into our 2D tracking array [[name, failures]]
-        modelStats = pool.map(name => [name, 0]);
-
-        return databaseCache.app_manifest.default_model;
-    }
-
-    // 3. DISCOVERY: Only runs if both memory and cache are empty.
-    try {
-        console.log("[FORGE]: Discovering models via Google API...");
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        const data = await response.json();
-
-        if (!data.models) throw new Error("No models property in API response.");
-
-        // Filter: Flash and Pro only, exclude Lite and latest aliases.
-        const filteredModels = data.models.filter(m => 
-            (m.name.includes('flash') || m.name.includes('pro')) && 
-            m.supportedGenerationMethods.includes('generateContent') &&
-            !m.name.toLowerCase().includes('lite') &&
-            !m.name.endsWith('-latest')
-        );
-
-        // Sort so newest versions are at the top initially.
-        filteredModels.sort((a, b) => b.name.localeCompare(a.name));
-
-        if (filteredModels.length === 0) throw new Error("No suitable models found.");
-
-        const flatNames = filteredModels.map(m => m.name.split('/')[1]);
-        modelStats = flatNames.map(name => [name, 0]);
-        
-        const resolvedModel = modelStats[0][0];
-        console.log(`[FORGE]: Primary: ${resolvedModel}. Pool:`, modelStats);
-
-        // 4. PERSIST TO FIREBASE (Non-blocking for speed)
-        update(ref(db, 'app_manifest'), {
-            default_model: resolvedModel,
-            model_pool: flatNames, 
-            last_model_sync: new Date().toISOString()
-        }).catch(err => console.warn("[FORGE]: Manifest sync failed", err));
-        
-        if (!databaseCache.app_manifest) databaseCache.app_manifest = {};
-        databaseCache.app_manifest.default_model = resolvedModel;
-        databaseCache.app_manifest.model_pool = flatNames;
-
-        return resolvedModel;
-
-    } catch (e) {
-        console.warn("[FORGE]: Discovery failed. Falling back to high-reasoning defaults.", e);
-        // Modern Fallback (Removed dead 1.5 versions)
-        // This is an array of model, failed_counts
-        modelStats = [
-            ['gemini-3-flash-preview', 0], 
-            ['gemini-2.5-flash', 0], 
-            ['gemini-2.5-pro', 0]
-        ];
-        return modelStats[0][0]; 
-    }
-}
 
 async function refreshProviderModels(providerName, proxyKey) {
     const providers = databaseCache.app_manifest?.llm_providers;
@@ -3033,98 +2899,6 @@ async function getBestModels(poolType) {
     return sorted;
 }
 
-async function callGeminiAPI(prompt, val, type) {
-    const isCode = type === 'code' || type === 'create';
-    const statusText = document.getElementById('engine-status-text');
-
-    if (window.isInCooldown) throw new Error("System is currently cooling down.");
-
-    const credentials = await retrieveGeminiCredentials();
-    if (!credentials) throw new Error("Failed to retrieve Gemini credentials.");
-
-    // modelStats is now guaranteed to be hydrated by retrieveGeminiCredentials if it was missing
-    modelStats.sort((a, b) => a[1] - b[1]);
-    
-    let attempts = 0;
-    const maxRetries = modelStats.length;
-
-    while (attempts < maxRetries) {
-        const currentEntry = modelStats[attempts];
-        if (!currentEntry) {
-            attempts++;
-            continue;
-        }
-
-        const modelName = currentEntry[0];
-
-        // --- THROTTLE & STATUS UPDATE ---
-        if (statusText) statusText.innerText = `READYING ENGINE... (4s THROTTLE)`;
-        await new Promise(r => setTimeout(r, 4000));
-        
-        if (statusText) statusText.innerText = `RETRIEVING MODEL ${modelName.toUpperCase()}...`;
-
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${credentials.apiKey}`;
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: prompt }] }] 
-                })
-            });
-
-            if (!response.ok) {
-                if (response.status === 429) console.warn(`[LIMIT]: 429 hit on ${modelName}.`);
-                currentEntry[1]++;
-                attempts++;
-                await new Promise(r => setTimeout(r, 200));
-                continue;
-            }
-
-            const data = await response.json();
-            if (currentEntry[1] > 0) currentEntry[1]--;
-
-            const rawResult = data.candidates[0].content.parts[0].text;
-            let sanitized = verifyAndFixCode(rawResult, isCode);
-            
-            if (isCode) {
-                if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
-                    const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
-                    if (start !== -1) sanitized = sanitized.substring(start);
-                }
-                return sanitized;
-            } else {
-                try {
-                    const parsed = JSON.parse(sanitized);
-                    if (parsed && typeof parsed.code === 'string') {
-                        parsed.code = verifyAndFixCode(parsed.code, true);
-                    } else if (Array.isArray(parsed)) {
-                        parsed.forEach(item => {
-                            if (item.url) item.url = verifyAndFixCode(item.url);
-                            if (item.code) item.code = verifyAndFixCode(item.code, true);
-                        });
-                    }
-                    return parsed;
-                } catch (jsonErr) {
-                    if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
-                        const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
-                        if (start !== -1) sanitized = sanitized.substring(start);
-                    }
-                    return sanitized;
-                }
-            }
-        } catch (error) {
-            console.warn(`[FAIL]: ${modelName} hit an error:`, error);
-            currentEntry[1]++;
-            attempts++;
-            if (attempts < maxRetries) await new Promise(r => setTimeout(r, 200));
-        }
-    }
-
-    await initiateSystemCooldown(statusText);
-    throw new Error("All models exhausted.");
-}
 
 /*
  * Objective: Primary Gateway for all LLM providers (Google, Sarvam, etc.)
@@ -3155,19 +2929,19 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
 
     let candidates = await getBestModels(poolType);
     if (candidates.length === 0) {
-        console.error(`[FORGE]: No models available for pool: ${poolType}`);
+        console.error(`callProviderAPI: [FORGE]: No models available for pool: ${poolType}`);
         throw new Error("No enabled models found.");
     }
 
     let circulationCount = 0;
-    const maxCirculations = 2;
+    const maxCirculations = 1;
 
     while (circulationCount < maxCirculations) {
         for (let i = 0; i < candidates.length; i++) {
             const { provider, model, config, statRef } = candidates[i];
             const progress = Math.floor(((circulationCount * candidates.length + i) / (maxCirculations * candidates.length)) * 100);
             
-            console.log(`[FORGE]: Round ${circulationCount + 1} | Attempting ${provider.toUpperCase()} : ${model}`);
+            console.log(`callProviderAPI: [FORGE]: Round ${circulationCount + 1} | Attempting ${provider.toUpperCase()} : ${model}`);
             
             if (statusText) {
                 statusText.innerText = `FORGING SPARK [---] ${progress}% | Retrieving ${provider.toUpperCase()} ${model}...`;
@@ -3197,20 +2971,18 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 
-                console.log(`[DEBUG] Raw Proxy JSON from ${model}:`, data);
+                console.log(`callProviderAPI: [DEBUG] Raw Proxy JSON from ${model}:`, data);
                 
                 if (data.success === false) {
                     throw new Error(data.error + (data.detail ? ": " + data.detail : ""));
                 }
 
-                console.log(`[FORGE SUCCESS]: Response received from ${model}`);
+                console.log(`callProviderAPI: [FORGE SUCCESS]: Response received from ${model}`);
                 if (statusText) statusText.innerText = "SPARK FORGE SUCCESSFUL [======] 100% | Finalizing data...";
                 
                 // 1. Get raw result from Proxy
                 let rawResult = data.result;
                 if (!rawResult) throw new Error("Empty response content from Proxy.");
-
-                console.log(`[DEBUG] Raw LLM Text Content:`, rawResult);
 
                 // 2. Extract Data (This now handles both Code and Source modes)
                 const extracted = extractSparkData(rawResult, isCode);
@@ -3222,7 +2994,7 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
                 const isTimeout = error.name === 'AbortError';
                 const errorMsg = isTimeout ? "30s Timeout" : error.message;
                 
-                console.error(`[FORGE FAIL]: ${model} encountered an error:`, errorMsg);
+                console.error(`callProviderAPI:[FORGE FAIL]: ${model} encountered an error:`, errorMsg);
                 
                 handleModelError(provider, model);
                 statRef[1] = modelStats[provider][model] || statRef[1] + 1;
@@ -3237,7 +3009,7 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
         circulationCount++;
     }
 
-    console.error("[FORGE CRITICAL]: All attempts failed across two full circulations.");
+    console.error("callProviderAPI:[FORGE CRITICAL]: All attempts failed across two full circulations.");
     if (statusText) statusText.innerText = "CRITICAL FAILURE: All models exhausted. Initiating Cooldown.";
     await initiateSystemCooldown(statusText);
     throw new Error("All model attempts exhausted after two full circulations.");
@@ -3315,7 +3087,7 @@ async function initiateSystemCooldown(statusElement) {
             if (timeLeft < 0) {
                 clearInterval(timer);
                 window.isInCooldown = false;
-                
+                /*
                 // RECOVERY: Reset all failure counts in the new object structure
                 if (modelStats) {
                     Object.keys(modelStats).forEach(provider => {
@@ -3324,7 +3096,7 @@ async function initiateSystemCooldown(statusElement) {
                         });
                     });
                 }
-                
+                */
                 if (statusElement) statusElement.textContent = "SYSTEM READY";
                 resolve();
             }
@@ -3408,50 +3180,6 @@ function formatTimeAgo(timestamp) {
     return Math.floor(seconds) + "S AGO";
 }
 
-// --- SMART LOGIC ASSIGNER ---
-function predictLogicType(prompt) {
-    const p = prompt.toLowerCase();
-    const types = databaseCache.settings?.['arcade-current-types'] || [];
-    
-    // Look for the matched type object from your DB list
-    const matchedType = types.find(t => p.includes(t.id) || p.includes(t.name.toLowerCase()));
-    
-    // Scenario 1: No DB type matched at all
-    if (!matchedType) {
-        let fallbackLogic = 'hybrid';
-        if (p.includes('generate') || p.includes('create') || p.includes('build') || p.includes('design')) fallbackLogic = 'create';
-        if (p.includes('top') || p.includes('get') || p.includes('find') || p.includes('list') || p.includes('show me')) fallbackLogic = 'source';
-        
-        // If it's still hybrid after keywords, we safely default it to 'create' 
-        // to prevent callGeminiAPI from getting stuck
-        if (fallbackLogic === 'hybrid') fallbackLogic = 'create';
-        
-        return { id: 'custom', name: 'Custom', logic: fallbackLogic };
-    }
-    
-    // Scenario 2: DB type matched, and it has a strict rule ('create' or 'source')
-    if (matchedType.logic !== 'hybrid') {
-        return matchedType; // Returns the exact object straight from the DB
-    }
-    
-    // Scenario 3: DB type matched, but the logic is 'hybrid'
-    // We must parse the prompt to determine the true intent!
-    let resolvedLogic = 'create'; // Default fallback for safety
-    
-    if (p.includes('top') || p.includes('get') || p.includes('find') || p.includes('retrieve') || p.includes('list') || p.includes('show me')) {
-        resolvedLogic = 'source';
-    } else if (p.includes('generate') || p.includes('create') || p.includes('build') || p.includes('design')) {
-        resolvedLogic = 'create';
-    }
-    
-    console.log(`[FORGE]: Hybrid type [${matchedType.name}] resolved to logic [${resolvedLogic}] based on prompt.`);
-    
-    // Return the matched object, but with the 'logic' property strictly forced to an actionable target!
-    return {
-        ...matchedType,
-        logic: resolvedLogic
-    };
-}
 /*
  * HUD Controls: Closes the Arcade Settings overlay
  */
