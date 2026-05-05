@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @11:53:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:06:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3209,13 +3209,6 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
     await initiateSystemCooldown(statusText);
     throw new Error("All model attempts exhausted after two full circulations.");
 }
-/*
- * Objective: Sync LLM configuration with Firebase and hydrate failure tracking.
- * Tasks: 
- * - Retrieve manifest from cache or Firebase.
- * - Correctly parse the flat array structure of model_pools.
- * - Preserve existing failure counts in the global modelStats object.
- */
 async function retrieveProvider() {
     console.log("[FORGE]: Syncing with Firebase Manifest...");
     try {
@@ -3233,13 +3226,11 @@ async function retrieveProvider() {
             return false;
         }
 
-        // Ensure modelStats is an object, not an array, to support key-value mapping
         if (!modelStats || Array.isArray(modelStats)) {
             modelStats = {};
         }
 
         manifest.llm_providers.forEach(p => {
-            // Only hydrate providers that are marked as enabled in the manifest
             if (p.enabled) {
                 const pName = p.provider_name;
                 
@@ -3250,18 +3241,19 @@ async function retrieveProvider() {
                 
                 const pools = p.model_pools || {};
                 
-                // Combine both create and source pools to ensure all possible models are tracked
-                const allModels = [
-                    ...(pools.create || []), 
-                    ...(pools.source || [])
-                ];
-                
-                allModels.forEach(modelName => {
-                    // Initialize to 0 only if not already tracked (persistence)
-                    if (modelStats[pName][modelName] === undefined) {
-                        modelStats[pName][modelName] = 0;
-                    }
-                });
+              // Task: Correctly map models into their specific pool types (create/source)
+              ['create', 'source'].forEach(poolType => {
+                  const manifestModels = pools[poolType] || [];
+                  
+                  // Initialize or Update the pool array
+                  // We store as [[modelName, failureCount], ...]
+                  modelStats[pName][poolType] = manifestModels.map(modelName => {
+                      // Search existing modelStats to preserve failure counts if already present
+                      const existingPool = modelStats[pName][poolType] || [];
+                      const existingEntry = existingPool.find(m => m[0] === modelName);
+                      return [modelName, existingEntry ? existingEntry[1] : 0];
+                  });
+              });
             }
         });
 
@@ -3272,7 +3264,6 @@ async function retrieveProvider() {
         return false;
     }
 }
-
 /*
  * System Cooldown & Reset Logic
  */
