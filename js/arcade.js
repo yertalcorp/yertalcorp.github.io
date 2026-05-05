@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2351,13 +2351,18 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 const aiLinks = await callProviderAPI(prompt, currentName, promptTypeObject, resolution.count, mode);
 
                 // ENHANCED: Normalization for multiple model response formats
-                linksToSave = (Array.isArray(aiLinks) ? aiLinks : (typeof aiLinks === 'string' ? aiLinks.split(/,|\n/).map(str => str.trim()).filter(Boolean) : []))
+                const rawArray = Array.isArray(aiLinks) ? aiLinks : (typeof aiLinks === 'string' ? aiLinks.split(/,|\n/).map(str => str.trim()).filter(Boolean) : [aiLinks]);
+                
+                linksToSave = rawArray
                     .slice(0, resolution.count)
-                    .map(item => ({
-                        name: item.name || generateSparkName(currentId),
-                        url: item.url || item.link || (typeof item === 'string' ? item : "N/A"),
-                        image: item.thumbnail || item.image || item.img || promptTypeObject.image || null
-                    }));                    
+                    .map((item, index) => {
+                        const isObject = item !== null && typeof item === 'object';
+                        return {
+                            name: (isObject ? (item.name || item.title) : null) || resolution.textChunks[index] || generateSparkName(currentId),
+                            url: isObject ? (item.url || item.link || item.code) : item,
+                            image: (isObject ? (item.thumbnail || item.image || item.img) : null) || promptTypeObject.image || '/assets/thumbnails/default.jpg'
+                        };
+                    });                    
             }
 
             for (let i = 0; i < linksToSave.length; i++) {
@@ -2377,14 +2382,16 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
 
                 const response = await callProviderAPI(prompt, currentName, promptTypeObject, i, mode);
                 
-                const sparkName = response.name || (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
+                // ENHANCED: Extract specific fields with object-aware fallbacks
+                const isObj = response !== null && typeof response === 'object';
+                const sparkName = (isObj ? (response.name || response.title) : null) || (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
                 
-                // ENHANCED: Extract content with fallback to link/url fields if code is missing
-                const rawContent = response.code || response.url || response.link;
-                const sparkContent = verifyAndFixCode(rawContent, mode); 
+                // Content extraction: prioritize 'code' for create mode, fallback to 'url/link'
+                const rawContent = isObj ? (response.code || response.url || response.link) : response;
+                const sparkContent = verifyAndFixCode(rawContent, true); 
                 
-                // ENHANCED: Normalize thumbnail keys
-                const sparkImage = response.thumbnail || response.image || response.img || promptTypeObject.image || null;
+                // Thumbnail normalization
+                const sparkImage = (isObj ? (response.thumbnail || response.image || response.img) : null) || promptTypeObject.image || '/assets/thumbnails/physics_default.jpg';
                 
                 console.log(`executeMassSpark spark mode=${mode} spark image URL=${sparkImage}`);
                 
