@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1838,18 +1838,6 @@ window.addNewCurrent = async (name, type, privacy, oldId = null) => {
     return window.update(window.ref(window.db), updates);
 };
 
-function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
-    if (!rawCode || typeof rawCode !== 'string') return "";
-
-    // 1. Scrub UNICODE spaces (non-breaking spaces, etc.) and Markdown ticks
-    let fixed = rawCode
-        .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
-        .replace(/^```[a-z]*\n?|```$/gi, '')
-        .trim();
-
-    return fixed;
-}
-
 /*
  * Objective: Clean and normalize raw LLM output.
  * Tasks: Scrub Unicode, remove markdown fences, and strip trailing JSON metadata.
@@ -1882,15 +1870,23 @@ function verifyAndFixCode(rawCode, isCodeMode = false) {
     return fixed.trim();
 }
 
+function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
+    if (!rawCode || typeof rawCode !== 'string') return "";
+
+    // 1. Scrub UNICODE spaces (non-breaking spaces, etc.) and Markdown ticks
+    let fixed = rawCode
+        .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
+        .replace(/^```[a-z]*\n?|```$/gi, '')
+        .trim();
+
+    return fixed;
+}
 /*
  * Objective: Extract structured name, code, and thumbnail from messy LLM responses.
  * Tasks: Identify JSON objects via key-aware regex, normalize fields, and handle hybrid fallbacks.
  */
-function extractSparkData(sanitized, rawResult, isCode) {
-    let jsonToParse = sanitized.trim();
-    
-    // Key-aware regex: looks for the largest block containing at least one expected JSON key.
-    // This ignores accidental braces in CSS/JS code.
+function extractSparkData(rawResult, isCode) {
+    let jsonToParse = rawResult.trim();
     const jsonPattern = /\{[\s\S]*"(?:name|code|thumbnail|url|title)"[\s\S]*\}/;
     const match = jsonToParse.match(jsonPattern);
 
@@ -1903,11 +1899,10 @@ function extractSparkData(sanitized, rawResult, isCode) {
                 item.url = item.url || item.link || item.href || "N/A";
                 item.thumbnail = item.thumbnail || item.image || item.img || item.pic || null;
                 
-                // If the JSON object lacks a code field but we have raw HTML, bridge them.
-                if (isCode && !item.code) {
-                    item.code = verifyAndFixCode(rawResult, true);
-                } else if (item.code) {
-                    item.code = verifyAndFixCode(item.code, true);
+                // If code is requested, fix it here ONCE
+                if (isCode) {
+                    let contentToFix = item.code || item.url;
+                    item.code = verifyAndFixCode(contentToFix, true);
                 }
             };
 
@@ -1922,10 +1917,10 @@ function extractSparkData(sanitized, rawResult, isCode) {
         console.warn("[EXTRACTOR]: JSON parse failed, falling back to raw mode.", e);
     }
 
-    // Fallback: If no JSON structure is found, treat the sanitized text as the code itself.
-    return isCode ? verifyAndFixCode(sanitized, true) : sanitized;
+    // Fallback: If no JSON structure is found, treat the raw text as the content
+    return isCode ? verifyAndFixCode(rawResult, true) : rawResult;
 }
-
+    
 function verifyAndFixCodePrevious(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
@@ -2358,7 +2353,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                     .map((item, index) => {
                         const isObject = item !== null && typeof item === 'object';
                         return {
-                            name: (isObject ? (item.name || item.title) : null) || resolution.textChunks[index] || generateSparkName(currentId),
+                            name: (isObject ? (item.name || item.title) : null) || resolution.textChunks[index] || generateSparkName(promptTypeObject.name),
                             url: isObject ? (item.url || item.link || item.code) : item,
                             image: (isObject ? (item.thumbnail || item.image || item.img) : null) || promptTypeObject.image || '/assets/thumbnails/default.jpg'
                         };
@@ -2384,17 +2379,14 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 
                 // ENHANCED: Extract specific fields with object-aware fallbacks
                 const isObj = response !== null && typeof response === 'object';
-                const sparkName = (isObj ? (response.name || response.title) : null) || (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
+           
+                // Use the normalized keys guaranteed by extractSparkData within callProviderAPI
                 
-                // Content extraction: prioritize 'code' for create mode, fallback to 'url/link'
-                const rawContent = isObj ? (response.code || response.url || response.link) : response;
-                const sparkContent = verifyAndFixCode(rawContent, true); 
-                
-                // Thumbnail normalization
-                const sparkImage = (isObj ? (response.thumbnail || response.image || response.img) : null) || promptTypeObject.image || '/assets/thumbnails/physics_default.jpg';
-                
-                console.log(`executeMassSpark spark mode=${mode} spark image URL=${sparkImage}`);
-                
+                const sparkName = isObj ? response.name : (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
+                const sparkContent = isObj ? (response.code || response.url) : response;
+                const sparkImage = isObj ? response.thumbnail : (promptTypeObject.image || '/assets/thumbnails/default.jpg');
+
+                console.log(`executeMassSpark spark mode=${mode} spark image URL=${sparkImage}`);                
                 const isCode = typeof sparkContent === 'string' && (sparkContent.trim().startsWith('<') || sparkContent.trim().startsWith('function') || sparkContent.trim().startsWith('const') || sparkContent.trim().includes('document.'));
                 
                 await saveSpark(
@@ -3212,22 +3204,16 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
                 console.log(`[FORGE SUCCESS]: Response received from ${model}`);
                 if (statusText) statusText.innerText = "SPARK FORGE SUCCESSFUL [======] 100% | Finalizing data...";
                 
+                // 1. Get raw result from Proxy
                 let rawResult = data.result;
                 if (!rawResult) throw new Error("Empty response content from Proxy.");
 
                 console.log(`[DEBUG] Raw LLM Text Content:`, rawResult);
 
-                let sanitized = verifyAndFixCode(rawResult, isCode);
-
-                // Unified Extraction Logic
-                if (!isCode || sanitized.includes('{')) {
-                    const extracted = extractSparkData(sanitized, rawResult, isCode);
-                    statRef[1] = 0; 
-                    return extracted;
-                }
-
+                // 2. Extract Data (This now handles both Code and Source modes)
+                const extracted = extractSparkData(rawResult, isCode);
                 statRef[1] = 0; 
-                return sanitized;
+                return extracted;
 
             } catch (error) {
                 clearTimeout(timeoutId);
