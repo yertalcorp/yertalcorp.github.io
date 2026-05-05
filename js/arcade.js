@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @9:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @11:53:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2891,50 +2891,71 @@ function handleModelError(providerName, modelName) {
 
 // FUNCTION: getBestModels
 async function getBestModels(poolType) {
-    // 1. Initial Hydration: check the global variable directly
+    // 1. Initial Hydration
     if (!modelStats || Object.keys(modelStats).length === 0) {
         console.log(`[FORGE]: modelStats empty, retrieving providers...`);
         await retrieveProvider();
     }
 
+  console.log(`[DEBUG]: Starting getBestModels for pool: ${poolType}`);
+  console.log(`[DEBUG]: Current modelStats state:`, modelStats);
+
     let candidates = [];
     const manifest = databaseCache.app_manifest;
 
-    // 2. Build Candidate List from the global modelStats
+  if (!manifest || !manifest.llm_providers) {
+      console.error("[DEBUG]: app_manifest or llm_providers is missing from databaseCache");
+      return [];
+  }
+
+    // 2. Build Candidate List
     Object.keys(modelStats).forEach(providerName => {
         const providerConfig = manifest.llm_providers.find(p => 
             p.provider_name.toUpperCase() === providerName.toUpperCase()
         );
         
+      console.log(`[DEBUG]: Checking Provider: ${providerName} | Found in Manifest: ${!!providerConfig} | Enabled: ${providerConfig?.enabled}`);
+
         if (providerConfig && providerConfig.enabled) {
             const pool = modelStats[providerName][poolType] || [];
+          console.log(`[DEBUG]: Provider ${providerName} pool [${poolType}] has ${pool.length} models.`);
+            
             pool.forEach(stat => {
+              console.log(`[DEBUG]: Evaluating model: ${stat[0]} | Failures: ${stat[1]}`);
                 candidates.push({
                     provider: providerName,
                     model: stat[0],
                     failures: stat[1],
                     config: providerConfig,
-                    statRef: stat // Keep a reference to the actual array [name, count]
+                    statRef: stat 
                 });
             });
         }
     });
 
-    if (candidates.length === 0) return [];
+  console.log(`[DEBUG]: Total candidates found before reset logic: ${candidates.length}`);
 
-    // 3. Logic: If ALL models have failed, reset counts to 0 and return them all
+    if (candidates.length === 0) {
+      console.warn(`[DEBUG]: No candidates found. Check if poolType '${poolType}' exists in modelStats keys.`);
+        return [];
+    }
+
+    // 3. Logic: Reset if all failed
     const allFailed = candidates.every(c => c.failures > 0);
     if (allFailed) {
         console.warn(`[FORGE]: All models failed. Resetting counts to circulate again.`);
         candidates.forEach(c => {
-            c.statRef[1] = 0; // Reset the count in the global modelStats
-            c.failures = 0;   // Reset local copy for sorting
+            c.statRef[1] = 0; 
+            c.failures = 0;   
         });
     }
 
-    // 4. Return sorted by least failures (the reset models will now have 0)
-    return candidates.sort((a, b) => a.failures - b.failures || a.model.localeCompare(b.model));
+    const sorted = candidates.sort((a, b) => a.failures - b.failures || a.model.localeCompare(b.model));
+  console.log(`[DEBUG]: Final sorted candidates:`, sorted.map(c => `${c.provider}:${c.model}`));
+    
+    return sorted;
 }
+
 async function callGeminiAPI(prompt, val, type) {
     const isCode = type === 'code' || type === 'create';
     const statusText = document.getElementById('engine-status-text');
