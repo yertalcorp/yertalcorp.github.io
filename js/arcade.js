@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3101,6 +3101,8 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
 
             const finalPrompt = shapeAiPrompt(provider, prompt, val, type, currentName, promptTypeObject);
             
+            console.log("callProviderAPI: finalPrompt=", finalPrompt);
+            
             // 30-Second Timeout Logic
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 180000);
@@ -3117,6 +3119,7 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
                         prompt: finalPrompt
                     })
                 });
+                console.log("callProviderAPI: response=", response);
 
                 clearTimeout(timeoutId);
 
