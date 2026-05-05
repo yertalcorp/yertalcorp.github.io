@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @18:40:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:06:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1883,16 +1883,25 @@ function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
 }
 /*
  * Objective: Extract structured name, code, and thumbnail from messy LLM responses.
- * Tasks: Identify JSON objects via key-aware regex, normalize fields, and handle hybrid fallbacks.
  */
 function extractSparkData(rawResult, isCode) {
-    let jsonToParse = rawResult.trim();
+    if (!rawResult) return null;
+
+    // 1. PRE-SCRUB: Remove the Markdown fences BEFORE any other logic
+    // This handles the "backtick at index 0" issue that crashes JSON.parse
+    let jsonToParse = rawResult.trim()
+        .replace(/^```[a-z]*\n?/gi, '') // Remove start fence (e.g. ```json)
+        .replace(/\n?```$/g, '');      // Remove end fence (```)
+
+    // 2. ISOLATE: Find the JSON object inside the (now cleaner) string
     const jsonPattern = /\{[\s\S]*"(?:name|code|thumbnail|url|title)"[\s\S]*\}/;
     const match = jsonToParse.match(jsonPattern);
 
-    console.log("extractSparkData rawResult=", rawResult);
+    console.log("extractSparkData scrubbedResult=", jsonToParse);
+
     try {
         if (match) {
+            // Now JSON.parse starts with '{', so it won't crash!
             const parsed = JSON.parse(match[0]);
             
             const processItem = (item) => {
@@ -1900,9 +1909,9 @@ function extractSparkData(rawResult, isCode) {
                 item.url = item.url || item.link || item.href || "N/A";
                 item.thumbnail = item.thumbnail || item.image || item.img || item.pic || null;
                 
-                // If code is requested, fix it here ONCE
                 if (isCode) {
                     let contentToFix = item.code || item.url;
+                    // verifyAndFixCode handles the internal contents of the "code" string
                     item.code = verifyAndFixCode(contentToFix, true);
                 }
             };
@@ -1922,7 +1931,7 @@ function extractSparkData(rawResult, isCode) {
     // Fallback: If no JSON structure is found, treat the raw text as the content
     return isCode ? verifyAndFixCode(rawResult, true) : rawResult;
 }
-    
+
 function verifyAndFixCodePrevious(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
