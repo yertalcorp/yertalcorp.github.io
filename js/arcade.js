@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:25:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1850,7 +1850,84 @@ function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
     return fixed;
 }
 
+/*
+ * Objective: Clean and normalize raw LLM output.
+ * Tasks: Scrub Unicode, remove markdown fences, and strip trailing JSON metadata.
+ * Idempotency: Can be called multiple times without stripping valid HTML tags.
+ */
 function verifyAndFixCode(rawCode, isCodeMode = false) {
+    if (!rawCode || typeof rawCode !== 'string') return "";
+
+    // 1. Scrub UNICODE spaces and standardized line breaks
+    let fixed = rawCode
+        .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
+        .trim();
+
+    // 2. Remove Markdown code fences (Idempotent: only matches specific block starts/ends)
+    fixed = fixed.replace(/^```[a-z]*\n?/gi, '').replace(/\n?
+```$/g, '');
+
+    // 3. Handle hybrid "Trailing Metadata" (Specific to Sarvam/Hybrid models)
+    // If the string contains a trailing JSON block after the code, we strip it for the code view.
+    const metadataMarker = /",\s*"thumbnail":\s*".*?"\s*\}?$/;
+    if (isCodeMode && metadataMarker.test(fixed)) {
+        fixed = fixed.replace(metadataMarker, '');
+    }
+
+    // 4. If it's HTML code, ensure we start at the doctype or html tag
+    if (isCodeMode && (fixed.includes('<!DOCTYPE') || fixed.includes('<html'))) {
+        const start = Math.max(fixed.indexOf('<!DOCTYPE'), fixed.indexOf('<html'));
+        if (start !== -1) fixed = fixed.substring(start);
+    }
+
+    return fixed.trim();
+}
+
+/*
+ * Objective: Extract structured name, code, and thumbnail from messy LLM responses.
+ * Tasks: Identify JSON objects via key-aware regex, normalize fields, and handle hybrid fallbacks.
+ */
+function extractSparkData(sanitized, rawResult, isCode) {
+    let jsonToParse = sanitized.trim();
+    
+    // Key-aware regex: looks for the largest block containing at least one expected JSON key.
+    // This ignores accidental braces in CSS/JS code.
+    const jsonPattern = /\{[\s\S]*"(?:name|code|thumbnail|url|title)"[\s\S]*\}/;
+    const match = jsonToParse.match(jsonPattern);
+
+    try {
+        if (match) {
+            const parsed = JSON.parse(match[0]);
+            
+            const processItem = (item) => {
+                item.name = item.name || item.title || "Untitled Spark";
+                item.url = item.url || item.link || item.href || "N/A";
+                item.thumbnail = item.thumbnail || item.image || item.img || item.pic || null;
+                
+                // If the JSON object lacks a code field but we have raw HTML, bridge them.
+                if (isCode && !item.code) {
+                    item.code = verifyAndFixCode(rawResult, true);
+                } else if (item.code) {
+                    item.code = verifyAndFixCode(item.code, true);
+                }
+            };
+
+            if (Array.isArray(parsed)) {
+                parsed.forEach(processItem);
+            } else {
+                processItem(parsed);
+            }
+            return parsed;
+        }
+    } catch (e) {
+        console.warn("[EXTRACTOR]: JSON parse failed, falling back to raw mode.", e);
+    }
+
+    // Fallback: If no JSON structure is found, treat the sanitized text as the code itself.
+    return isCode ? verifyAndFixCode(sanitized, true) : sanitized;
+}
+
+function verifyAndFixCodePrevious(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
     // 1. Scrub UNICODE spaces and Markdown ticks
@@ -3072,12 +3149,10 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
 
     if (statusText) statusText.innerText = "FORGING SPARK [-----] 0%";
 
-    // Ensure modelStats is hydrated
     if (!modelStats || Object.keys(modelStats).length === 0) {
         await retrieveProvider();
     }
 
-    // getBestModels handles the "if failures exist, reset and return" logic
     let candidates = await getBestModels(poolType);
     if (candidates.length === 0) {
         console.error(`[FORGE]: No models available for pool: ${poolType}`);
@@ -3085,7 +3160,7 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
     }
 
     let circulationCount = 0;
-    const maxCirculations = 2; // Circulate through the full model list twice
+    const maxCirculations = 2;
 
     while (circulationCount < maxCirculations) {
         for (let i = 0; i < candidates.length; i++) {
@@ -3095,15 +3170,12 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
             console.log(`[FORGE]: Round ${circulationCount + 1} | Attempting ${provider.toUpperCase()} : ${model}`);
             
             if (statusText) {
-                // Single line status update
                 statusText.innerText = `FORGING SPARK [---] ${progress}% | Retrieving ${provider.toUpperCase()} ${model}...`;
             }
 
             const finalPrompt = shapeAiPrompt(provider, prompt, val, type, currentName, promptTypeObject);
-            
             console.log("callProviderAPI: finalPrompt=", finalPrompt);
             
-            // 30-Second Timeout Logic
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 180000);
 
@@ -3119,13 +3191,12 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
                         prompt: finalPrompt
                     })
                 });
- 
+
                 clearTimeout(timeoutId);
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 
-                // --- DEBUG LOG: Proxy Output ---
                 console.log(`[DEBUG] Raw Proxy JSON from ${model}:`, data);
                 
                 if (data.success === false) {
@@ -3138,61 +3209,18 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
                 let rawResult = data.result;
                 if (!rawResult) throw new Error("Empty response content from Proxy.");
 
-                // --- DEBUG LOG: LLM Output before sanitization ---
                 console.log(`[DEBUG] Raw LLM Text Content:`, rawResult);
 
                 let sanitized = verifyAndFixCode(rawResult, isCode);
 
-                // Handle Structured JSON Responses (Auto-extraction logic)
+                // Unified Extraction Logic
                 if (!isCode || sanitized.includes('{')) {
-                    try {
-                        let jsonToParse = sanitized.trim();
-                        const jsonMatch = jsonToParse.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
-                        if (jsonMatch) {
-                            jsonToParse = jsonMatch[0];
-                        } else {
-                            const firstBrace = jsonToParse.indexOf('{');
-                            const lastBrace = jsonToParse.lastIndexOf('}');
-                            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-                                jsonToParse = jsonToParse.substring(firstBrace, lastBrace + 1);
-                            }
-                        }
-
-                        // --- DEBUG LOG: The final string being parsed ---
-                        console.log(`[DEBUG] String being sent to JSON.parse:`, jsonToParse);
-
-                        const parsed = JSON.parse(jsonToParse);
-                        
-                        const processItem = (item, index = 0) => {
-                            item.name = item.name || item.title || "Untitled Spark";
-                            item.url = item.url || item.link || item.href || "N/A";
-                            item.thumbnail = item.thumbnail || item.image || item.img || item.pic || null;
-                            if (item.code) item.code = verifyAndFixCode(item.code, true);
-                        };
-
-                        if (Array.isArray(parsed)) {
-                            parsed.forEach((item, idx) => processItem(item, idx));
-                        } else {
-                            processItem(parsed);
-                        }
-                        
-                        statRef[1] = 0; // Success: Reset failure count locally
-                        return parsed; 
-
-                    } catch (jsonErr) {
-                        console.warn("[FORGE]: JSON Extraction failed. Falling back to raw content.", jsonErr);
-                        // --- DEBUG LOG: Why it failed ---
-                        console.log(`[DEBUG] Content that failed to parse:`, sanitized);
-                    }
+                    const extracted = extractSparkData(sanitized, rawResult, isCode);
+                    statRef[1] = 0; 
+                    return extracted;
                 }
 
-                // Final cleanup for raw content
-                if (sanitized.includes('<!DOCTYPE') || sanitized.includes('<html')) {
-                    const start = Math.max(sanitized.indexOf('<!DOCTYPE'), sanitized.indexOf('<html'));
-                    if (start !== -1) sanitized = sanitized.substring(start);
-                }
-                
-                statRef[1] = 0; // Success: Reset failure count
+                statRef[1] = 0; 
                 return sanitized;
 
             } catch (error) {
@@ -3202,9 +3230,7 @@ async function callProviderAPI(prompt, currentName, promptTypeObject, val, type)
                 
                 console.error(`[FORGE FAIL]: ${model} encountered an error:`, errorMsg);
                 
-                // Use the standardized error handler
                 handleModelError(provider, model);
-                // Synchronize candidate's local statRef with the new global count
                 statRef[1] = modelStats[provider][model] || statRef[1] + 1;
 
                 if (statusText) {
