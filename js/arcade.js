@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:06:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:18:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1883,15 +1883,17 @@ function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
 }
 /*
  * Objective: Extract structured name, code, and thumbnail from messy LLM responses.
+ * Tasks: Identify JSON objects via key-aware regex, normalize fields, and handle hybrid fallbacks.
  */
 function extractSparkData(rawResult, isCode) {
     if (!rawResult) return null;
 
-    // 1. PRE-SCRUB: Remove the Markdown fences BEFORE any other logic
-    // This handles the "backtick at index 0" issue that crashes JSON.parse
+    // 1. PRE-SCRUB: Aggressively remove Markdown fences and triple backticks
+    // This prevents JSON.parse from crashing when models wrap the object in fences
     let jsonToParse = rawResult.trim()
-        .replace(/^```[a-z]*\n?/gi, '') // Remove start fence (e.g. ```json)
-        .replace(/\n?```$/g, '');      // Remove end fence (```)
+        .replace(/```json/gi, '') // Remove starting ```json (case insensitive)
+        .replace(/```/g, '')     // Remove any other triple backticks
+        .trim();
 
     // 2. ISOLATE: Find the JSON object inside the (now cleaner) string
     const jsonPattern = /\{[\s\S]*"(?:name|code|thumbnail|url|title)"[\s\S]*\}/;
@@ -1901,7 +1903,7 @@ function extractSparkData(rawResult, isCode) {
 
     try {
         if (match) {
-            // Now JSON.parse starts with '{', so it won't crash!
+            // After scrubbing, match[0] should start with '{'
             const parsed = JSON.parse(match[0]);
             
             const processItem = (item) => {
@@ -1911,7 +1913,7 @@ function extractSparkData(rawResult, isCode) {
                 
                 if (isCode) {
                     let contentToFix = item.code || item.url;
-                    // verifyAndFixCode handles the internal contents of the "code" string
+                    // verifyAndFixCode handles the internal contents (e.g., individual JS syntax)
                     item.code = verifyAndFixCode(contentToFix, true);
                 }
             };
