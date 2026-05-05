@@ -2180,7 +2180,7 @@ function shapeAiPrompt(providerName, rawPrompt, count, mode, currentName, prompt
         INSTRUCTIONS:
         ${systemInstructions}
         
-        QUANTITY: ${Math.max(1, count)}
+        QUANTITY: Return ${Math.max(1, count) unique items.}
     `.trim();
 
     console.log(`[SHAPER]: Raw prompt assembled for ${providerName}.`);
