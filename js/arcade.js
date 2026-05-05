@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1890,6 +1890,7 @@ function extractSparkData(rawResult, isCode) {
     const jsonPattern = /\{[\s\S]*"(?:name|code|thumbnail|url|title)"[\s\S]*\}/;
     const match = jsonToParse.match(jsonPattern);
 
+    console.log("extractSparkData rawResult=", rawResult);
     try {
         if (match) {
             const parsed = JSON.parse(match[0]);
@@ -1911,6 +1912,7 @@ function extractSparkData(rawResult, isCode) {
             } else {
                 processItem(parsed);
             }
+            console.log("extractSparkData parsed Data=", parsed);
             return parsed;
         }
     } catch (e) {
