@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:18:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1885,26 +1885,42 @@ function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
  * Objective: Extract structured name, code, and thumbnail from messy LLM responses.
  * Tasks: Identify JSON objects via key-aware regex, normalize fields, and handle hybrid fallbacks.
  */
+/*
+ * Objective: Extract structured name, code, and thumbnail from messy LLM responses.
+ * Tasks: Support multi-item generation (arrays) while isolating JSON from conversational text.
+ */
 function extractSparkData(rawResult, isCode) {
-    if (!rawResult) return null;
+    // 1. GHOST CHECK: Ensure rawResult exists before chaining methods
+    if (!rawResult || typeof rawResult !== 'string') return null;
 
-    // 1. PRE-SCRUB: Aggressively remove Markdown fences and triple backticks
-    // This prevents JSON.parse from crashing when models wrap the object in fences
+    // 2. PRE-SCRUB: Remove Markdown fences using a single chain
     let jsonToParse = rawResult.trim()
-        .replace(/```json/gi, '') // Remove starting ```json (case insensitive)
-        .replace(/```/g, '')     // Remove any other triple backticks
+        .replace(/```json/gi, '')
+        .replace(/```/g, '') // FIXED: Removed the rogue newline here
         .trim();
 
-    // 2. ISOLATE: Find the JSON object inside the (now cleaner) string
-    const jsonPattern = /\{[\s\S]*"(?:name|code|thumbnail|url|title)"[\s\S]*\}/;
-    const match = jsonToParse.match(jsonPattern);
+    // 3. ISOLATE: Find the outer boundaries of the JSON content
+    const firstBrace = jsonToParse.indexOf('{');
+    const firstBracket = jsonToParse.indexOf('[');
+    
+    let startIdx = -1;
+    if (firstBrace !== -1 && firstBracket !== -1) {
+        startIdx = Math.min(firstBrace, firstBracket);
+    } else {
+        startIdx = (firstBrace !== -1) ? firstBrace : firstBracket;
+    }
+
+    const lastBrace = jsonToParse.lastIndexOf('}');
+    const lastBracket = jsonToParse.lastIndexOf(']');
+    const endIdx = Math.max(lastBrace, lastBracket);
 
     console.log("extractSparkData scrubbedResult=", jsonToParse);
 
-    try {
-        if (match) {
-            // After scrubbing, match[0] should start with '{'
-            const parsed = JSON.parse(match[0]);
+    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+        let jsonCandidate = jsonToParse.substring(startIdx, endIdx + 1);
+
+        try {
+            const parsed = JSON.parse(jsonCandidate);
             
             const processItem = (item) => {
                 item.name = item.name || item.title || "Untitled Spark";
@@ -1912,28 +1928,29 @@ function extractSparkData(rawResult, isCode) {
                 item.thumbnail = item.thumbnail || item.image || item.img || item.pic || null;
                 
                 if (isCode) {
-                    let contentToFix = item.code || item.url;
-                    // verifyAndFixCode handles the internal contents (e.g., individual JS syntax)
+                    let contentToFix = item.code || item.url || "";
+                    // verifyAndFixCode cleans internal JS/HTML
                     item.code = verifyAndFixCode(contentToFix, true);
                 }
             };
 
+            // FEATURE: Handle Multiple Items (The "Top 3 Movies" logic)
             if (Array.isArray(parsed)) {
                 parsed.forEach(processItem);
             } else {
                 processItem(parsed);
             }
+            
             console.log("extractSparkData parsed Data=", parsed);
-            return parsed;
+            return parsed; 
+        } catch (e) {
+            console.warn("[EXTRACTOR]: JSON parse failed. Response might be malformed.", e);
         }
-    } catch (e) {
-        console.warn("[EXTRACTOR]: JSON parse failed, falling back to raw mode.", e);
     }
 
-    // Fallback: If no JSON structure is found, treat the raw text as the content
+    // 4. FALLBACK: Raw text mode if no structural JSON found
     return isCode ? verifyAndFixCode(rawResult, true) : rawResult;
 }
-
 function verifyAndFixCodePrevious(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
 
