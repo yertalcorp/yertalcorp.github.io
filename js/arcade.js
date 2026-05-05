@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1863,9 +1863,8 @@ function verifyAndFixCode(rawCode, isCodeMode = false) {
         .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
         .trim();
 
-    // 2. Remove Markdown code fences (Idempotent: only matches specific block starts/ends)
-    fixed = fixed.replace(/^```[a-z]*\n?/gi, '').replace(/\n?
-```$/g, '');
+// 2. Remove Markdown code fences (Idempotent: only matches specific block starts/ends)
+    fixed = fixed.replace(/^```[a-z]*\n?/gi, '').replace(/\n?```$/g, '');
 
     // 3. Handle hybrid "Trailing Metadata" (Specific to Sarvam/Hybrid models)
     // If the string contains a trailing JSON block after the code, we strip it for the code view.
