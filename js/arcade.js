@@ -3308,7 +3308,7 @@ async function initiateSystemCooldown(statusElement) {
     return new Promise((resolve) => {
         const timer = setInterval(() => {
             if (statusElement) {
-                statusElement.textContent = `WAITING TO CONNECT TO MODEL... ${timeLeft}s`;
+                statusElement.textContent = `MODELS BUSY.  REATTEMPTING IN... ${timeLeft}s`;
             }
             timeLeft--;
 
