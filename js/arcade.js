@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:25:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1888,6 +1888,7 @@ function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
 function extractSparkData(rawResult, isCode) {
     if (!rawResult || typeof rawResult !== 'string') return null;
 
+    console.log("extractSparkData[DEBUG]: rawResult=", rawResult);
     let jsonToParse = rawResult.trim()
         .replace(/```json/gi, '')
         .replace(/```/g, '')
@@ -1943,7 +1944,7 @@ function extractSparkData(rawResult, isCode) {
             } else {
                 processItem(parsed);
             }
-            
+            console.log("extractSparkData[DEBUG]: parsed=", parsed);
             return parsed; 
         } catch (e) {
             console.warn("[EXTRACTOR]: JSON parse failed after sanitization.", e);
