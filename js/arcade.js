@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:25:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:49:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1881,14 +1881,14 @@ function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
 
     return fixed;
 }
+
 /*
  * Objective: Extract structured name, code, and thumbnail from messy LLM responses.
- * Tasks: Support multi-item generation, handle backtick strings, and isolate JSON.
+ * Tasks: Handle backticks, literal newlines in quotes, and multi-item arrays.
  */
 function extractSparkData(rawResult, isCode) {
     if (!rawResult || typeof rawResult !== 'string') return null;
 
-    console.log("extractSparkData[DEBUG]: rawResult=", rawResult);
     let jsonToParse = rawResult.trim()
         .replace(/```json/gi, '')
         .replace(/```/g, '')
@@ -1896,13 +1896,9 @@ function extractSparkData(rawResult, isCode) {
 
     const firstBrace = jsonToParse.indexOf('{');
     const firstBracket = jsonToParse.indexOf('[');
-    
-    let startIdx = -1;
-    if (firstBrace !== -1 && firstBracket !== -1) {
-        startIdx = Math.min(firstBrace, firstBracket);
-    } else {
-        startIdx = (firstBrace !== -1) ? firstBrace : firstBracket;
-    }
+    let startIdx = (firstBrace !== -1 && firstBracket !== -1) 
+                   ? Math.min(firstBrace, firstBracket) 
+                   : (firstBrace !== -1 ? firstBrace : firstBracket);
 
     const lastBrace = jsonToParse.lastIndexOf('}');
     const lastBracket = jsonToParse.lastIndexOf(']');
@@ -1911,19 +1907,23 @@ function extractSparkData(rawResult, isCode) {
     if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
         let jsonCandidate = jsonToParse.substring(startIdx, endIdx + 1);
 
-        // --- SANITIZER: Handle LLM backtick pollution ---
-        // This regex looks for "code": `...` and converts it to valid JSON "code": "..."
-        if (jsonCandidate.includes('`')) {
-            jsonCandidate = jsonCandidate.replace(/":\s*`([\s\S]*?)`/g, (match, content) => {
-                // Escape backslashes, double quotes, and newlines for JSON compatibility
-                const sanitized = content
-                    .replace(/\\/g, '\\\\')
-                    .replace(/"/g, '\\"')
-                    .replace(/\n/g, '\\n')
-                    .replace(/\r/g, '\\r');
+        // --- THE "SUPER-DIGESTER" ---
+        // 1. Handle Backticks (if present)
+        jsonCandidate = jsonCandidate.replace(/":\s*`([\s\S]*?)`/g, (match, content) => {
+            const sanitized = content.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+            return `": "${sanitized}"`;
+        });
+
+        // 2. Handle Literal Newlines inside double quotes (The current culprit)
+        // This looks for "code": " ... " where there are actual line breaks
+        jsonCandidate = jsonCandidate.replace(/":\s*"([\s\S]*?)"/g, (match, content) => {
+            // Only escape if there are actual unescaped newlines
+            if (content.includes('\n') || content.includes('\r')) {
+                const sanitized = content.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
                 return `": "${sanitized}"`;
-            });
-        }
+            }
+            return match;
+        });
 
         try {
             const parsed = JSON.parse(jsonCandidate);
@@ -1932,28 +1932,21 @@ function extractSparkData(rawResult, isCode) {
                 item.name = item.name || item.title || "Untitled Spark";
                 item.url = item.url || item.link || item.href || "N/A";
                 item.thumbnail = item.thumbnail || item.image || item.img || item.pic || null;
-                
                 if (isCode) {
                     let contentToFix = item.code || item.url || "";
                     item.code = verifyAndFixCode(contentToFix, true);
                 }
             };
 
-            if (Array.isArray(parsed)) {
-                parsed.forEach(processItem);
-            } else {
-                processItem(parsed);
-            }
-            console.log("extractSparkData[DEBUG]: parsed=", parsed);
+            Array.isArray(parsed) ? parsed.forEach(processItem) : processItem(parsed);
             return parsed; 
         } catch (e) {
-            console.warn("[EXTRACTOR]: JSON parse failed after sanitization.", e);
+            console.error("[EXTRACTOR] Final Parse Failure:", e);
         }
     }
 
     return isCode ? verifyAndFixCode(rawResult, true) : rawResult;
 }
-
 
 function verifyAndFixCodePrevious(rawCode, isCodeMode = false) {
     if (!rawCode || typeof rawCode !== 'string') return "";
