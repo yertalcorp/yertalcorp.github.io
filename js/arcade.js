@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:49:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1469,6 +1469,31 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     }
 };
 
+function resolveCapabilityFromKeywords(input) {
+    const query = input.toLowerCase().trim();
+    if (query.length < 2) return []; // Only suggest after 2 characters
+
+    const presets = databaseCache.settings?.['arcade-current-types'] || [];
+    
+    // We want to find any capability where the query matches:
+    // 1. The ID
+    // 2. The Name
+    // 3. Any part of the Regex string
+    return presets.filter(cap => {
+        const id = (cap.id || '').toLowerCase();
+        const name = (cap.name || '').toLowerCase();
+        const regexStr = (cap.regex || '').toLowerCase();
+
+        // Use includes() for partial matches to give it that "search-as-you-type" feel
+        return id.includes(query) || 
+               name.includes(query) || 
+               regexStr.includes(query);
+    }).map(cap => ({
+        name: cap.name,
+        prompt: cap.example_prompt,
+        id: cap.id
+    })).slice(0, 6); // Keep the HUD clean with a max of 6 bubbles
+}
 function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
     if (!container) return;
@@ -1574,22 +1599,19 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         ` : '';
 
         const controls = (isOwner && !isFull) ? `
-            <div class="current-prompt-container" style="display: flex; align-items: center; gap: 10px; width: 100%;">
-                <div class="current-type-selector-wrapper">
-                    <span class="current-prompt-label" style="display: block; font-size: 10px; color: var(--fg-color-high);">CREATE OR SOURCE</span>
-                    <select id="select-${current.id}" class="current-prompt-input" onchange="const inp = document.getElementById('input-${current.id}'); inp.value = this.value; inp.focus(); inp.scrollLeft = 0; inp.setSelectionRange(0, 0);">
-                        <option value="">-- CUSTOM PROMPT --</option>
-                        ${(databaseCache.settings?.['arcade-current-types'] || []).map(type => `
-                            <option value="${type.example_prompt}">${type.name.toUpperCase()}</option>
-                        `).join('')}
-                    </select>
+            <div class="current-prompt-container" style="display: flex; flex-direction: column; gap: 5px; width: 100%; position: relative;">
+                <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
+                    <div class="input-wrapper" style="flex-grow: 1; position: relative;">
+                        <input type="text" id="input-${current.id}" 
+                           class="current-prompt-input"
+                           placeholder=" Type your prompt or paste a URL..." 
+                           oninput="window.updatePromptInputHUD('${current.id}')"
+                           onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')">
+                        <div id="hud-${current.id}" class="floating-hud-container" style="display: none;"></div>
                 </div>
-                <input type="text" id="input-${current.id}" 
-                       class="current-prompt-input"
-                       placeholder=" Type your prompt or paste a URL..." 
-                       onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')">
                 <button onclick="window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')" class="current-prompt-exec-button">EXEC</button>
-                ${actionIcons}
+                    ${actionIcons}
+                </div>
             </div>
         ` : (isFull && isOwner) ? `
             <div class="capacity-alert-container" style="display: flex; align-items: center; gap: 15px; width: 100%;">
@@ -1632,6 +1654,26 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         `;
     }
 }
+window.updatePromptInputHUD = (currentId) => {
+    const inputField = document.getElementById(`input-${currentId}`);
+    const hudContainer = document.getElementById(`hud-${currentId}`);
+    const query = inputField.value;
+
+    // Use the new keyword resolver for the UI bubbles
+    const matches = resolveCapabilityFromKeywords(query);
+
+    if (matches.length > 0) {
+        hudContainer.style.display = 'flex';
+        hudContainer.innerHTML = matches.map(m => `
+            <div class="hud-bubble" 
+                 onclick="applySuggestion('${currentId}', '${m.prompt.replace(/'/g, "\\'")}');">
+                ${m.name.toUpperCase()}
+            </div>
+        `).join('');
+    } else {
+        hudContainer.style.display = 'none';
+    }
+};
 /*
  * Objective: Initialize the update sequence for an existing Current.
  * [cite: 2026-04-14]
