@@ -788,12 +788,13 @@ main.max-width-limit {
     margin-left: auto;
     margin-bottom: 30px;
     background: var(--bg-color);
-    border: 1px solid var(--glow-aura);
+    border: 1px solid rgba(var(--glow-color-rgb), 0.3);
     border-radius: 4px;
     /* Uses theme bg-color for the recessed shadow depth */
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 5px rgba(var(--glow-color), 0.1);
     height: 45px; /* Slimmer profile */
     position: relative;
+    overflow:visible;    
 }
 /* ADDED: Forces the input field to stretch and fill all remaining space */
 .current-prompt-input[type="text"] {
@@ -839,10 +840,11 @@ main.max-width-limit {
     font-family: var(--text-main-font);
     font-weight: 100;
     font-size: 14px; /* Reduced for sleeker look */
-    letter-spacing: 3px;
+    letter-spacing: 1px;
     height: 100%;
     width: 100%;
     transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
 /* Ensures styling remains intact when clicked/focused */
@@ -850,8 +852,9 @@ main.max-width-limit {
     color: var(--glow-color, #00f2ff);
     outline: none;
     border-color: var(--glow-color);
-    box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.9), 
-                0 0 10px var(--glow-color-aura);
+    box-shadow: 
+        0 0 8px var(--glow-color-aura),
+        inset 2px 2px 5px rgba(0, 0, 0, 0.9);
     background: var(--bg-color-mid);
 }
 
@@ -1820,7 +1823,7 @@ button:hover {
     flex-wrap: wrap;
     gap: 8px;
     padding: 10px 0;
-    z-index: 9999;
+    z-index: 99999;
     background: transparent;
     pointer-events: none;
     overflow: visible;
