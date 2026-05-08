@@ -820,20 +820,20 @@ main.max-width-limit {
     border: none; 
     border-radius: 4px;
     height: 38px;
-    padding: 0 15px;
+    padding: 5 15px;
     /* THE BEVELED EFFECT: Using color-mix to add transparency to your hex glow */
     box-shadow: 
         /* Top-Left Highlight (Physical Edge) */
-        -1px -1px 0px color-mix(in srgb, var(--glow-color), transparent 85%),
+        -1px -1px 0px color-mix(in srgb, var(--glow-color), transparent 25%),
         
         /* Bottom-Right Shadow (Physical Edge) */
-        1px 1px 1px rgba(0, 0, 0, 0.6),        
+        1px 1px 1px var(--fg-color-low),        
         
         /* Inner Etched Depth (Makes the input feel 'recessed') */
-        inset 2px 2px 4px rgba(0, 0, 0, 0.8),    
+        inset 2px 2px 4px var(--fg-color-low),    
         
         /* Inner Glow reflection on the bottom edge */
-        inset -1px -1px 2px color-mix(in srgb, var(--glow-color), transparent 95%);
+        inset -1px -1px 2px color-mix(in srgb, var(--glow-color), transparent 30%);
     
     outline: none;
     color: var(--text-main-color);
