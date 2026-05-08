@@ -792,7 +792,7 @@ main.max-width-limit {
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 5px rgba(var(--glow-color-rgb), 0.1);
     width: 75vw; /* Set to 75% of window width */
     min-width: 320px; /* Fallback for very narrow mobile screens */
-    height: 35px; /* Slimmer profile */
+    height: 42px; /* Slimmer profile */
     overflow: hidden;
 }
 /* ADDED: Forces the input field to stretch and fill all remaining space */
@@ -828,7 +828,6 @@ main.max-width-limit {
     font-size: 14px; /* Reduced for sleeker look */
     padding: 10 15px;
     letter-spacing: 1px;
-    min-height: 42px;
     height: 100%;
     width: 100%;
     transition: all 0.3s ease;
