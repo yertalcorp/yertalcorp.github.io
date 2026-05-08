@@ -1840,3 +1840,59 @@ button:hover {
     to { opacity: 1; transform: translateY(0); }
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+/* --- THEME-AWARE FLOATING HUD & BUBBLES --- */
+
+.floating-hud-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 0;
+    z-index: 1000;
+    background: transparent;
+    pointer-events: none;
+}
+
+.hud-bubble {
+    pointer-events: auto;
+    /* Use the theme's background and low-opacity foreground for glass effect */
+    background: var(--bg-color-low); 
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    
+    /* Dynamic border and text colors from the theme */
+    border: 1px solid var(--border-color);
+    color: var(--fg-color-high);
+    
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: var(--text-main-font);
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    
+    /* Use the theme's glow and shadow intensity */
+    box-shadow: 0 4px 15px var(--card-shadow-color);
+    text-shadow: 0 0 5px var(--text-shadow-color);
+}
+
+.hud-bubble:hover {
+    background: var(--bg-color-mid);
+    border-color: var(--glow-color);
+    color: var(--button-color);
+    transform: translateY(-3px);
+    
+    /* Apply the theme's specific glow color */
+    box-shadow: 0 0 15px var(--glow-color-aura), 
+                0 0 5px var(--glow-color);
+}
+
+.hud-bubble:active {
+    transform: scale(0.92);
+}
