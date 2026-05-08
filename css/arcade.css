@@ -780,13 +780,13 @@ main.max-width-limit {
 /* --- Sleek Command Container --- */
 .current-prompt-container {
     display: flex;
-    width: 85vw; /* Set to 75% of window width */
+    width: 89vw; /* Set to 75% of window width */
     min-width: 320px; /* Fallback for very narrow mobile screens */
     width: 100%
-    gap: 15px;
+    gap: 10px;
     align-items: center;
     margin-left: auto;
-    margin-bottom: 25px;
+    margin-bottom: 35px;
     background: var(--bg-color);
     border: 1px solid rgba(var(--glow-color-rgb), 0.3);
     border-radius: 4px;
