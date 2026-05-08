@@ -141,7 +141,7 @@ main.max-width-limit {
     font-size: 10px;
 }
 
-/* --- SELECTION DOCK --- */
+/* --- PLAN TYPE DOCK --- */
 .plan-radio-dock {
     margin-top: auto;
     padding-bottom: 5px;
@@ -472,7 +472,7 @@ main.max-width-limit {
     filter: grayscale(1);
     cursor: not-allowed;
 }
-/* --- THEMED HUD PLAN SELECTION --- */
+/* --- THEMED HUD PLAN GRID --- */
 .plans-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -794,18 +794,6 @@ main.max-width-limit {
     height: 35px; /* Slimmer profile */
     overflow: hidden;
 }
-/* ADDED: Forces the dropdown container to scale only to its content width */
-.current-type-selector-wrapper {
-    flex: 0 0 auto; /* Do not grow, do not shrink, fit content */
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-/* ADDED: Keeps the select box tightly fitted to its longest option */
-.current-type-selector-wrapper select {
-    width: max-content;
-    max-width: 300px; /* Safety guard so it doesn't eat the whole row on huge text */
-}
 /* ADDED: Forces the input field to stretch and fill all remaining space */
 .current-prompt-input[type="text"] {
     flex: 1 1 auto; /* Grow and shrink proportionally */
@@ -826,36 +814,35 @@ main.max-width-limit {
 
 .current-prompt-input {
     flex-grow: 1;
-    background: transparent;
-    border: none;
+    background: var(--bg-color-high);
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    /* Inset shadow creates the 'embossed' or 'etched' into the UI look */
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.8), 
+                0 0 5px var(--box-shadow-color-glow);
     outline: none;
-    color: var(--text-muted-color);
+    color: var(--text-main-color);
+    font-family: var(--text-main-font);
     font-weight: 300;
-    font-size: 9px; /* Reduced for sleeker look */
-    padding: 0 12px;
+    font-size: 14px; /* Reduced for sleeker look */
+    padding: 10 15px;
     letter-spacing: 1px;
+    min-height: 42px;
     height: 100%;
-    width: auto;
-}
-
-/* ADDED: Fix for the dropdown and option colors */
-select.current-prompt-input {
-    background-color: var(--bg-color, #0a0c10);
-    color: var(--glow-color, #00f2ff);
-    border: 1px solid var(--glow-color, #00f2ff);
-}
-
-select.current-prompt-input option {
-    background-color: var(--bg-color, #0a0c10);
-    color: var(--glow-color, #00f2ff);
+    width: 100%;
+    transition: all 0.3s ease;
 }
 
 /* Ensures styling remains intact when clicked/focused */
-select.current-prompt-input:focus {
-    background-color: var(--bg-color, #0a0c10);
+.current-prompt-input:focus {
     color: var(--glow-color, #00f2ff);
     outline: none;
+    border-color: var(--glow-color);
+    box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.9), 
+                0 0 10px var(--glow-color-aura);
+    background: var(--bg-color-mid);
 }
+
 /* ADDED: Fix for cut-off left-aligned long text prompts */
 input.current-prompt-input {
     text-align: left; /* Maintains default reading direction */
@@ -879,36 +866,6 @@ input.current-prompt-input:focus {
     align-items: center;
     justify-content: center;
 
-/* --- Thin & Graceful Scrollbar for Dropdowns --- */
-
-/* 1. Target the select element specifically for Firefox */
-select.current-prompt-input {
-    scrollbar-width: thin;
-    scrollbar-color: var(--glow-color) var(--bg-color);
-}
-
-/* 2. Target the scrollbar for Chrome, Edge, and Safari */
-/* This works on the 'size' attribute lists and standard dropdown behaviors */
-select.current-prompt-input::-webkit-scrollbar {
-    width: 4px; /* Ultra-thin for a "graceful" look */
-}
-
-select.current-prompt-input::-webkit-scrollbar-track {
-    background: var(--bg-color);
-    border-left: 1px solid var(--glow-aura); /* Subtle separation line */
-}
-
-select.current-prompt-input::-webkit-scrollbar-thumb {
-    background-color: var(--glow-color);
-    border-radius: 10px;
-    /* Adding a glow effect to the scrollbar thumb */
-    box-shadow: 0 0 5px var(--glow-color); 
-}
-
-/* 3. Handle the hover state for the scrollbar */
-select.current-prompt-input::-webkit-scrollbar-thumb:hover {
-    background-color: var(--fg-color-high); /* Brighten on hover */
-}
     /* THEMED STYLES */
     background: linear-gradient(180deg, 
         rgba(255, 255, 255, 0.1) 0%, 
@@ -939,8 +896,8 @@ select.current-prompt-input::-webkit-scrollbar-thumb:hover {
 
 /* Fix for Placeholder color to match branding */
 .current-prompt-input::placeholder {
-    color: var(--branding-text-color);
-    opacity: 0.3;
+    color: var(--text-muted-color);
+    opacity: 0.6;
 }
 /* --- DECORATIVE HEADERS --- */
 /* Reduce space between hero and system ready line */
