@@ -1618,22 +1618,20 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                 <i class="fas fa-trash-alt" onclick="window.confirmDeleteCurrent('${ownerUid}', '${current.id}')" title="Delete" style="cursor: pointer; opacity: 0.6; color: var(--error-color, #ef4444);"></i>
             </div>
         ` : '';
-
         const controls = (isOwner && !isFull) ? `
-            <div class="current-prompt-container" style="display: flex; flex-direction: column; gap: 5px; width: 100%; position: relative;">
-                <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
-                    <div class="input-wrapper" style="flex-grow: 1; position: relative;">
-                        <input type="text" id="input-${current.id}" 
-                           class="current-prompt-input"
-                           placeholder=" Type your prompt or paste a URL..." 
-                           oninput="window.updatePromptInputHUD('${current.id}')"
+            <div class="current-prompt-container">
+                <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                   <div class="input-wrapper" style="flex-grow: 1; position: relative;">
+                       <input type="text" id="input-${current.id}" 
+                          class="current-prompt-input"
+                          placeholder="Type your prompt..." 
+                          oninput="window.updatePromptInputHUD('${current.id}')"
                            onfocus="window.updatePromptInputHUD('${current.id}')"
-                           onblur="setTimeout(() => { document.getElementById('hud-${current.id}').style.display = 'none'; }, 200)"
-                           onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')">
-                        <div id="hud-${current.id}" class="floating-hud-container" style="display: none;"></div>
+                           onblur="setTimeout(() => { const h = document.getElementById('hud-${current.id}'); if(h) h.style.display = 'none'; }, 250)">
+                    <div id="hud-${current.id}" class="floating-hud-container" style="display: none;"></div>
                 </div>
-                <button onclick="window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')" class="current-prompt-exec-button">EXEC</button>
-                    ${actionIcons}
+                   <button onclick="window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')" class="current-prompt-exec-button">EXEC</button>
+                      ${actionIcons}
                 </div>
             </div>
         ` : (isFull && isOwner) ? `
