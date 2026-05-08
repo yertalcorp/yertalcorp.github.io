@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:56:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1471,29 +1471,50 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
 
 function resolveCapabilityFromKeywords(input) {
     const query = input.toLowerCase().trim();
-    if (query.length < 2) return []; // Only suggest after 2 characters
+    if (query.length < 2) return [];
+
+    // 1. Expanded Noise Filter: Includes numbers, quantities, and sizes
+    const stopWords = new Set([
+        'a', 'an', 'the', 'is', 'to', 'it', 'and', 'or', 'for', 'hence', 'but', 
+        'no', 'not', 'make', 'create', 'generate', 'so', 'there', 'where', 
+        'here', 'has', 'should', 'could', 'would', 'put', 'in', 'out', 'on', 
+        'up', 'down', 'any', 'all', 'if', 'with', 'i', 'you', 'me', 'can', 
+        "can't", 'do', "don't", 'cannot', 'when', 'then', 'that', 'this', 
+        'press', 'click', 'he', 'she', 'him', 'her', 'us', 'we', 'them', 
+        "it's", 'its', 'now', 'some', 'small', 'big', 'large', 'medium',
+        'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+        'many', 'few', 'several', 'lots', 'much'
+    ]);
+
+    // 2. Tokenize: Remove punctuation, strip numeric digits, and filter stop words
+    const tokens = query
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") 
+        .replace(/\d+/g, "")                         
+        .split(/\s+/)
+        .filter(t => t.length > 1 && !stopWords.has(t));
+
+    if (tokens.length === 0) return [];
 
     const presets = databaseCache.settings?.['arcade-current-types'] || [];
     
-    // We want to find any capability where the query matches:
-    // 1. The ID
-    // 2. The Name
-    // 3. Any part of the Regex string
+    // 3. Match Intents: Only high-value nouns/verbs trigger the HUD
     return presets.filter(cap => {
         const id = (cap.id || '').toLowerCase();
         const name = (cap.name || '').toLowerCase();
         const regexStr = (cap.regex || '').toLowerCase();
 
-        // Use includes() for partial matches to give it that "search-as-you-type" feel
-        return id.includes(query) || 
-               name.includes(query) || 
-               regexStr.includes(query);
+        return tokens.some(token => 
+            id.includes(token) || 
+            name.includes(token) || 
+            regexStr.includes(token)
+        );
     }).map(cap => ({
         name: cap.name,
         prompt: cap.example_prompt,
         id: cap.id
-    })).slice(0, 6); // Keep the HUD clean with a max of 6 bubbles
+    })).slice(0, 6);
 }
+    
 function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
     if (!container) return;
@@ -1606,6 +1627,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                            class="current-prompt-input"
                            placeholder=" Type your prompt or paste a URL..." 
                            oninput="window.updatePromptInputHUD('${current.id}')"
+                           onblur="setTimeout(() => { document.getElementById('hud-${current.id}').style.display = 'none'; }, 200)"
                            onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')">
                         <div id="hud-${current.id}" class="floating-hud-container" style="display: none;"></div>
                 </div>
