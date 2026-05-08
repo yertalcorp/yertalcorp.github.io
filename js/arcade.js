@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:56:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1674,6 +1674,14 @@ window.updatePromptInputHUD = (currentId) => {
         hudContainer.style.display = 'none';
     }
 };
+
+window.applySuggestion = (currentId, promptText) => {
+    const inputField = document.getElementById(`input-${currentId}`);
+    inputField.value = promptText;
+    document.getElementById(`hud-${currentId}`).style.display = 'none';
+    inputField.focus();
+};
+    
 /*
  * Objective: Initialize the update sequence for an existing Current.
  * [cite: 2026-04-14]
