@@ -783,9 +783,8 @@ main.max-width-limit {
     width: 100%
     gap: 15px;
     align-items: flex-end;
-    margin-left: 5px;
+    margin-left: auto;
     margin-bottom: 10px;
-    margin-top: 10px;
     background: var(--bg-color);
     border: 1px solid var(--glow-aura);
     border-radius: 4px;
