@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @17:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1627,6 +1627,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                            class="current-prompt-input"
                            placeholder=" Type your prompt or paste a URL..." 
                            oninput="window.updatePromptInputHUD('${current.id}')"
+                           onfocus="window.updatePromptInputHUD('${current.id}')"
                            onblur="setTimeout(() => { document.getElementById('hud-${current.id}').style.display = 'none'; }, 200)"
                            onkeydown="if(event.key==='Enter') window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')">
                         <div id="hud-${current.id}" class="floating-hud-container" style="display: none;"></div>
@@ -1679,25 +1680,32 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
 window.updatePromptInputHUD = (currentId) => {
     const inputField = document.getElementById(`input-${currentId}`);
     const hudContainer = document.getElementById(`hud-${currentId}`);
+    
+    if (!inputField || !hudContainer) return;
+
     const query = inputField.value;
 
-    // Use the new keyword resolver for the UI bubbles
+    // Use the intelligent keyword resolver
     const matches = resolveCapabilityFromKeywords(query);
 
     if (matches.length > 0) {
         hudContainer.style.display = 'flex';
-        hudContainer.innerHTML = matches.map(m => `
-            <div class="hud-bubble" 
-                 onclick="applySuggestion('${currentId}', '${m.prompt.replace(/'/g, "\\'")}');">
-                ${m.name.toUpperCase()}
-            </div>
-        `).join('');
+        hudContainer.innerHTML = matches.map(m => {
+            // Escape single quotes for the inline onclick handler
+            const safePrompt = m.prompt.replace(/'/g, "\\'");
+            return `
+                <div class="hud-bubble" 
+                     onclick="window.applySuggestion('${currentId}', '${safePrompt}');">
+                    ${m.name.toUpperCase()}
+                </div>
+            `;
+        }).join('');
     } else {
         hudContainer.style.display = 'none';
     }
 };
 
-window.applySuggestion = (currentId, promptText) => {
+    window.applySuggestion = (currentId, promptText) => {
     const inputField = document.getElementById(`input-${currentId}`);
     inputField.value = promptText;
     document.getElementById(`hud-${currentId}`).style.display = 'none';
