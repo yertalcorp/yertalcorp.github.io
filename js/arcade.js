@@ -1422,7 +1422,178 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
         </div>
     `;
 }
+/**
+ * Overall Objective: Identify the library index and property deltas from a prompt.
+ * Task: Perform a prioritized scan of the library to resolve a semantic match.
+ */
+function resolveIndexFromPrompt(prompt, currentName) {
+    const cleanPrompt = prompt.toLowerCase().trim();
+    const tokens = cleanPrompt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
+    
+    const presets = databaseCache.settings?.['arcade-current-types'] || [];
+    let matchedCategory = null;
+    let matchedIndex = -1;
 
+    // 1. ACTIVE BOARD NAME CHECK (Highest Priority)
+    if (currentName) {
+        const cleanCurrentName = currentName.toLowerCase().trim();
+        const currentNameRegex = new RegExp(`\\b${cleanCurrentName}\\b`, 'i');
+        
+        if (currentNameRegex.test(cleanPrompt)) {
+            matchedIndex = presets.findIndex(p => (p.name || '').toLowerCase().trim() === cleanCurrentName);
+            if (matchedIndex !== -1) matchedCategory = presets[matchedIndex];
+        }
+    }
+
+    // 2. DB ID, NAME, & REGEX SCAN (Second Priority)
+    if (matchedIndex === -1) {
+        matchedIndex = presets.findIndex(category => {
+            const catId = (category.id || '').toLowerCase().trim();
+            const catName = (category.name || '').toLowerCase().trim();
+            
+            const idMatches = catId && new RegExp(`\\b${catId}\\b`, 'i').test(cleanPrompt);
+            const nameMatches = catName && new RegExp(`\\b${catName}\\b`, 'i').test(cleanPrompt);
+            
+            let regexMatches = false;
+            if (category.regex) {
+                try {
+                    const sanitizedRegex = category.regex.replace(/^\|+|\|+$/g, '').replace(/\|\|+/g, '|');
+                    const regexPattern = new RegExp(`\\b(${sanitizedRegex})\\b`, 'i');
+                    regexMatches = regexPattern.test(cleanPrompt) || tokens.some(t => regexPattern.test(t));
+                } catch (e) { /* silent fail */ }
+            }
+            return idMatches || nameMatches || regexMatches;
+        });
+        if (matchedIndex !== -1) matchedCategory = presets[matchedIndex];
+    }
+
+    // 3. PROPERTY EXTRACTION (Finding the user's overrides)
+    const userProperties = {};
+    if (matchedCategory && matchedCategory.parameter_map) {
+        const pMap = matchedCategory.parameter_map;
+        Object.keys(pMap).forEach(key => {
+            const match = prompt.match(new RegExp(pMap[key], 'i'));
+            if (match) {
+                userProperties[key] = (match[1] || match[0]).trim();
+            }
+        });
+    }
+
+    return {
+        index: matchedIndex, 
+        properties: userProperties,
+        is_custom: matchedIndex === -1
+    };
+}
+/**
+ * Overall Objective: Execute the user's intent by creating an index-linked Spark node.
+ * Task: Route to the local Template Cache (via index) or trigger the LLM for custom logic.
+ */
+async function executePrompt(userPrompt, libraryIndex = null) {
+    const library = databaseCache.settings?.['arcade-current-types'] || [];
+    
+    let targetIndex = libraryIndex;
+    let userOverrides = {};
+
+    // If no direct index provided, resolve it from the prompt text
+    if (targetIndex === null) {
+        const resolution = resolveIndexFromPrompt(userPrompt, ""); 
+        
+        if (resolution.is_custom) {
+            // Trigger LLM flow (Calls distillSparkCodeToCache inside handleCustomLLMFlow)
+            return await handleCustomLLMFlow(userPrompt);
+        }
+        
+        targetIndex = resolution.index;
+        userOverrides = resolution.properties;
+    }
+
+    // Build the User's Spark Node pointing to the library index
+    const sparkNode = {
+        logic_index: targetIndex, 
+        properties: {
+            ...library[targetIndex].defaults, // Start with defaults
+            ...userOverrides                  // Apply user-specific deltas
+        },
+        template_type: library[targetIndex].group,
+        timestamp: Date.now()
+    };
+
+    return await saveSparkToUserInfrastructure(sparkNode);
+}
+
+/**
+ * Overall Objective: Distill new LLM code into a reusable Class Template.
+ * Task: Extract a schema of parameters and defaults to define the Category's blueprint.
+ */
+function distillSparkCodeToCache(sparkNode, currentLibrary) {
+    let logic = "";
+    const rawCode = sparkNode.code;
+    
+    const scriptMatch = rawCode.match(/<script>([\s\S]*?)<\/script>/i);
+    logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
+
+    const configPattern = /(const|let|var)\s+(\w+)\s*=\s*([^;]+);/g;
+    const foundParams = {};
+    
+    // 1. Parameterize top-level constants
+    const templateWithVars = logic.replace(configPattern, (match, type, name, value) => {
+        const trimmedVal = value.trim();
+        const isParamCandidate = 
+            /^(\d+(\.\d+)?|'#?\w+'|"\w+")$/.test(trimmedVal) && 
+            (name === name.toUpperCase() || /count|speed|gravity|radius|color|mass|bounce|restitution|power|friction/i.test(name));
+
+        if (isParamCandidate) {
+            foundParams[name] = trimmedVal.replace(/['"]/g, ""); 
+            return `${type} ${name} = {{${name}}};`;
+        }
+        return match; 
+    });
+
+    // 2. Parameterize counts/loops
+    const finalTemplate = templateWithVars.replace(/(<\s*|==\s*|count\s*[:=]\s*)(\d+)/g, (match, prefix, num) => {
+        return prefix.includes('<') ? `${prefix}{{count}}` : match;
+    });
+
+    // 3. Define the Class Definition
+    const newTypeEntry = {
+        id: sparkNode.id || `type_${Date.now()}`,
+        name: sparkNode.name || "Generic Template",
+        group: sparkNode.template_type || "General",
+        parameter_map: Object.keys(foundParams).reduce((map, key) => {
+            map[key] = `(?:${key}(?:\\s(?:is|of|at))?\\s)?([-#\\w.]+)`;
+            return map;
+        }, { count: "(\\d+)(?=\\s*(?:objects|items|units)?)" }),
+        template: finalTemplate,
+        defaults: { ...foundParams, count: foundParams.count || 3 }
+    };
+
+    const newIndex = currentLibrary.push(newTypeEntry) - 1;
+
+    return {
+        newIndex: newIndex,
+        typeData: newTypeEntry,
+        extractedProperties: newTypeEntry.defaults
+    };
+}
+/**
+ * Overall Objective: Render the Spark by rehydrating the indexed template.
+ * Task: O(1) lookup to grab the code and inject current user properties.
+ */
+function assembleFromIndex(userSpark, library) {
+    const typeNode = library[userSpark.logic_index];
+    if (!typeNode) return "<!-- Error: Logic Index Out of Bounds -->";
+
+    let finalCode = typeNode.template;
+    const props = userSpark.properties;
+
+    // Inject properties into the placeholders
+    Object.keys(props).forEach(key => {
+        finalCode = finalCode.replaceAll(`{{${key}}}`, props[key]);
+    });
+
+    return finalCode;
+}
 window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
