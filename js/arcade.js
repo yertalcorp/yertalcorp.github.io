@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:29:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1428,30 +1428,29 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     const input = promptInput ? promptInput.value.trim() : '';
     if (!input) return;
 
-    const categorySelectObject = document.getElementById(`select-${currentId}`);
     const status = document.getElementById('engine-status-text');
     status.textContent = "PROCESSING INFRASTRUCTURE...";
-    // Access the text of the currently selected option
-    const categorySelect = categorySelectObject.options[categorySelectObject.selectedIndex].text.trim();
+
+    // Read the name passed from the bubble; fallback to 'Custom'
+    const categorySelect = promptInput.getAttribute('data-selected-capability') || 'Custom';
     
     let resolvedCategory;
 
     console.log("handleCreation: Selected Category is: ", categorySelect);
     
     try {
-        // Use categorySelect.value directly to determine resolution path
-        if (!categorySelect || categorySelect === '-- CUSTOM PROMPT --' || categorySelect === '') {
+        if (categorySelect === 'Custom' || categorySelect === '') {
             resolvedCategory = resolveCategoryFromPrompt(input);
         } else {
-            // Access databaseCache and perform find inline
+            // Find the full category object from the cache based on the bubble name
             resolvedCategory = databaseCache.settings?.['arcade-current-types']?.find(
-            t => t.name?.trim().toLowerCase() === categorySelect.trim().toLowerCase());
+                t => t.name?.trim().toLowerCase() === categorySelect.trim().toLowerCase());
             
-            // If find fails, fallback to regex as a last resort
             if (!resolvedCategory) resolvedCategory = resolveCategoryFromPrompt(input, categorySelect);
         }
+
         console.log("handleCreation: After databaseCache Lookup, Resolved current type is:", resolvedCategory?.name);
-        // Pass the resolved object directly to the engine
+
         await executeMassSpark(
             currentId, 
             currentName, 
@@ -1461,7 +1460,9 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
             currentPrivacy
         );
         
+        // Clean up
         promptInput.value = '';
+        promptInput.removeAttribute('data-selected-capability');
 
     } catch (e) {
         console.error("Creation Error:", e);
@@ -1624,7 +1625,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                    <div class="input-wrapper" style="flex-grow: 1; position: relative;">
                        <input type="text" id="input-${current.id}" 
                           class="current-prompt-input"
-                          placeholder="Type your prompt..." 
+                          placeholder="Type your prompt or paste a url..." 
                           oninput="window.updatePromptInputHUD('${current.id}')"
                            onfocus="window.updatePromptInputHUD('${current.id}')"
                            onblur="setTimeout(() => { const h = document.getElementById('hud-${current.id}'); if(h) h.style.display = 'none'; }, 250)">
@@ -1675,6 +1676,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         `;
     }
 }
+
 window.updatePromptInputHUD = (currentId) => {
     const inputField = document.getElementById(`input-${currentId}`);
     const hudContainer = document.getElementById(`hud-${currentId}`);
@@ -1682,18 +1684,16 @@ window.updatePromptInputHUD = (currentId) => {
     if (!inputField || !hudContainer) return;
 
     const query = inputField.value;
-
-    // Use the intelligent keyword resolver
     const matches = resolveCapabilityFromKeywords(query);
 
     if (matches.length > 0) {
         hudContainer.style.display = 'flex';
         hudContainer.innerHTML = matches.map(m => {
-            // Escape single quotes for the inline onclick handler
             const safePrompt = m.prompt.replace(/'/g, "\\'");
+            // Pass m.name as the third argument to applySuggestion
             return `
                 <div class="hud-bubble" 
-                     onclick="window.applySuggestion('${currentId}', '${safePrompt}');">
+                     onclick="window.applySuggestion('${currentId}', '${safePrompt}', '${m.name}');">
                     ${m.name.toUpperCase()}
                 </div>
             `;
@@ -1703,11 +1703,17 @@ window.updatePromptInputHUD = (currentId) => {
     }
 };
 
-    window.applySuggestion = (currentId, promptText) => {
+window.applySuggestion = (currentId, promptText, capabilityName) => {
     const inputField = document.getElementById(`input-${currentId}`);
-    inputField.value = promptText;
-    document.getElementById(`hud-${currentId}`).style.display = 'none';
-    inputField.focus();
+    const hudContainer = document.getElementById(`hud-${currentId}`);
+    
+    if (inputField) {
+        inputField.value = promptText;
+        // Directly store the name we just passed in
+        inputField.setAttribute('data-selected-capability', capabilityName);
+    }
+
+    if (hudContainer) hudContainer.style.display = 'none';
 };
     
 /*
