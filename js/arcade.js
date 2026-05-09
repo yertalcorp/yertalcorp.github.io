@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1625,7 +1625,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                    <div class="input-wrapper" style="flex-grow: 1; position: relative;">
                        <input type="text" id="input-${current.id}" 
                           class="current-prompt-input"
-                          placeholder="Type your prompt or paste a url..." 
+                          placeholder="Type a prompt (e.g. 'game', 'logic', 'physics') or paste a URL..." 
                           oninput="window.updatePromptInputHUD('${current.id}')"
                            onfocus="window.updatePromptInputHUD('${current.id}')"
                            onblur="setTimeout(() => { const h = document.getElementById('hud-${current.id}'); if(h) h.style.display = 'none'; }, 250)">
