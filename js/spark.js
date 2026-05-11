@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:39:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:29:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -400,11 +400,11 @@ function assembleSpark(spark) {
             let value = finalParameters[key];
 
             // --- ARRAY & OBJECT HANDLING ---
-            // If the value is an object or array, stringify it so it renders as valid JS syntax
             if (value !== null && typeof value === 'object') {
-                value = JSON.stringify(value);
+               value = JSON.stringify(value);
+               // Encode quotes to prevent breaking the HTML srcdoc attribute
+               value = JSON.stringify(value).replace(/"/g, '&quot;');
             }
-            // -------------------------------
 
             // Matches {{key}} and {{key || default}}
             const regex = new RegExp(`{{\\s*${key}\\s*(?:\\|\\|\\s*[^}]+)?}}`, 'g');
