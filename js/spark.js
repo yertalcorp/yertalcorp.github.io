@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 17:48:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 18:45:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -375,65 +375,66 @@ function assembleSpark(spark) {
 
     console.log("%c[ASSEMBLER] 🛠️ Starting Assembly for:", "color: #00f2fe; font-weight: bold;", spark.name);
 
-    // 2. DATA RESOLUTION: Access the settings branch
+    // 2. DATA RESOLUTION: Directly target the array by spark.index
     const settings = databaseCache?.settings || {};
-    const blueprints = settings["arcade-current-types"] || [];
-    const blueprint = blueprints[spark.index];
+    const blueprints = settings["arcade-current-types"];
+    
+    // Safety check: ensure blueprints is an array and the index exists
+    const blueprint = Array.isArray(blueprints) ? blueprints[spark.index] : null;
 
     if (!blueprint) {
-        console.error("[ASSEMBLER] ❌ FAILED: No blueprint found at index:", spark.index);
-        console.log("[ASSEMBLER] Current settings keys:", Object.keys(settings));
+        console.error(`[ASSEMBLER] ❌ FAILED: No blueprint found in settings["arcade-current-types"] at index: ${spark.index}`);
         return spark;
     }
 
-    // 3. PARAMETER MERGING: Blueprint < Spark Node (Overriding)
-    // We use 'parameter_map' per your data structure
+    // 3. PHASE 1: PRINT ENTIRE RAW CODE
+    console.groupCollapsed("%c[ASSEMBLER] 🟢 PHASE 1: RAW TEMPLATE (Before Hydration)", "color: #4CAF50;");
+    console.log(blueprint.template);
+    console.groupEnd();
+
+    // 4. PARAMETER MERGING: Blueprint Defaults < Spark Overrides
     const finalParameters = { 
         ...(blueprint.parameter_map || {}), 
         ...(spark.parameter_map || {}) 
     };
-    
-    console.log("[ASSEMBLER] 📋 Merged Parameters:", finalParameters);
 
-    // 4. ASSEMBLY: Hydration via Regex
-    let hydratedCode = blueprint.template;
+    // 5. HYDRATION
+    let hydratedCode = blueprint.template || "";
 
-    if (!hydratedCode) {
-        console.error("[ASSEMBLER] ❌ FAILED: Template is empty for blueprint at index", spark.index);
-        return spark;
+    if (hydratedCode) {
+        Object.keys(finalParameters).forEach(key => {
+            const value = finalParameters[key];
+            // Matches {{key}} and {{key || default}}
+            const regex = new RegExp(`{{\\s*${key}\\s*(?:\\|\\|\\s*[^}]+)?}}`, 'g');
+            
+            // Log individual replacements for granular tracking
+            const matchCount = (hydratedCode.match(regex) || []).length;
+            if (matchCount > 0) {
+                console.log(`[ASSEMBLER] Replacing {{${key}}} (${matchCount}x) ->`, value);
+            }
+            
+            hydratedCode = hydratedCode.replace(regex, value);
+        });
     }
 
-    console.log("[ASSEMBLER] 📝 Template found. Initial length:", hydratedCode.length);
+    // 6. PHASE 2: PRINT ENTIRE HYDRATED CODE
+    console.groupCollapsed("%c[ASSEMBLER] 🔵 PHASE 2: HYDRATED CODE (After Hydration)", "color: #2196F3;");
+    console.log(hydratedCode);
+    console.groupEnd();
 
-    Object.keys(finalParameters).forEach(key => {
-        const value = finalParameters[key];
-        // Matches {{key}} and {{key || default}}
-        const regex = new RegExp(`{{\\s*${key}\\s*(?:\\|\\|\\s*[^}]+)?}}`, 'g');
-        
-        const matches = hydratedCode.match(regex);
-        if (matches) {
-            console.log(`[ASSEMBLER] ✅ Replacing ${key} (${matches.length} matches) with:`, value);
-        }
-        
-        // Note: Using raw value. If value is #00f2fe, template must be '{{color}}'
-        hydratedCode = hydratedCode.replace(regex, value);
-    });
-
-    // 5. FINAL VALIDATION
-    if (hydratedCode.includes('{{')) {
+    // 7. FINAL TAG CHECK
+    if (hydratedCode && hydratedCode.includes('{{')) {
         const remaining = hydratedCode.match(/{{\s*[\w| ]+\s*}}/g);
-        console.warn("[ASSEMBLER] ⚠️ Warning: Some tags were not replaced:", remaining);
+        console.warn("[ASSEMBLER] ⚠️ Warning: Unreplaced tags detected:", remaining);
     }
 
-    console.log("[ASSEMBLER] ✨ Assembly Complete. Preview:", hydratedCode.substring(0, 100) + "...");
-
-    // Return the spark with the new .code property attached
     return {
         ...spark,
         code: hydratedCode,
         parameter_map: finalParameters
     };
 }
+
 watchAuthState(async (user) => {
     console.log("%c[AUTH] State Changed", "color: #00ff00;");
     if (!user) return;
