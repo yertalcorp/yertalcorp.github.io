@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 7:45:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 17:00:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -366,6 +366,52 @@ function setupInteractions(currentUid, spark) {
     const iframe = document.querySelector('#spark-content-container iframe');
     if (iframe) iframe.focus();
 }
+
+/*
+ * Assembles the executable logic by accessing the arcadeCurrentTypes array 
+ * directly via the index stored in the spark node.
+ */
+function assembleSpark(spark) {
+    // 1. Backward Compatibility: If code/link exists, return as-is
+    if (spark.code || spark.link) {
+        return spark; 
+    }
+
+    // 2. Direct Access: Go straight to the array index
+    // We use spark.index as the pointer to arcade-current-types[index]
+    const blueprint = arcadeCurrentTypes[spark.index];
+
+    if (!blueprint) {
+        console.warn(`[ASSEMBLER] No blueprint found at index: ${spark.index}`);
+        return spark;
+    }
+
+    // 3. Property Merging: Spark Overrides > Blueprint Defaults
+    const finalProperties = { 
+        ...(blueprint.property_map || {}), 
+        ...(spark.property_map || {}) 
+    };
+
+    // 4. Template Hydration
+    let hydratedCode = blueprint.template;
+    
+    Object.keys(finalProperties).forEach(key => {
+        const value = finalProperties[key];
+        // Matches {{key}} and {{key || default}}
+        const regex = new RegExp(`{{\\s*${key}\\s*(?:\\|\\|\\s*[^}]+)?}}`, 'g');
+        
+        // Ensure strings are quoted for the injected JS, numbers remain raw
+        const formattedValue = typeof value === 'string' ? `'${value}'` : value;
+        hydratedCode = hydratedCode.replace(regex, formattedValue);
+    });
+
+    // 5. Return the ephemeral execution object
+    return {
+        ...spark,
+        code: hydratedCode,
+        properties: finalProperties
+    };
+}
 watchAuthState(async (user) => {
     console.log("%c[AUTH] State Changed", "color: #00ff00;");
     if (!user) return;
@@ -433,16 +479,19 @@ if (!path) {
     let activeSpark = null;
     if (currentIndex !== -1) {
         activeSpark = allSparks[currentIndex];
-        loadSpark(activeSpark);
     } else if (allSparks.length > 0) {
         activeSpark = allSparks[0];
-        loadSpark(activeSpark);
+    }
+    if (activeSpark) {
+        // NEW: Assemble the spark before loading
+        const preparedSpark = assembleSpark(activeSpark);
+        loadSpark(preparedSpark);
     } else {
         document.getElementById('active-spark-name').textContent = "EMPTY CURRENT";
     }
-    
     setupInteractions(user.uid, activeSpark);
 });
+
 window.addEventListener('message', (event) => {
     // 1. Security check: Ensure we have data
     if (!event.data || event.data.type !== 'TICKER_UPDATE') return;
