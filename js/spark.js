@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 17:11:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 17:38:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -367,32 +367,34 @@ function setupInteractions(currentUid, spark) {
     if (iframe) iframe.focus();
 }
 
-/*
- * Assembles the executable logic for a spark.
- * Checks for legacy code/links first, then falls back to template assembly
- * using the databaseCache settings.
+/**
+ * Assembles the executable logic using parameter_map from the blueprint
+ * and spark node overrides.
  */
 function assembleSpark(spark) {
-    // 1. EXIT EARLY: If code or link already exists, it's a legacy or external node
+    console.log("%c[ASSEMBLER] Starting assembly for:", "color: #4facfe; font-weight: bold;", spark.name || spark.id);
+
+    // 1. EXIT EARLY: If code or link already exists
     if (spark.code || spark.link) {
         return spark;
     }
 
-    // 2. DATA RESOLUTION: Fetch the blueprint from databaseCache settings
-    // Path: databaseCache.settings['arcade-current-types'][index]
+    // 2. DATA RESOLUTION: Use databaseCache.settings
     const blueprints = databaseCache?.settings?.["arcade-current-types"] || [];
     const blueprint = blueprints[spark.index];
 
     if (!blueprint) {
-        console.warn(`[ASSEMBLER] No blueprint found at index ${spark.index} in databaseCache.settings.`);
+        console.warn(`[ASSEMBLER] No blueprint found at index ${spark.index}`);
         return spark;
     }
 
-    // 3. PROPERTY MERGING: Priority is spark.property_map > blueprint.property_map
+    // 3. PROPERTY MERGING: Use parameter_map (Blueprint defaults < Spark overrides)
     const finalProperties = { 
-        ...(blueprint.property_map || {}), 
-        ...(spark.property_map || {}) 
+        ...(blueprint.parameter_map || {}), 
+        ...(spark.parameter_map || {}) 
     };
+    
+    console.log("[ASSEMBLER] Final Merged Parameters:", finalProperties);
 
     // 4. ASSEMBLY: Replace placeholders in the template string
     let hydratedCode = blueprint.template;
@@ -400,22 +402,19 @@ function assembleSpark(spark) {
     if (hydratedCode) {
         Object.keys(finalProperties).forEach(key => {
             const value = finalProperties[key];
-            
-            // Regex matches {{key}} and {{key || default}}
-            // It replaces the entire tag with the mapped value
             const regex = new RegExp(`{{\\s*${key}\\s*(?:\\|\\|\\s*[^}]+)?}}`, 'g');
             
-            // Format for JS injection: Wrap strings in quotes, leave numbers/booleans raw
-            const formattedValue = typeof value === 'string' ? `'${value}'` : value;
-            hydratedCode = hydratedCode.replace(regex, formattedValue);
+            // We use the raw value. 
+            // Note: If your template has '{{color}}', the value should be #hex or 'name'
+            hydratedCode = hydratedCode.replace(regex, value);
         });
     }
 
-    // 5. RETURN: New ephemeral object with all original spark properties + assembled code
+    // 5. RETURN: New object with .code for loadSpark
     return {
         ...spark,
         code: hydratedCode,
-        properties: finalProperties // Helpful for debugging/UI
+        parameter_map: finalProperties 
     };
 }
 
