@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 17:00:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 17:11:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -368,50 +368,57 @@ function setupInteractions(currentUid, spark) {
 }
 
 /*
- * Assembles the executable logic by accessing the arcadeCurrentTypes array 
- * directly via the index stored in the spark node.
+ * Assembles the executable logic for a spark.
+ * Checks for legacy code/links first, then falls back to template assembly
+ * using the databaseCache settings.
  */
 function assembleSpark(spark) {
-    // 1. Backward Compatibility: If code/link exists, return as-is
+    // 1. EXIT EARLY: If code or link already exists, it's a legacy or external node
     if (spark.code || spark.link) {
-        return spark; 
-    }
-
-    // 2. Direct Access: Go straight to the array index
-    // We use spark.index as the pointer to arcade-current-types[index]
-    const blueprint = arcadeCurrentTypes[spark.index];
-
-    if (!blueprint) {
-        console.warn(`[ASSEMBLER] No blueprint found at index: ${spark.index}`);
         return spark;
     }
 
-    // 3. Property Merging: Spark Overrides > Blueprint Defaults
+    // 2. DATA RESOLUTION: Fetch the blueprint from databaseCache settings
+    // Path: databaseCache.settings['arcade-current-types'][index]
+    const blueprints = databaseCache?.settings?.["arcade-current-types"] || [];
+    const blueprint = blueprints[spark.index];
+
+    if (!blueprint) {
+        console.warn(`[ASSEMBLER] No blueprint found at index ${spark.index} in databaseCache.settings.`);
+        return spark;
+    }
+
+    // 3. PROPERTY MERGING: Priority is spark.property_map > blueprint.property_map
     const finalProperties = { 
         ...(blueprint.property_map || {}), 
         ...(spark.property_map || {}) 
     };
 
-    // 4. Template Hydration
+    // 4. ASSEMBLY: Replace placeholders in the template string
     let hydratedCode = blueprint.template;
-    
-    Object.keys(finalProperties).forEach(key => {
-        const value = finalProperties[key];
-        // Matches {{key}} and {{key || default}}
-        const regex = new RegExp(`{{\\s*${key}\\s*(?:\\|\\|\\s*[^}]+)?}}`, 'g');
-        
-        // Ensure strings are quoted for the injected JS, numbers remain raw
-        const formattedValue = typeof value === 'string' ? `'${value}'` : value;
-        hydratedCode = hydratedCode.replace(regex, formattedValue);
-    });
 
-    // 5. Return the ephemeral execution object
+    if (hydratedCode) {
+        Object.keys(finalProperties).forEach(key => {
+            const value = finalProperties[key];
+            
+            // Regex matches {{key}} and {{key || default}}
+            // It replaces the entire tag with the mapped value
+            const regex = new RegExp(`{{\\s*${key}\\s*(?:\\|\\|\\s*[^}]+)?}}`, 'g');
+            
+            // Format for JS injection: Wrap strings in quotes, leave numbers/booleans raw
+            const formattedValue = typeof value === 'string' ? `'${value}'` : value;
+            hydratedCode = hydratedCode.replace(regex, formattedValue);
+        });
+    }
+
+    // 5. RETURN: New ephemeral object with all original spark properties + assembled code
     return {
         ...spark,
         code: hydratedCode,
-        properties: finalProperties
+        properties: finalProperties // Helpful for debugging/UI
     };
 }
+
 watchAuthState(async (user) => {
     console.log("%c[AUTH] State Changed", "color: #00ff00;");
     if (!user) return;
