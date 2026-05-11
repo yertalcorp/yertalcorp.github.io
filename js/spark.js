@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 18:45:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 19:06:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -434,7 +434,6 @@ function assembleSpark(spark) {
         parameter_map: finalParameters
     };
 }
-
 watchAuthState(async (user) => {
     console.log("%c[AUTH] State Changed", "color: #00ff00;");
     if (!user) return;
