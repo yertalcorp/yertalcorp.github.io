@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:27:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:39:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -150,7 +150,7 @@ function loadSpark(spark) {
         }
     }
 
-    // 1. IDENTITY & THEME [cite: 2026-02-17]
+    // 1. IDENTITY & THEME
     if (typeof databaseCache !== 'undefined') {
         applyTheme(globalTheme);
     }
@@ -180,11 +180,16 @@ function loadSpark(spark) {
         iframe.id = "content-frame";
         iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
         
-        // Wrap the code – ensure wrapCodeInLaboratory includes the 'TICKER_UPDATE' postMessage logic
+        // Wrap the code
         const standardizedCode = wrapCodeInLaboratory(spark);
         
-        // Injecting via srcdoc to prevent "Unexpected end of input" errors common with doc.write
-        iframe.srcdoc = standardizedCode;
+        /*
+         * FINAL FIX: Switch from srcdoc to Blob URL to prevent truncation of 
+         * large codebases (9000+ chars) which caused "Unexpected end of input".
+         */
+        const blob = new Blob([standardizedCode], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+        iframe.src = blobUrl;
         
         container.appendChild(iframe);
 
@@ -193,10 +198,13 @@ function loadSpark(spark) {
         iframe.onload = () => {
             container.style.opacity = '1';
             if (hudStatus) hudStatus.textContent = "SPARK FULLY LOADED";
+            
+            // Revoke the URL to free up memory now that the iframe has loaded the content
+            URL.revokeObjectURL(blobUrl);
+            console.log("[SYSTEM] Spark Blob URL revoked successfully.");
         };
     }
 }
-
 function navigate(dir) {
     currentIndex = (currentIndex + dir + allSparks.length) % allSparks.length;
     const nextSpark = allSparks[currentIndex];
