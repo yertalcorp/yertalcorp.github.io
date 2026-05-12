@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 20:40:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 20:50:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -402,9 +402,9 @@ function assembleSpark(spark) {
             // --- ARRAY & OBJECT HANDLING ---
             if (value !== null && typeof value === 'object') {
                 /*
-                 * FINAL FIX: We stringify the object/array, swap " for ',
-                 * and then escape the ' as &apos; so the HTML srcdoc 
-                 * attribute doesn't terminate early.
+                 * FINAL FIX: Stringify to JSON, then swap " for ' to make it look like a JS literal.
+                 * Then, escape those single quotes as &apos; so the HTML srcdoc 
+                 * parser doesn't think the attribute has ended.
                  */
                 value = JSON.stringify(value)
                             .replace(/"/g, "'")    
@@ -418,7 +418,7 @@ function assembleSpark(spark) {
             const matchCount = (hydratedCode.match(regex) || []).length;
             if (matchCount > 0) {
                 console.log(`[ASSEMBLER] Replacing {{${key}}} (${matchCount}x) ->`, value);
-                // Use a function in .replace to treat the value as a literal string
+                // Use an arrow function to ensure the value is treated as a literal (escapes $)
                 hydratedCode = hydratedCode.replace(regex, () => value);
             }
         });
@@ -441,7 +441,6 @@ function assembleSpark(spark) {
         parameter_map: finalParameters
     };
 }
-
 watchAuthState(async (user) => {
     console.log("%c[AUTH] State Changed", "color: #00ff00;");
     if (!user) return;
