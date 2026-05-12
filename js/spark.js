@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:04:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:15:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -179,20 +179,14 @@ function loadSpark(spark) {
         const iframe = document.createElement('iframe');
         iframe.id = "content-frame";
         iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
-        container.appendChild(iframe);
-
-        const doc = iframe.contentWindow.document;
-        doc.open();
         
         // Wrap the code – ensure wrapCodeInLaboratory includes the 'TICKER_UPDATE' postMessage logic
         const standardizedCode = wrapCodeInLaboratory(spark);
         
-        try {
-            doc.write(standardizedCode);
-        } catch (e) {
-            console.error("[LAB VIEWPORT] Critical Error during doc.write:", e);
-        }
-        doc.close();
+        // Injecting via srcdoc to prevent "Unexpected end of input" errors common with doc.write
+        iframe.srcdoc = standardizedCode;
+        
+        container.appendChild(iframe);
 
         if (fallbackBtn) fallbackBtn.classList.add('hidden');
 
