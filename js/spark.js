@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:15:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:27:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -434,7 +434,10 @@ function assembleSpark(spark) {
         const remaining = hydratedCode.match(/{{\s*[\w| ]+\s*}}/g);
         console.warn("[ASSEMBLER] ⚠️ Warning: Unreplaced tags detected:", remaining);
     }
-
+    console.log(`[ASSEMBLER] ✅ Assembly Complete. Length: ${hydratedCode.length} chars.`);
+    if (!hydratedCode.endsWith('</html>')) {
+        console.error("[ASSEMBLER] 🚨 CRITICAL: Code is truncated! Missing closing tags.");
+    }
     return {
         ...spark,
         code: hydratedCode,
