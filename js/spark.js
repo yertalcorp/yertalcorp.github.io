@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 20:03:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 20:40:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -402,12 +402,13 @@ function assembleSpark(spark) {
             // --- ARRAY & OBJECT HANDLING ---
             if (value !== null && typeof value === 'object') {
                 /*
-                 * FIX: We stringify the object/array exactly once.
-                 * We then swap double quotes (") for single quotes (').
-                 * This prevents the srcdoc="..." attribute from closing early
-                 * while keeping the data as a valid JavaScript literal.
+                 * FINAL FIX: We stringify the object/array, swap " for ',
+                 * and then escape the ' as &apos; so the HTML srcdoc 
+                 * attribute doesn't terminate early.
                  */
-                value = JSON.stringify(value).replace(/"/g, "'");
+                value = JSON.stringify(value)
+                            .replace(/"/g, "'")    
+                            .replace(/'/g, "&apos;");
             }
 
             // Matches {{key}} and {{key || default}}
@@ -417,9 +418,9 @@ function assembleSpark(spark) {
             const matchCount = (hydratedCode.match(regex) || []).length;
             if (matchCount > 0) {
                 console.log(`[ASSEMBLER] Replacing {{${key}}} (${matchCount}x) ->`, value);
+                // Use a function in .replace to treat the value as a literal string
+                hydratedCode = hydratedCode.replace(regex, () => value);
             }
-            
-            hydratedCode = hydratedCode.replace(regex, value);
         });
     }
 
