@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:39:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:13:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -178,33 +178,37 @@ function loadSpark(spark) {
     } else {
         const iframe = document.createElement('iframe');
         iframe.id = "content-frame";
+        // allow-same-origin is critical for persistence if scripts interact with parent
         iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
         
+        container.appendChild(iframe);
+
         // Wrap the code
         const standardizedCode = wrapCodeInLaboratory(spark);
         
         /*
-         * FINAL FIX: Switch from srcdoc to Blob URL to prevent truncation of 
-         * large codebases (9000+ chars) which caused "Unexpected end of input".
+         * REVERT TO DOCUMENT.WRITE:
+         * Using the fixed template (block comments only), document.write provides 
+         * the most stable injection method for dynamic hydration.
          */
-        const blob = new Blob([standardizedCode], { type: 'text/html' });
-        const blobUrl = URL.createObjectURL(blob);
-        iframe.src = blobUrl;
-        
-        container.appendChild(iframe);
+        try {
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(standardizedCode);
+            doc.close();
+        } catch (err) {
+            console.error("[SYSTEM] Document write failed:", err);
+        }
 
         if (fallbackBtn) fallbackBtn.classList.add('hidden');
 
         iframe.onload = () => {
             container.style.opacity = '1';
             if (hudStatus) hudStatus.textContent = "SPARK FULLY LOADED";
-            
-            // Revoke the URL to free up memory now that the iframe has loaded the content
-            URL.revokeObjectURL(blobUrl);
-            console.log("[SYSTEM] Spark Blob URL revoked successfully.");
         };
     }
 }
+
 function navigate(dir) {
     currentIndex = (currentIndex + dir + allSparks.length) % allSparks.length;
     const nextSpark = allSparks[currentIndex];
