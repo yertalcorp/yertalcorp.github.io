@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:29:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 19:40:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
@@ -401,9 +401,13 @@ function assembleSpark(spark) {
 
             // --- ARRAY & OBJECT HANDLING ---
             if (value !== null && typeof value === 'object') {
-               value = JSON.stringify(value);
-               // Encode quotes to prevent breaking the HTML srcdoc attribute
-               value = JSON.stringify(value).replace(/"/g, '&quot;');
+                /*
+                 * FIX: We stringify the object/array exactly once.
+                 * We then swap double quotes (") for single quotes (').
+                 * This prevents the srcdoc="..." attribute from closing early
+                 * while keeping the data as a valid JavaScript literal.
+                 */
+                value = JSON.stringify(value).replace(/"/g, "'");
             }
 
             // Matches {{key}} and {{key || default}}
