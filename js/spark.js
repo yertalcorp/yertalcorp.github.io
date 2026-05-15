@@ -6,69 +6,59 @@ let allSparks = [];
 let currentIndex = -1;
 let currentId = '';
 let userId = '';
-window.arcadeSessionState = {
-    parameter_map: {} 
-};
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:12:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:33:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /**
  * Objective: Capture live UI state from the simulation iframe.
- * Task: Map iframe element values to the arcadeSessionState using blueprint keys.
+ * Task: Directly update the spark object's parameter_map with current UI values.
  */
 function syncUIToSessionMap(spark) {
-    console.group("%c[SYNC DEBUG] 🔍 Checking Iframe for State...", "color: #ffca28; font-weight: bold;");
+    console.group("%c[SYNC DEBUG] 🔍 Distilling UI to Spark Object...", "color: #ffca28; font-weight: bold;");
 
     const settings = databaseCache?.settings || {};
     const blueprints = settings["arcade-current-types"];
     const blueprint = Array.isArray(blueprints) ? blueprints[spark.index] : null;
 
     if (!blueprint || !blueprint.parameter_map) {
-        console.warn("[SYNC] ❌ No blueprint/parameter_map found for index:", spark.index);
+        console.warn("[SYNC] ❌ No blueprint schema found for index:", spark.index);
         console.groupEnd();
         return;
     }
 
-    const iframe = document.getElementById('content-frame');
-    if (!iframe) {
-        console.error("[SYNC] ❌ Critical: #content-frame element not found in DOM.");
-        console.groupEnd();
-        return;
-    }
-
-    const iframeDoc = iframe.contentWindow?.document;
+    const iframeDoc = document.getElementById('content-frame')?.contentWindow?.document;
     if (!iframeDoc) {
         console.error("[SYNC] ❌ Critical: Cannot access iframe document.");
         console.groupEnd();
         return;
     }
 
-    const sessionMap = {};
+    // Ensure the spark has a parameter_map to write to
+    if (!spark.parameter_map) spark.parameter_map = {};
+
     const schemaKeys = Object.keys(blueprint.parameter_map);
     
-    console.log("[SYNC] Target Schema Keys:", schemaKeys);
-
     schemaKeys.forEach(key => {
         const input = iframeDoc.getElementById(key);
         if (input) {
             let val = input.value;
             const type = input.type;
 
-            // Handle numeric types including hidden inputs for friction/count
+            // Type-specific extraction
             if (type === 'range' || type === 'number' || type === 'hidden') {
                 val = parseFloat(val);
             } else if (type === 'checkbox') {
                 val = input.checked;
             }
 
-            sessionMap[key] = val;
-            console.log(`%c[SYNC] Found: ${key} | Value: ${val} | Type: ${type}`, "color: #4caf50;");
-        } else {
-            console.warn(`%c[SYNC] Missing UI Element: No element found with ID "${key}"`, "color: #f44336;");
+            // DIRECT MUTATION: Update the spark memory object
+            if (spark.parameter_map[key] !== val) {
+                console.log(`%c[SYNC] Update: ${key} | ${spark.parameter_map[key]} -> ${val}`, "color: #4caf50; font-weight: bold;");
+                spark.parameter_map[key] = val;
+            }
         }
     });
 
-    window.arcadeSessionState.parameter_map = sessionMap;
-    console.log("[SYNC] Final Session Map Captured:", window.arcadeSessionState.parameter_map);
+    console.log("[SYNC] Distillation Complete. Spark Memory is now current.");
     console.groupEnd();
 }
 
@@ -295,19 +285,6 @@ function togglePlayPause() {
     }
 }
 
-/**
- * Objective: Prevent state leakage between different simulations.
- * Task: Wipe the live UI session map to ensure the next spark starts with fresh defaults.
- */
-function resetSparkSession() {
-    // Reset the global session state to an empty parameter map
-    window.arcadeSessionState = {
-        parameter_map: {}
-    };
-    
-    console.log("%c[SYSTEM] 🧹 Session Map Reset: Ready for fresh state.", "color: #ff9800; font-style: italic;");
-}
-
 /*
  * Objective: Initialize HUD and navigation interactions.
  * Task: Restrict navigation to mouse-only via side zones and reserve arrow keys for viewport gameplay.
@@ -324,8 +301,6 @@ function setupInteractions(currentUid, spark) {
             e.preventDefault();
             console.log("[NAV] Navigating to Previous Spark...");
             
-            // CLEAN SLATE: Reset session before moving to previous
-            resetSparkSession(); 
             navigate(-1);
         };
     }
@@ -336,8 +311,6 @@ function setupInteractions(currentUid, spark) {
             e.preventDefault();
             console.log("[NAV] Navigating to Next Spark...");
             
-            // CLEAN SLATE: Reset session before moving to next
-            resetSparkSession();
             navigate(1);
         };
     }
@@ -395,15 +368,9 @@ function setupInteractions(currentUid, spark) {
                 console.group("🔄 RELOAD AUDIT");
                 // 1. Sync
                 syncUIToSessionMap(window.currentSpark);
-                // 2. IMMEDIATE VERIFICATION
-                const capturedGravity = window.arcadeSessionState?.parameter_map?.gravity;
-                console.log("Check 1: Value in Session State right now:", capturedGravity);
-                if (capturedGravity === undefined) {
-                    console.error("CRITICAL: Sync failed to populate window.arcadeSessionState!");
-                }
-                // 3. Assemble
+                // 2. Assemble
                 const freshlyAssembledSpark = assembleSpark(window.currentSpark);
-                // 4. Load
+                // 3. Load
                 loadSpark(freshlyAssembledSpark);
                 console.groupEnd();
             }
@@ -426,9 +393,6 @@ function setupInteractions(currentUid, spark) {
         exitBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-
-            // CLEAN SLATE: Reset session map before leaving the lab
-            resetSparkSession();
 
             const params = new URLSearchParams(window.location.search);
             const userSlug = params.get('user') || 'yertal-arcade';
@@ -492,8 +456,7 @@ function assembleSpark(spark) {
     // Layer 3: Live Session (Current UI state)
     const finalParameters = { 
         ...(blueprint.parameter_map || {}), 
-        ...(spark.parameter_map || {}),
-        ...(window.arcadeSessionState?.parameter_map || {}) 
+        ...(spark.parameter_map || {})
     };
 
     console.groupCollapsed(`[ASSEMBLER] 🛠️ Assembling: ${spark.name}`);
