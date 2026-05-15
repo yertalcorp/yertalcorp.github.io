@@ -10,43 +10,67 @@ window.arcadeSessionState = {
     parameter_map: {} 
 };
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 18:48:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
-/*
- * Objective: Sync UI changes to the session map using the blueprint as the schema.
- * Task: Map live iframe input values to the session map to enable persistent reloads.
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 19:44:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+/**
+ * Objective: Sync UI to Session Map with deep logging.
+ * Task: Identify if the iframe is accessible and if IDs match the blueprint.
  */
 function syncUIToSessionMap(spark) {
+    console.group("%c[SYNC DEBUG] 🔍 Checking Iframe for State...", "color: #ffca28; font-weight: bold;");
+
     const settings = databaseCache?.settings || {};
     const blueprints = settings["arcade-current-types"];
     const blueprint = Array.isArray(blueprints) ? blueprints[spark.index] : null;
 
-    if (!blueprint || !blueprint.parameter_map) return;
+    if (!blueprint || !blueprint.parameter_map) {
+        console.warn("[SYNC] ❌ No blueprint/parameter_map found for index:", spark.index);
+        console.groupEnd();
+        return;
+    }
 
     const iframe = document.getElementById('content-frame');
-    const iframeDoc = iframe?.contentWindow?.document;
-    if (!iframeDoc) return;
+    if (!iframe) {
+        console.error("[SYNC] ❌ Critical: #content-frame element not found in DOM.");
+        console.groupEnd();
+        return;
+    }
+
+    const iframeDoc = iframe.contentWindow?.document;
+    if (!iframeDoc) {
+        console.error("[SYNC] ❌ Critical: Cannot access iframe document. (Cross-origin or not loaded?)");
+        console.groupEnd();
+        return;
+    }
 
     const sessionMap = {};
     const schemaKeys = Object.keys(blueprint.parameter_map);
+    
+    console.log("[SYNC] Target Schema Keys:", schemaKeys);
 
     schemaKeys.forEach(key => {
         const input = iframeDoc.getElementById(key);
         if (input) {
             let val = input.value;
+            const type = input.type;
 
-            // Handle numeric casting for ranges/numbers
-            if (input.type === 'range' || input.type === 'number') {
+            // Type-specific extraction
+            if (type === 'range' || type === 'number') {
                 val = parseFloat(val);
-            } else if (input.type === 'checkbox') {
+            } else if (type === 'checkbox') {
                 val = input.checked;
             }
 
-            // Only add to session map if it differs from the blueprint default 
-            // or if it's a value the user has actively manipulated.
             sessionMap[key] = val;
+            console.log(`%c[SYNC] Found Variable: ${key} | Value: ${val} | Type: ${type}`, "color: #4caf50;");
+        } else {
+            console.warn(`%c[SYNC] Missing UI Element: No element found with ID "${key}"`, "color: #f44336;");
         }
     });
 
+    window.arcadeSessionState.parameter_map = sessionMap;
+    console.log("[SYNC] Final Session Map Captured:", window.arcadeSessionState.parameter_map);
+    console.groupEnd();
+}
     window.arcadeSessionState.parameter_map = sessionMap;
     console.log("[SYSTEM] Session Map Synced from UI:", sessionMap);
 }
