@@ -10,7 +10,7 @@ window.arcadeSessionState = {
     parameter_map: {} 
 };
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 19:44:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 19:58:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /**
  * Objective: Sync UI to Session Map with deep logging.
  * Task: Identify if the iframe is accessible and if IDs match the blueprint.
@@ -71,9 +71,7 @@ function syncUIToSessionMap(spark) {
     console.log("[SYNC] Final Session Map Captured:", window.arcadeSessionState.parameter_map);
     console.groupEnd();
 }
-    window.arcadeSessionState.parameter_map = sessionMap;
-    console.log("[SYSTEM] Session Map Synced from UI:", sessionMap);
-}
+
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
  * @param {Object} spark - The spark data object from the DB.
