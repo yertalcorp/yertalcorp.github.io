@@ -10,7 +10,7 @@ window.arcadeSessionState = {
     parameter_map: {} 
 };
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 20:28:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:18:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /**
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Map iframe element values to the arcadeSessionState using blueprint keys.
@@ -392,10 +392,20 @@ function setupInteractions(currentUid, spark) {
     if (reloadBtn) {
         reloadBtn.onclick = () => {
             if (window.currentSpark) {
-                // Capture UI state before re-assembling
+                console.group("🔄 RELOAD AUDIT");
+                // 1. Sync
                 syncUIToSessionMap(window.currentSpark);
-                const freshlyAssembled = assembleSpark(window.currentSpark);
-                loadSpark(freshlyAssembled);
+                // 2. IMMEDIATE VERIFICATION
+                const capturedGravity = window.arcadeSessionState?.parameter_map?.gravity;
+                console.log("Check 1: Value in Session State right now:", capturedGravity);
+                if (capturedGravity === undefined) {
+                    console.error("CRITICAL: Sync failed to populate window.arcadeSessionState!");
+                }
+                // 3. Assemble
+                const freshlyAssembledSpark = assembleSpark(window.currentSpark);
+                // 4. Load
+                loadSpark(freshlyAssembledSpark);
+                console.groupEnd();
             }
         };
     }
