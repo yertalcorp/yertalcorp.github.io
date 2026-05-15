@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:33:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:39:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /**
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Directly update the spark object's parameter_map with current UI values.
@@ -326,7 +326,7 @@ function setupInteractions(currentUid, spark) {
             editBtn.style.display = 'flex';
             editBtn.onclick = (e) => {
                 e.stopPropagation();
-                openSparkEditor();
+                openSparkEditor(spark);
             };
         } else {
             editBtn.style.display = 'none';
@@ -364,12 +364,12 @@ function setupInteractions(currentUid, spark) {
     const reloadBtn = document.getElementById('reload-spark-btn');
     if (reloadBtn) {
         reloadBtn.onclick = () => {
-            if (window.currentSpark) {
+            if (spark) {
                 console.group("🔄 RELOAD AUDIT");
                 // 1. Sync
-                syncUIToSessionMap(window.currentSpark);
+                syncUIToSessionMap(spark);
                 // 2. Assemble
-                const freshlyAssembledSpark = assembleSpark(window.currentSpark);
+                const freshlyAssembledSpark = assembleSpark(spark);
                 // 3. Load
                 loadSpark(freshlyAssembledSpark);
                 console.groupEnd();
@@ -381,8 +381,8 @@ function setupInteractions(currentUid, spark) {
     const fallbackBtn = document.getElementById('fallback-url-btn');
     if (fallbackBtn) {
         fallbackBtn.onclick = () => {
-            if (window.currentSpark && window.currentSpark.link) {
-                window.open(window.currentSpark.link, '_blank');
+            if (spark && spark.link) {
+                window.open(spark.link, '_blank');
             }
         };
     }
@@ -416,9 +416,9 @@ function setupInteractions(currentUid, spark) {
         // Ctrl+R Logic: Now respects current slider values
         if (key === 'r' && e.ctrlKey) {
             e.preventDefault();
-            if (window.currentSpark) {
-                syncUIToSessionMap(window.currentSpark);
-                const freshlyAssembled = assembleSpark(window.currentSpark);
+            if (spark) {
+                syncUIToSessionMap(spark);
+                const freshlyAssembled = assembleSpark(spark);
                 loadSpark(freshlyAssembled);
             }
         }
@@ -604,8 +604,7 @@ window.addEventListener('message', (event) => {
     }
 });
 
-async function openSparkEditor() {
-    const spark = window.currentSpark;
+async function openSparkEditor(spark) {
     if (!spark) return;
 
     // 1. RESET GLOBAL SELECTIONS to prevent data-bleeding between sparks
