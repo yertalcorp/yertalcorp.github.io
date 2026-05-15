@@ -10,10 +10,10 @@ window.arcadeSessionState = {
     parameter_map: {} 
 };
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 19:58:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 20:28:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /**
- * Objective: Sync UI to Session Map with deep logging.
- * Task: Identify if the iframe is accessible and if IDs match the blueprint.
+ * Objective: Capture live UI state from the simulation iframe.
+ * Task: Map iframe element values to the arcadeSessionState using blueprint keys.
  */
 function syncUIToSessionMap(spark) {
     console.group("%c[SYNC DEBUG] 🔍 Checking Iframe for State...", "color: #ffca28; font-weight: bold;");
@@ -37,7 +37,7 @@ function syncUIToSessionMap(spark) {
 
     const iframeDoc = iframe.contentWindow?.document;
     if (!iframeDoc) {
-        console.error("[SYNC] ❌ Critical: Cannot access iframe document. (Cross-origin or not loaded?)");
+        console.error("[SYNC] ❌ Critical: Cannot access iframe document.");
         console.groupEnd();
         return;
     }
@@ -53,15 +53,15 @@ function syncUIToSessionMap(spark) {
             let val = input.value;
             const type = input.type;
 
-            // Type-specific extraction
-            if (type === 'range' || type === 'number') {
+            // Handle numeric types including hidden inputs for friction/count
+            if (type === 'range' || type === 'number' || type === 'hidden') {
                 val = parseFloat(val);
             } else if (type === 'checkbox') {
                 val = input.checked;
             }
 
             sessionMap[key] = val;
-            console.log(`%c[SYNC] Found Variable: ${key} | Value: ${val} | Type: ${type}`, "color: #4caf50;");
+            console.log(`%c[SYNC] Found: ${key} | Value: ${val} | Type: ${type}`, "color: #4caf50;");
         } else {
             console.warn(`%c[SYNC] Missing UI Element: No element found with ID "${key}"`, "color: #f44336;");
         }
@@ -460,94 +460,72 @@ function setupInteractions(currentUid, spark) {
     if (iframe) iframe.focus();
 }
 
+/**
+ * Objective: Hydrate a blueprint template with the established hierarchy of truth.
+ * Task: Replace {{key}} tags with merged values from Blueprint, User, and Session layers.
+ */
 function assembleSpark(spark) {
-    // 1. EXIT EARLY: Check for legacy code or links
-    if (spark.code || spark.link) {
-        return spark;
-    }
+    if (spark.code || spark.link) return spark;
 
     console.log("%c[ASSEMBLER] 🛠️ Starting Assembly for:", "color: #00f2fe; font-weight: bold;", spark.name);
 
-    // 2. DATA RESOLUTION: Directly target the array by spark.index
     const settings = databaseCache?.settings || {};
     const blueprints = settings["arcade-current-types"];
-    
-    // Safety check: ensure blueprints is an array and the index exists
     const blueprint = Array.isArray(blueprints) ? blueprints[spark.index] : null;
 
     if (!blueprint) {
-        console.error(`[ASSEMBLER] ❌ FAILED: No blueprint found in settings["arcade-current-types"] at index: ${spark.index}`);
+        console.error(`[ASSEMBLER] ❌ FAILED: No blueprint found at index: ${spark.index}`);
         return spark;
     }
 
-    // 3. PHASE 1: PRINT ENTIRE RAW CODE
-    console.groupCollapsed("%c[ASSEMBLER] 🟢 PHASE 1: RAW TEMPLATE (Before Hydration)", "color: #4CAF50;");
-    console.log(blueprint.template);
-    console.groupEnd();
-
-    // 4. PARAMETER MERGING: Hierarchy of Truth
-    // Blueprint Defaults < Spark Overrides (Prompt) < Session UI (Live Sliders)
+    // PARAMETER MERGING: Blueprint < User Spark < Live Session
     const finalParameters = { 
         ...(blueprint.parameter_map || {}), 
         ...(spark.parameter_map || {}),
-        ...(window.arcadeSessionState?.parameter_map || {})
+        ...(window.arcadeSessionState?.parameter_map || {}) 
     };
 
-    // 5. HYDRATION
+    console.groupCollapsed("[ASSEMBLER] 🧩 Parameter Hierarchy Audit");
+    console.log("Layer 1 (Blueprint Default):", blueprint.parameter_map);
+    console.log("Layer 2 (User Saved Intent):", spark.parameter_map);
+    console.log("Layer 3 (Live Session UI):", window.arcadeSessionState?.parameter_map);
+    console.log("%cFINAL MERGED RESULT:", "color: #00f2fe; font-weight: bold;", finalParameters);
+    console.groupEnd();
+
     let hydratedCode = blueprint.template || "";
 
     if (hydratedCode) {
         Object.keys(finalParameters).forEach(key => {
             let value = finalParameters[key];
 
-            // --- ARRAY & OBJECT HANDLING ---
+            // Handle Arrays/Objects (like ball_colors)
             if (value !== null && typeof value === 'object') {
-                /*
-                 * FINAL FIX: Stringify to JSON, then swap " for ' to make it look like a JS literal.
-                 * Then, escape those single quotes as &apos; so the HTML srcdoc 
-                 * parser doesn't think the attribute has ended.
-                 */
                 value = JSON.stringify(value)
                             .replace(/"/g, "'")    
                             .replace(/'/g, "&apos;");
             }
 
-            // Matches {{key}} and {{key || default}}
+            // Regex matches {{key}} or {{key || default}}
             const regex = new RegExp(`{{\\s*${key}\\s*(?:\\|\\|\\s*[^}]+)?}}`, 'g');
-            
-            // Log individual replacements for granular tracking
             const matchCount = (hydratedCode.match(regex) || []).length;
+            
             if (matchCount > 0) {
                 console.log(`[ASSEMBLER] Replacing {{${key}}} (${matchCount}x) ->`, value);
-                // Use an arrow function to ensure the value is treated as a literal (escapes $)
+                // Use arrow function to treat value as a literal string
                 hydratedCode = hydratedCode.replace(regex, () => value);
             }
         });
     }
 
-    // 6. PHASE 2: PRINT ENTIRE HYDRATED CODE
-    console.groupCollapsed("%c[ASSEMBLER] 🔵 PHASE 2: HYDRATED CODE (After Hydration)", "color: #2196F3;");
-    console.log(hydratedCode);
-    console.groupEnd();
-
-    // 7. FINAL TAG CHECK
-    if (hydratedCode && hydratedCode.includes('{{')) {
-        const remaining = hydratedCode.match(/{{\s*[\w| ]+\s*}}/g);
-        console.warn("[ASSEMBLER] ⚠️ Warning: Unreplaced tags detected:", remaining);
-    }
-    
     console.log(`[ASSEMBLER] ✅ Assembly Complete. Length: ${hydratedCode.length} chars.`);
-    
-    if (!hydratedCode.endsWith('</html>')) {
-        console.error("[ASSEMBLER] 🚨 CRITICAL: Code is truncated! Missing closing tags.");
-    }
 
     return {
         ...spark,
         code: hydratedCode,
-        parameter_map: finalParameters
+        assembled_parameters: finalParameters 
     };
 }
+
 watchAuthState(async (user) => {
     console.log("%c[AUTH] State Changed", "color: #00ff00;");
     if (!user) return;
