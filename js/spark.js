@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:39:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 23:14:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /**
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Directly update the spark object's parameter_map with current UI values.
@@ -264,12 +264,13 @@ function loadSpark(spark) {
 
 function navigate(dir) {
     currentIndex = (currentIndex + dir + allSparks.length) % allSparks.length;
+    
     const nextSpark = allSparks[currentIndex];
     
     const newUrl = `${window.location.pathname}?current=${currentId}&spark=${nextSpark.id}`;
     window.history.pushState({path: newUrl}, '', newUrl);
-    
-    loadSpark(nextSpark);
+    console.log(`navigation detected direction=${dir} currentIndex=${currentIndex}`);
+    loadSpark(assembleSpark(nextSpark));
 }
 
 function toggleZen() {
@@ -300,7 +301,6 @@ function setupInteractions(currentUid, spark) {
             e.stopPropagation();
             e.preventDefault();
             console.log("[NAV] Navigating to Previous Spark...");
-            
             navigate(-1);
         };
     }
@@ -310,7 +310,6 @@ function setupInteractions(currentUid, spark) {
             e.stopPropagation();
             e.preventDefault();
             console.log("[NAV] Navigating to Next Spark...");
-            
             navigate(1);
         };
     }
@@ -501,6 +500,7 @@ watchAuthState(async (user) => {
     if (!user) return;
 
     userId = user.uid; 
+    // load the spark for the user, current, spark defined in the URL
     const params = new URLSearchParams(window.location.search);
     const pageOwnerSlug = params.get('user'); 
     currentId = params.get('current');
