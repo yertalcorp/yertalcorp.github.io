@@ -6,9 +6,50 @@ let allSparks = [];
 let currentIndex = -1;
 let currentId = '';
 let userId = '';
+window.arcadeSessionState = {
+    parameter_map: {} 
+};
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:13:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 17:34:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+/*
+ * Objective: Sync UI changes to the session map using the blueprint as the schema.
+ * Task: Map live iframe input values to the session map to enable persistent reloads.
+ */
+function syncUIToSessionMap(spark) {
+    const settings = databaseCache?.settings || {};
+    const blueprints = settings["arcade-current-types"];
+    const blueprint = Array.isArray(blueprints) ? blueprints[spark.index] : null;
 
+    if (!blueprint || !blueprint.parameter_map) return;
+
+    const iframe = document.getElementById('content-frame');
+    const iframeDoc = iframe?.contentWindow?.document;
+    if (!iframeDoc) return;
+
+    const sessionMap = {};
+    const schemaKeys = Object.keys(blueprint.parameter_map);
+
+    schemaKeys.forEach(key => {
+        const input = iframeDoc.getElementById(key);
+        if (input) {
+            let val = input.value;
+
+            // Handle numeric casting for ranges/numbers
+            if (input.type === 'range' || input.type === 'number') {
+                val = parseFloat(val);
+            } else if (input.type === 'checkbox') {
+                val = input.checked;
+            }
+
+            // Only add to session map if it differs from the blueprint default 
+            // or if it's a value the user has actively manipulated.
+            sessionMap[key] = val;
+        }
+    });
+
+    window.arcadeSessionState.parameter_map = sessionMap;
+    console.log("[SYSTEM] Session Map Synced from UI:", sessionMap);
+}
 /*
  * Standardizes raw Spark code to fit the responsive Laboratory Viewport.
  * @param {Object} spark - The spark data object from the DB.
@@ -308,12 +349,18 @@ function setupInteractions(currentUid, spark) {
     }
 
     // 4. Reload Logic: Centralized binding using window.currentSpark
-    const reloadBtn = document.getElementById('reload-spark-btn');
+   const reloadBtn = document.getElementById('reload-spark-btn');
     if (reloadBtn) {
         reloadBtn.onclick = () => {
             if (window.currentSpark) {
-                console.log("[SYSTEM] Reloading Spark...");
-                loadSpark(window.currentSpark);
+                // 1. Check the iframe for any changes against the arcade-current-types schema
+                syncUIToSessionMap(window.currentSpark);
+
+                // 2. Assemble new code (Hierarchy will pick up the session map)
+                const freshlyAssembled = assembleSpark(window.currentSpark);
+
+                // 3. Re-inject
+                loadSpark(freshlyAssembled);
             }
         };
     }
@@ -398,10 +445,12 @@ function assembleSpark(spark) {
     console.log(blueprint.template);
     console.groupEnd();
 
-    // 4. PARAMETER MERGING: Blueprint Defaults < Spark Overrides
+    // 4. PARAMETER MERGING: Hierarchy of Truth
+    // Blueprint Defaults < Spark Overrides (Prompt) < Session UI (Live Sliders)
     const finalParameters = { 
         ...(blueprint.parameter_map || {}), 
-        ...(spark.parameter_map || {}) 
+        ...(spark.parameter_map || {}),
+        ...(window.arcadeSessionState?.parameter_map || {})
     };
 
     // 5. HYDRATION
@@ -446,10 +495,13 @@ function assembleSpark(spark) {
         const remaining = hydratedCode.match(/{{\s*[\w| ]+\s*}}/g);
         console.warn("[ASSEMBLER] ⚠️ Warning: Unreplaced tags detected:", remaining);
     }
+    
     console.log(`[ASSEMBLER] ✅ Assembly Complete. Length: ${hydratedCode.length} chars.`);
+    
     if (!hydratedCode.endsWith('</html>')) {
         console.error("[ASSEMBLER] 🚨 CRITICAL: Code is truncated! Missing closing tags.");
     }
+
     return {
         ...spark,
         code: hydratedCode,
