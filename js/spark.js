@@ -10,7 +10,7 @@ window.arcadeSessionState = {
     parameter_map: {} 
 };
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 17:34:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 18:48:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /*
  * Objective: Sync UI changes to the session map using the blueprint as the schema.
  * Task: Map live iframe input values to the session map to enable persistent reloads.
@@ -273,9 +273,23 @@ function togglePlayPause() {
     }
 }
 
+/**
+ * Objective: Prevent state leakage between different simulations.
+ * Task: Wipe the live UI session map to ensure the next spark starts with fresh defaults.
+ */
+function resetSparkSession() {
+    // Reset the global session state to an empty parameter map
+    window.arcadeSessionState = {
+        parameter_map: {}
+    };
+    
+    console.log("%c[SYSTEM] 🧹 Session Map Reset: Ready for fresh state.", "color: #ff9800; font-style: italic;");
+}
+
 /*
  * Objective: Initialize HUD and navigation interactions.
  * Task: Restrict navigation to mouse-only via side zones and reserve arrow keys for viewport gameplay.
+ * Task: Integrate Session Map resets on navigation and exit.
  */
 function setupInteractions(currentUid, spark) {
     // 1. Navigation: Mouse-Only via side zones
@@ -287,6 +301,9 @@ function setupInteractions(currentUid, spark) {
             e.stopPropagation();
             e.preventDefault();
             console.log("[NAV] Navigating to Previous Spark...");
+            
+            // CLEAN SLATE: Reset session before moving to previous
+            resetSparkSession(); 
             navigate(-1);
         };
     }
@@ -296,6 +313,9 @@ function setupInteractions(currentUid, spark) {
             e.stopPropagation();
             e.preventDefault();
             console.log("[NAV] Navigating to Next Spark...");
+            
+            // CLEAN SLATE: Reset session before moving to next
+            resetSparkSession();
             navigate(1);
         };
     }
@@ -304,7 +324,6 @@ function setupInteractions(currentUid, spark) {
     const editBtn = document.getElementById('edit-spark-btn');
 
     if (editBtn) {
-        // Check if the user is the owner OR the superuser
         const isOwner = currentUid && spark && spark.owner === currentUid;
         const isSuperUser = currentUid === 'yertal-arcade';
 
@@ -315,22 +334,22 @@ function setupInteractions(currentUid, spark) {
                 openSparkEditor();
             };
         } else {
-            // Explicitly ensure it's hidden if the check fails (safety)
             editBtn.style.display = 'none';
         }
     }
+
     // 3. UI Toggles & Media Controls
     const zenBtn = document.getElementById('zen-btn');
     if (zenBtn) zenBtn.onclick = toggleZen;
 
-    // ADD THIS: Specific handler for the Zen Exit button
     const exitZenBtn = document.getElementById('exit-zen-btn');
     if (exitZenBtn) {
         exitZenBtn.onclick = (e) => {
-            e.stopPropagation(); // Prevent the click from bubbling to the container
+            e.stopPropagation();
             toggleZen();
         };
     }
+
     const playPauseBtn = document.getElementById('play-pause-btn');
     if (playPauseBtn) {
         playPauseBtn.onclick = (e) => {
@@ -339,33 +358,27 @@ function setupInteractions(currentUid, spark) {
         };
     }
 
-    // Toggle play/pause on viewport click (useful for pausing sims/videos)
     const contentContainer = document.getElementById('spark-content-container');
     if (contentContainer) {
         contentContainer.onclick = (e) => {
-            // Only trigger if we aren't clicking a link/button inside
             togglePlayPause();
         };
     }
 
-    // 4. Reload Logic: Centralized binding using window.currentSpark
-   const reloadBtn = document.getElementById('reload-spark-btn');
+    // 4. Reload Logic: Now with Session Sync
+    const reloadBtn = document.getElementById('reload-spark-btn');
     if (reloadBtn) {
         reloadBtn.onclick = () => {
             if (window.currentSpark) {
-                // 1. Check the iframe for any changes against the arcade-current-types schema
+                // Capture UI state before re-assembling
                 syncUIToSessionMap(window.currentSpark);
-
-                // 2. Assemble new code (Hierarchy will pick up the session map)
                 const freshlyAssembled = assembleSpark(window.currentSpark);
-
-                // 3. Re-inject
                 loadSpark(freshlyAssembled);
             }
         };
     }
 
-    // 5. Fallback URL Binding (External Links)
+    // 5. Fallback URL Binding
     const fallbackBtn = document.getElementById('fallback-url-btn');
     if (fallbackBtn) {
         fallbackBtn.onclick = () => {
@@ -375,12 +388,15 @@ function setupInteractions(currentUid, spark) {
         };
     }
 
-    // 6. Exit Logic: Return to Showroom [cite: 2026-02-04]
+    // 6. Exit Logic: Return to Showroom
     const exitBtn = document.getElementById('exit-btn');
     if (exitBtn) {
         exitBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+
+            // CLEAN SLATE: Reset session map before leaving the lab
+            resetSparkSession();
 
             const params = new URLSearchParams(window.location.search);
             const userSlug = params.get('user') || 'yertal-arcade';
@@ -390,25 +406,27 @@ function setupInteractions(currentUid, spark) {
 
             console.log("[SYSTEM] Exiting to Showroom...");
             window.location.href = `/arcade/index.html?user=${userSlug}`;
-        }, true); // Capture phase to ensure priority
+        }, true);
     }
 
-   // 8. Keyboard Shortcuts: Reserved for System Toggles
+    // 8. Keyboard Shortcuts
     window.onkeydown = (e) => {
         const key = e.key.toLowerCase();
 
-        // Z or Escape for Zen Mode
         if (key === 'z' || key === 'escape') {
             toggleZen();
         }
 
-        // Ctrl+R for a quick logic reset
+        // Ctrl+R Logic: Now respects current slider values
         if (key === 'r' && e.ctrlKey) {
             e.preventDefault();
-            if (window.currentSpark) loadSpark(window.currentSpark);
+            if (window.currentSpark) {
+                syncUIToSessionMap(window.currentSpark);
+                const freshlyAssembled = assembleSpark(window.currentSpark);
+                loadSpark(freshlyAssembled);
+            }
         }
 
-        // Optional: Spacebar for Play/Pause if not in an input
         if (key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
             e.preventDefault();
             togglePlayPause();
