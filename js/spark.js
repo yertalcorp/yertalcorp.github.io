@@ -10,7 +10,7 @@ window.arcadeSessionState = {
     parameter_map: {} 
 };
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:47:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 22:12:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /**
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Map iframe element values to the arcadeSessionState using blueprint keys.
@@ -472,12 +472,10 @@ function setupInteractions(currentUid, spark) {
 
 /**
  * Objective: Hydrate a blueprint template with the established hierarchy of truth.
- * Task: Merge session state back into the spark object to ensure UI values persist on reload.
+ * Task: Ensure session values (Layer 3) take absolute precedence during string replacement.
  */
 function assembleSpark(spark) {
     if (spark.code || spark.link) return spark;
-
-    console.log("%c[ASSEMBLER] 🛠️ Starting Assembly for:", "color: #00f2fe; font-weight: bold;", spark.name);
 
     const settings = databaseCache?.settings || {};
     const blueprints = settings["arcade-current-types"];
@@ -488,53 +486,51 @@ function assembleSpark(spark) {
         return spark;
     }
 
-    // --- THE MERGE: Update the spark object's memory directly ---
-    // We combine the blueprint defaults, existing spark data, and the live UI session map.
-    const mergedParameters = { 
+    // --- THE HIERARCHY OF TRUTH ---
+    // Layer 1: Blueprint Defaults
+    // Layer 2: User Spark Node (Saved state)
+    // Layer 3: Live Session (Current UI state)
+    const finalParameters = { 
         ...(blueprint.parameter_map || {}), 
         ...(spark.parameter_map || {}),
         ...(window.arcadeSessionState?.parameter_map || {}) 
     };
 
-    // Update the actual spark reference so loadSpark sees the new values
-    spark.parameter_map = mergedParameters;
-
-    console.groupCollapsed("[ASSEMBLER] 🧩 Parameter Hierarchy Audit");
-    console.log("Layer 1 (Blueprint Default):", blueprint.parameter_map);
-    console.log("Layer 2 (Previous Spark State):", spark.parameter_map); // Now updated
-    console.log("Layer 3 (Live Session UI):", window.arcadeSessionState?.parameter_map);
-    console.log("%cFINAL MERGED RESULT:", "color: #00f2fe; font-weight: bold;", spark.parameter_map);
-    console.groupEnd();
+    console.groupCollapsed(`[ASSEMBLER] 🛠️ Assembling: ${spark.name}`);
+    console.log("Hierarchy Result:", finalParameters);
 
     let hydratedCode = blueprint.template || "";
 
     if (hydratedCode) {
-        Object.keys(spark.parameter_map).forEach(key => {
-            let value = spark.parameter_map[key];
+        // Iterate through the keys defined in the BLUEPRINT to ensure we don't miss anything
+        const schemaKeys = Object.keys(blueprint.parameter_map || finalParameters);
+        
+        schemaKeys.forEach(key => {
+            let value = finalParameters[key];
 
-            // Handle Arrays/Objects (like ball_colors)
+            // Handle Arrays/Objects
             if (value !== null && typeof value === 'object') {
-                value = JSON.stringify(value)
-                            .replace(/"/g, "'")    
-                            .replace(/'/g, "&apos;");
+                value = JSON.stringify(value).replace(/"/g, "'").replace(/'/g, "&apos;");
             }
 
             const regex = new RegExp(`{{\\s*${key}\\s*(?:\\|\\|\\s*[^}]+)?}}`, 'g');
-            const matchCount = (hydratedCode.match(regex) || []).length;
             
-            if (matchCount > 0) {
-                console.log(`[ASSEMBLER] Replacing {{${key}}} (${matchCount}x) ->`, value);
+            if (hydratedCode.match(regex)) {
+                // This is the moment of truth: check the log for this specific replacement
+                console.log(`[BAKING] {{${key}}} -> ${value}`);
                 hydratedCode = hydratedCode.replace(regex, () => value);
             }
         });
     }
 
-    // Attach the hydrated code to the spark object
-    spark.code = hydratedCode;
+    console.groupEnd();
 
-    console.log(`[ASSEMBLER] ✅ Assembly Complete. Code Length: ${spark.code.length} chars.`);
-
-    return spark;
+    // We return a NEW object to avoid mutating the original reference too early
+    return {
+        ...spark,
+        code: hydratedCode,
+        parameter_map: finalParameters 
+    };
 }
 
 watchAuthState(async (user) => {
