@@ -10,7 +10,7 @@ window.arcadeSessionState = {
     parameter_map: {} 
 };
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:18:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 21:47:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /**
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Map iframe element values to the arcadeSessionState using blueprint keys.
@@ -472,7 +472,7 @@ function setupInteractions(currentUid, spark) {
 
 /**
  * Objective: Hydrate a blueprint template with the established hierarchy of truth.
- * Task: Replace {{key}} tags with merged values from Blueprint, User, and Session layers.
+ * Task: Merge session state back into the spark object to ensure UI values persist on reload.
  */
 function assembleSpark(spark) {
     if (spark.code || spark.link) return spark;
@@ -488,25 +488,29 @@ function assembleSpark(spark) {
         return spark;
     }
 
-    // PARAMETER MERGING: Blueprint < User Spark < Live Session
-    const finalParameters = { 
+    // --- THE MERGE: Update the spark object's memory directly ---
+    // We combine the blueprint defaults, existing spark data, and the live UI session map.
+    const mergedParameters = { 
         ...(blueprint.parameter_map || {}), 
         ...(spark.parameter_map || {}),
         ...(window.arcadeSessionState?.parameter_map || {}) 
     };
 
+    // Update the actual spark reference so loadSpark sees the new values
+    spark.parameter_map = mergedParameters;
+
     console.groupCollapsed("[ASSEMBLER] 🧩 Parameter Hierarchy Audit");
     console.log("Layer 1 (Blueprint Default):", blueprint.parameter_map);
-    console.log("Layer 2 (User Saved Intent):", spark.parameter_map);
+    console.log("Layer 2 (Previous Spark State):", spark.parameter_map); // Now updated
     console.log("Layer 3 (Live Session UI):", window.arcadeSessionState?.parameter_map);
-    console.log("%cFINAL MERGED RESULT:", "color: #00f2fe; font-weight: bold;", finalParameters);
+    console.log("%cFINAL MERGED RESULT:", "color: #00f2fe; font-weight: bold;", spark.parameter_map);
     console.groupEnd();
 
     let hydratedCode = blueprint.template || "";
 
     if (hydratedCode) {
-        Object.keys(finalParameters).forEach(key => {
-            let value = finalParameters[key];
+        Object.keys(spark.parameter_map).forEach(key => {
+            let value = spark.parameter_map[key];
 
             // Handle Arrays/Objects (like ball_colors)
             if (value !== null && typeof value === 'object') {
@@ -515,25 +519,22 @@ function assembleSpark(spark) {
                             .replace(/'/g, "&apos;");
             }
 
-            // Regex matches {{key}} or {{key || default}}
             const regex = new RegExp(`{{\\s*${key}\\s*(?:\\|\\|\\s*[^}]+)?}}`, 'g');
             const matchCount = (hydratedCode.match(regex) || []).length;
             
             if (matchCount > 0) {
                 console.log(`[ASSEMBLER] Replacing {{${key}}} (${matchCount}x) ->`, value);
-                // Use arrow function to treat value as a literal string
                 hydratedCode = hydratedCode.replace(regex, () => value);
             }
         });
     }
 
-    console.log(`[ASSEMBLER] ✅ Assembly Complete. Length: ${hydratedCode.length} chars.`);
+    // Attach the hydrated code to the spark object
+    spark.code = hydratedCode;
 
-    return {
-        ...spark,
-        code: hydratedCode,
-        assembled_parameters: finalParameters 
-    };
+    console.log(`[ASSEMBLER] ✅ Assembly Complete. Code Length: ${spark.code.length} chars.`);
+
+    return spark;
 }
 
 watchAuthState(async (user) => {
