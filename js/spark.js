@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 14:52:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:38:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /*
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Directly update the spark object's parameter_map with current UI values.
@@ -262,15 +262,28 @@ function loadSpark(spark) {
     }
 }
 
+/*
+ * Objective: Change viewports to adjacent spark structures.
+ * Task: Maintain state continuity across transitions by preserving realm configuration URL parameters.
+ */
 function navigate(dir) {
     currentIndex = (currentIndex + dir + allSparks.length) % allSparks.length;
     
     const nextSpark = allSparks[currentIndex];
     
-    const newUrl = `${window.location.pathname}?current=${currentId}&spark=${nextSpark.id}`;
+    // Highlighted changes to apply: Read and preserve the active user slug
+    const currentParams = new URLSearchParams(window.location.search);
+    const userParam = currentParams.get('user');
+    
+    // Highlighted changes to apply: Conditionally append user back into the string
+    let newUrl = `${window.location.pathname}?current=${currentId}&spark=${nextSpark.id}`;
+    if (userParam) {
+        newUrl += `&user=${userParam}`;
+    }
+    
     window.history.pushState({path: newUrl}, '', newUrl);
     console.log(`navigation detected direction=${dir} currentIndex=${currentIndex}`);
-    // Highlighted changes to apply:
+    
     const freshlyAssembled = assembleSpark(nextSpark);
     window.currentSpark = freshlyAssembled;
     loadSpark(freshlyAssembled);
