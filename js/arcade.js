@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @12:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3469,6 +3469,11 @@ window.closeArcadeSettings = () => {
     if (hud) {
         // Option A: Instantly hide it
         //hud.style.display = 'none';
+        // Highlighted changes to apply: Rollback logic to revert style preview if unsubmitted
+        const originalTheme = hud.dataset.originalTheme;
+        if (originalTheme && typeof applyTheme === 'function') {
+            applyTheme(originalTheme);
+        }
         
         // Option B: If you are using a fade-out animation in showroom_style.css or arcade.css
         hud.classList.remove('active'); 
@@ -3548,7 +3553,10 @@ window.openArcadeSettings = () => {
 
         const activeThemeId = isSetup ? (profile.theme || 'spring-bloom') : 'spring-bloom';
         themeSelect.value = activeThemeId;
-        
+
+        // Highlighted changes to apply: Store original theme state as a rollback checkpoint on open
+        hud.dataset.originalTheme = activeThemeId;
+
         themeSelect.onchange = (e) => {
             if (typeof applyTheme === 'function') applyTheme(e.target.value);
             const selectedTheme = themes[e.target.value];
