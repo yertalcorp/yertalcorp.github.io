@@ -7,8 +7,8 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 23:14:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
-/**
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 14:10:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+/*
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Directly update the spark object's parameter_map with current UI values.
  */
@@ -270,7 +270,10 @@ function navigate(dir) {
     const newUrl = `${window.location.pathname}?current=${currentId}&spark=${nextSpark.id}`;
     window.history.pushState({path: newUrl}, '', newUrl);
     console.log(`navigation detected direction=${dir} currentIndex=${currentIndex}`);
-    loadSpark(assembleSpark(nextSpark));
+    // Highlighted changes to apply:
+    const freshlyAssembled = assembleSpark(nextSpark);
+    window.currentSpark = freshlyAssembled;
+    loadSpark(freshlyAssembled);
 }
 
 function toggleZen() {
@@ -325,7 +328,7 @@ function setupInteractions(currentUid, spark) {
             editBtn.style.display = 'flex';
             editBtn.onclick = (e) => {
                 e.stopPropagation();
-                openSparkEditor(spark);
+                openSparkEditor(window.currentSpark || spark);
             };
         } else {
             editBtn.style.display = 'none';
@@ -359,17 +362,19 @@ function setupInteractions(currentUid, spark) {
         };
     }
 
-    // 4. Reload Logic: Now with Session Sync
+    // 4. Reload Logic: Now tracking window.currentSpark dynamically
     const reloadBtn = document.getElementById('reload-spark-btn');
     if (reloadBtn) {
         reloadBtn.onclick = () => {
-            if (spark) {
+            const activeSpark = window.currentSpark || spark;
+            if (activeSpark) {
                 console.group("🔄 RELOAD AUDIT");
                 // 1. Sync
-                syncUIToSessionMap(spark);
+                syncUIToSessionMap(activeSpark);
                 // 2. Assemble
-                const freshlyAssembledSpark = assembleSpark(spark);
+                const freshlyAssembledSpark = assembleSpark(activeSpark);
                 // 3. Load
+                window.currentSpark = freshlyAssembledSpark;
                 loadSpark(freshlyAssembledSpark);
                 console.groupEnd();
             }
@@ -380,8 +385,9 @@ function setupInteractions(currentUid, spark) {
     const fallbackBtn = document.getElementById('fallback-url-btn');
     if (fallbackBtn) {
         fallbackBtn.onclick = () => {
-            if (spark && spark.link) {
-                window.open(spark.link, '_blank');
+            const activeSpark = window.currentSpark || spark;
+            if (activeSpark && activeSpark.link) {
+                window.open(activeSpark.link, '_blank');
             }
         };
     }
@@ -412,12 +418,14 @@ function setupInteractions(currentUid, spark) {
             toggleZen();
         }
 
-        // Ctrl+R Logic: Now respects current slider values
+        // Ctrl+R Logic: Now tracks live global target execution context
         if (key === 'r' && e.ctrlKey) {
             e.preventDefault();
-            if (spark) {
-                syncUIToSessionMap(spark);
-                const freshlyAssembled = assembleSpark(spark);
+            const activeSpark = window.currentSpark || spark;
+            if (activeSpark) {
+                syncUIToSessionMap(activeSpark);
+                const freshlyAssembled = assembleSpark(activeSpark);
+                window.currentSpark = freshlyAssembled;
                 loadSpark(freshlyAssembled);
             }
         }
@@ -433,7 +441,7 @@ function setupInteractions(currentUid, spark) {
     if (iframe) iframe.focus();
 }
 
-/**
+/*
  * Objective: Hydrate a blueprint template with the established hierarchy of truth.
  * Task: Ensure session values (Layer 3) take absolute precedence during string replacement.
  */
