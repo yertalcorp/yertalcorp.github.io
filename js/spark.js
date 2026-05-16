@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 14:10:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 14:52:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /*
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Directly update the spark object's parameter_map with current UI values.
@@ -446,7 +446,10 @@ function setupInteractions(currentUid, spark) {
  * Task: Ensure session values (Layer 3) take absolute precedence during string replacement.
  */
 function assembleSpark(spark) {
-    if (spark.code || spark.link) return spark;
+    // Highlighted changes to apply:
+    if ((spark.code || spark.link) && (spark.index === undefined || spark.index === null)) {
+        return spark;
+    }
 
     const settings = databaseCache?.settings || {};
     const blueprints = settings["arcade-current-types"];
@@ -502,6 +505,7 @@ function assembleSpark(spark) {
         parameter_map: finalParameters 
     };
 }
+
 
 watchAuthState(async (user) => {
     console.log("%c[AUTH] State Changed", "color: #00ff00;");
