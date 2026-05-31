@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:38:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:57:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /*
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Directly update the spark object's parameter_map with current UI values.
@@ -454,11 +454,77 @@ function setupInteractions(currentUid, spark) {
     if (iframe) iframe.focus();
 }
 
+function assembleSpark(spark) {
+    // Highlighted changes to apply:
+    if ((spark.code || spark.link) && (spark.index === undefined || spark.index === null)) {
+        return spark;
+    }
+
+    const settings = databaseCache?.settings || {};
+    const blueprints = settings["arcade-current-types"];
+    const blueprint = Array.isArray(blueprints) ? blueprints[spark.index] : null;
+
+    if (!blueprint) {
+        console.error(`[ASSEMBLER] ❌ FAILED: No blueprint found at index: ${spark.index}`);
+        return spark;
+    }
+
+    // --- THE HIERARCHY OF TRUTH ---
+    // Layer 1: Blueprint Defaults
+    // Layer 2: User Spark Node (Saved state)
+    // Layer 3: Live Session (Current UI state)
+    const finalParameters = { 
+        ...(blueprint.parameter_map || {}), 
+        ...(spark.parameter_map || {})
+    };
+
+    console.groupCollapsed(`[ASSEMBLER] 🛠️ Assembling: ${spark.name}`);
+    console.log("Hierarchy Result:", finalParameters);
+
+    let hydratedCode = blueprint.template || "";
+
+    if (hydratedCode) {
+        // Iterate through the keys defined in the BLUEPRINT to ensure we don't miss anything
+        const schemaKeys = Object.keys(blueprint.parameter_map || finalParameters);
+        
+        schemaKeys.forEach(key => {
+            let value = finalParameters[key];
+
+            // Handle Arrays/Objects cleanly based on nesting types
+            if (value !== null && typeof value === 'object') {
+                if (Array.isArray(value)) {
+                    // Maintain original logic for sequential arrays
+                    value = JSON.stringify(value).replace(/"/g, "'").replace(/'/g, "&apos;");
+                } else {
+                    // Deep nested nodes/objects require raw, unescaped JSON text
+                    value = JSON.stringify(value);
+                }
+            }
+
+            const regex = new RegExp(`{{\\s*${key}\\s*(?:\\|\\|\\s*[^}]+)?}}`, 'g');
+            
+            if (hydratedCode.match(regex)) {
+                // This is the moment of truth: check the log for this specific replacement
+                console.log(`[BAKING] {{${key}}} -> ${value}`);
+                hydratedCode = hydratedCode.replace(regex, () => value);
+            }
+        });
+    }
+
+    console.groupEnd();
+
+    // We return a NEW object to avoid mutating the original reference too early
+    return {
+        ...spark,
+        code: hydratedCode,
+        parameter_map: finalParameters 
+    };
+}
 /*
  * Objective: Hydrate a blueprint template with the established hierarchy of truth.
  * Task: Ensure session values (Layer 3) take absolute precedence during string replacement.
  */
-function assembleSpark(spark) {
+function prevAssembleSpark(spark) {
     // Highlighted changes to apply:
     if ((spark.code || spark.link) && (spark.index === undefined || spark.index === null)) {
         return spark;
