@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1424,8 +1424,6 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
 }
 function resolveIndexFromPrompt(prompt, currentName) {
     const cleanPrompt = prompt.toLowerCase().trim();
-    const tokens = cleanPrompt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
-    
     const presets = databaseCache.settings?.['arcade-current-types'] || [];
     
     let bestIndex = -1;
@@ -1434,23 +1432,32 @@ function resolveIndexFromPrompt(prompt, currentName) {
 
     presets.forEach((category, index) => {
         let currentScore = 0;
-        const catId = (category.id || '').toLowerCase().trim();
-        const catName = (category.name || '').toLowerCase().trim();
-        const catRegex = category.regex || '';
-
-        if (currentName && catName === currentName.toLowerCase().trim()) currentScore += 0.5;
-        if (catId && cleanPrompt.includes(catId)) currentScore += 0.4;
-        if (catName && cleanPrompt.includes(catName)) currentScore += 0.3;
         
+        // 1. ID & Description match
+        if (category.id && cleanPrompt.includes(category.id.toLowerCase())) currentScore += 0.4;
+        if (category.description && cleanPrompt.includes(category.description.toLowerCase())) currentScore += 0.2;
+        
+        // 2. Scan template internal 'groups' for semantic keyword matching
         try {
-            const regexPattern = new RegExp(`\\b(${catRegex})\\b`, 'i');
-            if (catRegex && regexPattern.test(cleanPrompt)) currentScore += 0.4;
-        } catch (e) {}
-
-        if (category.fields) {
-            category.fields.forEach(field => {
-                if (cleanPrompt.includes(field.toLowerCase())) currentScore += 0.1;
-            });
+            // Ensure you are operating in an environment where DOMParser is available (browser)
+            const templateDOM = new DOMParser().parseFromString(category.New_Template, 'text/html');
+            const scriptContent = templateDOM.querySelector('script')?.innerText || '';
+            const groupsMatch = scriptContent.match(/groups\s*=\s*(\{[\s\S]*?\})/);
+            
+            if (groupsMatch) {
+                // Safely parse the group object from the template script
+                const groups = JSON.parse(groupsMatch[1].replace(/'/g, '"'));
+                Object.entries(groups).forEach(([groupName, tools]) => {
+                    if (cleanPrompt.includes(groupName.toLowerCase().replace('_', ' '))) currentScore += 0.3;
+                    if (Array.isArray(tools)) {
+                        tools.forEach(tool => {
+                            if (cleanPrompt.includes(tool.toLowerCase())) currentScore += 0.15;
+                        });
+                    }
+                });
+            }
+        } catch (e) { 
+            // Silent fail if template structure is unexpected
         }
 
         if (currentScore > maxScore) {
@@ -1461,7 +1468,8 @@ function resolveIndexFromPrompt(prompt, currentName) {
 
     const matchedCategory = maxScore >= SCORE_THRESHOLD ? presets[bestIndex] : null;
     const matchedIndex = maxScore >= SCORE_THRESHOLD ? bestIndex : -1;
-
+    
+    // 3. Property Extraction
     const userProperties = {};
     if (matchedCategory && matchedCategory.parameter_map) {
         const pMap = matchedCategory.parameter_map;
