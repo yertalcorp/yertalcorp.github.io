@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1422,52 +1422,46 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
         </div>
     `;
 }
-/**
- * Overall Objective: Identify the library index and property deltas from a prompt.
- * Task: Perform a prioritized scan of the library to resolve a semantic match.
- */
 function resolveIndexFromPrompt(prompt, currentName) {
     const cleanPrompt = prompt.toLowerCase().trim();
     const tokens = cleanPrompt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
     
     const presets = databaseCache.settings?.['arcade-current-types'] || [];
-    let matchedCategory = null;
-    let matchedIndex = -1;
+    
+    let bestIndex = -1;
+    let maxScore = 0;
+    const SCORE_THRESHOLD = 0.2;
 
-    // 1. ACTIVE BOARD NAME CHECK (Highest Priority)
-    if (currentName) {
-        const cleanCurrentName = currentName.toLowerCase().trim();
-        const currentNameRegex = new RegExp(`\\b${cleanCurrentName}\\b`, 'i');
+    presets.forEach((category, index) => {
+        let currentScore = 0;
+        const catId = (category.id || '').toLowerCase().trim();
+        const catName = (category.name || '').toLowerCase().trim();
+        const catRegex = category.regex || '';
+
+        if (currentName && catName === currentName.toLowerCase().trim()) currentScore += 0.5;
+        if (catId && cleanPrompt.includes(catId)) currentScore += 0.4;
+        if (catName && cleanPrompt.includes(catName)) currentScore += 0.3;
         
-        if (currentNameRegex.test(cleanPrompt)) {
-            matchedIndex = presets.findIndex(p => (p.name || '').toLowerCase().trim() === cleanCurrentName);
-            if (matchedIndex !== -1) matchedCategory = presets[matchedIndex];
+        try {
+            const regexPattern = new RegExp(`\\b(${catRegex})\\b`, 'i');
+            if (catRegex && regexPattern.test(cleanPrompt)) currentScore += 0.4;
+        } catch (e) {}
+
+        if (category.fields) {
+            category.fields.forEach(field => {
+                if (cleanPrompt.includes(field.toLowerCase())) currentScore += 0.1;
+            });
         }
-    }
 
-    // 2. DB ID, NAME, & REGEX SCAN (Second Priority)
-    if (matchedIndex === -1) {
-        matchedIndex = presets.findIndex(category => {
-            const catId = (category.id || '').toLowerCase().trim();
-            const catName = (category.name || '').toLowerCase().trim();
-            
-            const idMatches = catId && new RegExp(`\\b${catId}\\b`, 'i').test(cleanPrompt);
-            const nameMatches = catName && new RegExp(`\\b${catName}\\b`, 'i').test(cleanPrompt);
-            
-            let regexMatches = false;
-            if (category.regex) {
-                try {
-                    const sanitizedRegex = category.regex.replace(/^\|+|\|+$/g, '').replace(/\|\|+/g, '|');
-                    const regexPattern = new RegExp(`\\b(${sanitizedRegex})\\b`, 'i');
-                    regexMatches = regexPattern.test(cleanPrompt) || tokens.some(t => regexPattern.test(t));
-                } catch (e) { /* silent fail */ }
-            }
-            return idMatches || nameMatches || regexMatches;
-        });
-        if (matchedIndex !== -1) matchedCategory = presets[matchedIndex];
-    }
+        if (currentScore > maxScore) {
+            maxScore = currentScore;
+            bestIndex = index;
+        }
+    });
 
-    // 3. PROPERTY EXTRACTION (Finding the user's overrides)
+    const matchedCategory = maxScore >= SCORE_THRESHOLD ? presets[bestIndex] : null;
+    const matchedIndex = maxScore >= SCORE_THRESHOLD ? bestIndex : -1;
+
     const userProperties = {};
     if (matchedCategory && matchedCategory.parameter_map) {
         const pMap = matchedCategory.parameter_map;
@@ -1485,7 +1479,8 @@ function resolveIndexFromPrompt(prompt, currentName) {
         is_custom: matchedIndex === -1
     };
 }
-/**
+
+/*
  * Overall Objective: Execute the user's intent by creating an index-linked Spark node.
  * Task: Route to the local Template Cache (via index) or trigger the LLM for custom logic.
  */
@@ -1522,7 +1517,7 @@ async function executePrompt(userPrompt, libraryIndex = null) {
     return await saveSparkToUserInfrastructure(sparkNode);
 }
 
-/**
+/*
  * Overall Objective: Distill new LLM code into a reusable Class Template.
  * Task: Extract a schema of parameters and defaults to define the Category's blueprint.
  */
@@ -1576,7 +1571,7 @@ function distillSparkCodeToCache(sparkNode, currentLibrary) {
         extractedProperties: newTypeEntry.defaults
     };
 }
-/**
+/*
  * Overall Objective: Render the Spark by rehydrating the indexed template.
  * Task: O(1) lookup to grab the code and inject current user properties.
  */
