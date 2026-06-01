@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:53:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1422,6 +1422,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
         </div>
     `;
 }
+
 /*
  * Overall Objective: Identify the library index and property deltas from a prompt.
  * Task: Perform a prioritized probabilistic scan of the library to resolve a semantic match.
@@ -1440,7 +1441,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     presets.forEach((category, index) => {
         let currentScore = 0;
 
-        // **1. Priority Boost (Bubble Selection)**
+        // 1. Priority Boost (Bubble Selection)
         if (forcedCategoryName && category.name && category.name.toLowerCase() === forcedCategoryName.toLowerCase()) {
             currentScore += 0.5;
         }
@@ -1497,6 +1498,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         is_custom: matchedIndex === -1
     };
 }
+
 /*
  * Overall Objective: Execute the user's intent by creating an index-linked Spark node.
  * Task: Route to the local Template Cache (via index) or trigger the LLM for custom logic.
