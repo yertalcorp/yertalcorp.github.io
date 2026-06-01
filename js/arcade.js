@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:02:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1609,7 +1609,55 @@ function assembleFromIndex(userSpark, library) {
 
     return finalCode;
 }
+
 window.handleCreation = async (currentId, currentName, currentPrivacy) => {
+    const promptInput = document.getElementById(`input-${currentId}`);
+    const input = promptInput ? promptInput.value.trim() : '';
+    if (!input) return;
+
+    const status = document.getElementById('engine-status-text');
+    status.textContent = "PROCESSING INFRASTRUCTURE...";
+
+    // Read the name passed from the bubble; fallback to 'Custom'
+    const categorySelect = promptInput.getAttribute('data-selected-capability') || 'Custom';
+    
+    let resolvedCategory;
+
+    console.log("handleCreation: Selected Category is: ", categorySelect);
+    
+    try {
+        if (categorySelect === 'Custom' || categorySelect === '') {
+            resolvedCategory = resolveCategoryFromPrompt(input);
+        } else {
+            // Find the full category object from the cache based on the bubble name
+            resolvedCategory = databaseCache.settings?.['arcade-current-types']?.find(
+                t => t.name?.trim().toLowerCase() === categorySelect.trim().toLowerCase());
+            
+            if (!resolvedCategory) resolvedCategory = resolveCategoryFromPrompt(input, categorySelect);
+        }
+
+        console.log("handleCreation: After databaseCache Lookup, Resolved current type is:", resolvedCategory?.name);
+
+        await executeMassSpark(
+            currentId, 
+            currentName, 
+            input, 
+            (resolvedCategory.logic === 'source' || /^(http|https):\/\/[^ "]+$/.test(input)) ? 'source' : 'create', 
+            resolvedCategory,
+            currentPrivacy
+        );
+        
+        // Clean up
+        promptInput.value = '';
+        promptInput.removeAttribute('data-selected-capability');
+
+    } catch (e) {
+        console.error("Creation Error:", e);
+        await executeMassSpark(currentId, currentName, input, 'create', { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg' }, currentPrivacy);
+    }
+};
+
+window.handleCreationNew = async (currentId, currentName, currentPrivacy) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
     if (!input) return;
