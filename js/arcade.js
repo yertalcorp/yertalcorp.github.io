@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1422,7 +1422,14 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
         </div>
     `;
 }
-function resolveIndexFromPrompt(prompt, currentName) {
+/*
+ * Overall Objective: Identify the library index and property deltas from a prompt.
+ * Task: Perform a prioritized probabilistic scan of the library to resolve a semantic match.
+ * @param {string} prompt - The user's input string.
+ * @param {string} currentName - The current board name for high-priority matching.
+ * @param {string|null} forcedCategoryName - The category selected via bubble UI.
+ */
+function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) {
     const cleanPrompt = prompt.toLowerCase().trim();
     const presets = databaseCache.settings?.['arcade-current-types'] || [];
     
@@ -1432,20 +1439,23 @@ function resolveIndexFromPrompt(prompt, currentName) {
 
     presets.forEach((category, index) => {
         let currentScore = 0;
+
+        // **1. Priority Boost (Bubble Selection)**
+        if (forcedCategoryName && category.name && category.name.toLowerCase() === forcedCategoryName.toLowerCase()) {
+            currentScore += 0.5;
+        }
         
-        // 1. ID & Description match
+        // 2. ID & Description match
         if (category.id && cleanPrompt.includes(category.id.toLowerCase())) currentScore += 0.4;
         if (category.description && cleanPrompt.includes(category.description.toLowerCase())) currentScore += 0.2;
         
-        // 2. Scan template internal 'groups' for semantic keyword matching
+        // 3. Scan template internal 'groups' for semantic keyword matching
         try {
-            // Ensure you are operating in an environment where DOMParser is available (browser)
             const templateDOM = new DOMParser().parseFromString(category.New_Template, 'text/html');
             const scriptContent = templateDOM.querySelector('script')?.innerText || '';
             const groupsMatch = scriptContent.match(/groups\s*=\s*(\{[\s\S]*?\})/);
             
             if (groupsMatch) {
-                // Safely parse the group object from the template script
                 const groups = JSON.parse(groupsMatch[1].replace(/'/g, '"'));
                 Object.entries(groups).forEach(([groupName, tools]) => {
                     if (cleanPrompt.includes(groupName.toLowerCase().replace('_', ' '))) currentScore += 0.3;
@@ -1469,7 +1479,7 @@ function resolveIndexFromPrompt(prompt, currentName) {
     const matchedCategory = maxScore >= SCORE_THRESHOLD ? presets[bestIndex] : null;
     const matchedIndex = maxScore >= SCORE_THRESHOLD ? bestIndex : -1;
     
-    // 3. Property Extraction
+    // 4. Property Extraction
     const userProperties = {};
     if (matchedCategory && matchedCategory.parameter_map) {
         const pMap = matchedCategory.parameter_map;
@@ -1487,7 +1497,6 @@ function resolveIndexFromPrompt(prompt, currentName) {
         is_custom: matchedIndex === -1
     };
 }
-
 /*
  * Overall Objective: Execute the user's intent by creating an index-linked Spark node.
  * Task: Route to the local Template Cache (via index) or trigger the LLM for custom logic.
@@ -1605,25 +1614,23 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     const status = document.getElementById('engine-status-text');
     status.textContent = "PROCESSING INFRASTRUCTURE...";
 
-    // Read the name passed from the bubble; fallback to 'Custom'
-    const categorySelect = promptInput.getAttribute('data-selected-capability') || 'Custom';
-    
-    let resolvedCategory;
-
-    console.log("handleCreation: Selected Category is: ", categorySelect);
+    // Capture the hint from the bubble
+    const bubbleHint = promptInput.getAttribute('data-selected-capability');
     
     try {
-        if (categorySelect === 'Custom' || categorySelect === '') {
-            resolvedCategory = resolveCategoryFromPrompt(input);
+        // CENTRALIZED RESOLUTION
+        // We pass the bubbleHint to help the matcher, but we still re-run it
+        const matchResult = resolveIndexFromPrompt(input, bubbleHint);
+        
+        let resolvedCategory;
+        if (!matchResult.is_custom) {
+            resolvedCategory = databaseCache.settings['arcade-current-types'][matchResult.index];
+            // Merge properties into the object to be used for hydration
+            resolvedCategory.injectedProperties = matchResult.properties;
         } else {
-            // Find the full category object from the cache based on the bubble name
-            resolvedCategory = databaseCache.settings?.['arcade-current-types']?.find(
-                t => t.name?.trim().toLowerCase() === categorySelect.trim().toLowerCase());
-            
-            if (!resolvedCategory) resolvedCategory = resolveCategoryFromPrompt(input, categorySelect);
+            // Fallback for custom requests
+            resolvedCategory = { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg' };
         }
-
-        console.log("handleCreation: After databaseCache Lookup, Resolved current type is:", resolvedCategory?.name);
 
         await executeMassSpark(
             currentId, 
@@ -1634,7 +1641,6 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
             currentPrivacy
         );
         
-        // Clean up
         promptInput.value = '';
         promptInput.removeAttribute('data-selected-capability');
 
