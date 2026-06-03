@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @17:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1457,7 +1457,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         
         // 3. Scan template internal 'groups' for semantic keyword matching
         try {
-            **const rawHTML = category.template || '';**
+            const rawHTML = category.template || '';
             const templateDOM = new DOMParser().parseFromString(rawHTML, 'text/html');
             const scriptContent = templateDOM.querySelector('script')?.innerText || '';
             const groupsMatch = scriptContent.match(/groups\s*=\s*(\{[\s\S]*?\})/);
@@ -3119,7 +3119,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
             const cachedPreset = databaseCache.settings?.['arcade-current-types']?.[promptTypeObject.index];
             
             // COROLLARY CHECK: Verify if the matched index contains actual template execution data
-            **const functionalTemplate = cachedPreset?.template || '';**
+            const functionalTemplate = cachedPreset?.template || '';
 
             if (functionalTemplate.trim() === '') {
                 // Upgrade path to hybrid code mode execution since template block is an empty stub
