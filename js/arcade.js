@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:02:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:24:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1450,9 +1450,15 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         if (category.id && cleanPrompt.includes(category.id.toLowerCase())) currentScore += 0.4;
         if (category.description && cleanPrompt.includes(category.description.toLowerCase())) currentScore += 0.2;
         
+        // 2b. Enhanced structural property scoring for custom searches
+        if (category.name && cleanPrompt.includes(category.name.toLowerCase())) currentScore += 0.3;
+        if (category.example_prompt && cleanPrompt.includes(category.example_prompt.toLowerCase())) currentScore += 0.25;
+        if (category.regex && new RegExp(category.regex, 'i').test(cleanPrompt)) currentScore += 0.35;
+        
         // 3. Scan template internal 'groups' for semantic keyword matching
         try {
-            const templateDOM = new DOMParser().parseFromString(category.New_Template, 'text/html');
+            const rawHTML = category.template || category.legacy_template || category.New_Template || category.legacy_code || '';
+            const templateDOM = new DOMParser().parseFromString(rawHTML, 'text/html');
             const scriptContent = templateDOM.querySelector('script')?.innerText || '';
             const groupsMatch = scriptContent.match(/groups\s*=\s*(\{[\s\S]*?\})/);
             
@@ -1482,12 +1488,16 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     
     // 4. Property Extraction
     const userProperties = {};
-    if (matchedCategory && matchedCategory.parameter_map) {
-        const pMap = matchedCategory.parameter_map;
+    if (matchedCategory) {
+        const pMap = matchedCategory.parameter_map || {};
         Object.keys(pMap).forEach(key => {
-            const match = prompt.match(new RegExp(pMap[key], 'i'));
-            if (match) {
-                userProperties[key] = (match[1] || match[0]).trim();
+            if (typeof pMap[key] === 'string') {
+                const match = prompt.match(new RegExp(pMap[key], 'i'));
+                if (match) {
+                    userProperties[key] = (match[1] || match[0]).trim();
+                }
+            } else {
+                userProperties[key] = pMap[key];
             }
         });
     }
@@ -1498,7 +1508,6 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         is_custom: matchedIndex === -1
     };
 }
-
 
 /*
  * Overall Objective: Execute the user's intent by creating an index-linked Spark node.
@@ -1591,6 +1600,7 @@ function distillSparkCodeToCache(sparkNode, currentLibrary) {
         extractedProperties: newTypeEntry.defaults
     };
 }
+
 /*
  * Overall Objective: Render the Spark by rehydrating the indexed template.
  * Task: O(1) lookup to grab the code and inject current user properties.
@@ -1618,77 +1628,31 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     const status = document.getElementById('engine-status-text');
     status.textContent = "PROCESSING INFRASTRUCTURE...";
 
-    // Read the name passed from the bubble; fallback to 'Custom'
-    const categorySelect = promptInput.getAttribute('data-selected-capability') || 'Custom';
-    
-    let resolvedCategory;
-
-    console.log("handleCreation: Selected Category is: ", categorySelect);
-    
-    try {
-        if (categorySelect === 'Custom' || categorySelect === '') {
-            resolvedCategory = resolveCategoryFromPrompt(input);
-        } else {
-            // Find the full category object from the cache based on the bubble name
-            resolvedCategory = databaseCache.settings?.['arcade-current-types']?.find(
-                t => t.name?.trim().toLowerCase() === categorySelect.trim().toLowerCase());
-            
-            if (!resolvedCategory) resolvedCategory = resolveCategoryFromPrompt(input, categorySelect);
-        }
-
-        console.log("handleCreation: After databaseCache Lookup, Resolved current type is:", resolvedCategory?.name);
-
-        await executeMassSpark(
-            currentId, 
-            currentName, 
-            input, 
-            (resolvedCategory.logic === 'source' || /^(http|https):\/\/[^ "]+$/.test(input)) ? 'source' : 'create', 
-            resolvedCategory,
-            currentPrivacy
-        );
-        
-        // Clean up
-        promptInput.value = '';
-        promptInput.removeAttribute('data-selected-capability');
-
-    } catch (e) {
-        console.error("Creation Error:", e);
-        await executeMassSpark(currentId, currentName, input, 'create', { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg' }, currentPrivacy);
-    }
-};
-
-window.handleCreationNew = async (currentId, currentName, currentPrivacy) => {
-    const promptInput = document.getElementById(`input-${currentId}`);
-    const input = promptInput ? promptInput.value.trim() : '';
-    if (!input) return;
-
-    const status = document.getElementById('engine-status-text');
-    status.textContent = "PROCESSING INFRASTRUCTURE...";
-
     // Capture the hint from the bubble
     const bubbleHint = promptInput.getAttribute('data-selected-capability');
     
     try {
         // CENTRALIZED RESOLUTION
         // We pass the bubbleHint to help the matcher, but we still re-run it
-        const matchResult = resolveIndexFromPrompt(input, bubbleHint);
+        const matchResult = resolveIndexFromPrompt(input, currentName, bubbleHint);
         
         let resolvedCategory;
         if (!matchResult.is_custom) {
             resolvedCategory = databaseCache.settings['arcade-current-types'][matchResult.index];
             // Merge properties into the object to be used for hydration
-            resolvedCategory.injectedProperties = matchResult.properties;
+            resolvedCategory.index = matchResult.index;
+            resolvedCategory.properties = matchResult.properties;
+            resolvedCategory.is_custom = false;
         } else {
             // Fallback for custom requests
-            resolvedCategory = { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg' };
+            resolvedCategory = { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg', index: -1, properties: {}, is_custom: true };
         }
 
         await executeMassSpark(
             currentId, 
             currentName, 
             input, 
-            (resolvedCategory.logic === 'source' || /^(http|https):\/\/[^ "]+$/.test(input)) ? 'source' : 'create', 
-            resolvedCategory,
+            (!matchResult.is_custom) ? 'cache_hit' : ((resolvedCategory.logic === 'source' || /^(http|https):\/\/[^ "]+$/.test(input)) ? 'source' : 'create'), resolvedCategory,
             currentPrivacy
         );
         
@@ -1697,7 +1661,7 @@ window.handleCreationNew = async (currentId, currentName, currentPrivacy) => {
 
     } catch (e) {
         console.error("Creation Error:", e);
-        await executeMassSpark(currentId, currentName, input, 'create', { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg' }, currentPrivacy);
+        await executeMassSpark(currentId, currentName, input, 'create', { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg', index: -1, properties: {}, is_custom: true }, currentPrivacy);
     }
 };
 
@@ -2646,119 +2610,6 @@ function closeExecHUD(intervalId) {
     }, 800);
 }
 
-// FUNCTION: executeMassSpark
-async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeObject, currentPrivacy) {
-    const status = document.getElementById('engine-status-text');
-    
-    // 1. CAPACITY VALIDATION
-    const planLimits = databaseCache.settings?.['plan_limits']?.[databaseCache.users?.[user.uid]?.profile?.plan_type || 'free'] || databaseCache.settings?.['plan_limits']?.['free'];
-    const remainingSpace = planLimits.max_sparks_per_current - Object.keys(databaseCache.users?.[user.uid]?.infrastructure?.currents?.[currentId]?.sparks || {}).length;
-
-    if (remainingSpace <= 0) {
-        status.textContent = `STORAGE FULL (${planLimits.max_sparks_per_current}/${planLimits.max_sparks_per_current})`;
-        alert(`Limit reached: ${planLimits.max_sparks_per_current} sparks.`);
-        return;
-    }
-
-    // 2. WORKLOAD LOGIC
-    const manualUrls = extractUrls(prompt);
-    const resolution = getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpace);
-
-    const updateForgeStatus = (text) => {
-        if (!window.isInCooldown) status.textContent = text;
-    };
-
-    // START STATUS HUD
-    const hudInterval = await triggerExecHUD();
-    try {
-        if (mode === 'source') {
-            let linksToSave = [];
-
-            if (manualUrls.length > 0 && !resolution.isAiReferenceSearch) {
-                for (let i = 0; i < Math.min(manualUrls.length, resolution.count); i++) {
-                    linksToSave.push({
-                        name: resolution.textChunks[i] || generateSparkName(currentId),
-                        url: manualUrls[i],
-                        image: promptTypeObject.image || '/assets/thumbnails/default.jpg'
-                    });
-                }
-            } else {
-                updateForgeStatus("CONSULTING MODEL POOL...");
-                
-                const aiLinks = await callProviderAPI(prompt, currentName, promptTypeObject, resolution.count, mode);
-
-                // ENHANCED: Normalization for multiple model response formats
-                const rawArray = Array.isArray(aiLinks) ? aiLinks : (typeof aiLinks === 'string' ? aiLinks.split(/,|\n/).map(str => str.trim()).filter(Boolean) : [aiLinks]);
-                
-                linksToSave = rawArray
-                    .slice(0, resolution.count)
-                    .map((item, index) => {
-                        const isObject = item !== null && typeof item === 'object';
-                        return {
-                            name: (isObject ? (item.name || item.title) : null) || resolution.textChunks[index] || generateSparkName(promptTypeObject.name),
-                            url: isObject ? (item.url || item.link || item.code) : item,
-                            image: (isObject ? (item.thumbnail || item.image || item.img) : null) || promptTypeObject.image || '/assets/thumbnails/default.jpg'
-                        };
-                    });                    
-            }
-
-            for (let i = 0; i < linksToSave.length; i++) {
-                const sparkName = linksToSave.length > 1 && linksToSave[i].name.startsWith('spark_') ? `${linksToSave[i].name}-${i + 1}` : linksToSave[i].name;
-
-                console.log(`executeMassSpark spark mode=${mode} spark image URL=${linksToSave[i].image}`);
-                await saveSpark(currentId, {name: sparkName, link: linksToSave[i].url, image: linksToSave[i].image}, prompt, promptTypeObject.name, promptTypeObject.image, currentPrivacy);
-                
-                const progress = Math.round(((i + 1) / linksToSave.length) * 100);
-                updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
-            }
-        } else {
-            // CREATE MODE
-            for (let i = 0; i < resolution.count; i++) {
-                const progress = Math.round((i / resolution.count) * 100);
-                updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
-
-                const response = await callProviderAPI(prompt, currentName, promptTypeObject, i, mode);
-                
-                // ENHANCED: Extract specific fields with object-aware fallbacks
-                const isObj = response !== null && typeof response === 'object';
-           
-                // Use the normalized keys guaranteed by extractSparkData within callProviderAPI
-                
-                const sparkName = isObj ? response.name : (resolution.count > 1 ? `${generateSparkName(currentId)}-${i + 1}` : generateSparkName(currentId));
-                const sparkContent = isObj ? (response.code || response.url) : response;
-                const sparkImage = isObj ? response.thumbnail : (promptTypeObject.image || '/assets/thumbnails/default.jpg');
-
-                console.log(`executeMassSpark spark mode=${mode} spark image URL=${sparkImage}`);                
-                const isCode = typeof sparkContent === 'string' && (sparkContent.trim().startsWith('<') || sparkContent.trim().startsWith('function') || sparkContent.trim().startsWith('const') || sparkContent.trim().includes('document.'));
-                
-                await saveSpark(
-                    currentId, 
-                    { 
-                        name: sparkName, 
-                        [isCode ? 'code' : 'link']: sparkContent, 
-                        image: sparkImage
-                    }, 
-                    prompt,
-                    promptTypeObject.name,
-                    promptTypeObject.image,
-                    currentPrivacy
-                );
-            }
-            updateForgeStatus(`FORGING ${resolution.count} SPARKS [==========] 100%`);
-        }
-
-        setTimeout(async () => {
-            status.textContent = "SYSTEM READY";
-            closeExecHUD(hudInterval);
-            await refreshUI(); 
-        }, 1000);
-
-    } catch (e) { 
-        console.error("Forge Error:", e);
-        if (!window.isInCooldown) status.textContent = "FORGE ERROR";
-        closeExecHUD(hudInterval);
-    }
-}
 
 /*
  * Processes the image field from the DB.
@@ -3239,7 +3090,162 @@ async function getBestModels(poolType) {
     return sorted;
 }
 
+async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeObject, currentPrivacy) {
+    const status = document.getElementById('engine-status-text');
+    
+    // 1. CAPACITY VALIDATION
+    const planLimits = databaseCache.settings?.['plan_limits']?.[databaseCache.users?.[user.uid]?.profile?.plan_type || 'free'] || databaseCache.settings?.['plan_limits']?.['free'];
+    const remainingSpace = planLimits.max_sparks_per_current - Object.keys(databaseCache.users?.[user.uid]?.infrastructure?.currents?.[currentId]?.sparks || {}).length;
 
+    if (remainingSpace <= 0) {
+        status.textContent = `STORAGE FULL (${planLimits.max_sparks_per_current}/${planLimits.max_sparks_per_current})`;
+        alert(`Limit reached: ${planLimits.max_sparks_per_current} sparks.`);
+        return;
+    }
+
+    // 2. WORKLOAD LOGIC
+    const manualUrls = extractUrls(prompt);
+    const resolution = getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpace);
+
+    const updateForgeStatus = (text) => {
+        if (!window.isInCooldown) status.textContent = text;
+    };
+
+    // START STATUS HUD
+    const hudInterval = await triggerExecHUD();
+    try {
+        // Handle Instant Cache Hit Infrastructure Creation
+        if (mode === 'cache_hit' && promptTypeObject && promptTypeObject.index !== -1) {
+            updateForgeStatus("FORGING INSTANT SPARK FROM CACHE...");
+            const cachedPreset = databaseCache.settings?.['arcade-current-types']?.[promptTypeObject.index];
+            
+            const functionalTemplate = cachedPreset.template || cachedPreset.legacy_template || cachedPreset.New_Template || cachedPreset.legacy_code || '';
+
+            await saveSpark(currentId, {
+                name: cachedPreset.name || generateSparkName(currentId),
+                [cachedPreset.logic === 'source' ? 'link' : 'code']: functionalTemplate,
+                image: cachedPreset.image || '/assets/thumbnails/default.jpg',
+                index: promptTypeObject.index,
+                logic_used: cachedPreset.logic || 'create',
+                parameter_map: promptTypeObject.properties || {}
+            }, prompt, cachedPreset.name, cachedPreset.image, currentPrivacy);
+            
+            updateForgeStatus("FORGING COMPLETE");
+        } else if (mode === 'source') {
+            let linksToSave = [];
+
+            if (manualUrls.length > 0 && !resolution.isAiReferenceSearch) {
+                for (let i = 0; i < Math.min(manualUrls.length, resolution.count); i++) {
+                    linksToSave.push({
+                        name: resolution.textChunks[i] || generateSparkName(currentId),
+                        url: manualUrls[i],
+                        image: '/assets/thumbnails/default.jpg'
+                    });
+                }
+            } else {
+                updateForgeStatus("CONSULTING MODEL POOL...");
+                
+                const activeProvider = databaseCache.app_manifest?.llm_providers?.find(p => p.enabled)?.provider_name || 'google';
+                const isolatedSourceModels = modelStats[activeProvider]?.source || [];
+                const chosenSourceModel = isolatedSourceModels.length > 0 ? isolatedSourceModels[0][0] : databaseCache.app_manifest?.llm_providers?.find(p => p.provider_name === activeProvider)?.default_model;
+                
+                const response = await callProviderAPI(prompt, currentName, { default_model: chosenSourceModel }, resolution.count, mode);
+                const rawArray = Array.isArray(response) ? response : (typeof response === 'string' ? JSON.parse(response) : [response]);
+                
+                linksToSave = rawArray
+                    .slice(0, resolution.count)
+                    .map((item, index) => {
+                        const isObject = item !== null && typeof item === 'object';
+                        return {
+                            name: (isObject ? (item.name || item.title) : null) || resolution.textChunks[index] || generateSparkName("Source Content"),
+                            url: isObject ? (item.url || item.link || item.code) : item,
+                            image: (isObject ? (item.thumbnail || item.image || item.img) : null) || '/assets/thumbnails/default.jpg'
+                        };
+                    });                    
+            }
+
+            for (let i = 0; i < linksToSave.length; i++) {
+                const sparkName = linksToSave.length > 1 && linksToSave[i].name.startsWith('spark_') ? `${linksToSave[i].name}-${i + 1}` : linksToSave[i].name;
+                await saveSpark(currentId, {name: sparkName, link: linksToSave[i].url, image: linksToSave[i].image, logic_used: 'source'}, prompt, "Sourced Stream", linksToSave[i].image, currentPrivacy);
+                
+                const progress = Math.round(((i + 1) / linksToSave.length) * 100);
+                updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
+            }
+        } else {
+            // CREATE MODE
+            for (let i = 0; i < resolution.count; i++) {
+                const progress = Math.round((i / resolution.count) * 100);
+                updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
+
+                const response = await callProviderAPI(prompt, currentName, {}, i, mode);
+                const isObj = response !== null && typeof response === 'object';
+           
+                let sparkName = isObj ? response.name : generateSparkName(currentId);
+                let sparkContent = isObj ? (response.code || response.url) : response;
+                let sparkImage = isObj ? response.thumbnail : '/assets/thumbnails/default.jpg';
+                
+                let flatParamMap = {};
+
+                if (typeof sparkContent === 'string') {
+                    sparkContent = sparkContent.replace(/\/\/.*$/gm, match => `/* ${match.replace(/\/\//, '').trim()} */`);
+                    
+                    const topLevelVarRegex = /(?:var|let|const)\s+([a-zA-Z0-9_]+)\s*=\s*([^;;\n]+)/g;
+                    let varMatch;
+                    while ((varMatch = topLevelVarRegex.exec(sparkContent)) !== null) {
+                        const varName = varMatch[1];
+                        const varVal = varMatch[2].trim();
+                        if (!varVal.includes('document.') && !varVal.includes('window.')) {
+                            flatParamMap[varName] = varVal.replace(/['"`]/g, '');
+                            sparkContent = sparkContent.replace(varMatch[0], `${varMatch[0].split('=')[0]}= {{${varName}}}`);
+                        }
+                    }
+                }
+
+                const nextCachedIndex = (databaseCache.settings?.['arcade-current-types'] || []).length;
+                const generatedTypeObject = {
+                    id: sparkName.toLowerCase().replace(/\s+/g, '-'),
+                    name: sparkName,
+                    logic: 'create',
+                    template: sparkContent,
+                    parameter_map: flatParamMap,
+                    image: sparkImage
+                };
+                
+                if (!databaseCache.settings['arcade-current-types']) databaseCache.settings['arcade-current-types'] = [];
+                databaseCache.settings['arcade-current-types'].push(generatedTypeObject);
+                await update(ref(db, `settings/arcade-current-types/${nextCachedIndex}`), generatedTypeObject);
+                
+                await saveSpark(
+                    currentId, 
+                    { 
+                        name: sparkName, 
+                        code: sparkContent, 
+                        image: sparkImage,
+                        index: nextCachedIndex,
+                        logic_used: 'create',
+                        parameter_map: flatParamMap
+                    }, 
+                    prompt,
+                    sparkName,
+                    sparkImage,
+                    currentPrivacy
+                );
+            }
+            updateForgeStatus(`FORGING ${resolution.count} SPARKS [==========] 100%`);
+        }
+
+        setTimeout(async () => {
+            status.textContent = "SYSTEM READY";
+            closeExecHUD(hudInterval);
+            await refreshUI(); 
+        }, 1000);
+
+    } catch (e) { 
+        console.error("Forge Error:", e);
+        if (!window.isInCooldown) status.textContent = "FORGE ERROR";
+        closeExecHUD(hudInterval);
+    }
+}
 /*
  * Objective: Primary Gateway for all LLM providers (Google, Sarvam, etc.)
  * Tasks: 
