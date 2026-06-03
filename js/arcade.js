@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:24:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @16:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1457,7 +1457,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         
         // 3. Scan template internal 'groups' for semantic keyword matching
         try {
-            const rawHTML = category.template || category.legacy_template || category.New_Template || category.legacy_code || '';
+            **const rawHTML = category.template || '';**
             const templateDOM = new DOMParser().parseFromString(rawHTML, 'text/html');
             const scriptContent = templateDOM.querySelector('script')?.innerText || '';
             const groupsMatch = scriptContent.match(/groups\s*=\s*(\{[\s\S]*?\})/);
@@ -3116,21 +3116,80 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
     try {
         // Handle Instant Cache Hit Infrastructure Creation
         if (mode === 'cache_hit' && promptTypeObject && promptTypeObject.index !== -1) {
-            updateForgeStatus("FORGING INSTANT SPARK FROM CACHE...");
             const cachedPreset = databaseCache.settings?.['arcade-current-types']?.[promptTypeObject.index];
             
-            const functionalTemplate = cachedPreset.template || cachedPreset.legacy_template || cachedPreset.New_Template || cachedPreset.legacy_code || '';
+            // COROLLARY CHECK: Verify if the matched index contains actual template execution data
+            **const functionalTemplate = cachedPreset?.template || '';**
 
-            await saveSpark(currentId, {
-                name: cachedPreset.name || generateSparkName(currentId),
-                [cachedPreset.logic === 'source' ? 'link' : 'code']: functionalTemplate,
-                image: cachedPreset.image || '/assets/thumbnails/default.jpg',
-                index: promptTypeObject.index,
-                logic_used: cachedPreset.logic || 'create',
-                parameter_map: promptTypeObject.properties || {}
-            }, prompt, cachedPreset.name, cachedPreset.image, currentPrivacy);
-            
-            updateForgeStatus("FORGING COMPLETE");
+            if (functionalTemplate.trim() === '') {
+                // Upgrade path to hybrid code mode execution since template block is an empty stub
+                updateForgeStatus("STUB HIT! GENERATING BASE TEMPLATE...");
+                
+                const response = await callProviderAPI(prompt, currentName, {}, 0, 'create');
+                const isObj = response !== null && typeof response === 'object';
+           
+                let sparkName = isObj ? response.name : (cachedPreset.name || generateSparkName(currentId));
+                let sparkContent = isObj ? (response.code || response.url) : response;
+                let sparkImage = isObj ? response.thumbnail : (cachedPreset.image || '/assets/thumbnails/default.jpg');
+                
+                let flatParamMap = {};
+
+                if (typeof sparkContent === 'string') {
+                    sparkContent = sparkContent.replace(/\/\/.*$/gm, match => `/* ${match.replace(/\/\//, '').trim()} */`);
+                    
+                    const topLevelVarRegex = /(?:var|let|const)\s+([a-zA-Z0-9_]+)\s*=\s*([^;;\n]+)/g;
+                    let varMatch;
+                    while ((varMatch = topLevelVarRegex.exec(sparkContent)) !== null) {
+                        const varName = varMatch[1];
+                        const varVal = varMatch[2].trim();
+                        if (!varVal.includes('document.') && !varVal.includes('window.')) {
+                            flatParamMap[varName] = varVal.replace(/['"`]/g, '');
+                            sparkContent = sparkContent.replace(varMatch[0], `${varMatch[0].split('=')[0]}= {{${varName}}}`);
+                        }
+                    }
+                }
+
+                // Hydrate the existing entry context inside the structural cache matrix
+                cachedPreset.template = sparkContent;
+                cachedPreset.parameter_map = flatParamMap;
+                if (isObj && response.name) cachedPreset.name = sparkName;
+                if (isObj && response.thumbnail) cachedPreset.image = sparkImage;
+                
+                // Update database path at the existing targeted array offset directly
+                await update(ref(db, `settings/arcade-current-types/${promptTypeObject.index}`), cachedPreset);
+                
+                // Provision user node instance pointing back to the updated index identity
+                await saveSpark(
+                    currentId, 
+                    { 
+                        name: cachedPreset.name, 
+                        code: sparkContent, 
+                        image: cachedPreset.image,
+                        index: promptTypeObject.index,
+                        logic_used: 'create',
+                        parameter_map: promptTypeObject.properties && Object.keys(promptTypeObject.properties).length > 0 ? promptTypeObject.properties : flatParamMap
+                    }, 
+                    prompt,
+                    cachedPreset.name,
+                    cachedPreset.image,
+                    currentPrivacy
+                );
+                updateForgeStatus("HYBRID HYDRATION COMPLETE");
+            } else {
+                // Standard Cache Hit execution layer when template code is valid and populated
+                updateForgeStatus("FORGING INSTANT SPARK FROM CACHE...");
+                
+                await saveSpark(currentId, {
+                    name: cachedPreset.name || generateSparkName(currentId),
+                    code: functionalTemplate,
+                    image: cachedPreset.image || '/assets/thumbnails/default.jpg',
+                    index: promptTypeObject.index,
+                    logic_used: cachedPreset.logic || 'create',
+                    parameter_map: promptTypeObject.properties || {}
+                }, prompt, cachedPreset.name, cachedPreset.image, currentPrivacy);
+                
+                updateForgeStatus("FORGING COMPLETE");
+            }
         } else if (mode === 'source') {
             let linksToSave = [];
 
@@ -3172,7 +3231,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
             }
         } else {
-            // CREATE MODE
+            // CREATE MODE (Complete cache miss, appending a brand new index layout structure)
             for (let i = 0; i < resolution.count; i++) {
                 const progress = Math.round((i / resolution.count) * 100);
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
@@ -3246,6 +3305,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
         closeExecHUD(hudInterval);
     }
 }
+
 /*
  * Objective: Primary Gateway for all LLM providers (Google, Sarvam, etc.)
  * Tasks: 
