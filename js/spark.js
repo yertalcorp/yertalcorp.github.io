@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 16:21:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 16:26:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /*
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Directly update the spark object's parameter_map with current UI values.
@@ -119,43 +119,47 @@ function wrapCodeInLaboratory(spark) {
                     const wrapper = document.getElementById('user-code-wrapper');
 
 function syncDimensions() {
-    const canvases = document.querySelectorAll('canvas');
-    const bounds = wrapper.getBoundingClientRect();
+                        const canvases = document.querySelectorAll('canvas');
+                        const bounds = wrapper.getBoundingClientRect();
 
-    canvases.forEach(canvas => {
-        // If the canvas is the main element, sync its resolution to the Lab Stage
-        // This fixes the "Cut off" issue by ensuring internal resolution = visual size
-        if (canvas.width !== bounds.width || canvas.height !== bounds.height) {
- // Check if the canvas context is running a WebGL interface
- const isWebGL = canvas.getContext('webgl') || canvas.getContext('webgl2');
- if (isWebGL) {
- // Skip manual inline dimension attribute adjustments for WebGL.
- // Mutating width/height directly wipes the engine's frame back-buffer.
+                        canvases.forEach(canvas => {
+                            if (canvas.width !== bounds.width || canvas.height !== bounds.height) {
+ // FUTURE-PROOF CONTEXT DETECTION:
+ // Check for active 2D properties instead of blacklisting specific 3D tokens.
+ // If a context isn't strictly 2D, forcing a 2D pull returns null and avoids context mutation errors.
+ const isStrict2D = canvas.getContext('2d') && !canvas.classList.contains('p5Canvas');
+ 
+ if (!isStrict2D) {
+ // Let WebGL, WebGL2, WebGPU, and advanced engines scale gracefully via the global resize event
  return;
  }
 
-            // Save current drawing to prevent flicker/loss
-            const tempCtx = canvas.getContext('2d');
-            let tempImage = null;
-            if (tempCtx) {
-                tempImage = canvas.toDataURL();
-            }
+                                // Save current drawing to prevent flicker/loss
+                                const tempCtx = canvas.getContext('2d');
+                                let tempImage = null;
+                                if (tempCtx) {
+                                    tempImage = canvas.toDataURL();
+                                }
 
-            canvas.width = bounds.width;
-            canvas.height = bounds.height;
+                                canvas.width = bounds.width;
+                                canvas.height = bounds.height;
 
-            if (tempImage) {
-                const img = new Image();
-                img.src = tempImage;
-                img.onload = () => canvas.getContext('2d').drawImage(img, 0, 0, bounds.width, bounds.height);
-            }
-        }
-    });
+                                if (tempImage) {
+                                    const img = new Image();
+                                    img.src = tempImage;
+                                    img.onload = () => canvas.getContext('2d').drawImage(img, 0, 0, bounds.width, bounds.height);
+                                }
+                            }
+                        });
 
-    // Notify internal scripts (Three.js/P5) that the Lab has resized
-    window.dispatchEvent(new Event('resize'));
-}
+                        // Safeguard for Gemini scripts that leverage p5.js execution layers
+                        if (typeof resizeCanvas === 'function') {
+                            resizeCanvas(bounds.width, bounds.height);
+                        }
 
+                        // Notify internal scripts (Three.js/WebGPU/P5) that the Lab has resized
+                        window.dispatchEvent(new Event('resize'));
+                    }
                     // ResizeObserver is more reliable than window.onresize for iframe/container changes
                     const ro = new ResizeObserver(() => {
  console.log("[LAB MONITOR] ResizeObserver triggered via wrapper mutation.");
