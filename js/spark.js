@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 15:57:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 16:10:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /*
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Directly update the spark object's parameter_map with current UI values.
@@ -121,18 +121,24 @@ function wrapCodeInLaboratory(spark) {
                     function syncDimensions() {
                         const canvases = document.querySelectorAll('canvas');
                         const bounds = wrapper.getBoundingClientRect();
+ console.log(\`[LAB MONITOR] Running syncDimensions. Found \${canvases.length} canvases. Wrapper bounds: \${bounds.width}x\${bounds.height}\`);
 
                         canvases.forEach(canvas => {
                             // If the canvas is the main element, sync its resolution to the Lab Stage
                             // This fixes the "Cut off" issue by ensuring internal resolution = visual size
                             if (canvas.width !== bounds.width || canvas.height !== bounds.height) {
+ console.log(\`[LAB MONITOR] ⚠️ Dimension mismatch detected! Canvas size: \${canvas.width}x\${canvas.height} vs Wrapper: \${bounds.width}x\${bounds.height}\`);
+                                
                                 // Save current drawing to prevent flicker/loss
                                 const tempCtx = canvas.getContext('2d');
                                 let tempImage = null;
                                 if (tempCtx) {
                                     tempImage = canvas.toDataURL();
+                                } else {
+ console.warn("[LAB MONITOR] canvas.getContext('2d') returned null! This is likely a WebGL context canvas.");
                                 }
 
+ console.log(\`[LAB MONITOR] Resizing canvas element dimensions to: \${bounds.width}x\${bounds.height}. (Warning: This resets WebGL buffer state)\`);
                                 canvas.width = bounds.width;
                                 canvas.height = bounds.height;
 
@@ -145,24 +151,30 @@ function wrapCodeInLaboratory(spark) {
                         });
 
                         // Notify internal scripts (Three.js/P5) that the Lab has resized
+ console.log("[LAB MONITOR] Dispatching global resize event to inner sandbox environment...");
                         window.dispatchEvent(new Event('resize'));
                     }
 
                     // ResizeObserver is more reliable than window.onresize for iframe/container changes
                     const ro = new ResizeObserver(() => {
+ console.log("[LAB MONITOR] ResizeObserver triggered via wrapper mutation.");
                         requestAnimationFrame(syncDimensions);
                     });
 
                     ro.observe(wrapper);
 
                     // Initial sync once everything is parsed
-                    window.addEventListener('load', syncDimensions);
+                    window.addEventListener('load', () => {
+ console.log("[LAB MONITOR] Window load event fired. Initializing syncDimensions layout check.");
+                        syncDimensions();
+                    });
                 })();
             </script>
         </body>
         </html>
     `;
 }
+
 /*
  * Objective: Render Spark content and reset HUD visuals.
  * Task: Initialize playable states and reset timing/progress for the new session.
