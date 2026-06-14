@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @17:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:53:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3445,27 +3445,35 @@ async function initiateSystemCooldown(statusElement) {
 async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg', currentPrivacy) {
     const sparkId = `spark_${Date.now()}_${Math.floor(Math.random()*1000)}`;
     
-    // UPDATED PATH: users/[UID]/infrastructure/currents/...
+ console.group(`[PERSISTENCE] saveSpark -> ID: ${sparkId}`);
+ console.log("[PERSISTENCE] Incoming data mapping allocation from Orchestrator:", data);
+
     const dbPath = `users/${user.uid}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
     
     const userNode = databaseCache.users?.[user.uid];
     const currentCurrent = userNode?.infrastructure?.currents?.[currentId];
     const rank = currentCurrent?.sparks ? Object.keys(currentCurrent.sparks).length + 1 : 1;
 
-    await saveToRealtimeDB(dbPath, {
+     const payload = {
         id: sparkId,
         name: data.name || "Unnamed Spark",
         prompt: prompt,
-        owner: user.uid, // Use UID for owner check, not email
+        owner: user.uid, 
         created: Date.now(),
         template_type: detectedTemplate,
+        index: typeof data.index !== 'undefined' ? data.index : -1, // Transparent index logging pass-through
         image: data.image || templateUrl || '/assets/thumbnails/default.jpg',
         internal_rank: rank,
         code: data.code || null,
         link: data.link || null,
         privacy: currentPrivacy,
+        parameter_map: data.parameter_map || {}, // Transparent parameter map pass-through
         stats: { views: 0, likes: 0, transactions: 0 }
-    });
+     };
+ 
+     console.log("[PERSISTENCE] Writing structural storage payload directly to dbPath:", payload);
+     await saveToRealtimeDB(dbPath, payload);
+     console.groupEnd();
 }
 
 window.deleteSpark = async (currentId, sparkId, ownerUid) => {
