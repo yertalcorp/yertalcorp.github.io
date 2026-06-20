@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1510,10 +1510,6 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
 }
 
 
-/*
- * Overall Objective: Distill new LLM code into a reusable Class Template.
- * Task: Extract a schema of parameters and defaults to define the Category's blueprint.
- */
 function generateTemplateAndParameterMap(sparkNode, currentLibrary) {
     let logic = "";
     const rawCode = sparkNode.code || "";
@@ -1521,31 +1517,39 @@ function generateTemplateAndParameterMap(sparkNode, currentLibrary) {
     const scriptMatch = rawCode.match(/<script>([\s\S]*?)<\/script>/i);
     logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
 
-    const configPattern = /(const|let|var)\s+(\w+)\s*=\s*([^;]+);/g;
+    // Fixed regex engine pattern to split single-line comma grouped variables cleanly 
+    const configPattern = /(?:const|let|var)\s+([^;]+);/g;
     const foundParams = {};
     
-    // 1. Parameterize top-level constants
-    const templateWithVars = logic.replace(configPattern, (match, type, name, value) => {
-        const trimmedVal = value.trim();
-        const isParamCandidate = 
-            /^(\d+(\.\d+)?|'#?\w+'|"\w+")$/.test(trimmedVal) && 
-            (name === name.toUpperCase() || /count|speed|gravity|radius|color|mass|bounce|restitution|power|friction/i.test(name));
-
-        if (isParamCandidate) {
-            // Clean value for standard property assignment
-            const cleanedVal = trimmedVal.replace(/['"]/g, "");
-            foundParams[name.toLowerCase()] = isNaN(cleanedVal) ? cleanedVal : parseFloat(cleanedVal); 
+    // 1. Parameterize top-level constants safely
+    let templateWithVars = logic.replace(configPattern, (match, expression) => {
+        // Handle comma-separated inline assignments like: worldWidth = 128, worldDepth = 128
+        const assignments = expression.split(',');
+        let processedAssignments = assignments.map(assign => {
+            const parts = assign.split('=');
+            if (parts.length !== 2) return assign;
             
-            // Wrap string-based parameter expressions in quotes inside the template script block to avoid runtime js engine execution syntax errors
-            return `${type} ${name} = ${isNaN(cleanedVal) ? `"${`{{${name.toLowerCase()}}}`}"` : `{{${name.toLowerCase()}}}`};`;
-        }
-        return match; 
+            const name = parts[0].trim();
+            const value = parts[1].trim();
+            
+            const isParamCandidate = /^(\d+(\.\d+)?|'#?\w+'|"\w+")$/.test(value) && (name === name.toUpperCase() || /width|depth|height|seed|size|count|speed|gravity|radius|color/i.test(name));
+
+            if (isParamCandidate) {
+                const cleanedVal = value.replace(/['"]/g, "");
+                const key = name.toLowerCase();
+                foundParams[key] = isNaN(cleanedVal) ? cleanedVal : parseFloat(cleanedVal);
+                return `${name} = ${isNaN(cleanedVal) ? `"${`{{${key}}}`}"` : `{{${key}}}`}`;
+            }
+            return assign;
+        });
+        
+        // Rebuild statement header safely back into logic lines
+        const keyword = match.match(/^(const|let|var)/)[0];
+        return `${keyword} ${processedAssignments.join(', ')};`;
     });
 
-    // 2. Parameterize counts/loops
-    const finalScriptLogic = templateWithVars.replace(/(<\s*|==\s*|count\s*[:=]\s*)(\d+)/g, (match, prefix, num) => {
-        return prefix.includes('<') ? `${prefix}{{count}}` : match;
-    });
+    // 2. Clear out the aggressive blanket replace placeholder condition to protect lookup loops
+    const finalScriptLogic = templateWithVars;
 
     // 3. Re-assemble complete document matrix context if original shell was extracted
     let compiledTemplateDoc = "";
@@ -1560,13 +1564,13 @@ function generateTemplateAndParameterMap(sparkNode, currentLibrary) {
         id: sparkNode.id || `type_${Date.now()}`,
         name: sparkNode.name || "Generic Template",
         group: sparkNode.template_type || "General",
-        parameter_map: { ...foundParams, count: foundParams.count || 3 },
+        parameter_map: { ...foundParams },
         regex_map: Object.keys(foundParams).reduce((map, key) => {
             map[key] = `(?:${key}(?:\\s(?:is|of|at))?\\s)?([-#\\w.]+)`;
             return map;
-        }, { count: "(\\d+)(?=\\s*(?:objects|items|units|wheels|pulley|pulleys)?)" }),
+        }, {}),
         template: compiledTemplateDoc,
-        defaults: { ...foundParams, count: foundParams.count || 3 }
+        defaults: { ...foundParams }
     };
 
     return {
@@ -1574,6 +1578,7 @@ function generateTemplateAndParameterMap(sparkNode, currentLibrary) {
         extractedProperties: newTypeEntry.defaults
     };
 }
+
 window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
