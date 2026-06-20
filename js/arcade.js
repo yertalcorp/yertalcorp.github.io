@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @14:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3093,7 +3093,8 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 const parserMockNode = { id: cachedPreset.id, name: sparkName, code: rawLLMContent, template_type: cachedPreset.group };
                 const distillation = generateTemplateAndParameterMap(parserMockNode, []);
                 
-                // Hydrate the central registry record
+                // Hydrate the central cache with the template and parameter map
+                // mode is cache hit where index exists but not the template
                 cachedPreset.template = distillation.typeData.template;
                 cachedPreset.parameter_map = distillation.typeData.parameter_map;
                 if (isObj && response.name) cachedPreset.name = sparkName;
@@ -3209,7 +3210,8 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 // Call the helper to extract variables and construct the model entry data objects cleanly
                 const parserMockNode = { id: sparkName.toLowerCase().replace(/\s+/g, '-'), name: sparkName, code: rawLLMContent, template_type: "Custom Labs" };
                 const distillation = generateTemplateAndParameterMap(parserMockNode, []);
-                
+
+                // case mode is create and a new cache type has to be introduced
                 const nextCachedIndex = (databaseCache.settings?.['arcade-current-types'] || []).length;
                 const newRegisteredTypeObject = distillation.typeData;
                 newRegisteredTypeObject.image = sparkImage; // Sync generation imagery asset profile
