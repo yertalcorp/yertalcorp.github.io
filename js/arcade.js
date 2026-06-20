@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:31:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @22:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1563,14 +1563,13 @@ function generateTemplateAndParameterMap(sparkNode, currentLibrary) {
     const newTypeEntry = {
         id: sparkNode.id || `type_${Date.now()}`,
         name: sparkNode.name || "Generic Template",
-        group: sparkNode.template_type || "General",
+        group: sparkNode.group || "General",
         parameter_map: { ...foundParams },
-        regex_map: Object.keys(foundParams).reduce((map, key) => {
+        regex: Object.keys(foundParams).reduce((map, key) => {
             map[key] = `(?:${key}(?:\\s(?:is|of|at))?\\s)?([-#\\w.]+)`;
             return map;
         }, {}),
         template: compiledTemplateDoc,
-        defaults: { ...foundParams }
     };
 
     return {
@@ -3049,6 +3048,20 @@ async function getBestModels(poolType) {
     return sorted;
 }
 
+async function checkImageExists(url) {
+    if (!url || typeof url !== 'string') return false;
+    // Treat standard relative thumbnail stubs as missing or invalid to force recovery
+    if (url.includes('custom.jpg') || url.includes('default.jpg')) return false;
+    
+    try {
+        // Run a lightweight HEAD request to inspect file availability without downloading bytes
+        const response = await fetch(url, { method: 'HEAD', cache: 'no-cache' });
+        return response.ok && response.headers.get('content-type')?.startsWith('image/');
+    } catch (e) {
+        // Fail gracefully if CORS restrictions or dead domains reject the connection ping
+        return false;
+    }
+}
 async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeObject, currentPrivacy) {
     const status = document.getElementById('engine-status-text');
     console.group("[FORGE EXECUTIVE PIPELINE]");
@@ -3090,22 +3103,32 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 const sparkImage = isObj ? response.thumbnail : (cachedPreset.image || '/assets/thumbnails/default.jpg');
                 
                 // Distill received raw content into clean templates using the helper function
-                const parserMockNode = { id: cachedPreset.id, name: sparkName, code: rawLLMContent, template_type: cachedPreset.group };
+                const parserMockNode = { id: cachedPreset.id, name: sparkName, code: rawLLMContent, group: cachedPreset.group };
                 const distillation = generateTemplateAndParameterMap(parserMockNode, []);
                 
                 // Hydrate the central cache with the template and parameter map
                 // mode is cache hit where index exists but not the template
                 cachedPreset.template = distillation.typeData.template;
                 cachedPreset.parameter_map = distillation.typeData.parameter_map;
-                if (isObj && response.name) cachedPreset.name = sparkName;
-                if (isObj && response.thumbnail) cachedPreset.image = sparkImage;
+                // Run real-time asynchronous path verification
+                const isCurrentImageValid = await checkImageExists(cachedPreset.image);
                 
+                // If the current image in the cache is not loading, use an unSplash image
+                if (!isCurrentImageValid) {
+                    if (isObj && response.thumbnail && await checkImageExists(sparkImage)) {
+                        cachedPreset.image = sparkImage;
+                    } else {
+                        // Dynamic Unsplash fallback loop matching the baseline engine name criteria
+                        const queryKeyword = encodeURIComponent((cachedPreset.name || sparkName).toLowerCase().replace(/studio|engine|lab|canvas|game/g, '').trim());
+                        cachedPreset.image = `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400&q=${queryKeyword || 'abstract'}`;
+                    }
+                }
                 console.log("[CACHE REGISTRATION] Writing hydrated blueprint template to database reference index...");
                 await update(ref(db, `settings/arcade-current-types/${promptTypeObject.index}`), cachedPreset);
                 
                 // Instantiation: Save user spark instance pointing back to centralized registry index
                 await saveSpark(currentId, { 
-                    name: cachedPreset.name, 
+                    name: sparkName, 
                     image: cachedPreset.image,
                     index: promptTypeObject.index,
                     logic_used: 'create',
@@ -3208,7 +3231,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 }
 
                 // Call the helper to extract variables and construct the model entry data objects cleanly
-                const parserMockNode = { id: sparkName.toLowerCase().replace(/\s+/g, '-'), name: sparkName, code: rawLLMContent, template_type: "Custom Labs" };
+                const parserMockNode = { id: sparkName.toLowerCase().replace(/\s+/g, '-'), name: sparkName, code: rawLLMContent, group: "Custom Group" };
                 const distillation = generateTemplateAndParameterMap(parserMockNode, []);
 
                 // case mode is create and a new cache type has to be introduced
