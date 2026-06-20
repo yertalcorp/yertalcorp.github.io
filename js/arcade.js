@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:53:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1532,8 +1532,12 @@ function generateTemplateAndParameterMap(sparkNode, currentLibrary) {
             (name === name.toUpperCase() || /count|speed|gravity|radius|color|mass|bounce|restitution|power|friction/i.test(name));
 
         if (isParamCandidate) {
-            foundParams[name] = trimmedVal.replace(/['"]/g, ""); 
-            return `${type} ${name} = {{${name}}};`;
+            // Clean value for standard property assignment
+            const cleanedVal = trimmedVal.replace(/['"]/g, "");
+            foundParams[name.toLowerCase()] = isNaN(cleanedVal) ? cleanedVal : parseFloat(cleanedVal); 
+            
+            // Wrap string-based parameter expressions in quotes inside the template script block to avoid runtime js engine execution syntax errors
+            return `${type} ${name} = ${isNaN(cleanedVal) ? `"${`{{${name.toLowerCase()}}}`}"` : `{{${name.toLowerCase()}}}`};`;
         }
         return match; 
     });
@@ -1543,35 +1547,33 @@ function generateTemplateAndParameterMap(sparkNode, currentLibrary) {
         return prefix.includes('<') ? `${prefix}{{count}}` : match;
     });
 
- // 3. Re-assemble complete document matrix context if original shell was extracted
- let compiledTemplateDoc = "";
- if (scriptMatch) {
- compiledTemplateDoc = rawCode.replace(scriptMatch[1], `\n${finalScriptLogic}\n`);
- } else {
-     // Fallback wrapper structure using safe string split parts to satisfy HTML browser frames
- compiledTemplateDoc = `<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <style> body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #050508; } </style> </head> <body> <script> ${finalScriptLogic} <${'/'}script> </body> </html>`;
- }
-// 4. Define the Class Definition
+    // 3. Re-assemble complete document matrix context if original shell was extracted
+    let compiledTemplateDoc = "";
+    if (scriptMatch) {
+        compiledTemplateDoc = rawCode.replace(scriptMatch[1], `\n${finalScriptLogic}\n`);
+    } else {
+        compiledTemplateDoc = `<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <style> body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #050508; } </style> </head> <body> <script> ${finalScriptLogic} <${'/'}script> </body> </html>`;
+    }
+
+    // 4. Define the Class Definition
     const newTypeEntry = {
- id: sparkNode.id || `type_${Date.now()}`,
+        id: sparkNode.id || `type_${Date.now()}`,
         name: sparkNode.name || "Generic Template",
         group: sparkNode.template_type || "General",
-        parameter_map: Object.keys(foundParams).reduce((map, key) => {
- // Restored correct template literal tags and normal regex capture strings
- map[key] = `(?:${key}(?:\\s(?:is|of|at))?\\s)?([-#\\w.]+)`;
+        parameter_map: { ...foundParams, count: foundParams.count || 3 },
+        regex_map: Object.keys(foundParams).reduce((map, key) => {
+            map[key] = `(?:${key}(?:\\s(?:is|of|at))?\\s)?([-#\\w.]+)`;
             return map;
- }, { count: "(\\d+)(?=\\s*(?:objects|items|units|wheels|pulley|pulleys)?)" }),
+        }, { count: "(\\d+)(?=\\s*(?:objects|items|units|wheels|pulley|pulleys)?)" }),
         template: compiledTemplateDoc,
         defaults: { ...foundParams, count: foundParams.count || 3 }
     };
 
-    // Remove side-effect inline push operations. Let executeMassSpark control registrar commits.
     return {
         typeData: newTypeEntry,
         extractedProperties: newTypeEntry.defaults
     };
 }
-
 window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
