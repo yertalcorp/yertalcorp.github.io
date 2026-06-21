@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1520,20 +1520,20 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
 
     const foundParams = {};
     
-    // Enforce comment enclosure rules: convert all single-line comments to standard /* */ format
-    rawCode = rawCode.replace(/\/\/.*$/gm, match => {
+    // Enforce comment enclosure rules safely: convert all single-line comments to standard /* */ format
+    rawCode = rawCode.replace(/(?<!https?:)\/\/.*$/gm, match => {
         const cleanComment = match.replace(/^\/\/\s*/, '').trim();
         return cleanComment ? `/* ${cleanComment} */` : '';
     });
 
-    // FIX: Target only the active script execution payload block, completely skipping external library dependencies
+    // Target only the active script execution payload block, completely skipping external library dependencies
     const scriptMatch = rawCode.match(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/i);
     let logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
 
     // Fixed regex engine pattern to split single-line comma grouped variables cleanly 
     const configPattern = /(?:const|let|var)\s+([^;]+);/g;
     
-    // 1. Parameterize top-level constants safely
+    // 1. Parameterize ALL top-level constants generically based on explicit structural assignment types
     let templateWithVars = logic.replace(configPattern, (match, expression) => {
         const assignments = expression.split(',');
         let processedAssignments = assignments.map(assign => {
@@ -1543,13 +1543,23 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
             const name = parts[0].trim();
             const value = parts[1].trim();
             
-            const isParamCandidate = /^(\d+(\.\d+)?|'#?\w+'|"\w+")$/.test(value) && (name === name.toUpperCase() || /width|depth|height|seed|size|count|speed|gravity|radius|color/i.test(name));
+            // FIX: Generic validation matchers for strict primitive numbers/hex layouts or quoted text strings
+            const isNumericOrHex = /^-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)$/.test(value);
+            const isQuotedString = /^变化?(['"`])([\s\S]*?)\1$/.test(value) || /^(['"`])([\s\S]*?)\1$/.test(value);
 
-            if (isParamCandidate) {
-                const cleanedVal = value.replace(/['"]/g, "");
+            if (isNumericOrHex || isQuotedString) {
+                // Strip structural wrapper quotes or literal tags out for pure storage configuration mapping
+                const cleanedVal = value.replace(/^['"`]|['"`]$/g, "");
                 const key = name.toLowerCase();
-                foundParams[key] = isNaN(cleanedVal) ? cleanedVal : parseFloat(cleanedVal);
-                return `${name} = ${isNaN(cleanedVal) ? `"${`{{${key}}}`}"` : `{{${key}}}`}`;
+                
+                // Keep hexadecimal strings as text configurations, parse true decimal floats natively
+                if (isNumericOrHex && !value.toLowerCase().includes('0x')) {
+                    foundParams[key] = parseFloat(cleanedVal);
+                } else {
+                    foundParams[key] = cleanedVal;
+                }
+                
+                return `${name} = ${isNaN(cleanedVal) || value.toLowerCase().includes('0x') ? `"${`{{${key}}}`}"` : `{{${key}}}`}`;
             }
             return assign;
         });
@@ -1560,7 +1570,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
 
     const finalScriptLogic = templateWithVars;
 
-    // 3. Re-assemble complete document matrix context ensuring it starts strictly with DOCTYPE
+    // 2. Re-assemble complete document matrix context ensuring it starts strictly with DOCTYPE
     let compiledTemplateDoc = "";
     const cleanCheckCode = rawCode.trim().toUpperCase();
     if (cleanCheckCode.startsWith("<!DOCTYPE") || cleanCheckCode.includes("<HTML")) {
@@ -1575,7 +1585,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     console.log("[TELEMETRY OUTPUT] Cleaned and Processed Template Output:\n", compiledTemplateDoc);
     console.log("[TELEMETRY OUTPUT] Extracted Parameter Map Dictionary Target:", foundParams);
 
-    // 4. SMART METADATA EXTRACTION LAYER
+    // 3. SMART METADATA EXTRACTION LAYER (Generic Extraction)
     const titleMatch = rawCode.match(/<title>([\s\S]*?)<\/title>/i);
     const h1Match = rawCode.match(/<h1>([\s\S]*?)<\/h1>/i);
     const h2Match = rawCode.match(/<h2>([\s\S]*?)<\/h2>/i);
@@ -1585,26 +1595,18 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         resolvedName = titleMatch ? titleMatch[1].trim() : (h1Match ? h1Match[1].trim() : (h2Match ? h2Match[1].trim() : "Custom Simulation Space"));
     }
 
-    // Category Group Classification Detector
+    // Dynamic Group Detector
     let resolvedGroup = "Custom Labs";
-    let resolvedRules = "Execute interactive rendering threads via modular canvas context structures.";
     if (rawCode.includes("three") || rawCode.includes("THREE") || rawCode.includes("WebGLRenderer")) {
         resolvedGroup = "Visual Simulations";
-        resolvedRules = "Initialize core Three.js scene graphs, camera vectors, and lighting matrices. Optimize performance using vertex shader arrays or flat shading materials.";
     } else if (rawCode.includes("addEventListener('keydown'") || rawCode.includes("score") || rawCode.includes("gameState")) {
         resolvedGroup = "Arcade Labs";
-        resolvedRules = "Maintain a distinct engine state loop. Map fluid keyboard event bindings. Check real-time frame boundary constraints or bounding box collisions.";
     }
 
-    // Semantic Description Generator
-    let resolvedDescription = "Procedural visual sandbox execution layout.";
-    if (prompt && prompt.trim().length > 0) {
-        resolvedDescription = prompt.trim().charAt(0).toUpperCase() + prompt.trim().slice(1);
-    } else {
-        resolvedDescription = `${resolvedGroup} environment running customized structural configurations for ${resolvedName.toLowerCase()}.`;
-    }
+    // Dynamic Description Setup
+    let resolvedDescription = prompt ? (prompt.trim().charAt(0).toUpperCase() + prompt.trim().slice(1)) : `${resolvedGroup} environment for ${resolvedName.toLowerCase()}.`;
 
-    // 5. Define the Class Definition Object Structure matching the exact schema requirement
+    // 4. Define the Pure Class Definition Object Structure with no specific fallbacks
     const newTypeEntry = {
         id: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-'),
         name: resolvedName,
@@ -1613,7 +1615,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         image: sparkNode.image || "/assets/thumbnails/default.jpg",
         description: resolvedDescription,
         regex: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '|'),
-        rules: resolvedRules,
+        rules: `Execute interactive rendering threads via modular ${resolvedGroup.toLowerCase()} structures.`,
         logic: "create",
         is_custom: true,
         parameter_map: Object.keys(foundParams).reduce((map, key) => {
