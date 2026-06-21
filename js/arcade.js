@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @20:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:06:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1535,6 +1535,13 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     
     // 1. Parameterize ALL top-level constants generically based on explicit structural assignment types
     let templateWithVars = logic.replace(configPattern, (match, expression) => {
+        // Look behind the match in the active logic context to ensure it isn't part of a 'for (' loop declaration
+        const matchIndex = logic.indexOf(match);
+        if (matchIndex > 0) {
+            const contextBefore = logic.substring(Math.max(0, matchIndex - 20), matchIndex);
+            if (/for\s*\($/i.test(contextBefore.trim())) return match;
+        }
+
         const assignments = expression.split(',');
         let processedAssignments = assignments.map(assign => {
             const parts = assign.split('=');
@@ -1543,18 +1550,20 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
             const name = parts[0].trim();
             const value = parts[1].trim();
             
-            // FIX: Generic validation matchers for strict primitive numbers/hex layouts or quoted text strings
+            if (name.length <= 1 || /^(iterator|index|clock|time|delta|frame|loop)$/i.test(name)) {
+                return assign;
+            }
+            
             const isNumericOrHex = /^-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)$/.test(value);
-            const isQuotedString = /^变化?(['"`])([\s\S]*?)\1$/.test(value) || /^(['"`])([\s\S]*?)\1$/.test(value);
+            const isQuotedString = /^(['"`])([\s\S]*?)\1$/.test(value);
 
             if (isNumericOrHex || isQuotedString) {
-                // Strip structural wrapper quotes or literal tags out for pure storage configuration mapping
                 const cleanedVal = value.replace(/^['"`]|['"`]$/g, "");
                 const key = name.toLowerCase();
                 
-                // Keep hexadecimal strings as text configurations, parse true decimal floats natively
+                // FIX: Copy values exactly as they are defined in the source code
                 if (isNumericOrHex && !value.toLowerCase().includes('0x')) {
-                    foundParams[key] = parseFloat(cleanedVal);
+                    foundParams[key] = isNaN(value) ? parseFloat(value) : Number(value);
                 } else {
                     foundParams[key] = cleanedVal;
                 }
