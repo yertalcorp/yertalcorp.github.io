@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @22:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1510,20 +1510,29 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
 }
 
 
-function generateTemplateAndParameterMap(sparkNode, currentLibrary) {
-    let logic = "";
-    const rawCode = sparkNode.code || "";
+function generateTemplateAndParameterMap(sparkNode, prompt = "") {
+    let rawCode = sparkNode.code || "";
     
-    const scriptMatch = rawCode.match(/<script>([\s\S]*?)<\/script>/i);
-    logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
+    // Cleanse text input: Strip out hidden unicode, zero-width, and control characters
+    rawCode = rawCode.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '');
+
+    const foundParams = {};
+    
+    // Enforce comment enclosure rules: convert all single-line comments to standard /* */ format
+    rawCode = rawCode.replace(/\/\/.*$/gm, match => {
+        const cleanComment = match.replace(/^\/\/\s*/, '').trim();
+        return cleanComment ? `/* ${cleanComment} */` : '';
+    });
+
+    // Isolate code execution logic
+    const scriptMatch = rawCode.match(/<script[\s\S]*?>([\s\S]*?)<\/script>/i);
+    let logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
 
     // Fixed regex engine pattern to split single-line comma grouped variables cleanly 
     const configPattern = /(?:const|let|var)\s+([^;]+);/g;
-    const foundParams = {};
     
-    // 1. Parameterize top-level constants safely
+    // Parameterize top-level constants safely
     let templateWithVars = logic.replace(configPattern, (match, expression) => {
-        // Handle comma-separated inline assignments like: worldWidth = 128, worldDepth = 128
         const assignments = expression.split(',');
         let processedAssignments = assignments.map(assign => {
             const parts = assign.split('=');
@@ -1543,33 +1552,67 @@ function generateTemplateAndParameterMap(sparkNode, currentLibrary) {
             return assign;
         });
         
-        // Rebuild statement header safely back into logic lines
         const keyword = match.match(/^(const|let|var)/)[0];
         return `${keyword} ${processedAssignments.join(', ')};`;
     });
 
-    // 2. Clear out the aggressive blanket replace placeholder condition to protect lookup loops
     const finalScriptLogic = templateWithVars;
 
-    // 3. Re-assemble complete document matrix context if original shell was extracted
+    // Re-assemble complete document matrix context starting strictly with DOCTYPE
     let compiledTemplateDoc = "";
-    if (scriptMatch) {
-        compiledTemplateDoc = rawCode.replace(scriptMatch[1], `\n${finalScriptLogic}\n`);
+    if (rawCode.trim().toUpperCase().startsWith("<!DOCTYPE")) {
+        compiledTemplateDoc = scriptMatch ? rawCode.replace(scriptMatch[1], `\n${finalScriptLogic}\n`) : rawCode;
     } else {
-        compiledTemplateDoc = `<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <style> body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #050508; } </style> </head> <body> <script> ${finalScriptLogic} <${'/'}script> </body> </html>`;
+        compiledTemplateDoc = `<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <style>\n        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #050508; }\n    </style>\n</head>\n<body>\n    <script type="module">\n${finalScriptLogic}\n    </script>\n</body>\n</html>`;
     }
 
-    // 4. Define the Class Definition
+    // 1. SMART METADATA EXTRACTION LAYER
+    // Extract explicit title from HTML tags if present, otherwise fall back to clean string names
+    const titleMatch = rawCode.match(/<title>([\s\S]*?)<\/title>/i);
+    const h1Match = rawCode.match(/<h1>([\s\S]*?)<\/h1>/i);
+    let resolvedName = sparkNode.name || "";
+    
+    if (!resolvedName || resolvedName.startsWith('spark_') || resolvedName === 'Unnamed Spark') {
+        resolvedName = titleMatch ? titleMatch[1].trim() : (h1Match ? h1Match[1].trim() : "Custom Simulation Space");
+    }
+
+    // 2. CATEGORY GROUP CLASSIFICATION DETECTOR
+    let resolvedGroup = "Custom Labs";
+    let resolvedRules = "Execute interactive rendering threads via modular canvas context structures.";
+    if (rawCode.includes("three") || rawCode.includes("THREE") || rawCode.includes("WebGLRenderer")) {
+        resolvedGroup = "Visual Simulations";
+        resolvedRules = "Initialize core Three.js scene graphs, camera vectors, and lighting matrices. Optimize performance using vertex shader arrays or flat shading materials.";
+    } else if (rawCode.includes("addEventListener('keydown'") || rawCode.includes("score") || rawCode.includes("gameState")) {
+        resolvedGroup = "Arcade Labs";
+        resolvedRules = "Maintain a distinct engine state loop. Map fluid keyboard event bindings. Check real-time frame boundary constraints or bounding box collisions.";
+    }
+
+    // 3. SEMANTIC DESCRIPTION GENERATOR
+    let resolvedDescription = "Procedural visual sandbox execution layout.";
+    if (prompt && prompt.trim().length > 0) {
+        resolvedDescription = prompt.trim().charAt(0).toUpperCase() + prompt.trim().slice(1);
+    } else {
+        // Derive description from code indicators if prompt context is absent
+        resolvedDescription = `${resolvedGroup} environment running customized structural configurations for ${resolvedName.toLowerCase()}.`;
+    }
+
+    // 4. Define the Full Structural Blueprint Entry Definition
     const newTypeEntry = {
-        id: sparkNode.id || `type_${Date.now()}`,
-        name: sparkNode.name || "Generic Template",
-        group: sparkNode.group || "General",
-        parameter_map: { ...foundParams },
-        regex: Object.keys(foundParams).reduce((map, key) => {
+        id: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-'),
+        name: resolvedName,
+        group: resolvedGroup,
+        image: sparkNode.image || "/assets/thumbnails/default.jpg",
+        description: resolvedDescription,
+        regex: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '|'),
+        rules: resolvedRules,
+        logic: "create",
+        is_custom: true,
+        parameter_map: Object.keys(foundParams).reduce((map, key) => {
             map[key] = `(?:${key}(?:\\s(?:is|of|at))?\\s)?([-#\\w.]+)`;
             return map;
         }, {}),
         template: compiledTemplateDoc,
+        defaults: { ...foundParams }
     };
 
     return {
@@ -3104,7 +3147,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 
                 // Distill received raw content into clean templates using the helper function
                 const parserMockNode = { id: cachedPreset.id, name: sparkName, code: rawLLMContent, group: cachedPreset.group };
-                const distillation = generateTemplateAndParameterMap(parserMockNode, []);
+                const distillation = generateTemplateAndParameterMap(parserMockNode, prompt );
                 
                 // Hydrate the central cache with the template and parameter map
                 // mode is cache hit where index exists but not the template
@@ -3232,7 +3275,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
 
                 // Call the helper to extract variables and construct the model entry data objects cleanly
                 const parserMockNode = { id: sparkName.toLowerCase().replace(/\s+/g, '-'), name: sparkName, code: rawLLMContent, group: "Custom Group" };
-                const distillation = generateTemplateAndParameterMap(parserMockNode, []);
+                const distillation = generateTemplateAndParameterMap(parserMockNode, prompt);
 
                 // case mode is create and a new cache type has to be introduced
                 const nextCachedIndex = (databaseCache.settings?.['arcade-current-types'] || []).length;
