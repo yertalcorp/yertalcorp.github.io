@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:56:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1508,12 +1508,13 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         is_custom: matchedIndex === -1
     };
 }
-
-
 function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     let rawCode = sparkNode.code || "";
     
-    // Cleanse text input: Strip out hidden unicode, zero-width, and control characters
+    console.group("[DISTILLATION ENGINE] generateTemplateAndParameterMap");
+    console.log("[TELEMETRY INPUT] Raw Code Input String:\n", rawCode);
+
+    // Cleanse text input: Strip out hidden unicode, zero-width spaces, and control characters
     rawCode = rawCode.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '');
 
     const foundParams = {};
@@ -1524,15 +1525,16 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         return cleanComment ? `/* ${cleanComment} */` : '';
     });
 
-    // Isolate code execution logic
+    // Isolate code execution logic safely accounting for optional attributes in script tag
     const scriptMatch = rawCode.match(/<script[\s\S]*?>([\s\S]*?)<\/script>/i);
     let logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
 
     // Fixed regex engine pattern to split single-line comma grouped variables cleanly 
     const configPattern = /(?:const|let|var)\s+([^;]+);/g;
     
-    // Parameterize top-level constants safely
+    // 1. Parameterize top-level constants safely
     let templateWithVars = logic.replace(configPattern, (match, expression) => {
+        // Handle comma-separated inline assignments like: worldWidth = 128, worldDepth = 128
         const assignments = expression.split(',');
         let processedAssignments = assignments.map(assign => {
             const parts = assign.split('=');
@@ -1552,13 +1554,14 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
             return assign;
         });
         
+        // Rebuild statement header safely back into logic lines
         const keyword = match.match(/^(const|let|var)/)[0];
         return `${keyword} ${processedAssignments.join(', ')};`;
     });
 
     const finalScriptLogic = templateWithVars;
 
-    // Re-assemble complete document matrix context starting strictly with DOCTYPE
+    // 3. Re-assemble complete document matrix context ensuring it starts strictly with DOCTYPE
     let compiledTemplateDoc = "";
     if (rawCode.trim().toUpperCase().startsWith("<!DOCTYPE")) {
         compiledTemplateDoc = scriptMatch ? rawCode.replace(scriptMatch[1], `\n${finalScriptLogic}\n`) : rawCode;
@@ -1566,17 +1569,20 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         compiledTemplateDoc = `<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <style>\n        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #050508; }\n    </style>\n</head>\n<body>\n    <script type="module">\n${finalScriptLogic}\n    </script>\n</body>\n</html>`;
     }
 
-    // 1. SMART METADATA EXTRACTION LAYER
-    // Extract explicit title from HTML tags if present, otherwise fall back to clean string names
+    console.log("[TELEMETRY OUTPUT] Cleaned and Processed Template Output:\n", compiledTemplateDoc);
+    console.log("[TELEMETRY OUTPUT] Extracted Parameter Map Dictionary Target:", foundParams);
+
+    // 4. SMART METADATA EXTRACTION LAYER
     const titleMatch = rawCode.match(/<title>([\s\S]*?)<\/title>/i);
     const h1Match = rawCode.match(/<h1>([\s\S]*?)<\/h1>/i);
+    const h2Match = rawCode.match(/<h2>([\s\S]*?)<\/h2>/i);
     let resolvedName = sparkNode.name || "";
     
     if (!resolvedName || resolvedName.startsWith('spark_') || resolvedName === 'Unnamed Spark') {
-        resolvedName = titleMatch ? titleMatch[1].trim() : (h1Match ? h1Match[1].trim() : "Custom Simulation Space");
+        resolvedName = titleMatch ? titleMatch[1].trim() : (h1Match ? h1Match[1].trim() : (h2Match ? h2Match[1].trim() : "Custom Simulation Space"));
     }
 
-    // 2. CATEGORY GROUP CLASSIFICATION DETECTOR
+    // Category Group Classification Detector
     let resolvedGroup = "Custom Labs";
     let resolvedRules = "Execute interactive rendering threads via modular canvas context structures.";
     if (rawCode.includes("three") || rawCode.includes("THREE") || rawCode.includes("WebGLRenderer")) {
@@ -1587,16 +1593,15 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         resolvedRules = "Maintain a distinct engine state loop. Map fluid keyboard event bindings. Check real-time frame boundary constraints or bounding box collisions.";
     }
 
-    // 3. SEMANTIC DESCRIPTION GENERATOR
+    // Semantic Description Generator
     let resolvedDescription = "Procedural visual sandbox execution layout.";
     if (prompt && prompt.trim().length > 0) {
         resolvedDescription = prompt.trim().charAt(0).toUpperCase() + prompt.trim().slice(1);
     } else {
-        // Derive description from code indicators if prompt context is absent
         resolvedDescription = `${resolvedGroup} environment running customized structural configurations for ${resolvedName.toLowerCase()}.`;
     }
 
-    // 4. Define the Full Structural Blueprint Entry Definition
+    // 5. Define the Class Definition
     const newTypeEntry = {
         id: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-'),
         name: resolvedName,
@@ -1614,6 +1619,8 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         template: compiledTemplateDoc,
         defaults: { ...foundParams }
     };
+
+    console.groupEnd();
 
     return {
         typeData: newTypeEntry,
