@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:06:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1530,12 +1530,51 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     const scriptMatch = rawCode.match(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/i);
     let logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
 
-    // Fixed regex engine pattern to split single-line comma grouped variables cleanly 
+    // 1. ADVANCED DICTIONARY DECONSTRUCTION ENGINE
+    // Scan for structured configuration parameter maps like "const params = { ... }"
+    const objectMapPattern = /(?:const|let|var)\s+(\w*(?:params|config|settings|options|setup)\w*)\s*=\s*\{([\s\S]*?)\};/i;
+    const objectMapMatch = logic.match(objectMapPattern);
+
+    if (objectMapMatch) {
+        const mapIdentifier = objectMapMatch[1];
+        const internalBody = objectMapMatch[2];
+        
+        const lineEntries = internalBody.split('\n');
+        const processedLines = lineEntries.map(line => {
+            const cleanLine = line.trim();
+            if (!cleanLine || cleanLine.startsWith('/*')) return line;
+            
+            const parts = cleanLine.split(/:(.+)/);
+            if (parts.length < 2) return line;
+            
+            const keyName = parts[0].trim().replace(/['"`]/g, "");
+            let rawVal = parts[1].trim().replace(/,$/, "").trim();
+            
+            const isNumericOrHex = /^-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)$/.test(rawVal);
+            const isQuotedString = /^(['"`])([\s\S]*?)\1$/.test(rawVal);
+
+            if (isNumericOrHex || isQuotedString) {
+                const cleanedVal = rawVal.replace(/^['"`]|['"`]$/g, "");
+                const lowercaseKey = keyName.toLowerCase();
+                
+                if (isNumericOrHex && !rawVal.toLowerCase().includes('0x')) {
+                    foundParams[lowercaseKey] = parseFloat(cleanedVal);
+                } else {
+                    foundParams[lowercaseKey] = cleanedVal;
+                }
+                
+                const originalIndent = line.match(/^\s*/)[0];
+                return `${originalIndent}${keyName}: ${isNaN(cleanedVal) || rawVal.toLowerCase().includes('0x') ? `"${`{{${lowercaseKey}}}`}"` : `{{${lowercaseKey}}}`},`;
+            }
+            return line;
+        });
+        
+        logic = logic.replace(objectMapMatch[0], `const ${mapIdentifier} = {\n${processedLines.join('\n')}\n};`);
+    }
+
+    // 2. BACKUP SCALAR VARIABLE SCANNER
     const configPattern = /(?:const|let|var)\s+([^;]+);/g;
-    
-    // 1. Parameterize ALL top-level constants generically based on explicit structural assignment types
     let templateWithVars = logic.replace(configPattern, (match, expression) => {
-        // Look behind the match in the active logic context to ensure it isn't part of a 'for (' loop declaration
         const matchIndex = logic.indexOf(match);
         if (matchIndex > 0) {
             const contextBefore = logic.substring(Math.max(0, matchIndex - 20), matchIndex);
@@ -1561,11 +1600,12 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
                 const cleanedVal = value.replace(/^['"`]|['"`]$/g, "");
                 const key = name.toLowerCase();
                 
-                // FIX: Copy values exactly as they are defined in the source code
-                if (isNumericOrHex && !value.toLowerCase().includes('0x')) {
-                    foundParams[key] = isNaN(value) ? parseFloat(value) : Number(value);
-                } else {
-                    foundParams[key] = cleanedVal;
+                if (!foundParams[key]) {
+                    if (isNumericOrHex && !value.toLowerCase().includes('0x')) {
+                        foundParams[key] = parseFloat(cleanedVal);
+                    } else {
+                        foundParams[key] = cleanedVal;
+                    }
                 }
                 
                 return `${name} = ${isNaN(cleanedVal) || value.toLowerCase().includes('0x') ? `"${`{{${key}}}`}"` : `{{${key}}}`}`;
@@ -1579,7 +1619,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
 
     const finalScriptLogic = templateWithVars;
 
-    // 2. Re-assemble complete document matrix context ensuring it starts strictly with DOCTYPE
+    // 3. Re-assemble complete document matrix context ensuring it starts strictly with DOCTYPE
     let compiledTemplateDoc = "";
     const cleanCheckCode = rawCode.trim().toUpperCase();
     if (cleanCheckCode.startsWith("<!DOCTYPE") || cleanCheckCode.includes("<HTML")) {
@@ -1594,7 +1634,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     console.log("[TELEMETRY OUTPUT] Cleaned and Processed Template Output:\n", compiledTemplateDoc);
     console.log("[TELEMETRY OUTPUT] Extracted Parameter Map Dictionary Target:", foundParams);
 
-    // 3. SMART METADATA EXTRACTION LAYER (Generic Extraction)
+    // 4. SMART METADATA EXTRACTION LAYER
     const titleMatch = rawCode.match(/<title>([\s\S]*?)<\/title>/i);
     const h1Match = rawCode.match(/<h1>([\s\S]*?)<\/h1>/i);
     const h2Match = rawCode.match(/<h2>([\s\S]*?)<\/h2>/i);
@@ -1615,7 +1655,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     // Dynamic Description Setup
     let resolvedDescription = prompt ? (prompt.trim().charAt(0).toUpperCase() + prompt.trim().slice(1)) : `${resolvedGroup} environment for ${resolvedName.toLowerCase()}.`;
 
-    // 4. Define the Pure Class Definition Object Structure with no specific fallbacks
+    // 5. Define the Pure Class Definition Object Structure for Central Cache Injection
     const newTypeEntry = {
         id: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-'),
         name: resolvedName,
@@ -1627,10 +1667,9 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         rules: `Execute interactive rendering threads via modular ${resolvedGroup.toLowerCase()} structures.`,
         logic: "create",
         is_custom: true,
-        parameter_map: Object.keys(foundParams).reduce((map, key) => {
-            map[key] = `(?:${key}(?:\\s(?:is|of|at))?\\s)?([-#\\w.]+)`;
-            return map;
-        }, {}),
+        // FIX: Assign direct primitive configuration properties layout to the cache map
+        parameter_map: { ...foundParams },
+        defaults: { ...foundParams },
         template: compiledTemplateDoc
     };
 
