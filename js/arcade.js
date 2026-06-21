@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @15:56:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @19:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1508,6 +1508,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         is_custom: matchedIndex === -1
     };
 }
+
 function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     let rawCode = sparkNode.code || "";
     
@@ -1525,8 +1526,8 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         return cleanComment ? `/* ${cleanComment} */` : '';
     });
 
-    // Isolate code execution logic safely accounting for optional attributes in script tag
-    const scriptMatch = rawCode.match(/<script[\s\S]*?>([\s\S]*?)<\/script>/i);
+    // FIX: Target only the active script execution payload block, completely skipping external library dependencies
+    const scriptMatch = rawCode.match(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/i);
     let logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
 
     // Fixed regex engine pattern to split single-line comma grouped variables cleanly 
@@ -1534,7 +1535,6 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     
     // 1. Parameterize top-level constants safely
     let templateWithVars = logic.replace(configPattern, (match, expression) => {
-        // Handle comma-separated inline assignments like: worldWidth = 128, worldDepth = 128
         const assignments = expression.split(',');
         let processedAssignments = assignments.map(assign => {
             const parts = assign.split('=');
@@ -1554,7 +1554,6 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
             return assign;
         });
         
-        // Rebuild statement header safely back into logic lines
         const keyword = match.match(/^(const|let|var)/)[0];
         return `${keyword} ${processedAssignments.join(', ')};`;
     });
@@ -1563,8 +1562,12 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
 
     // 3. Re-assemble complete document matrix context ensuring it starts strictly with DOCTYPE
     let compiledTemplateDoc = "";
-    if (rawCode.trim().toUpperCase().startsWith("<!DOCTYPE")) {
+    const cleanCheckCode = rawCode.trim().toUpperCase();
+    if (cleanCheckCode.startsWith("<!DOCTYPE") || cleanCheckCode.includes("<HTML")) {
         compiledTemplateDoc = scriptMatch ? rawCode.replace(scriptMatch[1], `\n${finalScriptLogic}\n`) : rawCode;
+        if (!compiledTemplateDoc.trim().toUpperCase().startsWith("<!DOCTYPE")) {
+            compiledTemplateDoc = "<!DOCTYPE html>\n" + compiledTemplateDoc.trim();
+        }
     } else {
         compiledTemplateDoc = `<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <style>\n        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #050508; }\n    </style>\n</head>\n<body>\n    <script type="module">\n${finalScriptLogic}\n    </script>\n</body>\n</html>`;
     }
@@ -1601,10 +1604,11 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         resolvedDescription = `${resolvedGroup} environment running customized structural configurations for ${resolvedName.toLowerCase()}.`;
     }
 
-    // 5. Define the Class Definition
+    // 5. Define the Class Definition Object Structure matching the exact schema requirement
     const newTypeEntry = {
         id: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-'),
         name: resolvedName,
+        example_prompt: prompt,
         group: resolvedGroup,
         image: sparkNode.image || "/assets/thumbnails/default.jpg",
         description: resolvedDescription,
@@ -1616,8 +1620,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
             map[key] = `(?:${key}(?:\\s(?:is|of|at))?\\s)?([-#\\w.]+)`;
             return map;
         }, {}),
-        template: compiledTemplateDoc,
-        defaults: { ...foundParams }
+        template: compiledTemplateDoc
     };
 
     console.groupEnd();
