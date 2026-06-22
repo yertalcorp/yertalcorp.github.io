@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1438,50 +1438,97 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     let maxScore = 0;
     const SCORE_THRESHOLD = 0.2;
 
-    presets.forEach((category, index) => {
-        let currentScore = 0;
-
-        // 1. Priority Boost (Bubble Selection)
-        if (forcedCategoryName && category.name && category.name.toLowerCase() === forcedCategoryName.toLowerCase()) {
-            currentScore += 0.5;
+    // 0. Bubble Preset Exact Match Guard
+    if (forcedCategoryName) {
+        const bubbleIndex = presets.findIndex(category => category.name && category.name.toLowerCase() === forcedCategoryName.toLowerCase());
+        if (bubbleIndex !== -1 && presets[bubbleIndex].prompt && presets[bubbleIndex].prompt.trim() === prompt.trim()) {
+            bestIndex = bubbleIndex;
+            maxScore = 1.0; // Max out score to guarantee bypass
         }
-        
-        // 2. ID & Description match
-        if (category.id && cleanPrompt.includes(category.id.toLowerCase())) currentScore += 0.4;
-        if (category.description && cleanPrompt.includes(category.description.toLowerCase())) currentScore += 0.2;
-        
-        // 2b. Enhanced structural property scoring for custom searches
-        if (category.name && cleanPrompt.includes(category.name.toLowerCase())) currentScore += 0.3;
-        if (category.example_prompt && cleanPrompt.includes(category.example_prompt.toLowerCase())) currentScore += 0.25;
-        if (category.regex && new RegExp(category.regex, 'i').test(cleanPrompt)) currentScore += 0.35;
-        
-        // 3. Scan template internal 'groups' for semantic keyword matching
-        try {
-            const rawHTML = category.template || '';
-            const templateDOM = new DOMParser().parseFromString(rawHTML, 'text/html');
-            const scriptContent = templateDOM.querySelector('script')?.innerText || '';
-            const groupsMatch = scriptContent.match(/groups\s*=\s*(\{[\s\S]*?\})/);
-            
-            if (groupsMatch) {
-                const groups = JSON.parse(groupsMatch[1].replace(/'/g, '"'));
-                Object.entries(groups).forEach(([groupName, tools]) => {
-                    if (cleanPrompt.includes(groupName.toLowerCase().replace('_', ' '))) currentScore += 0.3;
-                    if (Array.isArray(tools)) {
-                        tools.forEach(tool => {
-                            if (cleanPrompt.includes(tool.toLowerCase())) currentScore += 0.15;
-                        });
+    }
+
+    // Only execute scoring loop if an exact bubble match wasn't already triggered
+    if (bestIndex === -1) {
+        // 1. Tokenize using the same rules as bubble capability matching
+        const stopWords = new Set([
+            'a', 'an', 'the', 'is', 'to', 'it', 'and', 'or', 'for', 'hence', 'but', 
+            'no', 'not', 'make', 'create', 'generate', 'so', 'there', 'where', 
+            'here', 'has', 'should', 'could', 'would', 'put', 'in', 'out', 'on', 
+            'up', 'down', 'any', 'all', 'if', 'with', 'i', 'you', 'me', 'can', 
+            "can't", 'do', "don't", 'cannot', 'when', 'then', 'that', 'this', 
+            'press', 'click', 'he', 'she', 'him', 'her', 'us', 'we', 'them', 
+            "it's", 'its', 'now', 'some', 'small', 'big', 'large', 'medium',
+            'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+            'many', 'few', 'several', 'lots', 'much'
+        ]);
+
+        const tokens = cleanPrompt
+            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") 
+            .replace(/\d+/g, "")                         
+            .split(/\s+/)
+            .filter(t => t.length > 1 && !stopWords.has(t));
+
+        presets.forEach((category, index) => {
+            let currentScore = 0;
+            let wordMatched = false;
+
+            // 2. Score based on clean token match frequency
+            if (tokens.length > 0) {
+                const searchTarget = `${category.name || ''} ${category.id || ''} ${category.description || ''} ${category.regex || ''}`.toLowerCase();
+                tokens.forEach(token => {
+                    if (searchTarget.includes(token)) {
+                        currentScore += 0.25; // Award incremental points per meaningful word hit
+                        wordMatched = true;
                     }
                 });
             }
-        } catch (e) { 
-            // Silent fail if template structure is unexpected
-        }
 
-        if (currentScore > maxScore) {
-            maxScore = currentScore;
-            bestIndex = index;
-        }
-    });
+            // 1. Priority Boost (Bubble Selection)
+            if (forcedCategoryName && category.name && category.name.toLowerCase() === forcedCategoryName.toLowerCase()) {
+                currentScore += 0.5;
+            }
+            
+            // 2. ID & Description match
+            if (category.id && cleanPrompt.includes(category.id.toLowerCase())) currentScore += 0.4;
+            if (category.description && cleanPrompt.includes(category.description.toLowerCase())) currentScore += 0.2;
+            
+            // 2b. Enhanced structural property scoring for custom searches
+            if (category.name && cleanPrompt.includes(category.name.toLowerCase())) currentScore += 0.3;
+            if (category.example_prompt && cleanPrompt.includes(category.example_prompt.toLowerCase())) currentScore += 0.25;
+            if (category.regex && new RegExp(category.regex, 'i').test(cleanPrompt)) currentScore += 0.35;
+            
+            // 3. Scan template internal 'groups' for semantic keyword matching
+            try {
+                const rawHTML = category.template || '';
+                const templateDOM = new DOMParser().parseFromString(rawHTML, 'text/html');
+                const scriptContent = templateDOM.querySelector('script')?.innerText || '';
+                const groupsMatch = scriptContent.match(/groups\s*=\s*(\{[\s\S]*?\})/);
+                
+                if (groupsMatch) {
+                    const groups = JSON.parse(groupsMatch[1].replace(/'/g, '"'));
+                    Object.entries(groups).forEach(([groupName, tools]) => {
+                        if (cleanPrompt.includes(groupName.toLowerCase().replace('_', ' '))) currentScore += 0.3;
+                        if (Array.isArray(tools)) {
+                            tools.forEach(tool => {
+                                if (cleanPrompt.includes(tool.toLowerCase())) {
+                                    currentScore += 0.15;
+                                    wordMatched = true;
+                                }
+                            });
+                        }
+                    });
+                }
+            } catch (e) { 
+                // Silent fail if template structure is unexpected
+            }
+
+            // Enforce that at least one high-value keyword or contextual word must match
+            if (wordMatched && currentScore > maxScore) {
+                maxScore = currentScore;
+                bestIndex = index;
+            }
+        });
+    }
 
     const matchedCategory = maxScore >= SCORE_THRESHOLD ? presets[bestIndex] : null;
     const matchedIndex = maxScore >= SCORE_THRESHOLD ? bestIndex : -1;
