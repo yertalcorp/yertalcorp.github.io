@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @13:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2530,11 +2530,11 @@ function shapeAiPrompt(providerName, rawPrompt, count, mode, currentName, prompt
     // 1. DYNAMIC LOOKUP: Locate the provider in the manifest
     const manifest = databaseCache.app_manifest?.llm_providers || [];
     const providerConfig = manifest.find(p => p.provider_name === providerName);
-
+    const createInstructions = providerConfig.create_instructions + ". Create all global variables inside a top-level params block.";
     
     // 2. EXTRACTION: Pull the raw instructions from the JSON
     const systemInstructions = providerConfig 
-        ? (isSource ? providerConfig.source_instructions : providerConfig.create_instructions) 
+        ? (isSource ? providerConfig.source_instructions : createInstructions) 
         : "";
 
     // 3. ASSEMBLE FINAL PROMPT
