@@ -1795,7 +1795,6 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         is_custom: true,
         // FIX: Assign direct primitive configuration properties layout to the cache map
         parameter_map: { ...foundParams },
-        defaults: { ...foundParams },
         template: compiledTemplateDoc
     };
 
@@ -1820,8 +1819,14 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     
     try {
         // CENTRALIZED RESOLUTION
-        // We pass the bubbleHint to help the matcher, but we still re-run it
         const matchResult = resolveIndexFromPrompt(input, currentName, bubbleHint);
+        
+        // --- ADDED INTERCEPTOR FOR POORLY FORMED PROMPTS ---
+        if (matchResult.status === "TRY_A_DIFFERENT_PROMPT") {
+            status.textContent = matchResult.message || "Instructions were not clear. Please try again.";
+            return; /* Stop everything right here—no executeMassSpark, no LLM call */
+        }
+        // ----------------------------------------------------
         
         let resolvedCategory;
         if (!matchResult.is_custom) {
