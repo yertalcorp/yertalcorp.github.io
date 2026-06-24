@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL ARCADE LOADED | ${new Date().toLocaleDateString()} @21:41:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -101,13 +101,13 @@ let currentTutorialStep = 0;
 const steps = [
     {
         target: null,
-        title: "ARCADE_INIT",
-        content: "Welcome to your Arcade. This is a versatile showroom for your projects, a social hub for friends, or a business storefront where you can collect tips and funding."
+        title: "REALM_INIT",
+        content: "Welcome to your Realm. This is a versatile showroom for your Simulations, a social hub for friends, or a business storefront where you can create and share with your network."
     },
     {
         target: ".settings-trigger", // Assuming three dots
         title: "OS_PREFERENCES",
-        content: "Access System Settings to change themes (like Autumn Ember) or upgrade plans. Business Plans allow you to rebrand 'Tips' to 'Sales' to match your shop."
+        content: "Access System Settings to change the name, subtitle, theme (like Autumn Ember) and privacy of your Realm."
     },
     {
         target: ".terminal-btn", 
@@ -122,12 +122,12 @@ const steps = [
     {
         target: ".spark-stats-row", // Target the icons/stats row on a card
         title: "ENGAGEMENT_PROTOCOLS",
-        content: "Interact with Sparks via Save, Share, or Tip. In Business mode, these interactions become your revenue stream for sales or product funding."
+        content: "Interact with Sparks via the Like, Save, Share and Feedback icons under each card."
     },
     {
         target: null,
         title: "SYSTEM_READY",
-        content: "Your Laboratory is online. Start forging Currents and share your unique URL to begin growing your audience and funding."
+        content: "Your Realm is online. Start forging Currents and share your unique URL to begin growing your audience and network."
     }
 ];
 
@@ -886,7 +886,7 @@ window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
 
     const baseUrl = window.location.origin + window.location.pathname;
     const shareUrl = `${baseUrl}?user=${ownerId}&current=${currentId}&spark=${sparkId}`;
-    const shareTitle = "Check out this Spark on Yertal Arcade!";
+    const shareTitle = "Check out this Spark on the Yertal Realms!";
     const shareData = { title: shareTitle, text: 'Explore this brilliant spark:', url: shareUrl };
     const visitorUid = auth.currentUser ? auth.currentUser.uid : "anonymous";
 
@@ -1076,7 +1076,7 @@ async function refreshUI() {
         globalTheme = ownerProfile.theme || 'neon-dark';
         applyTheme(globalTheme);
         
-        document.title = `${ownerProfile.display_name || 'Arcade'} | Showroom`;
+        document.title = `${ownerProfile.display_name || 'Realm'} | Showroom`;
         
         const brandingLogo = document.getElementById('branding-logo');
         if (brandingLogo) {
@@ -1085,7 +1085,7 @@ async function refreshUI() {
 
         const brandingName = document.getElementById('branding-name');
         if (brandingName) {
-            brandingName.textContent = ownerProfile.display_name || 'Arcade';
+            brandingName.textContent = ownerProfile.display_name || 'Realm';
         }
 
         // Apply owner-specific UI colors to CSS variables
@@ -1193,7 +1193,7 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
         const profileData = profileSnapshot.val();
 
         if (!profileData || !profileData.arcade_title) {
-            console.log("[Identity Gate] No Arcade Name found. Launching Setup HUD...");
+            console.log("[Identity Gate] No Realm Name found. Launching Setup HUD...");
             window.openArcadeSettings(); 
             return; // Exit here. The user will click Forge again after Establish Identity.
         }
@@ -1361,7 +1361,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
 
                 <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid var(--glow-aura); padding-left: 0.5rem; height: 16px; margin-left: 0.2rem;">
                     <a href="/index.html" title="Showroom" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size);; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-door-open"></i></a>
-                    <a href="?user=${userSlug}" title="My Arcade" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size);; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
+                    <a href="?user=${userSlug}" title="My Realm" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size);; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
                     <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 3px; text-decoration: none; background: var(--branding-color); color: var(--bg-color); box-shadow: 0 0 5px var(--box-shadow-color); font-size: var(--nav-font-size); font-weight: 900;">HUB</a>
                 </div>
             </div>
@@ -1417,7 +1417,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                 <span id="engine-status-text" style="color: var(--branding-text-color); background: var(--bg-color-low); font-weight: bold; font-size: 9px; text-shadow: 0 0 5px var(--glow-aura);">LABORATORY SYSTEM READY</span>
             </div>
             <div style="font-size: 8px; font-weight: 900; color: var(--branding-color); opacity: 0.6; letter-spacing: 0.2em; text-transform: uppercase;">
-                Arcade Environment v2.0
+                Realms Environment v2.0
             </div>
         </div>
     `;
@@ -1696,7 +1696,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     if (rawCode.includes("three") || rawCode.includes("THREE") || rawCode.includes("WebGLRenderer")) {
         resolvedGroup = "Visual Simulations";
     } else if (rawCode.includes("addEventListener('keydown'") || rawCode.includes("score") || rawCode.includes("gameState")) {
-        resolvedGroup = "Arcade Labs";
+        resolvedGroup = "Realm Labs";
     }
 
     // Dynamic Description Setup
@@ -1864,13 +1864,13 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                 container.innerHTML = `
                     <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 8rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 2rem; background: var(--card-bg);">
                         <h1 class="metallic-text" style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem; letter-spacing: -1px; color: var(--branding-text-color);">
-                            ${firstName}, Welcome to your Arcade
+                            ${firstName}, Welcome to your Realm
                         </h1>
                         <p style="color: var(--glow-color); opacity: 0.6; margin-bottom: 4rem; letter-spacing: 4px; font-size: 12px; font-family: 'Orbitron', sans-serif;">
                             SYSTEM STANDBY // NO ACTIVE CURRENTS DETECTED
                         </p>
                         <button onclick="window.openArcadeSettings()" class="ethereal-btn">
-                            <span class="btn-content">CREATE YOUR ARCADE</span>
+                            <span class="btn-content">CREATE YOUR REALM</span>
                             <div class="btn-glow"></div>
                         </button>
                     </div>
@@ -2800,7 +2800,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                     icon.style.color = neonColor;
                     icon.style.filter = neonGlow;
                     btn.style.pointerEvents = "none";
-                    btn.title = "Already in Your Arcade";
+                    btn.title = "Already in Your Realm";
                 }
             }
         })();
@@ -2892,7 +2892,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                                 <i class="fas fa-trash" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                         ` : `
-                            <button id="${sparkElementId}" onclick="cloneSpark(this, '${visitorUid}', '${ownerId}', '${currentId}', '${spark.id}')" title="Save to My Arcade" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <button id="${sparkElementId}" onclick="cloneSpark(this, '${visitorUid}', '${ownerId}', '${currentId}', '${spark.id}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-save" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                             <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
@@ -3727,7 +3727,7 @@ window.closeArcadeSettings = () => {
         // Option B: If you are using a fade-out animation in showroom_style.css or arcade.css
         hud.classList.remove('active'); 
         
-        console.log("[UI]: Arcade Settings HUD closed.");
+        console.log("[UI]: Realm Settings HUD closed.");
     } else {
         console.warn("[UI]: Could not find 'arcadesettings-hud' to close.");
     }
@@ -3759,11 +3759,11 @@ window.openArcadeSettings = () => {
     // 2. GENERATE DYNAMIC PROFILE STRUCTURE
     if (profileZone) {
         profileZone.innerHTML = `
-            <label class="hud-label-metallic">* ARCADE NAME</label>
+            <label class="hud-label-metallic">* REALM NAME</label>
             <input type="text" id="new-arcade-name" placeholder="e.g., Quantum Lab" class="hud-input">
             
             <label class="hud-label-metallic">SYSTEM SUBTITLE</label>
-            <input type="text" id="new-arcade-subtitle" placeholder="Establish Your Arcade to Start Creating" class="hud-input">
+            <input type="text" id="new-arcade-subtitle" placeholder="Establish Your Realm to Start Creating" class="hud-input">
 
             <label class="hud-label-metallic">INTERFACE THEME</label>
             <select id="arcade-theme-select" class="hud-input"></select>
@@ -3822,8 +3822,8 @@ window.openArcadeSettings = () => {
     if (hudHeader) {
         hudHeader.innerHTML = `
             <div class="hud-header-text">
-                <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE LABORATORY' : 'INITIALIZE YOUR ARCADE'}</h2>
-                <p class="hud-subtitle-info">${isSetup ? 'Syncing Profile Data...' : 'Establish Your Arcade to Start Creating'}</p>
+                <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE LABORATORY' : 'INITIALIZE YOUR REALM'}</h2>
+                <p class="hud-subtitle-info">${isSetup ? 'Syncing Profile Data...' : 'Establish Your Realm to Start Creating'}</p>
             </div>
             <button onclick="closeArcadeSettings()" class="close-hud-corner" aria-label="Close Settings">
                 <i class="fa-solid fa-xmark"></i>
