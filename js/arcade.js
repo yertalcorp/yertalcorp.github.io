@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:46:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1435,108 +1435,74 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     const presets = databaseCache.settings?.['arcade-current-types'] || [];
     
     let bestIndex = -1;
-    let maxScore = 0;
-    const SCORE_THRESHOLD = 0.2;
+    let maxMatchesCount = 0;
 
-    // 0. Bubble Preset Exact Match Guard
+    /* ----------------------------------------------------------------- */
+    /* CORE TOKENIZATION LOGIC ENGINE                                    */
+    /* ----------------------------------------------------------------- */
+    const stopWords = new Set([
+        'a', 'an', 'the', 'is', 'to', 'it', 'and', 'or', 'for', 'hence', 'but', 
+        'no', 'not', 'make', 'create', 'generate', 'so', 'there', 'where', 
+        'here', 'has', 'should', 'could', 'would', 'put', 'in', 'out', 'on', 
+        'up', 'down', 'any', 'all', 'if', 'with', 'i', 'you', 'me', 'can', 
+        "can't", 'do', "don't", 'cannot', 'when', 'then', 'that', 'this', 
+        'press', 'click', 'he', 'she', 'him', 'her', 'us', 'we', 'them', 
+        "it's", 'its', 'now', 'some', 'small', 'big', 'large', 'medium', 'over',
+        'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+        'many', 'few', 'several', 'lots', 'much', 'app', 'application', 'system', 'tool'
+    ]);
+
+    /* Inner Helper: Extracts pure alphanumeric tokens, bypassing stop words */
+    const getCleanTokens = (str) => {
+        if (!str) return [];
+        return str
+            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+            .replace(/\d+/g, "")
+            .split(/\s+/)
+            .filter(t => t.length > 1 && !stopWords.has(t));
+    };
+
+    const userTokens = getCleanTokens(cleanPrompt);
+
+    /* ----------------------------------------------------------------- */
+    /* STAGE 0: BUBBLE PRESET EXACT MATCH GUARD                          */
+    /* ----------------------------------------------------------------- */
     if (forcedCategoryName) {
-        const bubbleIndex = presets.findIndex(category => category.name && category.name.toLowerCase() === forcedCategoryName.toLowerCase());
+        const bubbleIndex = presets.findIndex(cat => cat.name && cat.name.toLowerCase() === forcedCategoryName.toLowerCase());
         if (bubbleIndex !== -1 && presets[bubbleIndex].prompt && presets[bubbleIndex].prompt.trim() === prompt.trim()) {
             bestIndex = bubbleIndex;
-            maxScore = 1.0; // Max out score to guarantee bypass
+            maxMatchesCount = userTokens.length; // Max out token alignment count
         }
     }
 
-    // Only execute scoring loop if an exact bubble match wasn't already triggered
-    if (bestIndex === -1) {
-        // 1. Tokenize using the same rules as bubble capability matching
-        const stopWords = new Set([
-            'a', 'an', 'the', 'is', 'to', 'it', 'and', 'or', 'for', 'hence', 'but', 
-            'no', 'not', 'make', 'create', 'generate', 'so', 'there', 'where', 
-            'here', 'has', 'should', 'could', 'would', 'put', 'in', 'out', 'on', 
-            'up', 'down', 'any', 'all', 'if', 'with', 'i', 'you', 'me', 'can', 
-            "can't", 'do', "don't", 'cannot', 'when', 'then', 'that', 'this', 
-            'press', 'click', 'he', 'she', 'him', 'her', 'us', 'we', 'them', 
-            "it's", 'its', 'now', 'some', 'small', 'big', 'large', 'medium',
-            'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
-            'many', 'few', 'several', 'lots', 'much'
-        ]);
-
-        const tokens = cleanPrompt
-            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") 
-            .replace(/\d+/g, "")                         
-            .split(/\s+/)
-            .filter(t => t.length > 1 && !stopWords.has(t));
-
+    /* ----------------------------------------------------------------- */
+    /* STAGE 1: STRICT 50% TOKEN INTERSECTION SCANNERS                   */
+    /* ----------------------------------------------------------------- */
+    if (bestIndex === -1 && userTokens.length > 0) {
         presets.forEach((category, index) => {
-            let currentScore = 0;
-            let wordMatched = false;
+            const cachePrompt = category.prompt ? category.prompt.toLowerCase().trim() : '';
+            const cacheTokens = getCleanTokens(cachePrompt);
 
-            // 2. Score based on clean token match frequency
-            if (tokens.length > 0) {
-                const searchTarget = `${category.name || ''} ${category.id || ''} ${category.description || ''} ${category.regex || ''}`.toLowerCase();
-                tokens.forEach(token => {
-                    if (searchTarget.includes(token)) {
-                        currentScore += 0.25; // Award incremental points per meaningful word hit
-                        wordMatched = true;
-                    }
-                });
-            }
+            /* Count precise keyword intersections strictly against the prompt field */
+            const intersection = userTokens.filter(token => cacheTokens.includes(token));
 
-            // 1. Priority Boost (Bubble Selection)
-            if (forcedCategoryName && category.name && category.name.toLowerCase() === forcedCategoryName.toLowerCase()) {
-                currentScore += 0.5;
-            }
-            
-            // 2. ID & Description match
-            if (category.id && cleanPrompt.includes(category.id.toLowerCase())) currentScore += 0.4;
-            if (category.description && cleanPrompt.includes(category.description.toLowerCase())) currentScore += 0.2;
-            
-            // 2b. Enhanced structural property scoring for custom searches
-            if (category.name && cleanPrompt.includes(category.name.toLowerCase())) currentScore += 0.3;
-            if (category.example_prompt && cleanPrompt.includes(category.example_prompt.toLowerCase())) currentScore += 0.25;
-            if (category.regex && new RegExp(category.regex, 'i').test(cleanPrompt)) currentScore += 0.35;
-            
-            // 3. Scan template internal 'groups' for semantic keyword matching
-            try {
-                const rawHTML = category.template || '';
-                const templateDOM = new DOMParser().parseFromString(rawHTML, 'text/html');
-                const scriptContent = templateDOM.querySelector('script')?.innerText || '';
-                const groupsMatch = scriptContent.match(/groups\s*=\s*(\{[\s\S]*?\})/);
-                
-                if (groupsMatch) {
-                    const groups = JSON.parse(groupsMatch[1].replace(/'/g, '"'));
-                    Object.entries(groups).forEach(([groupName, tools]) => {
-                        if (cleanPrompt.includes(groupName.toLowerCase().replace('_', ' '))) currentScore += 0.3;
-                        if (Array.isArray(tools)) {
-                            tools.forEach(tool => {
-                                if (cleanPrompt.includes(tool.toLowerCase())) {
-                                    currentScore += 0.15;
-                                    wordMatched = true;
-                                }
-                            });
-                        }
-                    });
-                }
-            } catch (e) { 
-                // Silent fail if template structure is unexpected
-            }
-
-            // Enforce that at least one high-value keyword or contextual word must match
-            if (wordMatched && currentScore > maxScore) {
-                maxScore = currentScore;
+            if (intersection.length > maxMatchesCount) {
+                maxMatchesCount = intersection.length;
                 bestIndex = index;
             }
         });
     }
 
-    const matchedCategory = maxScore >= SCORE_THRESHOLD ? presets[bestIndex] : null;
-    const matchedIndex = maxScore >= SCORE_THRESHOLD ? bestIndex : -1;
-    
-    // 4. Property Extraction
-    const userProperties = {};
-    if (matchedCategory) {
+    /* Evaluate match percentage bounds based on the active user tokens */
+    const matchPercentage = userTokens.length > 0 ? (maxMatchesCount / userTokens.length) * 100 : 0;
+    const finalMatchedIndex = (bestIndex !== -1 && matchPercentage >= 50) ? bestIndex : -1;
+
+    /* If a valid cached index is identified, parse configurations and return instantly */
+    if (finalMatchedIndex !== -1) {
+        const matchedCategory = presets[finalMatchedIndex];
+        const userProperties = {};
         const pMap = matchedCategory.parameter_map || {};
+
         Object.keys(pMap).forEach(key => {
             if (typeof pMap[key] === 'string') {
                 const match = prompt.match(new RegExp(pMap[key], 'i'));
@@ -1547,12 +1513,94 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
                 userProperties[key] = pMap[key];
             }
         });
+
+        return {
+            index: finalMatchedIndex,
+            properties: userProperties,
+            is_custom: false,
+            status: "SUCCESS_CACHE_HIT"
+        };
     }
 
+    /* ----------------------------------------------------------------- */
+    /* STAGE 2: PRE-FLIGHT LLM FIREBREAK VALIDATOR                       */
+    /* ----------------------------------------------------------------- */
+    
+    /* Guard A: Prompt completely empty or contains only non-descriptive stop words */
+    if (userTokens.length === 0) {
+        return {
+            index: -1,
+            properties: {},
+            is_custom: true,
+            status: "TRY_A_different_prompt",
+            message: "Instructions were not clear. Please try again with descriptive keywords."
+        };
+    }
+
+    /* Guard B: Phonotactic and Character Mash Verification (Catching "aeplp") */
+    const isGibberish = (token) => {
+        if (token.length <= 2) return false;
+        if (/([a-z])\1\1/.test(token)) return true; // Continuous repeating chars
+        
+        const vowels = (token.match(/[aeiou]/g) || []).length;
+        const consonants = token.length - vowels;
+        if (vowels === 0 || consonants === 0) return true; // Missing phonetic vowel balance
+        
+        const invalidClusters = ['qx', 'zv', 'wq', 'jx', 'mx', 'lpp', 'bcz', 'aepl'];
+        return invalidClusters.some(cluster => token.includes(cluster));
+    };
+
+    for (let token of userTokens) {
+        if (isGibberish(token)) {
+            return {
+                index: -1,
+                properties: {},
+                is_custom: true,
+                status: "TRY_A_different_prompt",
+                message: "Unstructured word fragments detected. Instructions were not clear. Please try again."
+            };
+        }
+    }
+
+    /* Guard C: Living Semantic Domain Anchoring (Catching "The quick brown fox...") */
+    const systemVocabulary = new Set();
+    presets.forEach(category => {
+        const tokens = getCleanTokens(category.prompt);
+        tokens.forEach(t => systemVocabulary.add(t));
+    });
+
+    /* Strict check for concise prompts to ensure they align with historical core properties */
+    if (userTokens.length <= 3) {
+        const hasSemanticIntent = userTokens.some(token => systemVocabulary.has(token));
+        if (!hasSemanticIntent) {
+            return {
+                index: -1,
+                properties: {},
+                is_custom: true,
+                status: "TRY_A_different_prompt",
+                message: "Application domain not recognized. Instructions were not clear. Please try again."
+            };
+        }
+    }
+
+    /* Fallback Catch: Handle complex inputs that pass structural validations but miss the cache vocabulary mapping */
+    const knownWordsCount = userTokens.filter(token => systemVocabulary.has(token)).length;
+    if (userTokens.length > 3 && knownWordsCount === 0) {
+        return {
+            index: -1,
+            properties: {},
+            is_custom: true,
+            status: "TRY_A_different_prompt",
+            message: "Sentence structure is valid, but the software instructions were not clear. Please try again."
+        };
+    }
+
+    /* Prompt is structured, meaningful, and safe to execute via a clean model pool pull */
     return {
-        index: matchedIndex, 
-        properties: userProperties,
-        is_custom: matchedIndex === -1
+        index: -1,
+        properties: {},
+        is_custom: true,
+        status: "PROCEED_TO_LLM"
     };
 }
 
