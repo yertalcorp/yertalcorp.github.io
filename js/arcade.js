@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:46:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1465,20 +1465,27 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     const userTokens = getCleanTokens(cleanPrompt);
 
     /* ----------------------------------------------------------------- */
-    /* STAGE 0: BUBBLE PRESET EXACT MATCH GUARD                          */
+    /* STEP 1: BUBBLE PRESET EXACT MATCH GUARD                           */
     /* ----------------------------------------------------------------- */
     if (forcedCategoryName) {
         const bubbleIndex = presets.findIndex(cat => cat.name && cat.name.toLowerCase() === forcedCategoryName.toLowerCase());
-        if (bubbleIndex !== -1 && presets[bubbleIndex].prompt && presets[bubbleIndex].prompt.trim() === prompt.trim()) {
-            bestIndex = bubbleIndex;
-            maxMatchesCount = userTokens.length; // Max out token alignment count
+        if (bubbleIndex !== -1 && presets[bubbleIndex].prompt) {
+            const cachedTargetPrompt = presets[bubbleIndex].prompt.trim();
+            if (cachedTargetPrompt === prompt.trim()) {
+                return {
+                    index: bubbleIndex,
+                    properties: {},
+                    is_custom: false,
+                    status: "SUCCESS_CACHE_HIT"
+                };
+            }
         }
     }
 
     /* ----------------------------------------------------------------- */
-    /* STAGE 1: STRICT 50% TOKEN INTERSECTION SCANNERS                   */
+    /* STEP 2: HIGHEST MATCH PROBABILISTIC INTERSECTION TOKENIZER        */
     /* ----------------------------------------------------------------- */
-    if (bestIndex === -1 && userTokens.length > 0) {
+    if (userTokens.length > 0) {
         presets.forEach((category, index) => {
             const cachePrompt = category.prompt ? category.prompt.toLowerCase().trim() : '';
             const cacheTokens = getCleanTokens(cachePrompt);
@@ -1486,6 +1493,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
             /* Count precise keyword intersections strictly against the prompt field */
             const intersection = userTokens.filter(token => cacheTokens.includes(token));
 
+            /* Capture the layout index holding the absolute highest match count volume */
             if (intersection.length > maxMatchesCount) {
                 maxMatchesCount = intersection.length;
                 bestIndex = index;
@@ -1493,37 +1501,61 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         });
     }
 
-    /* Evaluate match percentage bounds based on the active user tokens */
+    /* ----------------------------------------------------------------- */
+    /* STEP 2c: EVALUATE TOKEN THRESHOLD & PARAMETER PROPERTY CHANGES     */
+    /* ----------------------------------------------------------------- */
     const matchPercentage = userTokens.length > 0 ? (maxMatchesCount / userTokens.length) * 100 : 0;
-    const finalMatchedIndex = (bestIndex !== -1 && matchPercentage >= 50) ? bestIndex : -1;
 
-    /* If a valid cached index is identified, parse configurations and return instantly */
-    if (finalMatchedIndex !== -1) {
-        const matchedCategory = presets[finalMatchedIndex];
-        const userProperties = {};
-        const pMap = matchedCategory.parameter_map || {};
+    if (bestIndex !== -1 && matchPercentage >= 50) {
+        const matchedCategory = presets[bestIndex];
+        const originalPMap = matchedCategory.parameter_map || {};
+        const changedProperties = {};
+        let valueHasChanged = false;
 
-        Object.keys(pMap).forEach(key => {
-            if (typeof pMap[key] === 'string') {
-                const match = prompt.match(new RegExp(pMap[key], 'i'));
-                if (match) {
-                    userProperties[key] = (match[1] || match[0]).trim();
+        /* Extract properties and assess delta changes against the source text */
+        Object.keys(originalPMap).forEach(key => {
+            /* Check if the property key name exists as a substring or exact word within the user prompt */
+            if (cleanPrompt.includes(key.toLowerCase())) {
+                let extractedValue = null;
+
+                if (typeof originalPMap[key] === 'string') {
+                    const match = prompt.match(new RegExp(originalPMap[key], 'i'));
+                    if (match) {
+                        extractedValue = (match[1] || match[0]).trim();
+                    }
+                } else {
+                    extractedValue = originalPMap[key];
                 }
-            } else {
-                userProperties[key] = pMap[key];
+
+                /* Compare the extracted user runtime value against the cached value baseline */
+                if (extractedValue !== null && extractedValue !== originalPMap[key]) {
+                    changedProperties[key] = extractedValue;
+                    valueHasChanged = true;
+                }
             }
         });
 
+        /* Step 2.c.i: Values have changed -> return target index paired with isolated delta maps */
+        if (valueHasChanged) {
+            return {
+                index: bestIndex,
+                properties: changedProperties,
+                is_custom: false,
+                status: "SUCCESS_CACHE_HIT_WITH_CHANGES"
+            };
+        }
+
+        /* Step 2.c.ii: Prompts differ slightly but data values are identical -> skip parameter maps */
         return {
-            index: finalMatchedIndex,
-            properties: userProperties,
+            index: bestIndex,
+            properties: {},
             is_custom: false,
             status: "SUCCESS_CACHE_HIT"
         };
     }
 
     /* ----------------------------------------------------------------- */
-    /* STAGE 2: PRE-FLIGHT LLM FIREBREAK VALIDATOR                       */
+    /* STEP 2d: PRE-FLIGHT LLM FIREBREAK VALIDATOR                       */
     /* ----------------------------------------------------------------- */
     
     /* Guard A: Prompt completely empty or contains only non-descriptive stop words */
@@ -1532,7 +1564,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
             index: -1,
             properties: {},
             is_custom: true,
-            status: "TRY_A_different_prompt",
+            status: "TRY_A_DIFFERENT_PROMPT",
             message: "Instructions were not clear. Please try again with descriptive keywords."
         };
     }
@@ -1556,7 +1588,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
                 index: -1,
                 properties: {},
                 is_custom: true,
-                status: "TRY_A_different_prompt",
+                status: "TRY_A_DIFFERENT_PROMPT",
                 message: "Unstructured word fragments detected. Instructions were not clear. Please try again."
             };
         }
@@ -1577,7 +1609,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
                 index: -1,
                 properties: {},
                 is_custom: true,
-                status: "TRY_A_different_prompt",
+                status: "TRY_A_DIFFERENT_PROMPT",
                 message: "Application domain not recognized. Instructions were not clear. Please try again."
             };
         }
@@ -1590,7 +1622,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
             index: -1,
             properties: {},
             is_custom: true,
-            status: "TRY_A_different_prompt",
+            status: "TRY_A_DIFFERENT_PROMPT",
             message: "Sentence structure is valid, but the software instructions were not clear. Please try again."
         };
     }
@@ -1603,7 +1635,6 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         status: "PROCEED_TO_LLM"
     };
 }
-
 function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     let rawCode = sparkNode.code || "";
     
