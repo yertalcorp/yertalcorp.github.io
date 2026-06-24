@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1594,39 +1594,6 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         }
     }
 
-    /* Guard C: Living Semantic Domain Anchoring (Catching "The quick brown fox...") */
-    const systemVocabulary = new Set();
-    presets.forEach(category => {
-        const tokens = getCleanTokens(category.prompt);
-        tokens.forEach(t => systemVocabulary.add(t));
-    });
-
-    /* Strict check for concise prompts to ensure they align with historical core properties */
-    if (userTokens.length <= 3) {
-        const hasSemanticIntent = userTokens.some(token => systemVocabulary.has(token));
-        if (!hasSemanticIntent) {
-            return {
-                index: -1,
-                properties: {},
-                is_custom: true,
-                status: "TRY_A_DIFFERENT_PROMPT",
-                message: "Application domain not recognized. Instructions were not clear. Please try again."
-            };
-        }
-    }
-
-    /* Fallback Catch: Handle complex inputs that pass structural validations but miss the cache vocabulary mapping */
-    const knownWordsCount = userTokens.filter(token => systemVocabulary.has(token)).length;
-    if (userTokens.length > 3 && knownWordsCount === 0) {
-        return {
-            index: -1,
-            properties: {},
-            is_custom: true,
-            status: "TRY_A_DIFFERENT_PROMPT",
-            message: "Sentence structure is valid, but the software instructions were not clear. Please try again."
-        };
-    }
-
     /* Prompt is structured, meaningful, and safe to execute via a clean model pool pull */
     return {
         index: -1,
@@ -1635,6 +1602,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         status: "PROCEED_TO_LLM"
     };
 }
+
 function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     let rawCode = sparkNode.code || "";
     
