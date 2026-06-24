@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3324,7 +3324,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
             const functionalTemplate = cachedPreset?.template || '';
             
             console.log(`[USE CASE 1] Found Cache Blueprint Match at index: ${promptTypeObject.index} ("${cachedPreset.name}")`);
-
+            // Cache outline exists but there is no template.  No need to store parameter_map in spark node.
             if (functionalTemplate.trim() === '') {
                 console.warn("[USE CASE 1] Template block is empty! Invoking LLM to build structural logic base...");
                 updateForgeStatus("STUB HIT! GENERATING BASE TEMPLATE...");
@@ -3334,7 +3334,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 
                 const rawLLMContent = isObj ? (response.code || response.url) : response;
                 const sparkName = isObj ? response.name : (cachedPreset.name || generateSparkName(currentId));
-                const sparkImage = isObj ? response.thumbnail : (cachedPreset.image || '/assets/thumbnails/default.jpg');
+                const sparkImage = isObj ? response.thumbnail : (cachedPreset.image);
                 
                 // Distill received raw content into clean templates using the helper function
                 const parserMockNode = { id: cachedPreset.id, name: sparkName, code: rawLLMContent, group: cachedPreset.group };
@@ -3366,31 +3366,16 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                     image: cachedPreset.image,
                     index: promptTypeObject.index,
                     logic_used: 'create',
-                    parameter_map: promptTypeObject.properties && Object.keys(promptTypeObject.properties).length > 0 ? promptTypeObject.properties : distillation.extractedProperties
                 }, prompt, cachedPreset.name, cachedPreset.image, currentPrivacy);
                 
                 updateForgeStatus("HYBRID HYDRATION COMPLETE");
             } else {
+                // Cache hit and the template exists in the cache.
                 updateForgeStatus("FORGING INSTANT SPARK FROM CACHE...");
                 console.log("[USE CASE 1] Valid template present. Distilling prompt overrides without calling the LLM.");
 
                 let explicitOverrideMap = { ...(promptTypeObject.properties || {}) };
-                if (cachedPreset.parameter_map && typeof prompt === 'string') {
-                    Object.keys(cachedPreset.parameter_map).forEach(key => {
-                        if (!explicitOverrideMap[key]) {
-                            try {
-                                const pattern = cachedPreset.parameter_map[key];
-                                const regex = new RegExp(pattern, 'i');
-                                const matchResult = prompt.match(regex);
-                                if (matchResult) {
-                                    explicitOverrideMap[key] = matchResult[1] || matchResult[0];
-                                    console.log(`[EXTRACTOR] Auto matched local parameter override -> ${key}:`, explicitOverrideMap[key]);
-                                }
-                            } catch (pErr) { /* Skip invalid matching loops */ }
-                        }
-                    });
-                }
-                
+      
                 await saveSpark(currentId, {
                     name: cachedPreset.name || generateSparkName(currentId),
                     image: cachedPreset.image || '/assets/thumbnails/default.jpg',
@@ -3485,7 +3470,6 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                     image: sparkImage,
                     index: nextCachedIndex,
                     logic_used: 'create',
-                    parameter_map: distillation.extractedProperties
                 }, prompt, sparkName, sparkImage, currentPrivacy);
             }
             updateForgeStatus(`FORGING ${resolution.count} SPARKS [==========] 100%`);
