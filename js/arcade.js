@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3328,6 +3328,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
             } else {
                 // Template is fine but check if the current cachedPresent.image is fine.
                 const isCachedImageValid = await checkImageExists(cachedPreset.image);
+                console.log("executeMassSpark: Cache Hit with a valid Template and Image validity is ", isCachedImageValid);
                 if (!isCachedImageValid) {
                     // Since we are not calling the llm, we should directly query unSplash
                     // Dynamic Unsplash fallback loop matching the baseline engine name criteria
