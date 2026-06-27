@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1452,7 +1452,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         'many', 'few', 'several', 'lots', 'much', 'app', 'application', 'system', 'tool'
     ]);
 
-/* Inner Helper: Extracts pure alphanumeric tokens, bypassing stop words */
+    /* Inner Helper: Extracts pure alphanumeric tokens, bypassing stop words */
     const getCleanTokens = (str) => {
         if (!str) return [];
         return str
@@ -1470,8 +1470,8 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     /* ----------------------------------------------------------------- */
     if (forcedCategoryName) {
         const bubbleIndex = presets.findIndex(cat => cat.name && cat.name.toLowerCase() === forcedCategoryName.toLowerCase());
-        if (bubbleIndex !== -1 && presets[bubbleIndex].prompt) {
-            const cachedTargetPrompt = presets[bubbleIndex].prompt.trim();
+        if (bubbleIndex !== -1 && presets[bubbleIndex].example_prompt) {
+            const cachedTargetPrompt = presets[bubbleIndex].example_prompt.trim();
             if (cachedTargetPrompt === prompt.trim()) {
                 return {
                     index: bubbleIndex,
@@ -1488,7 +1488,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     /* ----------------------------------------------------------------- */
     if (userTokens.length > 0) {
         presets.forEach((category, index) => {
-            const cachePrompt = category.prompt ? category.prompt.toLowerCase().trim() : '';
+            const cachePrompt = category.example_prompt ? category.example_prompt.toLowerCase().trim() : '';
             const cacheTokens = getCleanTokens(cachePrompt);
 
             /* Count precise keyword intersections strictly against the prompt field */
