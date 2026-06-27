@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1452,16 +1452,17 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         'many', 'few', 'several', 'lots', 'much', 'app', 'application', 'system', 'tool'
     ]);
 
-    /* Inner Helper: Extracts pure alphanumeric tokens, bypassing stop words */
+/* Inner Helper: Extracts pure alphanumeric tokens, bypassing stop words */
     const getCleanTokens = (str) => {
         if (!str) return [];
         return str
+            .toLowerCase()
             .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
             .replace(/\d+/g, "")
             .split(/\s+/)
+            .map(t => t.trim())
             .filter(t => t.length > 1 && !stopWords.has(t));
     };
-
     const userTokens = getCleanTokens(cleanPrompt);
 
     /* ----------------------------------------------------------------- */
