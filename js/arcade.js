@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:04:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3432,8 +3432,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                     if (isObj && response.thumbnail && await checkImageExists(sparkImage)) {
                         cachedPreset.image = sparkImage;
                     } else {
-                        const queryKeyword = encodeURIComponent(sparkName.toLowerCase().replace(/studio|engine|lab|canvas|game/g, '').trim());
-                        cachedPreset.image = `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400&q=${queryKeyword || 'abstract'}`;
+                        cachedPreset.image = getArcadeImageFromPrompt(prompt);
                     }
                 }
             } 
@@ -3449,8 +3448,7 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 
                 if (!isCachedImageValid) {
                     console.warn(`[IMAGE REPAIR] Invalid image path detected for "${cachedPreset.name}". Fetching Unsplash fallback...`);
-                    const queryKeyword = encodeURIComponent((cachedPreset.name || '').toLowerCase().replace(/studio|engine|lab|canvas|game/g, '').trim());
-                    cachedPreset.image = `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400&q=${queryKeyword || 'abstract'}`;
+                    cachedPreset.image = getArcadeImageFromPrompt(prompt);
                 }
             }
 
