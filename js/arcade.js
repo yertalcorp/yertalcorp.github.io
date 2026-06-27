@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3265,6 +3265,8 @@ async function checkImageExists(url) {
         return false;
     }
 }
+
+/* The engine that creates the spark card(s) */
 async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeObject, currentPrivacy) {
     const status = document.getElementById('engine-status-text');
     console.group("[FORGE EXECUTIVE PIPELINE]");
@@ -3293,7 +3295,11 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
             const functionalTemplate = cachedPreset?.template || '';
             
             console.log(`[USE CASE 1] Found Cache Blueprint Match at index: ${promptTypeObject.index} ("${cachedPreset.name}")`);
-            // Cache outline exists but there is no template.  No need to store parameter_map in spark node.
+            
+            let sparkName = cachedPreset.name || generateSparkName(currentId);
+            let explicitOverrideMap = {};
+
+            // CASE A: STUB HIT (No template block present)
             if (functionalTemplate.trim() === '') {
                 console.warn("[USE CASE 1] Template block is empty! Invoking LLM to build structural logic base...");
                 updateForgeStatus("STUB HIT! GENERATING BASE TEMPLATE...");
@@ -3302,70 +3308,60 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 const isObj = response !== null && typeof response === 'object';
                 
                 const rawLLMContent = isObj ? (response.code || response.url) : response;
-                const sparkName = isObj ? response.name : (cachedPreset.name || generateSparkName(currentId));
-                const sparkImage = isObj ? response.thumbnail : (cachedPreset.image);
+                if (isObj) sparkName = response.name || sparkName;
+                const sparkImage = isObj ? response.thumbnail : cachedPreset.image;
                 
                 // Distill received raw content into clean templates using the helper function
                 const parserMockNode = { id: cachedPreset.id, name: sparkName, code: rawLLMContent, group: cachedPreset.group };
-                const distillation = generateTemplateAndParameterMap(parserMockNode, prompt );
+                const distillation = generateTemplateAndParameterMap(parserMockNode, prompt);
                 
                 // Hydrate the central cache with the template and parameter map
-                // mode is cache hit where index exists but not the template
                 cachedPreset.template = distillation.typeData.template;
                 cachedPreset.parameter_map = distillation.typeData.parameter_map;
+                
                 // Run real-time asynchronous path verification
                 const isCurrentImageValid = await checkImageExists(cachedPreset.image);
 
-                // If the current image in the cache is not loading, use an unSplash image
+                // If the current image in the cache is not loading, use response thumbnail or Unsplash fallback
                 if (!isCurrentImageValid) {
                     if (isObj && response.thumbnail && await checkImageExists(sparkImage)) {
                         cachedPreset.image = sparkImage;
-                } else {
-                   // Dynamic Unsplash fallback loop matching the baseline engine name criteria
-                   const queryKeyword = encodeURIComponent((cachedPreset.name || sparkName).toLowerCase().replace(/studio|engine|lab|canvas|game/g, '').trim());
-                   cachedPreset.image = `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400&q=${queryKeyword || 'abstract'}`;
+                    } else {
+                        const queryKeyword = encodeURIComponent(sparkName.toLowerCase().replace(/studio|engine|lab|canvas|game/g, '').trim());
+                        cachedPreset.image = `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400&q=${queryKeyword || 'abstract'}`;
+                    }
                 }
-            } else {
-                // Template is fine but check if the current cachedPresent.image is fine.
+            } 
+            // CASE B: BLUEPRINT LOADED (Template block exists but validating image path consistency)
+            else {
+                updateForgeStatus("FORGING INSTANT SPARK FROM CACHE...");
+                console.log("[USE CASE 1] Valid template present. Distilling prompt overrides without calling the LLM.");
+
+                explicitOverrideMap = { ...(promptTypeObject.properties || {}) };
+                
                 const isCachedImageValid = await checkImageExists(cachedPreset.image);
                 console.log("executeMassSpark: Cache Hit with a valid Template and Image validity is ", isCachedImageValid);
+                
                 if (!isCachedImageValid) {
-                    // Since we are not calling the llm, we should directly query unSplash
-                    // Dynamic Unsplash fallback loop matching the baseline engine name criteria
-                    const queryKeyword = encodeURIComponent((cachedPreset.name).toLowerCase().replace(/studio|engine|lab|canvas|game/g, '').trim());
+                    console.warn(`[IMAGE REPAIR] Invalid image path detected for "${cachedPreset.name}". Fetching Unsplash fallback...`);
+                    const queryKeyword = encodeURIComponent((cachedPreset.name || '').toLowerCase().replace(/studio|engine|lab|canvas|game/g, '').trim());
                     cachedPreset.image = `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400&q=${queryKeyword || 'abstract'}`;
                 }
             }
 
-                console.log("[CACHE REGISTRATION] Writing hydrated blueprint template to database reference index...");
-                await update(ref(db, `settings/arcade-current-types/${promptTypeObject.index}`), cachedPreset);
-                
-                // Instantiation: Save user spark instance pointing back to centralized registry index
-                await saveSpark(currentId, { 
-                    name: sparkName, 
-                    image: cachedPreset.image,
-                    index: promptTypeObject.index,
-                    logic_used: 'create',
-                }, prompt, cachedPreset.name, cachedPreset.image, currentPrivacy);
-                
-                updateForgeStatus("HYBRID HYDRATION COMPLETE");
-            } else {
-                // Cache hit and the template exists in the cache.
-                updateForgeStatus("FORGING INSTANT SPARK FROM CACHE...");
-                console.log("[USE CASE 1] Valid template present. Distilling prompt overrides without calling the LLM.");
-
-                let explicitOverrideMap = { ...(promptTypeObject.properties || {}) };
-      
-                await saveSpark(currentId, {
-                    name: cachedPreset.name || generateSparkName(currentId),
-                    image: cachedPreset.image || '/assets/thumbnails/default.jpg',
-                    index: promptTypeObject.index,
-                    logic_used: cachedPreset.logic || 'create',
-                    parameter_map: explicitOverrideMap
-                }, prompt, cachedPreset.name, cachedPreset.image, currentPrivacy);
-                
-                updateForgeStatus("FORGING COMPLETE");
-            }
+            // UNIFIED USE CASE 1 WRITEBACK & COMMITMENT
+            console.log("[CACHE REGISTRATION] Writing updated blueprint configuration to centralized registry index...");
+            await update(ref(db, `settings/arcade-current-types/${promptTypeObject.index}`), cachedPreset);
+            
+            await saveSpark(currentId, { 
+                name: sparkName, 
+                image: cachedPreset.image || '/assets/thumbnails/default.jpg',
+                index: promptTypeObject.index,
+                logic_used: cachedPreset.logic || 'create',
+                parameter_map: explicitOverrideMap
+            }, prompt, cachedPreset.name, cachedPreset.image, currentPrivacy);
+            
+            updateForgeStatus(functionalTemplate.trim() === '' ? "HYBRID HYDRATION COMPLETE" : "FORGING COMPLETE");
         } 
         // NATIVE RETAINED LOGIC: MEDIA DIRECT STREAM ROUTING
         else if (mode === 'source') {
@@ -3469,13 +3465,14 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
         closeExecHUD(hudInterval);
     }
 }
+
 /*
  * Objective: Primary Gateway for all LLM providers (Google, Sarvam, etc.)
  * Tasks: 
  * - Delegate URL resolution and API keys to the Proxy.
  * - Log raw LLM output for debugging.
  * - Parse standardized response from Apps Script Proxy.
- * - Extract and log fields for executeMassSpark validation.
+ * - Extract and log fields for creating a spark card and validation.
  * - Double-circulation logic with 30s timeouts and handleModelError.
  */
 async function callProviderAPI(prompt, currentName, promptTypeObject, val, type) {
