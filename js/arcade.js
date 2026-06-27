@@ -1666,12 +1666,14 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
 
     /* Guard B: Phonotactic and Character Mash Verification (Catching "aeplp") */
     const isGibberish = (token) => {
-        if (token.length <= 2) return false;
+        if (token.length <= 3) return false;
         if (/([a-z])\1\1/.test(token)) return true; // Continuous repeating chars
         
         const vowels = (token.match(/[aeiou]/g) || []).length;
         const consonants = token.length - vowels;
-        if (vowels === 0 || consonants === 0) return true; // Missing phonetic vowel balance
+        
+        // Only enforce vowel check on longer non-technical terms to avoid flagging compound words
+        if (token.length > 5 && (vowels === 0 || consonants === 0)) return true;
         
         const invalidClusters = ['qx', 'zv', 'wq', 'jx', 'mx', 'lpp', 'bcz', 'aepl'];
         return invalidClusters.some(cluster => token.includes(cluster));
