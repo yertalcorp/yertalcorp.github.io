@@ -21,6 +21,19 @@ let selectedCategory = null;
 let cachedGKey = null;
 let MAXTIP = 100000;
 
+// GLOBAL CONFIGURATION ENGINES
+const ARCADE_STOP_WORDS = new Set([
+    'a', 'an', 'the', 'is', 'to', 'it', 'and', 'or', 'for', 'hence', 'but', 
+    'no', 'not', 'make', 'create', 'generate', 'so', 'there', 'where', 
+    'here', 'has', 'should', 'could', 'would', 'put', 'in', 'out', 'on', 
+    'up', 'down', 'any', 'all', 'if', 'with', 'i', 'you', 'me', 'can', 
+    "can't", 'do', "don't", 'cannot', 'when', 'then', 'that', 'this', 
+    'press', 'click', 'he', 'she', 'him', 'her', 'us', 'we', 'them', 
+    "it's", 'its', 'now', 'some', 'small', 'big', 'large', 'medium', 'over',
+    'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+    'many', 'few', 'several', 'lots', 'much', 'app', 'application', 'system', 'tool',
+    'show', 'display', 'view', 'render', 'simulate', 'beautiful', 'steep'
+]);
 /*
  * Global Model Stats: [ ["model-name", failureCount], ... ]
  * Replaces the old flat 'availableModels' array.
@@ -1423,6 +1436,121 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     `;
 }
 
+/**
+ * Completely generic parameter extraction engine. 
+ * Identifies property overrides purely based on type validation and adjective-noun/numeric structures.
+ * @param {string} prompt - The user's input string.
+ * @param {Object} originalPMap - The baseline parameter_map from the target simulation archetype.
+ * @returns {Object} Isolated delta map containing only modified properties.
+ */
+function extractParamDeltas(prompt, originalPMap) {
+    const changedProperties = {};
+    const cleanPrompt = prompt.toLowerCase().trim();
+
+    // 1. Generic Natural Language Mapping Registries
+    const semanticColors = {
+        'red': '#ff3333', 'blue': '#3399ff', 'yellow': '#ffcc00', 'green': '#00ffcc', 
+        'white': '#ffffff', 'black': '#000000', 'orange': '#ff6600', 'purple': '#9933ff', 
+        'pink': '#ff66cc', 'cyan': '#00ffff', 'magenta': '#ff00ff', 'grey': '#888888'
+    };
+    
+    const wordToNumber = {
+        'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+        'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11,
+        'twelve': 12, 'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60
+    };
+
+    const booleanTriggers = {
+        'true': ['enable', 'on', 'add', 'show', 'with', 'activate', 'include', 'yes'],
+        'false': ['disable', 'off', 'remove', 'hide', 'without', 'deactivate', 'no', 'not']
+    };
+
+    // 2. Build the Adjective-Noun and Modifier Context Pairs from the prompt
+    const descriptivePhrases = [];
+    
+    // Catch digits alongside their measurement tags/nouns (e.g., "60 degree", "5kg", "0.3 coefficient")
+    const numMatches = cleanPrompt.match(/(\d+(?:\.\d+)?)\s*([a-zº°]+)?/g) || [];
+    descriptivePhrases.push(...numMatches);
+
+    // Scan for semantic adjectives (colors, written numbers, state modifiers) + their trailing nouns
+    const words = cleanPrompt.split(/\s+/);
+    for (let i = 0; i < words.length; i++) {
+        const currentWord = words[i];
+        const nextWord = words[i + 1] || '';
+        
+        if (semanticColors[currentWord] || wordToNumber[currentWord] || ['high', 'low', 'max', 'min'].includes(currentWord)) {
+            descriptivePhrases.push(`${currentWord} ${nextWord}`.trim());
+        }
+    }
+
+    // 3. Polymorphic Extraction Loop (Evaluates solely by metadata value type)
+    Object.keys(originalPMap).forEach(key => {
+        const cleanKey = key.toLowerCase();
+        const defaultValue = originalPMap[key];
+        let extractedValue = null;
+
+        // Isolate the matching context phrase where the noun segment maps to this parameter key
+        const associatedPhrase = descriptivePhrases.find(phrase => {
+            const tokens = phrase.split(' ');
+            const nounSegment = tokens[1] || '';
+            const adjectiveSegment = tokens[0] || '';
+            
+            return cleanKey.includes(nounSegment) || cleanKey.includes(adjectiveSegment) || phrase.includes(cleanKey);
+        });
+
+        if (!associatedPhrase && !cleanPrompt.includes(cleanKey)) return;
+
+        // TYPE DISPATCHER A: NUMBER VALUED PARAMETERS
+        if (typeof defaultValue === 'number') {
+            const digits = associatedPhrase?.match(/(\d+(?:\.\d+)?)/);
+            if (digits) {
+                extractedValue = parseFloat(digits[1]);
+            } else {
+                const foundWordNum = Object.keys(wordToNumber).find(word => associatedPhrase?.includes(word));
+                if (foundWordNum) {
+                    extractedValue = wordToNumber[foundWordNum];
+                } else {
+                    // Relative scaling adjustments based on relative value limits
+                    if (cleanPrompt.includes('high') || cleanPrompt.includes('max')) extractedValue = defaultValue * 2;
+                    if (cleanPrompt.includes('low') || cleanPrompt.includes('min') || cleanPrompt.includes('no')) extractedValue = defaultValue * 0.1;
+                }
+            }
+        }
+        
+        // TYPE DISPATCHER B: STRING / HEX VALUED PARAMETERS
+        else if (typeof defaultValue === 'string') {
+            if (defaultValue.startsWith('#') || associatedPhrase?.match(/red|blue|yellow|green|white|black|orange|purple|pink|cyan|magenta|grey/)) {
+                const detectedColor = Object.keys(semanticColors).find(color => cleanPrompt.includes(color));
+                if (detectedColor) extractedValue = semanticColors[detectedColor];
+            } else {
+                // If it is an interpolation placeholder template string pattern, execute regex evaluation
+                try {
+                    const match = cleanPrompt.match(new RegExp(defaultValue, 'i'));
+                    if (match) extractedValue = (match[1] || match[0]).trim();
+                } catch (e) {
+                    extractedValue = cleanPrompt;
+                }
+            }
+        }
+        
+        // TYPE DISPATCHER C: BOOLEAN VALUED PARAMETERS
+        else if (typeof defaultValue === 'boolean') {
+            const isNegative = booleanTriggers.false.some(trigger => cleanPrompt.includes(trigger));
+            const isPositive = booleanTriggers.true.some(trigger => cleanPrompt.includes(trigger));
+            
+            if (isNegative) extractedValue = false;
+            else if (isPositive) extractedValue = true;
+        }
+
+        // 4. Strict Variance Control Check
+        if (extractedValue !== null && extractedValue !== defaultValue) {
+            changedProperties[key] = extractedValue;
+        }
+    });
+
+    return changedProperties;
+}
+
 /*
  * Overall Objective: Identify the library index and property deltas from a prompt.
  * Task: Perform a prioritized probabilistic scan of the library to resolve a semantic match.
@@ -1440,17 +1568,6 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     /* ----------------------------------------------------------------- */
     /* CORE TOKENIZATION LOGIC ENGINE                                    */
     /* ----------------------------------------------------------------- */
-    const stopWords = new Set([
-        'a', 'an', 'the', 'is', 'to', 'it', 'and', 'or', 'for', 'hence', 'but', 
-        'no', 'not', 'make', 'create', 'generate', 'so', 'there', 'where', 
-        'here', 'has', 'should', 'could', 'would', 'put', 'in', 'out', 'on', 
-        'up', 'down', 'any', 'all', 'if', 'with', 'i', 'you', 'me', 'can', 
-        "can't", 'do', "don't", 'cannot', 'when', 'then', 'that', 'this', 
-        'press', 'click', 'he', 'she', 'him', 'her', 'us', 'we', 'them', 
-        "it's", 'its', 'now', 'some', 'small', 'big', 'large', 'medium', 'over',
-        'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
-        'many', 'few', 'several', 'lots', 'much', 'app', 'application', 'system', 'tool'
-    ]);
 
     /* Inner Helper: Extracts pure alphanumeric tokens, bypassing stop words */
     const getCleanTokens = (str) => {
@@ -1461,7 +1578,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
             .replace(/\d+/g, "")
             .split(/\s+/)
             .map(t => t.trim())
-            .filter(t => t.length > 1 && !stopWords.has(t));
+            .filter(t => t.length > 1 && !ARCADE_STOP_WORDS.has(t));
     };
     const userTokens = getCleanTokens(cleanPrompt);
 
@@ -1510,31 +1627,8 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     if (bestIndex !== -1 && matchPercentage >= 50) {
         const matchedCategory = presets[bestIndex];
         const originalPMap = matchedCategory.parameter_map || {};
-        const changedProperties = {};
-        let valueHasChanged = false;
-
-        /* Extract properties and assess delta changes against the source text */
-        Object.keys(originalPMap).forEach(key => {
-            /* Check if the property key name exists as a substring or exact word within the user prompt */
-            if (cleanPrompt.includes(key.toLowerCase())) {
-                let extractedValue = null;
-
-                if (typeof originalPMap[key] === 'string') {
-                    const match = prompt.match(new RegExp(originalPMap[key], 'i'));
-                    if (match) {
-                        extractedValue = (match[1] || match[0]).trim();
-                    }
-                } else {
-                    extractedValue = originalPMap[key];
-                }
-
-                /* Compare the extracted user runtime value against the cached value baseline */
-                if (extractedValue !== null && extractedValue !== originalPMap[key]) {
-                    changedProperties[key] = extractedValue;
-                    valueHasChanged = true;
-                }
-            }
-        });
+        const changedProperties = extractParamDeltas(prompt, originalPMap);
+        const valueHasChanged = Object.keys(changedProperties).length > 0;
 
         /* Step 2.c.i: Values have changed -> return target index paired with isolated delta maps */
         if (valueHasChanged) {
@@ -1830,25 +1924,12 @@ function resolveCapabilityFromKeywords(input) {
     const query = input.toLowerCase().trim();
     if (query.length < 2) return [];
 
-    // 1. Expanded Noise Filter: Includes numbers, quantities, and sizes
-    const stopWords = new Set([
-        'a', 'an', 'the', 'is', 'to', 'it', 'and', 'or', 'for', 'hence', 'but', 
-        'no', 'not', 'make', 'create', 'generate', 'so', 'there', 'where', 
-        'here', 'has', 'should', 'could', 'would', 'put', 'in', 'out', 'on', 
-        'up', 'down', 'any', 'all', 'if', 'with', 'i', 'you', 'me', 'can', 
-        "can't", 'do', "don't", 'cannot', 'when', 'then', 'that', 'this', 
-        'press', 'click', 'he', 'she', 'him', 'her', 'us', 'we', 'them', 
-        "it's", 'its', 'now', 'some', 'small', 'big', 'large', 'medium',
-        'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
-        'many', 'few', 'several', 'lots', 'much'
-    ]);
-
     // 2. Tokenize: Remove punctuation, strip numeric digits, and filter stop words
     const tokens = query
         .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") 
         .replace(/\d+/g, "")                         
         .split(/\s+/)
-        .filter(t => t.length > 1 && !stopWords.has(t));
+        .filter(t => t.length > 1 && !ARCADE_STOP_WORDS.has(t));
 
     if (tokens.length === 0) return [];
 
@@ -2630,7 +2711,7 @@ function shapeAiPrompt(providerName, rawPrompt, count, mode, currentName, prompt
     // 1. DYNAMIC LOOKUP: Locate the provider in the manifest
     const manifest = databaseCache.app_manifest?.llm_providers || [];
     const providerConfig = manifest.find(p => p.provider_name === providerName);
-    const createInstructions = providerConfig.create_instructions + ". Create all global variables inside a top-level params block.";
+    const createInstructions = providerConfig.create_instructions + ". Name primary global variables using words from the prompt and define them inside a top-level params block.";
     
     // 2. EXTRACTION: Pull the raw instructions from the JSON
     const systemInstructions = providerConfig 
@@ -3263,7 +3344,31 @@ async function checkImageExists(url) {
     } catch (e) {
         // Fail gracefully if CORS restrictions or dead domains reject the connection ping
         return false;
-    }
+        }
+}
+
+/**
+ * Distills the first 6 meaningful keywords from a prompt to fetch a target Unsplash asset.
+ * @param {string} prompt - The user's input string.
+ * @returns {string} Fully qualified direct Unsplash asset URL.
+ */
+function getArcadeImageFromPrompt(prompt) {
+    if (!prompt) return 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400&q=abstract';
+
+    // 2. Clean, tokenize, and filter down to descriptive keywords
+    const descriptiveTokens = prompt
+        .toLowerCase()
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Strip structural punctuation
+        .replace(/\d+/g, "")                         // Strip single numbers
+        .split(/\s+/)
+        .filter(t => t.length > 1 && !ARCADE_STOP_WORDS.has(t));
+
+    // 3. Slice exactly the first 6 high-priority words
+    const topKeywords = descriptiveTokens.slice(0, 6).join('-');
+    const searchString = encodeURIComponent(topKeywords || 'abstract');
+
+    // 4. Return the finalized asset link optimized for your uniform layout grids
+    return `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&crop=entropy&w=400&h=400&q=80&q=${searchString}`;
 }
 
 /* The engine that creates the spark card(s) */
