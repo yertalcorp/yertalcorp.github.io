@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3313,19 +3313,21 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 // mode is cache hit where index exists but not the template
                 cachedPreset.template = distillation.typeData.template;
                 cachedPreset.parameter_map = distillation.typeData.parameter_map;
-                // Run real-time asynchronous path verification
-                const isCurrentImageValid = await checkImageExists(cachedPreset.image);
                 
-                // If the current image in the cache is not loading, use an unSplash image
-                if (!isCurrentImageValid) {
-                    if (isObj && response.thumbnail && await checkImageExists(sparkImage)) {
-                        cachedPreset.image = sparkImage;
-                    } else {
-                        // Dynamic Unsplash fallback loop matching the baseline engine name criteria
-                        const queryKeyword = encodeURIComponent((cachedPreset.name || sparkName).toLowerCase().replace(/studio|engine|lab|canvas|game/g, '').trim());
-                        cachedPreset.image = `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400&q=${queryKeyword || 'abstract'}`;
-                    }
-                }
+            }
+            // Run real-time asynchronous path verification
+            const isCurrentImageValid = await checkImageExists(cachedPreset.image);
+
+            // If the current image in the cache is not loading, use an unSplash image
+            if (!isCurrentImageValid) {
+                if (isObj && response.thumbnail && await checkImageExists(sparkImage)) {
+                    cachedPreset.image = sparkImage;
+            } else {
+               // Dynamic Unsplash fallback loop matching the baseline engine name criteria
+               const queryKeyword = encodeURIComponent((cachedPreset.name || sparkName).toLowerCase().replace(/studio|engine|lab|canvas|game/g, '').trim());
+               cachedPreset.image = `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400&q=${queryKeyword || 'abstract'}`;
+            }
+
                 console.log("[CACHE REGISTRATION] Writing hydrated blueprint template to database reference index...");
                 await update(ref(db, `settings/arcade-current-types/${promptTypeObject.index}`), cachedPreset);
                 
