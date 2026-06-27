@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:04:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1710,7 +1710,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     const foundParams = {};
     
     // Enforce comment enclosure rules safely: convert all single-line comments to standard /* */ format
-    rawCode = rawCode.replace(/(?<!https?:)\/\/.*$/gm, match => {
+    rawCode = rawCode.replace(/(?<!https?:|http?:)\/\/(?![^<>]*>)([^?\n]*)$/gm, match => {
         const cleanComment = match.replace(/^\/\/\s*/, '').trim();
         return cleanComment ? `/* ${cleanComment} */` : '';
     });
