@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:33:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3337,22 +3337,32 @@ async function getBestModels(poolType) {
 }
 
 async function checkImageExists(url) {
-    console.log("[checkImageExists] Checking URL:", url);
     if (!url || typeof url !== 'string') return false;
     if (url.includes('custom.jpg') || url.includes('default.jpg')) return false;
     
-    let result = false;
     try {
-        const response = await fetch(url, { method: 'HEAD', cache: 'no-cache' });
-        result = !!(response.ok && response.headers.get('content-type')?.startsWith('image/'));
-        console.log("[checkImageExists] HEAD request response.ok:", response.ok, "Result:", result);
+        let response = await fetch(url, { method: 'HEAD', cache: 'no-cache' });
+        
+        // If HEAD fails completely, fallback to a 1-byte GET request
+        if (!response.ok) {
+            response = await fetch(url, { 
+                method: 'GET', 
+                cache: 'no-cache',
+                headers: { 'Range': 'bytes=0-0' } 
+            });
+        }
+
+        if (response.ok) {
+            const contentType = response.headers.get('content-type');
+            // Accept it if it explicitly says image, OR if the CDN hid the content-type but returned 200 OK
+            if (!contentType || contentType.startsWith('image/')) {
+                return true;
+            }
+        }
+        return false;
     } catch (e) {
-        console.error("[checkImageExists] Caught exception:", e);
-        result = false;
+        return false;
     }
-    
-    console.log("[checkImageExists] Final returning value:", result);
-    return result; 
 }
 
 /**
