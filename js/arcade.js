@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:59:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1714,7 +1714,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     const foundParams = {};
     
     // Enforce comment enclosure rules safely: convert all single-line comments to standard /* */ format
-    rawCode = rawCode.replace(/(?<!https?:|http?:)\/\/(?![^<>]*>)([^?\n]*)$/gm, match => {
+    rawCode = rawCode.replace(/^(?!.*:\/\/)\/\/.*$/gm, match => {
         const cleanComment = match.replace(/^\/\/\s*/, '').trim();
         return cleanComment ? `/* ${cleanComment} */` : '';
     });
@@ -3357,6 +3357,7 @@ async function checkImageExists(url) {
  * @returns {string} Fully qualified direct Unsplash asset URL.
  */
 function getArcadeImageFromPrompt(prompt) {
+    const NUM_WORDS_MATCH = 3;
     if (!prompt) return 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400&q=abstract';
 
     // 2. Clean, tokenize, and filter down to descriptive keywords
@@ -3368,7 +3369,7 @@ function getArcadeImageFromPrompt(prompt) {
         .filter(t => t.length > 1 && !ARCADE_STOP_WORDS.has(t));
 
     // 3. Slice exactly the first 6 high-priority words
-    const topKeywords = descriptiveTokens.slice(0, 6).join('-');
+    const topKeywords = descriptiveTokens.slice(0, NUM_WORDS_MATCH).join('-');
     const searchString = encodeURIComponent(topKeywords || 'abstract');
 
     // 4. Return the finalized asset link optimized for your uniform layout grids
