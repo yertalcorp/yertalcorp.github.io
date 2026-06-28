@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1551,17 +1551,16 @@ function extractParamDeltas(prompt, originalPMap) {
     return changedProperties;
 }
 
-/*
- * Overall Objective: Identify the library index and property deltas from a prompt.
- * Task: Perform a prioritized probabilistic scan of the library to resolve a semantic match.
- * @param {string} prompt - The user's input string.
- * @param {string} currentName - The current board name for high-priority matching.
- * @param {string|null} forcedCategoryName - The category selected via bubble UI.
- */
 function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) {
     const cleanPrompt = prompt.toLowerCase().trim();
     const presets = databaseCache.settings?.['arcade-current-types'] || [];
     
+    // --- INTEGRATED METRIC CONFIGURATION TUNERS ---
+    const MATCH_THRESHOLD_PERCENT = 50; 
+    const GIBBERISH_MIN_TOKEN_LEN = 3;   // Skip evaluation for tokens this size or smaller
+    const GIBBERISH_VOWEL_RULE_LEN = 5;  // Only enforce vowel balance on tokens strictly greater than this size
+    // ----------------------------------------------
+
     let bestIndex = -1;
     let maxMatchesCount = 0;
 
@@ -1624,9 +1623,11 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     /* ----------------------------------------------------------------- */
     const matchPercentage = userTokens.length > 0 ? (maxMatchesCount / userTokens.length) * 100 : 0;
 
-    if (bestIndex !== -1 && matchPercentage >= 50) {
+    if (bestIndex !== -1 && matchPercentage >= MATCH_THRESHOLD_PERCENT) {
         const matchedCategory = presets[bestIndex];
         const originalPMap = matchedCategory.parameter_map || {};
+        
+        // Delegate dynamic variation tracking cleanly to our generic processor module
         const changedProperties = extractParamDeltas(prompt, originalPMap);
         const valueHasChanged = Object.keys(changedProperties).length > 0;
 
@@ -1666,14 +1667,15 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
 
     /* Guard B: Phonotactic and Character Mash Verification (Catching "aeplp") */
     const isGibberish = (token) => {
-        if (token.length <= 3) return false;
+        // Skip short symbols or remnants from split notation strings (e.g., 's', 'p')
+        if (token.length <= GIBBERISH_MIN_TOKEN_LEN) return false;
         if (/([a-z])\1\1/.test(token)) return true; // Continuous repeating chars
         
         const vowels = (token.match(/[aeiou]/g) || []).length;
         const consonants = token.length - vowels;
         
-        // Only enforce vowel check on longer non-technical terms to avoid flagging compound words
-        if (token.length > 5 && (vowels === 0 || consonants === 0)) return true;
+        // Only run phonotactic check on long strings to let compound framework terms bypass safely
+        if (token.length > GIBBERISH_VOWEL_RULE_LEN && (vowels === 0 || consonants === 0)) return true;
         
         const invalidClusters = ['qx', 'zv', 'wq', 'jx', 'mx', 'lpp', 'bcz', 'aepl'];
         return invalidClusters.some(cluster => token.includes(cluster));
