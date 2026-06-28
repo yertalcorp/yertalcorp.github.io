@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:33:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3337,18 +3337,22 @@ async function getBestModels(poolType) {
 }
 
 async function checkImageExists(url) {
+    console.log("[checkImageExists] Checking URL:", url);
     if (!url || typeof url !== 'string') return false;
-    // Treat standard relative thumbnail stubs as missing or invalid to force recovery
     if (url.includes('custom.jpg') || url.includes('default.jpg')) return false;
     
+    let result = false;
     try {
-        // Run a lightweight HEAD request to inspect file availability without downloading bytes
         const response = await fetch(url, { method: 'HEAD', cache: 'no-cache' });
-        return response.ok && response.headers.get('content-type')?.startsWith('image/');
+        result = !!(response.ok && response.headers.get('content-type')?.startsWith('image/'));
+        console.log("[checkImageExists] HEAD request response.ok:", response.ok, "Result:", result);
     } catch (e) {
-        // Fail gracefully if CORS restrictions or dead domains reject the connection ping
-        return false;
-        }
+        console.error("[checkImageExists] Caught exception:", e);
+        result = false;
+    }
+    
+    console.log("[checkImageExists] Final returning value:", result);
+    return result; 
 }
 
 /**
