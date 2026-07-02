@@ -9,52 +9,45 @@ console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 1
 let currentItems, currentAuth, currentUi, user, heroData;
 
     
-async function initShowroom() {
+**async function initRealmsHome() {**
     try {
-        // 1. Fetch only the public nodes required for the UI
-        const paths = [
-            'navigation', 
-            'settings', 
-            'hero_section', 
-            'showcase-items', 
-            'action-cards', 
-            'auth_ui'
-        ];
-
-        // Fetch all in parallel for speed
-        const results = await Promise.all(
-            paths.map(path => 
-                fetch(`${firebaseConfig.databaseURL}/${path}.json`).then(res => res.json())
-            )
-        );
-
-        // Map results back to a data object
+        const paths = ['settings/ui-settings', 'settings/realmshome', 'auth_ui'];
+        const results = await Promise.all(paths.map(p => fetch(`${firebaseConfig.databaseURL}/${p}.json`).then(r => r.json())));
         const data = {};
-        paths.forEach((path, index) => { data[path] = results[index]; });
+        paths.forEach((p, i) => { data[p] = results[i]; });
 
-        if (data && data.settings) {
-            // ... Your existing assignment logic remains the same ...
-            currentItems = data.navigation.menu_items;
+        if (data && data['settings/ui-settings'] && data['settings/realmshome']) {
+            currentUi = data['settings/ui-settings'];
             currentAuth = data.auth_ui;
-            currentUi = data.settings['ui-settings'];
-            
-            applyGlobalStyles(data.settings);
-            renderBranding(data.navigation.branding);
-            renderNavbar(currentItems, currentUi);
-            renderHero(data.hero_section);
-            renderShowcase(data['showcase-items']);
-            renderActionCards(data['action-cards']);
-            renderFooter(data.navigation.footer);
-            renderAdminGate(data.settings['ui-settings']);
-            renderAuthStatus(user, currentAuth);
+            const realms = data['settings/realmshome'];
 
+            applyGlobalStyles({ 'ui-settings': currentUi });
+
+            // Dynamic Router for the 10 System Sections
+            **const sectionRouter = {**
+                **navigation: () => { renderBranding(realms.navigation.branding); renderNavbar(realms.navigation.menu_items); },**
+                **hero: () => renderHero(realms.hero),**
+                **featured_realms: () => renderFeaturedRealms(realms.featured_realms),**
+                **how_realms_work: () => renderHowRealmsWork(realms.how_realms_work),**
+                **trending_sparks: () => renderTrendingSparks(realms.trending_sparks),**
+                **creation_templates: () => renderTemplates(realms.creation_templates),**
+                **learn_to_build: () => renderLearnToBuild(realms.learn_to_build),**
+                **future_community: () => renderCommunity(realms.future_community),**
+                **final_cta: () => renderFinalCTA(realms.final_cta),**
+                **footer: () => renderFooter(realms.footer)**
+            **};**
+
+            **Object.keys(realms).forEach(key => {**
+                **if (sectionRouter[key]) sectionRouter[key]();**
+            **});**
+
+            renderAuthStatus(user, currentAuth);
             document.body.style.opacity = '1';
         }
     } catch (error) {
-        console.error("System Error: Laboratory Data Unreachable.", error);
+        console.error("System Error: Realms Architecture Offline.", error);
     }
 }
-
 // --- 2. THE BRANDING & UI ENGINE ---
 
 function applyGlobalStyles(settings) {
@@ -95,66 +88,28 @@ function applyGlobalStyles(settings) {
 }
 
 function renderBranding(brand) {
-    const container = document.getElementById('nav-logo');
-    container.innerHTML = `
+    const el = document.getElementById('nav-logo');
+    if (!el) return;
+    el.innerHTML = `
         <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
-            <img src="/assets/images/Yertal_Logo_New_HR.png" alt="Logo" onerror="this.src='https://placehold.co/40x40/3b82f6/white?text=Y'" class="h-10 w-auto">
+            <img src="${brand.logo_url}" class="h-10 w-auto">
             <h1 class="text-xl font-extrabold uppercase tracking-tighter">
-                <span style="color:${brand.parts[0].color}">${brand.parts[0].text}</span>
-                <span class="text-blue-500">${brand.parts[1].text}</span>
+                <span style="color: var(--neon-color);">${brand.text_part_1}</span> 
+                <span class="text-white">${brand.text_part_2}</span>
             </h1>
         </div>
     `;
 }
 
-function renderNavbar(items, ui) {
-    const nav = document.getElementById('nav-menu');
-    if (!nav || !items) return;
-
-    nav.innerHTML = items.map(item => `
-        <button onclick="window.open('${item.link}', '_blank')" 
-                class="transition-colors duration-300 uppercase tracking-widest font-bold"
-                style="color: var(--nav-text-color); font-family: var(--nav-font); font-size: ${ui.nav_font_size}">
+function renderNavbar(items) {
+    const el = document.getElementById('nav-menu');
+    if (!el || !items) return;
+    el.innerHTML = items.map(item => `
+        <a href="${item.link}" class="transition-colors uppercase tracking-widest font-bold" style="color: var(--nav-text-color);">
             ${item.label}
-        </button>
+        </a>
     `).join('');
 }
-
-const getSafeSlug = async (user) => {
-    // 1. Session Storage Trace (Keep this, it's efficient)
-    let cachedStr = sessionStorage.getItem('currentUser');
-    if (cachedStr) {
-        let cached = JSON.parse(cachedStr);
-        if (cached?.slug) return cached.slug;
-    }
-
-    console.log("showroom.js: getSafeSlug: Fetching via SDK for UID:", user.uid);
-    
-    try {
-        // --- THE CHANGE IS HERE ---
-        // Use the Firebase SDK instead of fetch()
-        // Ensure 'get', 'ref', and 'db' are accessible (usually from firebase-config.js)
-        const snapshot = await get(ref(db, `users/${user.uid}/profile`));
-        
-        if (snapshot.exists()) {
-            const profile = snapshot.val();
-            console.log("getSafeSlug: Profile retrieved:", profile);
-            
-            if (profile?.slug) {
-                sessionStorage.setItem('currentUser', JSON.stringify(profile));
-                return profile.slug;
-            }
-        } else {
-            console.warn("getSafeSlug: No profile found in DB for this UID.");
-        }
-    } catch (error) {
-        console.error("getSafeSlug: SDK Error:", error);
-    }
-
-    // 3. Fallback to UID (Only if SDK fails or slug is missing)
-    console.warn("showroom.js: getSafeSlug: Couldn't find the slug so Falling back to UID.");
-    return user.uid; 
-};
 
 async function renderAuthStatus(user, authData) {
     const authZone = document.getElementById('auth-zone');
@@ -324,25 +279,24 @@ watchAuthState(async (newUser) => {
 });
 // --- 3. HERO & INTERACTION ENGINE ---
 function renderHero(hero) {
-    const container = document.getElementById('hero-container');
-    const ctaLink = hero.holographic_cta.link || './arcade/index.html?user=yertal-arcade';
-    container.innerHTML = `
-        <div class="py-8 animate-fadeIn text-center">
-            <h2 class="text-5xl lg:text-7xl uppercase tracking-tighter text-glow"
-            style="font-family: var(--nav-font); font-weight: var(--nav-weight); font-variation-settings: 'wght' var(--nav-weight), 'ital' 0;">
-                ${hero.title_parts[0].text} <span class="italic" style="color: var(--accent-color); font-weight: inherit; font-style: italic; font-variation-settings: 'wght' var(--nav-weight), 'ital' 1;">${hero.title_parts[1].text}</span>
+    const el = document.getElementById('hero-container');
+    if (!el) return;
+    const ctaLink = hero.primary_button.link || './arcade/index.html?user=yertal-arcade';
+    el.innerHTML = `
+        <div class="py-16 text-center animate-fadeIn max-w-4xl">
+            <h2 class="text-6xl lg:text-8xl font-black uppercase tracking-tighter text-white leading-none">
+                ${hero.main_headline}
             </h2>
-            <p class="text-slate-400 mt-4 text-lg italic font-light tracking-wide mx-auto max-w-2xl">
-                ${hero.description}
+            <p class="text-xl lg:text-2xl text-slate-400 mt-6 font-light max-w-2xl mx-auto tracking-wide">
+                ${hero.subheadline}
             </p>
-            <div class="w-full flex justify-center mt-8 mb-9" style="perspective: 1000px;">
-                <button id="arcade-trigger" data-link="${ctaLink}" onclick="window.openAuthHUD('superuser')" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl uppercase text-lg tracking-[0.5em] text-white">
-                    <div class="inner-content flex items-center gap-6">
-                        <i class="fas fa-power-off text-blue-400 opacity-70 group-hover:scale-125 transition-transform"></i>
-                        ${hero.holographic_cta.text}
-                        <i class="fas fa-microchip text-blue-400 opacity-70 group-hover:rotate-180 transition-transform duration-1000"></i>
-                    </div>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10">
+                <button id="arcade-trigger" data-link="${ctaLink}" onclick="window.openAuthHUD('superuser')" class="glass-card metallic-bezel text-sm py-4 px-8 uppercase tracking-[0.3em] text-white font-bold bg-white/5 hover:bg-white/10 transition-all">
+                    ${hero.primary_button.text}
                 </button>
+                <a href="${hero.secondary_button.link}" class="text-xs uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-colors py-4 px-8">
+                    ${hero.secondary_button.text}
+                </a>
             </div>
         </div>
     `;
@@ -361,6 +315,125 @@ function initTiltEngine() {
     });
 }
 
+function renderFeaturedRealms(items) {
+    const el = document.getElementById('showcase-grid');
+    if (!el || !Array.isArray(items)) return;
+    el.innerHTML = items.map(item => `
+        <div class="featured-card metallic-bezel p-8 rounded-[2rem] cursor-pointer aspect-video relative overflow-hidden group flex-1 min-w-[300px]"
+             onclick="window.location.href='./arcade/index.html?realm=${item.realm_slug}'"
+             onmouseenter="const v=this.querySelector('video'); if(v) v.play();"
+             onmouseleave="const v=this.querySelector('video'); if(v) { v.pause(); v.currentTime=0; }">
+            <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105 brightness-110 contrast-105 rounded-[2rem]" style="background-image: url('${item.realm_image}')"></div>
+            ${item.realm_animation_preview ? `<video src="${item.realm_animation_preview}" loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem] pointer-events-none"></video>` : ''}
+            <div class="absolute inset-0 bg-slate-950/30 backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-500 rounded-[2rem]"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 rounded-[2rem]"></div>
+            <div class="relative z-10 flex flex-col h-full justify-between">
+                <div class="flex justify-between items-start">
+                    <span class="text-[10px] font-bold tracking-widest uppercase" style="color: var(--accent-color);">REALM PROTOCOL</span>
+                    <i class="fas fa-rocket text-blue-500 text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="uppercase tracking-tighter text-white text-xl">${item.realm_title}</h3>
+                    <p class="text-xs text-slate-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 max-w-sm">${item.realm_description}</p>
+                    <span class="neon-text-sync block mt-2 text-[9px] font-bold tracking-[0.2em]" style="color: var(--neon-color);">${item.button_text} →</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderHowRealmsWork(data) {
+    const el = document.getElementById('visual-flow-container');
+    if (!el || !data.steps) return;
+    el.innerHTML = `
+        <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-12">// THE ALCHEMY</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 items-center max-w-4xl mx-auto">
+            ${data.steps.map(step => `
+                <div class="glass-card metallic-bezel p-8 flex flex-col items-center">
+                    <div class="text-3xl font-bold text-white mb-2">${step.id}</div>
+                    <div class="uppercase tracking-widest text-sm text-slate-400 font-bold">${step.label}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderTrendingSparks(items) {
+    const el = document.getElementById('trending-sparks-grid');
+    if (!el || !items) return;
+    el.innerHTML = items.map(spark => `
+        <div class="glass-card metallic-bezel p-6 flex flex-col justify-between relative overflow-hidden group">
+            <div class="flex justify-between items-start">
+                <span class="text-[10px] tracking-widest text-slate-500 uppercase">// ATOMIC_CORE</span>
+                <span class="text-[10px] font-bold" style="color: var(--neon-color);">${spark.remix_count} REMIXES</span>
+            </div>
+            <div class="py-8 text-center text-sm font-mono text-slate-400 uppercase tracking-wider">
+                [ ${spark.preview_type.toUpperCase()} ]
+            </div>
+            <div class="flex justify-between items-center border-t border-white/5 pt-4">
+                <span class="text-[9px] text-slate-500 tracking-wider">CREATOR: ${spark.creator_name}</span>
+                <span class="text-[10px] font-black uppercase tracking-wider cursor-pointer" style="color: var(--accent-color);">REMIX →</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderTemplates(items) {
+    const el = document.getElementById('templates-grid');
+    if (!el || !items) return;
+    el.innerHTML = items.map(t => `
+        <div class="glass-card metallic-bezel p-6 flex flex-col items-center justify-center text-center cursor-pointer group hover:scale-[1.02] transition-transform">
+            <i class="${t.icon} text-2xl mb-4" style="color: var(--neon-color);"></i>
+            <span class="text-xs uppercase font-bold tracking-widest text-white">${t.type}</span>
+        </div>
+    `).join('');
+}
+
+function renderLearnToBuild(data) {
+    const el = document.getElementById('action-grid');
+    if (!el || !data.modules) return;
+    el.innerHTML = data.modules.map(m => `
+        <div class="glass-card action-card p-8 flex flex-col h-full group cursor-pointer relative overflow-hidden" onclick="window.open('${m.link}', '_blank')">
+            <div class="flex items-center justify-center"><i class="${m.icon} text-3xl" style="color: var(--neon-color);"></i></div>
+            <h3 class="mt-8 mb-1 uppercase tracking-tighter text-white text-xl">${m.title}</h3>
+            <span class="text-[9px] font-bold uppercase tracking-widest mt-4" style="color: var(--accent-color);">Access Module →</span>
+        </div>
+    `).join('');
+}
+
+function renderCommunity(data) {
+    const el = document.querySelector('#learn-container + section');
+    if (!el) return;
+    el.innerHTML = `
+        <h3 class="text-xs uppercase tracking-[0.4em] text-slate-400 mb-4">${data.optional_tagline.toUpperCase()}</h3>
+        <p class="text-sm uppercase tracking-[0.2em] text-slate-500">${data.insights.join(' &bull; ')}</p>
+    `;
+}
+
+function renderFinalCTA(cta) {
+    const el = document.querySelector('main > section:last-of-type');
+    if (!el) return;
+    el.innerHTML = `
+        <h2 class="text-4xl lg:text-6xl font-black uppercase tracking-tight text-white mb-8">${cta.headline}</h2>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button onclick="window.openAuthHUD('superuser')" class="glass-card metallic-bezel text-xs py-4 px-10 uppercase tracking-[0.3em] text-white font-bold">${cta.primary_btn.text}</button>
+            <button class="text-xs py-4 px-10 uppercase tracking-[0.3em] text-slate-400 hover:text-white transition-all">${cta.secondary_btn.text}</button>
+        </div>
+    `;
+}
+
+function renderFooter(footer) {
+    const el = document.getElementById('footer-container');
+    if (!el || !footer.legal_links) return;
+    el.innerHTML = `
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex flex-wrap gap-6 text-xs text-slate-400">
+                ${footer.legal_links.map(l => `<button onclick="window.open('${l.url}', '_blank')" class="hover:text-white transition">${l.label}</button>`).join('')}
+            </div>
+            <div class="text-[10px] text-slate-500 uppercase tracking-widest">© 2026 YERTAL CORPORATION &bull; LAB PARADIGM</div>
+        </div>
+    `;
+}
 // --- 4. CARD RENDERING (Sequential) ---
 
 async function renderActionCards(cards) {
