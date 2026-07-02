@@ -9,7 +9,7 @@ console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 1
 let currentItems, currentAuth, currentUi, user, heroData;
 
     
-**async function initRealmsHome() {**
+async function initRealmsHome() {
     try {
         const paths = ['settings/ui-settings', 'settings/realmshome', 'auth_ui'];
         const results = await Promise.all(paths.map(p => fetch(`${firebaseConfig.databaseURL}/${p}.json`).then(r => r.json())));
@@ -24,22 +24,22 @@ let currentItems, currentAuth, currentUi, user, heroData;
             applyGlobalStyles({ 'ui-settings': currentUi });
 
             // Dynamic Router for the 10 System Sections
-            **const sectionRouter = {**
-                **navigation: () => { renderBranding(realms.navigation.branding); renderNavbar(realms.navigation.menu_items); },**
-                **hero: () => renderHero(realms.hero),**
-                **featured_realms: () => renderFeaturedRealms(realms.featured_realms),**
-                **how_realms_work: () => renderHowRealmsWork(realms.how_realms_work),**
-                **trending_sparks: () => renderTrendingSparks(realms.trending_sparks),**
-                **creation_templates: () => renderTemplates(realms.creation_templates),**
-                **learn_to_build: () => renderLearnToBuild(realms.learn_to_build),**
-                **future_community: () => renderCommunity(realms.future_community),**
-                **final_cta: () => renderFinalCTA(realms.final_cta),**
-                **footer: () => renderFooter(realms.footer)**
-            **};**
+            const sectionRouter = {
+                navigation: () => { renderBranding(realms.navigation.branding); renderNavbar(realms.navigation.menu_items); },
+                hero: () => renderHero(realms.hero),
+                featured_realms: () => renderFeaturedRealms(realms.featured_realms),
+                how_realms_work: () => renderHowRealmsWork(realms.how_realms_work),
+                trending_sparks: () => renderTrendingSparks(realms.trending_sparks),
+                creation_templates: () => renderTemplates(realms.creation_templates),
+                learn_to_build: () => renderLearnToBuild(realms.learn_to_build),
+                future_community: () => renderCommunity(realms.future_community),
+                final_cta: () => renderFinalCTA(realms.final_cta),
+                footer: () => renderFooter(realms.footer)
+            };
 
-            **Object.keys(realms).forEach(key => {**
-                **if (sectionRouter[key]) sectionRouter[key]();**
-            **});**
+            Object.keys(realms).forEach(key => {
+                if (sectionRouter[key]) sectionRouter[key]();
+            });
 
             renderAuthStatus(user, currentAuth);
             document.body.style.opacity = '1';
