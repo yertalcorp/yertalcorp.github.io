@@ -1,1 +1,180 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>YERTAL CORP | Build Realms</title>
+    <link rel="stylesheet" href="./css/system_styles.css">
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/showroom_style.css">
+    <link rel="stylesheet" id="google-fonts-link">
+    <link rel="stylesheet" id="font-awesome-link">
+</head>
+<body class="bg-[#050505]">
+
+    <!-- 1. Minimal Top Navigation Bar -->
+    <nav class="glass fixed w-full z-50 px-6 py-4 flex justify-between items-center main-nav">
+        <!-- Left: Branding & Dynamic Logo -->
+        <div id="nav-logo" class="logo-container"></div>
+        
+        <!-- Center: Strategic Navigation Filters -->
+        <div id="nav-menu" class="hidden md:flex gap-8 items-center text-sm font-medium tracking-wider uppercase">
+            <a href="#showcase-grid" class="text-white/60 hover:text-white transition-colors">Explore</a>
+            <a href="#showcase-grid" class="text-white/60 hover:text-white transition-colors">Realms</a>
+            <a href="#templates-container" class="text-white/60 hover:text-white transition-colors">Create</a>
+            <a href="#learn-container" class="text-white/60 hover:text-white transition-colors">Learn</a>
+        </div>
+        
+        <!-- Right: Dynamic Auth Zone & Primary CTA -->
+        <div class="flex items-center gap-4">
+            <button class="hidden lg:block glass-card metallic-bezel text-xs py-2 px-4 uppercase tracking-[0.2em] text-white font-bold hover:brightness-125 transition-all">
+                Create Realm
+            </button>
+            <div id="auth-zone"></div>
+        </div>
+    </nav>
+
+    <!-- Main Content Stream: Vertical Layer Storytelling -->
+    <main class="pt-24 px-6 max-w-7xl mx-auto">
+        
+        <!-- 2. Cinematic Hero Section -->
+        <section id="hero-container" class="min-h-[70vh] flex flex-col justify-center items-center relative overflow-hidden">
+            <!-- Space for background animated sparks/particles handled via script or canvas -->
+            <div class="py-16 text-center animate-fadeIn z-10 max-w-4xl">
+                <h2 id="hero-title" class="text-6xl lg:text-8xl font-black uppercase tracking-tighter text-white leading-none">
+                    Create Living Realms.
+                </h2>
+                <p id="hero-subtitle" class="text-xl lg:text-2xl text-slate-400 mt-6 font-light max-w-2xl mx-auto tracking-wide">
+                    Interactive worlds built from ideas, knowledge, simulations, media, and imagination.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10">
+                    <button class="glass-card metallic-bezel text-sm py-4 px-8 uppercase tracking-[0.3em] text-white font-bold bg-white/5 hover:bg-white/10 transition-all w-full sm:w-auto">
+                        Build Your Realm
+                    </button>
+                    <a href="#showcase-grid" class="text-xs uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-colors py-4 px-8">
+                        Explore Realms
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Featured Realms Section (Primary System Grid Entry) -->
+        <section class="mb-24">
+            <div class="mb-10 text-left">
+                <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-2">// FEATURED ECOSYSTEMS</h3>
+                <h2 class="text-3xl font-bold uppercase tracking-tight text-white">Live Prototype Realms</h2>
+            </div>
+            <!-- Handled dynamically by showroom.js injecting into showcase-grid -->
+            <div id="showcase-grid" class="flex flex-wrap gap-6 mb-16"></div>
+        </section>
+
+        <!-- 4. How Realms Work Visual Container -->
+        <section id="visual-flow-container" class="py-20 mb-24 border-t border-b border-white/5 text-center">
+            <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-12">// THE ALCHEMY</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 items-center max-w-4xl mx-auto">
+                <div class="glass-card metallic-bezel p-8 flex flex-col items-center">
+                    <div class="text-3xl font-bold text-white mb-2">01</div>
+                    <div class="uppercase tracking-widest text-sm text-slate-400 font-bold">USER IDEA</div>
+                </div>
+                <div class="glass-card metallic-bezel p-8 flex flex-col items-center border-dashed">
+                    <div class="text-3xl font-bold text-white mb-2">02</div>
+                    <div class="uppercase tracking-widest text-sm text-slate-400 font-bold">SPARKS GENERATE</div>
+                </div>
+                <div class="glass-card metallic-bezel p-8 flex flex-col items-center">
+                    <div class="text-3xl font-bold text-white mb-2">03</div>
+                    <div class="uppercase tracking-widest text-sm text-slate-400 font-bold">REALM EXPANDS</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Trending Sparks Section -->
+        <section class="mb-24">
+            <div class="mb-10 flex justify-between items-end">
+                <div>
+                    <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-2">// ATOMIC ARCHITECTURE</h3>
+                    <h2 class="text-3xl font-bold uppercase tracking-tight text-white">Trending Sparks</h2>
+                </div>
+            </div>
+            <div id="trending-sparks-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Script injects lightweight modular preview components here -->
+            </div>
+        </section>
+
+        <!-- 6. Creation Templates Section -->
+        <section id="templates-container" class="mb-24">
+            <div class="mb-10">
+                <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-2">// ZERO COLD START</h3>
+                <h2 class="text-3xl font-bold uppercase tracking-tight text-white">Start With A Template</h2>
+            </div>
+            <div id="templates-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Quick blueprint injection cards to remove canvas fear -->
+            </div>
+        </section>
+
+        <!-- 7. "Learn to Build" Secondary Section -->
+        <section id="learn-container" class="mb-24 pt-12 border-t border-white/5">
+            <div class="mb-8">
+                <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-2">// INTELLECTUAL CURRICULUM</h3>
+                <h2 class="text-2xl font-bold uppercase tracking-tight text-white">Learn to Build Realms</h2>
+            </div>
+            <!-- Secondary Landing Grid for previous primary links (Books, Curriculum, Blog) -->
+            <div id="action-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"></div>
+        </section>
+
+        <!-- 8. Future & Community Insights Section -->
+        <section class="mb-24 text-center py-12 glass-card metallic-bezel max-w-4xl mx-auto">
+            <h3 class="text-xs uppercase tracking-[0.4em] text-slate-400 mb-4">EXPERIMENTAL INTELLIGENCE ECOSYSTEM</h3>
+            <p class="text-sm uppercase tracking-[0.2em] text-slate-500">
+                Millions of Sparks Generated &bull; Shared Remix Culture &bull; Early Access Release
+            </p>
+        </section>
+
+        <!-- 9. Final Cinematic CTA Section -->
+        <section class="py-24 text-center max-w-3xl mx-auto mb-16">
+            <h2 class="text-4xl lg:text-6xl font-black uppercase tracking-tight text-white mb-8">
+                Build your Realm.
+            </h2>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button class="glass-card metallic-bezel text-xs py-4 px-10 uppercase tracking-[0.3em] text-white font-bold hover:brightness-125 transition-all">
+                    Create Realm
+                </button>
+                <button class="text-xs py-4 px-10 uppercase tracking-[0.3em] text-slate-400 hover:text-white transition-all">
+                    Explore Ecosystem
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- 10. Minimal Clean Footer Container -->
+    <footer id="footer-container" class="py-12 px-6 border-t border-white/5"></footer>
+
+    <!-- Admin Gateways & Authentication Protocol Hud Elements -->
+    <div id="admin-gateway"></div>
+    
+    <!-- Unified Script Module: Populates layout dynamically using JSON profile records -->
+    <script type="module" src="./js/realms.js"></script>
+
+    <!-- Authentic Cinematic Authentication Access Protocol HUD -->
+    <div id="auth-hud">
+        <div class="glass-card metallic-bezel hud-bezel-fixed flex flex-col items-center">
+            <h2 class="uppercase font-black" style="filter: drop-shadow(0 0 8px var(--neon-color));">
+                ACCESS_PROTOCOL
+            </h2>
+            
+            <div style="height: 1px; width: 40px; background: var(--neon-color); margin: 1rem 0 1.5rem; opacity: 0.6;"></div>
+            
+            <p class="uppercase tracking-[0.4em]" style="font-size: 14px; font-weight: bold; opacity: 0.6; margin-bottom: 2rem;">
+                SELECT SECURE GATEWAY : <span style="color: var(--neon-color)">INITIALIZE</span>
+            </p>
+            
+            <div id="provider-list" class="flex flex-col gap-8 mb-12 items-center w-full"></div>
+            
+            <button onclick="window.closeAuthHUD()" class="hud-abort-btn-unique text-[11px] py-4 px-10 uppercase tracking-[0.4em] cursor-pointer">
+                [ ABORT_CONNECTION ]
+            </button>
+        </div>
+    </div>
+</body>
+</html>
