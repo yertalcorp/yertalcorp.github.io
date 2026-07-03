@@ -516,13 +516,18 @@
 .realms-page-body html,
 .realms-page-body main,
 .realms-page-body section,
+.realms-page-body footer,
 .realms-page-body #hero-container,
 .realms-page-body .realms-hero-container,
 .realms-page-body .max-w-7xl,
 .realms-page-body .mx-auto,
-.realms-page-body [id$="-container"] {
-    background: transparent ; background-color: transparent ; /* Sweeps away all opaque background layers completely */
+.realms-page-body [id$="-container"],
+.realms-page-body [id*="grid-container"] > div,
+.realms-page-body #trending-sparks-grid > div {
+    background: transparent ; 
+    background-color: transparent ; /* Forces all defined section containers and inner grids to strip color layers completely */
 }
+
 /* --- SPECIFIC HERO BLOCK OVERRIDE --- */
 .realms-page-body [class*="realms-hero-container"] {
     background: transparent ;
@@ -534,12 +539,22 @@
     display: block ;
     visibility: visible ;
     opacity: 1 ;
-    z-index: -1 ; /* Shifted to -1 to sit safely behind text and containers */
-    background: radial-gradient(circle at 50% 40%, #0c182e 0%, #050505 70%) ;
+    position: fixed ; /* Locks canvas to viewport grid frame during deep scrolls */
+    top: 0 ;
+    left: 0 ;
+    width: 100vw ;
+    height: 100vh ;
+    z-index: -1 ; /* Kept at -1 to float behind text copy layers cleanly */
+    background: radial-gradient(circle at 50% 40%, #0c182e 0%, #050505 75%) ; /* Deepened outer bounds for contrast blend */
 }
 
 /* --- SECTION CONTENT BLOCKS HOVER LAYER CONTRAST --- */
-.realms-page-body .featured-card, .realms-page-body .glass-card, .realms-page-body footer {
-    background: rgba(15, 23, 42, 0.45) ; /* Keeps background text elements perfectly crisp over the swarm */
+.realms-page-body .featured-card, 
+.realms-page-body .glass-card, 
+.realms-page-body footer,
+.realms-page-body [id$="-container"] .bg-slate-900\/50,
+.realms-page-body [id$="-container"] .bg-white\/5 {
+    background: rgba(15, 23, 42, 0.55) ; /* Subtle tint overlay step protects contrast integrity over moving particles */
     backdrop-filter: blur(var(--card-blur, 15px)) ;
+    -webkit-backdrop-filter: blur(var(--card-blur, 15px)) ;
 }
