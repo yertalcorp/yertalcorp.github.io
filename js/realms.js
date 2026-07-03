@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:25:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:41:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -122,44 +122,40 @@ function initBackgroundEffects() {
         constructor() {
             this.reset(true); // Initial seed scatter
         }
-        reset(isInitial = false) {
-            // Target the center of the viewport (where the hero text sits)
+reset(isInitial = false) {
             this.centerX = canvas.width / 2;
-            this.centerY = canvas.height * 0.4; // Slightly elevated center for hero titles
+            this.centerY = canvas.height * 0.4; 
 
-            // Orbital geometry setup (Elliptical distribution)
             this.angle = Math.random() * Math.PI * 2;
             
-            // Core swarm radius vs outward boundary dispersion path
             const spreadFactor = Math.random();
             if (spreadFactor < 0.6) {
-                // 60% of particles form the tight internal hero swarm
-                this.radiusX = Math.random() * 250 + 50;
-                this.radiusY = Math.random() * 100 + 20;
+                // 60% of particles form a thick, concentrated halo around the text
+                this.radiusX = Math.random() * 350 + 50;
+                this.radiusY = Math.random() * 120 + 30;
             } else {
-                // 40% gracefully break away and drift out across the full page structure
-                this.radiusX = Math.random() * (canvas.width * 0.6) + 200;
-                this.radiusY = Math.random() * (canvas.height * 0.6) + 100;
+                // 40% drift outward across the full page view dimensions
+                this.radiusX = Math.random() * (canvas.width * 0.8) + 200;
+                this.radiusY = Math.random() * (canvas.height * 0.8) + 100;
             }
 
-            // Continuous rotation speed
-            this.orbitSpeed = (Math.random() * 0.002 + 0.0005) * (Math.random() > 0.5 ? 1 : -1);
+            this.orbitSpeed = (Math.random() * 0.0015 + 0.0003) * (Math.random() > 0.5 ? 1 : -1);
             
-            // Micro-fluctuation wave parameters for organic cloud drifting
-            this.waveSpeed = Math.random() * 0.02 + 0.01;
+            this.waveSpeed = Math.random() * 0.01 + 0.005;
             this.waveOffset = Math.random() * 100;
             
-            this.size = Math.random() * 2.5 + 0.5;
-            this.depth = Math.random() * 0.7 + 0.3; // Parallax depth layer mapping
+            // SIGNIFICANTLY SMALLER MICRO-PARTICLES FOR A DEEPER DUST CLOUD EFFECT
+            this.size = Math.random() * 1.0 + 0.2; 
+            this.depth = Math.random() * 0.8 + 0.2; 
             
-            // Persistent lifespan engine parameters
-            this.alpha = isInitial ? Math.random() * 0.7 + 0.2 : 0;
-            this.maxAlpha = Math.random() * 0.6 + 0.3;
-            this.fadeInSpeed = Math.random() * 0.01 + 0.005;
+            this.alpha = isInitial ? Math.random() * 0.6 + 0.1 : 0;
+            this.maxAlpha = Math.random() * 0.5 + 0.2;
+            this.fadeInSpeed = Math.random() * 0.008 + 0.003;
             this.age = 0;
-            this.lifespan = Math.random() * 400 + 300;
+            this.lifespan = Math.random() * 500 + 400;
         }
-        update(mouseX = 0, mouseY = 0) {
+    
+            update(mouseX = 0, mouseY = 0) {
             this.age++;
             this.angle += this.orbitSpeed;
             this.waveOffset += this.waveSpeed;
