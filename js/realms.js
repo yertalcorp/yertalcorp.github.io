@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:53:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 18:04:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -111,7 +111,16 @@ function initBackgroundEffects() {
     const canvas = document.createElement('canvas');
     const MAX_SPARKS = 350;
     canvas.id = 'realms-bg-canvas';
-    canvas.className = 'fixed top-0 left-0 w-full h-full pointer-events-none z-[-1]';
+    
+    **// Enforce explicit runtime layout rules directly to bypass missing framework utility classes**
+    **canvas.style.position = 'fixed';**
+    **canvas.style.top = '0';**
+    **canvas.style.left = '0';**
+    **canvas.style.width = '100vw';**
+    **canvas.style.height = '100vh';**
+    **canvas.style.pointerEvents = 'none';**
+    **canvas.style.zIndex = '-1';**
+    
     document.body.prepend(canvas);
 
     const ctx = canvas.getContext('2d');
@@ -134,7 +143,7 @@ function initBackgroundEffects() {
         constructor() {
             this.reset(true); // Initial seed scatter
         }
-reset(isInitial = false) {
+        reset(isInitial = false) {
             this.centerX = canvas.width / 2;
             this.centerY = canvas.height * 0.4; 
 
@@ -167,7 +176,7 @@ reset(isInitial = false) {
             this.lifespan = Math.random() * 500 + 400;
         }
     
-            update(mouseX = 0, mouseY = 0) {
+        update(mouseX = 0, mouseY = 0) {
             this.age++;
             this.angle += this.orbitSpeed;
             this.waveOffset += this.waveSpeed;
