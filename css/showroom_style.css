@@ -494,3 +494,24 @@ body, html, main, section#hero-container {
     justify-content: center;
     min-height: 50vh;
 }
+/* --- HERO SEGMENT SEPARATION AND COCKPIT DEPTH --- */
+.realms-hero-subtitle-wrapper {
+    margin-bottom: 5.5rem !important; /* Widened extensively to prevent line fighting */
+    display: block !important;
+    position: relative !important;
+    z-index: 20 !important;
+}
+
+.realms-hero-btn-row {
+    margin-top: 1.5rem !important; /* Gives the 3D action button its own layout perimeter */
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    position: relative !important;
+    z-index: 30 !important;
+}
+
+.realms-hero-subtitle {
+    line-height: 1.8 !important;
+    padding: 0 1.5rem !important;
+}
