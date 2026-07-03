@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:22:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:37:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -298,6 +298,42 @@ function renderNavbar(items) {
         </a>
     `).join('');
 }
+
+const getSafeSlug = async (user) => {
+    // 1. Session Storage Trace (Keep this, it's efficient)
+    let cachedStr = sessionStorage.getItem('currentUser');
+    if (cachedStr) {
+        let cached = JSON.parse(cachedStr);
+        if (cached?.slug) return cached.slug;
+    }
+
+    console.log("showroom.js: getSafeSlug: Fetching via SDK for UID:", user.uid);
+    
+    try {
+        // --- THE CHANGE IS HERE ---
+        // Use the Firebase SDK instead of fetch()
+        // Ensure 'get', 'ref', and 'db' are accessible (usually from firebase-config.js)
+        const snapshot = await get(ref(db, `users/${user.uid}/profile`));
+        
+        if (snapshot.exists()) {
+            const profile = snapshot.val();
+            console.log("getSafeSlug: Profile retrieved:", profile);
+            
+            if (profile?.slug) {
+                sessionStorage.setItem('currentUser', JSON.stringify(profile));
+                return profile.slug;
+            }
+        } else {
+            console.warn("getSafeSlug: No profile found in DB for this UID.");
+        }
+    } catch (error) {
+        console.error("getSafeSlug: SDK Error:", error);
+    }
+
+    // 3. Fallback to UID (Only if SDK fails or slug is missing)
+    console.warn("showroom.js: getSafeSlug: Couldn't find the slug so Falling back to UID.");
+    return user.uid; 
+};
 
 async function renderAuthStatus(user, authData) {
     const authZone = document.getElementById('auth-zone');
