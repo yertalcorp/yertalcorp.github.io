@@ -371,6 +371,14 @@
 .realms-hero-cta-secondary:hover {
     color: #94a3b8; /*Slate-400 */
 }
+
+/* --- 3. BACKGROUND EFFECTS & MOTION DEPTH --- */
+#realms-bg-canvas {
+    mix-blend-mode: screen;
+    will-change: transform;
+    background: radial-gradient(circle at 50% 50%, #0b1329 0%, #050508 100%);
+}
+
 /* --- AUTH SYSTEM SPECIFIC CLASSES --- */
 
 .auth-trigger-btn {
