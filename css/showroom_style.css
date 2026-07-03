@@ -290,7 +290,9 @@
     margin-top: 1.5rem; /* Spacing below the massive title */
     max-w-2xl; /* Paragraph width constraint */
     text-align: center;
-    line-height: 1.6;
+    line-height: 1.8;
+    line-height: 1.8 ;
+    padding: 0 0.5rem ;
 }
 
 /* --- THE HOLOGRAPHIC PRIMARY BUTTON ENGINE --- */
@@ -496,14 +498,15 @@ body, html, main, section#hero-container {
 }
 /* --- HERO SEGMENT SEPARATION AND COCKPIT DEPTH --- */
 .realms-hero-subtitle-wrapper {
-    margin-bottom: 5.5rem ; /* Widened extensively to prevent line fighting */
+    margin-bottom: 0.5rem ; /* Widened extensively to prevent line fighting */
     display: block ;
     position: relative ;
     z-index: 20 ;
 }
 
 .realms-hero-btn-row {
-    margin-top: 1.5rem ; /* Gives the 3D action button its own layout perimeter */
+    margin-top: 0.5rem ; /* Gives the 3D action button its own layout perimeter */
+    margin-bottom: 0.5rem;
     display: flex ;
     justify-content: center ;
     align-items: center ;
@@ -511,7 +514,3 @@ body, html, main, section#hero-container {
     z-index: 30 ;
 }
 
-.realms-hero-subtitle {
-    line-height: 1.8 ;
-    padding: 0 1.5rem ;
-}
