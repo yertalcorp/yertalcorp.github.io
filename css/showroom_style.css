@@ -451,3 +451,23 @@
     border-color: rgba(239, 68, 68, 0.5);
     letter-spacing: 0.4em;
 }
+/* --- NAVIGATION BRANDING FIXES --- */
+#nav-logo.logo-container {
+    min-width: 320px; /* Gives the logo wrapper enough space to breathe */
+    flex-shrink: 0;   /* Prevents flexbox from squeezing it */
+    white-space: nowrap; /* Forces text to stay on one single line */
+}
+
+/* --- MENU ITEM CORRECTIONS --- */
+#nav-menu a {
+    text-decoration: none; /* Strips out the default underline */
+    font-weight: 700;       /* Makes the font presence thicker */
+    transition: text-shadow 0.3s ease, color 0.3s ease;
+}
+
+#nav-menu a:hover {
+    text-decoration: none;
+    color: #ffffff;
+    text-shadow: 0 0 10px var(--neon-color, #00f2ff),
+                 0 0 20px var(--neon-color, #00f2ff); /* Kinetic neon glow */
+}
