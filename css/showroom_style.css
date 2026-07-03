@@ -285,14 +285,13 @@
 /* The subtle sub-headline and descriptions */
 .realms-hero-subtitle {
     font-size: 1.25rem; /* Text-xl (20px) */
-    color: #94a3b8; /* Slate-400 */
-    font-weight: 300; /* Font-light */
+    color: #ffffff; /* Slate-400 */
+    font-weight: 600; /* Font-light */
     letter-spacing: 0.1em; /* Wide tracking */
     margin-top: 1.5rem; /* Spacing below the massive title */
     max-w-2xl; /* Paragraph width constraint */
     text-align: center;
     line-height: 1.8;
-    line-height: 1.8 ;
     padding: 0 0.5rem ;
 }
 
