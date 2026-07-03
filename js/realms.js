@@ -420,7 +420,7 @@ function renderHero(hero) {
     if (!el) return;
     const ctaLink = hero.primary_button.link || './arcade/index.html?user=yertal-arcade';
     el.innerHTML = `
-        <div class="realms-hero-container py-16 text-center animate-fadeIn max-w-4xl">
+        <div class="realms-hero-container py-4 text-center animate-fadeIn max-w-4xl">
             <h2 class="realms-hero-title">
                 ${hero.main_headline}
             </h2>
