@@ -673,4 +673,4 @@ window.closeAuthHUD = () => {
   if (hud) hud.classList.remove('active');
 };
 
-window.onload = initRealmshome;
+window.onload = initRealmsHome;
