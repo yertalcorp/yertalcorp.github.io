@@ -427,7 +427,7 @@ function renderHero(hero) {
             <p class="realms-hero-subtitle">
                 ${hero.subheadline}
             </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10">
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-16">
                 <button id="arcade-trigger" data-link="${ctaLink}" onclick="window.openAuthHUD('superuser')" class="realms-surreal-3d-btn">
                     <div class="realms-inner-content">
                         <i class="fas fa-power-off"></i>
