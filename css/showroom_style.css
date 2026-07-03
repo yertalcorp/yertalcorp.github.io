@@ -517,10 +517,17 @@
 .realms-page-body html,
 .realms-page-body main,
 .realms-page-body section,
+.realms-page-body #hero-container,
+.realms-page-body .realms-hero-container,
 .realms-page-body .max-w-7xl,
 .realms-page-body .mx-auto,
 .realms-page-body [id$="-container"] {
-    background: transparent ; /* Changed from background-color to sweep away all background layers completely */
+    background: transparent ; background-color: transparent ; /* Sweeps away all opaque background layers completely */
+}
+/* --- SPECIFIC HERO BLOCK OVERRIDE --- */
+.realms-page-body [class*="realms-hero-container"] {
+    background: transparent ;
+    background-color: transparent ;
 }
 
 /* --- EXPLICIT CANVAS RENDERING ENGINE FIX --- */
