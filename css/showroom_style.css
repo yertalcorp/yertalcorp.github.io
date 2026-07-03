@@ -511,11 +511,6 @@
     z-index: 30 ;
 }
 
-/* --- REMOVED GLOBAL TRANSPARENCY CONFLICTS --- */
-body, html, main, section#hero-container {
-    background-color: unset ; /* Restores standard native rendering back to the old website layout */
-}
-
 /* --- SCOPED TRANSPARENCY FOR NEW REALMS ONLY --- */
 .realms-page-body,
 .realms-page-body html,
