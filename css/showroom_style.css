@@ -235,6 +235,142 @@
    letter-spacing: 0.2em;
    color: #94a3b8;
 }
+/* --- REALMS SPECIFIC CLASSES --- */
+/* --- THE HERO LAYOUT & PARTICLE CANVAS --- */
+
+/* Parent container holding the entire hero content block */
+.realms-hero-container {
+    min-height: 70vh; /* Viewport height for cinematic spacing */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    background-color: #050505; /* Fallback background */
+}
+
+/* --- THE MASSIVE, CENTERED TYPOGRAPHY --- */
+
+/* The primary headline: massive, bold, uppercase, centered, with cyan glow */
+.realms-hero-title {
+    font-size: 6rem; /* Huge default size (96px) */
+    font-weight: 900; /* Extra black weight */
+    text-transform: uppercase;
+    text-align: center;
+    letter-spacing: -0.05em; /* Tracking-tighter */
+    line-height: 1.0; /* Tight leading */
+    color: #ffffff;
+    /* This key property provides the signature blue/cyan holographic glow effect */
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.7), 
+                 0 0 20px rgba(0, 242, 255, 0.5), 
+                 0 0 30px rgba(0, 242, 255, 0.3);
+}
+
+/* Special text class for color accents within the title */
+.realms-hero-accent {
+    color: var(--accent-color); /* Dynamically pulled from settings/ui_settings */
+}
+
+/* The subtle sub-headline and descriptions */
+.realms-hero-subtitle {
+    font-size: 1.25rem; /* Text-xl (20px) */
+    color: #94a3b8; /* Slate-400 */
+    font-weight: 300; /* Font-light */
+    letter-spacing: 0.1em; /* Wide tracking */
+    margin-top: 1.5rem; /* Spacing below the massive title */
+    max-w-2xl; /* Paragraph width constraint */
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* --- THE HOLOGRAPHIC PRIMARY BUTTON ENGINE --- */
+
+/* Outer capsule shape with 3D perspective for hover effects */
+.realms-surreal-3d-btn {
+    position: relative;
+    padding: 1rem 4rem; /* Wide and clean padding */
+    border-radius: 1rem; /* Beveled corner style */
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: 1.125rem; /* Text-lg (18px) */
+    letter-spacing: 0.3em;
+    color: #ffffff;
+    cursor: pointer;
+    overflow: hidden; /* Important for inner glow animations */
+    perspective: 1000px; /* Essential for 3D hover 'tilt' effects */
+    
+    /* COMPLEX BACKGROUND STYLING:
+       Combines an internal gradient base, subtle hardware grid lines, and 
+       the characteristic glowing borders (box-shadow).
+    */
+    background: linear-gradient(135deg, rgba(16, 23, 31, 0.9) 0%, rgba(5, 5, 5, 0.95) 100%);
+    border: 1px solid rgba(0, 242, 255, 0.2); /* Faint baseline cyan border */
+    
+    /* THE PRIMARY BOX SHADOW GLOWS: (Inner and Outer Cyan rings) */
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.6), /* Persistent Outer Glow */
+                inset 0 0 15px rgba(0, 242, 255, 0.3); /* Soft Inner Glow */
+                
+    transition: all 0.3s ease-out; /* Smooth hover transition */
+}
+
+/* HOVER EFFECTS: Highlights, Tilt, and Icon Animation triggers */
+
+.realms-surreal-3d-btn:hover {
+    transform: translateY(-3px) rotateX(2deg); /* Subtle 3D 'tilt' effect */
+    border-color: rgba(0, 242, 255, 0.8); /* Intensified border */
+    background: linear-gradient(135deg, rgba(20, 28, 38, 0.95) 0%, rgba(5, 5, 5, 1) 100%);
+    box-shadow: 0 0 25px rgba(0, 242, 255, 0.9), /* Intense Outer Glow */
+                inset 0 0 20px rgba(0, 242, 255, 0.5); /* Soft Inner Glow */
+}
+
+/* --- ICON HANDLING (The power-off and chip detail icons) --- */
+
+/* Center the text and icons within the button using flexbox alignment rules */
+.realms-surreal-3d-btn .realms-inner-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem; /* Gap-3 spacing */
+}
+
+/* Define the visual style for the persistent cyan icon details */
+.realms-surreal-3d-btn i {
+    color: var(--neon-color); /* Blue/Cyan (0, 242, 255) */
+    filter: drop-shadow(0 0 5px rgba(0, 242, 255, 0.8)); /* Soft icon glow */
+    opacity: 0.7; /* Subtly dimmed until hover */
+    transition: all 0.5s ease;
+}
+
+/* Specific microchip icon on the right (needs rotation animation) */
+.realms-surreal-3d-btn .fa-microchip {
+    /* Persistent drop-shadow is defined in 'surreal-3d-btn i' */
+}
+
+/* Trigger specific icon animations (scale/rotate) when the button is hovered */
+.realms-surreal-3d-btn:hover i {
+    opacity: 1.0;
+    transform: scale(1.1); /* fa-power-off on left slightly scales up */
+}
+
+.realms-surreal-3d-btn:hover .fa-microchip {
+    transform: rotate(180deg) scale(1.1); /* Microchip on right rotates 180deg */
+}
+
+/* THE DESCRIPTION SUB-HEADING UNDER THE BUTTON */
+.realms-hero-cta-secondary {
+    font-size: 0.75rem; /* Text-xs (12px) */
+    text-transform: uppercase;
+    font-weight: 300;
+    letter-spacing: 0.3em; /* Wide tracking */
+    color: #64748b; /* Slate-500 */
+    margin-top: 1rem;
+    transition: color 0.3s ease;
+}
+
+.realms-hero-cta-secondary:hover {
+    color: #94a3b8; /*Slate-400 */
+}
 /* --- AUTH SYSTEM SPECIFIC CLASSES --- */
 
 .auth-trigger-btn {
