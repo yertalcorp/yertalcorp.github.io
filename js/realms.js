@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:42:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:01:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -464,14 +464,18 @@ function renderHero(hero) {
     if (!el) return;
     const ctaLink = hero.primary_button.link || './arcade/index.html?user=yertal-arcade';
     el.innerHTML = `
-        <div class="realms-hero-container py-4 text-center animate-fadeIn max-w-4xl">
+        <div class="realms-hero-container text-center animate-fadeIn max-w-4xl">
             <h2 class="realms-hero-title">
                 ${hero.main_headline}
             </h2>
-            <p class="realms-hero-subtitle">
-                ${hero.subheadline}
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-16">
+            
+            <div class="realms-hero-subtitle-wrapper">
+                <p class="realms-hero-subtitle">
+                    ${hero.subheadline}
+                </p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center realms-hero-btn-row">
                 <button id="arcade-trigger" data-link="${ctaLink}" onclick="window.openAuthHUD('superuser')" class="realms-surreal-3d-btn">
                     <div class="realms-inner-content">
                         <i class="fas fa-power-off"></i>
@@ -479,6 +483,9 @@ function renderHero(hero) {
                         <i class="fas fa-microchip"></i>
                     </div>
                 </button>
+            </div>
+            
+            <div class="realms-hero-secondary-wrapper">
                 <a href="${hero.secondary_button.link}" class="realms-hero-cta-secondary text-xs uppercase tracking-[0.3em] py-4 px-8">
                     ${hero.secondary_button.text}
                 </a>
@@ -512,7 +519,7 @@ function renderFeaturedRealms(items) {
     el.innerHTML = items.map(item => `
         <div class="featured-card metallic-bezel p-8 rounded-[2rem] cursor-pointer aspect-video relative overflow-hidden group flex-1 min-w-[300px]"
              onclick="window.location.href='./arcade/index.html?realm=${item.realm_slug}'"
-             onmouseenter="const v=this.querySelector('video'); if(v) v.play();"
+             onmouseenter="const v=this.querySelector('video'); if(v) { v.play().catch(err => console.warn('Video playback intercepted:', err.message)); }"
              onmouseleave="const v=this.querySelector('video'); if(v) { v.pause(); v.currentTime=0; }">
             <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105 brightness-110 contrast-105 rounded-[2rem]" style="background-image: url('${item.realm_image}')"></div>
             ${item.realm_animation_preview ? `<video src="${item.realm_animation_preview}" loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem] pointer-events-none"></video>` : ''}
