@@ -502,6 +502,10 @@ function renderLearnToBuild(data) {
 function renderCommunity(data) {
     const el = document.getElementById('community-insight-container');
     if (!el) return;
+    
+    // Add the structural wrapper styling hooks dynamically here
+    el.className = "mb-24 text-center py-12 glass-card metallic-bezel max-w-4xl mx-auto";
+    
     el.innerHTML = `
         <h3 class="text-xs uppercase tracking-[0.4em] text-slate-400 mb-4">${data.optional_tagline.toUpperCase()}</h3>
         <p class="text-sm uppercase tracking-[0.2em] text-slate-500">${data.insights.join(' &bull; ')}</p>
