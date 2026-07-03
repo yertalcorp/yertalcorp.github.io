@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:50:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:56:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -165,20 +165,21 @@ reset(isInitial = false) {
             if (spreadFactor < 0.6) {
                 // 60% of particles form a thick, concentrated halo around the text
                 this.radiusX = Math.random() * 350 + 50;
-                this.radiusY = Math.random() * 120 + 30;
+                this.radiusY = Math.random() * 250 + 100; /* Increased from * 120 + 30 to widen the inner vertical ellipse */
             } else {
                 // 40% drift outward across the full page view dimensions
                 this.radiusX = Math.random() * (canvas.width * 0.8) + 200;
-                this.radiusY = Math.random() * (canvas.height * 0.8) + 100;
+                this.radiusY = Math.random() * (canvas.height * 0.8) + 300; /* Increased from + 100 to broaden the outer field path */
             }
 
-            this.orbitSpeed = (Math.random() * 0.0015 + 0.0003) * (Math.random() > 0.5 ? 1 : -1);
+            // INCREASED VELOCITY FOR FASTER SWIRLING ROTATION
+            this.orbitSpeed = (Math.random() * 0.004 + 0.0015) * (Math.random() > 0.5 ? 1 : -1); /* Boosted from 0.0015 + 0.0003 for a more kinetic momentum */
             
             this.waveSpeed = Math.random() * 0.01 + 0.005;
             this.waveOffset = Math.random() * 100;
             
-            // EXTRA-LARGE BOOFTED LUMINOUS PARTICLE RADII
-            this.size = Math.random() * 4.0 + 2.0; /* Boosted from 2.5 + 1.0 to increase visibility */
+            // EXTRA-LARGE BOOSTED LUMINOUS PARTICLE RADII
+            this.size = Math.random() * 4.0 + 2.0;
             this.depth = Math.random() * 0.8 + 0.2; 
             
             this.alpha = isInitial ? Math.random() * 0.6 + 0.1 : 0;
@@ -186,7 +187,7 @@ reset(isInitial = false) {
             this.fadeInSpeed = Math.random() * 0.008 + 0.003;
             this.age = 0;
             this.lifespan = Math.random() * 500 + 400;
-        }    
+        }
         update(mouseX = 0, mouseY = 0) {
             this.age++;
             this.angle += this.orbitSpeed;
