@@ -512,24 +512,20 @@
 }
 
 /* --- SCOPED TRANSPARENCY FOR NEW REALMS ONLY --- */
-.realms-page-body,
-.realms-page-body html,
-.realms-page-body main,
-.realms-page-body section,
-.realms-page-body footer,
-.realms-page-body #hero-container,
-.realms-page-body .realms-hero-container,
-.realms-page-body .max-w-7xl,
-.realms-page-body .mx-auto,
-.realms-page-body [id$="-container"],
-.realms-page-body [id*="grid-container"] > div,
-.realms-page-body #trending-sparks-grid > div {
-    background: transparent ; 
-    background-color: transparent ; /* Forces all defined section containers and inner grids to strip color layers completely */
+html.realms-page-root,
+html.realms-page-root body,
+html.realms-page-root main,
+html.realms-page-root section,
+html.realms-page-root footer,
+html.realms-page-root #hero-container,
+html.realms-page-root #showcase-grid,
+html.realms-page-root [id$="-container"],
+html.realms-page-root [id*="-grid"] {
+    background: transparent ; background-color: transparent ; /* Sweeps away every default fallback background color cleanly */
 }
 
 /* --- SPECIFIC HERO BLOCK OVERRIDE --- */
-.realms-page-body [class*="realms-hero-container"] {
+html.realms-page-root [class*="realms-hero-container"] {
     background: transparent ;
     background-color: transparent ;
 }
@@ -539,22 +535,20 @@
     display: block ;
     visibility: visible ;
     opacity: 1 ;
-    position: fixed ; /* Locks canvas to viewport grid frame during deep scrolls */
+    position: fixed ;
     top: 0 ;
     left: 0 ;
     width: 100vw ;
     height: 100vh ;
-    z-index: -1 ; /* Kept at -1 to float behind text copy layers cleanly */
-    background: radial-gradient(circle at 50% 40%, #0c182e 0%, #050505 75%) ; /* Deepened outer bounds for contrast blend */
+    z-index: -1 ;
+    background: radial-gradient(circle at 50% 40%, #0c182e 0%, #050505 75%) ;
 }
 
 /* --- SECTION CONTENT BLOCKS HOVER LAYER CONTRAST --- */
-.realms-page-body .featured-card, 
-.realms-page-body .glass-card, 
-.realms-page-body footer,
-.realms-page-body [id$="-container"] .bg-slate-900\/50,
-.realms-page-body [id$="-container"] .bg-white\/5 {
-    background: rgba(15, 23, 42, 0.55) ; /* Subtle tint overlay step protects contrast integrity over moving particles */
+html.realms-page-root .featured-card, 
+html.realms-page-root .glass-card, 
+html.realms-page-root footer {
+    background: rgba(15, 23, 42, 0.55) ;
     backdrop-filter: blur(var(--card-blur, 15px)) ;
     -webkit-backdrop-filter: blur(var(--card-blur, 15px)) ;
 }
