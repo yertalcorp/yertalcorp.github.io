@@ -112,14 +112,14 @@ function initBackgroundEffects() {
     const MAX_SPARKS = 350;
     canvas.id = 'realms-bg-canvas';
     
-    **// Enforce explicit runtime layout rules directly to bypass missing framework utility classes**
-    **canvas.style.position = 'fixed';**
-    **canvas.style.top = '0';**
-    **canvas.style.left = '0';**
-    **canvas.style.width = '100vw';**
-    **canvas.style.height = '100vh';**
-    **canvas.style.pointerEvents = 'none';**
-    **canvas.style.zIndex = '-1';**
+    // Enforce explicit runtime layout rules directly to bypass missing framework utility classes
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100vw';
+    canvas.style.height = '100vh';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '-1';
     
     document.body.prepend(canvas);
 
