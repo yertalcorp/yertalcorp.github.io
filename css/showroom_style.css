@@ -240,7 +240,7 @@
 
 /* Parent container holding the entire hero content block */
 .realms-hero-container {
-    min-height: 70vh; /* Viewport height for cinematic spacing */
+    min-height: 50vh; /* Viewport height for cinematic spacing */
     display: flex;
     flex-direction: column;
     justify-content: center;
