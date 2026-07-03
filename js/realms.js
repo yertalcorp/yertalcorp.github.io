@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 14:24:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 11:18:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -315,7 +315,16 @@ function initTiltEngine() {
     });
 }
 
+window.onload = initRealmsHome;
+
 function renderFeaturedRealms(items) {
+    const headerEl = document.getElementById('featured-realms-header');
+    if (headerEl) {
+        headerEl.innerHTML = `
+            <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-2">// FEATURED ECOSYSTEMS</h3>
+            <h2 class="text-3xl font-bold uppercase tracking-tight text-white">Live Prototype Realms</h2>
+        `;
+    }
     const el = document.getElementById('showcase-grid');
     if (!el || !Array.isArray(items)) return;
     el.innerHTML = items.map(item => `
@@ -342,23 +351,16 @@ function renderFeaturedRealms(items) {
     `).join('');
 }
 
-function renderHowRealmsWork(data) {
-    const el = document.getElementById('visual-flow-container');
-    if (!el || !data.steps) return;
-    el.innerHTML = `
-        <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-12">// THE ALCHEMY</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 items-center max-w-4xl mx-auto">
-            ${data.steps.map(step => `
-                <div class="glass-card metallic-bezel p-8 flex flex-col items-center">
-                    <div class="text-3xl font-bold text-white mb-2">${step.id}</div>
-                    <div class="uppercase tracking-widest text-sm text-slate-400 font-bold">${step.label}</div>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-
 function renderTrendingSparks(items) {
+    const headerEl = document.getElementById('trending-sparks-header');
+    if (headerEl) {
+        headerEl.innerHTML = `
+            <div>
+                <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-2">// ATOMIC ARCHITECTURE</h3>
+                <h2 class="text-3xl font-bold uppercase tracking-tight text-white">Trending Sparks</h2>
+            </div>
+        `;
+    }
     const el = document.getElementById('trending-sparks-grid');
     if (!el || !items) return;
     el.innerHTML = items.map(spark => `
@@ -379,6 +381,13 @@ function renderTrendingSparks(items) {
 }
 
 function renderTemplates(items) {
+    const headerEl = document.getElementById('templates-header');
+    if (headerEl) {
+        headerEl.innerHTML = `
+            <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-2">// ZERO COLD START</h3>
+            <h2 class="text-3xl font-bold uppercase tracking-tight text-white">Start With A Template</h2>
+        `;
+    }
     const el = document.getElementById('templates-grid');
     if (!el || !items) return;
     el.innerHTML = items.map(t => `
@@ -390,19 +399,26 @@ function renderTemplates(items) {
 }
 
 function renderLearnToBuild(data) {
+    const headerEl = document.getElementById('learn-header');
+    if (headerEl) {
+        headerEl.innerHTML = `
+            <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-2">// INTELLECTUAL CURRICULUM</h3>
+            <h2 class="text-2xl font-bold uppercase tracking-tight text-white">${data.section_title || 'Learn to Build Realms'}</h2>
+        `;
+    }
     const el = document.getElementById('action-grid');
     if (!el || !data.modules) return;
     el.innerHTML = data.modules.map(m => `
         <div class="glass-card action-card p-8 flex flex-col h-full group cursor-pointer relative overflow-hidden" onclick="window.open('${m.link}', '_blank')">
             <div class="flex items-center justify-center"><i class="${m.icon} text-3xl" style="color: var(--neon-color);"></i></div>
             <h3 class="mt-8 mb-1 uppercase tracking-tighter text-white text-xl">${m.title}</h3>
-            <span class="text-[9px] font-bold uppercase tracking-widest mt-4" style="color: var(--accent-color);">Access Module →</span>
+            <span class="text-[9px] font-bold uppercase tracking-widest mt-4" style="color: var(--accent-color);">${data.cta_label || 'LEARN HOW REALMS ARE BUILT'} →</span>
         </div>
     `).join('');
 }
 
 function renderCommunity(data) {
-    const el = document.querySelector('#learn-container + section');
+    const el = document.getElementById('community-insight-container');
     if (!el) return;
     el.innerHTML = `
         <h3 class="text-xs uppercase tracking-[0.4em] text-slate-400 mb-4">${data.optional_tagline.toUpperCase()}</h3>
@@ -411,7 +427,7 @@ function renderCommunity(data) {
 }
 
 function renderFinalCTA(cta) {
-    const el = document.querySelector('main > section:last-of-type');
+    const el = document.getElementById('final-cta-container');
     if (!el) return;
     el.innerHTML = `
         <h2 class="text-4xl lg:text-6xl font-black uppercase tracking-tight text-white mb-8">${cta.headline}</h2>
@@ -434,88 +450,22 @@ function renderFooter(footer) {
         </div>
     `;
 }
-// --- 4. CARD RENDERING (Sequential) ---
-
-async function renderActionCards(cards) {
-    const grid = document.getElementById('action-grid');
-    const keys = Object.keys(cards);
-    grid.innerHTML = '';
-
-    keys.forEach((key, i) => {
-        const card = cards[key];
-
-    
-        const cardEl = document.createElement('div');
-        cardEl.className = 'glass-card action-card p-8 flex flex-col h-full group opacity-0 translate-y-4 transition-all duration-500 relative overflow-hidden';
-        cardEl.onclick = () => window.open(card.link, '_blank');
-        
-        cardEl.innerHTML = `
-            <div class="card-icon-badge flex items-center justify-center transition-transform duration-500">
-                <i class="${card.icon} text-3xl relative z-20" style="color: var(--neon-color);"></i>
-                <i class="${card.icon} text-3xl absolute blur-[2px] opacity-0 group-hover:opacity-70 transition-opacity duration-500 z-10" style="color: var(--neon-color);"></i>
-                <i class="${card.icon} text-3xl absolute translate-y-1 translate-x-1 blur-[1px] z-0"style="opacity: 0.2; color: var(--neon-color);"></i>
-            </div>
-            <h3 class="mt-8 mb-1 uppercase tracking-tighter text-white text-xl" style="font-family: var(--nav-font); font-weight: var(--nav-weight); font-variation-settings: 'wght' var(--nav-weight);">${card.title}</h3>
-            <p class="text-[11px] text-slate-500 mb-6 font-light leading-relaxed flex-grow">${card.desc}</p>
-            <div class="flex items-center gap-2">
-                <span class="text-[9px] font-bold text-blue-500 uppercase tracking-widest" style="color: var(--accent-color);">Execute →</span>
-            </div>
-        `;
-
-        grid.appendChild(cardEl);
-        setTimeout(() => cardEl.classList.remove('opacity-0', 'translate-y-4'), i * 80);
-    });
-}
-
-function renderShowcase(items) {
-    const grid = document.getElementById('showcase-grid');
-    grid.innerHTML = Object.keys(items).map(key => {
-        const item = items[key];
-        return `
-            <div class="featured-card metallic-bezel p-8 rounded-[2rem] cursor-pointer aspect-video relative overflow-hidden group flex-1 min-w-[300px]"
-                 onclick="window.location.href='${item.path || '#'}'">
-                
-                <div class="absolute inset-0 bg-cover bg-no-repeat bg-center transition-transform duration-700 group-hover:scale-105 brightness-110 contrast-105 rounded-[2rem]" 
-                     style="background-image: url('${item.img}')">
-                </div>
-
-                 <div class="absolute inset-0 bg-slate-950/30 backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-500 rounded-[2rem]"></div>
-                
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 rounded-[2rem]"></div>
-
-                
-                <div class="relative z-10 flex flex-col h-full justify-between">
-                    <div class="flex justify-between items-start">
-                        <span class="text-blue-400 text-[10px] font-bold tracking-widest uppercase" style="color: var(--accent-color);">Showcased: ${item.category || 'Laboratory'}</span>
-                        <i class="fas fa-rocket text-blue-500 text-2xl group-hover:text-cyan-400 transition-colors"></i>
-                    </div>
-                    <div>
-                        <h3 class="uppercase tracking-tighter text-white text-xl" style="font-family: var(--nav-font); font-weight: var(--nav-weight);">${item.title}</h3>
-                        <span class="neon-text-sync block mt-2 text-[9px] text-blue-400 uppercase font-bold tracking-[0.2em]">Initialize →</span>
-                    </div>
-                </div>
-            </div>`;
-    }).join('');
-}
-function renderFooter(footer) {
-    const container = document.getElementById('footer-container');
-    container.innerHTML = `
-        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
-            ${footer.columns.map(col => `
-                <div>
-                    <h4 class="text-blue-500 font-bold uppercase text-xs mb-4">${col.heading}</h4>
-                    <div class="flex flex-col gap-2 text-xs text-slate-400">
-                        ${col.links.map(link => `<button onclick="window.open('${link.url}', '_blank')" class="text-left hover:text-white transition">${link.label}</button>`).join('')}
-                    </div>
+function renderHowRealmsWork(data) {
+    const el = document.getElementById('visual-flow-container');
+    if (!el || !data.steps) return;
+    el.innerHTML = `
+        <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-12">// THE ALCHEMY</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 items-center max-w-4xl mx-auto">
+            ${data.steps.map(step => `
+                <div class="glass-card metallic-bezel p-8 flex flex-col items-center">
+                    <div class="text-3xl font-bold text-white mb-2">${step.id}</div>
+                    <div class="uppercase tracking-widest text-sm text-slate-400 font-bold">${step.label}</div>
                 </div>
             `).join('')}
-            <div class="text-[10px] text-slate-500 uppercase tracking-widest flex flex-col justify-center md:items-end">
-                <span>© 2026 YERTAL CORPORATION</span>
-                <span class="mt-1 opacity-50 italic">Systems Built in the Lab</span>
-            </div>
         </div>
     `;
 }
+
 
 function renderAdminGate(ui) {
     const gate = document.getElementById('admin-gateway');
@@ -641,4 +591,4 @@ window.closeAuthHUD = () => {
   if (hud) hud.classList.remove('active');
 };
 
-window.onload = initShowroom;
+window.onload = initRealmshome;
