@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:27:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:48:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -210,7 +210,7 @@ function initBackgroundEffects() {
                 this.reset(false);
             }
         }
-        draw(mouseX = 0, mouseY = 0) {
+draw(mouseX = 0, mouseY = 0) {
             // Apply mouse parallax tracking relative to depth layers
             const parallaxX = (mouseX - canvas.width / 2) * 0.025 * this.depth;
             const parallaxY = (mouseY - canvas.height / 2) * 0.025 * this.depth;
@@ -222,8 +222,15 @@ function initBackgroundEffects() {
             ctx.globalAlpha = Math.max(0, this.alpha);
             ctx.shadowBlur = 12 * this.depth;
             
-            // Fix: Resolve CSS variable value via computed style lookup or native hex fallback
-            const neonColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-color').trim() || '#00f2ff';
+            // Fix: Prioritize global runtime UI configuration payload over DOM style computations
+            let neonColor = '#00f2ff';
+            if (typeof currentUi !== 'undefined' && currentUi?.['neon-color']) {
+                neonColor = currentUi['neon-color'];
+            } else {
+                const computedColor = getComputedStyle(document.documentElement).getPropertyValue('--neon-color').trim();
+                if (computedColor) neonColor = computedColor;
+            }
+            
             ctx.shadowColor = neonColor;
             ctx.fillStyle = neonColor;
             
@@ -232,7 +239,7 @@ function initBackgroundEffects() {
             ctx.fill();
             ctx.restore();
         }
-    }
+}
 
     // Interactive mouse state listeners
     let currentMouseX = window.innerWidth / 2;
