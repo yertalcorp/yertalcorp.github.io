@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:06:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:07:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -105,13 +105,14 @@ async function initRealmsHome() {
 }
 
 function initBackgroundEffects() {
+    console.log("%c [CANVAS ENGINE] Initializing hardware particle layer... ", "background: #111; color: #00f2ff; font-weight: bold;");
+
     // 1. Create a true full-viewport background layout layer
     const canvas = document.createElement('canvas');
     const MAX_SPARKS = 350;
     canvas.id = 'realms-bg-canvas';
-    canvas.className = 'fixed top-0 left-0 w-full h-full pointer-events-none z-[-1]';
     
-    // Enforce layout positioning directly to bypass missing framework utility styles
+    // Enforce explicit runtime layout rules directly to bypass missing framework utility classes
     canvas.style.position = 'fixed';
     canvas.style.top = '0';
     canvas.style.left = '0';
@@ -121,23 +122,35 @@ function initBackgroundEffects() {
     canvas.style.zIndex = '-1';
     
     document.body.prepend(canvas);
+    console.log("[CANVAS ENGINE] Canvas element prepended to DOM body. ID:", canvas.id);
 
     const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        console.error("[CANVAS ENGINE] Failed to acquire 2D context from canvas element.");
+        return;
+    }
+    console.log("[CANVAS ENGINE] 2D Context acquired successfully.");
+
     let particles = [];
 
     function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         
+        console.log(`[CANVAS ENGINE] Dimensions updated -> Width: ${canvas.width}px, Height: ${canvas.height}px`);
+        
         // RE-SYNC CENTER ATTRACTORS IMMEDIATELY ACROSS ALL LIVING SPARKS ON RESIZE
-        particles.forEach(p => {
-            p.centerX = canvas.width / 2;
-            p.centerY = canvas.height * 0.4;
-        });
+        if (particles.length > 0) {
+            particles.forEach(p => {
+                p.centerX = canvas.width / 2;
+                p.centerY = canvas.height * 0.4;
+            });
+            console.log(`[CANVAS ENGINE] Recalculated orbit center point (${canvas.width / 2}, ${canvas.height * 0.4}) across ${particles.length} active particles.`);
+        }
     }
     window.addEventListener('resize', resize);
     resize();
-    
+
     class CosmicSpark {
         constructor() {
             this.reset(true); // Initial seed scatter
@@ -226,13 +239,16 @@ function initBackgroundEffects() {
     });
 
     // Generate cloud assembly population size
+    console.log(`[CANVAS ENGINE] Generating particle cloud assembly (${MAX_SPARKS} sparks)...`);
     for (let i = 0; i < MAX_SPARKS; i++) {
         const spark = new CosmicSpark();
         // Scatter particle timeframes evenly so they don't fade all at once
         spark.age = Math.random() * spark.lifespan;
         particles.push(spark);
     }
+    console.log("[CANVAS ENGINE] Population generation complete. Swarm collection loaded.");
 
+    let executionFrameCount = 0;
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
@@ -242,10 +258,18 @@ function initBackgroundEffects() {
             p.draw(currentMouseX, currentMouseY);
         });
         
+        if (executionFrameCount === 0) {
+            console.log("%c [CANVAS ENGINE] Dynamic requestAnimationFrame loop successfully mounted and painting loops active. ", "color: #4ade80; font-weight: bold;");
+        }
+        executionFrameCount++;
+        
         requestAnimationFrame(animate);
     }
+    
+    console.log("[CANVAS ENGINE] Spawning loop process thread...");
     animate();
 }
+
 function applyGlobalStyles(settings) {
     const ui = settings['ui-settings'];
 
