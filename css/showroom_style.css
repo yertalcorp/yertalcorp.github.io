@@ -510,11 +510,13 @@
     position: relative ;
     z-index: 30 ;
 }
-/* --- FIXED ROOT ANCHORS: PREVENTS BROWSER WHITE LEAKS --- */
+/* --- FIXED ROOT ANCHORS: FORCE FULL VIEWPORT RE-PAINT ON LOAD --- */
 html.realms-page-root,
 html.realms-page-root body {
     background: #050505 ;
-    background-color: #050505 ; /* Changes from transparent to solid midnight black to seal the base layer */
+    background-color: #050505 ;
+    min-height: 100vh ; /* Forces the document container to fill the window frame instantly before scripts load */
+    height: 100% ;
 }
 
 /* --- COMPLETE LAYER TRANSPARENCY STREAM FOR NEW REALMS ONLY --- */
@@ -532,7 +534,10 @@ html.realms-page-root [id*="-grid"],
 html.realms-page-root .max-w-7xl,
 html.realms-page-root .mx-auto {
     background: transparent ;
-    background-color: transparent ; /* Sweeps away legacy sheet color fills from all layout rows */
+    background-color: transparent ;
+    border: none ; /* Wipes out any native horizontal partition lines from the structural templates */
+    border-color: transparent ;
+    box-shadow: none ;
 }
 
 /* --- SPECIFIC HERO BLOCK OVERRIDE --- */
@@ -546,20 +551,20 @@ html.realms-page-root [class*="realms-hero-container"] {
     display: block ;
     visibility: visible ;
     opacity: 1 ;
-    position: fixed ; /* Fixed lock ensures it pins edge-to-edge as you scroll */
+    position: fixed ;
     top: 0 ;
     left: 0 ;
     width: 100vw ;
     height: 100vh ;
     z-index: -1 ;
-    background: radial-gradient(circle at 50% 40%, #0c182e 0%, #050505 75%) ;
+    background: radial-gradient(circle at 50% 40%, #0c182e 0%, #050505 85%) ;
 }
 
-/* --- SECTION CONTENT BLOCKS HOVER LAYER CONTRAST --- */
+/* --- SECTION CONTENT BLOCKS SURFACE CONTRAST --- */
 html.realms-page-root .featured-card, 
 html.realms-page-root .glass-card, 
 html.realms-page-root footer {
-    background: rgba(15, 23, 42, 0.65) ; /* Slightly deepened opacity keeps lower card text incredibly readable over your fast sparks */
+    background: rgba(15, 23, 42, 0.65) ;
     backdrop-filter: blur(var(--card-blur, 15px)) ;
     -webkit-backdrop-filter: blur(var(--card-blur, 15px)) ;
     border: 1px solid rgba(255, 255, 255, 0.05) ;
