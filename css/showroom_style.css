@@ -304,7 +304,7 @@
     border-radius: 1rem; /* Beveled corner style */
     text-transform: uppercase;
     font-weight: 700;
-    font-size: 1.125rem; /* Text-lg (18px) */
+    font-size: 1.5rem; /* Text-lg (18px) */
     letter-spacing: 0.3em;
     color: #ffffff;
     cursor: pointer;
@@ -370,9 +370,9 @@
 
 /* THE DESCRIPTION SUB-HEADING UNDER THE BUTTON */
 .realms-hero-cta-secondary {
-    font-size: 0.75rem; /* Text-xs (12px) */
+    font-size: 1rem; /* Text-xs (12px) */
     text-transform: uppercase;
-    font-weight: 300;
+    font-weight: 400;
     letter-spacing: 0.3em; /* Wide tracking */
     color: #64748b; /* Slate-500 */
     margin-top: 1rem;
@@ -463,6 +463,7 @@
 /* --- MENU ITEM CORRECTIONS --- */
 #nav-menu a {
     text-decoration: none; /* Strips out the default underline */
+    font-size: 15px;
     font-weight: 700;       /* Makes the font presence thicker */
     transition: text-shadow 0.3s ease, color 0.3s ease;
 }
