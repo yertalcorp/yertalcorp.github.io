@@ -3,57 +3,29 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 11:18:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 12:34:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
 
-    
-async function initRealmsHome() {
-    try {
-        const paths = ['settings/ui-settings', 'settings/realmshome', 'auth_ui'];
-        const results = await Promise.all(paths.map(p => fetch(`${firebaseConfig.databaseURL}/${p}.json`).then(r => r.json())));
-        const data = {};
-        paths.forEach((p, i) => { data[p] = results[i]; });
-
-        if (data && data['settings/ui-settings'] && data['settings/realmshome']) {
-            currentUi = data['settings/ui-settings'];
-            currentAuth = data.auth_ui;
-            const realms = data['settings/realmshome'];
-
-            applyGlobalStyles({ 'ui-settings': currentUi });
-
-            // Dynamic Router for the 10 System Sections
-            const sectionRouter = {
-                navigation: () => { renderBranding(realms.navigation.branding); renderNavbar(realms.navigation.menu_items); },
-                hero: () => renderHero(realms.hero),
-                featured_realms: () => renderFeaturedRealms(realms.featured_realms),
-                how_realms_work: () => renderHowRealmsWork(realms.how_realms_work),
-                trending_sparks: () => renderTrendingSparks(realms.trending_sparks),
-                creation_templates: () => renderTemplates(realms.creation_templates),
-                learn_to_build: () => renderLearnToBuild(realms.learn_to_build),
-                future_community: () => renderCommunity(realms.future_community),
-                final_cta: () => renderFinalCTA(realms.final_cta),
-                footer: () => renderFooter(realms.footer)
-            };
-
-            Object.keys(realms).forEach(key => {
-                if (sectionRouter[key]) sectionRouter[key]();
-            });
+/* Tag/Function: initRealmsHome */
 async function initRealmsHome() {
     try {
         console.log("%c [SYSTEM INITIALIZATION] Fetching architecture paths...", "color: #00f2ff; font-weight: bold;");
-        const paths = ['settings/ui-settings', 'settings/realmshome', 'auth_ui'];
+        
+        // Modified path from 'settings/realmshome' to 'realmshome'
+        const paths = ['settings/ui-settings', 'realmshome', 'auth_ui'];
         const results = await Promise.all(paths.map(p => fetch(`${firebaseConfig.databaseURL}/${p}.json`).then(r => r.json())));
         const data = {};
         paths.forEach((p, i) => { data[p] = results[i]; });
 
         console.log("[SYSTEM DATA INITIALIZED] Payload received:", data);
 
-        if (data && data['settings/ui-settings'] && data['settings/realmshome']) {
+        // Updated validation conditional check to match the new root payload key
+        if (data && data['settings/ui-settings'] && data['realmshome']) {
             currentUi = data['settings/ui-settings'];
             currentAuth = data.auth_ui;
-            const realms = data['settings/realmshome'];
+            const realms = data['realmshome'];
 
             console.log("[CONFIG SYNC] UI settings parsed successfully:", currentUi);
             console.log("[CONFIG SYNC] Realms home structural payload mapping:", realms);
@@ -119,20 +91,12 @@ async function initRealmsHome() {
             document.body.style.opacity = '1';
             console.log("%c [SYSTEM ONLINE] View execution stream complete.", "color: #bada55; font-weight: bold;");
         } else {
-            console.error("[CRITICAL SHUTDOWN] Validation conditions failed. Missing 'settings/ui-settings' or 'settings/realmshome' entries.");
+            console.error("[CRITICAL SHUTDOWN] Validation conditions failed. Missing 'settings/ui-settings' or 'realmshome' entries.");
         }
     } catch (error) {
         console.error("System Error: Realms Architecture Offline.", error);
     }
-}
-            renderAuthStatus(user, currentAuth);
-            document.body.style.opacity = '1';
-        }
-    } catch (error) {
-        console.error("System Error: Realms Architecture Offline.", error);
-    }
-}
-// --- 2. THE BRANDING & UI ENGINE ---
+}    
 
 function applyGlobalStyles(settings) {
     const ui = settings['ui-settings'];
