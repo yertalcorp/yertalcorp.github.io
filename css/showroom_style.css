@@ -248,6 +248,8 @@
     position: relative;
     overflow: hidden;
     background-color: #050505; /* Fallback background */
+    /* move up by 0.5 inch */
+    transform: translateY(-2.25rem);
 }
 
 /* --- THE MASSIVE, CENTERED TYPOGRAPHY --- */
