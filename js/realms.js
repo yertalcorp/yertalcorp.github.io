@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 18:18:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:06:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -86,9 +86,7 @@ async function initRealmsHome() {
             });
 
             // Animated cosmic particles engine forced prior to asynchronous watchers
-            if (typeof initBackgroundEffects === 'function') {
-                initBackgroundEffects();
-            }
+            initBackgroundEffects();
             
             console.log("[AUTH SYNC] Binding secure gateway profiles...");
             watchAuthState((u) => {
@@ -111,8 +109,9 @@ function initBackgroundEffects() {
     const canvas = document.createElement('canvas');
     const MAX_SPARKS = 350;
     canvas.id = 'realms-bg-canvas';
+    canvas.className = 'fixed top-0 left-0 w-full h-full pointer-events-none z-[-1]';
     
-    // Enforce explicit runtime layout rules directly to bypass missing framework utility classes
+    // Enforce layout positioning directly to bypass missing framework utility styles
     canvas.style.position = 'fixed';
     canvas.style.top = '0';
     canvas.style.left = '0';
@@ -138,7 +137,7 @@ function initBackgroundEffects() {
     }
     window.addEventListener('resize', resize);
     resize();
-
+    
     class CosmicSpark {
         constructor() {
             this.reset(true); // Initial seed scatter
