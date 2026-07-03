@@ -260,11 +260,18 @@
     text-align: center;
     letter-spacing: -0.05em; /* Tracking-tighter */
     line-height: 1.0; /* Tight leading */
-    color: #ffffff;
-    /* This key property provides the signature blue/cyan holographic glow effect */
-    text-shadow: 0 0 10px rgba(0, 242, 255, 0.7), 
-                 0 0 20px rgba(0, 242, 255, 0.5), 
-                 0 0 30px rgba(0, 242, 255, 0.3);
+    
+/* THE METALLIC REFLECTION ENGINE */
+    background: linear-gradient(to bottom, #ffffff 20%, #b4c6ef 45%, #00f2ff 50%, #ffffff 55%, #7892b5 85%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    /* ANTI-ALIASING FIX FOR TEXT-SHADOW WITH GRADIENTS */
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8))
+            drop-shadow(0 0 12px rgba(0, 242, 255, 0.5))
+            drop-shadow(0 0 30px rgba(0, 242, 255, 0.2));
+    will-change: filter;
 }
 
 /* Special text class for color accents within the title */
