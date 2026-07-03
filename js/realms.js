@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:17:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:22:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -789,5 +789,72 @@ window.closeAuthHUD = () => {
   const hud = document.getElementById('auth-hud');
   if (hud) hud.classList.remove('active');
 };
+let audioCtx = null;
+let droneNodes = [];
+
+function initDreamscapeAudio() {
+    if (audioCtx) return; // Prevent double initialization
+
+    // Initialize the Web Audio context
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Master volume configuration with a soft fade-in layer
+    const masterGain = audioCtx.createGain();
+    masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+    masterGain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 4.0); // Smooth 4-second fade
+    masterGain.connect(audioCtx.destination);
+
+    // Lowpass filter engine to block harsh frequencies and provide a deep "underwater" feel
+    const lowpassFilter = audioCtx.createBiquadFilter();
+    lowpassFilter.type = 'lowpass';
+    lowpassFilter.frequency.setValueAtTime(320, audioCtx.currentTime);
+    lowpassFilter.connect(masterGain);
+
+    // Oscillator configuration builder
+    const createDroneOsc = (frequency, detuneValue) => {
+        const osc = audioCtx.createOscillator();
+        const oscGain = audioCtx.createGain();
+
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+        osc.detune.setValueAtTime(detuneValue, audioCtx.currentTime);
+        
+        oscGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        
+        // LFO (Low-Frequency Oscillator) to slowly sweep volume up and down over time
+        const lfo = audioCtx.createOscillator();
+        const lfoGain = audioCtx.createGain();
+        lfo.type = 'sine';
+        lfo.frequency.setValueAtTime(0.08, audioCtx.currentTime); // Super slow cycle
+        lfoGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        
+        lfo.connect(lfoGain);
+        lfoGain.connect(oscGain.gain);
+
+        osc.connect(oscGain);
+        oscGain.connect(lowpassFilter);
+        
+        osc.start();
+        lfo.start();
+        
+        droneNodes.push(osc, lfo);
+    };
+
+    // Generate layered harmonic chords (Deep base tones mimicking space environments)
+    createDroneOsc(55.00, -8);  // A1 note, detuned flat
+    createDroneOsc(55.00, 8);   // A1 note, detuned sharp
+    createDroneOsc(110.00, -4); // A2 note, octave up helper
+    createDroneOsc(165.00, 0);  // E3 note, a pure perfect fifth for atmospheric depth
+}
+
+// Attach a global event listener to spin up the sound array on the user's first natural click interaction
+window.addEventListener('click', () => {
+    if (typeof initDreamscapeAudio === 'function') {
+        initDreamscapeAudio();
+        // If audio context was suspended by browser security policy, resume it dynamically
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+}, { once: true }); // { once: true } auto-unregisters the click listener immediately after execution
 
 window.onload = initRealmsHome;
