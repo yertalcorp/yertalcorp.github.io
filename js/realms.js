@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 14:57:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 15:01:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -98,6 +98,88 @@ async function initRealmsHome() {
     }
 }    
 
+function initBackgroundEffects() {
+    const canvas = document.createElement('canvas');
+    canvas.id = 'realms-bg-canvas';
+    canvas.className = 'fixed top-0 left-0 w-full h-full pointer-events-none z-[-1]';
+    document.body.prepend(canvas);
+
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Spark {
+        constructor() {
+            this.reset();
+        }
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = canvas.height + Math.random() * 100;
+            this.size = Math.random() * 2 + 1;
+            this.speedY = -(Math.random() * 1.5 + 0.5);
+            this.speedX = (Math.random() - 0.5) * 0.5;
+            this.alpha = Math.random() * 0.5 + 0.5;
+            this.decay = Math.random() * 0.005 + 0.002;
+            this.depth = Math.random() * 0.5 + 0.5; // Depth multiplier
+        }
+        update(mouseX = 0, mouseY = 0) {
+            // Subtle motion/depth parallax shift based on depth property
+            const parallaxX = (mouseX - canvas.width / 2) * 0.02 * this.depth;
+            const parallaxY = (mouseY - canvas.height / 2) * 0.02 * this.depth;
+
+            this.y += this.speedY * this.depth;
+            this.x += this.speedX * this.depth;
+            this.alpha -= this.decay;
+
+            if (this.alpha <= 0 || this.y < -10) {
+                this.reset();
+            }
+        }
+        draw(mouseX = 0, mouseY = 0) {
+            const renderX = this.x + ((mouseX - canvas.width / 2) * 0.02 * this.depth);
+            const renderY = this.y + ((mouseY - canvas.height / 2) * 0.02 * this.depth);
+            
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.shadowBlur = 8 * this.depth;
+            ctx.shadowColor = 'var(--neon-color, #00f2ff)';
+            ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+            ctx.beginPath();
+            ctx.arc(renderX, renderY, this.size * this.depth, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    let currentMouseX = canvas.width / 2;
+    let currentMouseY = canvas.height / 2;
+    window.addEventListener('mousemove', (e) => {
+        currentMouseX = e.clientX;
+        currentMouseY = e.clientY;
+    });
+
+    for (let i = 0; i < 60; i++) {
+        particles.push(new Spark());
+        // Stagger initial positions
+        particles[i].y = Math.random() * canvas.height;
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            p.update(currentMouseX, currentMouseY);
+            p.draw(currentMouseX, currentMouseY);
+        });
+        requestAnimationFrame(animate);
+    }
+    animate();
+}
 function applyGlobalStyles(settings) {
     const ui = settings['ui-settings'];
 
