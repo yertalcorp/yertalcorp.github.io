@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 12:38:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 14:19:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -149,11 +149,16 @@ function renderBranding(brand) {
     `;
 }
 
+/* Tag/Function: renderNavbar */
 function renderNavbar(items) {
     const el = document.getElementById('nav-menu');
     if (!el || !items) return;
+    
+    // Explicitly enforce the design variables to map font rules across rendering pipelines
     el.innerHTML = items.map(item => `
-        <a href="${item.link}" class="transition-colors uppercase tracking-widest font-bold" style="color: var(--nav-text-color);">
+        <a href="${item.link}" 
+           class="transition-colors uppercase tracking-[0.3em] font-bold text-xs hover:text-white" 
+           style="font-family: var(--nav-font), sans-serif; font-weight: var(--nav-weight); color: var(--nav-text-color);">
             ${item.label}
         </a>
     `).join('');
@@ -367,8 +372,8 @@ function renderFeaturedRealms(items) {
     const headerEl = document.getElementById('featured-realms-header');
     if (headerEl) {
         headerEl.innerHTML = `
-            <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-2">// FEATURED ECOSYSTEMS</h3>
-            <h2 class="text-3xl font-bold uppercase tracking-tight text-white">Live Prototype Realms</h2>
+            <h2 class="text-3xl lg:text-4xl font-black uppercase tracking-tight text-white mb-2">Featured Ecosystems</h2>
+            <p class="text-sm text-slate-400 font-light tracking-wide max-w-xl">Live prototype worlds engineered from core physics engines, procedural media frameworks, and structural systems.</p>
         `;
     }
     const el = document.getElementById('showcase-grid');
