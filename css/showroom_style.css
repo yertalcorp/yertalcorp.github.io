@@ -471,3 +471,26 @@
     text-shadow: 0 0 10px var(--neon-color, #00f2ff),
                  0 0 20px var(--neon-color, #00f2ff); /* Kinetic neon glow */
 }
+
+/* --- HARDWARE PARTICLE LAYER SYNC & TRANSPARENCY --- */
+body, html, main, section#hero-container {
+    background-color: transparent;
+}
+
+#realms-bg-canvas {
+    display: block;
+    /* Seamless dreamscape background blend fading cleanly into #050505 */
+    background: radial-gradient(circle at 50% 50%, #0d172a 0%, #050505 75%);
+    z-index: 0;
+}
+
+.realms-hero-container {
+    position: relative;
+    z-index: 10; /* Forces buttons/text to stack cleanly above the canvas */
+    transform: translateY(-2.25rem);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+}
