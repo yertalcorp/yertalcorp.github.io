@@ -40,7 +40,91 @@ async function initRealmsHome() {
             Object.keys(realms).forEach(key => {
                 if (sectionRouter[key]) sectionRouter[key]();
             });
+async function initRealmsHome() {
+    try {
+        console.log("%c [SYSTEM INITIALIZATION] Fetching architecture paths...", "color: #00f2ff; font-weight: bold;");
+        const paths = ['settings/ui-settings', 'settings/realmshome', 'auth_ui'];
+        const results = await Promise.all(paths.map(p => fetch(`${firebaseConfig.databaseURL}/${p}.json`).then(r => r.json())));
+        const data = {};
+        paths.forEach((p, i) => { data[p] = results[i]; });
 
+        console.log("[SYSTEM DATA INITIALIZED] Payload received:", data);
+
+        if (data && data['settings/ui-settings'] && data['settings/realmshome']) {
+            currentUi = data['settings/ui-settings'];
+            currentAuth = data.auth_ui;
+            const realms = data['settings/realmshome'];
+
+            console.log("[CONFIG SYNC] UI settings parsed successfully:", currentUi);
+            console.log("[CONFIG SYNC] Realms home structural payload mapping:", realms);
+
+            applyGlobalStyles({ 'ui-settings': currentUi });
+
+            // Dynamic Router for the 10 System Sections
+            const sectionRouter = {
+                navigation: () => { 
+                    console.log("-> Executing section: navigation");
+                    renderBranding(realms.navigation.branding); 
+                    renderNavbar(realms.navigation.menu_items); 
+                },
+                hero: () => { 
+                    console.log("-> Executing section: hero");
+                    renderHero(realms.hero); 
+                },
+                featured_realms: () => { 
+                    console.log("-> Executing section: featured_realms");
+                    renderFeaturedRealms(realms.featured_realms); 
+                },
+                how_realms_work: () => { 
+                    console.log("-> Executing section: how_realms_work");
+                    renderHowRealmsWork(realms.how_realms_work); 
+                },
+                trending_sparks: () => { 
+                    console.log("-> Executing section: trending_sparks");
+                    renderTrendingSparks(realms.trending_sparks); 
+                },
+                creation_templates: () => { 
+                    console.log("-> Executing section: creation_templates");
+                    renderTemplates(realms.creation_templates); 
+                },
+                learn_to_build: () => { 
+                    console.log("-> Executing section: learn_to_build");
+                    renderLearnToBuild(realms.learn_to_build); 
+                },
+                future_community: () => { 
+                    console.log("-> Executing section: future_community");
+                    renderCommunity(realms.future_community); 
+                },
+                final_cta: () => { 
+                    console.log("-> Executing section: final_cta");
+                    renderFinalCTA(realms.final_cta); 
+                },
+                footer: () => { 
+                    console.log("-> Executing section: footer");
+                    renderFooter(realms.footer); 
+                }
+            };
+
+            Object.keys(realms).forEach(key => {
+                if (sectionRouter[key]) {
+                    sectionRouter[key]();
+                } else {
+                    console.warn(`[ROUTER WARNING] Unknown key matched in payload path: "${key}"`);
+                }
+            });
+
+            console.log("[AUTH SYNC] Binding secure gateway profiles...");
+            renderAuthStatus(user, currentAuth);
+            
+            document.body.style.opacity = '1';
+            console.log("%c [SYSTEM ONLINE] View execution stream complete.", "color: #bada55; font-weight: bold;");
+        } else {
+            console.error("[CRITICAL SHUTDOWN] Validation conditions failed. Missing 'settings/ui-settings' or 'settings/realmshome' entries.");
+        }
+    } catch (error) {
+        console.error("System Error: Realms Architecture Offline.", error);
+    }
+}
             renderAuthStatus(user, currentAuth);
             document.body.style.opacity = '1';
         }
@@ -314,8 +398,6 @@ function initTiltEngine() {
         btn.style.transform = `rotateX(${-y / 8}deg) rotateY(${x / 12}deg)`;
     });
 }
-
-window.onload = initRealmsHome;
 
 function renderFeaturedRealms(items) {
     const headerEl = document.getElementById('featured-realms-header');
