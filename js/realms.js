@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:37:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:53:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -85,21 +85,26 @@ async function initRealmsHome() {
                 }
             });
 
-            // Animated particles...
-            initBackgroundEffects();
+            // Animated cosmic particles engine forced prior to asynchronous watchers
+            if (typeof initBackgroundEffects === 'function') {
+                initBackgroundEffects();
+            }
             
             console.log("[AUTH SYNC] Binding secure gateway profiles...");
-            renderAuthStatus(user, currentAuth);
+            watchAuthState((u) => {
+                user = u;
+                renderAuthStatus(user, currentAuth);
+            });
             
             document.body.style.opacity = '1';
-            console.log("%c [SYSTEM ONLINE] View execution stream complete.", "color: #bada55; font-weight: bold;");
+            console.log("%c [SYSTEM ONLINE] View execution stream complete.", "color: #4ade80; font-weight: bold;");
         } else {
             console.error("[CRITICAL SHUTDOWN] Validation conditions failed. Missing 'settings/ui-settings' or 'realmshome' entries.");
         }
     } catch (error) {
         console.error("System Error: Realms Architecture Offline.", error);
     }
-}    
+}
 
 function initBackgroundEffects() {
     // 1. Create a true full-viewport background layout layer
