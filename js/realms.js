@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:15:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:37:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -155,7 +155,7 @@ function initBackgroundEffects() {
         constructor() {
             this.reset(true); // Initial seed scatter
         }
-        reset(isInitial = false) {
+reset(isInitial = false) {
             this.centerX = canvas.width / 2;
             this.centerY = canvas.height * 0.4; 
 
@@ -177,8 +177,8 @@ function initBackgroundEffects() {
             this.waveSpeed = Math.random() * 0.01 + 0.005;
             this.waveOffset = Math.random() * 100;
             
-            // SIGNIFICANTLY SMALLER MICRO-PARTICLES FOR A DEEPER DUST CLOUD EFFECT
-            this.size = Math.random() * 1.0 + 0.2; 
+            // EXTRA-LARGE BOOFTED LUMINOUS PARTICLE RADII
+            this.size = Math.random() * 4.0 + 2.0; /* Boosted from 2.5 + 1.0 to increase visibility */
             this.depth = Math.random() * 0.8 + 0.2; 
             
             this.alpha = isInitial ? Math.random() * 0.6 + 0.1 : 0;
@@ -186,8 +186,7 @@ function initBackgroundEffects() {
             this.fadeInSpeed = Math.random() * 0.008 + 0.003;
             this.age = 0;
             this.lifespan = Math.random() * 500 + 400;
-        }
-    
+        }    
         update(mouseX = 0, mouseY = 0) {
             this.age++;
             this.angle += this.orbitSpeed;
