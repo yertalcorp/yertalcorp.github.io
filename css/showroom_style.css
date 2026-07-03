@@ -372,15 +372,15 @@
 .realms-hero-cta-secondary {
     font-size: 1rem; /* Text-xs (12px) */
     text-transform: uppercase;
-    font-weight: 400;
+    font-weight: 700;
     letter-spacing: 0.3em; /* Wide tracking */
-    color: #64748b; /* Slate-500 */
+    color: #ffffff; /* Slate-500 */
     margin-top: 1rem;
     transition: color 0.3s ease;
 }
 
 .realms-hero-cta-secondary:hover {
-    color: #94a3b8; /*Slate-400 */
+    color: #0000ff; /*Slate-400 */
 }
 
 /* --- 3. BACKGROUND EFFECTS & MOTION DEPTH --- */
