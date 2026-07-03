@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:21:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:25:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -102,57 +102,96 @@ async function initRealmsHome() {
 }    
 
 function initBackgroundEffects() {
-    const heroContainer = document.getElementById('hero-container');
-    if (!heroContainer) return;
-
-    // Pinned canvas inside the hero element
+    // 1. Create a true full-viewport background layout layer
     const canvas = document.createElement('canvas');
     canvas.id = 'realms-bg-canvas';
-    canvas.className = 'absolute inset-0 w-full h-full pointer-events-none z-0';
-    heroContainer.prepend(canvas);
+    canvas.className = 'fixed top-0 left-0 w-full h-full pointer-events-none z-[-1]';
+    document.body.prepend(canvas);
 
     const ctx = canvas.getContext('2d');
     let particles = [];
 
     function resize() {
-        canvas.width = heroContainer.offsetWidth;
-        canvas.height = heroContainer.offsetHeight;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resize);
     resize();
 
-    class Spark {
+    class CosmicSpark {
         constructor() {
-            this.reset();
+            this.reset(true); // Initial seed scatter
         }
-        reset() {
-            // Concentrates spawning in a swarm near the center-bottom of the hero section
-            this.x = (canvas.width * 0.2) + Math.random() * (canvas.width * 0.6);
-            this.y = canvas.height * 0.8 + Math.random() * 50;
+        reset(isInitial = false) {
+            // Target the center of the viewport (where the hero text sits)
+            this.centerX = canvas.width / 2;
+            this.centerY = canvas.height * 0.4; // Slightly elevated center for hero titles
+
+            // Orbital geometry setup (Elliptical distribution)
+            this.angle = Math.random() * Math.PI * 2;
+            
+            // Core swarm radius vs outward boundary dispersion path
+            const spreadFactor = Math.random();
+            if (spreadFactor < 0.6) {
+                // 60% of particles form the tight internal hero swarm
+                this.radiusX = Math.random() * 250 + 50;
+                this.radiusY = Math.random() * 100 + 20;
+            } else {
+                // 40% gracefully break away and drift out across the full page structure
+                this.radiusX = Math.random() * (canvas.width * 0.6) + 200;
+                this.radiusY = Math.random() * (canvas.height * 0.6) + 100;
+            }
+
+            // Continuous rotation speed
+            this.orbitSpeed = (Math.random() * 0.002 + 0.0005) * (Math.random() > 0.5 ? 1 : -1);
+            
+            // Micro-fluctuation wave parameters for organic cloud drifting
+            this.waveSpeed = Math.random() * 0.02 + 0.01;
+            this.waveOffset = Math.random() * 100;
+            
             this.size = Math.random() * 2.5 + 0.5;
-            this.speedY = -(Math.random() * 0.8 + 0.2); // Slower, drift speed
-            this.speedX = (Math.random() - 0.5) * 0.6;
-            this.alpha = Math.random() * 0.6 + 0.4;
-            this.decay = Math.random() * 0.003 + 0.001;
-            this.depth = Math.random() * 0.5 + 0.5;
+            this.depth = Math.random() * 0.7 + 0.3; // Parallax depth layer mapping
+            
+            // Persistent lifespan engine parameters
+            this.alpha = isInitial ? Math.random() * 0.7 + 0.2 : 0;
+            this.maxAlpha = Math.random() * 0.6 + 0.3;
+            this.fadeInSpeed = Math.random() * 0.01 + 0.005;
+            this.age = 0;
+            this.lifespan = Math.random() * 400 + 300;
         }
         update(mouseX = 0, mouseY = 0) {
-            this.y += this.speedY * this.depth;
-            this.x += this.speedX * this.depth;
-            this.alpha -= this.decay;
+            this.age++;
+            this.angle += this.orbitSpeed;
+            this.waveOffset += this.waveSpeed;
 
-            // Continuous swarm respawning loop
-            if (this.alpha <= 0 || this.y < canvas.height * 0.1) {
-                this.reset();
+            // Fluid orbital vector calculations with dynamic organic noise
+            const noise = Math.sin(this.waveOffset) * 15 * this.depth;
+            this.baseX = this.centerX + (this.radiusX + noise) * Math.cos(this.angle);
+            this.baseY = this.centerY + (this.radiusY + noise) * Math.sin(this.angle);
+
+            // Smooth opacity phase loops (fade in, glow, fade out)
+            if (this.age < 50 && this.alpha < this.maxAlpha) {
+                this.alpha += this.fadeInSpeed;
+            } else if (this.age > this.lifespan - 50) {
+                this.alpha -= this.fadeInSpeed;
+            }
+
+            // Endless continuous loop check
+            if (this.age >= this.lifespan || this.alpha <= 0) {
+                this.reset(false);
             }
         }
         draw(mouseX = 0, mouseY = 0) {
-            const renderX = this.x + ((mouseX - canvas.width / 2) * 0.015 * this.depth);
-            const renderY = this.y + ((mouseY - canvas.height / 2) * 0.015 * this.depth);
+            // Apply mouse parallax tracking relative to depth layers
+            const parallaxX = (mouseX - canvas.width / 2) * 0.025 * this.depth;
+            const parallaxY = (mouseY - canvas.height / 2) * 0.025 * this.depth;
             
+            const renderX = this.baseX + parallaxX;
+            const renderY = this.baseY + parallaxY;
+
             ctx.save();
-            ctx.globalAlpha = this.alpha;
-            ctx.shadowBlur = 10 * this.depth;
+            ctx.globalAlpha = Math.max(0, this.alpha);
+            ctx.shadowBlur = 12 * this.depth;
             ctx.shadowColor = 'var(--neon-color, #00f2ff)';
             ctx.fillStyle = `rgba(0, 242, 255, ${this.alpha})`;
             ctx.beginPath();
@@ -162,30 +201,35 @@ function initBackgroundEffects() {
         }
     }
 
-    let currentMouseX = canvas.width / 2;
-    let currentMouseY = canvas.height / 2;
+    // Interactive mouse state listeners
+    let currentMouseX = window.innerWidth / 2;
+    let currentMouseY = window.innerHeight / 2;
     window.addEventListener('mousemove', (e) => {
         currentMouseX = e.clientX;
         currentMouseY = e.clientY;
     });
 
-    for (let i = 0; i < 80; i++) {
-        particles.push(new Spark());
-        // Evenly seed throughout the initial container block height
-        particles[i].y = Math.random() * canvas.height;
+    // Generate cloud assembly population size
+    for (let i = 0; i < 120; i++) {
+        const spark = new CosmicSpark();
+        // Scatter particle timeframes evenly so they don't fade all at once
+        spark.age = Math.random() * spark.lifespan;
+        particles.push(spark);
     }
 
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Render the cloud engine elements
         particles.forEach(p => {
             p.update(currentMouseX, currentMouseY);
             p.draw(currentMouseX, currentMouseY);
         });
+        
         requestAnimationFrame(animate);
     }
     animate();
 }
-
 function applyGlobalStyles(settings) {
     const ui = settings['ui-settings'];
 
