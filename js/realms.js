@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 14:19:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 14:57:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -330,24 +330,27 @@ watchAuthState(async (newUser) => {
         }
     }
 });
-// --- 3. HERO & INTERACTION ENGINE ---
 function renderHero(hero) {
     const el = document.getElementById('hero-container');
     if (!el) return;
     const ctaLink = hero.primary_button.link || './arcade/index.html?user=yertal-arcade';
     el.innerHTML = `
-        <div class="py-16 text-center animate-fadeIn max-w-4xl">
-            <h2 class="text-6xl lg:text-8xl font-black uppercase tracking-tighter text-white leading-none">
+        <div class="realms-hero-container py-16 text-center animate-fadeIn max-w-4xl">
+            <h2 class="realms-hero-title">
                 ${hero.main_headline}
             </h2>
-            <p class="text-xl lg:text-2xl text-slate-400 mt-6 font-light max-w-2xl mx-auto tracking-wide">
+            <p class="realms-hero-subtitle">
                 ${hero.subheadline}
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10">
-                <button id="arcade-trigger" data-link="${ctaLink}" onclick="window.openAuthHUD('superuser')" class="glass-card metallic-bezel text-sm py-4 px-8 uppercase tracking-[0.3em] text-white font-bold bg-white/5 hover:bg-white/10 transition-all">
-                    ${hero.primary_button.text}
+                <button id="arcade-trigger" data-link="${ctaLink}" onclick="window.openAuthHUD('superuser')" class="realms-surreal-3d-btn">
+                    <div class="realms-inner-content">
+                        <i class="fas fa-power-off"></i>
+                        <span>${hero.primary_button.text}</span>
+                        <i class="fas fa-microchip"></i>
+                    </div>
                 </button>
-                <a href="${hero.secondary_button.link}" class="text-xs uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-colors py-4 px-8">
+                <a href="${hero.secondary_button.link}" class="realms-hero-cta-secondary text-xs uppercase tracking-[0.3em] py-4 px-8">
                     ${hero.secondary_button.text}
                 </a>
             </div>
@@ -355,7 +358,6 @@ function renderHero(hero) {
     `;
     initTiltEngine();
 }
-
 function initTiltEngine() {
     const btn = document.getElementById('arcade-trigger');
     if (!btn) return;
