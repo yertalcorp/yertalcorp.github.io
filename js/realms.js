@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:56:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 12:29:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -346,6 +346,7 @@ function renderNavbar(items) {
     `).join('');
 }
 
+/* Function that gets the safe Slug for a user */
 const getSafeSlug = async (user) => {
     // 1. Session Storage Trace (Keep this, it's efficient)
     let cachedStr = sessionStorage.getItem('currentUser');
@@ -551,7 +552,17 @@ watchAuthState(async (newUser) => {
 function renderHero(hero) {
     const el = document.getElementById('hero-container');
     if (!el) return;
-    const ctaLink = hero.primary_button.link || './arcade/index.html?user=yertal-arcade';
+    // Calculate action based on the global user variable
+    let ctaLink = "window.openAuthHUD('personal')";
+    let heroBtnTxt = hero.primary_button.create_text;
+    
+    if (user) {
+        const isSuperuser = user.email === 'yertalcorp@gmail.com';
+        const finalSlug = isSuperuser ? 'yertal-arcade' : await getSafeSlug(user);
+        ctaLink = `window.location.href='./arcade/index.html?user=${finalSlug}'`;
+        heroBtnTxt = hero.primary_button.entry_text;
+    }
+    
     el.innerHTML = `
         <div class="realms-hero-container text-center animate-fadeIn max-w-4xl">
             <h2 class="realms-hero-title">
@@ -565,10 +576,10 @@ function renderHero(hero) {
             </div>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center realms-hero-btn-row">
-                <button id="arcade-trigger" data-link="${ctaLink}" onclick="window.openAuthHUD('superuser')" class="realms-surreal-3d-btn">
+                <button id="hero-primary-btn" data-link="${ctaLink}" onclick="window.openAuthHUD('superuser')" class="realms-surreal-3d-btn">
                     <div class="realms-inner-content">
                         <i class="fas fa-power-off"></i>
-                        <span>${hero.primary_button.text}</span>
+                        <span>${heroBtnTxt}</span>
                         <i class="fas fa-microchip"></i>
                     </div>
                 </button>
@@ -584,7 +595,7 @@ function renderHero(hero) {
     initTiltEngine();
 }
 function initTiltEngine() {
-    const btn = document.getElementById('arcade-trigger');
+    const btn = document.getElementById('hero-primary-btn');
     if (!btn) return;
 
     document.addEventListener('mousemove', (e) => {
