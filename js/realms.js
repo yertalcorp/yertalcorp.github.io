@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 14:07:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 14:55:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -578,7 +578,7 @@ async function renderHero(hero) {
             </div>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center realms-hero-btn-row">
-                <button id="hero-primary-btn" data-link="${ctaLink}" onclick="window.openAuthHUD('superuser')" class="realms-surreal-3d-btn">
+                <button id="hero-primary-btn" data-link="${ctaLink}" onclick="${ctaLink}" class="realms-surreal-3d-btn">
                     <div class="realms-inner-content">
                         <i class="fas fa-power-off"></i>
                         <span>${heroBtnTxt}</span>
