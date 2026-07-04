@@ -550,7 +550,7 @@ watchAuthState(async (newUser) => {
     }
 });
 
-async function renderHero (hero) {
+async function renderHero(hero) {
     const el = document.getElementById('hero-container');
     if (!el) return;
     // Calculate action based on the global user variable
