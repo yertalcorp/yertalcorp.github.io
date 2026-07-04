@@ -631,7 +631,7 @@ function renderFeaturedRealms(items) {
             <div id="fallback-img-${item.realm_id || item.realm_slug}" class="absolute inset-0 bg-cover bg-center transition-opacity duration-500 opacity-100 group-hover:opacity-0 rounded-[2rem]" style="background-image: url('${item.realm_image}')"></div>
             
             <!-- Layer 2: Video playing edge-to-edge (Forced geometric container matching layout rules) -->
-            ${item.realm_animation_preview ? `<video src="${item.realm_animation_preview}" loop muted playsinline onerror="this.style.display='none'; console.warn('Media playback error.');" **style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; margin: 0; padding: 0;"** class="opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem] pointer-events-none z-0"></video>` : ''}
+            ${item.realm_animation_preview ? `<video src="${item.realm_animation_preview}" loop muted playsinline onerror="this.style.display='none'; console.warn('Media playback error.');" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; margin: 0; padding: 0;" class="opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem] pointer-events-none z-0"></video>` : ''}
             
             <!-- Layer 3: Glass Tint Overlay -->            
             <div class="absolute inset-0 bg-slate-950/30 backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-500 rounded-[2rem] z-10"></div>
