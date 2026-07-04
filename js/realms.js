@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:52:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 18:15:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -626,11 +626,9 @@ function renderFeaturedRealms(items) {
              onclick="window.location.href='./arcade/index.html?realm=${item.realm_slug}'"
              onmouseenter="const v=this.querySelector('video'); if(v && v.style.display !== 'none') { v.play().catch(err => console.warn('Video playback intercepted:', err.message)); }"
              onmouseleave="const v=this.querySelector('video'); if(v && v.style.display !== 'none') { v.pause(); v.currentTime=0; }">
-            
-            /*Layer 1*/
+
             <div id="fallback-img-${item.realm_id || item.realm_slug}" class="absolute inset-0 bg-cover bg-center transition-opacity duration-500 opacity-100 group-hover:opacity-0 rounded-[2rem]" style="background-image: url('${item.realm_image}')"></div>
-            
-            /*Layer 2*/
+
             ${item.realm_animation_preview ? `<video src="${item.realm_animation_preview}" loop muted playsinline onerror="this.style.display='none'; console.warn('Media playback error.');" class="absolute top-0 left-0 w-full h-full object-cover p-0 m-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem] pointer-events-none z-0"></video>` : ''}
             
             
