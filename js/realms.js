@@ -549,7 +549,7 @@ watchAuthState(async (newUser) => {
         }
     }
 });
-aysnc function (hero) {
+aysnc function renderHero (hero) {
     const el = document.getElementById('hero-container');
     if (!el) return;
     // Calculate action based on the global user variable
