@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:54:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:28:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -631,7 +631,7 @@ function renderFeaturedRealms(items) {
             <div id="fallback-img-${item.realm_id || item.realm_slug}" class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105 brightness-110 contrast-105 rounded-[2rem]" style="background-image: url('${item.realm_image}')"></div>
             
             <!-- Layer 2: Video playing underneath the glass layer (Reveals smoothly on hover) -->
-            ${item.realm_animation_preview ? `<video src="${item.realm_animation_preview}" loop muted playsinline onerror="this.style.display='none'; console.warn('Media playback error. Reverting to static image asset layer.');" class="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem] pointer-events-none z-0"></video>` : ''}
+                        ${item.realm_animation_preview ? `<video src="${item.realm_animation_preview}" loop muted playsinline autoplay onerror="this.style.display='none'; console.warn('Media playback error.');" class="absolute top-0 left-0 w-full h-full object-cover p-0 m-0 opacity-100 transition-transform duration-700 group-hover:scale-105 rounded-[2rem] pointer-events-none z-0"></video>` : ''}
             
             <!-- Layer 3: The Glass Tint and Blur Layer (Sits on top of video/image to give the "under glass" look) -->
             <div class="absolute inset-0 bg-slate-950/30 backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-500 rounded-[2rem] z-10"></div>
