@@ -3373,7 +3373,7 @@ async function checkImageExists(url) {
     }
 }
 
-/
+/*
  * Distills the first 6 meaningful keywords from a prompt to fetch a target Unsplash asset.
  * @param {string} prompt - The user's input string.
  * @returns {string} Fully qualified direct Unsplash asset URL.
@@ -3980,7 +3980,8 @@ async function formatPlanPrice(baseInrAmount) {
         };
     }
 }
-/* * Objective: Initialize or Re-Forge Arcade Identity
+/* 
+ * Objective: Initialize or Re-Forge Arcade Identity
  * Task: Dynamically generate HUD structure, populate from cache, and ensure Close UI is present.
  */
 window.openArcadeSettings = async () => {
