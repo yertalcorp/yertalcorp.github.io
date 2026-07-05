@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1434,7 +1434,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     `;
 }
 
-/
+/*
  * Completely generic parameter extraction engine. 
  * Identifies property overrides purely based on type validation and adjective-noun/numeric structures.
  * @param {string} prompt - The user's input string.
