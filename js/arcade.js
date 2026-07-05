@@ -291,7 +291,8 @@ window.endTutorial = function() {
     if (tooltip) tooltip.remove();
 };
     
-/* * Objective: Drawer Navigation & State Management
+/* 
+ * Objective: Drawer Navigation & State Management
  * Task: Toggle visibility of static HTML sections and manage origin levels
  */
 window.toggleDrawer = (menuType = 'main') => {
