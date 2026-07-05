@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:01:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 21:08:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -761,19 +761,27 @@ function renderHowRealmsWork(data) {
     const el = document.getElementById('visual-flow-container');
     if (!el || !data.steps) return;
     el.innerHTML = `
-        <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-12">// THE ALCHEMY</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 items-center max-w-4xl mx-auto">
-            ${data.steps.map(step => `
-                <div class="glass-card metallic-bezel p-8 flex flex-col items-center">
-                    <div class="text-3xl font-bold text-white mb-2">${step.id}</div>
-                    <div class="uppercase tracking-widest text-sm text-slate-400 font-bold">${step.label}</div>
-                </div>
-            `).join('')}
+        <div class="max-w-4xl mx-auto px-6">
+            <h2 class="text-3xl font-extrabold text-white uppercase tracking-widest mb-2">HOW REALMS WORK</h2>
+            <p class="text-slate-400 text-sm max-w-2xl mx-auto mb-16">${data.subtitle || 'From single prompt to an interactive 3D virtual environment.'}</p>
+            
+            <div class="flex flex-col md:flex-row gap-8 items-stretch justify-center">
+                ${data.steps.map((step, index) => `
+                    <div class="glass-card metallic-bezel p-8 flex flex-col items-center flex-1 transition-all">
+                        <div class="text-xs font-mono uppercase tracking-[0.3em] mb-3" style="color: var(--neon-color, #00f2ff);">PHASE ${step.id}</div>
+                        <h3 class="text-xl font-extrabold text-white uppercase tracking-wider mb-4">${step.label}</h3>
+                        <p class="text-slate-400 text-xs leading-relaxed text-center">${step.description}</p>
+                    </div>
+                    ${index < data.steps.length - 1 ? `
+                        <div class="hidden md:flex items-center justify-center text-slate-600 font-light text-2xl px-2 select-none pointer-events-none">
+                            <i class="fa-solid fa-chevron-right text-xs opacity-30" style="color: var(--neon-color, #00f2ff);"></i>
+                        </div>
+                    ` : ''}
+                `).join('')}
+            </div>
         </div>
     `;
 }
-
-
 function renderAdminGate(ui) {
     const gate = document.getElementById('admin-gateway');
     const config = ui['admin-btn'];
