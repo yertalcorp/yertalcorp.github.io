@@ -613,6 +613,7 @@ function initTiltEngine() {
 
 function renderFeaturedRealms(items) {
     const headerEl = document.getElementById('featured-realms-header');
+    
     if (headerEl) {
         headerEl.innerHTML = `
             <h2 class="text-3xl lg:text-4xl font-black uppercase tracking-tight text-white mb-2">Featured Ecosystems</h2>
