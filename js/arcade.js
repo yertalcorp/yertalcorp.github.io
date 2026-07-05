@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1434,7 +1434,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     `;
 }
 
-/**
+/
  * Completely generic parameter extraction engine. 
  * Identifies property overrides purely based on type validation and adjective-noun/numeric structures.
  * @param {string} prompt - The user's input string.
@@ -3372,7 +3372,7 @@ async function checkImageExists(url) {
     }
 }
 
-/**
+/
  * Distills the first 6 meaningful keywords from a prompt to fetch a target Unsplash asset.
  * @param {string} prompt - The user's input string.
  * @returns {string} Fully qualified direct Unsplash asset URL.
@@ -3909,17 +3909,35 @@ window.closeArcadeSettings = () => {
 
 async function formatPlanPrice(baseInrAmount) {
     try {
-        const userLocale = navigator.language || 'en-IN';
-        const formatterOptions = new Intl.NumberFormat(userLocale, { style: 'currency', currency: 'INR' }).resolvedOptions();
-        let targetCurrency = formatterOptions.currency || 'INR';
+        let targetCurrency = 'INR';
+        let userLocale = 'en-IN';
 
-        if (targetCurrency === 'INR' && !userLocale.includes('IN')) {
-            targetCurrency = 'USD';
+        // 1. Explicitly detect the user's real currency via a quick client-side IP lookup
+        try {
+            const geoResponse = await fetch('https://ipapi.co/json/');
+            if (geoResponse.ok) {
+                const geoData = await geoResponse.json();
+                if (geoData.currency) {
+                    targetCurrency = geoData.currency;
+                    // Dynamically map locale matching the detected country for cleaner symbols
+                    userLocale = navigator.languages ? navigator.languages[0] : navigator.language;
+                }
+            }
+        } catch (geoError) {
+            console.warn("Location check failed, defaulting to browser environment parsing:", geoError);
+            // Fallback system logic if the IP API is blocked or times out
+            const formatterOptions = new Intl.NumberFormat(navigator.language || 'en-IN', { style: 'currency', currency: 'INR' }).resolvedOptions();
+            targetCurrency = formatterOptions.currency || 'INR';
+            userLocale = navigator.language || 'en-IN';
+            if (targetCurrency === 'INR' && !userLocale.includes('IN')) {
+                targetCurrency = 'USD';
+            }
         }
 
         let symbol = '₹';
         let convertedAmount = baseInrAmount;
 
+        // 2. Fetch conversion rates if the user is outside India
         if (targetCurrency !== 'INR') {
             const response = await fetch(`https://api.frankfurter.dev/v2/latest?base=INR&symbols=${targetCurrency}`);
             if (response.ok) {
@@ -3928,8 +3946,11 @@ async function formatPlanPrice(baseInrAmount) {
             }
         }
 
-        // Extract the symbol using the parts array
-        const formatter = new Intl.NumberFormat(userLocale, {
+        // 3. Cleanly isolate the standalone currency symbol
+        // We use a clean target-matched fallback locale layout (e.g., 'en-US' for USD) 
+        // to strip extra country codes like 'US$' or 'CA$' from printing.
+        const symbolLocale = targetCurrency === 'USD' ? 'en-US' : (targetCurrency === 'EUR' ? 'de-DE' : userLocale);
+        const formatter = new Intl.NumberFormat(symbolLocale, {
             style: 'currency',
             currency: targetCurrency,
             minimumFractionDigits: 2,
@@ -3939,8 +3960,11 @@ async function formatPlanPrice(baseInrAmount) {
         const parts = formatter.formatToParts(convertedAmount);
         symbol = parts.find(p => p.type === 'currency')?.value || symbol;
         
-        // Format just the number value cleanly
-        const costStr = new Intl.NumberFormat(userLocale, {
+        // Strip out lingering alpha codes from the symbol if present (e.g. "US$" -> "$")
+        symbol = symbol.replace(/[A-Z]/g, '').trim();
+
+        // 4. Format the numeric value completely standalone
+        const costStr = new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         }).format(convertedAmount);
@@ -3948,14 +3972,13 @@ async function formatPlanPrice(baseInrAmount) {
         return { symbol, cost: costStr };
 
     } catch (error) {
-        console.warn("Currency conversion failed, falling back to base INR:", error);
+        console.warn("Currency conversion routine encountered an error, running fallback:", error);
         return { 
             symbol: '₹', 
             cost: new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(baseInrAmount) 
         };
     }
 }
-
 /* * Objective: Initialize or Re-Forge Arcade Identity
  * Task: Dynamically generate HUD structure, populate from cache, and ensure Close UI is present.
  */
