@@ -4033,8 +4033,8 @@ window.openArcadeSettings = () => {
                     <div class="tier-pitch">${plan.pitch}</div>
                     <div class="tier-pricing">
                         <div class="price-main">
-                            $INR{plan.cost}<small>/mo</small> 
-                            <span class="price-annual" style="margin-left: 15px;">$${plan.cost * 10}<small>/yr</small></span>
+                            INR${plan.cost}<small>/mo</small> 
+                            <span class="price-annual" style="margin-left: 15px;">INR${plan.cost * 10}<small>/yr</small></span>
                         </div>                    
                     </div>
                     <ul class="tier-specs-list">
