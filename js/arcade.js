@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:44:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -4064,7 +4064,7 @@ window.openArcadeSettings = async () => {
 
         const planContainer = planZone.querySelector('.plan-selection-container');
         
-        Object.keys(allPlans).forEach(planId => {
+        for (const planId of Object.keys(allPlans)) {
             const plan = allPlans[planId];
             const userCurrentPlan = profile.plan_type || 'free';
             const isActive = (planId === userCurrentPlan);
@@ -4112,7 +4112,7 @@ window.openArcadeSettings = async () => {
                 };
             }
             planContainer.appendChild(planBox);
-        });
+        }
     }
 
     // 7. BUTTON CONFIGURATION & VISIBILITY
