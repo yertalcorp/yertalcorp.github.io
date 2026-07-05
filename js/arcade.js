@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:38:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3909,6 +3909,55 @@ window.closeArcadeSettings = () => {
     }
 };
 
+async function formatPlanPrice(baseInrAmount) {
+    try {
+        const userLocale = navigator.language || 'en-IN';
+        const formatterOptions = new Intl.NumberFormat(userLocale, { style: 'currency', currency: 'INR' }).resolvedOptions();
+        let targetCurrency = formatterOptions.currency || 'INR';
+
+        if (targetCurrency === 'INR' && !userLocale.includes('IN')) {
+            targetCurrency = 'USD';
+        }
+
+        let symbol = '₹';
+        let convertedAmount = baseInrAmount;
+
+        if (targetCurrency !== 'INR') {
+            const response = await fetch(`https://api.frankfurter.dev/v2/latest?base=INR&symbols=${targetCurrency}`);
+            if (response.ok) {
+                const data = await response.json();
+                convertedAmount = baseInrAmount * data.rates[targetCurrency];
+            }
+        }
+
+        // Extract the symbol using the parts array
+        const formatter = new Intl.NumberFormat(userLocale, {
+            style: 'currency',
+            currency: targetCurrency,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        const parts = formatter.formatToParts(convertedAmount);
+        symbol = parts.find(p => p.type === 'currency')?.value || symbol;
+        
+        // Format just the number value cleanly
+        const costStr = new Intl.NumberFormat(userLocale, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(convertedAmount);
+
+        return { symbol, cost: costStr };
+
+    } catch (error) {
+        console.warn("Currency conversion failed, falling back to base INR:", error);
+        return { 
+            symbol: '₹', 
+            cost: new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(baseInrAmount) 
+        };
+    }
+}
+
 /* * Objective: Initialize or Re-Forge Arcade Identity
  * Task: Dynamically generate HUD structure, populate from cache, and ensure Close UI is present.
  */
@@ -4026,6 +4075,10 @@ window.openArcadeSettings = () => {
             const planBox = document.createElement('div');
             planBox.className = `plan-card-rounded ${isActive ? 'active' : ''} ${!canSelect ? 'tier-locked' : ''}`;
             
+            // Fetch converted prices asynchronously before injecting the HTML
+            const fPP = await formatPlanPrice(plan.cost);
+            const fPPAnnual = await formatPlanPrice(plan.cost * 10);
+            
             planBox.innerHTML = `
                 <div class="plan-box-inner">
                     <div class="tier-identity-metallic">${(planId).toUpperCase()}-TIER</div>
@@ -4033,8 +4086,8 @@ window.openArcadeSettings = () => {
                     <div class="tier-pitch">${plan.pitch}</div>
                     <div class="tier-pricing">
                         <div class="price-main">
-                            INR${plan.cost}<small>/mo</small> 
-                            <span class="price-annual" style="margin-left: 15px;">INR${plan.cost * 10}<small>/yr</small></span>
+                            ${fPP.symbol}${fPP.cost}<small>/mo</small> 
+                            <span class="price-annual" style="margin-left: 15px;">${fPPAnnual.symbol}${fPPAnnual.cost}<small>/yr</small></span>
                         </div>                    
                     </div>
                     <ul class="tier-specs-list">
