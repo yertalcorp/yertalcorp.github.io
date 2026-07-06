@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 18:33:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:05:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -919,16 +919,15 @@ el.insertAdjacentHTML('beforeend', `
         <p class="text-slate-400 text-xs font-mono tracking-wider uppercase max-w-2xl mx-auto opacity-80">${data.subtitle || 'From an open prompt to a global interactive destination.'}</p>
         
         <div class="flex flex-wrap md:flex-row items-center justify-center gap-4 max-w-5xl mx-auto mt-4 mb-4 font-mono text-xs">
-            ${data.steps.map((step, index) => `
-                <div class="w-44 flex items-center justify-center">
-                    <button onclick="switchRealmStep(${index})" id="realm-step-btn-${index}" class="surreal-3d-btn w-full p-4 rounded-xl text-white transition-all duration-300 group relative">
-                        <div class="inner-content flex flex-col items-center justify-center pointer-events-none">
-                            <div class="text-[8px] tracking-[0.2em] text-cyan-400/60 mb-0.5 group-hover:text-cyan-400 font-bold transition-colors">PHASE ${step.id}</div>
-                            <div class="font-extrabold tracking-widest uppercase text-[10px] whitespace-nowrap">${step.label}</div>
-                        </div>
-                    </button>
-                </div>
-                
+${data.steps.map((step, index) => `
+    <div class="w-40 flex items-center justify-center">
+        <button onclick="switchRealmStep(${index})" id="realm-step-btn-${index}" class="surreal-3d-btn w-full rounded-xl text-white transition-all duration-300 group relative">
+            <div class="inner-content flex flex-col items-center justify-center pointer-events-none">
+                <div class="text-[8px] tracking-[0.1em] text-cyan-400/60 mb-0.5 group-hover:text-cyan-400 font-bold transition-colors">PHASE ${step.id}</div>
+                <div class="font-extrabold tracking-normal uppercase text-[11px] text-center leading-tight px-1">${step.label}</div>
+            </div>
+        </button>
+    </div>                
                 <div class="flex items-center justify-center text-slate-700 select-none pointer-events-none px-1 shrink-0">
                     ${index < data.steps.length - 1 ? `
                         <i class="fa-solid fa-chevron-right text-xs opacity-40 animate-pulse" style="color: var(--neon-color, #00f2ff);"></i>
