@@ -923,7 +923,7 @@ el.insertAdjacentHTML('beforeend', `
                 <div class="w-44 flex items-center justify-center">
                     <button onclick="switchRealmStep(${index})" id="realm-step-btn-${index}" class="surreal-3d-btn w-full p-4 rounded-xl text-white transition-all duration-300 group relative">
                         <div class="inner-content flex flex-col items-center justify-center pointer-events-none">
-                            <div class="text-[8px] tracking-[0.2em] text-cyan-400/60 mb-0.5 group-hover:text-cyan-400 font-bold transition-colors">**PHASE ${step.id}**</div>
+                            <div class="text-[8px] tracking-[0.2em] text-cyan-400/60 mb-0.5 group-hover:text-cyan-400 font-bold transition-colors">PHASE ${step.id}</div>
                             <div class="font-extrabold tracking-widest uppercase text-[10px] whitespace-nowrap">${step.label}</div>
                         </div>
                     </button>
