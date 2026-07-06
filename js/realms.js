@@ -904,6 +904,154 @@ function initHeartbeatAnimation(targetContainer) {
 
     animate();
 }
+
+function initNeuralNetworkSimulation(activeIndex) {
+    const canvas = document.getElementById('neural-flow-canvas');
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width || 400;
+    canvas.height = rect.height || 280;
+
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    // Define 4 Node locations laid out like a processing pathway grid
+    const nodes = [
+        { id: 0, x: canvas.width * 0.20, y: canvas.height * 0.65, label: 'IMAGINE', color: '#a855f7', pulse: 0 },
+        { id: 1, x: canvas.width * 0.40, y: canvas.height * 0.30, label: 'SPARK', color: '#f59e0b', pulse: 0 },
+        { id: 2, x: canvas.width * 0.60, y: canvas.height * 0.70, label: 'SHARE', color: '#06b6d4', pulse: 0 },
+        { id: 3, x: canvas.width * 0.82, y: canvas.height * 0.35, label: 'GROW', color: '#ec4899', pulse: 0 }
+    ];
+
+    let particles = [];
+    let flowProgress = 0;
+
+    function drawSimulation() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        flowProgress += 0.015;
+        if (flowProgress > 1) flowProgress = 1;
+
+        // 1. Draw Connection Pipelines
+        for (let i = 0; i < nodes.length - 1; i++) {
+            const start = nodes[i];
+            const end = nodes[i + 1];
+
+            ctx.beginPath();
+            ctx.moveTo(start.x, start.y);
+            ctx.lineTo(end.x, end.y);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Draw data pulse flow animation traveling up to the active index node
+            if (i < activeIndex) {
+                ctx.beginPath();
+                ctx.moveTo(start.x, start.y);
+                
+                // If it's the immediate pipeline leading to the current step, animate it moving across
+                let pct = (i === activeIndex - 1) ? flowProgress : 1;
+                let midX = start.x + (end.x - start.x) * pct;
+                let midY = start.y + (end.y - start.y) * pct;
+                
+                ctx.lineTo(midX, midY);
+                ctx.strokeStyle = end.color;
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = end.color;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // 2. Render Glass Circles & Handles
+        nodes.forEach((node) => {
+            const isActive = node.id === activeIndex;
+            const isDiscovered = node.id <= activeIndex;
+            
+            node.pulse += 0.05;
+
+            // Outer Glowing aura boundary ring
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, 28, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.65)';
+            ctx.fill();
+            
+            ctx.lineWidth = isActive ? 2 : 1;
+            ctx.strokeStyle = isDiscovered ? node.color : 'rgba(255, 255, 255, 0.1)';
+            
+            if (isActive) {
+                ctx.shadowBlur = 12 + Math.sin(node.pulse) * 4;
+                ctx.shadowColor = node.color;
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Glass reflection highlight arcs
+            if (isDiscovered) {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 24, Math.PI * 1.2, Math.PI * 1.7);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                ctx.fillStyle = isActive ? node.color : 'rgba(255, 255, 255, 0.05)';
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, isActive ? 4 : 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Node Step HUD Label Text underneath circle
+            ctx.font = 'bold 8px monospace';
+            ctx.fillStyle = isActive ? '#fff' : 'rgba(255, 255, 255, 0.3)';
+            ctx.textAlign = 'center';
+            ctx.fillText(node.label, node.x, node.y + 42);
+        });
+
+        // 3. Emit Energy Stream Particles from Active Node
+        if (Math.random() > 0.6 && particles.length < 40) {
+            const target = nodes[activeIndex];
+            particles.push({
+                x: target.x,
+                y: target.y,
+                vx: (Math.random() - 0.5) * 1.5,
+                vy: (Math.random() - 0.5) * 1.5,
+                size: Math.random() * 2 + 0.5,
+                alpha: 1.0,
+                color: target.color
+            });
+        }
+
+        // Render Active Energy Particles
+        particles = particles.filter(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.alpha -= 0.015;
+
+            if (p.alpha > 0) {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                return true;
+            }
+            return false;
+        });
+        ctx.globalAlpha = 1.0;
+
+        animationFrameId = requestAnimationFrame(drawSimulation);
+    }
+
+    drawSimulation();
+
+    // Clean hook reference array tracking to avoid leaks during subsequent triggers
+    window.addEventListener('resize', () => {
+        const r = canvas.getBoundingClientRect();
+        canvas.width = r.width || 400;
+        canvas.height = r.height || 280;
+    }, { once: true });
+}
 window.switchRealmStep = function(index) {
     const steps = window.realmStepsData;
     if (!steps || !steps[index]) return;
@@ -934,51 +1082,19 @@ window.switchRealmStep = function(index) {
     if (titleEl) titleEl.innerText = currentStep.label;
     if (descEl) descEl.innerText = currentStep.description;
 
-    // 3. Update Visual Display Block Based on Concept Step Index
+    // 3. Inject and Initialize the Glowing Neural Flow Network Canvas
     if (displayEl) {
-        displayEl.innerHTML = ''; // Wipe out previous scene wrapper
+        displayEl.innerHTML = `
+            <canvas id="neural-flow-canvas" class="absolute inset-0 w-full h-full"></canvas>
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 font-mono text-[9px] text-cyan-400/40 tracking-widest uppercase select-none pointer-events-none">
+                SIMULATION_MODE // LAYER_0${index + 1}
+            </div>
+        `;
         
-        switch(index) {
-            case 0: // IMAGINE THE REALM
-                displayEl.innerHTML = `
-                    <div class="absolute inset-0 bg-gradient-to-tr from-purple-950/40 to-black/80 z-0"></div>
-                    <div class="text-center font-mono text-xs text-purple-400/80 animate-pulse z-10 p-4">
-                        <i class="fa-solid fa-brain text-4xl mb-3 block text-purple-500"></i>
-                        AWAITING CONCEPT SYNCING...<br>
-                        <span class="text-[10px] text-slate-500">[Neural Prompt Engine Active]</span>
-                    </div>`;
-                break;
-            case 1: // CREATE THE SPARKS
-                displayEl.innerHTML = `
-                    <div class="absolute inset-0 bg-gradient-to-tr from-amber-950/30 to-black/80 z-0"></div>
-                    <div class="text-center font-mono text-xs text-amber-400 animate-pulse z-10 p-4">
-                        <i class="fa-solid fa-bolt text-4xl mb-3 block text-amber-500 animate-bounce"></i>
-                        IGNITING TRANSLATION KINETICS...<br>
-                        <span class="text-[10px] text-slate-500">[Sparks Emitting Matrix Online]</span>
-                    </div>`;
-                break;
-            case 2: // SHARE WITH THE WORLD
-                displayEl.innerHTML = `
-                    <div class="absolute inset-0 bg-gradient-to-tr from-cyan-950/40 to-black/80 z-0"></div>
-                    <div class="text-center font-mono text-xs text-cyan-400 z-10 p-4">
-                        <i class="fa-solid fa-globe text-4xl mb-3 block text-cyan-400 animate-spin" style="animation-duration: 12s;"></i>
-                        BROADCASTING NODE STREAM...<br>
-                        <span class="text-[10px] text-emerald-400">[Global Access Gateway Open]</span>
-                    </div>`;
-                break;
-            case 3: // GROW YOUR FANDOM
-                displayEl.innerHTML = `
-                    <div class="absolute inset-0 bg-gradient-to-tr from-pink-950/40 to-black/80 z-0"></div>
-                    <div class="text-center font-mono text-xs text-pink-400 z-10 p-4">
-                        <i class="fa-solid fa-users text-4xl mb-3 block text-pink-500"></i>
-                        MAPPING SOCIAL IMPACT LOOPS...<br>
-                        <span class="text-[10px] text-slate-500">[Network Expansion: Exponential]</span>
-                    </div>`;
-                break;
-        }
+        initNeuralNetworkSimulation(index);
     }
 }
-
+    
 function renderHowRealmsWork(data) {
     const el = document.getElementById('visual-flow-container');
     if (!el || !data.steps) return;
