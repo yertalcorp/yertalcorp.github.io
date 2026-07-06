@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:20:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:33:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -905,7 +905,7 @@ function initHeartbeatAnimation(targetContainer) {
     animate();
 }
 
-function initNeuralNetworkSimulation(activeIndex) {
+function initNeuralNetworkSimulation(customNodes, uniformShape) {
     const canvas = document.getElementById('neural-flow-canvas');
     if (!canvas) return;
 
@@ -914,115 +914,122 @@ function initNeuralNetworkSimulation(activeIndex) {
     canvas.height = rect.height || 280;
 
     const ctx = canvas.getContext('2d');
-    let animationFrameId;
 
-    // Define 4 Node locations laid out like a processing pathway grid
-    const nodes = [
-        { id: 0, x: canvas.width * 0.20, y: canvas.height * 0.65, label: 'IMAGINE', color: '#a855f7', pulse: 0 },
-        { id: 1, x: canvas.width * 0.40, y: canvas.height * 0.30, label: 'SPARK', color: '#f59e0b', pulse: 0 },
-        { id: 2, x: canvas.width * 0.60, y: canvas.height * 0.70, label: 'SHARE', color: '#06b6d4', pulse: 0 },
-        { id: 3, x: canvas.width * 0.82, y: canvas.height * 0.35, label: 'GROW', color: '#ec4899', pulse: 0 }
-    ];
+    // Map the relative points using the uniform step-level shape designation override
+    const nodes = customNodes.map(node => ({
+        id: node.id,
+        x: canvas.width * node.x_pct,
+        y: canvas.height * node.y_pct,
+        label: node.label,
+        shape: uniformShape, // Forces every sub-node in this step view to share the same geometry
+        color: node.color || '#00f2ff',
+        pulse: Math.random() * Math.PI
+    }));
 
     let particles = [];
     let flowProgress = 0;
+    let activePulseIndex = 0;
+
+    function drawNodeShape(x, y, radius, shape) {
+        ctx.beginPath();
+        if (shape === 'diamond') {
+            ctx.moveTo(x, y - radius);
+            ctx.lineTo(x + radius, y);
+            ctx.lineTo(x, y + radius);
+            ctx.lineTo(x - radius, y);
+            ctx.closePath();
+        } else if (shape === 'hexagon') {
+            for (let i = 0; i < 6; i++) {
+                ctx.lineTo(x + radius * Math.cos(i * Math.PI / 3), y + radius * Math.sin(i * Math.PI / 3));
+            }
+            ctx.closePath();
+        } else if (shape === 'octagon') {
+            for (let i = 0; i < 8; i++) {
+                ctx.lineTo(x + radius * Math.cos(i * Math.PI / 4), y + radius * Math.sin(i * Math.PI / 4));
+            }
+            ctx.closePath();
+        } else {
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+        }
+    }
 
     function drawSimulation() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        flowProgress += 0.015;
-        if (flowProgress > 1) flowProgress = 1;
+        
+        flowProgress += 0.01;
+        if (flowProgress > 1) {
+            flowProgress = 0;
+            activePulseIndex = (activePulseIndex + 1) % nodes.length;
+        }
 
-        // 1. Draw Connection Pipelines
-        for (let i = 0; i < nodes.length - 1; i++) {
+        for (let i = 0; i < nodes.length; i++) {
             const start = nodes[i];
-            const end = nodes[i + 1];
+            const end = nodes[(i + 1) % nodes.length];
 
             ctx.beginPath();
             ctx.moveTo(start.x, start.y);
             ctx.lineTo(end.x, end.y);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
-            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Draw data pulse flow animation traveling up to the active index node
-            if (i < activeIndex) {
+            if (i === activePulseIndex) {
                 ctx.beginPath();
                 ctx.moveTo(start.x, start.y);
-                
-                // If it's the immediate pipeline leading to the current step, animate it moving across
-                let pct = (i === activeIndex - 1) ? flowProgress : 1;
-                let midX = start.x + (end.x - start.x) * pct;
-                let midY = start.y + (end.y - start.y) * pct;
-                
+                let midX = start.x + (end.x - start.x) * flowProgress;
+                let midY = start.y + (end.y - start.y) * flowProgress;
                 ctx.lineTo(midX, midY);
-                ctx.strokeStyle = end.color;
+                ctx.strokeStyle = start.color;
                 ctx.lineWidth = 2;
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = end.color;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = start.color;
                 ctx.stroke();
                 ctx.shadowBlur = 0;
             }
         }
 
-        // 2. Render Glass Circles & Handles
-        nodes.forEach((node) => {
-            const isActive = node.id === activeIndex;
-            const isDiscovered = node.id <= activeIndex;
-            
-            node.pulse += 0.05;
+        nodes.forEach((node, i) => {
+            node.pulse += 0.04;
+            const isPulseTarget = i === activePulseIndex;
 
-            // Outer Glowing aura boundary ring
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, 28, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(5, 5, 5, 0.65)';
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.7)';
+            drawNodeShape(node.x, node.y, 24, node.shape);
             ctx.fill();
+
+            ctx.lineWidth = isPulseTarget ? 2 : 1;
+            ctx.strokeStyle = isPulseTarget ? node.color : 'rgba(255, 255, 255, 0.15)';
             
-            ctx.lineWidth = isActive ? 2 : 1;
-            ctx.strokeStyle = isDiscovered ? node.color : 'rgba(255, 255, 255, 0.1)';
-            
-            if (isActive) {
-                ctx.shadowBlur = 12 + Math.sin(node.pulse) * 4;
+            if (isPulseTarget) {
+                ctx.shadowBlur = 10 + Math.sin(node.pulse) * 4;
                 ctx.shadowColor = node.color;
             }
             ctx.stroke();
             ctx.shadowBlur = 0;
 
-            // Glass reflection highlight arcs
-            if (isDiscovered) {
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, 24, Math.PI * 1.2, Math.PI * 1.7);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                
-                ctx.fillStyle = isActive ? node.color : 'rgba(255, 255, 255, 0.05)';
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, isActive ? 4 : 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, 18, Math.PI * 1.2, Math.PI * 1.6);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
 
-            // Node Step HUD Label Text underneath circle
             ctx.font = 'bold 8px monospace';
-            ctx.fillStyle = isActive ? '#fff' : 'rgba(255, 255, 255, 0.3)';
+            ctx.fillStyle = isPulseTarget ? '#fff' : 'rgba(255, 255, 255, 0.3)';
             ctx.textAlign = 'center';
-            ctx.fillText(node.label, node.x, node.y + 42);
+            ctx.fillText(node.label, node.x, node.y + 36);
+            
+            if (isPulseTarget && Math.random() > 0.6 && particles.length < 50) {
+                particles.push({
+                    x: node.x,
+                    y: node.y,
+                    vx: (Math.random() - 0.5) * 1.2,
+                    vy: (Math.random() - 0.5) * 1.2,
+                    size: Math.random() * 2 + 0.5,
+                    alpha: 1.0,
+                    color: node.color
+                });
+            }
         });
 
-        // 3. Emit Energy Stream Particles from Active Node
-        if (Math.random() > 0.6 && particles.length < 40) {
-            const target = nodes[activeIndex];
-            particles.push({
-                x: target.x,
-                y: target.y,
-                vx: (Math.random() - 0.5) * 1.5,
-                vy: (Math.random() - 0.5) * 1.5,
-                size: Math.random() * 2 + 0.5,
-                alpha: 1.0,
-                color: target.color
-            });
-        }
-
-        // Render Active Energy Particles
         particles = particles.filter(p => {
             p.x += p.vx;
             p.y += p.vy;
@@ -1040,25 +1047,18 @@ function initNeuralNetworkSimulation(activeIndex) {
         });
         ctx.globalAlpha = 1.0;
 
-        animationFrameId = requestAnimationFrame(drawSimulation);
+        requestAnimationFrame(drawSimulation);
     }
 
     drawSimulation();
-
-    // Clean hook reference array tracking to avoid leaks during subsequent triggers
-    window.addEventListener('resize', () => {
-        const r = canvas.getBoundingClientRect();
-        canvas.width = r.width || 400;
-        canvas.height = r.height || 280;
-    }, { once: true });
 }
+
 window.switchRealmStep = function(index) {
     const steps = window.realmStepsData;
     if (!steps || !steps[index]) return;
 
     const currentStep = steps[index];
 
-    // 1. Manage Active Button States Visually
     steps.forEach((_, i) => {
         const btn = document.getElementById(`realm-step-btn-${i}`);
         if (btn) {
@@ -1072,7 +1072,6 @@ window.switchRealmStep = function(index) {
         }
     });
 
-    // 2. Update Immersive Details Panel Context Text
     const phaseEl = document.getElementById('realm-step-phase');
     const titleEl = document.getElementById('realm-step-title');
     const descEl = document.getElementById('realm-step-desc');
@@ -1082,7 +1081,6 @@ window.switchRealmStep = function(index) {
     if (titleEl) titleEl.innerText = currentStep.label;
     if (descEl) descEl.innerText = currentStep.description;
 
-    // 3. Inject and Initialize the Glowing Neural Flow Network Canvas
     if (displayEl) {
         displayEl.innerHTML = `
             <canvas id="neural-flow-canvas" class="absolute inset-0 w-full h-full"></canvas>
@@ -1091,10 +1089,10 @@ window.switchRealmStep = function(index) {
             </div>
         `;
         
-        initNeuralNetworkSimulation(index);
+        // Pass both the nodes array AND the parent step's uniform geometric shape choice
+        initNeuralNetworkSimulation(currentStep.nodes || [], currentStep.shape || 'circle');
     }
-}
-    
+}    
 function renderHowRealmsWork(data) {
     const el = document.getElementById('visual-flow-container');
     if (!el || !data.steps) return;
