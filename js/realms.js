@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:15:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:20:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -992,7 +992,7 @@ function renderHowRealmsWork(data) {
             
             <p class="text-slate-400 text-xs font-mono tracking-wider uppercase max-w-2xl mx-auto opacity-80">${data.subtitle || 'From an open prompt to a global interactive destination.'}</p>
             
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-5xl mx-auto mt-6 mb-6 font-mono text-xs">
+            <div class="grid grid-cols-4 gap-4 max-w-5xl mx-auto mt-6 mb-6 font-mono text-xs">
                 ${data.steps.map((step, index) => `
                     <div class="w-full flex items-center justify-center">
                         <button onclick="switchRealmStep(${index})" id="realm-step-btn-${index}" class="surreal-3d-btn w-full rounded-xl text-white transition-all duration-300 group relative">
