@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:20:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:26:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -911,16 +911,17 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
 
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width || 700;
-    // MAXIMIZED RENDERING LAYER MATRIX: Canvas height adjusted to use the entire 500px viewport framework safely
-    canvas.height = 500;
+    // Set rendering workspace matrix canvas dimension coordinate boundaries cleanly to 480px
+    canvas.height = 480;
 
     const ctx = canvas.getContext('2d');
 
     const nodes = customNodes.map(node => ({
         id: node.id,
         x: canvas.width * node.x_pct,
-        // Expanded dynamic scaling so layout handles make use of the wide headroom beautifully
-        y: canvas.height * (node.y_pct * 0.72 + 0.16), label: node.label,
+        // Tuned vertical spacing offsets to center your 70px shapes beautifully within the 480px workspace
+        y: canvas.height * (node.y_pct * 0.65 + 0.18),
+        label: node.label,
         shape: uniformShape,
         color: node.color || '#00f2ff',
         pulse: Math.random() * Math.PI,
@@ -1126,11 +1127,11 @@ function renderHowRealmsWork(data) {
                 `).join('')}
             </div>
 
-            <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-4 min-h-[620px] flex flex-col gap-4 items-center justify-start overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+            <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-2 pb-24 min-h-[600px] flex flex-col gap-2 items-center justify-start overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                 
-                <div id="realm-visual-display" class="w-full min-h-[500px] h-[500px] flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden"></div>
+                <div id="realm-visual-display" class="w-full h-[480px] flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden"></div>
                 
-                <div class="w-full text-left flex flex-col justify-end relative z-10 px-4 pb-2 mt-1">
+                <div class="absolute bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 text-left flex flex-col justify-end z-10 px-6 py-4">
                     <h3 id="realm-step-title" class="text-3xl font-extrabold text-white uppercase tracking-widest mb-1 text-glow"></h3>
                     <p id="realm-step-desc" class="text-slate-200 text-base font-mono leading-relaxed tracking-widest m-0"></p>
                 </div>
