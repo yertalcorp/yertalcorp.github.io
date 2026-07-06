@@ -16,7 +16,8 @@
 }
 
 .surreal-3d-btn:hover {
-    box-shadow: 0 20px 45px rgba(0, 242, 255, 0.3);
+    box-shadow: 0 20px 45px rgba(0, 242, 255, 0.3), 0 0 20px var(--neon-color);
+    transform: translateY(-5px);
 }
 
 .inner-content {
