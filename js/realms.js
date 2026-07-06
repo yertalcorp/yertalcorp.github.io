@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:37:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:51:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -771,7 +771,8 @@ function initHeartbeatAnimation(targetContainer) {
     canvas.style.display = 'block';
     canvas.style.maxWidth = '100%';
     canvas.style.height = 'auto';
-    canvas.style.margin = '0 auto -10px auto';
+    // Increased bottom margin from -10px to 12px to add a clean gap above "HOW REALMS WORK"
+    canvas.style.margin = '0 auto 12px auto'; 
 
     container.insertBefore(canvas, container.firstChild);
 
@@ -784,7 +785,6 @@ function initHeartbeatAnimation(targetContainer) {
     let xStep = canvas.width / maxPoints;
     let frame = 0;
 
-    // Track active particle sparks so they move cleanly over frames
     let activeSparks = [];
 
     for (let i = 0; i < maxPoints; i++) {
@@ -796,55 +796,63 @@ function initHeartbeatAnimation(targetContainer) {
         frame++;
 
         const centerY = canvas.height / 2;
-        const maxAmplitude = (canvas.height / 2) - 8; // Safe internal padding bound
+        const maxAmplitude = (canvas.height / 2) - 8; 
         let nextY = centerY;
         
-        // --- MULTI-FREQUENCY HEARTBEAT ENGINE ---
-        // Generates more dynamic, frequent action loops with distinct heights
-        const cycle = frame % 70; // Faster cycle interval for more action
-        
-        if (cycle > 10 && cycle < 35) {
-            let localFrame = cycle - 10;
-            // Alternating pulse patterns based on frame counts to diversify peaks/troughs
-            const scaleFactor = (Math.floor(frame / 70) % 2 === 0) ? 1.0 : 0.65;
+        // --- HYPER-ACTIVE HEARTBEAT GENERATOR ---
+        // Shortened cycle from 70 to 35 frames for highly frequent, aggressive mountain peaks
+        const cycle = frame % 35; if (cycle > 5 && cycle < 18) {
+            let localFrame = cycle - 5;
+            // Varies peak heights dynamically across cycles so they stay sharp but unique
+            const heightVariant = (Math.floor(frame / 35) % 3 === 0) ? 1.0 : (Math.floor(frame / 35) % 3 === 1 ? 0.75 : 0.55);
             
-            if (localFrame >= 1 && localFrame <= 4) {
-                // Preliminary compression drop
-                nextY = centerY + (12 * scaleFactor);
-            } else if (localFrame >= 5 && localFrame <= 9) {
-                // Critical Spiking Peak
-                nextY = centerY - (maxAmplitude * scaleFactor);
+            // Precise single-frame updates form razor-sharp angles instead of plateaus
+            if (localFrame === 1) {
+                nextY = centerY + (10 * heightVariant); // Quick dip (Q wave)
+            } else if (localFrame === 3) {
+                nextY = centerY - (maxAmplitude * heightVariant); // Extreme sharp peak (R wave)
                 
-                // Trigger spark and audio ONLY at the high value threshold peaks
-                if (localFrame === 6 && scaleFactor === 1.0) {
+                // Trigger glitch sound and sparks on high peaks
+                if (heightVariant >= 0.75) {
                     triggerSparkVisual(canvas.width - xStep * 2, nextY);
                     glitchSound.currentTime = 0;
-                    glitchSound.play().catch(() => {}); }
-            } else if (localFrame >= 10 && localFrame <= 14) {
-                // Rebound Deep Trough
-                nextY = centerY + (maxAmplitude * 0.8 * scaleFactor);
-            } else if (localFrame >= 18 && localFrame <= 22) {
-                // Secondary minor stabilization wave
-                nextY = centerY - (18 * scaleFactor);
+                    glitchSound.play().catch(() => {});
+                }
+            } else if (localFrame === 5) {
+                nextY = centerY + (maxAmplitude * 0.9 * heightVariant); // Deep sharp plunge (S wave)
+            } else if (localFrame === 8) {
+                nextY = centerY - (14 * heightVariant); // Secondary recovery bump (T wave)
             }
         } else {
-            // Active ambient noise jitter line
-            nextY += (Math.sin(frame * 0.4) * 2) + ((Math.random() - 0.5) * 3);
+            nextY += (Math.sin(frame * 0.6) * 1.5) + ((Math.random() - 0.5) * 2);
         }
 
-        // Keep absolute safety clamp to never exceed canvas boundaries
         if (nextY < 6) nextY = 6;
         if (nextY > canvas.height - 6) nextY = canvas.height - 6;
 
         points.shift();
         points.push(nextY);
 
-        // Render the running heartbeat path
+        // --- RENDER DUAL-PASS YELLOW LIGHT RAY GLOW ---
+        // Pass 1: Soft wide yellow ray neon glow blur background
         ctx.beginPath();
-        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--neon-color').trim() || '#00f2ff';
+        ctx.strokeStyle = '#ffe600';
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = '#ffcc00';
+        for (let i = 0; i < points.length; i++) {
+            let x = i * xStep;
+            if (i === 0) ctx.moveTo(x, points[i]);
+            else ctx.lineTo(x, points[i]);
+        }
+        ctx.stroke();
+
+        // Pass 2: Hyper-bright electric white-yellow core line
+        ctx.beginPath();
+        ctx.strokeStyle = '#fffdec';
         ctx.lineWidth = 2;
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = ctx.strokeStyle;
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = '#fff';
 
         for (let i = 0; i < points.length; i++) {
             let x = i * xStep;
@@ -853,18 +861,17 @@ function initHeartbeatAnimation(targetContainer) {
         }
         ctx.stroke();
 
-        // --- RENDER LIVE SPARK PARTICLES ENGINE ---
         ctx.shadowBlur = 4;
         activeSparks = activeSparks.filter(spark => {
-            spark.x -= xStep; // Keep pinned lock to the scrolling wave speed
+            spark.x -= xStep; 
             spark.y += spark.vy;
             spark.vx *= 0.98;
             spark.x += spark.vx;
             spark.life -= 0.04;
 
             if (spark.life > 0) {
-                ctx.fillStyle = `rgba(255, 253, 236, ${spark.life})`; // Light Ray White Core
-                ctx.strokeStyle = `rgba(255, 250, 224, ${spark.life * 0.7})`; // Golden Ray Glow Outline
+                ctx.fillStyle = `rgba(255, 253, 236, ${spark.life})`; 
+                ctx.strokeStyle = `rgba(255, 215, 0, ${spark.life * 0.7})`; 
                 ctx.beginPath();
                 ctx.arc(spark.x, spark.y, spark.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -878,11 +885,9 @@ function initHeartbeatAnimation(targetContainer) {
     }
 
     function triggerSparkVisual(x, y) {
-        // Core impact flash block (Light Ray White)
         ctx.fillStyle = '#fffdec';
         ctx.fillRect(x - 4, y - 4, 8, 8);
         
-        // Scatter light ray line fragments outwards
         for (let i = 0; i < 12; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = 1 + Math.random() * 4;
@@ -890,7 +895,7 @@ function initHeartbeatAnimation(targetContainer) {
                 x: x,
                 y: y,
                 vx: Math.cos(angle) * speed,
-                vy: (Math.sin(angle) * speed) + 0.5, // Subtle gravity bias downward
+                vy: (Math.sin(angle) * speed) + 0.5, 
                 size: 1 + Math.random() * 2,
                 life: 1.0
             });
