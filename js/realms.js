@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 21:44:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 21:49:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -1107,7 +1107,7 @@ function renderHowRealmsWork(data) {
     window.realmStepsData = data.steps;
 
     el.insertAdjacentHTML('beforeend', `
-        <div class="max-w-7xl mx-auto px-6 inner-flow-wrapper">
+        <div class="max-w-7xl mx-auto px-6 inner-flow-wrapper flex flex-col h-full">
             <h2 class="text-3xl font-extrabold text-white uppercase tracking-widest mb-2 text-glow">${data.title || 'HOW REALMS WORK'}</h2>
             
             <p class="text-slate-400 text-lg font-mono tracking-wider uppercase max-w-3xl mx-auto opacity-80">${data.subtitle || 'From an open prompt to a global interactive destination.'}</p>
@@ -1124,14 +1124,13 @@ function renderHowRealmsWork(data) {
                     </div>
                 `).join('')}
             </div>
-<div id="realm-immersive-panel" 
-     class="featured-card metallic-bezel min-h-[640px] relative rounded-2xl p-4 flex flex-col gap-4 overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-  
-  <div id="realm-visual-display" 
-       class="w-full min-h-[480px] flex-1 flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden">
-  </div>
-</div>
-
+    <div id="realm-immersive-panel" 
+         class="featured-card metallic-bezel min-h-[640px] relative rounded-2xl p-4 flex flex-col gap-4 flex-1 overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+      
+      <div id="realm-visual-display" 
+           class="w-full min-h-[480px] flex-1 flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden">
+      </div>
+    </div>
 
     <!-- Description stays at its natural height -->
     <div class="border-t border-white/5 text-left px-2 pt-2 shrink-0">
