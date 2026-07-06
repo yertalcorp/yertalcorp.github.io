@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 11:25:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 12:14:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -760,29 +760,194 @@ function renderFooter(footer) {
 function renderHowRealmsWork(data) {
     const el = document.getElementById('visual-flow-container');
     if (!el || !data.steps) return;
+    
+    // Cache the steps globally or on the window to access via event handlers securely
+    window.realmStepsData = data.steps;
+
     el.innerHTML = `
         <div class="max-w-4xl mx-auto px-6">
-            <h2 class="text-3xl font-extrabold text-white uppercase tracking-widest mb-2">HOW REALMS WORK</h2>
-            <p class="text-slate-400 text-sm max-w-2xl mx-auto mb-16">${data.subtitle || 'From single prompt to an interactive 3D virtual environment.'}</p>
+            <h2 class="text-3xl font-extrabold text-white uppercase tracking-widest mb-2">${data.title || 'HOW REALMS WORK'}</h2>
+            <p class="text-slate-400 text-sm max-w-2xl mx-auto mb-12">${data.subtitle || 'From single prompt to an interactive 3D virtual environment.'}</p>
             
-            <div class="flex flex-col md:flex-row gap-8 items-stretch justify-center">
+            <div class="flex flex-row items-center justify-between bg-black/40 border border-white/10 rounded-xl p-4 mb-8 font-mono text-xs overflow-x-auto gap-2">
                 ${data.steps.map((step, index) => `
-                    <div class="glass-card metallic-bezel p-8 flex flex-col items-center flex-1 transition-all">
-                        <div class="text-xs font-mono uppercase tracking-[0.3em] mb-3" style="color: var(--neon-color, #00f2ff);">PHASE ${step.id}</div>
-                        <h3 class="text-xl font-extrabold text-white uppercase tracking-wider mb-4">${step.label}</h3>
-                        <p class="text-slate-400 text-xs leading-relaxed text-center">${step.description}</p>
-                    </div>
+                    <button onclick="switchRealmStep(${index})" id="realm-step-btn-${index}" class="flex-1 min-w-[140px] px-3 py-2 rounded transition-all duration-300 border border-transparent hover:border-cyan-500/30 text-slate-500 hover:text-white group">
+                        <div class="text-[10px] tracking-[0.2em] text-slate-600 group-hover:text-cyan-400 transition-colors mb-1">STEP 0${step.id}.</div>
+                        <div class="font-bold tracking-wider uppercase truncate">[${step.label}]</div>
+                    </button>
                     ${index < data.steps.length - 1 ? `
-                        <div class="hidden md:flex items-center justify-center text-slate-600 font-light text-2xl px-2 select-none pointer-events-none">
-                            <i class="fa-solid fa-chevron-right text-xs opacity-30" style="color: var(--neon-color, #00f2ff);"></i>
+                        <div class="text-slate-700 font-light select-none pointer-events-none px-1">
+                            <i class="fa-solid fa-chevron-right text-[10px] opacity-40" style="color: var(--neon-color, #00f2ff);"></i>
                         </div>
                     ` : ''}
                 `).join('')}
             </div>
+
+            <div id="realm-immersive-panel" class="relative rounded-2xl border border-cyan-500/30 bg-slate-950/80 p-8 min-h-[400px] flex flex-col md:flex-row gap-8 items-center justify-center overflow-hidden transition-all duration-500 shadow-[0_0_25px_rgba(0,242,255,0.15),inset_0_0_20px_rgba(0,242,255,0.05)]">
+                <div id="realm-visual-display" class="w-full md:w-1/2 min-h-[260px] flex items-center justify-center relative rounded-xl border border-white/5 bg-black/40 p-4">
+                    </div>
+                
+                <div class="w-full md:w-1/2 text-left flex flex-col justify-center">
+                    <div id="realm-step-phase" class="text-xs font-mono uppercase tracking-[0.3em] mb-2" style="color: var(--neon-color, #00f2ff);">PHASE 1</div>
+                    <h3 id="realm-step-title" class="text-2xl font-extrabold text-white uppercase tracking-wider mb-4">CREATE A REALM</h3>
+                    <p id="realm-step-desc" class="text-slate-400 text-sm leading-relaxed mb-6">Initial configuration data stream.</p>
+                </div>
+            </div>
         </div>
     `;
+
+    // Initialize execution with the first step
+    if (typeof window.switchRealmStep === 'undefined') {
+        initRealmFlowEngine();
+    }
+    window.switchRealmStep(0);
 }
-function renderAdminGate(ui) {
+
+function initRealmFlowEngine() {
+    window.switchRealmStep = function(index) {
+        const steps = window.realmStepsData;
+        if (!steps || !steps[index]) return;
+        
+        const currentStep = steps[index];
+        
+        // Update Step Buttons styling
+        steps.forEach((_, i) => {
+            const btn = document.getElementById(`realm-step-btn-${i}`);
+            if (btn) {
+                if (i === index) {
+                    btn.classList.remove('text-slate-500', 'border-transparent');
+                    btn.classList.add('text-white', 'border-cyan-500/50', 'bg-cyan-950/20', 'shadow-[0_0_15px_rgba(0,242,255,0.15)]');
+                } else {
+                    btn.classList.add('text-slate-500', 'border-transparent');
+                    btn.classList.remove('text-white', 'border-cyan-500/50', 'bg-cyan-950/20', 'shadow-[0_0_15px_rgba(0,242,255,0.15)]');
+                }
+            }
+        });
+
+        // Update Text Components
+        document.getElementById('realm-step-phase').innerText = `PHASE 0${currentStep.id}`;
+        document.getElementById('realm-step-title').innerText = currentStep.label;
+        document.getElementById('realm-step-desc').innerText = currentStep.description;
+
+        // Render specific hardware-accelerated simulated visuals inside the visual display container
+        const visualDisplay = document.getElementById('realm-visual-display');
+        if (!visualDisplay) return;
+
+        // Clear timeouts or internal loops if any were attached previously
+        if (window.realmVisualInterval) clearInterval(window.realmVisualInterval);
+
+        if (index === 0) {
+            // STEP 1: Simulate the Re-Forge Laboratory Identity HUD updating
+            visualDisplay.innerHTML = `
+                <div class="w-full max-w-sm rounded-lg border border-cyan-400/40 bg-slate-900/90 p-4 font-mono text-[10px] text-left shadow-[0_0_15px_rgba(0,242,255,0.1)]">
+                    <div class="text-center text-cyan-400 border-b border-cyan-400/20 pb-2 mb-3 tracking-widest uppercase animate-pulse">RE-FORGE HUD SIMULATION</div>
+                    <div class="mb-2">
+                        <span class="text-cyan-400/70 block mb-1">■ REALM_NAME:</span>
+                        <div id="sim-realm-name" class="bg-black/60 p-1.5 border border-white/5 rounded text-white h-6 flex items-center"></div>
+                    </div>
+                    <div class="mb-2">
+                        <span class="text-cyan-400/70 block mb-1">■ INTERFACE_THEME:</span>
+                        <div id="sim-realm-theme" class="bg-black/60 p-1.5 border border-white/5 rounded text-slate-400 h-6 flex items-center">DEFAULT DARK</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1 mt-4 pt-2 border-t border-white/5 text-[8px] text-center opacity-40">
+                        <div class="border border-white/10 p-1 rounded">BIZ_TIER</div>
+                        <div id="sim-free-tier" class="border border-cyan-400/50 p-1 rounded text-cyan-400 bg-cyan-950/20 font-bold">FREE_TIER</div>
+                        <div class="border border-white/10 p-1 rounded">PERS_TIER</div>
+                    </div>
+                </div>
+            `;
+            
+            // Text Decoded simulation logic
+            const nameTarget = "THE YERTAL ARCADE";
+            let nameIdx = 0;
+            window.realmVisualInterval = setInterval(() => {
+                if (nameIdx <= nameTarget.length) {
+                    document.getElementById('sim-realm-name').innerText = nameTarget.slice(0, nameIdx) + (nameIdx < nameTarget.length ? '█' : '');
+                    nameIdx++;
+                } else if (nameIdx === nameTarget.length + 1) {
+                    // Trigger theme change effect
+                    const themeEl = document.getElementById('sim-realm-theme');
+                    if(themeEl) {
+                        themeEl.innerText = "NEON DARK";
+                        themeEl.classList.remove('text-slate-400');
+                        themeEl.classList.add('text-cyan-400', 'font-bold');
+                        document.getElementById('realm-immersive-panel').style.borderColor = 'rgba(0, 242, 255, 0.7)';
+                    }
+                    nameIdx++;
+                } else {
+                    clearInterval(window.realmVisualInterval);
+                }
+            }, 80);
+
+        } else if (index === 1) {
+            // STEP 2: Initialize a Current (Circuit Pipeline System Flow Animation)
+            visualDisplay.innerHTML = `
+                <div class="w-full flex flex-col items-center justify-center p-4">
+                    <svg class="w-full max-w-[280px]" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 50 H180" stroke="rgba(255,255,255,0.05)" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M20 50 H180" stroke="url(#pipeline-grad)" stroke-width="2" stroke-linecap="round" stroke-dasharray="10 150" class="animate-dash"/>
+                        
+                        <circle cx="20" cy="50" r="8" fill="#020617" stroke="#00f2ff" stroke-width="2"/>
+                        <circle cx="100" cy="50" r="10" fill="#020617" stroke="#00f2ff" stroke-width="2" class="animate-pulse"/>
+                        <circle cx="180" cy="50" r="8" fill="#020617" stroke="#00f2ff" stroke-width="2"/>
+                        
+                        <defs>
+                            <linearGradient id="pipeline-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#00f2ff" />
+                                <stop offset="100%" stop-color="#7000ff" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="mt-4 font-mono text-[9px] text-cyan-400/60 tracking-[0.2em] uppercase animate-pulse">STREAMING DATA ARCHITECTURE PIPELINE</div>
+                </div>
+            `;
+            document.getElementById('realm-immersive-panel').style.borderColor = 'rgba(0, 242, 255, 0.3)';
+
+        } else if (index === 2) {
+            // STEP 3: Add Sparks (Prompt Cache Bubble Simulation)
+            visualDisplay.innerHTML = `
+                <div class="w-full max-w-sm flex flex-col items-center justify-end min-h-[220px] relative">
+                    <div id="spark-bubble-arena" class="absolute inset-0 w-full h-[150px] overflow-hidden pointer-events-none"></div>
+                    
+                    <div class="w-full bg-slate-900 border border-purple-500/30 rounded p-2 font-mono text-[10px] text-left text-purple-400 flex items-center shadow-[0_0_15px_rgba(112,0,255,0.1)] mt-auto z-10">
+                        <span class="text-purple-500 mr-1.5">></span>
+                        <div id="sim-prompt-input" class="text-white"></div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('realm-immersive-panel').style.borderColor = 'rgba(112, 0, 255, 0.4)';
+
+            const promptTarget = "/generate interactive voxel workspace";
+            let promptIdx = 0;
+            const arena = document.getElementById('spark-bubble-arena');
+            const keywords = ['[Three.js]', '[Physics]', '[AudioContext]', '[VoxelEngine]', '[Cache_Match]'];
+
+            window.realmVisualInterval = setInterval(() => {
+                if (promptIdx <= promptTarget.length) {
+                    document.getElementById('sim-prompt-input').innerText = promptTarget.slice(0, promptIdx) + '█';
+                    
+                    // Periodically spawn a cache spark bubble as characters register
+                    if (promptIdx > 0 && promptIdx % 6 === 0 && arena) {
+                        const kw = keywords[Math.floor(Math.random() * keywords.length)];
+                        const bubble = document.createElement('div');
+                        bubble.className = "absolute bg-purple-950/40 border border-purple-400/40 px-2 py-0.5 rounded-full text-[8px] font-mono text-purple-300 shadow-[0_0_8px_rgba(112,0,255,0.2)] animate-float-bubble";
+                        bubble.style.left = `${15 + Math.random() * 70}%`;
+                        bubble.style.bottom = `10px`;
+                        bubble.innerText = kw;
+                        arena.appendChild(bubble);
+                        
+                        // Self destroy bubble after floating animation finishes
+                        setTimeout(() => bubble.remove(), 2500);
+                    }
+                    promptIdx++;
+                } else {
+                    document.getElementById('sim-prompt-input').innerText = promptTarget;
+                    clearInterval(window.realmVisualInterval);
+                }
+            }, 70);
+        }
+    };
+}function renderAdminGate(ui) {
     const gate = document.getElementById('admin-gateway');
     const config = ui['admin-btn'];
     gate.innerHTML = `<a href="${config.link}" class="fixed bottom-4 right-4 w-3 h-3 block transition-opacity duration-500 hover:opacity-100" 
