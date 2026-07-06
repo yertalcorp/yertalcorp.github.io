@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 22:03:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 22:22:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -909,16 +909,22 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     const canvas = document.getElementById('neural-flow-canvas');
     if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width || 700;
-    canvas.height = rect.height || 480;
+    function resizeCanvas() {
+        const rect = canvas.parentNode.getBoundingClientRect();
+        canvas.width = rect.width;
+        // Make sure the initialization height stays locked to your flex minimum
+        canvas.height = 460; }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas, { passive: true });
 
     const ctx = canvas.getContext('2d');
 
+    // Keep data decoupled from rendering calculations
     const nodes = customNodes.map(node => ({
         id: node.id,
-        x: canvas.width * node.x_pct,
-        y: canvas.height * (node.y_pct * 0.65 + 0.18),
+        x_pct: node.x_pct,
+        y_pct: node.y_pct * 0.65 + 0.18,
         label: node.label,
         shape: uniformShape,
         color: node.color || '#00f2ff',
@@ -956,6 +962,9 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     }
 
     function drawSimulation() {
+        // Exit early if the element left the viewport to avoid ghost background rendering memory leaks
+        if (!document.getElementById('neural-flow-canvas')) return;
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         pulseProgress += 0.025;
@@ -965,20 +974,26 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
             nodes[activePulseIndex].glowIntensity = 1.0;
         }
 
+        // Calculate exact pixel values in real time based on the active canvas dimensions
         for (let i = 0; i < nodes.length; i++) {
             const start = nodes[i];
             const end = nodes[(i + 1) % nodes.length];
 
+            const startX = canvas.width * start.x_pct;
+            const startY = canvas.height * start.y_pct;
+            const endX = canvas.width * end.x_pct;
+            const endY = canvas.height * end.y_pct;
+
             ctx.beginPath();
-            ctx.moveTo(start.x, start.y);
-            ctx.lineTo(end.x, end.y);
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
             if (i === activePulseIndex) {
-                let currentX = start.x + (end.x - start.x) * pulseProgress;
-                let currentY = start.y + (end.y - start.y) * pulseProgress;
+                let currentX = startX + (endX - startX) * pulseProgress;
+                let currentY = startY + (endY - startY) * pulseProgress;
 
                 ctx.beginPath();
                 ctx.arc(currentX, currentY, 5, 0, Math.PI * 2);
@@ -995,8 +1010,12 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
 
         nodes.forEach((node) => {
             node.glowIntensity *= 0.95;
+            
+            const nodeX = canvas.width * node.x_pct;
+            const nodeY = canvas.height * node.y_pct;
+
             ctx.fillStyle = 'rgba(5, 5, 5, 0.85)';
-            drawNodeShape(node.x, node.y, NODE_RADIUS, node.shape);
+            drawNodeShape(nodeX, nodeY, NODE_RADIUS, node.shape);
             ctx.fill();
 
             const currentGlow = node.glowIntensity;
@@ -1016,12 +1035,12 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
             ctx.fillStyle = currentGlow > 0.3 ? '#ffffff' : 'rgba(255, 255, 255, 0.85)';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(node.label, node.x, node.y);
+            ctx.fillText(node.label, nodeX, nodeY);
 
             if (currentGlow > 0.5 && Math.random() > 0.3) {
                 particles.push({
-                    x: node.x,
-                    y: node.y,
+                    x: nodeX,
+                    y: nodeY,
                     vx: (Math.random() - 0.5) * 2,
                     vy: (Math.random() - 0.5) * 2,
                     size: Math.random() * 2 + 1,
@@ -1295,7 +1314,9 @@ function initRealmFlowEngine() {
             }, 70);
         }
     };
-}function renderAdminGate(ui) {
+}
+
+function renderAdminGate(ui) {
     const gate = document.getElementById('admin-gateway');
     const config = ui['admin-btn'];
     gate.innerHTML = `<a href="${config.link}" class="fixed bottom-4 right-4 w-3 h-3 block transition-opacity duration-500 hover:opacity-100" 
