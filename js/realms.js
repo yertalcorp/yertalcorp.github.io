@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 21:32:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 21:36:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -1124,9 +1124,7 @@ function renderHowRealmsWork(data) {
                     </div>
                 `).join('')}
             </div>
-
-// +++ ADDED TO NEW CODE +++
-<div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-4 flex flex-col gap-4 overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+<div id="realm-immersive-panel" class="featured-card metallic-bezel  min-h-[640px] relative rounded-2xl p-4 flex-col gap-4 overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
     <div id="realm-visual-display" class="w-full min-h-[480px] flex-1 flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden"></div>
 
     <!-- Description stays at its natural height -->
