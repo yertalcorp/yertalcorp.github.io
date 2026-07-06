@@ -911,8 +911,8 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
 
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width || 700;
-    // **MAXIMIZED RENDERING LAYER MATRIX:** Canvas height adjusted to use the entire 500px viewport framework safely
-    **canvas.height = 500;**
+    // MAXIMIZED RENDERING LAYER MATRIX: Canvas height adjusted to use the entire 500px viewport framework safely
+    canvas.height = 500;
 
     const ctx = canvas.getContext('2d');
 
@@ -920,7 +920,7 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
         id: node.id,
         x: canvas.width * node.x_pct,
         // Expanded dynamic scaling so layout handles make use of the wide headroom beautifully
-        **y: canvas.height * (node.y_pct * 0.72 + 0.16),** label: node.label,
+        y: canvas.height * (node.y_pct * 0.72 + 0.16), label: node.label,
         shape: uniformShape,
         color: node.color || '#00f2ff',
         pulse: Math.random() * Math.PI,
@@ -1126,13 +1126,13 @@ function renderHowRealmsWork(data) {
                 `).join('')}
             </div>
 
-            <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl **p-4** min-h-[620px] flex flex-col gap-4 items-center justify-start overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+            <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-4 min-h-[620px] flex flex-col gap-4 items-center justify-start overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                 
-                <div id="realm-visual-display" class="w-full **min-h-[500px] h-[500px]** flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden"></div>
+                <div id="realm-visual-display" class="w-full min-h-[500px] h-[500px] flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden"></div>
                 
-                <div class="w-full text-left flex flex-col justify-end relative z-10 **px-4 pb-2 mt-1**">
-                    <h3 id="realm-step-title" class="text-3xl font-extrabold text-white uppercase tracking-widest **mb-1** text-glow"></h3>
-                    <p id="realm-step-desc" class="text-slate-200 text-base font-mono leading-relaxed tracking-widest **m-0**"></p>
+                <div class="w-full text-left flex flex-col justify-end relative z-10 px-4 pb-2 mt-1">
+                    <h3 id="realm-step-title" class="text-3xl font-extrabold text-white uppercase tracking-widest mb-1 text-glow"></h3>
+                    <p id="realm-step-desc" class="text-slate-200 text-base font-mono leading-relaxed tracking-widest m-0"></p>
                 </div>
             </div>
         </div>
