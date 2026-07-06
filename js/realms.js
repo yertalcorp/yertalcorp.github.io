@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:34:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:37:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -623,7 +623,7 @@ function renderFeaturedRealms(items) {
     const el = document.getElementById('showcase-grid');
     if (!el || !Array.isArray(items)) return;
     el.innerHTML = items.map(item => `
-        <div class="featured-card metallic-bezel p-8 rounded-[2rem] cursor-pointer aspect-video relative overflow-hidden group flex-1 min-w-[300px]"
+        <div class="featured-card metallic-bezel pt-8 pb-2 rounded-[2rem] cursor-pointer aspect-video relative overflow-hidden group flex-1 min-w-[300px]"
              onclick="window.location.href='./arcade/index.html?user=${item.realm_slug}'"
              onmouseenter="const v=this.querySelector('video'); if(v && v.style.display !== 'none') { v.play().catch(err => console.warn('Video playback intercepted:', err.message)); }"
              onmouseleave="const v=this.querySelector('video'); if(v && v.style.display !== 'none') { v.pause(); v.currentTime=0; }">
