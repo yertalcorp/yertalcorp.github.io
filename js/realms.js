@@ -769,7 +769,7 @@ function renderHowRealmsWork(data) {
             
             <p class="text-slate-400 text-xs font-mono tracking-wider uppercase max-w-2xl mx-auto opacity-80">${data.subtitle || 'From single prompt to an interactive 3D virtual environment.'}</p>
             
-            <div class="flex flex-row items-center justify-center gap-4 max-w-3xl mx-auto mt-15 mb-15 font-mono text-xs">
+            <div class="flex flex-row items-center justify-center gap-4 max-w-3xl mx-auto mt-4 mb-4 font-mono text-xs">
                 ${data.steps.map((step, index) => `
                     <div class="w-48 flex items-center justify-center">
                         <button onclick="switchRealmStep(${index})" id="realm-step-btn-${index}" class="surreal-3d-btn w-full p-4 rounded-xl text-white transition-all duration-300 group relative">
