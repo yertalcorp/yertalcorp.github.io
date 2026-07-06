@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:05:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:06:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -904,7 +904,80 @@ function initHeartbeatAnimation(targetContainer) {
 
     animate();
 }
+window.switchRealmStep = function(index) {
+    const steps = window.realmStepsData;
+    if (!steps || !steps[index]) return;
 
+    const currentStep = steps[index];
+
+    // 1. Manage Active Button States Visually
+    steps.forEach((_, i) => {
+        const btn = document.getElementById(`realm-step-btn-${i}`);
+        if (btn) {
+            if (i === index) {
+                btn.style.border = '1px solid var(--neon-color, #00f2ff)';
+                btn.style.boxShadow = '0 0 15px rgba(0, 242, 255, 0.2)';
+            } else {
+                btn.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+                btn.style.boxShadow = 'none';
+            }
+        }
+    });
+
+    // 2. Update Immersive Details Panel Context Text
+    const phaseEl = document.getElementById('realm-step-phase');
+    const titleEl = document.getElementById('realm-step-title');
+    const descEl = document.getElementById('realm-step-desc');
+    const displayEl = document.getElementById('realm-visual-display');
+
+    if (phaseEl) phaseEl.innerText = `PHASE ${currentStep.id}`;
+    if (titleEl) titleEl.innerText = currentStep.label;
+    if (descEl) descEl.innerText = currentStep.description;
+
+    // 3. Update Visual Display Block Based on Concept Step Index
+    if (displayEl) {
+        displayEl.innerHTML = ''; // Wipe out previous scene wrapper
+        
+        switch(index) {
+            case 0: // IMAGINE THE REALM
+                displayEl.innerHTML = `
+                    <div class="absolute inset-0 bg-gradient-to-tr from-purple-950/40 to-black/80 z-0"></div>
+                    <div class="text-center font-mono text-xs text-purple-400/80 animate-pulse z-10 p-4">
+                        <i class="fa-solid fa-brain text-4xl mb-3 block text-purple-500"></i>
+                        AWAITING CONCEPT SYNCING...<br>
+                        <span class="text-[10px] text-slate-500">[Neural Prompt Engine Active]</span>
+                    </div>`;
+                break;
+            case 1: // CREATE THE SPARKS
+                displayEl.innerHTML = `
+                    <div class="absolute inset-0 bg-gradient-to-tr from-amber-950/30 to-black/80 z-0"></div>
+                    <div class="text-center font-mono text-xs text-amber-400 animate-pulse z-10 p-4">
+                        <i class="fa-solid fa-bolt text-4xl mb-3 block text-amber-500 animate-bounce"></i>
+                        IGNITING TRANSLATION KINETICS...<br>
+                        <span class="text-[10px] text-slate-500">[Sparks Emitting Matrix Online]</span>
+                    </div>`;
+                break;
+            case 2: // SHARE WITH THE WORLD
+                displayEl.innerHTML = `
+                    <div class="absolute inset-0 bg-gradient-to-tr from-cyan-950/40 to-black/80 z-0"></div>
+                    <div class="text-center font-mono text-xs text-cyan-400 z-10 p-4">
+                        <i class="fa-solid fa-globe text-4xl mb-3 block text-cyan-400 animate-spin" style="animation-duration: 12s;"></i>
+                        BROADCASTING NODE STREAM...<br>
+                        <span class="text-[10px] text-emerald-400">[Global Access Gateway Open]</span>
+                    </div>`;
+                break;
+            case 3: // GROW YOUR FANDOM
+                displayEl.innerHTML = `
+                    <div class="absolute inset-0 bg-gradient-to-tr from-pink-950/40 to-black/80 z-0"></div>
+                    <div class="text-center font-mono text-xs text-pink-400 z-10 p-4">
+                        <i class="fa-solid fa-users text-4xl mb-3 block text-pink-500"></i>
+                        MAPPING SOCIAL IMPACT LOOPS...<br>
+                        <span class="text-[10px] text-slate-500">[Network Expansion: Exponential]</span>
+                    </div>`;
+                break;
+        }
+    }
+}
 function renderHowRealmsWork(data) {
     const el = document.getElementById('visual-flow-container');
     if (!el || !data.steps) return;
