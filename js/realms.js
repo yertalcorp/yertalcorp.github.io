@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:58:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:07:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -910,15 +910,17 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width || 400;
-    canvas.height = rect.height || 280;
+    canvas.width = rect.width || 700;
+    // Expanded local drawing matrix frame explicitly from 380 to 440 to match layout limits
+    canvas.height = 440;
 
     const ctx = canvas.getContext('2d');
 
     const nodes = customNodes.map(node => ({
         id: node.id,
+        // Centered coordinates vertically within the brand-new taller context space limits
         x: canvas.width * node.x_pct,
-        y: canvas.height * node.y_pct,
+        y: canvas.height * (node.y_pct * 0.9 + 0.05), // Scales and drops nodes cleanly away from top badge
         label: node.label,
         shape: uniformShape,
         color: node.color || '#00f2ff',
@@ -930,8 +932,7 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     let activePulseIndex = 0;
     let pulseProgress = 0;
 
-    // SCALED UP BOUNDING RADIUS: Expanded radius threshold from 34 to 45 to hold large text fields cleanly
-    const NODE_RADIUS = 45;
+    const NODE_RADIUS = 70;
 
     function drawNodeShape(x, y, radius, shape) {
         ctx.beginPath();
@@ -982,7 +983,7 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
                 let currentY = start.y + (end.y - start.y) * pulseProgress;
 
                 ctx.beginPath();
-                ctx.arc(currentX, currentY, 4, 0, Math.PI * 2);
+                ctx.arc(currentX, currentY, 5, 0, Math.PI * 2);
                 ctx.fillStyle = '#ffffff';
                 ctx.strokeStyle = start.color;
                 ctx.lineWidth = 2;
@@ -1002,20 +1003,19 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
 
             const currentGlow = node.glowIntensity;
             if (currentGlow > 0.05) {
-                ctx.lineWidth = 2.5;
+                ctx.lineWidth = 3;
                 ctx.strokeStyle = node.color;
-                ctx.shadowBlur = 15 * currentGlow;
+                ctx.shadowBlur = 20 * currentGlow;
                 ctx.shadowColor = node.color;
             } else {
-                ctx.lineWidth = 1;
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             }
             ctx.stroke();
             ctx.shadowBlur = 0;
 
-            // SCALED UP EMBEDDED TEXT ENGINE: Enlarged internal labels font metrics from 9px to 11px
-            ctx.font = 'bold 11px monospace';
-            ctx.fillStyle = currentGlow > 0.3 ? '#ffffff' : 'rgba(255, 255, 255, 0.75)';
+            ctx.font = 'bold 17px monospace';
+            ctx.fillStyle = currentGlow > 0.3 ? '#ffffff' : 'rgba(255, 255, 255, 0.85)';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(node.label, node.x, node.y);
@@ -1056,6 +1056,7 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     drawSimulation();
 }
 
+
 window.switchRealmStep = function(index) {
     const steps = window.realmStepsData;
     if (!steps || !steps[index]) return;
@@ -1075,27 +1076,32 @@ window.switchRealmStep = function(index) {
         }
     });
 
-    const phaseEl = document.getElementById('realm-step-phase');
+    // Removed outer phase assignment completely
     const titleEl = document.getElementById('realm-step-title');
     const descEl = document.getElementById('realm-step-desc');
     const displayEl = document.getElementById('realm-visual-display');
 
-    if (phaseEl) phaseEl.innerText = `PHASE ${currentStep.id}`;
     if (titleEl) titleEl.innerText = currentStep.label;
     if (descEl) descEl.innerText = currentStep.description;
 
     if (displayEl) {
+        // Injected the Phase element indicator directly into the absolute top-left of the dark container canvas wrapper
         displayEl.innerHTML = `
             <canvas id="neural-flow-canvas" class="absolute inset-0 w-full h-full"></canvas>
-            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 font-mono text-[9px] text-cyan-400/40 tracking-widest uppercase select-none pointer-events-none">
+            
+            <div id="realm-step-phase" class="absolute top-4 left-6 text-[14px] font-mono uppercase tracking-[0.4em] font-black z-20" style="color: var(--neon-color, #00f2ff); filter: drop-shadow(0 0 8px var(--neon-color, #00f2ff));">
+                PHASE ${currentStep.id}
+            </div>
+            
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 font-mono text-[9px] text-cyan-400/30 tracking-widest uppercase select-none pointer-events-none z-20">
                 SIMULATION_MODE // LAYER_0${index + 1}
             </div>
         `;
         
-        // Pass both the nodes array AND the parent step's uniform geometric shape choice
         initNeuralNetworkSimulation(currentStep.nodes || [], currentStep.shape || 'circle');
     }
-}    
+}
+    
 function renderHowRealmsWork(data) {
     const el = document.getElementById('visual-flow-container');
     if (!el || !data.steps) return;
@@ -1107,7 +1113,7 @@ function renderHowRealmsWork(data) {
         <div class="max-w-7xl mx-auto px-6 inner-flow-wrapper">
             <h2 class="text-3xl font-extrabold text-white uppercase tracking-widest mb-2 text-glow">${data.title || 'HOW REALMS WORK'}</h2>
             
-            <p class="text-slate-400 text-sm font-mono tracking-wider uppercase max-w-2xl mx-auto opacity-80">${data.subtitle || 'From an open prompt to a global interactive destination.'}</p>
+            <p class="text-slate-400 text-lg font-mono tracking-wider uppercase max-w-3xl mx-auto opacity-80">${data.subtitle || 'From an open prompt to a global interactive destination.'}</p>
             
             <div class="grid grid-cols-4 gap-4 max-w-5xl mx-auto mt-6 mb-6 font-mono text-xs">
                 ${data.steps.map((step, index) => `
@@ -1122,12 +1128,13 @@ function renderHowRealmsWork(data) {
                 `).join('')}
             </div>
 
-            <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-10 min-h-[480px] flex flex-col md:flex-row gap-10 items-center justify-center overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                <div id="realm-visual-display" class="w-full md:w-1/2 min-h-[280px] flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-6 shadow-inner overflow-hidden"></div>
-                <div class="w-full md:w-1/2 text-left flex flex-col justify-center relative z-10 pl-2">
-                    <div id="realm-step-phase" class="text-[10px] font-mono uppercase tracking-[0.3em] mb-3 font-bold" style="color: var(--neon-color, #00f2ff);">PHASE 01</div>
-                    <h3 id="realm-step-title" class="text-2xl font-extrabold text-white uppercase tracking-widest mb-4 border-b border-white/5 pb-3 text-glow"></h3>
-                    <p id="realm-step-desc" class="text-slate-300 text-sm font-mono leading-relaxed tracking-wider mb-6"></p>
+            <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-6 min-h-[620px] flex flex-col gap-6 items-center justify-start overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                
+                <div id="realm-visual-display" class="w-full min-h-[440px] flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-4 shadow-inner overflow-hidden"></div>
+                
+                <div class="w-full text-left flex flex-col justify-end relative z-10 px-2 mt-2 border-t border-white/5 pt-4">
+                    <h3 id="realm-step-title" class="text-3xl font-extrabold text-white uppercase tracking-widest mb-3 text-glow"></h3>
+                    <p id="realm-step-desc" class="text-slate-200 text-base font-mono leading-relaxed tracking-widest mb-2"></p>
                 </div>
             </div>
         </div>
