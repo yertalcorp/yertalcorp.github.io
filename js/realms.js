@@ -807,11 +807,6 @@ function renderHowRealmsWork(data) {
     }
     window.switchRealmStep(0);
 }
-    if (typeof window.switchRealmStep === 'undefined') {
-        initRealmFlowEngine();
-    }
-    window.switchRealmStep(0);
-}
 
 function initRealmFlowEngine() {
     window.switchRealmStep = function(index) {
