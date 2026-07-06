@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 14:55:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:31:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -757,14 +757,104 @@ function renderFooter(footer) {
         </div>
     `;
 }
+
+function initHeartbeatAnimation(targetContainer) {
+    const container = targetContainer || document.getElementById('visual-flow-container');
+    if (!container) return;
+
+    // Prevent duplicate canvases if re-rendered
+    if (document.getElementById('heartbeat-canvas')) return;
+
+    // Create and insert the canvas dynamic element above the title structure
+    const canvas = document.createElement('canvas');
+    canvas.id = 'heartbeat-canvas';
+    canvas.width = 600;
+    canvas.height = 80;
+    canvas.style.display = 'block';
+    canvas.style.maxWidth = '100%';
+    canvas.style.height = 'auto';
+    canvas.style.margin = '0 auto -10px auto';
+
+    container.insertBefore(canvas, container.firstChild);
+
+    const ctx = canvas.getContext('2d');
+    const glitchSound = new Audio('assets/audio/glitch-spark.mp3'); 
+    glitchSound.volume = 0.3;
+
+    let points = [];
+    const maxPoints = 100;
+    let xStep = canvas.width / maxPoints;
+    let frame = 0;
+
+    for (let i = 0; i < maxPoints; i++) {
+        points.push(canvas.height / 2);
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        frame++;
+
+        let nextY = canvas.height / 2;
+        
+        if (frame % 120 > 40 && frame % 120 < 55) {
+            let localFrame = frame % 120 - 40;
+            if (localFrame === 3) nextY = canvas.height / 2 + 15;
+            if (localFrame === 7) {
+                nextY = 10;
+                triggerSparkVisual(canvas.width - xStep * 2, nextY);
+                glitchSound.currentTime = 0;
+                glitchSound.play().catch(() => {}); 
+            }
+            if (localFrame === 11) nextY = canvas.height / 2 - 10;
+        } else {
+            nextY += (Math.random() - 0.5) * 2;
+        }
+
+        points.shift();
+        points.push(nextY);
+
+        ctx.beginPath();
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--neon-color').trim() || '#00f2ff';
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = ctx.strokeStyle;
+
+        for (let i = 0; i < points.length; i++) {
+            let x = i * xStep;
+            if (i === 0) ctx.moveTo(x, points[i]);
+            else ctx.lineTo(x, points[i]);
+        }
+        ctx.stroke();
+
+        requestAnimationFrame(animate);
+    }
+
+    function triggerSparkVisual(x, y) {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x - 5, y - 5, 10, 10);
+        
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#ff007f';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 4; i++) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + (Math.random() - 0.5) * 30, y + (Math.random() - 0.5) * 30);
+            ctx.stroke();
+        }
+    }
+
+    animate();
+}
+
 function renderHowRealmsWork(data) {
     const el = document.getElementById('visual-flow-container');
     if (!el || !data.steps) return;
+    el.innerHTML = ''; // Clears prior loader info if present
     
     window.realmStepsData = data.steps;
 
-    el.innerHTML = `
-        <div class="max-w-7xl mx-auto px-6">
+    el.insertAdjacentHTML('beforeend', `
+        <div class="max-w-7xl mx-auto px-6 inner-flow-wrapper">
             <h2 class="text-3xl font-extrabold text-white uppercase tracking-widest mb-2 text-glow">${data.title || 'HOW REALMS WORK'}</h2>
             
             <p class="text-slate-400 text-xs font-mono tracking-wider uppercase max-w-2xl mx-auto opacity-80">${data.subtitle || 'From single prompt to an interactive 3D virtual environment.'}</p>
@@ -800,14 +890,16 @@ function renderHowRealmsWork(data) {
                 </div>
             </div>
         </div>
-    `;
+    `);
+
+    // Initialize canvas directly inside the freshly injected inner wrapper element
+    initHeartbeatAnimation(el.querySelector('.inner-flow-wrapper'));
 
     if (typeof window.switchRealmStep === 'undefined') {
         initRealmFlowEngine();
     }
     window.switchRealmStep(0);
 }
-
 function initRealmFlowEngine() {
     window.switchRealmStep = function(index) {
         const steps = window.realmStepsData;
