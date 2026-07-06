@@ -766,7 +766,7 @@ function initHeartbeatAnimation(targetContainer) {
 
     const canvas = document.createElement('canvas');
     canvas.id = 'heartbeat-canvas';
-    canvas.width = 800;
+    canvas.width = 1200;
     canvas.height = 80;
     canvas.style.display = 'block';
     canvas.style.maxWidth = '100%';
