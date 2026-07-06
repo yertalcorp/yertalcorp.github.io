@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:15:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:20:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -911,17 +911,16 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
 
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width || 700;
-    // Expanded local drawing matrix frame explicitly from 380 to 440 to match layout limits
-    canvas.height = 440;
+    // **MAXIMIZED RENDERING LAYER MATRIX:** Canvas height adjusted to use the entire 500px viewport framework safely
+    **canvas.height = 500;**
 
     const ctx = canvas.getContext('2d');
 
     const nodes = customNodes.map(node => ({
         id: node.id,
-        // Centered coordinates vertically within the brand-new taller context space limits
         x: canvas.width * node.x_pct,
-        y: canvas.height * (node.y_pct * 0.9 + 0.05), // Scales and drops nodes cleanly away from top badge
-        label: node.label,
+        // Expanded dynamic scaling so layout handles make use of the wide headroom beautifully
+        **y: canvas.height * (node.y_pct * 0.72 + 0.16),** label: node.label,
         shape: uniformShape,
         color: node.color || '#00f2ff',
         pulse: Math.random() * Math.PI,
@@ -1056,7 +1055,6 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     drawSimulation();
 }
 
-
 window.switchRealmStep = function(index) {
     const steps = window.realmStepsData;
     if (!steps || !steps[index]) return;
@@ -1128,13 +1126,13 @@ function renderHowRealmsWork(data) {
                 `).join('')}
             </div>
 
-            <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-6 min-h-[620px] flex flex-col gap-6 items-center justify-start overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+            <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl **p-4** min-h-[620px] flex flex-col gap-4 items-center justify-start overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                 
-                <div id="realm-visual-display" class="w-full min-h-[440px] flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-4 shadow-inner overflow-hidden"></div>
+                <div id="realm-visual-display" class="w-full **min-h-[500px] h-[500px]** flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden"></div>
                 
-                <div class="w-full text-left flex flex-col justify-end relative z-10 px-2 mt-2 border-t border-white/5 pt-4">
-                    <h3 id="realm-step-title" class="text-3xl font-extrabold text-white uppercase tracking-widest mb-3 text-glow"></h3>
-                    <p id="realm-step-desc" class="text-slate-200 text-base font-mono leading-relaxed tracking-widest mb-2"></p>
+                <div class="w-full text-left flex flex-col justify-end relative z-10 **px-4 pb-2 mt-1**">
+                    <h3 id="realm-step-title" class="text-3xl font-extrabold text-white uppercase tracking-widest **mb-1** text-glow"></h3>
+                    <p id="realm-step-desc" class="text-slate-200 text-base font-mono leading-relaxed tracking-widest **m-0**"></p>
                 </div>
             </div>
         </div>
