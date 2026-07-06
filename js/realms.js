@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:47:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:58:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -915,7 +915,6 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
 
     const ctx = canvas.getContext('2d');
 
-    // Map DB relative points into local coordinate targets
     const nodes = customNodes.map(node => ({
         id: node.id,
         x: canvas.width * node.x_pct,
@@ -924,15 +923,17 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
         shape: uniformShape,
         color: node.color || '#00f2ff',
         pulse: Math.random() * Math.PI,
-        glowIntensity: 0 // Added runtime state tracking to handle impact ignition transitions
+        glowIntensity: 0
     }));
 
     let particles = [];
     let activePulseIndex = 0;
-    let pulseProgress = 0; // Replaces static line paths with traveling packet state tracking
+    let pulseProgress = 0;
 
-    // Expanded radius from 24 to 34 to fully hold text strings inside bounds safely
-    const NODE_RADIUS = 34; function drawNodeShape(x, y, radius, shape) {
+    // SCALED UP BOUNDING RADIUS: Expanded radius threshold from 34 to 45 to hold large text fields cleanly
+    const NODE_RADIUS = 45;
+
+    function drawNodeShape(x, y, radius, shape) {
         ctx.beginPath();
         if (shape === 'diamond') {
             ctx.moveTo(x, y - radius);
@@ -958,15 +959,13 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     function drawSimulation() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // 1. ADVANCE AND ANIMATE KINETIC PULSES
-        pulseProgress += 0.025; // Speeds up the traveling packet movement
+        pulseProgress += 0.025;
         if (pulseProgress >= 1) {
             pulseProgress = 0;
             activePulseIndex = (activePulseIndex + 1) % nodes.length;
-            // Wake up the destination node instantly upon pulse strike impact
-            nodes[activePulseIndex].glowIntensity = 1.0; }
+            nodes[activePulseIndex].glowIntensity = 1.0;
+        }
 
-        // 2. RENDER THE STATIC NETWORK PIPELINE CHANNELS
         for (let i = 0; i < nodes.length; i++) {
             const start = nodes[i];
             const end = nodes[(i + 1) % nodes.length];
@@ -978,7 +977,6 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            // Render a distinct traveling energy packet along the track instead of rendering lines
             if (i === activePulseIndex) {
                 let currentX = start.x + (end.x - start.x) * pulseProgress;
                 let currentY = start.y + (end.y - start.y) * pulseProgress;
@@ -996,14 +994,12 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
             }
         }
 
-        // 3. RENDER ALL NODES WITH EMBEDDED DATA STRINGS
         nodes.forEach((node) => {
-            // Decays glow intensity gradually back down over time framework loops
-            node.glowIntensity *= 0.95; ctx.fillStyle = 'rgba(5, 5, 5, 0.85)';
+            node.glowIntensity *= 0.95;
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.85)';
             drawNodeShape(node.x, node.y, NODE_RADIUS, node.shape);
             ctx.fill();
 
-            // Set up conditional layout metrics if node is experiencing fresh energy strike impact
             const currentGlow = node.glowIntensity;
             if (currentGlow > 0.05) {
                 ctx.lineWidth = 2.5;
@@ -1017,14 +1013,13 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
             ctx.stroke();
             ctx.shadowBlur = 0;
 
-            // Transferred dynamic text variables directly into geometric vector boundaries
-            ctx.font = 'bold 9px monospace';
+            // SCALED UP EMBEDDED TEXT ENGINE: Enlarged internal labels font metrics from 9px to 11px
+            ctx.font = 'bold 11px monospace';
             ctx.fillStyle = currentGlow > 0.3 ? '#ffffff' : 'rgba(255, 255, 255, 0.75)';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(node.label, node.x, node.y); // Render precisely at true shape center coordinates
+            ctx.fillText(node.label, node.x, node.y);
 
-            // 4. EMIT REACTIONARY PARTICLES
             if (currentGlow > 0.5 && Math.random() > 0.3) {
                 particles.push({
                     x: node.x,
@@ -1038,7 +1033,6 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
             }
         });
 
-        // 5. RENDERING PIPELINE EMISSIONS ENGINE
         particles = particles.filter(p => {
             p.x += p.vx;
             p.y += p.vy;
@@ -1061,6 +1055,7 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
 
     drawSimulation();
 }
+
 window.switchRealmStep = function(index) {
     const steps = window.realmStepsData;
     if (!steps || !steps[index]) return;
@@ -1112,7 +1107,7 @@ function renderHowRealmsWork(data) {
         <div class="max-w-7xl mx-auto px-6 inner-flow-wrapper">
             <h2 class="text-3xl font-extrabold text-white uppercase tracking-widest mb-2 text-glow">${data.title || 'HOW REALMS WORK'}</h2>
             
-            <p class="text-slate-400 text-xs font-mono tracking-wider uppercase max-w-2xl mx-auto opacity-80">${data.subtitle || 'From an open prompt to a global interactive destination.'}</p>
+            <p class="text-slate-400 text-sm font-mono tracking-wider uppercase max-w-2xl mx-auto opacity-80">${data.subtitle || 'From an open prompt to a global interactive destination.'}</p>
             
             <div class="grid grid-cols-4 gap-4 max-w-5xl mx-auto mt-6 mb-6 font-mono text-xs">
                 ${data.steps.map((step, index) => `
@@ -1127,12 +1122,12 @@ function renderHowRealmsWork(data) {
                 `).join('')}
             </div>
 
-            <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-10 min-h-[420px] flex flex-col md:flex-row gap-10 items-center justify-center overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+            <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-10 min-h-[480px] flex flex-col md:flex-row gap-10 items-center justify-center overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                 <div id="realm-visual-display" class="w-full md:w-1/2 min-h-[280px] flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-6 shadow-inner overflow-hidden"></div>
                 <div class="w-full md:w-1/2 text-left flex flex-col justify-center relative z-10 pl-2">
                     <div id="realm-step-phase" class="text-[10px] font-mono uppercase tracking-[0.3em] mb-3 font-bold" style="color: var(--neon-color, #00f2ff);">PHASE 01</div>
                     <h3 id="realm-step-title" class="text-2xl font-extrabold text-white uppercase tracking-widest mb-4 border-b border-white/5 pb-3 text-glow"></h3>
-                    <p id="realm-step-desc" class="text-slate-400 text-xs font-mono leading-relaxed tracking-wide mb-6"></p>
+                    <p id="realm-step-desc" class="text-slate-300 text-sm font-mono leading-relaxed tracking-wider mb-6"></p>
                 </div>
             </div>
         </div>
