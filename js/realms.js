@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 13:50:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 12:55:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -768,21 +768,22 @@ function renderHowRealmsWork(data) {
             <h2 class="text-3xl font-extrabold text-white uppercase tracking-widest mb-2 text-glow">${data.title || 'HOW REALMS WORK'}</h2>
             <p class="text-slate-400 text-xs font-mono tracking-wider uppercase max-w-2xl mx-auto mb-16 opacity-80">${data.subtitle || 'From single prompt to an interactive 3D virtual environment.'}</p>
             
-            <div class="flex flex-col md:flex-row items-stretch justify-center gap-8 mb-12 font-mono text-xs">
+            <div class="flex flex-row items-center justify-center gap-4 max-w-3xl mx-auto mb-12 font-mono text-xs">
                 ${data.steps.map((step, index) => `
-                    <div class="flex-1 flex items-center gap-4">
-                        <button onclick="switchRealmStep(${index})" id="realm-step-btn-${index}" class="surreal-3d-btn w-full p-5 rounded-xl text-white transition-all duration-300 group relative">
+                    <div class="w-48 flex items-center justify-center">
+                        <button onclick="switchRealmStep(${index})" id="realm-step-btn-${index}" class="surreal-3d-btn w-full p-4 rounded-xl text-white transition-all duration-300 group relative">
                             <div class="inner-content flex flex-col items-center justify-center pointer-events-none">
-                                <div class="text-[9px] tracking-[0.25em] text-cyan-400/60 mb-1 group-hover:text-cyan-400 font-bold transition-colors">PHASE 0${step.id}</div>
-                                <div class="font-extrabold tracking-widest uppercase text-xs">[${step.label}]</div>
+                                <div class="text-[8px] tracking-[0.2em] text-cyan-400/60 mb-0.5 group-hover:text-cyan-400 font-bold transition-colors">PHASE 0${step.id}</div>
+                                <div class="font-extrabold tracking-wider uppercase text-[10px] whitespace-nowrap">${step.label}</div>
                             </div>
                         </button>
-                        ${index < data.steps.length - 1 ? `
-                            <div class="hidden md:flex items-center justify-center text-slate-700 select-none pointer-events-none px-1">
-                                <i class="fa-solid fa-chevron-right text-xs opacity-20" style="color: var(--neon-color, #00f2ff);"></i>
-                            </div>
-                        ` : ''}
                     </div>
+                    
+                    ${index < data.steps.length - 1 ? `
+                        <div class="flex items-center justify-center text-slate-700 select-none pointer-events-none px-2 shrink-0">
+                            <i class="fa-solid fa-chevron-right text-xs opacity-40 animate-pulse" style="color: var(--neon-color, #00f2ff);"></i>
+                        </div>
+                    ` : ''}
                 `).join('')}
             </div>
 
@@ -792,7 +793,7 @@ function renderHowRealmsWork(data) {
                     </div>
                 
                 <div class="w-full md:w-1/2 text-left flex flex-col justify-center relative z-10 pl-2">
-                    <div id="realm-step-phase" class="text-[10px] font-mono uppercase tracking-[0.35em] mb-3 font-bold" style="color: var(--neon-color, #00f2ff);">PHASE 01</div>
+                    <div id="realm-step-phase" class="text-[10px] font-mono uppercase tracking-[0.3em] mb-3 font-bold" style="color: var(--neon-color, #00f2ff);">PHASE 01</div>
                     <h3 id="realm-step-title" class="text-2xl font-extrabold text-white uppercase tracking-widest mb-4 border-b border-white/5 pb-3 text-glow">CREATE A REALM</h3>
                     <p id="realm-step-desc" class="text-slate-400 text-xs font-mono leading-relaxed tracking-wide mb-6">Initial configuration data stream.</p>
                 </div>
