@@ -911,7 +911,7 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
 
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width || 700;
-    canvas.height = 460;
+    canvas.height = 480;
 
     const ctx = canvas.getContext('2d');
 
@@ -1126,7 +1126,7 @@ function renderHowRealmsWork(data) {
             </div>
 
             <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-4 min-h-[640px] flex flex-col justify-between overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                <div id="realm-visual-display" class="w-full flex-1 min-h-[460px] shrink-0 flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden"></div>
+                <div id="realm-visual-display" class="w-full flex-1 min-h-[480px] shrink-0 flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden"></div>
                 
                 <div class="w-full border-t border-white/5 text-left flex flex-col justify-start px-2 pt-4 mt-2">
                     <h3 id="realm-step-title" class="text-3xl font-extrabold text-white uppercase tracking-widest mb-1 text-glow"></h3>
