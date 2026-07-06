@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 21:49:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 21:57:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -1130,12 +1130,11 @@ function renderHowRealmsWork(data) {
       <div id="realm-visual-display" 
            class="w-full min-h-[480px] flex-1 flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden">
       </div>
-    </div>
-
-    <!-- Description stays at its natural height -->
-    <div class="border-t border-white/5 text-left px-2 pt-2 shrink-0">
-        <h3 id="realm-step-title" class="text-3xl font-extrabold text-white uppercase tracking-widest mb-1 text-glow"></h3>
-        <p id="realm-step-desc" class="text-slate-200 text-base font-mono leading-relaxed tracking-widest m-0"> </p>
+        <!-- Description stays at its natural height -->
+        <div class="border-t border-white/5 text-left px-2 pt-2 shrink-0">
+            <h3 id="realm-step-title" class="text-3xl font-extrabold text-white uppercase tracking-widest mb-1 text-glow"></h3>
+            <p id="realm-step-desc" class="text-slate-200 text-base font-mono leading-relaxed tracking-widest m-0"> </p>
+        </div>
     </div>
 </div>
     `);
