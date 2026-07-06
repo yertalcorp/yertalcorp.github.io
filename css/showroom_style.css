@@ -569,3 +569,33 @@ html.realms-page-root footer {
     -webkit-backdrop-filter: blur(var(--card-blur, 15px)) ;
     border: 1px solid rgba(255, 255, 255, 0.05) ;
 }
+
+/* Inline styles fallback for immediate testing or direct inject */
+@keyframes dash {
+  to {
+    stroke-dashoffset: -160;
+  }
+}
+.animate-dash {
+  animation: dash 3s linear infinite;
+}
+
+@keyframes floatBubble {
+  0% {
+    transform: translateY(0) scale(0.8);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-110px) scale(1.05);
+    opacity: 0;
+  }
+}
+.animate-float-bubble {
+  animation: floatBubble 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
