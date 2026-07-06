@@ -99,6 +99,13 @@
 .gap-6 { gap: 1.5rem ; }
 .gap-8 { gap: 2rem ; }
 .gap-10 { gap: 2.5rem; }
+.gap-12 { gap: 3rem; }
+.gap-14 { gap: 3.5rem; }
+.gap-16 { gap: 4rem; }
+.gap-18 { gap: 4.5rem; }
+.gap-20 { gap: 5rem; }
+.gap-22 { gap: 5.5rem; }
+.gap-24 { gap: 6rem; }
 .fixed { position: fixed; }
 .z-50 { z-index: 50; }
 .hidden { display: none; }
@@ -180,23 +187,66 @@
 
 /* --- 3. SPACING & SIZING --- */
 .mx-auto { margin-left: auto; margin-right: auto; }
+.mt-2 { margin-top: 0.5rem ; }
 .mt-4 { margin-top: 1rem ; }
+.mt-6 { margin-top: 1.5rem ; }
 .mt-8 { margin-top: 2rem ; }
+.mt-10 { margin-top: 2.5rem ; }
+.mt-12 { margin-top: 3rem ; }
+.mt-14 { margin-top: 3.5rem ; }
+.mt-16 { margin-top: 4rem ; }
+.mt-18 { margin-top: 4.5rem ; }
+.mt-20 { margin-top: 5rem ; }
+.mt-22 { margin-top: 5.5rem ; }
+.mt-24 { margin-top: 6rem ; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-8 { margin-bottom: 2rem; }
 .mb-9 { margin-bottom: 2.25rem; }
+.mb-10 { margin-bottom: 2.5rem; }
+.mb-12 { margin-bottom: 3rem; }
+.mb-14 { margin-bottom: 3.5rem; }
 .mb-16 { margin-bottom: 4rem ; }
+.mb-18 { margin-bottom: 4.5rem ; }
+.mb-20 { margin-bottom: 5rem ; }
+.mb-22 { margin-bottom: 5.5rem ; }
 .mb-24 { margin-bottom: 6rem ; }
+.pt-2 { padding-top: 0.5rem ; }
+.pt-4 { padding-top: 1rem ; }
+.pt-6 { padding-top: 1.5rem ; }
+.pt-8 { padding-top: 2rem ; }
+.pt-10 { padding-top: 2.5rem ; }
+.pt-12 { padding-top: 3rem ; }
+.pt-14 { padding-top: 3.5rem ; }
+.pt-16 { padding-top: 4rem ; }
+.pt-18 { padding-top: 4.5rem ; }
 .pt-20 { padding-top: 5rem ; }
+.pt-22 { padding-top: 5.5rem ; }
+.pt-24 { padding-top: 6rem ; } 
 .pt-32 { padding-top: 8rem ; }
+.px-2 { padding-left: 0.5rem ; padding-right: 0.5rem ; }
 .px-4 { padding-left: 1rem ; padding-right: 1rem ; }
-.py-2 { padding-top: 0.5rem ; padding-bottom: 0.5rem ; }
 .px-6 { padding-left: 1.5rem ; padding-right: 1.5rem ; }
-.py-4 { padding-top: 1rem ; padding-bottom: 1rem ; }
-.py-8 { padding-top: 2rem ; padding-bottom: 2rem ; }
-.py-12 { padding-top: 3rem ; padding-bottom: 3rem ; }
-.p-8 { padding: 2rem ; }
+.px-8 { padding-left: 2rem ; padding-right: 2rem ; }
+.px-10 { padding-left: 2.5rem ; padding-right: 2.5rem ; }
+.px-12 { padding-left: 3rem ; padding-right: 3rem ; }
+.px-14 { padding-left: 3.5rem ; padding-right: 3.5rem ; }
+.px-16 { padding-left: 4rem ; padding-right: 4rem ; }
+.px-18 { padding-left: 4.5rem ; padding-right: 4.5rem ; }
 .px-20 { padding-left: 5rem ; padding-right: 5rem ; }
-.mb-24 { margin-bottom: 6rem ; }
-.pt-24 { padding-top: 6rem ; } /* Pulls hero up slightly more than pt-32 */
+.px-22 { padding-left: 5.5rem ; padding-right: 5.5rem ; }
+.px-24 { padding-left: 6rem ; padding-right: 6rem ; }
+.py-2 { padding-top: 0.5rem ; padding-bottom: 0.5rem ; }
+.py-4 { padding-top: 1rem ; padding-bottom: 1rem ; }
+.px-6 { padding-left: 1.5rem ; padding-right: 1.5rem ; }
+.py-8 { padding-top: 2rem ; padding-bottom: 2rem ; }
+.py-10 { padding-top: 2.5rem ; padding-bottom: 2.5rem ; }
+.py-12 { padding-top: 3rem ; padding-bottom: 3rem ; }
+.p-4 { padding: 1rem ; }
+.p-8 { padding: 2rem ; }
+.p-12 { padding: 3rem ; }
+.p-16 { padding: 4rem ; }
 
 .w-full { width: 100% ; }
 .w-9 { width: 2.25rem; }
