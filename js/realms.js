@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:33:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:47:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -915,22 +915,24 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
 
     const ctx = canvas.getContext('2d');
 
-    // Map the relative points using the uniform step-level shape designation override
+    // Map DB relative points into local coordinate targets
     const nodes = customNodes.map(node => ({
         id: node.id,
         x: canvas.width * node.x_pct,
         y: canvas.height * node.y_pct,
         label: node.label,
-        shape: uniformShape, // Forces every sub-node in this step view to share the same geometry
+        shape: uniformShape,
         color: node.color || '#00f2ff',
-        pulse: Math.random() * Math.PI
+        pulse: Math.random() * Math.PI,
+        glowIntensity: 0 // Added runtime state tracking to handle impact ignition transitions
     }));
 
     let particles = [];
-    let flowProgress = 0;
     let activePulseIndex = 0;
+    let pulseProgress = 0; // Replaces static line paths with traveling packet state tracking
 
-    function drawNodeShape(x, y, radius, shape) {
+    // Expanded radius from 24 to 34 to fully hold text strings inside bounds safely
+    const NODE_RADIUS = 34; function drawNodeShape(x, y, radius, shape) {
         ctx.beginPath();
         if (shape === 'diamond') {
             ctx.moveTo(x, y - radius);
@@ -956,12 +958,15 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     function drawSimulation() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        flowProgress += 0.01;
-        if (flowProgress > 1) {
-            flowProgress = 0;
+        // 1. ADVANCE AND ANIMATE KINETIC PULSES
+        pulseProgress += 0.025; // Speeds up the traveling packet movement
+        if (pulseProgress >= 1) {
+            pulseProgress = 0;
             activePulseIndex = (activePulseIndex + 1) % nodes.length;
-        }
+            // Wake up the destination node instantly upon pulse strike impact
+            nodes[activePulseIndex].glowIntensity = 1.0; }
 
+        // 2. RENDER THE STATIC NETWORK PIPELINE CHANNELS
         for (let i = 0; i < nodes.length; i++) {
             const start = nodes[i];
             const end = nodes[(i + 1) % nodes.length];
@@ -970,70 +975,74 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
             ctx.moveTo(start.x, start.y);
             ctx.lineTo(end.x, end.y);
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1.5;
             ctx.stroke();
 
+            // Render a distinct traveling energy packet along the track instead of rendering lines
             if (i === activePulseIndex) {
+                let currentX = start.x + (end.x - start.x) * pulseProgress;
+                let currentY = start.y + (end.y - start.y) * pulseProgress;
+
                 ctx.beginPath();
-                ctx.moveTo(start.x, start.y);
-                let midX = start.x + (end.x - start.x) * flowProgress;
-                let midY = start.y + (end.y - start.y) * flowProgress;
-                ctx.lineTo(midX, midY);
+                ctx.arc(currentX, currentY, 4, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
                 ctx.strokeStyle = start.color;
                 ctx.lineWidth = 2;
-                ctx.shadowBlur = 8;
+                ctx.shadowBlur = 12;
                 ctx.shadowColor = start.color;
+                ctx.fill();
                 ctx.stroke();
                 ctx.shadowBlur = 0;
             }
         }
 
-        nodes.forEach((node, i) => {
-            node.pulse += 0.04;
-            const isPulseTarget = i === activePulseIndex;
-
-            ctx.fillStyle = 'rgba(5, 5, 5, 0.7)';
-            drawNodeShape(node.x, node.y, 24, node.shape);
+        // 3. RENDER ALL NODES WITH EMBEDDED DATA STRINGS
+        nodes.forEach((node) => {
+            // Decays glow intensity gradually back down over time framework loops
+            node.glowIntensity *= 0.95; ctx.fillStyle = 'rgba(5, 5, 5, 0.85)';
+            drawNodeShape(node.x, node.y, NODE_RADIUS, node.shape);
             ctx.fill();
 
-            ctx.lineWidth = isPulseTarget ? 2 : 1;
-            ctx.strokeStyle = isPulseTarget ? node.color : 'rgba(255, 255, 255, 0.15)';
-            
-            if (isPulseTarget) {
-                ctx.shadowBlur = 10 + Math.sin(node.pulse) * 4;
+            // Set up conditional layout metrics if node is experiencing fresh energy strike impact
+            const currentGlow = node.glowIntensity;
+            if (currentGlow > 0.05) {
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = node.color;
+                ctx.shadowBlur = 15 * currentGlow;
                 ctx.shadowColor = node.color;
+            } else {
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
             }
             ctx.stroke();
             ctx.shadowBlur = 0;
 
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, 18, Math.PI * 1.2, Math.PI * 1.6);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            ctx.font = 'bold 8px monospace';
-            ctx.fillStyle = isPulseTarget ? '#fff' : 'rgba(255, 255, 255, 0.3)';
+            // Transferred dynamic text variables directly into geometric vector boundaries
+            ctx.font = 'bold 9px monospace';
+            ctx.fillStyle = currentGlow > 0.3 ? '#ffffff' : 'rgba(255, 255, 255, 0.75)';
             ctx.textAlign = 'center';
-            ctx.fillText(node.label, node.x, node.y + 36);
-            
-            if (isPulseTarget && Math.random() > 0.6 && particles.length < 50) {
+            ctx.textBaseline = 'middle';
+            ctx.fillText(node.label, node.x, node.y); // Render precisely at true shape center coordinates
+
+            // 4. EMIT REACTIONARY PARTICLES
+            if (currentGlow > 0.5 && Math.random() > 0.3) {
                 particles.push({
                     x: node.x,
                     y: node.y,
-                    vx: (Math.random() - 0.5) * 1.2,
-                    vy: (Math.random() - 0.5) * 1.2,
-                    size: Math.random() * 2 + 0.5,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    size: Math.random() * 2 + 1,
                     alpha: 1.0,
                     color: node.color
                 });
             }
         });
 
+        // 5. RENDERING PIPELINE EMISSIONS ENGINE
         particles = particles.filter(p => {
             p.x += p.vx;
             p.y += p.vy;
-            p.alpha -= 0.015;
+            p.alpha -= 0.02;
 
             if (p.alpha > 0) {
                 ctx.fillStyle = p.color;
@@ -1052,7 +1061,6 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
 
     drawSimulation();
 }
-
 window.switchRealmStep = function(index) {
     const steps = window.realmStepsData;
     if (!steps || !steps[index]) return;
