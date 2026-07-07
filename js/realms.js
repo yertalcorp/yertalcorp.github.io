@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 12:13:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 12:28:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -1112,19 +1112,24 @@ window.switchRealmStep = function(index) {
     if (descEl) descEl.innerText = currentStep.description;
 
     if (displayEl) {
-        // Injected the Phase element indicator directly into the absolute top-left of the dark container canvas wrapper
-        displayEl.innerHTML = `
-            <canvas id="neural-flow-canvas" class="absolute inset-0 w-full h-full"></canvas>
-            
-            <div id="realm-step-phase" class="absolute top-4 left-6 text-[14px] font-mono uppercase tracking-[0.4em] font-black z-20" style="color: var(--neon-color, #00f2ff); filter: drop-shadow(0 0 8px var(--neon-color, #00f2ff));">
-                PHASE ${currentStep.id}
-            </div>
-            
-            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 font-mono text-[9px] text-cyan-400/30 tracking-widest uppercase select-none pointer-events-none z-20">
-                SIMULATION_MODE // LAYER_0${index + 1}
-            </div>
-        `;
+    // Safely preserve the canvas template element and update only the structural textual HUD overlays
+        let phaseHUD = document.getElementById('realm-step-phase');
+        let layerHUD = document.getElementById('realm-step-layer');
+
+        if (!phaseHUD) {
+            displayEl.insertAdjacentHTML('beforeend', `
+                <div id="realm-step-phase" class="absolute top-4 left-6 text-[14px] font-mono uppercase tracking-[0.4em] font-black z-20" style="color: var(--neon-color, #00f2ff); filter: drop-shadow(0 0 8px var(--neon-color, #00f2ff));"></div>
+                <div id="realm-step-layer" class="absolute bottom-3 left-1/2 -translate-x-1/2 font-mono text-[9px] text-cyan-400/30 tracking-widest uppercase select-none pointer-events-none z-20"></div>
+            `);
+            phaseHUD = document.getElementById('realm-step-phase');
+            layerHUD = document.getElementById('realm-step-layer');
+        }
+
+        phaseHUD.innerText = `PHASE ${currentStep.id}`;
+        layerHUD.innerText = `SIMULATION_MODE // LAYER_0${index + 1}`;
         
+        initNeuralNetworkSimulation(currentStep.nodes || [], currentStep.shape || 'circle');
+    }        
         initNeuralNetworkSimulation(currentStep.nodes || [], currentStep.shape || 'circle');
     }
 }
