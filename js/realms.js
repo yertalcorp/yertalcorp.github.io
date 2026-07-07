@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 12:38:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 13:03:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -928,7 +928,7 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     const ctx = canvas.getContext('2d');
 
     const nodes = customNodes.map(node => {
-        const mappedY = node.y_pct * 0.65 + 0.18;
+        const mappedY = node.y_pct * 0.84 + 0.08;;
         console.log(`📍 [Neural-Flow] Node Mapping (${node.label || 'Unnamed'}):`, { originalX: node.x_pct, originalY: node.y_pct, mappedY: mappedY });
         return {
             id: node.id,
@@ -946,7 +946,7 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     let activePulseIndex = 0;
     let pulseProgress = 0;
 
-    const NODE_RADIUS = 70;
+    const NODE_RADIUS = 105;
 
     function drawNodeShape(x, y, radius, shape) {
         ctx.beginPath();
@@ -1042,7 +1042,7 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
             ctx.stroke();
             ctx.shadowBlur = 0;
 
-            ctx.font = 'bold 17px monospace';
+            ctx.font = 'bold 25px monospace';
             ctx.fillStyle = currentGlow > 0.3 ? '#ffffff' : 'rgba(255, 255, 255, 0.85)';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -1094,8 +1094,9 @@ window.switchRealmStep = function(index) {
         const btn = document.getElementById(`realm-step-btn-${i}`);
         if (btn) {
             if (i === index) {
-                btn.style.border = '1px solid var(--neon-color, #00f2ff)';
-                btn.style.boxShadow = '0 0 15px rgba(0, 242, 255, 0.2)';
+                // Made the active border and neon glow significantly more prominent
+                btn.style.border = '2px solid var(--neon-color, #00f2ff)';
+                btn.style.boxShadow = '0 0 30px rgba(0, 242, 255, 0.65), inset 0 0 15px rgba(0, 242, 255, 0.3)';
             } else {
                 btn.style.border = '1px solid rgba(255, 255, 255, 0.2)';
                 btn.style.boxShadow = 'none';
@@ -1103,35 +1104,43 @@ window.switchRealmStep = function(index) {
         }
     });
 
-    // Removed outer phase assignment completely
     const titleEl = document.getElementById('realm-step-title');
     const descEl = document.getElementById('realm-step-desc');
     const displayEl = document.getElementById('realm-visual-display');
 
-    if (titleEl) titleEl.innerText = currentStep.label;
+    if (titleEl) {
+        titleEl.innerText = currentStep.label;
+        // Applied the decorative metallic text classification
+        titleEl.className = 'text-3xl font-extrabold uppercase tracking-widest mb-1 metallic-text-header';
+    }
     if (descEl) descEl.innerText = currentStep.description;
 
     if (displayEl) {
-    // Safely preserve the canvas template element and update only the structural textual HUD overlays
         let phaseHUD = document.getElementById('realm-step-phase');
         let layerHUD = document.getElementById('realm-step-layer');
 
+        // If the overlay elements don't exist yet, construct them safely
         if (!phaseHUD) {
             displayEl.insertAdjacentHTML('beforeend', `
-                <div id="realm-step-phase" class="absolute top-4 left-6 text-[14px] font-mono uppercase tracking-[0.4em] font-black z-20" style="color: var(--neon-color, #00f2ff); filter: drop-shadow(0 0 8px var(--neon-color, #00f2ff));"></div>
-                <div id="realm-step-layer" class="absolute bottom-3 left-1/2 -translate-x-1/2 font-mono text-[9px] text-cyan-400/30 tracking-widest uppercase select-none pointer-events-none z-20"></div>
+                <!-- Positioned the phase tag explicitly at the top center of the canvas panel -->
+                <div id="realm-step-phase" class="absolute top-2 left-1/2 -translate-x-1/2 text-[14px] font-mono uppercase tracking-[0.4em] font-black z-20 text-center" style="color: var(--neon-color, #00f2ff); filter: drop-shadow(0 0 8px var(--neon-color, #00f2ff));"></div>
+                <!-- Kept a dummy or hidden element reference if other logic expects layerHUD to exist in the DOM -->
+                <div id="realm-step-layer" style="display: none;"></div>
             `);
             phaseHUD = document.getElementById('realm-step-phase');
             layerHUD = document.getElementById('realm-step-layer');
         }
 
+        // Update the topmost phase indicator text
         phaseHUD.innerText = `PHASE ${currentStep.id}`;
-        layerHUD.innerText = `SIMULATION_MODE // LAYER_0${index + 1}`;
+        
+        // Clear the canvas name text to prevent it from cluttering the center coordinate area
+        layerHUD.innerText = '';
         
         initNeuralNetworkSimulation(currentStep.nodes || [], currentStep.shape || 'circle');
     }        
 }
-    
+
 function renderHowRealmsWork(data) {
     const el = document.getElementById('visual-flow-container');
     if (!el || !data.steps) return;
@@ -1158,10 +1167,9 @@ el.insertAdjacentHTML('beforeend', `
             `).join('')}
         </div>
         
-<!-- Clean layout architecture powered by dedicated style definitions -->
-<div id="realm-immersive-panel" class="featured-card metallic-bezel realm-immersive-panel-container">
-    
-    <div id="realm-visual-display" class="realm-visual-display-canvas-frame">
+<!-- Stripped layout padding from container frames to make 100% use of canvas real estate -->
+<div id="realm-immersive-panel" class="featured-card metallic-bezel realm-immersive-panel-container p-minimal">
+    <div id="realm-visual-display" class="realm-visual-display-canvas-frame p-minimal">
         <canvas id="neural-nodes-canvas" class="w-full h-full absolute inset-0"></canvas>
     </div>
             <!-- TEXT BOX: Retains natural shrink-0 sizing boundaries -->
