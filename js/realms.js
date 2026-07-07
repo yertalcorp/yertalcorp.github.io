@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 11:36:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 11:59:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -915,7 +915,8 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     function resizeCanvas() {
         const rect = canvas.parentNode.getBoundingClientRect();
         canvas.width = rect.width;
-        canvas.height = 1000; 
+        // Matches drawing buffer height to layout height to prevent structural vertical squishing
+        canvas.height = rect.height; 
         console.log("📐 [Neural-Flow] Parent Container Rect:", { width: rect.width, height: rect.height });
         console.log("🎨 [Neural-Flow] Canvas Drawing Size Set To:", { width: canvas.width, height: canvas.height });
     }
@@ -970,8 +971,8 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     }
 
     function drawSimulation() {
-        // Prevents ghost memory rendering leaks if user switches views away from the canvas completely
-        if (!document.getElementById('neural-flow-canvas')) return;
+        // Corrected target check to match the active canvas ID container context
+        if (!document.getElementById('neural-nodes-canvas')) return;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
