@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:56:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2229,6 +2229,7 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
     hud.classList.add('active');
 };
 
+/* The actual routine called from arcade/index.html on new and update current */
 window.submitNewCurrent = async () => {
     const hud = document.getElementById('add-current-hud');
     const mode = hud.dataset.mode; // 'add' or 'update'
@@ -2250,18 +2251,20 @@ window.submitNewCurrent = async () => {
     const prevName = hud.dataset.prevName || '';
     const prevType = hud.dataset.prevType || '';
     const prevPrivacy = hud.dataset.prevPrivacy || 'private';
-
+    
+    // Enforce immutable identification mechanics across updates
     let finalId;
-    let nameChanged = newName !== prevName;
 
-    if (nameChanged) {
-        // Generate new ID because name changed (or it's a brand new 'add')
-        finalId = newName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    if (mode === 'add') {
+        // Generates an unbreakable string token key with timestamp layout mapping
+        finalId = 'curr-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now().toString(36);
     } else {
-        // No name change: preserve the existing ID
+        // Update mode strictly preserves the historical routing folder signature regardless of name renames
         finalId = prevId;
     }
-
+    
+    // Simple boolean track for modification guards
+    const hasNameChanged = newName !== prevName;
     // 4. Change Detection Guard
     const hasTypeChanged = newType !== prevType;
     const hasPrivacyChanged = newPrivacy !== prevPrivacy;
@@ -2291,23 +2294,9 @@ window.submitNewCurrent = async () => {
             await saveToRealtimeDB(path, { ...dataPacket, date_created: timestamp });
         } else {
             // UPDATE MODE
-            if (nameChanged) {
-                // Name changed: We must move the record (Delete old, Create new)
-                // We'll need to fetch sparks first to carry them over
-                const oldPath = `users/${ownerUid}/infrastructure/currents/${prevId}`;
-                const newPath = `users/${ownerUid}/infrastructure/currents/${finalId}`;
-                
-                // Carry over the sparks from our local cache before deleting
-                const sparks = databaseCache.users?.[ownerUid]?.infrastructure?.currents?.[prevId]?.sparks || {};
-                const originalDate = databaseCache.users?.[ownerUid]?.infrastructure?.currents?.[prevId]?.date_created || timestamp;
-
-                await saveToRealtimeDB(oldPath, null); // Remove old
-                await saveToRealtimeDB(newPath, { ...dataPacket, date_created: originalDate, sparks }); // Set new
-            } else {
-                // Only non-ID fields changed: standard update
-                const path = `users/${ownerUid}/infrastructure/currents/${prevId}`;
-                await update(ref(db, path), dataPacket);
-            }
+            // Refactored Update Route: Target location remains identical, dropping complex subtree migrations entirely
+            const path = `users/${ownerUid}/infrastructure/currents/${prevId}`;
+            await update(ref(db, path), dataPacket);
         }
 
         window.closeAddCurrentHud();
@@ -2321,47 +2310,6 @@ window.submitNewCurrent = async () => {
 /*
  * Objective: Create a new Current with specific metadata.
  */
-window.addNewCurrent = async (name, type, privacy, oldId = null) => {
-    const activeUser = window.auth?.currentUser;
-    if (!activeUser) throw new Error("Authentication required.");
-
-    const newId = name.toUpperCase().replace(/\s+/g, '-');
-    const basePath = `users/${activeUser.uid}/infrastructure/currents`;
-    const updates = {};
-
-    if (oldId) {
-        // UPDATE MODE: Fetch existing nested data (sparks, etc.) to ensure nothing is lost
-        const snapshot = await window.get(window.ref(window.db, `${basePath}/${oldId}`));
-        const existingData = snapshot.val() || {};
-
-        // Merge existing sparks/data with new metadata
-        updates[`${basePath}/${newId}`] = {
-            ...existingData,
-            id: newId,
-            name: name,
-            type: type,
-            privacy: privacy,
-            updated_at: Date.now()
-        };
-
-        // If the ID changed, delete the old node
-        if (newId !== oldId) {
-            updates[`${basePath}/${oldId}`] = null;
-        }
-    } else {
-        // ADD MODE: Create fresh record
-        updates[`${basePath}/${newId}`] = {
-            id: newId,
-            name: name,
-            type: type,
-            privacy: privacy,
-            created_at: Date.now()
-        };
-    }
-
-    return window.update(window.ref(window.db), updates);
-};
-
 /*
  * Objective: Clean and normalize raw LLM output.
  * Tasks: Scrub Unicode, remove markdown fences, and strip trailing JSON metadata.
