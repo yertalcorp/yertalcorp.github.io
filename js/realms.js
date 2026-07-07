@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 12:12:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 12:13:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -915,8 +915,9 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     function resizeCanvas() {
         const rect = canvas.parentNode.getBoundingClientRect();
         canvas.width = rect.width;
-        // Matches drawing buffer height to layout height to prevent structural vertical squishing
-        canvas.height = rect.height; 
+        // Reliably snaps to the explicit 480px structural boundary established by the custom class wrapper
+        canvas.height = rect.height || 480;
+        
         console.log("📐 [Neural-Flow] Parent Container Rect:", { width: rect.width, height: rect.height });
         console.log("🎨 [Neural-Flow] Canvas Drawing Size Set To:", { width: canvas.width, height: canvas.height });
     }
