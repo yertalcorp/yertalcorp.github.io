@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:56:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2264,7 +2264,7 @@ window.submitNewCurrent = async () => {
     }
     
     // Simple boolean track for modification guards
-    const hasNameChanged = newName !== prevName;
+    const nameChanged = newName !== prevName;
     // 4. Change Detection Guard
     const hasTypeChanged = newType !== prevType;
     const hasPrivacyChanged = newPrivacy !== prevPrivacy;
