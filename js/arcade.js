@@ -29,6 +29,7 @@ const ARCADE_STOP_WORDS = new Set([
     'up', 'down', 'any', 'all', 'if', 'with', 'i', 'you', 'me', 'can', 
     "can't", 'do', "don't", 'cannot', 'when', 'then', 'that', 'this', 
     'press', 'click', 'he', 'she', 'him', 'her', 'us', 'we', 'them', 
+    'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
     "it's", 'its', 'now', 'some', 'small', 'big', 'large', 'medium', 'over',
     'many', 'few', 'several', 'lots', 'much', 'app', 'application', 'system', 'tool',
     'show', 'display', 'view', 'render', 'simulate', 'beautiful', 'steep'
