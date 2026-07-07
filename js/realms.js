@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 11:11:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 11:27:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -915,7 +915,7 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
     function resizeCanvas() {
         const rect = canvas.parentNode.getBoundingClientRect();
         canvas.width = rect.width;
-        canvas.height = 480; 
+        canvas.height = 1000; 
         console.log("📐 [Neural-Flow] Parent Container Rect:", { width: rect.width, height: rect.height });
         console.log("🎨 [Neural-Flow] Canvas Drawing Size Set To:", { width: canvas.width, height: canvas.height });
     }
@@ -1154,11 +1154,10 @@ el.insertAdjacentHTML('beforeend', `
         </div>
         
         <!-- WRAPPER: Implements flex column configuration -->
-        <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-4 flex flex-col gap-4 overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-            
-            <!-- CANVAS CONTAINER: Set to baseline min-h-[480px], uses flex-1 to expand uniformly -->
-            <div id="realm-visual-display" class="w-full min-h-[480px] flex-1 flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden"></div>
-            
+        <!-- Expanded the outer panel wrapper to a minimum height of 1200px -->
+        <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-4 flex flex-col gap-4 min-h-[1200px] overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+        <!-- Expanded the inner display panel container to a minimum height of 1000px -->
+        <div id="realm-visual-display" class="w-full min-h-[1000px] flex-1 flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden"></div>            
             <!-- TEXT BOX: Retains natural shrink-0 sizing boundaries -->
             <div class="border-t border-white/5 text-left px-2 pt-2 shrink-0">
                 <h3 id="realm-step-title" class="text-3xl font-extrabold text-white uppercase tracking-widest mb-1 text-glow"></h3>
