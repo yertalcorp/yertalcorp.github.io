@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3769,7 +3769,6 @@ async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', t
         index: typeof data.index !== 'undefined' ? data.index : -1, // Transparent index logging pass-through
         image: data.image || templateUrl || '/assets/thumbnails/default.jpg',
         internal_rank: rank,
-        code: data.code || null,
         link: data.link || null,
         privacy: currentPrivacy,
         parameter_map: data.parameter_map || {}, // Transparent parameter map pass-through
