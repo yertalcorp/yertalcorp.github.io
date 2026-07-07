@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 13:03:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 13:13:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -1122,19 +1122,16 @@ window.switchRealmStep = function(index) {
         // If the overlay elements don't exist yet, construct them safely
         if (!phaseHUD) {
             displayEl.insertAdjacentHTML('beforeend', `
-                <!-- Positioned the phase tag explicitly at the top center of the canvas panel -->
-                <div id="realm-step-phase" class="absolute top-2 left-1/2 -translate-x-1/2 text-[14px] font-mono uppercase tracking-[0.4em] font-black z-20 text-center" style="color: var(--neon-color, #00f2ff); filter: drop-shadow(0 0 8px var(--neon-color, #00f2ff));"></div>
-                <!-- Kept a dummy or hidden element reference if other logic expects layerHUD to exist in the DOM -->
+                <!-- Shifted text to top center using transform percentages to keep it unbeatably aligned -->
+                <div id="realm-step-phase" class="absolute top-4 left-1/2 -translate-x-1/2 text-[14px] font-mono uppercase tracking-[0.4em] font-black z-20 text-center" style="color: var(--neon-color, #00f2ff); filter: drop-shadow(0 0 8px var(--neon-color, #00f2ff));"></div>
                 <div id="realm-step-layer" style="display: none;"></div>
             `);
             phaseHUD = document.getElementById('realm-step-phase');
             layerHUD = document.getElementById('realm-step-layer');
         }
 
-        // Update the topmost phase indicator text
         phaseHUD.innerText = `PHASE ${currentStep.id}`;
-        
-        // Clear the canvas name text to prevent it from cluttering the center coordinate area
+        // Cleared secondary text tracking entirely to clear any possibility of canvas clutter
         layerHUD.innerText = '';
         
         initNeuralNetworkSimulation(currentStep.nodes || [], currentStep.shape || 'circle');
@@ -1167,15 +1164,18 @@ el.insertAdjacentHTML('beforeend', `
             `).join('')}
         </div>
         
-<!-- Stripped layout padding from container frames to make 100% use of canvas real estate -->
-<div id="realm-immersive-panel" class="featured-card metallic-bezel realm-immersive-panel-container p-minimal">
+<!-- Reduced entire panel container layout envelope footprint width by 10% -->
+<div id="realm-immersive-panel" class="featured-card metallic-bezel realm-immersive-panel-container max-w-5xl mx-auto p-minimal">
+    
     <div id="realm-visual-display" class="realm-visual-display-canvas-frame p-minimal">
         <canvas id="neural-nodes-canvas" class="w-full h-full absolute inset-0"></canvas>
     </div>
-            <!-- TEXT BOX: Retains natural shrink-0 sizing boundaries -->
-            <div class="border-t border-white/5 text-left px-2 pt-2 shrink-0">
-                <h3 id="realm-step-title" class="text-3xl font-extrabold text-white uppercase tracking-widest mb-1 text-glow"></h3>
-                <p id="realm-step-desc" class="text-slate-200 text-base font-mono leading-relaxed tracking-widest m-0"></p>
+            <!-- TEXT BOX: Transformed to an accent-tinted light dashboard backdrop with dark readable text -->
+            <div class="text-left p-6 shrink-0 bg-cyan-400 text-black rounded-b-xl">
+                <!-- Swapped white text for black to stand out on the new light dashboard layout -->
+                <h3 id="realm-step-title" class="text-3xl font-black text-black uppercase tracking-widest mb-3"></h3>
+                <!-- Introduced a slight margin-top (mt-2) and shifted typography colors to dark neutral black -->
+                <p id="realm-step-desc" class="text-slate-900 mt-2 text-base font-mono leading-relaxed tracking-wider m-0"></p>
             </div>
         </div>
     </div>
