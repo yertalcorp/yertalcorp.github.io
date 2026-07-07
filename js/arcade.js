@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -30,7 +30,6 @@ const ARCADE_STOP_WORDS = new Set([
     "can't", 'do', "don't", 'cannot', 'when', 'then', 'that', 'this', 
     'press', 'click', 'he', 'she', 'him', 'her', 'us', 'we', 'them', 
     "it's", 'its', 'now', 'some', 'small', 'big', 'large', 'medium', 'over',
-    'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
     'many', 'few', 'several', 'lots', 'much', 'app', 'application', 'system', 'tool',
     'show', 'display', 'view', 'render', 'simulate', 'beautiful', 'steep'
 ]);
@@ -1468,7 +1467,7 @@ function extractParamDeltas(prompt, originalPMap) {
     const descriptivePhrases = [];
     
     // Catch digits alongside their measurement tags/nouns (e.g., "60 degree", "5kg", "0.3 coefficient")
-    const numMatches = cleanPrompt.match(/(\d+(?:\.\d+)?)\s*([a-zº°]+)?/g) || [];
+    const numMatches = cleanPrompt.match(/(\d+(?:\.\d+)?)\s+([a-z0-9-_]+(?:\s+[a-z0-9-_]+)?)/gi) || [];
     descriptivePhrases.push(...numMatches);
 
     // Scan for semantic adjectives (colors, written numbers, state modifiers) + their trailing nouns
@@ -1488,16 +1487,19 @@ function extractParamDeltas(prompt, originalPMap) {
         const defaultValue = originalPMap[key];
         let extractedValue = null;
 
-        // Isolate the matching context phrase where the noun segment maps to this parameter key
+    // Flexible substring matching anchor to bridge partial mappings like "balls" to "ball_count"
         const associatedPhrase = descriptivePhrases.find(phrase => {
-            const tokens = phrase.split(' ');
-            const nounSegment = tokens[1] || '';
-            const adjectiveSegment = tokens[0] || '';
+            const cleanPhrase = phrase.toLowerCase();
+            // Strips trailing plural 's' signatures to isolate base naming stems
+            const singularKey = cleanKey.replace(/_count$/, '').replace(/s$/, '');
+            const parts = cleanPhrase.split(/\s+/);
             
-            return cleanKey.includes(nounSegment) || cleanKey.includes(adjectiveSegment) || phrase.includes(cleanKey);
+            return parts.some(p => p.includes(singularKey) || singularKey.includes(p.replace(/s$/, ''))) || cleanPhrase.includes(cleanKey);
         });
 
-        if (!associatedPhrase && !cleanPrompt.includes(cleanKey)) return;
+        // Balanced baseline visibility escape hatch guard rule check
+        const simpleKeyStem = cleanKey.replace(/_count$/, '').replace(/s$/, '');
+        if (!associatedPhrase && !cleanPrompt.includes(cleanKey) && !cleanPrompt.includes(simpleKeyStem)) return;
 
         // TYPE DISPATCHER A: NUMBER VALUED PARAMETERS
         if (typeof defaultValue === 'number') {
@@ -1568,17 +1570,18 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     /* ----------------------------------------------------------------- */
 
     /* Inner Helper: Extracts pure alphanumeric tokens, bypassing stop words */
-    const getCleanTokens = (str) => {
+    const getCleanTokens = (str, stripNumbers = false) => {
         if (!str) return [];
-        return str
-            .toLowerCase()
-            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
-            .replace(/\d+/g, "")
+        let processed = str.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+        if (stripNumbers) {
+            processed = processed.replace(/\d+/g, "");
+        }
+        return processed
             .split(/\s+/)
             .map(t => t.trim())
-            .filter(t => t.length > 1 && !ARCADE_STOP_WORDS.has(t));
+            .filter(t => t.length > 0 && !ARCADE_STOP_WORDS.has(t));
     };
-    const userTokens = getCleanTokens(cleanPrompt);
+    const userTokens = getCleanTokens(cleanPrompt, true);
 
     /* ----------------------------------------------------------------- */
     /* STEP 1: BUBBLE PRESET EXACT MATCH GUARD                           */
@@ -1604,7 +1607,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     if (userTokens.length > 0) {
         presets.forEach((category, index) => {
             const cachePrompt = category.example_prompt ? category.example_prompt.toLowerCase().trim() : '';
-            const cacheTokens = getCleanTokens(cachePrompt);
+            const cacheTokens = getCleanTokens(cachePrompt, true);
 
             /* Count precise keyword intersections strictly against the prompt field */
             const intersection = userTokens.filter(token => cacheTokens.includes(token));
@@ -1896,11 +1899,21 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
         
         let resolvedCategory;
         if (!matchResult.is_custom) {
-            resolvedCategory = databaseCache.settings['arcade-current-types'][matchResult.index];
-            // Merge properties into the object to be used for hydration
+            // 1. Force a deep clone to snap the reference bond with databaseCache entirely
+            const cachedTemplate = databaseCache.settings['arcade-current-types'][matchResult.index];
+            resolvedCategory = JSON.parse(JSON.stringify(cachedTemplate));
+            
+            // 2. Safe property assignment isolated purely to this single execution context
             resolvedCategory.index = matchResult.index;
-            resolvedCategory.properties = matchResult.properties;
             resolvedCategory.is_custom = false;
+            
+            // 3. Explicitly pair parameter maps ONLY if structural updates were verified by the delta routine
+            if (matchResult.status === "SUCCESS_CACHE_HIT_WITH_CHANGES") {
+                resolvedCategory.properties = matchResult.properties;
+            } else {
+                // Bypasses property generation completely for exact matches, leaving the map clean
+                resolvedCategory.properties = {};
+            }
         } else {
             // Fallback for custom requests
             resolvedCategory = { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg', index: -1, properties: {}, is_custom: true };
