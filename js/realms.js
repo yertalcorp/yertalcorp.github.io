@@ -907,12 +907,17 @@ function initHeartbeatAnimation(targetContainer) {
 
 function initNeuralNetworkSimulation(customNodes, uniformShape) {
     const canvas = document.getElementById('neural-flow-canvas');
-    if (!canvas) return;
+    if (!canvas) {
+        console.log("❌ [Neural-Flow]: Canvas element not found in DOM.");
+        return;
+    }
 
     function resizeCanvas() {
         const rect = canvas.parentNode.getBoundingClientRect();
         canvas.width = rect.width;
-        canvas.height = 480; // Hard locks internal buffer depth directly alongside flex space
+        canvas.height = 480; 
+        console.log("📐 [Neural-Flow] Parent Container Rect:", { width: rect.width, height: rect.height });
+        console.log("🎨 [Neural-Flow] Canvas Drawing Size Set To:", { width: canvas.width, height: canvas.height });
     }
 
     resizeCanvas();
@@ -920,17 +925,20 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
 
     const ctx = canvas.getContext('2d');
 
-    // Keep layout node percentages isolated so they can recalculate automatically
-    const nodes = customNodes.map(node => ({
-        id: node.id,
-        x_pct: node.x_pct,
-        y_pct: node.y_pct * 0.65 + 0.18,
-        label: node.label,
-        shape: uniformShape,
-        color: node.color || '#00f2ff',
-        pulse: Math.random() * Math.PI,
-        glowIntensity: 0
-    }));
+    const nodes = customNodes.map(node => {
+        const mappedY = node.y_pct * 0.65 + 0.18;
+        console.log(`📍 [Neural-Flow] Node Mapping (${node.label || 'Unnamed'}):`, { originalX: node.x_pct, originalY: node.y_pct, mappedY: mappedY });
+        return {
+            id: node.id,
+            x_pct: node.x_pct,
+            y_pct: mappedY,
+            label: node.label,
+            shape: uniformShape,
+            color: node.color || '#00f2ff',
+            pulse: Math.random() * Math.PI,
+            glowIntensity: 0
+        };
+    });
 
     let particles = [];
     let activePulseIndex = 0;
