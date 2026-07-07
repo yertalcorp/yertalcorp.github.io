@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 11:27:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 11:36:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -906,7 +906,7 @@ function initHeartbeatAnimation(targetContainer) {
 }
 
 function initNeuralNetworkSimulation(customNodes, uniformShape) {
-    const canvas = document.getElementById('neural-flow-canvas');
+    const canvas = document.getElementById('neural-nodes-canvas');
     if (!canvas) {
         console.log("❌ [Neural-Flow]: Canvas element not found in DOM.");
         return;
@@ -1157,7 +1157,10 @@ el.insertAdjacentHTML('beforeend', `
         <!-- Expanded the outer panel wrapper to a minimum height of 1200px -->
         <div id="realm-immersive-panel" class="featured-card metallic-bezel relative rounded-2xl p-4 flex flex-col gap-4 min-h-[1200px] overflow-hidden transition-all duration-500 bg-slate-950/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
         <!-- Expanded the inner display panel container to a minimum height of 1000px -->
-        <div id="realm-visual-display" class="w-full min-h-[1000px] flex-1 flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden"></div>            
+            <div id="realm-visual-display" class="w-full min-h-[480px] flex-1 flex items-center justify-center relative rounded-xl border border-white/5 bg-black/60 p-2 shadow-inner overflow-hidden">
+                <!-- Updated with the clean, unique identifier name -->
+                <canvas id="neural-nodes-canvas" class="w-full h-full absolute inset-0"></canvas>
+            </div>
             <!-- TEXT BOX: Retains natural shrink-0 sizing boundaries -->
             <div class="border-t border-white/5 text-left px-2 pt-2 shrink-0">
                 <h3 id="realm-step-title" class="text-3xl font-extrabold text-white uppercase tracking-widest mb-1 text-glow"></h3>
