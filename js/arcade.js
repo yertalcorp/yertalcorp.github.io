@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:40:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:47:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -493,11 +493,13 @@ window.updateSparkViews = async function(ownerId, currentId, sparkId, country = 
         // Fetch the user's profile to extract the human-readable slug dynamically
         const profileSnap = await get(ref(db, `users/${ownerId}/profile`)).catch(() => null);
         const userSlug = profileSnap?.val()?.slug || 'yertal-arcade';
-
+        const sparkImage = sparkData?.image || '';
+        
         updates[`${trendingPath}/spark_id`] = sparkId;
         updates[`${trendingPath}/current_id`] = currentId;
         updates[`${trendingPath}/user_id`] = ownerId;
         updates[`${trendingPath}/user_slug`] = userSlug;
+        updates[`${trendingPath}/image_url`] = sparkImage;
         updates[`${trendingPath}/view_count`] = currentViews;
     }
 
