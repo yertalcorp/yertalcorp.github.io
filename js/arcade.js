@@ -490,14 +490,14 @@ window.updateSparkViews = async function(ownerId, currentId, sparkId, country = 
         const trendingPath = `analytics/trending_sparks/${sparkId}`;
         const currentViews = (sparkData?.stats?.views?.total_count || 0) + 1;
 
-        **// Fetch the user's profile to extract the human-readable slug dynamically
+        // Fetch the user's profile to extract the human-readable slug dynamically
         const profileSnap = await get(ref(db, `users/${ownerId}/profile`)).catch(() => null);
-        const userSlug = profileSnap?.val()?.slug || 'yertal-arcade';**
+        const userSlug = profileSnap?.val()?.slug || 'yertal-arcade';
 
         updates[`${trendingPath}/spark_id`] = sparkId;
         updates[`${trendingPath}/current_id`] = currentId;
         updates[`${trendingPath}/user_id`] = ownerId;
-        **updates[`${trendingPath}/user_slug`] = userSlug;**
+        updates[`${trendingPath}/user_slug`] = userSlug;
         updates[`${trendingPath}/view_count`] = currentViews;
     }
 
