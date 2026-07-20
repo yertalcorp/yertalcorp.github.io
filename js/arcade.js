@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:29:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -468,8 +468,15 @@ async function updateSparkFeedback(sparkId, userId, comment) {
 window.updateSparkViews = async function(ownerId, currentId, sparkId, country = 'IN') {
     const now = new Date();
     const month = now.toISOString().slice(0, 7);
+    
     // Path must include the ownerId to reach the correct user node
-    const sparkPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/views`;
+    const sparkBase = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
+    const sparkPath = `${sparkBase}/stats/views`;
+
+    // Fetch the spark's privacy configuration to verify visibility
+    const sparkSnap = await get(ref(db, sparkBase)).catch(() => null);
+    const sparkData = sparkSnap?.val();
+    const isPublic = sparkData?.privacy === 'public';
 
     const updates = {};
     // Use the modular increment() function
@@ -478,8 +485,41 @@ window.updateSparkViews = async function(ownerId, currentId, sparkId, country = 
     updates[`${sparkPath}/monthly_ledger/${month}/total`] = increment(1);
     updates[`${sparkPath}/monthly_ledger/${month}/geo/${country}`] = increment(1);
 
-    return update(ref(db), updates);
-}    
+    // If the spark is explicitly public, also mirror the metrics to trending_sparks
+    if (isPublic) {
+        const trendingPath = `analytics/trending_sparks/${sparkId}`;
+        const currentViews = (sparkData?.stats?.views?.total_count || 0) + 1;
+
+        updates[`${trendingPath}/spark_id`] = sparkId;
+        updates[`${trendingPath}/current_id`] = currentId;
+        updates[`${trendingPath}/user_id`] = ownerId;
+        updates[`${trendingPath}/view_count`] = currentViews;
+    }
+
+    await update(ref(db), updates);
+
+    // Cap the leaderboard to the top 48 sparks if this spark was added or updated
+    if (isPublic) {
+        const trendingRef = ref(db, 'analytics/trending_sparks');
+        const trendingSnap = await get(trendingRef).catch(() => null);
+        const trendingSparks = trendingSnap?.val() || {};
+        
+        const keys = Object.keys(trendingSparks);
+        if (keys.length > 48) {
+            // Sort keys by view_count ascending to identify the lowest items
+            keys.sort((a, b) => (trendingSparks[a].view_count || 0) - (trendingSparks[b].view_count || 0));
+            
+            const pruneUpdates = {};
+            // Determine how many extra items need to be sliced off
+            const overflowCount = keys.length - 48;
+            for (let i = 0; i < overflowCount; i++) {
+                pruneUpdates[`analytics/trending_sparks/${keys[i]}`] = null;
+            }
+            await update(ref(db), pruneUpdates);
+        }
+    }
+}
+
 // FUNCTION: payOwner
 window.payOwner = function(btn, ownerId, currentId, sparkId) {
     const spark = databaseCache.users[ownerId].infrastructure.currents[currentId].sparks[sparkId];
