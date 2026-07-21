@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:10:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:35:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -675,8 +675,10 @@ async function renderTrendingSparks(headerData) {
         const snapshot = await get(ref(db, 'analytics/trending_sparks')).catch(() => null);
         const data = snapshot?.val() || {};
 
-        // Sort items by view_count descending and limit to top items
-            const sparks = Object.values(data)
+        // Debug log to verify Firebase payload size
+        console.log("Firebase raw keys count:", Object.keys(data).length);
+
+        const sparks = Object.values(data)
             .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
             .slice(0, MAX_TRENDING_SPARK_CARDS);
 
@@ -722,7 +724,7 @@ async function renderTrendingSparks(headerData) {
         // Render card markup
         let trackMarkup = sparks.map(buildCard).join('');
 
-        // If dataset is smaller than 12 items, multiply the baseline array so the track fills the screen before duplicating
+        // Duplicate track for seamless infinite scroll loop
         if (sparks.length < 12) {
             const repetitions = Math.ceil(12 / sparks.length);
             trackMarkup = Array(repetitions).fill(trackMarkup).join('');
@@ -735,6 +737,8 @@ async function renderTrendingSparks(headerData) {
                 ${trackMarkup}
             </div>
         `;
+
+        // Check if query limits exist on Firebase ref elsewhere
     } catch (err) {
         console.error("Error rendering trending sparks ticker:", err);
     }
