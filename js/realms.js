@@ -108,7 +108,7 @@ async function initRealmsHome() {
 }
 
 function initBackgroundEffects() {
-    console.log("%c [CANVAS ENGINE] Initializing hardware particle layer... ", "background: #111; color: #00f2ff; font-weight: bold;");
+    /*console.log("%c [CANVAS ENGINE] Initializing hardware particle layer... ", "background: #111; color: #00f2ff; font-weight: bold;");*/
 
     // 1. Create a true full-viewport background layout layer
     const canvas = document.createElement('canvas');
@@ -125,14 +125,14 @@ function initBackgroundEffects() {
     canvas.style.zIndex = '-1';
     
     document.body.prepend(canvas);
-    console.log("[CANVAS ENGINE] Canvas element prepended to DOM body. ID:", canvas.id);
+    /*console.log("[CANVAS ENGINE] Canvas element prepended to DOM body. ID:", canvas.id);*/
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
         console.error("[CANVAS ENGINE] Failed to acquire 2D context from canvas element.");
         return;
     }
-    console.log("[CANVAS ENGINE] 2D Context acquired successfully.");
+    /*console.log("[CANVAS ENGINE] 2D Context acquired successfully.");*/
 
     let particles = [];
 
@@ -140,7 +140,7 @@ function initBackgroundEffects() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         
-        console.log(`[CANVAS ENGINE] Dimensions updated -> Width: ${canvas.width}px, Height: ${canvas.height}px`);
+        /*console.log(`[CANVAS ENGINE] Dimensions updated -> Width: ${canvas.width}px, Height: ${canvas.height}px`);*/
         
         // RE-SYNC CENTER ATTRACTORS IMMEDIATELY ACROSS ALL LIVING SPARKS ON RESIZE
         if (particles.length > 0) {
@@ -148,7 +148,7 @@ function initBackgroundEffects() {
                 p.centerX = canvas.width / 2;
                 p.centerY = canvas.height * 0.4;
             });
-            console.log(`[CANVAS ENGINE] Recalculated orbit center point (${canvas.width / 2}, ${canvas.height * 0.4}) across ${particles.length} active particles.`);
+            /*console.log(`[CANVAS ENGINE] Recalculated orbit center point (${canvas.width / 2}, ${canvas.height * 0.4}) across ${particles.length} active particles.`);*/
         }
     }
     window.addEventListener('resize', resize);
@@ -253,14 +253,14 @@ draw(mouseX = 0, mouseY = 0) {
     });
 
     // Generate cloud assembly population size
-    console.log(`[CANVAS ENGINE] Generating particle cloud assembly (${MAX_SPARKS} sparks)...`);
+    /*console.log(`[CANVAS ENGINE] Generating particle cloud assembly (${MAX_SPARKS} sparks)...`);*/
     for (let i = 0; i < MAX_SPARKS; i++) {
         const spark = new CosmicSpark();
         // Scatter particle timeframes evenly so they don't fade all at once
         spark.age = Math.random() * spark.lifespan;
         particles.push(spark);
     }
-    console.log("[CANVAS ENGINE] Population generation complete. Swarm collection loaded.");
+    /*console.log("[CANVAS ENGINE] Population generation complete. Swarm collection loaded.");*/
 
     let executionFrameCount = 0;
     function animate() {
@@ -280,7 +280,7 @@ draw(mouseX = 0, mouseY = 0) {
         requestAnimationFrame(animate);
     }
     
-    console.log("[CANVAS ENGINE] Spawning loop process thread...");
+    /*console.log("[CANVAS ENGINE] Spawning loop process thread...");*/
     animate();
 }
 function applyGlobalStyles(settings) {
