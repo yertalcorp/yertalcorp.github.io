@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:48:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:57:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -689,7 +689,13 @@ async function renderTrendingSparks(headerData) {
 
         const buildCard = (spark) => {
             const ownerSlug = spark.user_slug || 'yertal-arcade';
-            const imgUrl = spark.spark_image || spark.image_url || spark.image || '';
+            let imgUrl = spark.spark_image || spark.image_url || spark.image || '';
+
+            // Escape double quotes in data URIs or image URLs to prevent HTML attribute breakage
+            if (imgUrl.includes('"')) {
+                imgUrl = imgUrl.replace(/"/g, '&quot;');
+            }
+
             const bgStyle = imgUrl ? `style="background-image: url('${imgUrl}');"` : '';
             const views = spark.view_count || 0;
             const sparkId = spark.spark_id || '';
@@ -724,7 +730,8 @@ async function renderTrendingSparks(headerData) {
         // Render card markup
         let trackMarkup = sparks.map(buildCard).join('');
 
-`       if (sparks.length > 0 && sparks.length < MAX_TRENDING_SPARK_CARDS) {
+        // Removed stray backtick above this line
+        if (sparks.length > 0 && sparks.length < MAX_TRENDING_SPARK_CARDS) {
             const repetitions = Math.ceil(MAX_TRENDING_SPARK_CARDS / sparks.length);
             trackMarkup = Array(repetitions).fill(trackMarkup).join('');
         }
