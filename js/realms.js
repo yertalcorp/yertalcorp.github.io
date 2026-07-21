@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:35:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:48:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -655,7 +655,7 @@ function renderFeaturedRealms(items) {
 }
 
 // Global configuration constant for trending sparks marquee
-const MAX_TRENDING_SPARK_CARDS = 48;
+const MAX_TRENDING_SPARK_CARDS = 50;
 
 async function renderTrendingSparks(headerData) {
     const headerEl = document.getElementById('trending-sparks-header');
@@ -724,9 +724,8 @@ async function renderTrendingSparks(headerData) {
         // Render card markup
         let trackMarkup = sparks.map(buildCard).join('');
 
-        // Duplicate track for seamless infinite scroll loop
-        if (sparks.length < 12) {
-            const repetitions = Math.ceil(12 / sparks.length);
+`       if (sparks.length > 0 && sparks.length < MAX_TRENDING_SPARK_CARDS) {
+            const repetitions = Math.ceil(MAX_TRENDING_SPARK_CARDS / sparks.length);
             trackMarkup = Array(repetitions).fill(trackMarkup).join('');
         }
 
