@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 19:48:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 20:01:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -679,7 +679,7 @@ async function renderTrendingSparks(headerData) {
         const sparks = Object.values(data)
             .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
             .slice(0, MAX_TRENDING_SPARK_CARDS);
-            ~~.slice(0, 48);~~
+            .slice(0, 48);
 
         if (sparks.length === 0) {
             gridEl.innerHTML = `<div class="text-slate-500 text-xs font-mono uppercase tracking-widest col-span-full">No active trending sparks detected</div>`;
