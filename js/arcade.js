@@ -465,6 +465,8 @@ async function updateSparkFeedback(sparkId, userId, comment) {
     return db.ref().update(updates);
 }
 
+const MAX_TRENDING_SPARKS = 50;
+
 window.updateSparkViews = async function(ownerId, currentId, sparkId, country = 'IN') {
     const now = new Date();
     const month = now.toISOString().slice(0, 7);
@@ -513,13 +515,13 @@ window.updateSparkViews = async function(ownerId, currentId, sparkId, country = 
         const trendingSparks = trendingSnap?.val() || {};
         
         const keys = Object.keys(trendingSparks);
-        if (keys.length > 48) {
+        if (keys.length > MAX_TRENDING_SPARKS) {
             // Sort keys by view_count ascending to identify the lowest items
             keys.sort((a, b) => (trendingSparks[a].view_count || 0) - (trendingSparks[b].view_count || 0));
             
             const pruneUpdates = {};
             // Determine how many extra items need to be sliced off
-            const overflowCount = keys.length - 48;
+            const overflowCount = keys.length - MAX_TRENDING_SPARKS;
             for (let i = 0; i < overflowCount; i++) {
                 pruneUpdates[`analytics/trending_sparks/${keys[i]}`] = null;
             }
