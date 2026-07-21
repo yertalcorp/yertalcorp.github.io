@@ -988,8 +988,8 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
         // Reliably snaps to the explicit 480px structural boundary established by the custom class wrapper
         canvas.height = rect.height || 480;
         
-        console.log("📐 [Neural-Flow] Parent Container Rect:", { width: rect.width, height: rect.height });
-        console.log("🎨 [Neural-Flow] Canvas Drawing Size Set To:", { width: canvas.width, height: canvas.height });
+        /*console.log("📐 [Neural-Flow] Parent Container Rect:", { width: rect.width, height: rect.height });*/
+        /*console.log("🎨 [Neural-Flow] Canvas Drawing Size Set To:", { width: canvas.width, height: canvas.height });*/
     }
 
     resizeCanvas();
@@ -999,7 +999,7 @@ function initNeuralNetworkSimulation(customNodes, uniformShape) {
 
     const nodes = customNodes.map(node => {
         const mappedY = node.y_pct * 0.84 + 0.08;;
-        console.log(`📍 [Neural-Flow] Node Mapping (${node.label || 'Unnamed'}):`, { originalX: node.x_pct, originalY: node.y_pct, mappedY: mappedY });
+        /*console.log(`📍 [Neural-Flow] Node Mapping (${node.label || 'Unnamed'}):`, { originalX: node.x_pct, originalY: node.y_pct, mappedY: mappedY });*/
         return {
             id: node.id,
             x_pct: node.x_pct,
