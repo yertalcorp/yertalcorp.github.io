@@ -641,7 +641,7 @@ html.realms-page-root footer {
 
 /* Custom utility classes to maximize canvas usage and introduce decorative headers */
 .p-minimal {
-    padding: 0px !important;
+    padding: 0px ;
 }
 
 .metallic-text-header {
@@ -674,9 +674,10 @@ html.realms-page-root section:has(#trending-sparks-grid) {
     display: flex;
     flex-direction: column;
     justify-space: space-between;
-    width: 200px;
-    height: 110px;
-    background: rgba(15, 23, 42, 0.65);
+    width: 240px;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    background-color: rgba(15, 23, 42, 0.65);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 1rem;
     padding: 12px;
@@ -685,8 +686,19 @@ html.realms-page-root section:has(#trending-sparks-grid) {
     transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Ensure background image scales dynamically inside 16:9 standard ratio */
+.ticker-spark-card[style*="background-image"] {
+    background-size: cover ;
+    background-position: center ;
+    background-repeat: no-repeat ;
+}
+
 .ticker-spark-card:hover {
     border-color: var(--neon-color, #00f2ff);
+}
+
+.marquee-track {
+    animation: scrollMarqueeRightToLeft 31.5s linear infinite;
 }
 
 @keyframes scrollMarqueeRightToLeft {
