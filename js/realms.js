@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 21:03:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 21:48:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -671,6 +671,9 @@ async function renderTrendingSparks(headerData) {
     const gridEl = document.getElementById('trending-sparks-grid');
     if (!gridEl) return;
 
+    // Reset container contents to clear prior animation instances and listeners
+    gridEl.innerHTML = '';
+
     try {
         const snapshot = await get(ref(db, 'analytics/trending_sparks')).catch(() => null);
         const data = snapshot?.val() || {};
@@ -733,19 +736,22 @@ async function renderTrendingSparks(headerData) {
         // Render card markup
         let trackMarkup = sparks.map(buildCard).join('');
 
-        // Removed stray backtick above this line
         if (sparks.length > 0 && sparks.length < MAX_TRENDING_SPARK_CARDS) {
             const repetitions = Math.ceil(MAX_TRENDING_SPARK_CARDS / sparks.length);
             trackMarkup = Array(repetitions).fill(trackMarkup).join('');
         }
 
         gridEl.className = 'w-full min-w-full overflow-hidden flex';
-        gridEl.innerHTML = `
+        
+        // Construct markup string before assigning to cleanly reset keyframe timing
+        const marqueeMarkup = `
             <div class="marquee-track flex gap-6 min-w-max">
                 ${trackMarkup}
                 ${trackMarkup}
             </div>
         `;
+
+        gridEl.innerHTML = marqueeMarkup;
 
         // Check if query limits exist on Firebase ref elsewhere
     } catch (err) {
