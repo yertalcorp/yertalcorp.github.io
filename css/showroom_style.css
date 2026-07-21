@@ -663,17 +663,22 @@ html.realms-page-root section:has(#trending-sparks-grid) {
 }
 
 .marquee-track {
-    animation: scrollMarqueeRightToLeft 35s linear infinite;
+    animation: scrollMarqueeRightToLeft 45s linear infinite;
 }
 
 .marquee-track:hover {
     animation-play-state: paused;
 }
 
+/* Prevent cards from collapsing inside the marquee flex container */
+.ticker-card-wrapper {
+    flex-shrink: 0;
+}
+
 .ticker-spark-card {
     display: flex;
     flex-direction: column;
-    justify-space: space-between;
+    justify-content: space-between;
     width: 240px;
     aspect-ratio: 4 / 3;
     height: auto;
@@ -701,10 +706,6 @@ html.realms-page-root section:has(#trending-sparks-grid) {
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 
                 0 0 20px var(--neon-color, #00f2ff), 
                 inset 0 0 10px var(--neon-color, #00f2ff);
-}
-
-.marquee-track {
-    animation: scrollMarqueeRightToLeft 10s linear infinite;
 }
 
 @keyframes scrollMarqueeRightToLeft {
