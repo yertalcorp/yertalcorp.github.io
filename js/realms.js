@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:59:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 18:56:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -660,7 +660,8 @@ async function renderTrendingSparks(headerData) {
         headerEl.innerHTML = `
             <div>
                 <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-2">// ATOMIC ARCHITECTURE</h3>
-                <h2 class="text-3xl font-bold uppercase tracking-tight text-white">Trending Sparks</h2>
+                <h2 class="text-3xl font-bold uppercase tracking-tight text-white">${headerData?.title || 'Trending Sparks'}</h2>
+                ${headerData?.subtitle ? `<p class="text-sm text-slate-400 font-light tracking-wide mt-2 max-w-xl">${headerData.subtitle}</p>` : ''}
             </div>
         `;
     }
@@ -669,7 +670,6 @@ async function renderTrendingSparks(headerData) {
     if (!gridEl) return;
 
     try {
-        // Fetch top trending sparks from analytics node
         const snapshot = await get(ref(db, 'analytics/trending_sparks')).catch(() => null);
         const data = snapshot?.val() || {};
 
@@ -683,26 +683,24 @@ async function renderTrendingSparks(headerData) {
             return;
         }
 
-        // Helper function to build individual spark card element HTML reusing glass-card & metallic-bezel
         const buildCard = (spark) => {
             const ownerSlug = spark.user_slug || 'yertal-arcade';
-            const bgImage = spark.spark_image ? `style="background-image: url('${spark.spark_image}');"` : '';
+            const imgUrl = spark.spark_image || spark.image_url || spark.image || '';
+            const bgStyle = imgUrl ? `style="background-image: url('${imgUrl}');"` : '';
             const views = spark.view_count || 0;
             const sparkId = spark.spark_id || '';
             const currentId = spark.current_id || '';
 
             return `
                 <div class="ticker-card-wrapper flex flex-col items-center gap-1 shrink-0">
-                    <!-- Owner Slug above the card -->
-                    <span class="text-[10px] font-mono font-bold tracking-widest text-slate-400 uppercase truncate max-w-[200px]">
+                    <span class="text-[10px] font-mono font-bold tracking-widest text-slate-400 uppercase truncate max-w-[220px]">
                         @${ownerSlug}
                     </span>
 
-                    <!-- Main Glass Spark Card reusing featured/glass styles -->
                     <a href="https://yertal.in/arcade/spark.html?user=${ownerSlug}&current=${currentId}&spark=${sparkId}" 
-                       class="glass-card metallic-bezel ticker-spark-card bg-cover bg-center relative group overflow-hidden flex flex-col justify-between p-3"
-                       ${bgImage}>
-                        <div class="absolute inset-0 bg-slate-950/40 backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-300 rounded-[2rem]"></div>
+                       class="glass-card metallic-bezel ticker-spark-card relative group overflow-hidden flex flex-col justify-between p-3 text-left"
+                       ${bgStyle}>
+                        <div class="absolute inset-0 bg-slate-950/20 backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-300 rounded-[1rem]"></div>
                         <div class="relative z-10 flex justify-between items-center w-full">
                             <span class="text-[9px] font-mono tracking-widest text-slate-300 uppercase">// SPARK</span>
                             <i class="fas fa-bolt text-[11px]" style="color: var(--neon-color);"></i>
@@ -712,7 +710,6 @@ async function renderTrendingSparks(headerData) {
                         </div>
                     </a>
 
-                    <!-- Views count below the card -->
                     <span class="text-[9px] font-mono font-semibold tracking-wider text-slate-500 uppercase">
                         ${views.toLocaleString()} VIEWS
                     </span>
@@ -720,13 +717,20 @@ async function renderTrendingSparks(headerData) {
             `;
         };
 
-        // Render duplicate card tracks to achieve infinite continuous marquee scroll
-        const cardsMarkup = sparks.map(buildCard).join('');
+        // Render card markup
+        let trackMarkup = sparks.map(buildCard).join('');
+
+        // If dataset is smaller than 12 items, multiply the baseline array so the track fills the screen before duplicating
+        if (sparks.length < 12) {
+            const repetitions = Math.ceil(12 / sparks.length);
+            trackMarkup = Array(repetitions).fill(trackMarkup).join('');
+        }
+
         gridEl.className = 'w-full overflow-hidden';
         gridEl.innerHTML = `
             <div class="marquee-track flex gap-6 w-max">
-                ${cardsMarkup}
-                ${cardsMarkup}
+                ${trackMarkup}
+                ${trackMarkup}
             </div>
         `;
     } catch (err) {
