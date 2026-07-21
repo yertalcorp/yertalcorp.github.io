@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 13:13:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:21:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -654,7 +654,7 @@ function renderFeaturedRealms(items) {
     `).join('');
 }
 
-function renderTrendingSparks(items) {
+async function renderTrendingSparks(headerData) {
     const headerEl = document.getElementById('trending-sparks-header');
     if (headerEl) {
         headerEl.innerHTML = `
@@ -664,23 +664,74 @@ function renderTrendingSparks(items) {
             </div>
         `;
     }
-    const el = document.getElementById('trending-sparks-grid');
-    if (!el || !items) return;
-    el.innerHTML = items.map(spark => `
-        <div class="glass-card metallic-bezel p-6 flex flex-col justify-between relative overflow-hidden group">
-            <div class="flex justify-between items-start">
-                <span class="text-[10px] tracking-widest text-slate-500 uppercase">// ATOMIC_CORE</span>
-                <span class="text-[10px] font-bold" style="color: var(--neon-color);">${spark.remix_count} REMIXES</span>
+
+    const gridEl = document.getElementById('trending-sparks-grid');
+    if (!gridEl) return;
+
+    try {
+        // Fetch top trending sparks from analytics node
+        const snapshot = await get(ref(db, 'analytics/trending_sparks')).catch(() => null);
+        const data = snapshot?.val() || {};
+
+        // Sort items by view_count descending and limit to top 48 items
+        const sparks = Object.values(data)
+            .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
+            .slice(0, 48);
+
+        if (sparks.length === 0) {
+            gridEl.innerHTML = `<div class="text-slate-500 text-xs font-mono uppercase tracking-widest col-span-full">No active trending sparks detected</div>`;
+            return;
+        }
+
+        // Helper function to build individual spark card element HTML reusing glass-card & metallic-bezel
+        const buildCard = (spark) => {
+            const ownerSlug = spark.user_slug || 'yertal-arcade';
+            const bgImage = spark.spark_image ? `style="background-image: url('${spark.spark_image}');"` : '';
+            const views = spark.view_count || 0;
+            const sparkId = spark.spark_id || '';
+            const currentId = spark.current_id || '';
+
+            return `
+                <div class="ticker-card-wrapper flex flex-col items-center gap-1 shrink-0">
+                    <!-- Owner Slug above the card -->
+                    <span class="text-[10px] font-mono font-bold tracking-widest text-slate-400 uppercase truncate max-w-[200px]">
+                        @${ownerSlug}
+                    </span>
+
+                    <!-- Main Glass Spark Card reusing featured/glass styles -->
+                    <a href="./arcade/index.html?user=${ownerSlug}&current=${currentId}&spark=${sparkId}" 
+                       class="glass-card metallic-bezel ticker-spark-card bg-cover bg-center relative group overflow-hidden flex flex-col justify-between p-3"
+                       ${bgImage}>
+                        <div class="absolute inset-0 bg-slate-950/40 backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-300 rounded-[2rem]"></div>
+                        <div class="relative z-10 flex justify-between items-center w-full">
+                            <span class="text-[9px] font-mono tracking-widest text-slate-300 uppercase">// SPARK</span>
+                            <i class="fas fa-bolt text-[11px]" style="color: var(--neon-color);"></i>
+                        </div>
+                        <div class="relative z-10 text-right">
+                            <span class="text-[9px] font-black uppercase tracking-wider block" style="color: var(--neon-color);">REMIX →</span>
+                        </div>
+                    </a>
+
+                    <!-- Views count below the card -->
+                    <span class="text-[9px] font-mono font-semibold tracking-wider text-slate-500 uppercase">
+                        ${views.toLocaleString()} VIEWS
+                    </span>
+                </div>
+            `;
+        };
+
+        // Render duplicate card tracks to achieve infinite continuous marquee scroll
+        const cardsMarkup = sparks.map(buildCard).join('');
+        gridEl.className = 'w-full overflow-hidden';
+        gridEl.innerHTML = `
+            <div class="marquee-track flex gap-6 w-max">
+                ${cardsMarkup}
+                ${cardsMarkup}
             </div>
-            <div class="py-8 text-center text-sm font-mono text-slate-400 uppercase tracking-wider">
-                [ ${spark.preview_type.toUpperCase()} ]
-            </div>
-            <div class="flex justify-between items-center border-t border-white/5 pt-4">
-                <span class="text-[9px] text-slate-500 tracking-wider">CREATOR: ${spark.creator_name}</span>
-                <span class="text-[10px] font-black uppercase tracking-wider cursor-pointer" style="color: var(--accent-color);">REMIX →</span>
-            </div>
-        </div>
-    `).join('');
+        `;
+    } catch (err) {
+        console.error("Error rendering trending sparks ticker:", err);
+    }
 }
 
 function renderTemplates(items) {
