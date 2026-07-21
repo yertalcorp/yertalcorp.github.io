@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:21:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:59:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -699,7 +699,7 @@ async function renderTrendingSparks(headerData) {
                     </span>
 
                     <!-- Main Glass Spark Card reusing featured/glass styles -->
-                    <a href="./arcade/index.html?user=${ownerSlug}&current=${currentId}&spark=${sparkId}" 
+                    <a href="https://yertal.in/arcade/spark.html?user=${ownerSlug}&current=${currentId}&spark=${sparkId}" 
                        class="glass-card metallic-bezel ticker-spark-card bg-cover bg-center relative group overflow-hidden flex flex-col justify-between p-3"
                        ${bgImage}>
                         <div class="absolute inset-0 bg-slate-950/40 backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-300 rounded-[2rem]"></div>
