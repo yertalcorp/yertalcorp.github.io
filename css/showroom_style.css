@@ -663,11 +663,12 @@ html.realms-page-root section:has(#trending-sparks-grid) {
 }
 
 .marquee-track {
-    display: flex !important;
-    width: max-content !important;
-    flex-shrink: 0 !important;
+    display: flex ;
+    width: max-content ;
+    min-width: max-content ;
+    flex-shrink: 0 ;
     will-change: transform;
-    animation: scrollMarqueeRightToLeft 50s linear infinite;
+    animation: scrollMarqueeRightToLeft 15s linear infinite;
 }
 
 .marquee-track:hover {
