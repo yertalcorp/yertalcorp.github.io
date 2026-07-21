@@ -676,10 +676,9 @@ async function renderTrendingSparks(headerData) {
         const data = snapshot?.val() || {};
 
         // Sort items by view_count descending and limit to top items
-        const sparks = Object.values(data)
+            const sparks = Object.values(data)
             .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
             .slice(0, MAX_TRENDING_SPARK_CARDS);
-            .slice(0, 48);
 
         if (sparks.length === 0) {
             gridEl.innerHTML = `<div class="text-slate-500 text-xs font-mono uppercase tracking-widest col-span-full">No active trending sparks detected</div>`;
