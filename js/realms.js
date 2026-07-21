@@ -739,9 +739,9 @@ async function renderTrendingSparks(headerData) {
             trackMarkup = Array(repetitions).fill(trackMarkup).join('');
         }
 
-        gridEl.className = 'w-full overflow-hidden flex';
+        gridEl.className = 'w-full min-w-full overflow-hidden flex';
         gridEl.innerHTML = `
-            <div class="marquee-track flex gap-6 w-max">
+            <div class="marquee-track flex gap-6 min-w-max">
                 ${trackMarkup}
                 ${trackMarkup}
             </div>
