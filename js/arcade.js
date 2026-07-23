@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:25:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1765,15 +1765,15 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
 
     const foundParams = {};
     
-    // Enforce comment enclosure rules safely: convert all single-line comments to standard /* */ format
-    rawCode = rawCode.replace(/^(?!.*:\/\/)\/\/.*$/gm, match => {
-        const cleanComment = match.replace(/^\/\/\s*/, '').trim();
-        return cleanComment ? `/* ${cleanComment} */` : '';
-    });
-
     // Target only the active script execution payload block, completely skipping external library dependencies
     const scriptMatch = rawCode.match(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/i);
     let logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
+
+    // Enforce comment enclosure rules safely ONLY inside JS execution logic (ignoring URLs like http:// or https://)
+    logic = logic.replace(/(?<!:)\/\/(.*)$/gm, (match, commentBody) => {
+        const cleanComment = commentBody.trim();
+        return cleanComment ? `/* ${cleanComment} */` : '';
+    });
 
     // 1. ADVANCED DICTIONARY DECONSTRUCTION ENGINE
     // Scan for structured configuration parameter maps like "const params = { ... }"
@@ -2371,9 +2371,6 @@ window.submitNewCurrent = async () => {
 };
 
 /*
- * Objective: Create a new Current with specific metadata.
- */
-/*
  * Objective: Clean and normalize raw LLM output.
  * Tasks: Scrub Unicode, remove markdown fences, and strip trailing JSON metadata.
  * Idempotency: Can be called multiple times without stripping valid HTML tags.
@@ -2386,17 +2383,19 @@ function verifyAndFixCode(rawCode, isCodeMode = false) {
         .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
         .trim();
 
-// 2. Remove Markdown code fences (Idempotent: only matches specific block starts/ends)
+    // 2. Remove Markdown code fences (Idempotent: only matches specific block starts/ends)
     fixed = fixed.replace(/^```[a-z]*\n?/gi, '').replace(/\n?```$/g, '');
 
-    // 3. Handle hybrid "Trailing Metadata" (Specific to Sarvam/Hybrid models)
-    // If the string contains a trailing JSON block after the code, we strip it for the code view.
+    // 3. Scrub orphaned comment delimiters at start/end of raw input
+    fixed = fixed.replace(/^(\/\*|\*\/|\/\/)+\s*/g, '').replace(/\*\/\s*$/g, '');
+
+    // 4. Handle hybrid "Trailing Metadata" (Specific to Sarvam/Hybrid models)
     const metadataMarker = /",\s*"thumbnail":\s*".*?"\s*\}?$/;
     if (isCodeMode && metadataMarker.test(fixed)) {
         fixed = fixed.replace(metadataMarker, '');
     }
 
-    // 4. If it's HTML code, ensure we start at the doctype or html tag
+    // 5. If it's HTML code, ensure we start strictly at the doctype or html tag
     if (isCodeMode && (fixed.includes('<!DOCTYPE') || fixed.includes('<html'))) {
         const start = Math.max(fixed.indexOf('<!DOCTYPE'), fixed.indexOf('<html'));
         if (start !== -1) fixed = fixed.substring(start);
