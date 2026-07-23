@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1607,7 +1607,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     const presets = databaseCache.settings?.['arcade-current-types'] || [];
     
     // --- INTEGRATED METRIC CONFIGURATION TUNERS ---
-    const MATCH_THRESHOLD_PERCENT = 50; 
+    const MATCH_THRESHOLD_PERCENT = 75; 
     const GIBBERISH_MIN_TOKEN_LEN = 3;   // Skip evaluation for tokens this size or smaller
     const GIBBERISH_VOWEL_RULE_LEN = 5;  // Only enforce vowel balance on tokens strictly greater than this size
     // ----------------------------------------------
