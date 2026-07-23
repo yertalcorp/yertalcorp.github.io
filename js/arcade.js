@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:25:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1765,11 +1765,19 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
 
     const foundParams = {};
     
-    // Target only the active script execution payload block, completely skipping external library dependencies
+    // 1. Clean invalid // line comments leaked into raw HTML (ignoring lines with URLs like http://, https://, or script/link tags)
+    rawCode = rawCode.replace(/^[ \t]*\/\/(?!.*:\/\/)(?!.*<script)(?!.*<link).*$/gm, '');
+
+    // 2. Clean invalid // line comments inside <style> blocks (convert to valid /* */ CSS comments)
+    rawCode = rawCode.replace(/<style[\s\S]*?<\/style>/gi, styleBlock => {
+        return styleBlock.replace(/(?<!:)\/\/(.*)$/gm, '/* $1 */');
+    });
+
+    // 3. Target only the active script execution payload block, completely skipping external library dependencies
     const scriptMatch = rawCode.match(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/i);
     let logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
 
-    // Enforce comment enclosure rules safely ONLY inside JS execution logic (ignoring URLs like http:// or https://)
+    // 4. Enforce comment enclosure rules safely inside JS execution logic (ignoring URLs like http:// or https://)
     logic = logic.replace(/(?<!:)\/\/(.*)$/gm, (match, commentBody) => {
         const cleanComment = commentBody.trim();
         return cleanComment ? `/* ${cleanComment} */` : '';
@@ -1912,7 +1920,6 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         rules: `Execute interactive rendering threads via modular ${resolvedGroup.toLowerCase()} structures.`,
         logic: "create",
         is_custom: true,
-        // FIX: Assign direct primitive configuration properties layout to the cache map
         parameter_map: { ...foundParams },
         template: compiledTemplateDoc
     };
@@ -1924,7 +1931,6 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         extractedProperties: JSON.parse(JSON.stringify(foundParams))
     };
 }
-
 window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
