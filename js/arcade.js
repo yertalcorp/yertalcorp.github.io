@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:59:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1754,183 +1754,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     };
 }
 
-function generateTemplateAndParameterMap(sparkNode, prompt = "") {
-    let rawCode = sparkNode.code || "";
-    
-    console.group("[DISTILLATION ENGINE] generateTemplateAndParameterMap");
-    console.log("[TELEMETRY INPUT] Raw Code Input String:\n", rawCode);
 
-    // Cleanse text input: Strip out hidden unicode, zero-width spaces, and control characters
-    rawCode = rawCode.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '');
-
-    const foundParams = {};
-    
-    // 1. Clean invalid // line comments leaked into raw HTML (ignoring lines with URLs like http://, https://, or script/link tags)
-    rawCode = rawCode.replace(/^[ \t]*\/\/(?!.*:\/\/)(?!.*<script)(?!.*<link).*$/gm, '');
-
-    // 2. Clean invalid // line comments inside <style> blocks (convert to valid /* */ CSS comments)
-    rawCode = rawCode.replace(/<style[\s\S]*?<\/style>/gi, styleBlock => {
-        return styleBlock.replace(/(?<!:)\/\/(.*)$/gm, '/* $1 */');
-    });
-
-    // 3. Target only the active script execution payload block, completely skipping external library dependencies
-    const scriptMatch = rawCode.match(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/i);
-    let logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
-
-    // 4. Enforce comment enclosure rules safely inside JS execution logic (ignoring URLs like http:// or https://)
-    logic = logic.replace(/(?<!:)\/\/(.*)$/gm, (match, commentBody) => {
-        const cleanComment = commentBody.trim();
-        return cleanComment ? `/* ${cleanComment} */` : '';
-    });
-
-    // 1. ADVANCED DICTIONARY DECONSTRUCTION ENGINE
-    // Scan for structured configuration parameter maps like "const params = { ... }"
-    const objectMapPattern = /(?:const|let|var)\s+(\w*(?:params|config|settings|options|setup)\w*)\s*=\s*\{([\s\S]*?)\};/i;
-    const objectMapMatch = logic.match(objectMapPattern);
-
-    if (objectMapMatch) {
-        const mapIdentifier = objectMapMatch[1];
-        const internalBody = objectMapMatch[2];
-        
-        const lineEntries = internalBody.split('\n');
-        const processedLines = lineEntries.map(line => {
-            const cleanLine = line.trim();
-            if (!cleanLine || cleanLine.startsWith('/*')) return line;
-            
-            const parts = cleanLine.split(/:(.+)/);
-            if (parts.length < 2) return line;
-            
-            const keyName = parts[0].trim().replace(/['"`]/g, "");
-            let rawVal = parts[1].trim().replace(/,$/, "").trim();
-            
-            const isNumericOrHex = /^-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)$/.test(rawVal);
-            const isQuotedString = /^(['"`])([\s\S]*?)\1$/.test(rawVal);
-
-            if (isNumericOrHex || isQuotedString) {
-                const cleanedVal = rawVal.replace(/^['"`]|['"`]$/g, "");
-                const lowercaseKey = keyName.toLowerCase();
-                
-                if (isNumericOrHex && !rawVal.toLowerCase().includes('0x')) {
-                    foundParams[lowercaseKey] = parseFloat(cleanedVal);
-                } else {
-                    foundParams[lowercaseKey] = cleanedVal;
-                }
-                
-                const originalIndent = line.match(/^\s*/)[0];
-                return `${originalIndent}${keyName}: ${isNaN(cleanedVal) || rawVal.toLowerCase().includes('0x') ? `"${`{{${lowercaseKey}}}`}"` : `{{${lowercaseKey}}}`},`;
-            }
-            return line;
-        });
-        
-        logic = logic.replace(objectMapMatch[0], `const ${mapIdentifier} = {\n${processedLines.join('\n')}\n};`);
-    }
-
-    // 2. BACKUP SCALAR VARIABLE SCANNER
-    const configPattern = /(?:const|let|var)\s+([^;]+);/g;
-    let templateWithVars = logic.replace(configPattern, (match, expression) => {
-        const matchIndex = logic.indexOf(match);
-        if (matchIndex > 0) {
-            const contextBefore = logic.substring(Math.max(0, matchIndex - 20), matchIndex);
-            if (/for\s*\($/i.test(contextBefore.trim())) return match;
-        }
-
-        const assignments = expression.split(',');
-        let processedAssignments = assignments.map(assign => {
-            const parts = assign.split('=');
-            if (parts.length !== 2) return assign;
-            
-            const name = parts[0].trim();
-            const value = parts[1].trim();
-            
-            if (name.length <= 1 || /^(iterator|index|clock|time|delta|frame|loop)$/i.test(name)) {
-                return assign;
-            }
-            
-            const isNumericOrHex = /^-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)$/.test(value);
-            const isQuotedString = /^(['"`])([\s\S]*?)\1$/.test(value);
-
-            if (isNumericOrHex || isQuotedString) {
-                const cleanedVal = value.replace(/^['"`]|['"`]$/g, "");
-                const key = name.toLowerCase();
-                
-                if (!foundParams[key]) {
-                    if (isNumericOrHex && !value.toLowerCase().includes('0x')) {
-                        foundParams[key] = parseFloat(cleanedVal);
-                    } else {
-                        foundParams[key] = cleanedVal;
-                    }
-                }
-                
-                return `${name} = ${isNaN(cleanedVal) || value.toLowerCase().includes('0x') ? `"${`{{${key}}}`}"` : `{{${key}}}`}`;
-            }
-            return assign;
-        });
-        
-        const keyword = match.match(/^(const|let|var)/)[0];
-        return `${keyword} ${processedAssignments.join(', ')};`;
-    });
-
-    const finalScriptLogic = templateWithVars;
-
-    // 3. Re-assemble complete document matrix context ensuring it starts strictly with DOCTYPE
-    let compiledTemplateDoc = "";
-    const cleanCheckCode = rawCode.trim().toUpperCase();
-    if (cleanCheckCode.startsWith("<!DOCTYPE") || cleanCheckCode.includes("<HTML")) {
-        compiledTemplateDoc = scriptMatch ? rawCode.replace(scriptMatch[1], `\n${finalScriptLogic}\n`) : rawCode;
-        if (!compiledTemplateDoc.trim().toUpperCase().startsWith("<!DOCTYPE")) {
-            compiledTemplateDoc = "<!DOCTYPE html>\n" + compiledTemplateDoc.trim();
-        }
-    } else {
-        compiledTemplateDoc = `<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <style>\n        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #050508; }\n    </style>\n</head>\n<body>\n    <script type="module">\n${finalScriptLogic}\n    </script>\n</body>\n</html>`;
-    }
-
-    console.log("[TELEMETRY OUTPUT] Cleaned and Processed Template Output:\n", compiledTemplateDoc);
-    console.log("[TELEMETRY OUTPUT] Extracted Parameter Map Dictionary Target:", foundParams);
-
-    // 4. SMART METADATA EXTRACTION LAYER
-    const titleMatch = rawCode.match(/<title>([\s\S]*?)<\/title>/i);
-    const h1Match = rawCode.match(/<h1>([\s\S]*?)<\/h1>/i);
-    const h2Match = rawCode.match(/<h2>([\s\S]*?)<\/h2>/i);
-    let resolvedName = sparkNode.name || "";
-    
-    if (!resolvedName || resolvedName.startsWith('spark_') || resolvedName === 'Unnamed Spark') {
-        resolvedName = titleMatch ? titleMatch[1].trim() : (h1Match ? h1Match[1].trim() : (h2Match ? h2Match[1].trim() : "Custom Simulation Space"));
-    }
-
-    // Dynamic Group Detector
-    let resolvedGroup = "Custom Labs";
-    if (rawCode.includes("three") || rawCode.includes("THREE") || rawCode.includes("WebGLRenderer")) {
-        resolvedGroup = "Visual Simulations";
-    } else if (rawCode.includes("addEventListener('keydown'") || rawCode.includes("score") || rawCode.includes("gameState")) {
-        resolvedGroup = "Realm Labs";
-    }
-
-    // Dynamic Description Setup
-    let resolvedDescription = prompt ? (prompt.trim().charAt(0).toUpperCase() + prompt.trim().slice(1)) : `${resolvedGroup} environment for ${resolvedName.toLowerCase()}.`;
-
-    // 5. Define the Pure Class Definition Object Structure for Central Cache Injection
-    const newTypeEntry = {
-        id: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-'),
-        name: resolvedName,
-        example_prompt: prompt,
-        group: resolvedGroup,
-        image: sparkNode.image || "/assets/thumbnails/default.jpg",
-        description: resolvedDescription,
-        regex: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '|'),
-        rules: `Execute interactive rendering threads via modular ${resolvedGroup.toLowerCase()} structures.`,
-        logic: "create",
-        is_custom: true,
-        parameter_map: { ...foundParams },
-        template: compiledTemplateDoc
-    };
-
-    console.groupEnd();
-
-    return {
-        typeData: newTypeEntry,
-        extractedProperties: JSON.parse(JSON.stringify(foundParams))
-    };
-}
 window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
@@ -2376,6 +2200,194 @@ window.submitNewCurrent = async () => {
     }
 };
 
+function generateTemplateAndParameterMap(sparkNode, prompt = "") {
+    let rawCode = sparkNode.code || "";
+    
+    console.group("[DISTILLATION ENGINE] generateTemplateAndParameterMap");
+    console.log("[TELEMETRY INPUT] Raw Code Input String:\n", rawCode);
+
+    // Cleanse text input: Strip out hidden unicode, zero-width spaces, and control characters
+    rawCode = rawCode.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '');
+
+    const foundParams = {};
+    
+    // 1. Clean invalid // line comments leaked into raw HTML (ignoring URLs like http://, https://, or script/link tags)
+    rawCode = rawCode.replace(/^[ \t]*\/\/(?!.*:\/\/\/?)(?!.*<script)(?!.*<link).*$/gm, (match) => {
+        console.log("[COMMENT CLEANUP 1 - HTML] Stripped Standalone HTML Line Comment:\n  Before:", JSON.stringify(match));
+        return '';
+    });
+
+    // 2. Clean invalid // line comments inside <style> blocks (convert to valid /* */ CSS comments, ignoring http:// or https://)
+    rawCode = rawCode.replace(/<style[\s\S]*?<\/style>/gi, styleBlock => {
+        return styleBlock.replace(/(?<!https?:)(?<!:)\/\/(.*)$/gm, (match, commentBody) => {
+            const cleanComment = commentBody.trim();
+            const replacement = cleanComment ? `/* ${cleanComment} */` : '';
+            console.log("[COMMENT CLEANUP 2 - STYLE] Converted Style Comment:\n  Before:", JSON.stringify(match), "\n  After: ", JSON.stringify(replacement));
+            return replacement;
+        });
+    });
+
+    // 3. Target only the active script execution payload block, completely skipping external library dependencies
+    const scriptMatch = rawCode.match(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/i);
+    let logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
+
+    // 4. Enforce comment enclosure rules safely inside JS execution logic (explicitly ignoring URLs like http:// or https://)
+    logic = logic.replace(/(?<!https?:)(?<!:)\/\/(.*)$/gm, (match, commentBody) => {
+        const cleanComment = commentBody.trim();
+        const replacement = cleanComment ? `/* ${cleanComment} */` : '';
+        console.log("[COMMENT CLEANUP 4 - JS LOGIC] Converted JS Line Comment:\n  Before:", JSON.stringify(match), "\n  After: ", JSON.stringify(replacement));
+        return replacement;
+    });
+
+    // 1. ADVANCED DICTIONARY DECONSTRUCTION ENGINE
+    // Scan for structured configuration parameter maps like "const params = { ... }"
+    const objectMapPattern = /(?:const|let|var)\s+(\w*(?:params|config|settings|options|setup)\w*)\s*=\s*\{([\s\S]*?)\};/i;
+    const objectMapMatch = logic.match(objectMapPattern);
+
+    if (objectMapMatch) {
+        const mapIdentifier = objectMapMatch[1];
+        const internalBody = objectMapMatch[2];
+        
+        const lineEntries = internalBody.split('\n');
+        const processedLines = lineEntries.map(line => {
+            const cleanLine = line.trim();
+            if (!cleanLine || cleanLine.startsWith('/*')) return line;
+            
+            const parts = cleanLine.split(/:(.+)/);
+            if (parts.length < 2) return line;
+            
+            const keyName = parts[0].trim().replace(/['"`]/g, "");
+            let rawVal = parts[1].trim().replace(/,$/, "").trim();
+            
+            const isNumericOrHex = /^-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)$/.test(rawVal);
+            const isQuotedString = /^(['"`])([\s\S]*?)\1$/.test(rawVal);
+
+            if (isNumericOrHex || isQuotedString) {
+                const cleanedVal = rawVal.replace(/^['"`]|['"`]$/g, "");
+                const lowercaseKey = keyName.toLowerCase();
+                
+                if (isNumericOrHex && !rawVal.toLowerCase().includes('0x')) {
+                    foundParams[lowercaseKey] = parseFloat(cleanedVal);
+                } else {
+                    foundParams[lowercaseKey] = cleanedVal;
+                }
+                
+                const originalIndent = line.match(/^\s*/)[0];
+                return `${originalIndent}${keyName}: ${isNaN(cleanedVal) || rawVal.toLowerCase().includes('0x') ? `"${`{{${lowercaseKey}}}`}"` : `{{${lowercaseKey}}}`},`;
+            }
+            return line;
+        });
+        
+        logic = logic.replace(objectMapMatch[0], `const ${mapIdentifier} = {\n${processedLines.join('\n')}\n};`);
+    }
+
+    // 2. BACKUP SCALAR VARIABLE SCANNER
+    const configPattern = /(?:const|let|var)\s+([^;]+);/g;
+    let templateWithVars = logic.replace(configPattern, (match, expression) => {
+        const matchIndex = logic.indexOf(match);
+        if (matchIndex > 0) {
+            const contextBefore = logic.substring(Math.max(0, matchIndex - 20), matchIndex);
+            if (/for\s*\($/i.test(contextBefore.trim())) return match;
+        }
+
+        const assignments = expression.split(',');
+        let processedAssignments = assignments.map(assign => {
+            const parts = assign.split('=');
+            if (parts.length !== 2) return assign;
+            
+            const name = parts[0].trim();
+            const value = parts[1].trim();
+            
+            if (name.length <= 1 || /^(iterator|index|clock|time|delta|frame|loop)$/i.test(name)) {
+                return assign;
+            }
+            
+            const isNumericOrHex = /^-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)$/.test(value);
+            const isQuotedString = /^(['"`])([\s\S]*?)\1$/.test(value);
+
+            if (isNumericOrHex || isQuotedString) {
+                const cleanedVal = value.replace(/^['"`]|['"`]$/g, "");
+                const key = name.toLowerCase();
+                
+                if (!foundParams[key]) {
+                    if (isNumericOrHex && !value.toLowerCase().includes('0x')) {
+                        foundParams[key] = parseFloat(cleanedVal);
+                    } else {
+                        foundParams[key] = cleanedVal;
+                    }
+                }
+                
+                return `${name} = ${isNaN(cleanedVal) || value.toLowerCase().includes('0x') ? `"${`{{${key}}}`}"` : `{{${key}}}`}`;
+            }
+            return assign;
+        });
+        
+        const keyword = match.match(/^(const|let|var)/)[0];
+        return `${keyword} ${processedAssignments.join(', ')};`;
+    });
+
+    const finalScriptLogic = templateWithVars;
+
+    // 3. Re-assemble complete document matrix context ensuring it starts strictly with DOCTYPE
+    let compiledTemplateDoc = "";
+    const cleanCheckCode = rawCode.trim().toUpperCase();
+    if (cleanCheckCode.startsWith("<!DOCTYPE") || cleanCheckCode.includes("<HTML")) {
+        compiledTemplateDoc = scriptMatch ? rawCode.replace(scriptMatch[1], `\n${finalScriptLogic}\n`) : rawCode;
+        if (!compiledTemplateDoc.trim().toUpperCase().startsWith("<!DOCTYPE")) {
+            compiledTemplateDoc = "<!DOCTYPE html>\n" + compiledTemplateDoc.trim();
+        }
+    } else {
+        compiledTemplateDoc = `<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <style>\n        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #050508; }\n    </style>\n</head>\n<body>\n    <script type="module">\n${finalScriptLogic}\n    </script>\n</body>\n</html>`;
+    }
+
+    console.log("[TELEMETRY OUTPUT] Cleaned and Processed Template Output:\n", compiledTemplateDoc);
+    console.log("[TELEMETRY OUTPUT] Extracted Parameter Map Dictionary Target:", foundParams);
+
+    // 4. SMART METADATA EXTRACTION LAYER
+    const titleMatch = rawCode.match(/<title>([\s\S]*?)<\/title>/i);
+    const h1Match = rawCode.match(/<h1>([\s\S]*?)<\/h1>/i);
+    const h2Match = rawCode.match(/<h2>([\s\S]*?)<\/h2>/i);
+    let resolvedName = sparkNode.name || "";
+    
+    if (!resolvedName || resolvedName.startsWith('spark_') || resolvedName === 'Unnamed Spark') {
+        resolvedName = titleMatch ? titleMatch[1].trim() : (h1Match ? h1Match[1].trim() : (h2Match ? h2Match[1].trim() : "Custom Simulation Space"));
+    }
+
+    // Dynamic Group Detector
+    let resolvedGroup = "Custom Labs";
+    if (rawCode.includes("three") || rawCode.includes("THREE") || rawCode.includes("WebGLRenderer")) {
+        resolvedGroup = "Visual Simulations";
+    } else if (rawCode.includes("addEventListener('keydown'") || rawCode.includes("score") || rawCode.includes("gameState")) {
+        resolvedGroup = "Realm Labs";
+    }
+
+    // Dynamic Description Setup
+    let resolvedDescription = prompt ? (prompt.trim().charAt(0).toUpperCase() + prompt.trim().slice(1)) : `${resolvedGroup} environment for ${resolvedName.toLowerCase()}.`;
+
+    // 5. Define the Pure Class Definition Object Structure for Central Cache Injection
+    const newTypeEntry = {
+        id: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-'),
+        name: resolvedName,
+        example_prompt: prompt,
+        group: resolvedGroup,
+        image: sparkNode.image || "/assets/thumbnails/default.jpg",
+        description: resolvedDescription,
+        regex: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '|'),
+        rules: `Execute interactive rendering threads via modular ${resolvedGroup.toLowerCase()} structures.`,
+        logic: "create",
+        is_custom: true,
+        parameter_map: { ...foundParams },
+        template: compiledTemplateDoc
+    };
+
+    console.groupEnd();
+
+    return {
+        typeData: newTypeEntry,
+        extractedProperties: JSON.parse(JSON.stringify(foundParams))
+    };
+}
+
 /*
  * Objective: Clean and normalize raw LLM output.
  * Tasks: Scrub Unicode, remove markdown fences, and strip trailing JSON metadata.
@@ -2393,11 +2405,18 @@ function verifyAndFixCode(rawCode, isCodeMode = false) {
     fixed = fixed.replace(/^```[a-z]*\n?/gi, '').replace(/\n?```$/g, '');
 
     // 3. Scrub orphaned comment delimiters at start/end of raw input
-    fixed = fixed.replace(/^(\/\*|\*\/|\/\/)+\s*/g, '').replace(/\*\/\s*$/g, '');
+    fixed = fixed.replace(/^(\/\*|\*\/|\/\/)+\s*/g, (match) => {
+        console.log("[VERIFY & FIX] Scrubbed orphaned start delimiter:\n  Before:", JSON.stringify(match));
+        return '';
+    }).replace(/\*\/\s*$/g, (match) => {
+        console.log("[VERIFY & FIX] Scrubbed orphaned end delimiter:\n  Before:", JSON.stringify(match));
+        return '';
+    });
 
     // 4. Handle hybrid "Trailing Metadata" (Specific to Sarvam/Hybrid models)
     const metadataMarker = /",\s*"thumbnail":\s*".*?"\s*\}?$/;
     if (isCodeMode && metadataMarker.test(fixed)) {
+        console.log("[VERIFY & FIX] Removed trailing metadata JSON footer.");
         fixed = fixed.replace(metadataMarker, '');
     }
 
