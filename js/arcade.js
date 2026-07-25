@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:59:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:12:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2211,15 +2211,16 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
 
     const foundParams = {};
     
-    // 1. Clean invalid // line comments leaked into raw HTML (ignoring URLs like http://, https://, or script/link tags)
-    rawCode = rawCode.replace(/^[ \t]*\/\/(?!.*:\/\/\/?)(?!.*<script)(?!.*<link).*$/gm, (match) => {
+    // 1. Clean invalid // line comments leaked into raw HTML (Strictly ignoring URLs and HTML tags)
+    rawCode = rawCode.replace(/^[ \t]*\/\/(?!.*https?:)(?!.*<script)(?!.*<link)(?!.*src=).*$/gm, (match) => {
         console.log("[COMMENT CLEANUP 1 - HTML] Stripped Standalone HTML Line Comment:\n  Before:", JSON.stringify(match));
         return '';
     });
 
-    // 2. Clean invalid // line comments inside <style> blocks (convert to valid /* */ CSS comments, ignoring http:// or https://)
+    // 2. Clean invalid // line comments inside <style> blocks (convert to valid /* */ CSS comments, ignoring URLs)
     rawCode = rawCode.replace(/<style[\s\S]*?<\/style>/gi, styleBlock => {
-        return styleBlock.replace(/(?<!https?:)(?<!:)\/\/(.*)$/gm, (match, commentBody) => {
+        return styleBlock.replace(/(?<!https?:)(?<!:)(?<!\bhttps?:\/\/[^\s]+)\/\/(.*)$/gm, (match, commentBody) => {
+            if (match.includes('http://') || match.includes('https://')) return match;
             const cleanComment = commentBody.trim();
             const replacement = cleanComment ? `/* ${cleanComment} */` : '';
             console.log("[COMMENT CLEANUP 2 - STYLE] Converted Style Comment:\n  Before:", JSON.stringify(match), "\n  After: ", JSON.stringify(replacement));
@@ -2227,12 +2228,16 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         });
     });
 
-    // 3. Target only the active script execution payload block, completely skipping external library dependencies
+    // 3. Target only the active inline script execution payload block
     const scriptMatch = rawCode.match(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/i);
     let logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
 
-    // 4. Enforce comment enclosure rules safely inside JS execution logic (explicitly ignoring URLs like http:// or https://)
+    // 4. Enforce comment enclosure rules safely inside JS execution logic (Protecting URLs explicitly)
     logic = logic.replace(/(?<!https?:)(?<!:)\/\/(.*)$/gm, (match, commentBody) => {
+        // If the match contains a protocol or URL, do NOT convert it to /* */
+        if (match.includes('http://') || match.includes('https://') || match.includes('src=')) {
+            return match;
+        }
         const cleanComment = commentBody.trim();
         const replacement = cleanComment ? `/* ${cleanComment} */` : '';
         console.log("[COMMENT CLEANUP 4 - JS LOGIC] Converted JS Line Comment:\n  Before:", JSON.stringify(match), "\n  After: ", JSON.stringify(replacement));
@@ -2240,7 +2245,6 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     });
 
     // 1. ADVANCED DICTIONARY DECONSTRUCTION ENGINE
-    // Scan for structured configuration parameter maps like "const params = { ... }"
     const objectMapPattern = /(?:const|let|var)\s+(\w*(?:params|config|settings|options|setup)\w*)\s*=\s*\{([\s\S]*?)\};/i;
     const objectMapMatch = logic.match(objectMapPattern);
 
@@ -2353,7 +2357,6 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         resolvedName = titleMatch ? titleMatch[1].trim() : (h1Match ? h1Match[1].trim() : (h2Match ? h2Match[1].trim() : "Custom Simulation Space"));
     }
 
-    // Dynamic Group Detector
     let resolvedGroup = "Custom Labs";
     if (rawCode.includes("three") || rawCode.includes("THREE") || rawCode.includes("WebGLRenderer")) {
         resolvedGroup = "Visual Simulations";
@@ -2361,7 +2364,6 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         resolvedGroup = "Realm Labs";
     }
 
-    // Dynamic Description Setup
     let resolvedDescription = prompt ? (prompt.trim().charAt(0).toUpperCase() + prompt.trim().slice(1)) : `${resolvedGroup} environment for ${resolvedName.toLowerCase()}.`;
 
     // 5. Define the Pure Class Definition Object Structure for Central Cache Injection
