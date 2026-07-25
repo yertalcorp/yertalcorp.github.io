@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:12:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2206,45 +2206,42 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     console.group("[DISTILLATION ENGINE] generateTemplateAndParameterMap");
     console.log("[TELEMETRY INPUT] Raw Code Input String:\n", rawCode);
 
-    // Cleanse text input: Strip out hidden unicode, zero-width spaces, and control characters
+    // 1. Cleanse invisible unicode/control characters
     rawCode = rawCode.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '');
 
     const foundParams = {};
-    
-    // 1. Clean invalid // line comments leaked into raw HTML (Strictly ignoring URLs and HTML tags)
-    rawCode = rawCode.replace(/^[ \t]*\/\/(?!.*https?:)(?!.*<script)(?!.*<link)(?!.*src=).*$/gm, (match) => {
-        console.log("[COMMENT CLEANUP 1 - HTML] Stripped Standalone HTML Line Comment:\n  Before:", JSON.stringify(match));
-        return '';
-    });
 
-    // 2. Clean invalid // line comments inside <style> blocks (convert to valid /* */ CSS comments, ignoring URLs)
-    rawCode = rawCode.replace(/<style[\s\S]*?<\/style>/gi, styleBlock => {
-        return styleBlock.replace(/(?<!https?:)(?<!:)(?<!\bhttps?:\/\/[^\s]+)\/\/(.*)$/gm, (match, commentBody) => {
-            if (match.includes('http://') || match.includes('https://')) return match;
-            const cleanComment = commentBody.trim();
-            const replacement = cleanComment ? `/* ${cleanComment} */` : '';
-            console.log("[COMMENT CLEANUP 2 - STYLE] Converted Style Comment:\n  Before:", JSON.stringify(match), "\n  After: ", JSON.stringify(replacement));
-            return replacement;
+    // 2. SAFE COMMENT STRIPPER: Tokenizes strings, URLs, <script src>, and <link> tags first
+    function stripJSCommentsSafely(code) {
+        const tokenRegex = /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|<script[^>]*src=["'][^"']+["'][^>]*>[\s\S]*?<\/script>|<link[^>]*>|\/\*[\s\S]*?\*\/|\/\/[^\r\n]*/gi;
+        
+        return code.replace(tokenRegex, (match) => {
+            const lower = match.toLowerCase();
+            // Preserve strings, <script src="...">, and <link> tags verbatim
+            if (match.startsWith('"') || match.startsWith("'") || match.startsWith('`') || lower.startsWith('<script') || lower.startsWith('<link')) {
+                return match;
+            }
+            // Strip actual block comments (/* ... */) and line comments (// ...)
+            if (match.startsWith('/*') || match.startsWith('//')) {
+                console.log("[COMMENT CLEANUP] Safely Stripped Comment:", JSON.stringify(match));
+                return '';
+            }
+            return match;
         });
-    });
+    }
 
-    // 3. Target only the active inline script execution payload block
+    // Clean style tags safely using the tokenizer
+    rawCode = rawCode.replace(/<style[\s\S]*?<\/style>/gi, styleBlock => stripJSCommentsSafely(styleBlock));
+
+    // 3. Extract and clean the inline script content cleanly
     const scriptMatch = rawCode.match(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/i);
     let logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
 
-    // 4. Enforce comment enclosure rules safely inside JS execution logic (Protecting URLs explicitly)
-    logic = logic.replace(/(?<!https?:)(?<!:)\/\/(.*)$/gm, (match, commentBody) => {
-        // If the match contains a protocol or URL, do NOT convert it to /* */
-        if (match.includes('http://') || match.includes('https://') || match.includes('src=')) {
-            return match;
-        }
-        const cleanComment = commentBody.trim();
-        const replacement = cleanComment ? `/* ${cleanComment} */` : '';
-        console.log("[COMMENT CLEANUP 4 - JS LOGIC] Converted JS Line Comment:\n  Before:", JSON.stringify(match), "\n  After: ", JSON.stringify(replacement));
-        return replacement;
-    });
+    // Apply the safe stripper to the inline JS logic block
+    logic = stripJSCommentsSafely(logic);
 
-    // 1. ADVANCED DICTIONARY DECONSTRUCTION ENGINE
+    // 4. ADVANCED DICTIONARY DECONSTRUCTION ENGINE
+    // Scans for structured configuration parameter maps like "const params = { ... }"
     const objectMapPattern = /(?:const|let|var)\s+(\w*(?:params|config|settings|options|setup)\w*)\s*=\s*\{([\s\S]*?)\};/i;
     const objectMapMatch = logic.match(objectMapPattern);
 
@@ -2255,7 +2252,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         const lineEntries = internalBody.split('\n');
         const processedLines = lineEntries.map(line => {
             const cleanLine = line.trim();
-            if (!cleanLine || cleanLine.startsWith('/*')) return line;
+            if (!cleanLine || cleanLine.startsWith('/*') || cleanLine.startsWith('//')) return line;
             
             const parts = cleanLine.split(/:(.+)/);
             if (parts.length < 2) return line;
@@ -2285,7 +2282,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         logic = logic.replace(objectMapMatch[0], `const ${mapIdentifier} = {\n${processedLines.join('\n')}\n};`);
     }
 
-    // 2. BACKUP SCALAR VARIABLE SCANNER
+    // 5. BACKUP SCALAR VARIABLE SCANNER
     const configPattern = /(?:const|let|var)\s+([^;]+);/g;
     let templateWithVars = logic.replace(configPattern, (match, expression) => {
         const matchIndex = logic.indexOf(match);
@@ -2332,7 +2329,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
 
     const finalScriptLogic = templateWithVars;
 
-    // 3. Re-assemble complete document matrix context ensuring it starts strictly with DOCTYPE
+    // 6. Re-assemble complete document matrix context ensuring valid HTML structure
     let compiledTemplateDoc = "";
     const cleanCheckCode = rawCode.trim().toUpperCase();
     if (cleanCheckCode.startsWith("<!DOCTYPE") || cleanCheckCode.includes("<HTML")) {
@@ -2347,7 +2344,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     console.log("[TELEMETRY OUTPUT] Cleaned and Processed Template Output:\n", compiledTemplateDoc);
     console.log("[TELEMETRY OUTPUT] Extracted Parameter Map Dictionary Target:", foundParams);
 
-    // 4. SMART METADATA EXTRACTION LAYER
+    // 7. SMART METADATA EXTRACTION LAYER
     const titleMatch = rawCode.match(/<title>([\s\S]*?)<\/title>/i);
     const h1Match = rawCode.match(/<h1>([\s\S]*?)<\/h1>/i);
     const h2Match = rawCode.match(/<h2>([\s\S]*?)<\/h2>/i);
@@ -2357,6 +2354,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         resolvedName = titleMatch ? titleMatch[1].trim() : (h1Match ? h1Match[1].trim() : (h2Match ? h2Match[1].trim() : "Custom Simulation Space"));
     }
 
+    // Dynamic Group Detector
     let resolvedGroup = "Custom Labs";
     if (rawCode.includes("three") || rawCode.includes("THREE") || rawCode.includes("WebGLRenderer")) {
         resolvedGroup = "Visual Simulations";
@@ -2364,9 +2362,10 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         resolvedGroup = "Realm Labs";
     }
 
+    // Dynamic Description Setup
     let resolvedDescription = prompt ? (prompt.trim().charAt(0).toUpperCase() + prompt.trim().slice(1)) : `${resolvedGroup} environment for ${resolvedName.toLowerCase()}.`;
 
-    // 5. Define the Pure Class Definition Object Structure for Central Cache Injection
+    // 8. Output Type Definition Entry
     const newTypeEntry = {
         id: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-'),
         name: resolvedName,
