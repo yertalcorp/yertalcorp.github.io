@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:04:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2241,8 +2241,8 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     logic = stripJSCommentsSafely(logic);
 
     // 4. ADVANCED DICTIONARY DECONSTRUCTION ENGINE
-    // Scans for structured configuration parameter maps like "const params = { ... }"
-    const objectMapPattern = /(?:const|let|var)\s+(\w*(?:params|config|settings|options|setup)\w*)\s*=\s*\{([\s\S]*?)\};/i;
+    // Matches primary configuration objects (e.g., 'params', 'p', 'config', 'settings', 'setup', 'options')
+    const objectMapPattern = /(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*\{([\s\S]*?)\};/i;
     const objectMapMatch = logic.match(objectMapPattern);
 
     if (objectMapMatch) {
@@ -2262,19 +2262,25 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
             
             const isNumericOrHex = /^-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)$/.test(rawVal);
             const isQuotedString = /^(['"`])([\s\S]*?)\1$/.test(rawVal);
+            const isBoolean = /^(true|false)$/i.test(rawVal);
 
-            if (isNumericOrHex || isQuotedString) {
-                const cleanedVal = rawVal.replace(/^['"`]|['"`]$/g, "");
+            if (isNumericOrHex || isQuotedString || isBoolean) {
                 const lowercaseKey = keyName.toLowerCase();
-                
-                if (isNumericOrHex && !rawVal.toLowerCase().includes('0x')) {
-                    foundParams[lowercaseKey] = parseFloat(cleanedVal);
+
+                if (isBoolean) {
+                    foundParams[lowercaseKey] = rawVal.toLowerCase() === 'true';
+                } else if (isNumericOrHex) {
+                    foundParams[lowercaseKey] = rawVal.toLowerCase().startsWith('0x') 
+                        ? parseInt(rawVal, 16) 
+                        : parseFloat(rawVal);
                 } else {
-                    foundParams[lowercaseKey] = cleanedVal;
+                    foundParams[lowercaseKey] = rawVal.replace(/^['"`]|['"`]$/g, "");
                 }
                 
                 const originalIndent = line.match(/^\s*/)[0];
-                return `${originalIndent}${keyName}: ${isNaN(cleanedVal) || rawVal.toLowerCase().includes('0x') ? `"${`{{${lowercaseKey}}}`}"` : `{{${lowercaseKey}}}`},`;
+                const isQuotedOrHex = isQuotedString || rawVal.toLowerCase().startsWith('0x');
+                
+                return `${originalIndent}${keyName}: ${isQuotedOrHex ? `"${`{{${lowercaseKey}}}`}"` : `{{${lowercaseKey}}}`},`;
             }
             return line;
         });
@@ -2305,20 +2311,25 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
             
             const isNumericOrHex = /^-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)$/.test(value);
             const isQuotedString = /^(['"`])([\s\S]*?)\1$/.test(value);
+            const isBoolean = /^(true|false)$/i.test(value);
 
-            if (isNumericOrHex || isQuotedString) {
-                const cleanedVal = value.replace(/^['"`]|['"`]$/g, "");
+            if (isNumericOrHex || isQuotedString || isBoolean) {
                 const key = name.toLowerCase();
                 
                 if (!foundParams[key]) {
-                    if (isNumericOrHex && !value.toLowerCase().includes('0x')) {
-                        foundParams[key] = parseFloat(cleanedVal);
+                    if (isBoolean) {
+                        foundParams[key] = value.toLowerCase() === 'true';
+                    } else if (isNumericOrHex) {
+                        foundParams[key] = value.toLowerCase().startsWith('0x') 
+                            ? parseInt(value, 16) 
+                            : parseFloat(value);
                     } else {
-                        foundParams[key] = cleanedVal;
+                        foundParams[key] = value.replace(/^['"`]|['"`]$/g, "");
                     }
                 }
                 
-                return `${name} = ${isNaN(cleanedVal) || value.toLowerCase().includes('0x') ? `"${`{{${key}}}`}"` : `{{${key}}}`}`;
+                const isQuotedOrHex = isQuotedString || value.toLowerCase().startsWith('0x');
+                return `${name} = ${isQuotedOrHex ? `"${`{{${key}}}`}"` : `{{${key}}}`}`;
             }
             return assign;
         });
@@ -2388,7 +2399,6 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         extractedProperties: JSON.parse(JSON.stringify(foundParams))
     };
 }
-
 /*
  * Objective: Clean and normalize raw LLM output.
  * Tasks: Scrub Unicode, remove markdown fences, and strip trailing JSON metadata.
