@@ -2211,7 +2211,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
     let rawCode = sparkNode.code || "";
     
     console.group("[DISTILLATION ENGINE] generateTemplateAndParameterMap");
-    console.log("[TELEMETRY INPUT] Raw Code Input String:\n", rawCode);
+    /*console.log("[TELEMETRY INPUT] Raw Code Input String:\n", rawCode);*/
 
     // 1. Cleanse invisible unicode/control characters
     rawCode = rawCode.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '');
@@ -2359,7 +2359,7 @@ function generateTemplateAndParameterMap(sparkNode, prompt = "") {
         compiledTemplateDoc = `<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <style>\n        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #050508; }\n    </style>\n</head>\n<body>\n    <script type="module">\n${finalScriptLogic}\n    </script>\n</body>\n</html>`;
     }
 
-    console.log("[TELEMETRY OUTPUT] Cleaned and Processed Template Output:\n", compiledTemplateDoc);
+    /*console.log("[TELEMETRY OUTPUT] Cleaned and Processed Template Output:\n", compiledTemplateDoc);*/
     console.log("[TELEMETRY OUTPUT] Extracted Parameter Map Dictionary Target:", foundParams);
 
     // 7. SMART METADATA EXTRACTION LAYER
