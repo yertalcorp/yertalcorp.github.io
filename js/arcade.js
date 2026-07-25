@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:04:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1610,6 +1610,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     const MATCH_THRESHOLD_PERCENT = 75; 
     const GIBBERISH_MIN_TOKEN_LEN = 3;   // Skip evaluation for tokens this size or smaller
     const GIBBERISH_VOWEL_RULE_LEN = 5;  // Only enforce vowel balance on tokens strictly greater than this size
+    const GIBBERISH_TOKENS_MAX_PERCENT = 25; // Maximum allowed gibberish percentage (25% max, 75%+ valid required)
     // ----------------------------------------------
 
     let bestIndex = -1;
@@ -1652,7 +1653,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     }
 
     /* ----------------------------------------------------------------- */
-    /* STEP 2: HIGHEST MATCH PROBABILISTIC INTERSECTION TOKENIZER        */
+    /* STEP 2: HIGHEST MATCH PROBABILISTIC INTERSECTION TOKENIZER         */
     /* ----------------------------------------------------------------- */
     if (userTokens.length > 0) {
         presets.forEach((category, index) => {
@@ -1723,7 +1724,8 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         if (token.length <= GIBBERISH_MIN_TOKEN_LEN) return false;
         if (/([a-z])\1\1/.test(token)) return true; // Continuous repeating chars
         
-        const vowels = (token.match(/[aeiou]/g) || []).length;
+        // Include 'y' in vowel checks to prevent valid words like 'rhythm' from being flagged
+        const vowels = (token.match(/[aeiouy]/g) || []).length;
         const consonants = token.length - vowels;
         
         // Only run phonotactic check on long strings to let compound framework terms bypass safely
@@ -1733,16 +1735,22 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         return invalidClusters.some(cluster => token.includes(cluster));
     };
 
+    let gibberishCount = 0;
     for (let token of userTokens) {
         if (isGibberish(token)) {
-            return {
-                index: -1,
-                properties: {},
-                is_custom: true,
-                status: "TRY_A_DIFFERENT_PROMPT",
-                message: "Unstructured word fragments detected. Instructions were not clear. Please try again."
-            };
+            gibberishCount++;
         }
+    }
+
+    const gibberishPercentage = (gibberishCount / userTokens.length) * 100;
+    if (gibberishPercentage > GIBBERISH_TOKENS_MAX_PERCENT) {
+        return {
+            index: -1,
+            properties: {},
+            is_custom: true,
+            status: "TRY_A_DIFFERENT_PROMPT",
+            message: "Unstructured word fragments detected. Instructions were not clear. Please try again."
+        };
     }
 
     /* Prompt is structured, meaningful, and safe to execute via a clean model pool pull */
@@ -1753,7 +1761,6 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         status: "PROCEED_TO_LLM"
     };
 }
-
 
 window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     const promptInput = document.getElementById(`input-${currentId}`);
