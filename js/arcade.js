@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:46:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3587,10 +3587,6 @@ async function executeMassSpark(currentId, currentName, prompt, mode, promptType
                 let rawLLMContent = isObj ? (response.code || response.url) : response;
                 let sparkImage = isObj ? response.thumbnail : '/assets/thumbnails/default.jpg';
                 
-                if (typeof rawLLMContent === 'string') {
-                    rawLLMContent = rawLLMContent.replace(/\/\/.*$/gm, match => `/* ${match.replace(/\/\//, '').trim()} */`);
-                }
-
                 // Call the helper to extract variables and construct the model entry data objects cleanly
                 const parserMockNode = { id: sparkName.toLowerCase().replace(/\s+/g, '-'), name: sparkName, code: rawLLMContent, group: "Custom Group" };
                 const distillation = generateTemplateAndParameterMap(parserMockNode, prompt);
