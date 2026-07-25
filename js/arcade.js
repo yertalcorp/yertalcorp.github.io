@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:46:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2402,7 +2402,7 @@ function verifyAndFixCode(rawCode, isCodeMode = false) {
         .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
         .trim();
 
-    // 2. Remove Markdown code fences (Idempotent: only matches specific block starts/ends)
+    // 2. Remove Markdown code fences
     fixed = fixed.replace(/^```[a-z]*\n?/gi, '').replace(/\n?```$/g, '');
 
     // 3. Scrub orphaned comment delimiters at start/end of raw input
@@ -2414,34 +2414,30 @@ function verifyAndFixCode(rawCode, isCodeMode = false) {
         return '';
     });
 
-    // 4. Handle hybrid "Trailing Metadata" (Specific to Sarvam/Hybrid models)
+    // 4. Handle hybrid "Trailing Metadata"
     const metadataMarker = /",\s*"thumbnail":\s*".*?"\s*\}?$/;
     if (isCodeMode && metadataMarker.test(fixed)) {
         console.log("[VERIFY & FIX] Removed trailing metadata JSON footer.");
         fixed = fixed.replace(metadataMarker, '');
     }
 
-    // 5. If it's HTML code, ensure we start strictly at the doctype or html tag
-    if (isCodeMode && (fixed.includes('<!DOCTYPE') || fixed.includes('<html'))) {
-        const start = Math.max(fixed.indexOf('<!DOCTYPE'), fixed.indexOf('<html'));
-        if (start !== -1) fixed = fixed.substring(start);
+    // 5. Case-insensitive document start finder (preferring <!DOCTYPE over <html)
+    if (isCodeMode) {
+        const doctypeIndex = fixed.search(/<!DOCTYPE/i);
+        const htmlIndex = fixed.search(/<html/i);
+        
+        let start = -1;
+        if (doctypeIndex !== -1) {
+            start = doctypeIndex;
+        } else if (htmlIndex !== -1) {
+            start = htmlIndex;
+        }
+
+        if (start > 0) fixed = fixed.substring(start);
     }
 
     return fixed.trim();
 }
-
-function verifyAndFixCodeBasic(rawCode, isCodeMode = false) {
-    if (!rawCode || typeof rawCode !== 'string') return "";
-
-    // 1. Scrub UNICODE spaces (non-breaking spaces, etc.) and Markdown ticks
-    let fixed = rawCode
-        .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
-        .replace(/^```[a-z]*\n?|```$/gi, '')
-        .trim();
-
-    return fixed;
-}
-
 /*
  * Objective: Extract structured name, code, and thumbnail from messy LLM responses.
  * Tasks: Handle backticks, literal newlines in quotes, and multi-item arrays.
