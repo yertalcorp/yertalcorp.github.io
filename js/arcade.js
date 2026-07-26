@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -35,6 +35,7 @@ const ARCADE_STOP_WORDS = new Set([
     'show', 'display', 'view', 'render', 'simulate', 'simulation', 'beautiful', 'steep',
     'build', 'animate', 'animation'
 ]);
+
 /*
  * Global Model Stats: [ ["model-name", failureCount], ... ]
  * Replaces the old flat 'availableModels' array.
@@ -1614,6 +1615,75 @@ function extractParamDeltas(prompt, originalPMap, returnTokensOnly = false) {
     return changedProperties;
 }
 
+// --- GLOBAL DOMAIN DICTIONARIES & TAXONOMY REGISTRIES ---
+const IRREGULAR_PLURALS = {
+    // 3D Geometry, Linear Algebra & Spatial Math
+    'vertices': 'vertex',
+    'matrices': 'matrix',
+    'axes': 'axis',
+    'indices': 'index',
+    'radii': 'radius',
+    'simplices': 'simplex',
+    'helices': 'helix',
+    'polyhedra': 'polyhedron',
+    'octahedra': 'octahedron',
+    'tetrahedra': 'tetrahedron',
+    'icosahedra': 'icosahedron',
+    'dodecahedra': 'dodecahedron',
+
+    // Physics, Fluids & Dynamics
+    'vortices': 'vortex',
+    'spectra': 'spectrum',
+    'quanta': 'quantum',
+    'phenomena': 'phenomenon',
+    'formulae': 'formula',
+    'formulas': 'formula',
+    'optima': 'optimum',
+    'maxima': 'maximum',
+    'minima': 'minimum',
+    'media': 'medium',
+    'strata': 'stratum',
+    'momenta': 'momentum',
+
+    // Computer Science, Data Structures & Graphs
+    'children': 'child',
+    'data': 'datum',
+    'nodes': 'node',
+    'leaves': 'leaf',
+    'schemata': 'schema',
+    'automata': 'automaton',
+    'criteria': 'criterion',
+    'analyses': 'analysis',
+    'syntheses': 'synthesis',
+    'hypotheses': 'hypothesis',
+    'bases': 'base',
+    'appendices': 'appendix',
+
+    // Biological, Ecosystem & Cellular Models
+    'loci': 'locus',
+    'nuclei': 'nucleus',
+    'fungi': 'fungus',
+    'algae': 'alga',
+    'bacteria': 'bacterium',
+    'genera': 'genus',
+
+    // Audio Synthesis & Wave Physics
+    'harmonics': 'harmonic',
+    'frequencies': 'frequency',
+    'codecs': 'codec',
+
+    // British to American Spelling Normalization
+    'colour': 'color',
+    'colours': 'color',
+    'centre': 'center',
+    'centres': 'center',
+    'synchronise': 'synchronize',
+    'synchronised': 'synchronize',
+    'modelled': 'modeled',
+    'analyser': 'analyzer',
+    'analysers': 'analyzer'
+};
+
 function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) {
     const cleanPrompt = prompt.toLowerCase().trim();
     const presets = databaseCache.settings?.['arcade-current-types'] || [];
@@ -1714,8 +1784,8 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         const userActions = userStructuralTokens.filter(t => t.endsWith('ing') && !NON_ACTION_ING.has(t));
         const cacheActions = cacheStructuralTokens.filter(t => t.endsWith('ing') && !NON_ACTION_ING.has(t));
 
-        // STEP 4 & 5: Isolate Core Domain Terms / Nouns and apply singular stemming (stripping trailing 's')
-        const stem = t => t.replace(/s$/, '');
+        // STEP 4 & 5: Isolate Core Domain Terms / Nouns and apply irregular dictionary + singular stemming
+        const stem = t => IRREGULAR_PLURALS[t] || t.replace(/s$/, '');
         const userPrimaryNouns = userStructuralTokens.filter(t => !t.endsWith('ing') || NON_ACTION_ING.has(t)).map(stem);
         const cachePrimaryNouns = cacheStructuralTokens.filter(t => !t.endsWith('ing') || NON_ACTION_ING.has(t)).map(stem);
 
