@@ -1696,7 +1696,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     const GIBBERISH_TOKENS_MAX_PERCENT = 25; // Maximum allowed gibberish percentage (25% max, 75%+ valid required)
     
     // Domain nouns ending in 'ing' that are NOT action verbs
-    const NON_ACTION_ING = new Set(['spring', 'string', 'ring', 'wing', 'swing', 'turing', 'tuning', 'ping']);
+    const NON_ACTION_ING = new Set(['spring', 'string', 'ring', 'wing', 'swing', 'turing', 'tuning', 'ping', 'building', 'ding']);
     // ----------------------------------------------
 
     let bestIndex = -1;
