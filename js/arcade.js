@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1644,6 +1644,7 @@ const IRREGULAR_PLURALS = {
     'media': 'medium',
     'strata': 'stratum',
     'momenta': 'momentum',
+    'harmonies':'harmony',
 
     // Computer Science, Data Structures & Graphs
     'children': 'child',
@@ -1702,7 +1703,7 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     let maxMatchesCount = 0;
 
     /* ----------------------------------------------------------------- */
-    /* CORE TOKENIZATION LOGIC ENGINE                                    */
+    /* CORE TOKENIZATION LOGIC ENGINE                                   */
     /* ----------------------------------------------------------------- */
 
     /* Inner Helper: Extracts pure alphanumeric tokens, bypassing stop words */
@@ -1789,14 +1790,14 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         const userPrimaryNouns = userStructuralTokens.filter(t => !t.endsWith('ing') || NON_ACTION_ING.has(t)).map(stem);
         const cachePrimaryNouns = cacheStructuralTokens.filter(t => !t.endsWith('ing') || NON_ACTION_ING.has(t)).map(stem);
 
-        // STRICT GATEWAY: Core Nouns and Action Verbs MUST match 100%
-        const nounsMatch = userPrimaryNouns.length === cachePrimaryNouns.length &&
+        // ONE-WAY SUBSET GATEWAY: 100% of user primary nouns and actions MUST exist in the cached entry
+        const nounsMatch = userPrimaryNouns.length > 0 && 
                            userPrimaryNouns.every(noun => cachePrimaryNouns.includes(noun));
 
-        const actionsMatch = userActions.length === cacheActions.length &&
+        const actionsMatch = userActions.length === 0 || 
                              userActions.every(act => cacheActions.includes(act));
 
-        // FORCE CACHE MISS IF CORE DOMAIN OR ACTIONS DIFFER
+        // FORCE CACHE MISS IF USER DOMAIN NOUNS OR ACTIONS ARE NOT FULLY SATISFIED BY THE CACHE ENTRY
         if (!nounsMatch || !actionsMatch) {
             // Skip cache return and proceed to Step 2d / LLM fetch
         } else {
