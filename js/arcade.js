@@ -32,7 +32,8 @@ const ARCADE_STOP_WORDS = new Set([
     'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
     "it's", 'its', 'now', 'some', 'small', 'big', 'large', 'medium', 'over',
     'many', 'few', 'several', 'lots', 'much', 'app', 'application', 'system', 'tool',
-    'show', 'display', 'view', 'render', 'simulate', 'beautiful', 'steep'
+    'show', 'display', 'view', 'render', 'simulate', 'simulation', 'beautiful', 'steep',
+    'build', 'animate', 'animation'
 ]);
 /*
  * Global Model Stats: [ ["model-name", failureCount], ... ]
