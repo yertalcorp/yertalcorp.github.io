@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1490,6 +1490,13 @@ function extractParamDeltas(prompt, originalPMap, returnTokensOnly = false) {
     const matchedParamTokens = {};
     const cleanPrompt = prompt.toLowerCase().trim();
 
+    // Standard measurement units and scalar qualifiers to restrict parameter token bleed
+    const PARAM_UNIT_WORDS = new Set([
+        'degree', 'degrees', 'deg', 'rad', 'radians', 'kg', 'g', 'm', 'cm', 'px',
+        'hz', 'sec', 'seconds', 'ms', 'coefficient', 'value', 'level', 'count',
+        'high', 'low', 'max', 'min'
+    ]);
+
     // 1. Generic Natural Language Mapping Registries
     const semanticColors = {
         'red': '#ff3333', 'blue': '#3399ff', 'yellow': '#ffcc00', 'green': '#00ffcc', 
@@ -1546,9 +1553,13 @@ function extractParamDeltas(prompt, originalPMap, returnTokensOnly = false) {
         const simpleKeyStem = cleanKey.replace(/_count$/, '').replace(/s$/, '');
         if (!associatedPhrase && !cleanPrompt.includes(cleanKey) && !cleanPrompt.includes(simpleKeyStem)) return;
 
-        // TRACK MATCHED PARAMETER TOKENS FOR PIPELINE STEP 2
+        // TRACK MATCHED PARAMETER TOKENS FOR PIPELINE STEP 2 (Filtered to prevent primary noun bleed)
         if (associatedPhrase) {
-            associatedPhrase.split(/\s+/).forEach(token => { matchedParamTokens[token] = true; });
+            associatedPhrase.split(/\s+/).forEach(token => {
+                if (/^\d+(?:\.\d+)?$/.test(token) || semanticColors[token] || wordToNumber[token] || PARAM_UNIT_WORDS.has(token)) {
+                    matchedParamTokens[token] = true;
+                }
+            });
         }
 
         // TYPE DISPATCHER A: NUMBER VALUED PARAMETERS
@@ -1612,6 +1623,9 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     const GIBBERISH_MIN_TOKEN_LEN = 3;   // Skip evaluation for tokens this size or smaller
     const GIBBERISH_VOWEL_RULE_LEN = 5;  // Only enforce vowel balance on tokens strictly greater than this size
     const GIBBERISH_TOKENS_MAX_PERCENT = 25; // Maximum allowed gibberish percentage (25% max, 75%+ valid required)
+    
+    // Domain nouns ending in 'ing' that are NOT action verbs
+    const NON_ACTION_ING = new Set(['spring', 'string', 'ring', 'wing', 'swing', 'turing', 'tuning', 'ping']);
     // ----------------------------------------------
 
     let bestIndex = -1;
@@ -1696,13 +1710,14 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         const userStructuralTokens = userTokens.filter(t => !userParamTokens.includes(t));
         const cacheStructuralTokens = getCleanTokens(cachePrompt, true).filter(t => !cacheParamTokens.includes(t));
 
-        // STEP 3: Extract Action Words (words ending in 'ing')
-        const userActions = userStructuralTokens.filter(t => t.endsWith('ing'));
-        const cacheActions = cacheStructuralTokens.filter(t => t.endsWith('ing'));
+        // STEP 3: Extract Action Words (words ending in 'ing' excluding non-action domain nouns)
+        const userActions = userStructuralTokens.filter(t => t.endsWith('ing') && !NON_ACTION_ING.has(t));
+        const cacheActions = cacheStructuralTokens.filter(t => t.endsWith('ing') && !NON_ACTION_ING.has(t));
 
-        // STEP 4 & 5: Isolate Core Domain Terms / Nouns (Remaining non-action, non-param tokens)
-        const userPrimaryNouns = userStructuralTokens.filter(t => !t.endsWith('ing'));
-        const cachePrimaryNouns = cacheStructuralTokens.filter(t => !t.endsWith('ing'));
+        // STEP 4 & 5: Isolate Core Domain Terms / Nouns and apply singular stemming (stripping trailing 's')
+        const stem = t => t.replace(/s$/, '');
+        const userPrimaryNouns = userStructuralTokens.filter(t => !t.endsWith('ing') || NON_ACTION_ING.has(t)).map(stem);
+        const cachePrimaryNouns = cacheStructuralTokens.filter(t => !t.endsWith('ing') || NON_ACTION_ING.has(t)).map(stem);
 
         // STRICT GATEWAY: Core Nouns and Action Verbs MUST match 100%
         const nounsMatch = userPrimaryNouns.length === cachePrimaryNouns.length &&
