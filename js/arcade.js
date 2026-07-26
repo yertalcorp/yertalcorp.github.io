@@ -2764,7 +2764,7 @@ function shapeAiPrompt(providerName, rawPrompt, count, mode, currentName, prompt
     // 1. DYNAMIC LOOKUP: Locate the provider in the manifest
     const manifest = databaseCache.app_manifest?.llm_providers || [];
     const providerConfig = manifest.find(p => p.provider_name === providerName);
-    const createInstructions = providerConfig.create_instructions + ". Do not add comments.  Shorten function and variable names. Define reusable .css classes in a single <style> block.  Name primary global variables using words from the prompt and define them inside a top-level params block.";
+    const createInstructions = providerConfig.create_instructions + ". Do not add comments.  Shorten function and nonprimary variable names. Define reusable .css classes in a single <style> block.  Name primary global variables using words from the prompt and define them inside a top-level params block.";
     
     // 2. EXTRACTION: Pull the raw instructions from the JSON
     const systemInstructions = providerConfig 
