@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1485,15 +1485,9 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
     `;
 }
 
-/*
- * Completely generic parameter extraction engine. 
- * Identifies property overrides purely based on type validation and adjective-noun/numeric structures.
- * @param {string} prompt - The user's input string.
- * @param {Object} originalPMap - The baseline parameter_map from the target simulation archetype.
- * @returns {Object} Isolated delta map containing only modified properties.
- */
-function extractParamDeltas(prompt, originalPMap) {
+function extractParamDeltas(prompt, originalPMap, returnTokensOnly = false) {
     const changedProperties = {};
+    const matchedParamTokens = {};
     const cleanPrompt = prompt.toLowerCase().trim();
 
     // 1. Generic Natural Language Mapping Registries
@@ -1538,7 +1532,7 @@ function extractParamDeltas(prompt, originalPMap) {
         const defaultValue = originalPMap[key];
         let extractedValue = null;
 
-    // Flexible substring matching anchor to bridge partial mappings like "balls" to "ball_count"
+        // Flexible substring matching anchor to bridge partial mappings like "balls" to "ball_count"
         const associatedPhrase = descriptivePhrases.find(phrase => {
             const cleanPhrase = phrase.toLowerCase();
             // Strips trailing plural 's' signatures to isolate base naming stems
@@ -1551,6 +1545,11 @@ function extractParamDeltas(prompt, originalPMap) {
         // Balanced baseline visibility escape hatch guard rule check
         const simpleKeyStem = cleanKey.replace(/_count$/, '').replace(/s$/, '');
         if (!associatedPhrase && !cleanPrompt.includes(cleanKey) && !cleanPrompt.includes(simpleKeyStem)) return;
+
+        // TRACK MATCHED PARAMETER TOKENS FOR PIPELINE STEP 2
+        if (associatedPhrase) {
+            associatedPhrase.split(/\s+/).forEach(token => { matchedParamTokens[token] = true; });
+        }
 
         // TYPE DISPATCHER A: NUMBER VALUED PARAMETERS
         if (typeof defaultValue === 'number') {
@@ -1600,6 +1599,7 @@ function extractParamDeltas(prompt, originalPMap) {
         }
     });
 
+    if (returnTokensOnly) return matchedParamTokens;
     return changedProperties;
 }
 
@@ -1685,23 +1685,54 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
         const changedProperties = extractParamDeltas(prompt, originalPMap);
         const valueHasChanged = Object.keys(changedProperties).length > 0;
 
-        /* Step 2.c.i: Values have changed -> return target index paired with isolated delta maps */
-        if (valueHasChanged) {
+        // 5-STEP CLASSIFICATION: DECOMPOSE USER AND CACHED PROMPTS
+        const cachePrompt = matchedCategory.example_prompt ? matchedCategory.example_prompt.toLowerCase().trim() : '';
+
+        // STEP 1 & 2: Extract parameter token deltas to isolate structural terms
+        const userParamTokens = Object.keys(extractParamDeltas(prompt, originalPMap, true));
+        const cacheParamTokens = Object.keys(extractParamDeltas(cachePrompt, originalPMap, true));
+
+        // Filter out parameter-associated words from primary tokens
+        const userStructuralTokens = userTokens.filter(t => !userParamTokens.includes(t));
+        const cacheStructuralTokens = getCleanTokens(cachePrompt, true).filter(t => !cacheParamTokens.includes(t));
+
+        // STEP 3: Extract Action Words (words ending in 'ing')
+        const userActions = userStructuralTokens.filter(t => t.endsWith('ing'));
+        const cacheActions = cacheStructuralTokens.filter(t => t.endsWith('ing'));
+
+        // STEP 4 & 5: Isolate Core Domain Terms / Nouns (Remaining non-action, non-param tokens)
+        const userPrimaryNouns = userStructuralTokens.filter(t => !t.endsWith('ing'));
+        const cachePrimaryNouns = cacheStructuralTokens.filter(t => !t.endsWith('ing'));
+
+        // STRICT GATEWAY: Core Nouns and Action Verbs MUST match 100%
+        const nounsMatch = userPrimaryNouns.length === cachePrimaryNouns.length &&
+                           userPrimaryNouns.every(noun => cachePrimaryNouns.includes(noun));
+
+        const actionsMatch = userActions.length === cacheActions.length &&
+                             userActions.every(act => cacheActions.includes(act));
+
+        // FORCE CACHE MISS IF CORE DOMAIN OR ACTIONS DIFFER
+        if (!nounsMatch || !actionsMatch) {
+            // Skip cache return and proceed to Step 2d / LLM fetch
+        } else {
+            /* Step 2.c.i: Values have changed -> return target index paired with isolated delta maps */
+            if (valueHasChanged) {
+                return {
+                    index: bestIndex,
+                    properties: changedProperties,
+                    is_custom: false,
+                    status: "SUCCESS_CACHE_HIT_WITH_CHANGES"
+                };
+            }
+
+            /* Step 2.c.ii: Prompts differ slightly but data values are identical -> skip parameter maps */
             return {
                 index: bestIndex,
-                properties: changedProperties,
+                properties: {},
                 is_custom: false,
-                status: "SUCCESS_CACHE_HIT_WITH_CHANGES"
+                status: "SUCCESS_CACHE_HIT"
             };
         }
-
-        /* Step 2.c.ii: Prompts differ slightly but data values are identical -> skip parameter maps */
-        return {
-            index: bestIndex,
-            properties: {},
-            is_custom: false,
-            status: "SUCCESS_CACHE_HIT"
-        };
     }
 
     /* ----------------------------------------------------------------- */
