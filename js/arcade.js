@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1880,6 +1880,21 @@ function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) 
     };
 }
 
+// FInd if the prompt is a source type or create type.
+function determinePromptMode(prompt) {
+    if (!prompt || typeof prompt !== 'string') return 'create';
+    
+    const sourceVerbs = ["get", "bring", "source", "find", "list", "research", "showcase"];
+    const trimmedPrompt = prompt.trim().toLowerCase();
+    
+    // Split into tokens and look at only the first 3 words
+    const firstFewWords = trimmedPrompt.split(/\s+/).slice(0, 3);
+    
+    const isSource = firstFewWords.some(word => sourceVerbs.includes(word));
+    
+    return isSource ? 'source' : 'create';
+}
+
 window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
@@ -1892,7 +1907,19 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
     const bubbleHint = promptInput.getAttribute('data-selected-capability');
     
     try {
-        // CENTRALIZED RESOLUTION
+        // --- ADDED EARLY INTERCEPTOR FOR SOURCE PROMPTS ---
+        const promptMode = determinePromptMode(input);
+
+        if (promptMode === 'source') {
+            const defaultSourcePromptTypeObject = { name: 'Source', id: 'source', logic: 'source', image: '/assets/thumbnails/default.jpg', index: -1, properties: {}, is_custom: true };
+            await executeMassSpark(currentId, currentName, input, 'source', defaultSourcePromptTypeObject, currentPrivacy);
+            promptInput.value = '';
+            promptInput.removeAttribute('data-selected-capability');
+            return;
+        }
+        // --------------------------------------------------
+
+        // CENTRALIZED RESOLUTION FOR CREATE PROMPTS
         const matchResult = resolveIndexFromPrompt(input, currentName, bubbleHint);
         
         // --- ADDED INTERCEPTOR FOR POORLY FORMED PROMPTS ---
@@ -1940,7 +1967,6 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
         await executeMassSpark(currentId, currentName, input, 'create', { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg', index: -1, properties: {}, is_custom: true }, currentPrivacy);
     }
 };
-
 function resolveCapabilityFromKeywords(input) {
     const query = input.toLowerCase().trim();
     if (query.length < 2) return [];
