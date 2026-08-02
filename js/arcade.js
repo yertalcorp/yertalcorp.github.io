@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2000,7 +2000,7 @@ function resolveCapabilityFromKeywords(input) {
     })).slice(0, 6);
 }
 
-/
+/*
  * Copies a selected circuit template from databaseCache into the user's infrastructure
  * @param {string} ownerUid - Logged-in user's UID
  * @param {string|null} templateId - Selected template ID or null for blank realm
