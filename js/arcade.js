@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2064,15 +2064,15 @@ function getCircuitCardPattern(circuitId) {
     return canvas.toDataURL();
 }
 
-/*
+/
  * Copies a selected circuit template from databaseCache into the user's infrastructure
  * @param {string} ownerUid - Logged-in user's UID
  * @param {string|null} templateId - Selected template ID or null for blank realm
  */
 async function initializeUserRealm(ownerUid, templateId) {
     try {
-        const db = getDatabase();
         const updates = {};
+        const timestamp = Date.now();
         
         // 1. Mark setup_complete as true
         updates[`users/${ownerUid}/profile/setup_complete`] = true;
@@ -2082,69 +2082,85 @@ async function initializeUserRealm(ownerUid, templateId) {
             databaseCache.users[ownerUid].profile.setup_complete = true;
         }
 
+        // Write setup_complete update to database
+        await update(ref(db), updates);
+
         // 2. If a specific template was selected, copy over its Currents & Sparks
         if (templateId) {
             const templates = databaseCache.settings?.['realm_circuits'] || [];
             const selectedCircuit = templates.find(t => t.templateId === templateId);
 
             if (selectedCircuit && selectedCircuit.currents) {
-                selectedCircuit.currents.forEach((curr, currIdx) => {
-                    const currentId = `current_${Date.now()}_${currIdx}`;
+                // Strip "REALM" from templateName for current type designation
+                const cleanType = (selectedCircuit.templateName || 'Custom')
+                    .replace(/\bREALM\b/gi, '')
+                    .trim();
+
+                for (let currIdx = 0; currIdx < selectedCircuit.currents.length; currIdx++) {
+                    const curr = selectedCircuit.currents[currIdx];
+                    
+                    // Generate lowercase hyphenated Current ID directly from currentName
+                    const currentId = (curr.currentName || `current-${currIdx}`)
+                        .toLowerCase()
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .trim()
+                        .replace(/\s+/g, '-');
+                        
                     const currentPath = `users/${ownerUid}/infrastructure/currents/${currentId}`;
                     
-                    // Build current metadata
+                    // Build and save Current metadata shell
                     const currentPayload = {
                         id: currentId,
                         name: curr.currentName,
-                        privacy: 'public',
-                        created: Date.now(),
-                        sparks: {}
+                        type: cleanType,
+                        privacy: 'private',
+                        date_created: timestamp,
+                        last_updated: timestamp
                     };
 
-                    // Copy sparks mapped to their index numbers
-                    if (curr.sparkIndices && Array.isArray(curr.sparkIndices)) {
-                        curr.sparkIndices.forEach((sparkIndex, sparkIdx) => {
-                            const sparkId = `spark_${Date.now()}_${currIdx}_${sparkIdx}`;
-                            
-                            // Map spark data using prompt index from arcade-current-types if available
-                            const promptText = databaseCache.settings?.['arcade-current-types']?.[sparkIndex] || `Spark Prompt #${sparkIndex}`;
-                            
-                            currentPayload.sparks[sparkId] = {
-                                id: sparkId,
-                                name: `Spark #${sparkIndex}`,
-                                prompt: promptText,
-                                owner: ownerUid,
-                                created: Date.now() + sparkIdx,
-                                template_type: 'Circuit',
-                                index: sparkIndex,
-                                image: '/assets/thumbnails/default.jpg',
-                                internal_rank: sparkIdx + 1,
-                                privacy: 'public',
-                                stats: { views: { total_count: 0 }, likes: { count: 0 }, reshares: { count: 0 }, feedback: { count: 0 }, transactions: { total_amount: 0 } }
-                            };
-                        });
-                    }
+                    await saveToRealtimeDB(currentPath, currentPayload);
 
-                    updates[currentPath] = currentPayload;
-
-                    // Update databaseCache locally
+                    // Update local databaseCache for current shell
                     if (!databaseCache.users[ownerUid].infrastructure) {
                         databaseCache.users[ownerUid].infrastructure = { currents: {} };
                     }
                     if (!databaseCache.users[ownerUid].infrastructure.currents) {
                         databaseCache.users[ownerUid].infrastructure.currents = {};
                     }
-                    databaseCache.users[ownerUid].infrastructure.currents[currentId] = currentPayload;
-                });
+                    databaseCache.users[ownerUid].infrastructure.currents[currentId] = {
+                        ...currentPayload,
+                        sparks: {}
+                    };
+
+                    // Copy Sparks mapped to sparkIndices via saveSpark
+                    if (curr.sparkIndices && Array.isArray(curr.sparkIndices)) {
+                        for (let sparkIdx = 0; sparkIdx < curr.sparkIndices.length; sparkIdx++) {
+                            const sparkIndex = curr.sparkIndices[sparkIdx];
+                            
+                            // Look up cached archetype from settings.arcade-current-types
+                            const cachedArchetype = databaseCache.settings?.['arcade-current-types']?.[sparkIndex] || {};
+                            
+                            const sparkData = {
+                                name: cachedArchetype.name || `Spark #${sparkIndex}`,
+                                image: cachedArchetype.image || '/assets/thumbnails/default.jpg',
+                                index: sparkIndex,
+                                parameter_map: cachedArchetype.parameter_map || {}
+                            };
+
+                            const prompt = cachedArchetype.example_prompt || '';
+                            const detectedTemplate = cachedArchetype.name || 'Custom';
+                            const templateUrl = cachedArchetype.image || '/assets/thumbnails/default.jpg';
+
+                            // Delegate spark creation to saveSpark
+                            await saveSpark(currentId, sparkData, prompt, detectedTemplate, templateUrl, 'private');
+                        }
+                    }
+                }
             }
         }
 
-        // 3. Write updates atomically to Firebase
-        await update(ref(db), updates);
-
-        // 4. Re-render the currents view immediately
-        const userInfrastructure = databaseCache.users?.[ownerUid]?.infrastructure?.currents || {};
-        renderCurrents(userInfrastructure, true, ownerUid, databaseCache.users[ownerUid].profile);
+        // 3. Re-render UI and refresh context
+        await refreshUI();
 
     } catch (error) {
         console.error("Failed to initialize user realm:", error);
@@ -2152,6 +2168,8 @@ async function initializeUserRealm(ownerUid, templateId) {
     }
 }
 
+// Expose helper to global window scope for inline onclick hooks
+window.initializeUserRealm = initializeUserRealm;
 // Expose helper to global window scope for inline onclick hooks
 window.initializeUserRealm = initializeUserRealm;
 function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
