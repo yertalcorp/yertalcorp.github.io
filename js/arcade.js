@@ -2064,7 +2064,7 @@ function getCircuitCardPattern(circuitId) {
     return canvas.toDataURL();
 }
 
-/
+/*
  * Copies a selected circuit template from databaseCache into the user's infrastructure
  * @param {string} ownerUid - Logged-in user's UID
  * @param {string|null} templateId - Selected template ID or null for blank realm
@@ -2143,15 +2143,14 @@ async function initializeUserRealm(ownerUid, templateId) {
                             const sparkData = {
                                 name: cachedArchetype.name || `Spark #${sparkIndex}`,
                                 image: cachedArchetype.image || '/assets/thumbnails/default.jpg',
-                                index: sparkIndex,
-                                parameter_map: cachedArchetype.parameter_map || {}
+                                index: sparkIndex
                             };
 
                             const prompt = cachedArchetype.example_prompt || '';
                             const detectedTemplate = cachedArchetype.name || 'Custom';
                             const templateUrl = cachedArchetype.image || '/assets/thumbnails/default.jpg';
 
-                            // Delegate spark creation to saveSpark
+                            // Delegate spark creation to saveSpark without overriding default parameter_map
                             await saveSpark(currentId, sparkData, prompt, detectedTemplate, templateUrl, 'private');
                         }
                     }
@@ -2170,6 +2169,7 @@ async function initializeUserRealm(ownerUid, templateId) {
 
 // Expose helper to global window scope for inline onclick hooks
 window.initializeUserRealm = initializeUserRealm;
+
 // Expose helper to global window scope for inline onclick hooks
 window.initializeUserRealm = initializeUserRealm;
 function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
