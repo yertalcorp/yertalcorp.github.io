@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1999,7 +1999,98 @@ function resolveCapabilityFromKeywords(input) {
         id: cap.id
     })).slice(0, 6);
 }
-    
+
+/**
+ * Copies a selected circuit template from databaseCache into the user's infrastructure
+ * @param {string} ownerUid - Logged-in user's UID
+ * @param {string|null} templateId - Selected template ID or null for blank realm
+ */
+async function initializeUserRealm(ownerUid, templateId) {
+    try {
+        const db = getDatabase();
+        const updates = {};
+        
+        // 1. Mark setup_complete as true
+        updates[`users/${ownerUid}/profile/setup_complete`] = true;
+
+        // Synchronously update local cache for smooth UI transition
+        if (databaseCache.users?.[ownerUid]?.profile) {
+            databaseCache.users[ownerUid].profile.setup_complete = true;
+        }
+
+        // 2. If a specific template was selected, copy over its Currents & Sparks
+        if (templateId) {
+            const templates = databaseCache.settings?.['realm_circuits'] || [];
+            const selectedCircuit = templates.find(t => t.templateId === templateId);
+
+            if (selectedCircuit && selectedCircuit.currents) {
+                selectedCircuit.currents.forEach((curr, currIdx) => {
+                    const currentId = `current_${Date.now()}_${currIdx}`;
+                    const currentPath = `users/${ownerUid}/infrastructure/currents/${currentId}`;
+                    
+                    // Build current metadata
+                    const currentPayload = {
+                        id: currentId,
+                        name: curr.currentName,
+                        privacy: 'public',
+                        created: Date.now(),
+                        sparks: {}
+                    };
+
+                    // Copy sparks mapped to their index numbers
+                    if (curr.sparkIndices && Array.isArray(curr.sparkIndices)) {
+                        curr.sparkIndices.forEach((sparkIndex, sparkIdx) => {
+                            const sparkId = `spark_${Date.now()}_${currIdx}_${sparkIdx}`;
+                            
+                            // Map spark data using prompt index from arcade-current-types if available
+                            const promptText = databaseCache.settings?.['arcade-current-types']?.[sparkIndex] || `Spark Prompt #${sparkIndex}`;
+                            
+                            currentPayload.sparks[sparkId] = {
+                                id: sparkId,
+                                name: `Spark #${sparkIndex}`,
+                                prompt: promptText,
+                                owner: ownerUid,
+                                created: Date.now() + sparkIdx,
+                                template_type: 'Circuit',
+                                index: sparkIndex,
+                                image: '/assets/thumbnails/default.jpg',
+                                internal_rank: sparkIdx + 1,
+                                privacy: 'public',
+                                stats: { views: { total_count: 0 }, likes: { count: 0 }, reshares: { count: 0 }, feedback: { count: 0 }, transactions: { total_amount: 0 } }
+                            };
+                        });
+                    }
+
+                    updates[currentPath] = currentPayload;
+
+                    // Update databaseCache locally
+                    if (!databaseCache.users[ownerUid].infrastructure) {
+                        databaseCache.users[ownerUid].infrastructure = { currents: {} };
+                    }
+                    if (!databaseCache.users[ownerUid].infrastructure.currents) {
+                        databaseCache.users[ownerUid].infrastructure.currents = {};
+                    }
+                    databaseCache.users[ownerUid].infrastructure.currents[currentId] = currentPayload;
+                });
+            }
+        }
+
+        // 3. Write updates atomically to Firebase
+        await update(ref(db), updates);
+
+        // 4. Re-render the currents view immediately
+        const userInfrastructure = databaseCache.users?.[ownerUid]?.infrastructure?.currents || {};
+        renderCurrents(userInfrastructure, true, ownerUid, databaseCache.users[ownerUid].profile);
+
+    } catch (error) {
+        console.error("Failed to initialize user realm:", error);
+        alert("Failed to initialize realm. Please try again.");
+    }
+}
+
+// Expose helper to global window scope for inline onclick hooks
+window.initializeUserRealm = initializeUserRealm;
+
 function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
     if (!container) return;
