@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2003,44 +2003,63 @@ function resolveCapabilityFromKeywords(input) {
 // --- DYNAMIC CARD CANVAS PATTERN GENERATOR ---
 function getCircuitCardPattern(circuitId) {
     const canvas = document.createElement('canvas');
-    canvas.width = 280;
+    canvas.width = 300;
     canvas.height = 160;
     const ctx = canvas.getContext('2d');
 
-    // Dark base background for thumbnail area
-    ctx.fillStyle = '#0a0d14';
+    // 1. Dark base background
+    ctx.fillStyle = '#080b10';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Seeded color/pattern variation based on templateId
-    let strokeColor = 'rgba(0, 229, 255, 0.35)'; // Default neon cyan
-    if (circuitId.includes('physics') || circuitId.includes('kinetic')) strokeColor = 'rgba(255, 0, 128, 0.35)';
-    if (circuitId.includes('astro') || circuitId.includes('horizon')) strokeColor = 'rgba(138, 43, 226, 0.4)';
-    if (circuitId.includes('biotech') || circuitId.includes('helix')) strokeColor = 'rgba(0, 255, 128, 0.35)';
+    // Color theme logic based on circuitId
+    let mainHue = 'rgba(0, 229, 255, '; // Default cyan
+    if (circuitId.includes('physics') || circuitId.includes('kinetic')) mainHue = 'rgba(255, 0, 128, ';
+    if (circuitId.includes('astro') || circuitId.includes('horizon')) mainHue = 'rgba(138, 43, 226, ';
+    if (circuitId.includes('biotech') || circuitId.includes('helix')) mainHue = 'rgba(0, 255, 128, ';
 
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = 1.5;
-
-    // Draw tech grid / circuit traces
+    // 2. Draw standard background grid
+    ctx.strokeStyle = mainHue + '0.25)';
+    ctx.lineWidth = 1;
     ctx.beginPath();
     for (let x = 0; x < canvas.width; x += 20) {
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
+        ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height);
     }
     for (let y = 0; y < canvas.height; y += 20) {
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
+        ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
     }
     ctx.stroke();
 
-    // Draw circuit node highlights
-    ctx.fillStyle = strokeColor.replace('0.35', '0.6').replace('0.4', '0.7');
-    for (let i = 0; i < 6; i++) {
-        const nx = (i * 45 + 20) % canvas.width;
-        const ny = (i * 30 + 15) % canvas.height;
+    // 3. Draw Faint Sinusoidal Wave Line at a Random Height
+    const waveY = 30 + Math.random() * (canvas.height - 60);
+    const frequency = 0.03 + Math.random() * 0.02;
+    const amplitude = 12 + Math.random() * 10;
+
+    ctx.strokeStyle = mainHue + '0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let x = 0; x < canvas.width; x++) {
+        const y = waveY + Math.sin(x * frequency) * amplitude;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // 4. Draw Intense Starfield with Bright Sparks (White, Yellow, Electric Cyan)
+    const sparkColors = ['#ffffff', '#fff066', '#00f0ff', '#ff00aa'];
+    for (let i = 0; i < 35; i++) {
+        const sx = Math.random() * canvas.width;
+        const sy = Math.random() * canvas.height;
+        const radius = Math.random() * 1.5 + 0.5;
+        const color = sparkColors[Math.floor(Math.random() * sparkColors.length)];
+
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = radius > 1.2 ? 6 : 2;
         ctx.beginPath();
-        ctx.arc(nx, ny, 3, 0, Math.PI * 2);
+        ctx.arc(sx, sy, radius, 0, Math.PI * 2);
         ctx.fill();
     }
+    ctx.shadowBlur = 0; // Reset glow state
 
     return canvas.toDataURL();
 }
@@ -2182,43 +2201,46 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                 const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
                 const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
 
-                // Generate Circuit Cards HTML// --- CARD MAPPING INSIDE renderCurrents ---
+// --- CARD MAPPING INSIDE renderCurrents ---
 
 const circuitCardsHTML = circuits.map(circuit => {
     const patternImg = getCircuitCardPattern(circuit.templateId);
 
     return `
-        <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 12px rgba(0, 0, 0, 0.6)); transition: transform 0.3s ease, filter 0.3s ease;">
+        <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); transition: transform 0.3s ease;">
             <div class="action-card" 
                  onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')"
-                 style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 160px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px solid var(--glow-aura); box-shadow: inset 0 0 15px rgba(0,0,0,0.9);">
+                 style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px solid var(--glow-aura); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
                 
-                <span class="metallic-text" style="position: relative; z-index: 10; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.4rem; color: var(--glow-color); text-shadow: 0 0 8px var(--glow-aura);">
+                <!-- Bolder & Thicker Top Neon Category Tag -->
+                <span class="metallic-text" style="position: relative; z-index: 10; font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.5rem; color: var(--glow-color); text-shadow: 0 0 10px var(--glow-aura);">
                     ${circuit.templateName}
                 </span>
-                <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 0.5rem; margin: 0; font-size: clamp(11px, 1.1vw, 13px); line-height: 1.3; max-width: 90%; word-break: break-word; white-space: normal; pointer-events: none; text-shadow: 0 2px 4px rgba(0,0,0,0.9);">
+
+                <!-- Template Subtitle / Realm Title -->
+                <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 0.75rem; margin: 0; font-size: 11px; font-weight: 500; line-height: 1.3; max-width: 92%; word-break: break-word; white-space: normal; pointer-events: none; opacity: 0.9; text-shadow: 0 2px 4px rgba(0,0,0,0.9);">
                     ${circuit.realmName}
                 </h4>
                 
-                <!-- Distinct circuit pattern thumbnail -->
-                <img src="${patternImg}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.45; z-index: 1;">
+                <!-- Background Starfield + Sinusoidal Pattern -->
+                <img src="${patternImg}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; z-index: 1;">
                 
-                <!-- Radial gradient overlay to preserve high text contrast -->
-                <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(8,11,16,0.65) 0%, rgba(8,11,16,0.95) 100%); z-index: 2; pointer-events: none;"></div>
+                <!-- Soft Center Radial Vignette -->
+                <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(8,11,16,0.55) 0%, rgba(8,11,16,0.9) 100%); z-index: 2; pointer-events: none;"></div>
             </div>
 
-            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center; padding: 0 0.5rem;">
-                <p style="font-size: 11px; color: var(--branding-text-color); opacity: 0.85; margin: 0; text-align: center; line-height: 1.35; height: 38px; overflow: hidden;">
+            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
+                <!-- Larger, Wrapping Subtitle Caption -->
+                <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; word-wrap: break-word; white-space: normal; min-height: 36px;">
                     ${circuit.realmSubtitle}
                 </p>
-                <button onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.25rem; padding: 8px 12px; font-size: 11px; letter-spacing: 1.5px;">
+                <button onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
                     INITIALIZE REALM
                 </button>
             </div>
         </div>
     `;
 }).join('');
-
                 // Render Blank Realm Card
                 const blankCardHTML = `
                     <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%;">
