@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2256,30 +2256,51 @@ const circuitCardsHTML = circuits.map(circuit => {
             </div>
         </div>
     `;
-}).join('');                // Render Blank Realm Card
-                const blankCardHTML = `
-                    <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%;">
-                        <div class="action-card" 
-                             onclick="window.initializeUserRealm('${ownerUid}', null)"
-                             style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 160px; width: 100%; cursor: pointer; border-radius: 8px; background: rgba(255,255,255,0.02) !important; border: 1px dashed var(--glow-color);">
-                            
-                            <i class="fas fa-plus-circle" style="font-size: 2rem; color: var(--glow-color); margin-bottom: 0.75rem; filter: drop-shadow(0 0 8px var(--glow-color));"></i>
-                            <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1rem; margin: 0; font-size: 14px; pointer-events: none;">
-                                BLANK REALM
-                            </h4>
-                        </div>
+}).join('');                
+// --- BLANK REALM CARD HTML ---
+const blankCardHTML = `
+    <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); transition: transform 0.3s ease;">
+        <div class="action-card" 
+             onclick="window.initializeUserRealm('${ownerUid}', null)"
+             style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px dashed var(--glow-color); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
+            
+            <i class="fas fa-plus-circle" style="font-size: 1.8rem; color: var(--glow-color); margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px var(--glow-color)); z-index: 10;"></i>
+            
+            <!-- 3D Extruded Neon Title matching the template cards -->
+            <span class="metallic-text" style="
+                position: relative; 
+                z-index: 10; 
+                font-family: 'Orbitron', sans-serif; 
+                font-size: 16px; 
+                font-weight: 900; 
+                letter-spacing: 2.5px; 
+                text-transform: uppercase; 
+                color: var(--glow-color); 
+                text-shadow: 
+                    1px 1px 0px #000,
+                    2px 2px 0px rgba(255, 255, 255, 0.85),
+                    3px 3px 0px #000,
+                    4px 4px 6px rgba(0, 229, 255, 0.9),
+                    0 0 12px var(--glow-color);
+            ">
+                BLANK REALM
+            </span>
+            
+            <!-- Soft Radial Background Overlay -->
+            <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(0, 229, 255, 0.08) 0%, rgba(8,11,16,0.95) 100%); z-index: 1; pointer-events: none;"></div>
+        </div>
 
-                        <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center; padding: 0 0.5rem;">
-                            <p style="font-size: 10px; color: var(--branding-text-color); opacity: 0.6; margin: 0; text-align: center; line-height: 1.4; height: 28px;">
-                                Start with a clean canvas and build custom infrastructure.
-                            </p>
-                            <button onclick="window.initializeUserRealm('${ownerUid}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.25rem; opacity: 0.8;">
-                                CREATE BLANK
-                            </button>
-                        </div>
-                    </div>
-                `;
-
+        <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
+            <!-- Updated Blank Realm Caption -->
+            <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; word-wrap: break-word; white-space: normal; min-height: 36px;">
+                Initialize an empty laboratory to construct custom currents and sparks from scratch.
+            </p>
+            <button onclick="window.initializeUserRealm('${ownerUid}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px; opacity: 0.85;">
+                CREATE BLANK
+            </button>
+        </div>
+    </div>
+`;
 // Outer container grid wrapper with Starfield Space Background
 container.innerHTML = `
     <div class="welcome-zone animate-fadeIn" style="padding: 3rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 1.5rem; background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%), radial-gradient(circle at top, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 100% 100%, 40px 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 30px rgba(0,0,0,0.8);">
