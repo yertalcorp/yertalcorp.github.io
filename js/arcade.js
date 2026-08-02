@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2000,7 +2000,7 @@ function resolveCapabilityFromKeywords(input) {
     })).slice(0, 6);
 }
 
-/**
+/
  * Copies a selected circuit template from databaseCache into the user's infrastructure
  * @param {string} ownerUid - Logged-in user's UID
  * @param {string|null} templateId - Selected template ID or null for blank realm
@@ -2090,7 +2090,6 @@ async function initializeUserRealm(ownerUid, templateId) {
 
 // Expose helper to global window scope for inline onclick hooks
 window.initializeUserRealm = initializeUserRealm;
-
 function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
     if (!container) return;
@@ -2108,7 +2107,7 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
         return isOwner || isPublic || isTargetUnlisted;
     }) : [];
     
-    // --- ARCADE SETUP ---
+    // --- ARCADE SETUP / TEMPLATE SELECTOR ---
     if (currentsArray.length === 0) {
         if (isOwner) {
             const firstName = profile?.display_name?.split(' ')[0] || "Engineer";
@@ -2133,18 +2132,82 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                     </div>
                 `;
             } else {
+                // Fetch circuit templates directly from databaseCache
+                const circuits = databaseCache.settings?.['realm_circuits'] || [];
+                const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
+                const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
+
+                // Generate Circuit Cards HTML
+                const circuitCardsHTML = circuits.map(circuit => {
+                    const coverImg = getDynamicCardCover(activeThemeData);
+                    return `
+                        <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%;">
+                            <div class="action-card" 
+                                 onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')"
+                                 style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 160px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important; border: 1px solid var(--glow-aura);">
+                                
+                                <span class="metallic-text" style="position: relative; z-index: 10; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.4rem; color: var(--glow-color);">
+                                    ${circuit.templateName}
+                                </span>
+                                <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1rem; margin: 0; font-size: 14px; pointer-events: none;">
+                                    ${circuit.realmName}
+                                </h4>
+                                
+                                <img src="${coverImg}" class="spark-thumbnail" style="opacity: 0.2;" onload="this.style.opacity='0.25';">
+                                <div style="position: absolute; inset: 0; background: var(--bg-color); opacity: 0.2; z-index: 2; pointer-events: none;"></div>
+                            </div>
+
+                            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center; padding: 0 0.5rem;">
+                                <p style="font-size: 10px; color: var(--branding-text-color); opacity: 0.6; margin: 0; text-align: center; line-height: 1.4; height: 28px; overflow: hidden;">
+                                    ${circuit.realmSubtitle}
+                                </p>
+                                <button onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.25rem;">
+                                    INITIALIZE REALM
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Render Blank Realm Card
+                const blankCardHTML = `
+                    <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%;">
+                        <div class="action-card" 
+                             onclick="window.initializeUserRealm('${ownerUid}', null)"
+                             style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 160px; width: 100%; cursor: pointer; border-radius: 8px; background: rgba(255,255,255,0.02) !important; border: 1px dashed var(--glow-color);">
+                            
+                            <i class="fas fa-plus-circle" style="font-size: 2rem; color: var(--glow-color); margin-bottom: 0.75rem; filter: drop-shadow(0 0 8px var(--glow-color));"></i>
+                            <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1rem; margin: 0; font-size: 14px; pointer-events: none;">
+                                BLANK REALM
+                            </h4>
+                        </div>
+
+                        <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center; padding: 0 0.5rem;">
+                            <p style="font-size: 10px; color: var(--branding-text-color); opacity: 0.6; margin: 0; text-align: center; line-height: 1.4; height: 28px;">
+                                Start with a clean canvas and build custom infrastructure.
+                            </p>
+                            <button onclick="window.initializeUserRealm('${ownerUid}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.25rem; opacity: 0.8;">
+                                CREATE BLANK
+                            </button>
+                        </div>
+                    </div>
+                `;
+
                 container.innerHTML = `
-                    <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 8rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 2rem; background: var(--card-bg);">
-                        <h1 class="metallic-text" style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem; letter-spacing: -1px; color: var(--branding-text-color);">
-                            ${firstName}, Welcome to your Realm
-                        </h1>
-                        <p style="color: var(--glow-color); opacity: 0.6; margin-bottom: 4rem; letter-spacing: 4px; font-size: 12px; font-family: 'Orbitron', sans-serif;">
-                            SYSTEM STANDBY // NO ACTIVE CURRENTS DETECTED
-                        </p>
-                        <button onclick="window.openArcadeSettings()" class="ethereal-btn">
-                            <span class="btn-content">CREATE YOUR REALM</span>
-                            <div class="btn-glow"></div>
-                        </button>
+                    <div class="welcome-zone animate-fadeIn" style="padding: 3rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 1.5rem; background: var(--card-bg);">
+                        <div style="text-align: center; margin-bottom: 2.5rem;">
+                            <h1 class="metallic-text" style="font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: 0.5rem; letter-spacing: -1px; color: var(--branding-text-color);">
+                                ${firstName}, Select Your Realm Circuit
+                            </h1>
+                            <p style="color: var(--glow-color); opacity: 0.6; letter-spacing: 3px; font-size: 11px; font-family: 'Orbitron', sans-serif; margin: 0;">
+                                SELECT A PRE-BUILT BLUEPRINT OR START BLANK TO INITIALIZE
+                            </p>
+                        </div>
+
+                        <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; width: 100%;">
+                            ${blankCardHTML}
+                            ${circuitCardsHTML}
+                        </div>
                     </div>
                 `;
             }
