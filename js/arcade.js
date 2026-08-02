@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:52:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2000,6 +2000,51 @@ function resolveCapabilityFromKeywords(input) {
     })).slice(0, 6);
 }
 
+// --- DYNAMIC CARD CANVAS PATTERN GENERATOR ---
+function getCircuitCardPattern(circuitId) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 280;
+    canvas.height = 160;
+    const ctx = canvas.getContext('2d');
+
+    // Dark base background for thumbnail area
+    ctx.fillStyle = '#0a0d14';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Seeded color/pattern variation based on templateId
+    let strokeColor = 'rgba(0, 229, 255, 0.35)'; // Default neon cyan
+    if (circuitId.includes('physics') || circuitId.includes('kinetic')) strokeColor = 'rgba(255, 0, 128, 0.35)';
+    if (circuitId.includes('astro') || circuitId.includes('horizon')) strokeColor = 'rgba(138, 43, 226, 0.4)';
+    if (circuitId.includes('biotech') || circuitId.includes('helix')) strokeColor = 'rgba(0, 255, 128, 0.35)';
+
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = 1.5;
+
+    // Draw tech grid / circuit traces
+    ctx.beginPath();
+    for (let x = 0; x < canvas.width; x += 20) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+    }
+    for (let y = 0; y < canvas.height; y += 20) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+    }
+    ctx.stroke();
+
+    // Draw circuit node highlights
+    ctx.fillStyle = strokeColor.replace('0.35', '0.6').replace('0.4', '0.7');
+    for (let i = 0; i < 6; i++) {
+        const nx = (i * 45 + 20) % canvas.width;
+        const ny = (i * 30 + 15) % canvas.height;
+        ctx.beginPath();
+        ctx.arc(nx, ny, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    return canvas.toDataURL();
+}
+
 /*
  * Copies a selected circuit template from databaseCache into the user's infrastructure
  * @param {string} ownerUid - Logged-in user's UID
@@ -2137,37 +2182,42 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                 const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
                 const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
 
-                // Generate Circuit Cards HTML
-                const circuitCardsHTML = circuits.map(circuit => {
-                    const coverImg = getDynamicCardCover(activeThemeData);
-                    return `
-                        <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%;">
-                            <div class="action-card" 
-                                 onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')"
-                                 style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 160px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important; border: 1px solid var(--glow-aura);">
-                                
-                                <span class="metallic-text" style="position: relative; z-index: 10; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.4rem; color: var(--glow-color);">
-                                    ${circuit.templateName}
-                                </span>
-                                <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1rem; margin: 0; font-size: 14px; pointer-events: none;">
-                                    ${circuit.realmName}
-                                </h4>
-                                
-                                <img src="${coverImg}" class="spark-thumbnail" style="opacity: 0.2;" onload="this.style.opacity='0.25';">
-                                <div style="position: absolute; inset: 0; background: var(--bg-color); opacity: 0.2; z-index: 2; pointer-events: none;"></div>
-                            </div>
+                // Generate Circuit Cards HTML// --- CARD MAPPING INSIDE renderCurrents ---
 
-                            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center; padding: 0 0.5rem;">
-                                <p style="font-size: 10px; color: var(--branding-text-color); opacity: 0.6; margin: 0; text-align: center; line-height: 1.4; height: 28px; overflow: hidden;">
-                                    ${circuit.realmSubtitle}
-                                </p>
-                                <button onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.25rem;">
-                                    INITIALIZE REALM
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+const circuitCardsHTML = circuits.map(circuit => {
+    const patternImg = getCircuitCardPattern(circuit.templateId);
+
+    return `
+        <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 12px rgba(0, 0, 0, 0.6)); transition: transform 0.3s ease, filter 0.3s ease;">
+            <div class="action-card" 
+                 onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')"
+                 style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 160px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px solid var(--glow-aura); box-shadow: inset 0 0 15px rgba(0,0,0,0.9);">
+                
+                <span class="metallic-text" style="position: relative; z-index: 10; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.4rem; color: var(--glow-color); text-shadow: 0 0 8px var(--glow-aura);">
+                    ${circuit.templateName}
+                </span>
+                <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 0.5rem; margin: 0; font-size: clamp(11px, 1.1vw, 13px); line-height: 1.3; max-width: 90%; word-break: break-word; white-space: normal; pointer-events: none; text-shadow: 0 2px 4px rgba(0,0,0,0.9);">
+                    ${circuit.realmName}
+                </h4>
+                
+                <!-- Distinct circuit pattern thumbnail -->
+                <img src="${patternImg}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.45; z-index: 1;">
+                
+                <!-- Radial gradient overlay to preserve high text contrast -->
+                <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(8,11,16,0.65) 0%, rgba(8,11,16,0.95) 100%); z-index: 2; pointer-events: none;"></div>
+            </div>
+
+            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center; padding: 0 0.5rem;">
+                <p style="font-size: 11px; color: var(--branding-text-color); opacity: 0.85; margin: 0; text-align: center; line-height: 1.35; height: 38px; overflow: hidden;">
+                    ${circuit.realmSubtitle}
+                </p>
+                <button onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.25rem; padding: 8px 12px; font-size: 11px; letter-spacing: 1.5px;">
+                    INITIALIZE REALM
+                </button>
+            </div>
+        </div>
+    `;
+}).join('');
 
                 // Render Blank Realm Card
                 const blankCardHTML = `
@@ -2193,23 +2243,24 @@ function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, s
                     </div>
                 `;
 
-                container.innerHTML = `
-                    <div class="welcome-zone animate-fadeIn" style="padding: 3rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 1.5rem; background: var(--card-bg);">
-                        <div style="text-align: center; margin-bottom: 2.5rem;">
-                            <h1 class="metallic-text" style="font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: 0.5rem; letter-spacing: -1px; color: var(--branding-text-color);">
-                                ${firstName}, Select Your Realm Circuit
-                            </h1>
-                            <p style="color: var(--glow-color); opacity: 0.6; letter-spacing: 3px; font-size: 11px; font-family: 'Orbitron', sans-serif; margin: 0;">
-                                SELECT A PRE-BUILT BLUEPRINT OR START BLANK TO INITIALIZE
-                            </p>
-                        </div>
+// Outer container grid wrapper with Starfield Space Background
+container.innerHTML = `
+    <div class="welcome-zone animate-fadeIn" style="padding: 3rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 1.5rem; background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%), radial-gradient(circle at top, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 100% 100%, 40px 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 30px rgba(0,0,0,0.8);">
+        <div style="text-align: center; margin-bottom: 2.5rem;">
+            <h1 class="metallic-text" style="font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: 0.5rem; letter-spacing: -1px; color: var(--branding-text-color);">
+                ${firstName}, Select Your Realm Circuit
+            </h1>
+            <p style="color: var(--glow-color); opacity: 0.6; letter-spacing: 3px; font-size: 11px; font-family: 'Orbitron', sans-serif; margin: 0;">
+                SELECT A PRE-BUILT BLUEPRINT OR START BLANK TO INITIALIZE
+            </p>
+        </div>
 
-                        <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; width: 100%;">
-                            ${blankCardHTML}
-                            ${circuitCardsHTML}
-                        </div>
-                    </div>
-                `;
+        <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.8rem; width: 100%;">
+            ${blankCardHTML}
+            ${circuitCardsHTML}
+        </div>
+    </div>
+`;
             }
         } else {
             container.innerHTML = `
