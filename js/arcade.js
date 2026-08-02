@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2212,8 +2212,24 @@ const circuitCardsHTML = circuits.map(circuit => {
                  onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')"
                  style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px solid var(--glow-aura); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
                 
-                <!-- Bolder & Thicker Top Neon Category Tag -->
-                <span class="metallic-text" style="position: relative; z-index: 10; font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.5rem; color: var(--glow-color); text-shadow: 0 0 10px var(--glow-aura);">
+                <!-- 3D Extruded Neon Title (1.5x taller, 2x thicker, inverted contrast shadow) -->
+                <span class="metallic-text" style="
+                    position: relative; 
+                    z-index: 10; 
+                    font-family: 'Orbitron', sans-serif; 
+                    font-size: 16px; 
+                    font-weight: 900; 
+                    letter-spacing: 2.5px; 
+                    text-transform: uppercase; 
+                    margin-bottom: 0.6rem; 
+                    color: var(--glow-color); 
+                    text-shadow: 
+                        1px 1px 0px #000,
+                        2px 2px 0px rgba(255, 255, 255, 0.85),
+                        3px 3px 0px #000,
+                        4px 4px 6px rgba(0, 229, 255, 0.9),
+                        0 0 12px var(--glow-color);
+                ">
                     ${circuit.templateName}
                 </span>
 
@@ -2226,11 +2242,11 @@ const circuitCardsHTML = circuits.map(circuit => {
                 <img src="${patternImg}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; z-index: 1;">
                 
                 <!-- Soft Center Radial Vignette -->
-                <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(8,11,16,0.55) 0%, rgba(8,11,16,0.9) 100%); z-index: 2; pointer-events: none;"></div>
+                <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(8,11,16,0.45) 0%, rgba(8,11,16,0.9) 100%); z-index: 2; pointer-events: none;"></div>
             </div>
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
-                <!-- Larger, Wrapping Subtitle Caption -->
+                <!-- Subtitle Caption -->
                 <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; word-wrap: break-word; white-space: normal; min-height: 36px;">
                     ${circuit.realmSubtitle}
                 </p>
@@ -2240,8 +2256,7 @@ const circuitCardsHTML = circuits.map(circuit => {
             </div>
         </div>
     `;
-}).join('');
-                // Render Blank Realm Card
+}).join('');                // Render Blank Realm Card
                 const blankCardHTML = `
                     <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%;">
                         <div class="action-card" 
