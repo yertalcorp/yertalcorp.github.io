@@ -264,14 +264,23 @@ watchAuthState(async (newUser) => {
                     // LOG: Profile not detected, initiating creation
                     console.log("%c [SYSTEM] PROFILE NOT DETECTED | CREATING NEW ENTRY ", "color: #f6ad55;");
 
+                    const defaultTitle = 'My Realm';
+                    const defaultSubtitle = 'Welcome to My Space';
+                    const defaultPrivacy = 'private';
+                    const defaultTheme = 'neon-dark';
+                    const defaultPlan = "free";
                     const generatedSlug = (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-');
                     profile = {
                         display_name: user.displayName,
                         slug: generatedSlug,
                         arcade_logo: currentUi['default-logo'],
-                        plan_type: 'free',
+                        plan_type: defaultPlan,
                         email: user.email,
-                        photoURL: user.photoURL
+                        photoURL: user.photoURL,
+                        arcade_title: defaultTitle,
+                        arcade_subtitle: defaultSubtitle,
+                        theme: defaultTheme,
+                        privacy: defaultPrivacy
                     };
                     
                     await fetch(profileUrl, {
