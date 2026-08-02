@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 21:48:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 09:51:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -494,14 +494,23 @@ watchAuthState(async (newUser) => {
                     // LOG: Profile not detected, initiating creation
                     console.log("%c [SYSTEM] PROFILE NOT DETECTED | CREATING NEW ENTRY ", "color: #f6ad55;");
 
+                    const defaultTitle = 'My Realm';
+                    const defaultSubtitle = 'Welcome to My Space';
+                    const defaultPrivacy = 'private';
+                    const defaultTheme = 'neon-dark';
+                    const defaultPlan = "free";
                     const generatedSlug = (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-');
                     profile = {
                         display_name: user.displayName,
                         slug: generatedSlug,
                         arcade_logo: currentUi['default-logo'],
-                        plan_type: 'free',
+                        plan_type: defaultPlan,
                         email: user.email,
-                        photoURL: user.photoURL
+                        photoURL: user.photoURL,
+                        arcade_title: defaultTitle,
+                        arcade_subtitle: defaultSubtitle,
+                        theme: defaultTheme,
+                        privacy: defaultPrivacy
                     };
                     
                     await fetch(profileUrl, {
