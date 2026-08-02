@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 19:10:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 09:57:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -268,8 +268,13 @@ watchAuthState(async (newUser) => {
                     const defaultSubtitle = 'Welcome to My Space';
                     const defaultPrivacy = 'private';
                     const defaultTheme = 'neon-dark';
-                    const defaultPlan = "free";
-                    const generatedSlug = (user.displayName || user.uid).toLowerCase().replace(/\s+/g, '-');
+                    const defaultPlan = 'free';
+                    const generatedSlug = (user.displayName || user.uid)
+                        .toLowerCase()
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .trim()
+                        .replace(/\s+/g, '-');
+
                     profile = {
                         display_name: user.displayName,
                         slug: generatedSlug,
@@ -280,7 +285,8 @@ watchAuthState(async (newUser) => {
                         arcade_title: defaultTitle,
                         arcade_subtitle: defaultSubtitle,
                         theme: defaultTheme,
-                        privacy: defaultPrivacy
+                        privacy: defaultPrivacy,
+                        setup_complete: false
                     };
                     
                     await fetch(profileUrl, {
