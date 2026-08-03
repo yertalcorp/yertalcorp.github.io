@@ -1097,7 +1097,7 @@ header {
     background: var(--bg-color-low); /* Ensuring the gray background is set */
     border-radius: 12px;
     border: 1px solid rgba(var(--border-color),0.2);
-    box-shadow: inset 2px 2px 8px rgba(var(--box_shadow-color),0.15); /* Creates the "recessed" look */
+    box-shadow: inset 2px 2px 8px rgba(var(--box-shadow-color),0.15); /* Creates the "recessed" look */
     margin-top: 0.25rem;
     padding: 0.25rem;
     overflow: hidden; /* Clips anything outside the rounded corners */
