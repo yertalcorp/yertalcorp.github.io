@@ -765,7 +765,7 @@ main.max-width-limit {
     
     /* Hardware Integration Look */
     background: rgba(0, 0, 0, 0.2); /* Darker recessed slot */
-    border: 1px solid rgba(var(--glow-aura-rgb), 0.3);
+    border: 1px solid color-mix(in srgb, var(--glow-color-aura) 30%, transparent);
     border-radius: 4px;
     padding: 4px 14px;
     text-transform: uppercase;
@@ -788,10 +788,10 @@ main.max-width-limit {
     margin-left: auto;
     margin-bottom: 35px;
     background: var(--bg-color);
-    border: 1px solid rgba(var(--glow-color-rgb), 0.3);
+    border: 1px solid color-mix(in srgb, var(--glow-color-aura) 30%, transparent);
     border-radius: 4px;
     /* Uses theme bg-color for the recessed shadow depth */
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 5px rgba(var(--glow-color), 0.1);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 5px color-mix(in srgb, var(--glow-color) 10%, transparent);
     height: 55px; 
     position: relative;
     overflow:visible;    
@@ -1096,8 +1096,8 @@ header {
 .experiment-zone {
     background: var(--bg-color-low); /* Ensuring the gray background is set */
     border-radius: 12px;
-    border: 1px solid rgba(var(--border-color),0.2);
-    box-shadow: inset 2px 2px 8px rgba(var(--box-shadow-color),0.15); /* Creates the "recessed" look */
+    border: 1px solid color-mix(in srgb, var(--border-color) 20%, transparent);
+    box-shadow: inset 2px 2px 8px color-mix(in srgb, var(--box-shadow-color) 15%, transparent); /* Creates the "recessed" look */
     margin-top: 0.25rem;
     padding: 0.25rem;
     overflow: hidden; /* Clips anything outside the rounded corners */
