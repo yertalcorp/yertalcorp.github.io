@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -66,21 +66,21 @@ export async function ensureActiveRealm(uid) {
         updates[`realms/${activeRealmId}`] = {
             realm_id: activeRealmId,
             realm_ownerid: uid,
-            **realm_display_name: userProfile.display_name || "PILOT",**
+            realm_display_name: userProfile.display_name || "PILOT",
             realm_title: userProfile.display_name ? `${userProfile.display_name}'s Realm` : "NEW REALM",
             realm_subtitle: "Welcome to my Realm",
             realm_logo: userProfile.photoURL || "/assets/images/avatar.jpg",
             realm_theme: "neon-dark",
             realm_privacy: "public",
             realm_plan_type: "free",
-            **realm_setup_complete: false,**
-            **realm_date_created: timestamp,**
-            **realm_last_updated: timestamp,**
+            realm_setup_complete: false,
+            realm_date_created: timestamp,
+            realm_last_updated: timestamp,
             currents: {}
         };
 
         updates[`users/${uid}/profile/active_realm_id`] = activeRealmId;
-        **// DELETED: updates[`users/${uid}/profile/setup_complete`] = true;**
+        // DELETED: updates[`users/${uid}/profile/setup_complete`] = true;
 
         await update(ref(db), updates);
 
@@ -2204,15 +2204,13 @@ async function initializeUserRealm(realmId, templateId) {
 // Expose helper to global window scope for inline onclick hooks
 window.initializeUserRealm = initializeUserRealm;
 
-// Expose helper to global window scope for inline onclick hooks
-window.initializeUserRealm = initializeUserRealm;
 function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
     if (!container) return;
 
     // 1. DYNAMIC PLAN LOOKUP FOR THE OWNER
-    const ownerData = databaseCache.users?.[ownerUid] || {};
-    const planType = ownerData.profile?.plan_type || 'free';
+    const realm = databaseCache.realms?.[realmId] || {};
+    const planType = realm.realm_plan_type || 'free';
     const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
     const maxSparks = planLimits.max_sparks_per_current;
 
@@ -2226,9 +2224,9 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
     // --- ARCADE SETUP / TEMPLATE SELECTOR ---
     if (currentsArray.length === 0) {
         if (isOwner) {
-            const firstName = profile?.display_name?.split(' ')[0] || "Engineer";
+            const firstName = realm.realm_display_name?.split(' ')[0] || profile?.display_name?.split(' ')[0] || "Engineer";";
             
-            if (profile?.setup_complete === true) {
+            if (realm.realm_setup_complete === true) {
                 container.innerHTML = `
                     <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 6rem 2rem; border: 1px solid var(--glow-aura); border-radius: 20px; margin: 2rem; background: var(--card-bg);">
                         <h1 class="metallic-text" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--branding-text-color);">
@@ -4710,63 +4708,45 @@ window.saveArcadeSettings = async () => {
     if (!activeUser) return;
 
     try {
-        const profilePath = `users/${activeUser.uid}/profile`;
-        
-        // Ensure local state exists
-        if (!window.pageOwnerData) window.pageOwnerData = {};
-        if (!window.pageOwnerData.profile) window.pageOwnerData.profile = {};
-        
-        const profile = window.pageOwnerData.profile;
-        
-        // --- RELIABLE REALM SLUG RECOVERY ---
-        // We pull directly from the URL params (?realm=realmSlug) as the source of truth
-        const urlParams = new URLSearchParams(window.location.search);
-        const currentSlug = urlParams.get('realm');
-        
+        const activeRealmId = await ensureActiveRealm(activeUser.uid);
+        const realmPath = `realms/${activeRealmId}`;
         const selectedPrivacy = privacySelect.value;
+        const timestamp = Date.now();
 
         // 1. CONSTRUCT REALM UPDATE PAYLOAD
         const updates = {};
-        updates[`${profilePath}/arcade_title`] = arcadeName;
-        updates[`${profilePath}/arcade_subtitle`] = subtitleInput.value.trim();
-        updates[`${profilePath}/theme`] = themeSelect.value;
-        updates[`${profilePath}/privacy`] = selectedPrivacy;
-        updates[`${profilePath}/plan_type`] = planValue;
-
-        // Ensure slug is synced in the profile node if it was missing
-        if (currentSlug) {
-            updates[`${profilePath}/slug`] = currentSlug;
-        }
-
-        if (profile.setup_complete === undefined || profile.setup_complete === null) {
-            updates[`${profilePath}/setup_complete`] = true;
-        }
+        updates[`${realmPath}/realm_title`] = arcadeName;
+        updates[`${realmPath}/realm_subtitle`] = subtitleInput.value.trim();
+        updates[`${realmPath}/realm_theme`] = themeSelect.value;
+        updates[`${realmPath}/realm_privacy`] = selectedPrivacy;
+        updates[`${realmPath}/realm_plan_type`] = planValue;
+        updates[`${realmPath}/realm_setup_complete`] = true;
+        updates[`${realmPath}/realm_last_updated`] = timestamp;
 
         // 2. GRANULAR SEARCH INDEX MANAGEMENT
-        if (currentSlug) {
-            if (selectedPrivacy === 'public') {
-                // Map the slug to the active UID
-                updates[`search_index/${currentSlug}`] = activeUser.uid;
-                console.log(`[INDEX]: Syncing public access for ${currentSlug}`);
-            } else {
-                // Remove slug from index if private/unlisted
-                updates[`search_index/${currentSlug}`] = null;
-                console.log(`[INDEX]: Removing ${currentSlug} from public directory.`);
-            }
+        if (selectedPrivacy === 'public') {
+            updates[`search_index/${activeRealmId}`] = activeUser.uid;
+            console.log(`[INDEX]: Syncing public access for ${activeRealmId}`);
         } else {
-            console.warn("[INDEX_SKIPPED]: No valid slug found in URL, Profile, or Global state.");
+            updates[`search_index/${activeRealmId}`] = null;
+            console.log(`[INDEX]: Removing ${activeRealmId} from public directory.`);
         }
 
         // 3. ATOMIC EXECUTION
-        // One update call handles both the user profile and the search index
         await window.update(window.ref(window.db), updates);
 
-        // 4. SYNC LOCAL STATE
-        Object.keys(updates).forEach(path => {
-            if (path.startsWith(profilePath)) {
-                const key = path.split('/').pop();
-                window.pageOwnerData.profile[key] = updates[path];
-            }
+        // 4. SYNC LOCAL STATE (REALMS NODE)
+        if (!databaseCache.realms) databaseCache.realms = {};
+        if (!databaseCache.realms[activeRealmId]) databaseCache.realms[activeRealmId] = {};
+
+        Object.assign(databaseCache.realms[activeRealmId], {
+            realm_title: arcadeName,
+            realm_subtitle: subtitleInput.value.trim(),
+            realm_theme: themeSelect.value,
+            realm_privacy: selectedPrivacy,
+            realm_plan_type: planValue,
+            realm_setup_complete: true,
+            realm_last_updated: timestamp
         });
 
         // 5. UI REFRESH
@@ -4774,7 +4754,7 @@ window.saveArcadeSettings = async () => {
         document.getElementById('arcadesettings-hud').classList.remove('active');
 
         await refreshUI();
-        console.log("[SYSTEM]: Settings and Search Index Synchronized.");
+        console.log("[SYSTEM]: Realm Settings and Search Index Synchronized.");
 
     } catch (error) {
         console.error("FORGE_FAILURE:", error);
