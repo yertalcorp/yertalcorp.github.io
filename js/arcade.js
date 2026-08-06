@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:56:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:38:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -62,15 +62,16 @@ window.getUserCountry = async function() {
     }
 };
 
-window.handleSparkLaunch = async function(currentId, sparkId, ownerId, targetUrl) {
+window.handleSparkLaunch = async function(realmId, currentId, sparkId, targetUrl) {
     console.log(`🚀 Launching Spark: ${sparkId}`);
 
     try {
         const country = await window.getUserCountry();
-        console.log(`handleSparkLaunch: ownerId: ${ownerId}, currentId: ${currentId}, sparkId: ${sparkId}`);
+        console.log(`handleSparkLaunch: realmId: ${realmId}, currentId: ${currentId}, sparkId: ${sparkId}`);
         
         // Pass the dynamic country variable instead of 'IN'
-        await window.updateSparkViews(ownerId, currentId, sparkId, country); 
+        await window.updateSparkViews(realmId, currentId, sparkId, country);
+        
         console.log("✅ View Logged");
     } catch (err) {
         console.warn("View tracking failed, but proceeding to launch:", err);
@@ -97,10 +98,10 @@ window.confirmDeleteCurrent = async (realmId, currentId) => {
             // 3. UI Refresh
             await refreshUI();
             
-            console.log(`System: Infrastructure for ${currentId} decommissioned.`);
+            console.log(`System: Infra for ${currentId} decommissioned.`);
         } catch (error) {
             console.error("Critical: Deletion protocol failed.", error);
-            alert("System error: Could not decommission infrastructure.");
+            alert("System error: Could not decommission Infra.");
         }
     }
 };
@@ -574,7 +575,7 @@ window.payOwner = function(btn, realmId, currentId, sparkId) {
                 </div>
                 
                 <button class="ethereal-btn-sm" 
-                        onclick="window.sendPayment('${ownerId}', '${currentId}', '${sparkId}', '${isSale ? 'sale' : 'tip'}')"
+                        onclick="window.sendPayment('${realmId}', '${currentId}', '${sparkId}', '${isSale ? 'sale' : 'tip'}')"
                         style="width: 100%; height: 45px; font-size: 13px; margin-top: 10px;">
                     CONFIRM TRANSACTION
                 </button>
@@ -724,7 +725,7 @@ window.openFeedback = async (event, realmId, currentId, sparkId) => {
              <textarea id="feedback-msg" class="nav-textarea sz-xs" placeholder="Type your thoughts here..." style="height: 60px;"></textarea>
              
              <button class="navigator-option sz-md" style="width:100%; margin-top:10px; font-weight:bold;" 
-                onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')">SUBMIT FEEDBACK</button>
+                onclick="submitSparkFeedback('${realmId}', '${currentId}', '${sparkId}')">SUBMIT FEEDBACK</button>
                <div id="feedback-list" style="margin:5px; height: 180px; overflow-y: auto !important; border-top:1px solid var(--fg-color-low); padding: 10px 5px 0 0;">
                 <div class="sz-xs" style="opacity:0.6; text-align:center;">SCANNING ARCHIVES...</div>
              </div>
@@ -757,10 +758,10 @@ window.openFeedback = async (event, realmId, currentId, sparkId) => {
             
             let actionsHtml = `<div style="display: flex; gap: 4px;">`;
             if (isAuthor) {
-                actionsHtml += `<button class="ethereal-btn-sm feedback-action-square" onclick="window.editFeedbackPrompt('${ownerId}', '${currentId}', '${sparkId}', '${key}')"><i class="fas fa-pen"></i></button>`;
+                actionsHtml += `<button class="ethereal-btn-sm feedback-action-square" onclick="window.editFeedbackPrompt('${realmId}', '${currentId}', '${sparkId}', '${key}')"><i class="fas fa-pen"></i></button>`;
             }
             if (isOwner || isAuthor) {
-                actionsHtml += `<button class="ethereal-btn-sm feedback-action-square btn-delete-x" onclick="window.deleteFeedback('${ownerId}', '${currentId}', '${sparkId}', '${key}')"><i class="fas fa-times"></i></button>`;
+                actionsHtml += `<button class="ethereal-btn-sm feedback-action-square btn-delete-x" onclick="window.deleteFeedback('${realmId}', '${currentId}', '${sparkId}', '${key}')"><i class="fas fa-times"></i></button>`;
             }
             actionsHtml += `</div>`;
 
@@ -809,7 +810,7 @@ window.deleteFeedback = async (realmId, currentId, sparkId, entryKey) => {
         }
 
         // Refresh the HUD to show updated list
-        window.openFeedback(null, ownerId, currentId, sparkId); 
+        window.openFeedback(null, realmId, currentId, sparkId); 
     } catch (e) {
         console.error("Deletion failed:", e);
     }
@@ -818,15 +819,15 @@ window.deleteFeedback = async (realmId, currentId, sparkId, entryKey) => {
 /*
  * Objective: Open inline edit mode within the HUD.
  */
-window.editFeedbackPrompt = (ownerId, currentId, sparkId, entryKey) => {
+window.editFeedbackPrompt = (realmId, currentId, sparkId, entryKey) => {
     const textDiv = document.getElementById(`text-${entryKey}`);
     const originalText = textDiv.innerText;
     
     textDiv.innerHTML = `
         <textarea id="edit-area-${entryKey}" class="nav-textarea sz-xs" style="height:60px; margin-top:5px; border: 1px solid var(--branding-color);">${originalText}</textarea>
         <div style="display:flex; gap:8px; margin-top:8px;">
-            <button class="ethereal-btn-sm sz-xs" style="padding: 4px 10px;" onclick="window.saveEdit('${ownerId}', '${currentId}', '${sparkId}', '${entryKey}')">SAVE</button>
-            <button class="ethereal-btn-sm sz-xs" style="padding: 4px 10px; border-color: var(--error-color); color: var(--error-color);" onclick="window.openFeedback(null, '${ownerId}', '${currentId}', '${sparkId}')">CANCEL</button>
+            <button class="ethereal-btn-sm sz-xs" style="padding: 4px 10px;" onclick="window.saveEdit('${realmId}', '${currentId}', '${sparkId}', '${entryKey}')">SAVE</button>
+            <button class="ethereal-btn-sm sz-xs" style="padding: 4px 10px; border-color: var(--error-color); color: var(--error-color);" onclick="window.openFeedback(null, '${realmId}', '${currentId}', '${sparkId}')">CANCEL</button>
         </div>
     `;
 };
@@ -842,7 +843,7 @@ window.saveEdit = async (realmId, currentId, sparkId, entryKey) => {
     
     try {
         await set(ref(db, path), newMessage);
-        window.openFeedback(null, ownerId, currentId, sparkId);
+        window.openFeedback(null, realmId, currentId, sparkId);
     } catch (e) {
         console.error("Edit failed:", e);
     }
@@ -1167,7 +1168,7 @@ async function refreshUI() {
         // TopBar needs the owner data and current user context
         renderTopBar(pageOwnerData, isOwner, user, userSlug);
         
-        // Currents needs the infrastructure and owner profile for context
+        // Currents needs the realm and owner profile for context
         renderCurrents(databaseCache.realms?.[realmId]?.currents || {}, isOwner, realmId, ownerProfile);
 
         console.log("--- [SYSTEM]: refreshUI COMPLETE ---");
@@ -1281,7 +1282,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, targetRealmId, source
             const currentMeta = sourceCurrentSnapshot.val();
             const saveDate = new Date().toISOString();
 
-            // 4. Ensure the Infrastructure "Current" container exists for the visitor
+            // 4. Ensure the Realm "Current" container exists for the visitor
             const visitorCurrentSnapshot = await get(ref(db, destinationCurrentPath));
             if (!visitorCurrentSnapshot.exists()) {
                 await set(ref(db, destinationCurrentPath), {
@@ -1897,7 +1898,7 @@ function determinePromptMode(prompt) {
     return isSource ? 'source' : 'create';
 }
 
-window.handleCreation = async (currentId, currentName, currentPrivacy) => {
+window.handleCreation = async (realmId, currentId, currentName, currentPrivacy) => {
     const promptInput = document.getElementById(`input-${currentId}`);
     const input = promptInput ? promptInput.value.trim() : '';
     if (!input) return;
@@ -1914,7 +1915,7 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
 
         if (promptMode === 'source') {
             const defaultSourcePromptTypeObject = { name: 'Source', id: 'source', logic: 'source', image: '/assets/thumbnails/default.jpg', index: -1, properties: {}, is_custom: true };
-            await executeMassSpark(currentId, currentName, input, 'source', defaultSourcePromptTypeObject, currentPrivacy);
+            await executeMassSpark(realmId, currentId, currentName, input, 'source', defaultSourcePromptTypeObject, currentPrivacy);
             promptInput.value = '';
             promptInput.removeAttribute('data-selected-capability');
             return;
@@ -1954,6 +1955,7 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
         }
 
         await executeMassSpark(
+            realmId,
             currentId, 
             currentName, 
             input, 
@@ -1966,7 +1968,7 @@ window.handleCreation = async (currentId, currentName, currentPrivacy) => {
 
     } catch (e) {
         console.error("Creation Error:", e);
-        await executeMassSpark(currentId, currentName, input, 'create', { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg', index: -1, properties: {}, is_custom: true }, currentPrivacy);
+        await executeMassSpark(realmId, currentId, currentName, input, 'create', { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg', index: -1, properties: {}, is_custom: true }, currentPrivacy);
     }
 };
 function resolveCapabilityFromKeywords(input) {
@@ -2067,7 +2069,7 @@ function getCircuitCardPattern(circuitId) {
 }
 
 /*
- * Copies a selected circuit template from databaseCache into the user's infrastructure
+ * Copies a selected circuit template from databaseCache into the user's Realm
  * @param {string} ownerUid - Logged-in user's UID
  * @param {string|null} templateId - Selected template ID or null for blank realm
  */
@@ -2147,7 +2149,7 @@ async function initializeUserRealm(realmId, templateId) {
                             const templateUrl = cachedArchetype.image || '/assets/thumbnails/default.jpg';
 
                             // Delegate spark creation to saveSpark without overriding default parameter_map
-                            await saveSpark(currentId, sparkData, prompt, detectedTemplate, templateUrl, 'private');
+                            await saveSpark(realmId, currentId, sparkData, prompt, detectedTemplate, templateUrl, 'private');
                         }
                     }
                 }
@@ -2168,7 +2170,7 @@ window.initializeUserRealm = initializeUserRealm;
 
 // Expose helper to global window scope for inline onclick hooks
 window.initializeUserRealm = initializeUserRealm;
-function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
+function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sharedSparkId) {
     const container = document.getElementById('currents-container');
     if (!container) return;
 
@@ -2223,7 +2225,7 @@ const circuitCardsHTML = circuits.map(circuit => {
     return `
         <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); transition: transform 0.3s ease;">
             <div class="action-card" 
-                 onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')"
+                 onclick="window.initializeUserRealm('${realmId}', '${circuit.templateId}')"
                  style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px solid var(--glow-aura); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
                 
                 <!-- 3D Extruded Neon Title (1.5x taller, 2x thicker, inverted contrast shadow) -->
@@ -2264,7 +2266,7 @@ const circuitCardsHTML = circuits.map(circuit => {
                 <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; word-wrap: break-word; white-space: normal; min-height: 36px;">
                     ${circuit.realmSubtitle}
                 </p>
-                <button onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
+                <button onclick="window.initializeUserRealm('${realmId}', '${circuit.templateId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
                     INITIALIZE REALM
                 </button>
             </div>
@@ -2275,7 +2277,7 @@ const circuitCardsHTML = circuits.map(circuit => {
 const blankCardHTML = `
     <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); transition: transform 0.3s ease;">
         <div class="action-card" 
-             onclick="window.initializeUserRealm('${ownerUid}', null)"
+             onclick="window.initializeUserRealm('${realmId}', null)"
              style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px dashed var(--glow-color); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
             
             <i class="fas fa-plus-circle" style="font-size: 1.8rem; color: var(--glow-color); margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px var(--glow-color)); z-index: 10;"></i>
@@ -2309,7 +2311,7 @@ const blankCardHTML = `
             <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; word-wrap: break-word; white-space: normal; min-height: 36px;">
                 Initialize an empty laboratory to construct custom currents and sparks from scratch.
             </p>
-            <button onclick="window.initializeUserRealm('${ownerUid}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px; opacity: 0.85;">
+            <button onclick="window.initializeUserRealm('${realmId}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px; opacity: 0.85;">
                 CREATE BLANK
             </button>
         </div>
@@ -2420,7 +2422,7 @@ container.innerHTML = `
                 
                 <div class="experiment-zone">
                     <div id="sparks-${current.id}" class="grid">
-                        ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id, ownerUid)).join('')}
+                        ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id, realmId)).join('')}
                     </div>
                 </div>
             </div>
@@ -2624,7 +2626,7 @@ window.submitNewCurrent = async () => {
         await refreshUI();
 
     } catch (e) {
-        console.error("Infrastructure Deployment Failed:", e);
+        console.error("Infra Deployment Failed:", e);
     }
 };
 
@@ -3348,7 +3350,7 @@ function genSparkImage(sparkImageFromDB) {
 }
 
 // FUNCTION: renderSparkCard
-function renderSparkCard(spark, isOwner, currentId, ownerId) {
+function renderSparkCard(spark, isOwner, currentId, realmId) {
     /* Overall Objective: Generate the HTML for a spark card with persistent 
         neon state for likes and shares, and dynamic monetization labels based on plan type. */
     
@@ -3398,7 +3400,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     // Forge State Check (Internal Async)
     if (visitorUid && !isOwner) {
         (async () => {
-            const savedRef = ref(db, `users/${visitorUid}/infrastructure/currents/${currentId}/sparks/${spark.id}`);
+            savedRef = ref(db, getSparkPath(visitorRealmId, currentId, spark.id));
             const snapshot = await get(savedRef);
             if (snapshot.exists()) {
                 const btn = document.getElementById(sparkElementId);
@@ -3433,7 +3435,7 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
     return `
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center; width: 100%;">
             <div class="action-card" 
-                  onclick="window.handleSparkLaunch('${currentId}', '${spark.id}', '${ownerId}', '${targetUrl}')"
+                  onclick="window.handleSparkLaunch('${realmId}', '${currentId}', '${spark.id}', '${ownerId}', '${targetUrl}')"
                   style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
                 
                 <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1.5rem; pointer-events: none;">
@@ -3480,32 +3482,32 @@ function renderSparkCard(spark, isOwner, currentId, ownerId) {
                     </div>
                     
                     <div class="action-buttons" style="display: flex; gap: 0.8rem; align-items: center; justify-content: center;">
-                        <button onclick="likeSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Like" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                        <button onclick="likeSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="Like" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                             <i class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
                         </button>
 
-                        <button onclick="openFeedback(event, '${ownerId}', '${currentId}', '${spark.id}')" title="Leave Feedback" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                        <button onclick="openFeedback(event, '${realmId}', '${currentId}', '${spark.id}')" title="Leave Feedback" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                             <i class="fas fa-comment" style="font-size: 10px; color: ${toolIconColor};"></i>
                         </button>
 
                         ${isOwner ? `
-                            <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
                             </button>
-                            <button onclick="deleteSpark('${currentId}', '${spark.id}', '${visitorUid}')" title="Delete" 
+                            <button onclick="deleteSpark('${realmId}', '${currentId}', '${spark.id}', '${visitorUid}')" title="Delete" 
                                     style="${btnStyle}" 
                                     onmouseover="this.style.color='var(--error-color)'; this.style.filter='drop-shadow(0 0 8px var(--error-color))'; this.style.transform='scale(1.2)';" 
                                     onmouseout="${onOut}">
                                 <i class="fas fa-trash" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                         ` : `
-                            <button id="${sparkElementId}" onclick="cloneSpark(this, '${visitorUid}', '${ownerId}', '${currentId}', '${spark.id}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <button id="${sparkElementId}" onclick="cloneSpark(this, '${visitorUid}', '${realmId}', '${currentId}', '${spark.id}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-save" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
-                            <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
                             </button>
-                            <button onclick="window.payOwner(this, '${ownerId}', '${currentId}', '${spark.id}')" 
+                            <button onclick="window.payOwner(this, '${realmId}', '${currentId}', '${spark.id}')" 
                                     title="${txActionTitle}" 
                                     style="${btnStyle}" 
                                     onmouseover="${onHover}" 
@@ -3953,7 +3955,7 @@ async function executeMassSpark(realmId, currentId, currentName, prompt, mode, p
             console.log("[CACHE REGISTRATION] Writing updated blueprint configuration to centralized registry index...");
             await update(ref(db, `settings/arcade-current-types/${promptTypeObject.index}`), cachedPreset);
             
-            await saveSpark(currentId, { 
+            await saveSpark(realmId, currentId, { 
                 name: sparkName, 
                 image: cachedPreset.image || '/assets/thumbnails/default.jpg',
                 index: promptTypeObject.index,
@@ -3999,7 +4001,7 @@ async function executeMassSpark(realmId, currentId, currentName, prompt, mode, p
 
             for (let i = 0; i < linksToSave.length; i++) {
                 const sparkName = linksToSave.length > 1 && linksToSave[i].name.startsWith('spark_') ? `${linksToSave[i].name}-${i + 1}` : linksToSave[i].name;
-                await saveSpark(currentId, {name: sparkName, link: linksToSave[i].url, image: linksToSave[i].image, logic_used: 'source'}, prompt, "Sourced Stream", linksToSave[i].image, currentPrivacy);
+                await saveSpark(realmId, currentId, {name: sparkName, link: linksToSave[i].url, image: linksToSave[i].image, logic_used: 'source'}, prompt, "Sourced Stream", linksToSave[i].image, currentPrivacy);
                 const progress = Math.round(((i + 1) / linksToSave.length) * 100);
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
             }
@@ -4037,7 +4039,7 @@ async function executeMassSpark(realmId, currentId, currentName, prompt, mode, p
                 await update(ref(db, `settings/arcade-current-types/${nextCachedIndex}`), newRegisteredTypeObject);
                 
                 // Instantiation node setup matching strict registry indexing conventions
-                await saveSpark(currentId, { 
+                await saveSpark(realmId, currentId, { 
                     name: sparkName, 
                     image: sparkImage,
                     index: nextCachedIndex,
