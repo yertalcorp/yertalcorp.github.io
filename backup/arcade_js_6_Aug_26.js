@@ -1,0 +1,4931 @@
+import { firebaseConfig, auth, saveToRealtimeDB, getArcadeData, db, get, set, ref, update, push, runTransaction, increment } from '/config/firebase-config.js';
+import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
+
+// --- ADD THE GLOBAL BRIDGE HERE ---
+window.auth = auth;
+window.db = db;
+window.ref = ref;
+window.update = update;
+window.get = get;
+
+// Build Check: Manually update the time string below when pushing new code
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+
+/* export variables that spark.js will use */
+export let databaseCache = {};
+export let globalTheme = "neon-dark";
+
+/* local variables of entire file scope */
+let user
+let selectedCategory = null;
+let cachedGKey = null;
+let MAXTIP = 100000;
+
+// GLOBAL CONFIGURATION ENGINES
+const ARCADE_STOP_WORDS = new Set([
+    'a', 'an', 'the', 'is', 'to', 'it', 'and', 'or', 'for', 'hence', 'but', 
+    'no', 'not', 'make', 'create', 'generate', 'so', 'there', 'where', 
+    'here', 'has', 'should', 'could', 'would', 'put', 'in', 'out', 'on', 
+    'up', 'down', 'any', 'all', 'if', 'with', 'i', 'you', 'me', 'can', 
+    "can't", 'do', "don't", 'cannot', 'when', 'then', 'that', 'this', 
+    'press', 'click', 'he', 'she', 'him', 'her', 'us', 'we', 'them', 
+    'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+    "it's", 'its', 'now', 'some', 'small', 'big', 'large', 'medium', 'over',
+    'many', 'few', 'several', 'lots', 'much', 'app', 'application', 'system', 'tool',
+    'show', 'display', 'view', 'render', 'simulate', 'simulation', 'beautiful', 'steep',
+    'build', 'animate', 'animation'
+]);
+
+/*
+ * Global Model Stats: [ ["model-name", failureCount], ... ]
+ * Replaces the old flat 'availableModels' array.
+ */
+let modelStats = {}; 
+window.isInCooldown = false;
+
+let currentModelIndex = 0;
+
+window.getUserCountry = async function() {
+    try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        return data.country_code || 'US'; 
+    } catch (err) {
+        console.warn("Country lookup failed, defaulting to US", err);
+        return 'US';
+    }
+};
+
+window.handleSparkLaunch = async function(currentId, sparkId, ownerId, targetUrl) {
+    console.log(`🚀 Launching Spark: ${sparkId}`);
+
+    try {
+        const country = await window.getUserCountry();
+        console.log(`handleSparkLaunch: ownerId: ${ownerId}, currentId: ${currentId}, sparkId: ${sparkId}`);
+        
+        // Pass the dynamic country variable instead of 'IN'
+        await window.updateSparkViews(ownerId, currentId, sparkId, country); 
+        console.log("✅ View Logged");
+    } catch (err) {
+        console.warn("View tracking failed, but proceeding to launch:", err);
+    }
+    // 2. ONLY navigate after the promise has resolved or failed
+    // Disable this if the view count has issues, otherwise you cannot see logs
+    window.location.href = targetUrl;
+};
+
+window.confirmDeleteCurrent = async (userId, currentId) => {
+    const confirmation = confirm(`Are you sure you want to delete the whole current [${currentId}]?\n\nAll associated sparks will be permanently deleted. This action cannot be undone.`);
+    
+    if (confirmation) {
+        try {
+            // 1. Database Removal
+            const dbPath = `users/${userId}/infrastructure/currents/${currentId}`;
+            await saveToRealtimeDB(dbPath, null);
+
+            // 2. Cache Cleanup
+            if (databaseCache.users?.[userId]?.infrastructure?.currents?.[currentId]) {
+                delete databaseCache.users[userId].infrastructure.currents[currentId];
+            }
+
+            // 3. UI Refresh
+            await refreshUI();
+            
+            console.log(`System: Infrastructure for ${currentId} decommissioned.`);
+        } catch (error) {
+            console.error("Critical: Deletion protocol failed.", error);
+            alert("System error: Could not decommission infrastructure.");
+        }
+    }
+};
+/*
+ * Objective: Close the Add Current HUD and reset visibility.
+ */
+window.closeAddCurrentHud = () => {
+    const hud = document.getElementById('add-current-hud');
+    if (hud) {
+        hud.style.display = 'none';
+    }
+};
+
+/*
+ * Objective: Laboratory Manual / Guided Viewlets
+ * Logic: Uses element-masking to highlight specific UI nodes.
+ */
+let currentTutorialStep = 0;
+const steps = [
+    {
+        target: null,
+        title: "REALM_INIT",
+        content: "Welcome to your Realm. This is a versatile showroom for your Simulations, a social hub for friends, or a business storefront where you can create and share with your network."
+    },
+    {
+        target: ".settings-trigger", // Assuming three dots
+        title: "OS_PREFERENCES",
+        content: "Access System Settings to change the name, subtitle, theme (like Autumn Ember) and privacy of your Realm."
+    },
+    {
+        target: ".terminal-btn", 
+        title: "INFRASTRUCTURE",
+        content: "Initialize a 'Current' to organize your work. You can Add, Rename (Update), or Decommission (Delete) Currents to manage your lab's data streams."
+    },
+    {
+        target: ".generate-btn",
+        title: "FORGE_GENERATION",
+        content: "This is the Forge. Paste a URL to scrape content or type a prompt—try: 'Top 3 movies for the current year'—to generate a Spark instantly."
+    },
+    {
+        target: ".spark-stats-row", // Target the icons/stats row on a card
+        title: "ENGAGEMENT_PROTOCOLS",
+        content: "Interact with Sparks via the Like, Save, Share and Feedback icons under each card."
+    },
+    {
+        target: null,
+        title: "SYSTEM_READY",
+        content: "Your Realm is online. Start forging Currents and share your unique URL to begin growing your audience and network."
+    }
+];
+
+window.handleMenuTrigger = (type) => {
+    const drawer = document.getElementById('main-drawer');
+    if (drawer) drawer.classList.remove('active');
+
+    // 1. Check if the cache exists
+    if (!databaseCache) {
+        console.error("Navigator Error: databaseCache is not initialized yet.");
+        return;
+    }
+
+    setTimeout(() => {
+        switch (type) {
+            case 'chat':
+                // 2. Safely extract chat_config
+                const chatData = databaseCache?.chat_config;
+
+                if (!chatData || !chatData.nodes) {
+                    console.error("Navigator Error: chat_config is missing from databaseCache.");
+                    // Optional: Show a small toast to the user "System loading..."
+                    return;
+                }
+
+                if (!window.navigatorAgent) {
+                    window.navigatorAgent = new ArcadeNavigator(chatData);
+                }
+                window.navigatorAgent.initChatAgent();
+                break;
+
+            case 'tutorial':
+                if (typeof window.showTutorial === 'function') window.showTutorial();
+                break;
+        }
+    }, 500);
+};
+
+window.showTutorial = function() {
+    currentTutorialStep = 0; 
+    
+    const mask = document.querySelector('.tutorial-mask');
+    if (mask) {
+        mask.classList.add('active');
+        // Reset coordinates to clear any previous spotlight
+        mask.style.setProperty('--r', '0px');
+    }
+    
+    if (!mask) {
+        console.error("Tutorial Mask not found in DOM.");
+        return;
+    }
+
+    setTimeout(() => {
+        renderTutorialStep();
+    }, 300); 
+};
+// --- arcade.js ---
+
+function renderTutorialStep() {
+    const step = steps[currentTutorialStep];
+    const mask = document.querySelector('.tutorial-mask');
+    const existingTooltip = document.querySelector('.tutorial-tooltip');
+    if (existingTooltip) existingTooltip.remove();
+
+    if (!step) {
+        window.endTutorial();
+        return;
+    }
+
+    // Handle Spotlight (Mask)
+    const targetEl = step.target ? document.querySelector(step.target) : null;
+    if (targetEl) {
+        const rect = targetEl.getBoundingClientRect();
+        // getBoundingClientRect is relative to viewport, which matches fixed mask
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        const r = Math.max(rect.width, rect.height) / 1.5 + 15;
+
+        mask.style.setProperty('--x', `${x}px`);
+        mask.style.setProperty('--y', `${y}px`);
+        mask.style.setProperty('--r', `${r}px`);
+    } else {
+        mask.style.setProperty('--r', `0px`);
+    }
+    // FIXED TOP-CENTERED POSITIONING
+    const totalSteps = steps.length;
+    const startPercent = 15;
+    const endPercent = 85;
+    const horizontalPercent = startPercent + (currentTutorialStep * ((endPercent - startPercent) / (totalSteps - 1)));
+
+    // For Mobile: Always center horizontally (50%)
+    // For Desktop: Progress horizontally
+    const finalLeft = window.innerWidth < 600 ? 50 : horizontalPercent;
+    
+    // Y-Position: Fixed at 25% from top to avoid scrolling issues
+    const finalTop = 10; createTooltip(finalLeft, finalTop, step);
+}
+
+function createTooltip(percentX, percentY, step) {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tutorial-tooltip active';
+    
+    // Apply viewport-relative percentage coordinates
+    tooltip.style.left = `${percentX}%`;
+    tooltip.style.top = `${percentY}%`;
+    tooltip.style.transform = 'translate(-50%, 0)'; /* Anchor from top-center */
+
+    tooltip.innerHTML = `
+        <div class="tooltip-header">
+            <span class="metallic-text">PHASE_${currentTutorialStep + 1} // ${steps.length}</span>
+            <button onclick="window.endTutorial()" class="close-tutorial">&times;</button>
+        </div>
+        
+        <h3>${step.title}</h3>
+        <p>${step.content}</p>
+
+        <div class="tooltip-nav" style="display: flex; gap: 12px;">
+            <button onclick="window.prevStep()" class="tutorial-next-btn" style="clip-path: none; flex: 1;" ${currentTutorialStep === 0 ? 'disabled' : ''}>PREV</button>
+            <button onclick="window.nextStep()" class="tutorial-next-btn" style="flex: 2;">
+                ${currentTutorialStep === steps.length - 1 ? 'FINISH_INIT' : 'NEXT_PHASE'}
+            </button>
+        </div>
+    `;
+    document.body.appendChild(tooltip);
+}
+
+window.nextStep = function() {
+    currentTutorialStep++;
+    if (currentTutorialStep < steps.length) {
+        renderTutorialStep();
+    } else {
+        endTutorial();
+    }
+};
+
+window.prevStep = function() {
+    if (currentTutorialStep > 0) {
+        currentTutorialStep--;
+        renderTutorialStep();
+    }
+};
+
+window.endTutorial = function() {
+    const mask = document.querySelector('.tutorial-mask');
+    const tooltip = document.querySelector('.tutorial-tooltip');
+    if (mask) mask.classList.remove('active');
+    if (tooltip) tooltip.remove();
+};
+    
+/* 
+ * Objective: Drawer Navigation & State Management
+ * Task: Toggle visibility of static HTML sections and manage origin levels
+ */
+window.toggleDrawer = (menuType = 'main') => {
+    const drawer = document.getElementById('main-drawer');
+    if (!drawer) return;
+
+    const isActive = drawer.classList.contains('active');
+
+    // 1. If opening fresh, lock the origin and show the correct section
+    if (!isActive) {
+        drawer.dataset.originMode = menuType;
+        if (menuType !== 'main') {
+            window.showSubMenu(menuType);
+        } else {
+            window.showMainMenu();
+        }
+        drawer.classList.add('active');
+    } 
+    // 2. If already open and switching modes via top-bar icons
+    else if (drawer.dataset.currentMode !== menuType) {
+        drawer.dataset.originMode = menuType; // Update origin if explicitly switched via icon
+        window.showSubMenu(menuType);
+    }
+    // 3. Close the drawer if clicking the same icon/close button
+    else {
+        drawer.classList.remove('active');
+    }
+
+    drawer.dataset.currentMode = menuType;
+};
+
+window.showSubMenu = (menuType) => {
+    const drawer = document.getElementById('main-drawer');
+    const origin = drawer.dataset.originMode || 'main';
+
+    // Hide all navigation containers
+    document.getElementById('drawer-main-nav').style.display = 'none';
+    document.getElementById('drawer-settings').style.display = 'none';
+    document.getElementById('drawer-help').style.display = 'none';
+
+    // Show the specific target
+    const targetSub = document.getElementById(`drawer-${menuType}`);
+    if (targetSub) {
+        targetSub.style.display = 'block';
+        
+        // Back Button Logic: Only show if we didn't START at this menu level
+        const backBtn = targetSub.querySelector('.back-btn');
+        if (backBtn) {
+            backBtn.style.display = (origin === 'main') ? 'flex' : 'none';
+        }
+    }
+};
+
+window.showMainMenu = () => {
+    document.getElementById('drawer-main-nav').style.display = 'block';
+    document.getElementById('drawer-settings').style.display = 'none';
+    document.getElementById('drawer-help').style.display = 'none';
+};
+
+// 3. Prefill the inputs with current cached data
+function prefillSettings() {
+    const profile = databaseCache.userProfile || {};
+    document.getElementById('set-display-name').value = profile.display_name || "";
+    document.getElementById('set-arcade-title').value = profile.arcade_title || "";
+    document.getElementById('set-arcade-subtitle').value = profile.arcade_subtitle || "";
+    document.getElementById('set-arcade-logo').value = profile.arcade_logo || "";
+    document.getElementById('set-arcade-theme').value = profile.current_theme_id || "neon-dark";
+}
+
+// 4. Save and Apply
+window.saveAllSettings = async () => {
+    const updates = {
+        display_name: document.getElementById('set-display-name').value,
+        arcade_title: document.getElementById('set-arcade-title').value,
+        arcade_subtitle: document.getElementById('set-arcade-subtitle').value,
+        arcade_logo: document.getElementById('set-arcade-logo').value,
+        current_theme_id: document.getElementById('set-arcade-theme').value
+    };
+
+    // Assuming you have a helper for Firebase
+    await saveToRealtimeDB(`users/${user.uid}/profile`, updates);
+    
+    // Refresh the UI locally
+    applyTheme(updates.current_theme_id);
+    
+    // If your logo/title are rendered via a function, call it here
+    if (typeof renderTopBar === "function") renderTopBar(); 
+    
+    window.toggleDrawer();
+    console.log("System Identity Re-Forged.");
+};
+
+/*
+ * Objective: Apply the flattened theme properties to the document root.
+ */
+export function applyTheme(themeId) {
+    const themes = databaseCache.settings?.['ui-settings']?.themes;
+    const activeTheme = themes[themeId] || themes['neon-dark']; // Default to Neon
+
+    if (!activeTheme) return;
+
+    const root = document.documentElement;
+
+    // We iterate through the keys (bg-color, branding-size, etc.)
+    Object.keys(activeTheme).forEach(key => {
+        if (key !== 'name') {
+            // This turns 'bg-color' into '--bg-color'
+            root.style.setProperty(`--${key}`, activeTheme[key]);
+        }
+    });
+
+    console.log(`[SYSTEM] Identity Initialized: ${activeTheme.name}`);
+}
+
+function renderThemeMenu() {
+    const list = document.getElementById('theme-list');
+    const themes = databaseCache.settings['ui-settings'].themes;
+
+    Object.keys(themes).forEach(id => {
+        const btn = document.createElement('button');
+        btn.className = 'ethereal-btn-sm';
+        btn.innerText = themes[id].name;
+        btn.onclick = () => {
+            applyTheme(id);
+            // Save preference to Firebase so it persists
+            updateUserPath(`profile/current_theme_id`, id);
+        };
+        list.appendChild(btn);
+    });
+}
+
+// Helper for the satisfying click
+const playClickSound = () => {
+    const audio = new Audio('https://actions.google.com/sounds/v1/foley/button_click.ogg');
+    audio.volume = 0.5;
+    audio.play().catch(e => console.log("Audio play blocked by browser"));
+};
+
+// Transaction routines to update Spark stats
+async function updateSparkTransaction(sparkId, txData) {
+    const txId = `tx_${Date.now()}`;
+    const sparkStatsPath = `infrastructure/currents/${currentId}/sparks/${sparkId}/stats/transactions`;
+
+    const updates = {};
+    updates[`${sparkStatsPath}/ledger/${txId}`] = {
+        amt: txData.amount,
+        ts: new Date().toISOString(),
+        uid: txData.senderId,
+        type: txData.isBusiness ? "sale" : "tip"
+    };
+    updates[`${sparkStatsPath}/total_amount`] = firebase.database.ServerValue.increment(txData.amount);
+
+    return db.ref().update(updates);
+}
+
+async function updateSparkFeedback(sparkId, userId, comment) {
+    const timestamp = new Date().toISOString();
+    const sparkStatsPath = `infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback`;
+
+    const updates = {};
+    const entryId = db.ref(sparkStatsPath).child('entries').push().key;
+
+    updates[`${sparkStatsPath}/count`] = firebase.database.ServerValue.increment(1);
+    updates[`${sparkStatsPath}/entries/${entryId}`] = {
+        uid: userId,
+        text: comment,
+        ts: timestamp
+    };
+
+    return db.ref().update(updates);
+}
+
+const MAX_TRENDING_SPARKS = 50;
+
+window.updateSparkViews = async function(ownerId, currentId, sparkId, country = 'IN') {
+    const now = new Date();
+    const month = now.toISOString().slice(0, 7);
+    
+    // Path must include the ownerId to reach the correct user node
+    const sparkBase = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
+    const sparkPath = `${sparkBase}/stats/views`;
+
+    // Fetch the spark's privacy configuration to verify visibility
+    const sparkSnap = await get(ref(db, sparkBase)).catch(() => null);
+    const sparkData = sparkSnap?.val();
+    const isPublic = sparkData?.privacy === 'public';
+
+    const updates = {};
+    // Use the modular increment() function
+    updates[`${sparkPath}/total_count`] = increment(1);
+    updates[`${sparkPath}/last_viewed`] = now.toISOString();
+    updates[`${sparkPath}/monthly_ledger/${month}/total`] = increment(1);
+    updates[`${sparkPath}/monthly_ledger/${month}/geo/${country}`] = increment(1);
+
+    // If the spark is explicitly public, also mirror the metrics to trending_sparks
+    if (isPublic) {
+        const trendingPath = `analytics/trending_sparks/${sparkId}`;
+        const currentViews = (sparkData?.stats?.views?.total_count || 0) + 1;
+
+        // Fetch the user's profile to extract the human-readable slug dynamically
+        const profileSnap = await get(ref(db, `users/${ownerId}/profile`)).catch(() => null);
+        const userSlug = profileSnap?.val()?.slug || 'yertal-arcade';
+        const sparkImage = sparkData?.image || '';
+        
+        updates[`${trendingPath}/spark_id`] = sparkId;
+        updates[`${trendingPath}/current_id`] = currentId;
+        updates[`${trendingPath}/user_id`] = ownerId;
+        updates[`${trendingPath}/user_slug`] = userSlug;
+        updates[`${trendingPath}/spark_image`] = sparkImage;
+        // updates[`${trendingPath}/image_url`] = sparkImage;
+        updates[`${trendingPath}/view_count`] = currentViews;
+    }
+
+    await update(ref(db), updates);
+
+    // Cap the leaderboard to the top 48 sparks if this spark was added or updated
+    if (isPublic) {
+        const trendingRef = ref(db, 'analytics/trending_sparks');
+        const trendingSnap = await get(trendingRef).catch(() => null);
+        const trendingSparks = trendingSnap?.val() || {};
+        
+        const keys = Object.keys(trendingSparks);
+        if (keys.length > MAX_TRENDING_SPARKS) {
+            // Sort keys by view_count ascending to identify the lowest items
+            keys.sort((a, b) => (trendingSparks[a].view_count || 0) - (trendingSparks[b].view_count || 0));
+            
+            const pruneUpdates = {};
+            // Determine how many extra items need to be sliced off
+            const overflowCount = keys.length - MAX_TRENDING_SPARKS;
+            for (let i = 0; i < overflowCount; i++) {
+                pruneUpdates[`analytics/trending_sparks/${keys[i]}`] = null;
+            }
+            await update(ref(db), pruneUpdates);
+        }
+    }
+}
+// FUNCTION: payOwner
+window.payOwner = function(btn, ownerId, currentId, sparkId) {
+    const spark = databaseCache.users[ownerId].infrastructure.currents[currentId].sparks[sparkId];
+    const isSale = spark.monetization_type === 'sales';
+    const fixedPrice = spark.price || 0;
+
+    const hudHtml = `
+        <div id="payment-hud" data-target-id="${sparkId}" class="hud-overlay" style="display: flex; align-items: flex-start; justify-content: center; padding-top: 10vh;" onclick="if(event.target === this) this.remove()">
+            <div class="hud-onboarding-grid" style="background: var(--bg-color-low); border: 1px solid var(--branding-color); padding: 2rem; border-radius: 12px; width: 340px; text-align: center; gap: 1.2rem; box-shadow: 0 0 20px var(--glow-aura);">
+                
+                <div class="metallic-text" style="font-size: 10px; opacity: 0.8;">
+                    ${isSale ? 'PREMIUM ACQUISITION' : 'SUPPORT CREATOR'}
+                </div>
+                
+                <div id="amount-display" class="metallic-text" style="font-size: 2.5rem; color: var(--branding-color);">
+                    ₹${isSale ? fixedPrice.toLocaleString('en-IN') : '0'}
+                </div>
+
+                ${!isSale ? `
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+                        ${[25, 50, 100, 500].map(amt => `
+                            <div class="navigator-option" style="margin:0; padding: 5px 12px;" onclick="setPaymentAmount(${amt})">₹${amt}</div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+
+                <div class="hud-step">
+                    <label class="hud-label-metallic">AMOUNT (INR)</label>
+                    <input type="number" id="payment-input" class="hud-input" 
+                           value="${isSale ? fixedPrice : ''}" 
+                           ${isSale ? 'readonly' : ''} 
+                           placeholder="Enter amount..."
+                           oninput="updateDisplay(this.value)"
+                           style="text-align: center; font-family: 'Orbitron'; color: var(--branding-color);">
+                </div>
+                
+                <button class="ethereal-btn-sm" 
+                        onclick="window.sendPayment('${ownerId}', '${currentId}', '${sparkId}', '${isSale ? 'sale' : 'tip'}')"
+                        style="width: 100%; height: 45px; font-size: 13px; margin-top: 10px;">
+                    CONFIRM TRANSACTION
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', hudHtml);
+};
+
+// UI Helper: Sync bubble click with input
+window.setPaymentAmount = function(amt) {
+    const input = document.getElementById('payment-input');
+    input.value = amt;
+    updateDisplay(amt);
+};
+
+// UI Helper: Sync display text with input
+window.updateDisplay = function(val) {
+    document.getElementById('amount-display').innerText = `₹${val || 0}`;
+};
+window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
+    const amount = parseFloat(document.getElementById('payment-input').value);
+    const visitorUid = auth.currentUser?.uid;
+    const paymentHud = document.getElementById('payment-hud');
+
+    // Validation
+    if (!amount || amount <= 0) return alert("Invalid amount.");
+    
+    // Only enforce a cap on Tips to prevent errors; Sales are uncapped
+    if (mode === 'tip' && amount > MAXTIP) {
+        return alert("For security, tips are capped at ₹1,00,000. For larger amounts, please contact the merchant.");
+    }
+
+    if (!visitorUid) return alert("Please log in to complete your purchase.");
+
+    const btn = paymentHud.querySelector('button');
+    btn.innerText = "AUTHORIZING...";
+    btn.disabled = true;
+
+    const txId = "tx_" + Date.now();
+    const path = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/transactions`;
+
+    const updates = {};
+    updates[`${path}/ledger/${txId}`] = {
+        amt: amount,
+        ts: new Date().toISOString(),
+        uid: visitorUid,
+        type: mode // Explicitly log if it was a tip or sale
+    };
+    updates[`${path}/total_amount`] = increment(amount);
+    updates[`${path}/count`] = increment(1);
+
+    try {
+        await update(ref(db), updates);
+        btn.innerText = "PAYMENT COMPLETE";
+        btn.style.color = "#00ff00";
+        
+        
+        // Update the UI in the stats row
+        // Locate the card using the ID stored on the HUD
+        const hud = document.getElementById('payment-hud');
+        const sparkId = hud.getAttribute('data-target-id');
+        const card = document.querySelector(`[data-spark-id="${sparkId}"]`);
+        const txLabel = card.querySelector('.stat-transactions');
+            
+        if (txLabel) {
+            // Assuming 'type' is passed to sendPayment (e.g., 'sale' or 'tip')
+            const labelText = mode === 'sale' ? 'SALES' : 'TIPS';
+            const iconClass = mode === 'sale' ? 'fa-shopping-cart' : 'fa-hand-holding-usd';
+    
+            // Calculate new total (extracting number from current text)
+            const currentText = txLabel.innerText.split(': ')[1] || "0";
+            const newTotal = parseFloat(currentText.replace(/,/g, '')) + amount;
+
+            txLabel.innerHTML = `
+             <i class="fas ${iconClass}" style="margin-right: 2px;"></i> 
+             ${labelText}: ${newTotal.toLocaleString('en-IN')}
+             `;
+            console.log("✅ Tip logged and UI updated");
+        }
+        setTimeout(() => paymentHud.remove(), 1500);
+
+    } catch (err) {
+        console.error("Payment sync failed:", err);
+        btn.innerText = "RETRY";
+        btn.disabled = false;
+    }
+};
+
+window.openFeedback = async (event, ownerId, currentId, sparkId) => {
+    if (event && event.stopPropagation) event.stopPropagation();
+    
+    let hudOverlay = document.getElementById('spark-feedback-overlay');
+    let existingPanel = document.querySelector('.feedback-panel');
+    
+    let leftPos, topPos;
+
+    if (existingPanel) {
+        // Capture position from existing panel if it's already on screen
+        leftPos = existingPanel.style.left;
+        topPos = existingPanel.style.top;
+        existingPanel.remove(); 
+    } else if (event) {
+        // SAFE CHECK: Line 605 fix
+        const target = event.target || event.currentTarget;
+        const card = target?.closest ? target.closest('.spark-card') : null;
+        const rect = card ? card.getBoundingClientRect() : target?.getBoundingClientRect?.();
+        
+        if (rect) {
+            leftPos = `${rect.left + 10}px`;
+            topPos = `${rect.top + window.scrollY}px`;
+        }
+    }
+
+    // Default fallback if position wasn't captured
+    if (!leftPos) { leftPos = '20px'; topPos = '20px'; }
+
+    if (!hudOverlay) {
+        hudOverlay = document.createElement('div');
+        hudOverlay.id = 'spark-feedback-overlay';
+        hudOverlay.className = 'share-hud-overlay'; 
+        document.body.appendChild(hudOverlay);
+    } else {
+        hudOverlay.innerHTML = '';
+    }
+    
+    hudOverlay.style.backdropFilter = 'blur(6px)';
+    hudOverlay.style.background = 'rgba(0,0,0,0.6)'; 
+    hudOverlay.style.display = 'block';
+
+    const panel = document.createElement('div');
+    panel.className = 'navigator-body feedback-panel'; 
+    panel.style.position = 'absolute';
+    panel.style.width = '380px';
+    panel.style.left = leftPos;
+    panel.style.top = topPos;
+
+    panel.innerHTML = `
+        <div class="navigator-header" style="justify-content: center; position: relative; padding: 10px;">
+            <span class="metallic-text sz-sm">SPARK FEEDBACK</span>
+            <i class="fas fa-times" style="position: absolute; right: 10px; cursor:pointer" 
+               onclick="document.getElementById('spark-feedback-overlay').remove()"></i>
+        </div>
+        <div style="padding:15px;">
+             <div class="sz-xs" style="margin-bottom: 3px; color: var(--fg-color-mid); text-align: center;">Kindly enter your feedback:</div>
+             <textarea id="feedback-msg" class="nav-textarea sz-xs" placeholder="Type your thoughts here..." style="height: 60px;"></textarea>
+             
+             <button class="navigator-option sz-md" style="width:100%; margin-top:10px; font-weight:bold;" 
+                onclick="submitSparkFeedback('${ownerId}', '${currentId}', '${sparkId}')">SUBMIT FEEDBACK</button>
+               <div id="feedback-list" style="margin:5px; height: 180px; overflow-y: auto !important; border-top:1px solid var(--fg-color-low); padding: 10px 5px 0 0;">
+                <div class="sz-xs" style="opacity:0.6; text-align:center;">SCANNING ARCHIVES...</div>
+             </div>
+
+             <button class="navigator-option sz-sm" 
+                style="width:100%; margin:10px; background:transparent; border: 1px solid var(--error-color); color: var(--error-color);" 
+                onclick="document.getElementById('spark-feedback-overlay').remove()">CLOSE</button>
+        </div>
+    `;
+    hudOverlay.appendChild(panel);
+
+    const feedbackPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback/entries`;
+    const snapshot = await get(ref(db, feedbackPath));
+    const entries = snapshot.val() || {};
+    const listContainer = panel.querySelector('#feedback-list');
+    listContainer.innerHTML = '';
+
+    const currentUserId = auth.currentUser?.uid;
+    const isOwner = currentUserId === ownerId;
+    const sortedKeys = Object.keys(entries).sort();
+
+    if (sortedKeys.length === 0) {
+        listContainer.innerHTML = '<div class="sz-sm" style="opacity:0.5; text-align:center; padding: 10px; font-style: italic;">No feedback yet.</div>';
+    } else {
+        sortedKeys.forEach(key => {
+            const e = entries[key];
+            const isAuthor = currentUserId === e.uid;
+            const row = document.createElement('div');
+            row.style.cssText = "margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;";
+            
+            let actionsHtml = `<div style="display: flex; gap: 4px;">`;
+            if (isAuthor) {
+                actionsHtml += `<button class="ethereal-btn-sm feedback-action-square" onclick="window.editFeedbackPrompt('${ownerId}', '${currentId}', '${sparkId}', '${key}')"><i class="fas fa-pen"></i></button>`;
+            }
+            if (isOwner || isAuthor) {
+                actionsHtml += `<button class="ethereal-btn-sm feedback-action-square btn-delete-x" onclick="window.deleteFeedback('${ownerId}', '${currentId}', '${sparkId}', '${key}')"><i class="fas fa-times"></i></button>`;
+            }
+            actionsHtml += `</div>`;
+
+            row.innerHTML = `
+                <div style="flex: 1;">
+                    <div class="hud-label-metallic sz-xs" style="color:var(--branding-color); font-size:8px; margin-bottom:1px;">${e.userName}</div>
+                    <div class="sz-sm" style="line-height:1.2;" id="text-${key}">${e.message}</div>
+                </div>
+                ${actionsHtml}
+            `;
+            listContainer.appendChild(row);
+        });
+        setTimeout(() => { listContainer.scrollTop = listContainer.scrollHeight; }, 50);
+    }
+};
+
+/*
+ * Objective: Remove feedback and decrement UI spark card count.
+ * Task: Transactional delete + DOM update for the numeric stat.
+ */
+window.deleteFeedback = async (ownerId, currentId, sparkId, entryKey) => {
+    if (!confirm("Permanently delete this transmission?")) return;
+    
+    const path = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback`;
+    const feedbackRef = ref(db, path);
+
+    try {
+        await runTransaction(feedbackRef, (currentData) => {
+            if (currentData && currentData.entries && currentData.entries[entryKey]) {
+                delete currentData.entries[entryKey];
+                // Decrease count, ensuring it never goes below 0
+                currentData.count = Math.max(0, (currentData.count || 1) - 1);
+            }
+            return currentData;
+        });
+
+        // --- UI SYNC: Update the Spark Card Count ---
+        const card = document.querySelector(`.spark-card[data-spark-id="${sparkId}"]`);
+        if (card) {
+            const label = card.querySelector('.stat-feedback');
+            if (label) {
+                const currentText = label.innerText.replace(/[^0-9]/g, '');
+                const newCount = Math.max(0, (parseInt(currentText) || 1) - 1);
+                label.innerHTML = `<i class="fas fa-comment"></i> FEEDBACK: ${newCount}`;
+            }
+        }
+
+        // Refresh the HUD to show updated list
+        window.openFeedback(null, ownerId, currentId, sparkId); 
+    } catch (e) {
+        console.error("Deletion failed:", e);
+    }
+};
+
+/*
+ * Objective: Open inline edit mode within the HUD.
+ */
+window.editFeedbackPrompt = (ownerId, currentId, sparkId, entryKey) => {
+    const textDiv = document.getElementById(`text-${entryKey}`);
+    const originalText = textDiv.innerText;
+    
+    textDiv.innerHTML = `
+        <textarea id="edit-area-${entryKey}" class="nav-textarea sz-xs" style="height:60px; margin-top:5px; border: 1px solid var(--branding-color);">${originalText}</textarea>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="ethereal-btn-sm sz-xs" style="padding: 4px 10px;" onclick="window.saveEdit('${ownerId}', '${currentId}', '${sparkId}', '${entryKey}')">SAVE</button>
+            <button class="ethereal-btn-sm sz-xs" style="padding: 4px 10px; border-color: var(--error-color); color: var(--error-color);" onclick="window.openFeedback(null, '${ownerId}', '${currentId}', '${sparkId}')">CANCEL</button>
+        </div>
+    `;
+};
+
+/*
+ * Objective: Save edited feedback to Firebase.
+ */
+window.saveEdit = async (ownerId, currentId, sparkId, entryKey) => {
+    const newMessage = document.getElementById(`edit-area-${entryKey}`).value.trim();
+    if (!newMessage) return;
+
+    const path = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback/entries/${entryKey}/message`;
+    
+    try {
+        await set(ref(db, path), newMessage);
+        window.openFeedback(null, ownerId, currentId, sparkId);
+    } catch (e) {
+        console.error("Edit failed:", e);
+    }
+};
+window.submitSparkFeedback = async (ownerId, currentId, sparkId) => {
+    const msgInput = document.getElementById('feedback-msg');
+    const message = msgInput.value.trim();
+    if (!message) return;
+
+    const visitorName = auth.currentUser?.displayName || "Anonymous User";
+    const visitorUid = auth.currentUser?.uid || "anon";
+    
+    // Per your suggestion: Create key by date/timestamp
+    const timestampKey = Date.now(); 
+    const feedbackRef = ref(db, `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback`);
+
+    try {
+        await runTransaction(feedbackRef, (currentData) => {
+            if (!currentData) currentData = { count: 0, entries: {} };
+            if (!currentData.entries) currentData.entries = {};
+
+            currentData.entries[timestampKey] = {
+                uid: visitorUid,
+                userName: visitorName,
+                message: message,
+                date: new Date().toISOString()
+            };
+
+            currentData.count = (currentData.count || 0) + 1;
+            return currentData;
+        });
+
+        // Sync the Spark Card UI
+        const card = document.querySelector(`.spark-card[data-spark-id="${sparkId}"]`);
+        if (card) {
+            const label = card.querySelector('.stat-feedback');
+            if (label) {
+                const currentCount = parseInt(label.innerText.replace(/[^0-9]/g, '')) || 0;
+                label.innerHTML = `<i class="fas fa-comment"></i> FEEDBACK: ${currentCount + 1}`;
+            }
+        }
+
+        const overlay = document.getElementById('spark-feedback-overlay');
+        if (overlay) overlay.remove();
+
+    } catch (e) {
+        console.error("Transmission Error:", e);
+    }
+};
+
+window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
+    // 1. Internal Safety Check
+    if (!auth.currentUser || !ownerUid || ownerUid === "undefined") return;
+
+    const visitorUid = auth.currentUser.uid;
+    const icon = btnElement.querySelector('i');
+    const likesRef = ref(db, `users/${ownerUid}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/likes`);
+
+    try {
+        const result = await runTransaction(likesRef, (currentData) => {
+            if (!currentData) currentData = { count: 0, users: {} };
+            if (!currentData.users) currentData.users = {};
+
+            if (currentData.users[visitorUid]) {
+                // TOGGLE OFF
+                delete currentData.users[visitorUid];
+                currentData.count = Math.max(0, (currentData.count || 1) - 1);
+            } else {
+                // TOGGLE ON
+                currentData.users[visitorUid] = new Date().toISOString();
+                currentData.count = (currentData.count || 0) + 1;
+            }
+            return currentData; 
+        });
+
+        // 2. UI and Style Updates (The Toggle Fix)
+        if (result.committed) {
+            const updated = result.snapshot.val(); 
+            const isNowLiked = updated.users && updated.users[visitorUid];
+            
+            // Update Icon Color & Glow
+            icon.style.color = isNowLiked ? "var(--glow-color)" : "#f3e5ab";
+            icon.style.filter = isNowLiked ? "drop-shadow(0 0 8px var(--glow-color))" : "none";
+            
+            const card = btnElement.closest('.spark-card'); 
+            const likeLabel = card.querySelector('.stat-likes');
+            
+            if (likeLabel) {
+                const count = updated.count !== undefined ? updated.count : 0;
+                // FIX: Matches the new labeled format in renderSparkCard
+                likeLabel.innerHTML = `
+                 <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> 
+                     LIKES: ${count}
+                 `;
+            }
+
+            // 3. Cache Synchronization
+            try {
+                if (databaseCache?.users?.[ownerUid]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
+                    databaseCache.users[ownerUid].infrastructure.currents[currentId].sparks[sparkId].stats.likes = updated;
+                }
+            } catch (e) {}
+        }
+    } catch (error) {
+        console.error("Like toggle failed:", error);
+    }
+};
+
+window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
+    /* Overall Objective: Update share stats with timestamp and count, 
+       then trigger sharing UI. Ensure user UID and Date are tracked. */
+
+    const baseUrl = window.location.origin + window.location.pathname;
+    const shareUrl = `${baseUrl}?user=${ownerId}&current=${currentId}&spark=${sparkId}`;
+    const shareTitle = "Check out this Spark on the Yertal Realms!";
+    const shareData = { title: shareTitle, text: 'Explore this brilliant spark:', url: shareUrl };
+    const visitorUid = auth.currentUser ? auth.currentUser.uid : "anonymous";
+
+    const setNeonFeedback = () => {
+        const icon = btnElement.querySelector('i');
+        if (icon) {
+            icon.style.color = "var(--glow-color)";
+            icon.style.filter = "drop-shadow(0 0 8px var(--glow-color))";
+        }
+    };
+
+    const performReshareUpdate = async () => {
+        // Path matches the rules update we discussed earlier
+        const resharePath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/reshares`;
+        const reshareRef = ref(db, resharePath);
+
+        try {
+            const result = await runTransaction(reshareRef, (currentData) => {
+                // 1. Data Transformation Logic
+                // If it's a number (old style) or empty, initialize the new object
+                if (typeof currentData !== 'object' || currentData === null) {
+                    const oldCount = typeof currentData === 'number' ? currentData : 0;
+                    currentData = { count: oldCount, users: {} };
+                }
+
+                // 2. Ensure users map exists for UID tracking
+                if (!currentData.users) {
+                    currentData.users = {};
+                }
+
+                // 3. Update count and map UID to ISO Date
+                currentData.count = (currentData.count || 0) + 1;
+                currentData.users[visitorUid] = new Date().toISOString();
+
+                return currentData;
+            });
+
+            if (result.committed) {
+                const updated = result.snapshot.val();
+                const card = btnElement.closest('.spark-card');
+                const reshareLabel = card ? card.querySelector('.stat-reshares') : null;
+                
+                if (reshareLabel) {
+                    const displayCount = updated.count || 0;
+                    reshareLabel.innerHTML = `
+                        <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
+                        SHARES: ${displayCount}
+                    `;
+                }
+                
+                setNeonFeedback();
+                
+                try {
+                    if (databaseCache?.users?.[ownerId]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
+                        databaseCache.users[ownerId].infrastructure.currents[currentId].sparks[sparkId].stats.forges = updated;
+                    }
+                } catch (e) {}
+            }
+        } catch (error) {
+            console.error("[Share Error] Firebase transaction failed:", error);
+        }
+    };
+
+    // 1. ATTEMPT NATIVE SHARE
+    if (navigator.share && navigator.canShare(shareData)) {
+        try {
+            await navigator.share(shareData);
+            await performReshareUpdate();
+            return;
+        } catch (err) {
+            if (err.name === 'AbortError') return;
+        }
+    }
+
+    // 2. FALLBACK
+    if (typeof launchShareHUD === "function") {
+        launchShareHUD(shareUrl, shareTitle);
+    } else {
+        await navigator.clipboard.writeText(shareUrl);
+    }
+    await performReshareUpdate();
+};
+
+function launchShareHUD(url, title) {
+    navigator.clipboard.writeText(url);
+    
+    const platforms = {
+        x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
+        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+        whatsapp: `https://api.whatsapp.com/send?text=${encodeURIComponent(title + " " + url)}`,
+        email: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent("Check this out: " + url)}`
+    };
+
+    const hud = document.createElement('div');
+    hud.className = 'share-hud-overlay';
+    hud.innerHTML = `
+        <div class="share-hud-content">
+            <h4 class="metallic-text" style="font-size: 14px; margin-bottom: 20px;">SHARE THIS BRILLIANCE</h4>
+            <div class="share-grid" style="display: flex; gap: 20px; justify-content: center; margin-bottom: 20px;">
+                <a href="${platforms.x}" target="_blank" style="color: var(--icon-color); font-size: 20px;"><i class="fab fa-x-twitter"></i></a>
+                <a href="${platforms.facebook}" target="_blank" style="color: var(--icon-color); font-size: 20px;"><i class="fab fa-facebook"></i></a>
+                <a href="${platforms.whatsapp}" target="_blank" style="color: var(--icon-color); font-size: 20px;"><i class="fab fa-whatsapp"></i></a>
+                <a href="${platforms.email}" style="color: var(--icon-color); font-size: 20px;"><i class="fas fa-envelope"></i></a>
+                <button onclick="copyToClipboard('${url}', this)" style="background:none; border:none; color: var(--icon-color); font-size: 20px; cursor:pointer;"><i class="fas fa-link"></i></button>
+            </div>
+            <p style="font-size: 9px; color: var(--glow-color); margin-bottom: 15px;">LINK COPIED TO CLIPBOARD</p>
+            <button onclick="this.closest('.share-hud-overlay').remove()" class="close-hud">CLOSE</button>
+        </div>
+    `;
+    document.body.appendChild(hud);
+}
+
+window.copyToClipboard = (text, btn) => {
+    navigator.clipboard.writeText(text);
+    const originalIcon = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check" style="color: var(--glow-color)"></i>';
+    setTimeout(() => btn.innerHTML = originalIcon, 2000);
+};
+
+/*
+ * Objective: Single Source of Truth for Rendering [cite: 2026-02-01]
+ * Logic: Fetches data, ensures user exists (Seeding), then triggers UI components.
+ */
+async function refreshUI() {
+    console.log("--- [SYSTEM]: refreshUI START ---");
+    try {
+        // 1. DATA ACQUISITION
+        const data = await getArcadeData();
+        databaseCache = data;
+
+        // 2. SILENT SEED: Ensure the logged-in user is registered [cite: 2026-02-01]
+        // We check if the current auth UID exists in the fetched user tree
+        if (!data.users?.[user.uid]) {
+            console.log("[SYSTEM]: User record missing. Initializing via syncUserProfile...");
+            await syncUserProfile(user);
+            
+            // Refresh local cache after seeding so the rest of the function has valid data
+            const updatedUsers = await get(ref(db, 'users'));
+            data.users = updatedUsers.val();
+            databaseCache.users = data.users;
+        }
+
+        // 3. ROUTE RESOLUTION
+        const urlParams = new URLSearchParams(window.location.search);
+        const pageOwnerSlug = urlParams.get('user');
+
+        if (!pageOwnerSlug) {
+            console.error("STRICT MODE: No slug detected in URL.");
+            return;
+        }
+
+        const allUsers = data.users || {};
+        
+        // Find the owner of the page by matching the URL slug to a profile slug
+        const ownerUid = Object.keys(allUsers).find(uid => 
+            allUsers[uid].profile && allUsers[uid].profile.slug === pageOwnerSlug
+        );
+
+        const loggedInUserRecord = allUsers[user?.uid];
+        const userSlug = loggedInUserRecord?.profile?.slug || "NO_SLUG";
+        const isOwner = (user && user.uid === ownerUid);
+
+        console.table({
+            "Page Owner Slug": pageOwnerSlug,
+            "Page Owner UID": ownerUid || "NOT_FOUND",
+            "Logged in User Slug": userSlug,
+            "Access_Level": isOwner ? "OWNER" : "VIEWER",
+        });
+
+        // 4. HANDLE MISSING OWNER
+        if (!ownerUid) {
+            const container = document.getElementById('currents-container');
+            if (container) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 5rem 0; opacity: 0.2; font-style: italic;">
+                        STRICT MODE: No user owns the slug '${pageOwnerSlug}'.
+                    </div>`;
+            }
+            return;
+        }
+
+        const pageOwnerData = allUsers[ownerUid];
+        const ownerProfile = pageOwnerData.profile || {};
+        const branding = ownerProfile.branding || {};
+
+        // 5. SLUG-OWNER BRANDING & THEME [cite: 2026-02-17]
+        globalTheme = ownerProfile.theme || 'neon-dark';
+        applyTheme(globalTheme);
+        
+        document.title = `${ownerProfile.display_name || 'Realm'} | Showroom`;
+        
+        const brandingLogo = document.getElementById('branding-logo');
+        if (brandingLogo) {
+            brandingLogo.src = branding.logo || 'assets/default-logo.png';
+        }
+
+        const brandingName = document.getElementById('branding-name');
+        if (brandingName) {
+            brandingName.textContent = ownerProfile.display_name || 'Realm';
+        }
+
+        // Apply owner-specific UI colors to CSS variables
+        const ui = branding.ui_settings || {};
+        document.documentElement.style.setProperty('--neon-color', ui['color-neon'] || '#00f2ff');
+
+        // 6. COMPONENT RENDERING
+        // TopBar needs the owner data and current user context
+        renderTopBar(pageOwnerData, isOwner, user, userSlug);
+        
+        // Currents needs the infrastructure and owner profile for context
+        renderCurrents(
+            pageOwnerData?.infrastructure?.currents || {}, 
+            isOwner, 
+            ownerUid, 
+            ownerProfile
+        );
+
+        console.log("--- [SYSTEM]: refreshUI COMPLETE ---");
+
+    } catch (e) {
+        console.error("SYSTEM ERROR in refreshUI:", e);
+    }
+}
+/* Synchronize the user details */
+async function syncUserProfile(currentUser) {
+    const profilePath = `users/${currentUser.uid}/profile`;
+    const profileRef = ref(db, profilePath);
+    const fallbackAvatar = '/assets/images/avatar.jpg';
+
+    try {
+        const snapshot = await get(profileRef);
+        const existingData = snapshot.val();
+
+        const updates = {
+            display_name: currentUser.displayName,
+            email: currentUser.email,
+            // Prioritize provider photo, then existing DB photo, then local fallback
+            photoURL: currentUser.photoURL || (existingData && existingData.photoURL) || fallbackAvatar,
+            uid: currentUser.uid,
+            last_sync: new Date().toISOString()
+        };
+
+        if (!existingData || !existingData.slug) {
+            updates.slug = currentUser.displayName.toLowerCase().replace(/\s+/g, '-') + 
+                           `-${Math.floor(1000 + Math.random() * 9000)}`;
+            updates.plan_type = "free";
+            updates.joined_date = new Date().toISOString();
+        }
+
+        await update(profileRef, updates);
+    } catch (error) {
+        console.error("Identity Sync Failed:", error);
+    }
+}    
+
+watchAuthState(async (currentUser) => {
+    console.log("--- [DEBUG] watchAuthState Triggered ---");
+    
+    if (!currentUser) {
+        console.warn("[AUTH]: No currentUser detected. Redirecting to index.html...");
+        window.location.href = "/index.html";
+        return;
+    }
+    
+    console.log(`[AUTH]: Logged in as: ${currentUser.email} (${currentUser.uid})`);
+    user = currentUser;
+
+    // Default to the Hub if no slug is present
+    const urlParams = new URLSearchParams(window.location.search);
+    const slug = urlParams.get('user');
+    
+    if (!slug) {
+        console.log("[ROUTING]: No 'user' slug in URL. Redirecting to yertal-arcade...");
+        window.location.href = "?user=yertal-arcade";
+        return;
+    }
+
+    console.log(`[ROUTING]: Target Page Owner Slug: "${slug}"`);
+    console.log("[UI]: Triggering refreshUI()...");
+    
+    // Trigger the single source of truth
+    refreshUI(); 
+});
+
+window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, sparkId) => {
+    // Paths
+    const profilePath = `users/${visitorUid}/profile`;
+    const sourcePath = `users/${sourceOwnerId}/infrastructure/currents/${sourceCurrentId}/sparks/${sparkId}`;
+    const destinationCurrentPath = `users/${visitorUid}/infrastructure/currents/${sourceCurrentId}`;
+    const destinationSparkPath = `${destinationCurrentPath}/sparks/${sparkId}`;
+
+    const setNeonPermanent = () => {
+        const icon = btn.querySelector('i');
+        if (icon) {
+            icon.style.color = "var(--glow-color)";
+            icon.style.filter = "drop-shadow(0 0 5px var(--glow-color))";
+            btn.style.pointerEvents = "none"; 
+        }
+    };
+
+    try {
+        // 1. Check if Arcade Identity exists. If not, Intercept with HUD and exit.
+        const profileSnapshot = await get(ref(db, profilePath));
+        const profileData = profileSnapshot.val();
+
+        if (!profileData || !profileData.arcade_title) {
+            console.log("[Identity Gate] No Realm Name found. Launching Setup HUD...");
+            window.openArcadeSettings(); 
+            return; // Exit here. The user will click Forge again after Establish Identity.
+        }
+
+        // 2. Check if spark already exists in visitor's collection
+        const checkSnapshot = await get(ref(db, destinationSparkPath));
+        if (checkSnapshot.exists()) {
+            setNeonPermanent();
+            alert("This spark is already in your collection!");
+            return;
+        }
+
+        // 3. Fetch original spark and source current metadata
+        const sourceSnapshot = await get(ref(db, sourcePath));
+        const sourceCurrentSnapshot = await get(ref(db, `users/${sourceOwnerId}/infrastructure/currents/${sourceCurrentId}`));
+
+        if (sourceSnapshot.exists() && sourceCurrentSnapshot.exists()) {
+            const sparkData = sourceSnapshot.val();
+            const currentMeta = sourceCurrentSnapshot.val();
+            const saveDate = new Date().toISOString();
+
+            // 4. Ensure the Infrastructure "Current" container exists for the visitor
+            const visitorCurrentSnapshot = await get(ref(db, destinationCurrentPath));
+            if (!visitorCurrentSnapshot.exists()) {
+                await set(ref(db, destinationCurrentPath), {
+                    id: sourceCurrentId,
+                    name: currentMeta.name || "My Collection",
+                    privacy: "public",
+                    type_ref: currentMeta.type_ref || "arcade",
+                    sparks: {}
+                });
+            }
+
+            // 5. Update forges analytic field on the ORIGINAL spark
+            const sourceForgeRef = ref(db, `${sourcePath}/stats/forges`);
+            await runTransaction(sourceForgeRef, (forgeObj) => {
+                if (!forgeObj) {
+                    forgeObj = { count: 1, users: { [visitorUid]: saveDate } };
+                    return forgeObj;
+                }
+                
+                forgeObj.count = (forgeObj.count || 0) + 1;
+                if (!forgeObj.users) forgeObj.users = {};
+                forgeObj.users[visitorUid] = saveDate;
+                
+                return forgeObj;
+            });
+
+            // 6. Create the forged copy for the visitor (Rule Compliant Stats)
+            const clonedData = {
+                ...sparkData,
+                id: sparkId, 
+                owner: visitorUid,
+                clonedFrom: sourceOwnerId,
+                created: Date.now(),
+                stats: {
+                    views: { count: 0, total_count: 0, last_viewed: saveDate, monthly_ledger: {} },
+                    transactions: { count: 0, total_amount: 0, ledger: {} },
+                    likes: { count: 0, users: {} },
+                    reshares: { count: 0, users: {} },
+                    forges: { count: 0, users: {} },
+                    feedback: { count: 0, entries: {} }
+                }
+            };
+
+            // 7. Write to Visitor's DB
+            await set(ref(db, destinationSparkPath), clonedData);
+            
+            // 8. UI Feedback
+            setNeonPermanent();
+            console.log(`[Forge Success] Spark ${sparkId} cloned from ${sourceOwnerId} to ${visitorUid}.`);
+        }
+    } catch (error) {
+        console.error("[Clone Error]", error);
+        if (error.message.includes("PERMISSION_DENIED")) {
+            console.warn("Permission Denied: Check auth state or .validate rules.");
+        }
+    }
+};
+
+window.genLogo = (name, profilePic, isOwner) => {
+    // SYSTEM LOGS: Debugging the state
+    console.log(`[genLogo Debug]: Name: "${name}" | isOwner: ${isOwner} | Photo: ${profilePic ? 'FOUND' : 'MISSING'}`);
+
+    // 1. VISITOR VIEW: Show the Owner's Profile Pic in a 3D lifted square
+    if (!isOwner && profilePic) {
+        return `
+            <div class="visitor-logo-3d" style="
+                background: var(--btn-gradient);
+                width: 42px; height: 42px;
+                display: flex; align-items: center; justify-content: center;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px var(--card-shadow-color);
+                border: 1px solid var(--border-color);
+                transform: perspective(1000px) rotateX(10deg);
+                overflow: hidden;
+            ">
+                <img src="${profilePic}" alt="${name}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+        `;
+    }
+
+    // 2. OWNER VIEW: Show the Cool 3D Initials Logo (Private to you)
+    // Fix for single-word "Y" -> "YE"
+    const words = name ? name.trim().split(' ') : ["YA"];
+    const initials = words.length > 1 
+        ? (words[0][0] + words[1][0]).toUpperCase()
+        : (words[0].length > 1 ? words[0].substring(0, 2) : words[0]).toUpperCase();
+
+    return `
+        <div class="owner-logo-3d" style="
+            background: var(--btn-gradient);
+            width: 42px; height: 42px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 15px var(--box-shadow-color);
+            border-radius: 6px;
+            transform: perspective(600px) rotateY(-15deg) rotateX(5deg);
+            border: 1px solid var(--button-border-color);
+            position: relative;
+        ">
+            <span style="
+                font-family: var(--branding-font); 
+                font-weight: var(--branding-weight); 
+                color: var(--button-text-color); 
+                font-size: 1.1rem;
+                text-shadow: 
+                    1px 1px 0px var(--button-text-shadow-color), 
+                    2px 2px 4px var(--card-shadow-color);
+            ">
+                ${initials}
+            </span>
+        </div>
+    `;
+};
+function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
+    const header = document.getElementById('arcade-header');
+    if (!header) return;
+
+    const profile = pageOwnerData?.profile || {};
+    const arcadeLogo = profile.arcade_logo;
+    const brandName = profile.display_name;
+    const arcadeTitle = profile.arcade_title;
+    const arcadeSubtitle = profile.arcade_subtitle;
+    const avatarPath = '/assets/images/avatar.jpg';
+    const isSetupComplete = profile.setup_complete === true;
+    const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
+
+    const ownerPhotoUrl = profile.photoURL || avatarPath; 
+
+    const logoContent = window.genLogo(brandName, ownerPhotoUrl, isOwner);
+        
+    header.innerHTML = `
+        <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura);">
+            
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='/index.html'">
+                    <div id="nav-logo" class="logo-container" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; flex: none; border: 1px solid var(--glow-color); border-radius: 4px; background: var(--bg-color); overflow: hidden;">
+                        ${logoContent}
+                    </div>
+                    <h1 class="metallic-text" style="font-size: 1rem; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1;">
+                        <span style="color: var(--branding-text-color);">${brandName}</span>
+                    </h1>
+                </div>
+
+                <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid var(--glow-aura); padding-left: 0.5rem; height: 16px; margin-left: 0.2rem;">
+                    <a href="/index.html" title="Showroom" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size);; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-door-open"></i></a>
+                    <a href="?user=${userSlug}" title="My Realm" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size);; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
+                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 3px; text-decoration: none; background: var(--branding-color); color: var(--bg-color); box-shadow: 0 0 5px var(--box-shadow-color); font-size: var(--nav-font-size); font-weight: 900;">HUB</a>
+                </div>
+            </div>
+
+            <div id="nav-hero-central" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                ${arcadeTitle ? `
+                <h1 style="margin: 0; font-size: 1.4rem; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; line-height: 1;">
+                    <span style="color: var(--branding-text-color);">${titleParts[0] || ''} ${titleParts[1] || ''}</span> 
+                    <span style="color: var(--glow-color); filter: drop-shadow(0 0 8px var(--glow-color));">${titleParts[2] || ''}</span>
+                </h1>
+                <p id="hero-subheading" style="color: var(--branding-text-color); opacity: 0.6; font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${arcadeSubtitle}</p>
+                ` : ''}
+            </div>
+
+            <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.8rem; margin-right: 0.5rem;">
+                    <i class="fa-solid fa-square-plus" title="Add Current" onclick="window.openAddCurrentHud()" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
+                    <i class="fa-solid fa-circle-question" title="Help Hub" onclick="window.toggleDrawer('help')" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem; position: relative;">
+                    <input type="text" id="arcade-search-input" placeholder="GO TO SLUG..." class="glass" style="border: 2px solid var(--glow-aura); border-radius: 9999px; padding: 0.25rem 0.75rem; font-size: var(--nav-font-size); color: var(--branding-text-color); width: 9rem; outline: none; background: var(--bg-color);">
+                    <i class="fa-solid fa-magnifying-glass" 
+                       onclick="const slug = document.getElementById('arcade-search-input').value; if(slug) window.location.href='?user=' + slug;" 
+                       onkeydown="const slug = document.getElementById('arcade-search-input').value; if(slug) window.location.href='?user=' + slug;" 
+                       style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: transform 0.2s;" 
+                       onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></i>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="text-align: right;">
+                        <p id="pilot-display" style="margin: 0; line-height: 1; color: var(--branding-text-color); font-weight: 800; font-size: 10px; text-transform: uppercase;">
+                            ${authUser.displayName}
+                            <span style="margin-left: 4px; padding: 1px 4px; border: 1px solid var(--glow-color); border-radius: 3px; font-size: 7px; vertical-align: middle; color: var(--bg-color); background: var(--branding-color); font-weight: 900;">${profile.plan_type || 'FREE'}</span>
+                        </p>
+                        <button onclick="handleLogout()" 
+                                style="background: none; border: none; font-size: 8px; font-weight: 900; color: var(--glow-color); text-transform: uppercase; cursor: pointer; padding: 0; letter-spacing: 0.5px;">
+                            Disconnect
+                        </button>
+                    </div>
+                    <img src="${authUser.photoURL}" alt="Pilot Avatar" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; border: 2px solid var(--glow-color); box-shadow: 0 0 10px var(--glow-aura); object-fit: cover;">
+                    
+                    ${(isOwner && isSetupComplete) ? `
+                    <div id="system-menu-trigger" onclick="window.toggleDrawer('main')" style="cursor: pointer; padding-left: 0.5rem; color: var(--branding-color); font-size: 1.1rem; transition: transform 0.3s;">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        </nav>
+        
+        <div id="engine-status-container" class="status-bar" style="border-top: 1px solid var(--glow-color); background: rgba(var(--bg-color), 0.9); padding: 5px 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--glow-color); box-shadow: 0 0 10px var(--glow-color-aura);"></div>
+                <span id="engine-status-text" style="color: var(--branding-text-color); background: var(--bg-color-low); font-weight: bold; font-size: 9px; text-shadow: 0 0 5px var(--glow-aura);">LABORATORY SYSTEM READY</span>
+            </div>
+            <div style="font-size: 8px; font-weight: 900; color: var(--branding-color); opacity: 0.6; letter-spacing: 0.2em; text-transform: uppercase;">
+                Realms Environment v2.0
+            </div>
+        </div>
+    `;
+}
+
+function extractParamDeltas(prompt, originalPMap, returnTokensOnly = false) {
+    const changedProperties = {};
+    const matchedParamTokens = {};
+    const cleanPrompt = prompt.toLowerCase().trim();
+
+    // Standard measurement units and scalar qualifiers to restrict parameter token bleed
+    const PARAM_UNIT_WORDS = new Set([
+        'degree', 'degrees', 'deg', 'rad', 'radians', 'kg', 'g', 'm', 'cm', 'px',
+        'hz', 'sec', 'seconds', 'ms', 'coefficient', 'value', 'level', 'count',
+        'high', 'low', 'max', 'min'
+    ]);
+
+    // 1. Generic Natural Language Mapping Registries
+    const semanticColors = {
+        'red': '#ff3333', 'blue': '#3399ff', 'yellow': '#ffcc00', 'green': '#00ffcc', 
+        'white': '#ffffff', 'black': '#000000', 'orange': '#ff6600', 'purple': '#9933ff', 
+        'pink': '#ff66cc', 'cyan': '#00ffff', 'magenta': '#ff00ff', 'grey': '#888888'
+    };
+    
+    const wordToNumber = {
+        'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+        'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11,
+        'twelve': 12, 'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60
+    };
+
+    const booleanTriggers = {
+        'true': ['enable', 'on', 'add', 'show', 'with', 'activate', 'include', 'yes'],
+        'false': ['disable', 'off', 'remove', 'hide', 'without', 'deactivate', 'no', 'not']
+    };
+
+    // 2. Build the Adjective-Noun and Modifier Context Pairs from the prompt
+    const descriptivePhrases = [];
+    
+    // Catch digits alongside their measurement tags/nouns (e.g., "60 degree", "5kg", "0.3 coefficient")
+    const numMatches = cleanPrompt.match(/(\d+(?:\.\d+)?)\s+([a-z0-9-_]+(?:\s+[a-z0-9-_]+)?)/gi) || [];
+    descriptivePhrases.push(...numMatches);
+
+    // Scan for semantic adjectives (colors, written numbers, state modifiers) + their trailing nouns
+    const words = cleanPrompt.split(/\s+/);
+    for (let i = 0; i < words.length; i++) {
+        const currentWord = words[i];
+        const nextWord = words[i + 1] || '';
+        
+        if (semanticColors[currentWord] || wordToNumber[currentWord] || ['high', 'low', 'max', 'min'].includes(currentWord)) {
+            descriptivePhrases.push(`${currentWord} ${nextWord}`.trim());
+        }
+    }
+
+    // 3. Polymorphic Extraction Loop (Evaluates solely by metadata value type)
+    Object.keys(originalPMap).forEach(key => {
+        const cleanKey = key.toLowerCase();
+        const defaultValue = originalPMap[key];
+        let extractedValue = null;
+
+        // Flexible substring matching anchor to bridge partial mappings like "balls" to "ball_count"
+        const associatedPhrase = descriptivePhrases.find(phrase => {
+            const cleanPhrase = phrase.toLowerCase();
+            // Strips trailing plural 's' signatures to isolate base naming stems
+            const singularKey = cleanKey.replace(/_count$/, '').replace(/s$/, '');
+            const parts = cleanPhrase.split(/\s+/);
+            
+            return parts.some(p => p.includes(singularKey) || singularKey.includes(p.replace(/s$/, ''))) || cleanPhrase.includes(cleanKey);
+        });
+
+        // Balanced baseline visibility escape hatch guard rule check
+        const simpleKeyStem = cleanKey.replace(/_count$/, '').replace(/s$/, '');
+        if (!associatedPhrase && !cleanPrompt.includes(cleanKey) && !cleanPrompt.includes(simpleKeyStem)) return;
+
+        // TRACK MATCHED PARAMETER TOKENS FOR PIPELINE STEP 2 (Filtered to prevent primary noun bleed)
+        if (associatedPhrase) {
+            associatedPhrase.split(/\s+/).forEach(token => {
+                if (/^\d+(?:\.\d+)?$/.test(token) || semanticColors[token] || wordToNumber[token] || PARAM_UNIT_WORDS.has(token)) {
+                    matchedParamTokens[token] = true;
+                }
+            });
+        }
+
+        // TYPE DISPATCHER A: NUMBER VALUED PARAMETERS
+        if (typeof defaultValue === 'number') {
+            const digits = associatedPhrase?.match(/(\d+(?:\.\d+)?)/);
+            if (digits) {
+                extractedValue = parseFloat(digits[1]);
+            } else {
+                const foundWordNum = Object.keys(wordToNumber).find(word => associatedPhrase?.includes(word));
+                if (foundWordNum) {
+                    extractedValue = wordToNumber[foundWordNum];
+                } else {
+                    // Relative scaling adjustments based on relative value limits
+                    if (cleanPrompt.includes('high') || cleanPrompt.includes('max')) extractedValue = defaultValue * 2;
+                    if (cleanPrompt.includes('low') || cleanPrompt.includes('min') || cleanPrompt.includes('no')) extractedValue = defaultValue * 0.1;
+                }
+            }
+        }
+        
+        // TYPE DISPATCHER B: STRING / HEX VALUED PARAMETERS
+        else if (typeof defaultValue === 'string') {
+            if (defaultValue.startsWith('#') || associatedPhrase?.match(/red|blue|yellow|green|white|black|orange|purple|pink|cyan|magenta|grey/)) {
+                const detectedColor = Object.keys(semanticColors).find(color => cleanPrompt.includes(color));
+                if (detectedColor) extractedValue = semanticColors[detectedColor];
+            } else {
+                // If it is an interpolation placeholder template string pattern, execute regex evaluation
+                try {
+                    const match = cleanPrompt.match(new RegExp(defaultValue, 'i'));
+                    if (match) extractedValue = (match[1] || match[0]).trim();
+                } catch (e) {
+                    extractedValue = cleanPrompt;
+                }
+            }
+        }
+        
+        // TYPE DISPATCHER C: BOOLEAN VALUED PARAMETERS
+        else if (typeof defaultValue === 'boolean') {
+            const isNegative = booleanTriggers.false.some(trigger => cleanPrompt.includes(trigger));
+            const isPositive = booleanTriggers.true.some(trigger => cleanPrompt.includes(trigger));
+            
+            if (isNegative) extractedValue = false;
+            else if (isPositive) extractedValue = true;
+        }
+
+        // 4. Strict Variance Control Check
+        if (extractedValue !== null && extractedValue !== defaultValue) {
+            changedProperties[key] = extractedValue;
+        }
+    });
+
+    if (returnTokensOnly) return matchedParamTokens;
+    return changedProperties;
+}
+
+// --- GLOBAL DOMAIN DICTIONARIES & TAXONOMY REGISTRIES ---
+const IRREGULAR_PLURALS = {
+    // 3D Geometry, Linear Algebra & Spatial Math
+    'vertices': 'vertex',
+    'matrices': 'matrix',
+    'axes': 'axis',
+    'indices': 'index',
+    'radii': 'radius',
+    'simplices': 'simplex',
+    'helices': 'helix',
+    'polyhedra': 'polyhedron',
+    'octahedra': 'octahedron',
+    'tetrahedra': 'tetrahedron',
+    'icosahedra': 'icosahedron',
+    'dodecahedra': 'dodecahedron',
+
+    // Physics, Fluids & Dynamics
+    'vortices': 'vortex',
+    'spectra': 'spectrum',
+    'quanta': 'quantum',
+    'phenomena': 'phenomenon',
+    'formulae': 'formula',
+    'formulas': 'formula',
+    'optima': 'optimum',
+    'maxima': 'maximum',
+    'minima': 'minimum',
+    'media': 'medium',
+    'strata': 'stratum',
+    'momenta': 'momentum',
+    'harmonies':'harmony',
+
+    // Computer Science, Data Structures & Graphs
+    'children': 'child',
+    'data': 'datum',
+    'nodes': 'node',
+    'leaves': 'leaf',
+    'schemata': 'schema',
+    'automata': 'automaton',
+    'criteria': 'criterion',
+    'analyses': 'analysis',
+    'syntheses': 'synthesis',
+    'hypotheses': 'hypothesis',
+    'bases': 'base',
+    'appendices': 'appendix',
+
+    // Biological, Ecosystem & Cellular Models
+    'loci': 'locus',
+    'nuclei': 'nucleus',
+    'fungi': 'fungus',
+    'algae': 'alga',
+    'bacteria': 'bacterium',
+    'genera': 'genus',
+
+    // Audio Synthesis & Wave Physics
+    'harmonics': 'harmonic',
+    'frequencies': 'frequency',
+    'codecs': 'codec',
+
+    // British to American Spelling Normalization
+    'colour': 'color',
+    'colours': 'color',
+    'centre': 'center',
+    'centres': 'center',
+    'synchronise': 'synchronize',
+    'synchronised': 'synchronize',
+    'modelled': 'modeled',
+    'analyser': 'analyzer',
+    'analysers': 'analyzer'
+};
+
+function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) {
+    const cleanPrompt = prompt.toLowerCase().trim();
+    const presets = databaseCache.settings?.['arcade-current-types'] || [];
+    
+    // --- INTEGRATED METRIC CONFIGURATION TUNERS ---
+    const MATCH_THRESHOLD_PERCENT = 75; 
+    const GIBBERISH_MIN_TOKEN_LEN = 3;   // Skip evaluation for tokens this size or smaller
+    const GIBBERISH_VOWEL_RULE_LEN = 5;  // Only enforce vowel balance on tokens strictly greater than this size
+    const GIBBERISH_TOKENS_MAX_PERCENT = 25; // Maximum allowed gibberish percentage (25% max, 75%+ valid required)
+    
+    // Domain nouns ending in 'ing' that are NOT action verbs
+    const NON_ACTION_ING = new Set(['spring', 'string', 'ring', 'wing', 'swing', 'turing', 'tuning', 'ping', 'building', 'ding']);
+    // ----------------------------------------------
+
+    let bestIndex = -1;
+    let maxMatchesCount = 0;
+
+    /* ----------------------------------------------------------------- */
+    /* CORE TOKENIZATION LOGIC ENGINE                                   */
+    /* ----------------------------------------------------------------- */
+
+    /* Inner Helper: Extracts pure alphanumeric tokens, bypassing stop words */
+    const getCleanTokens = (str, stripNumbers = false) => {
+        if (!str) return [];
+        let processed = str.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+        if (stripNumbers) {
+            processed = processed.replace(/\d+/g, "");
+        }
+        return processed
+            .split(/\s+/)
+            .map(t => t.trim())
+            .filter(t => t.length > 0 && !ARCADE_STOP_WORDS.has(t));
+    };
+    const userTokens = getCleanTokens(cleanPrompt, true);
+
+    /* ----------------------------------------------------------------- */
+    /* STEP 1: BUBBLE PRESET EXACT MATCH GUARD                           */
+    /* ----------------------------------------------------------------- */
+    if (forcedCategoryName) {
+        const bubbleIndex = presets.findIndex(cat => cat.name && cat.name.toLowerCase() === forcedCategoryName.toLowerCase());
+        if (bubbleIndex !== -1 && presets[bubbleIndex].example_prompt) {
+            const cachedTargetPrompt = presets[bubbleIndex].example_prompt.trim();
+            if (cachedTargetPrompt === prompt.trim()) {
+                return {
+                    index: bubbleIndex,
+                    properties: {},
+                    is_custom: false,
+                    status: "SUCCESS_CACHE_HIT"
+                };
+            }
+        }
+    }
+
+    /* ----------------------------------------------------------------- */
+    /* STEP 2: HIGHEST MATCH PROBABILISTIC INTERSECTION TOKENIZER         */
+    /* ----------------------------------------------------------------- */
+    if (userTokens.length > 0) {
+        presets.forEach((category, index) => {
+            const cachePrompt = category.example_prompt ? category.example_prompt.toLowerCase().trim() : '';
+            const cacheTokens = getCleanTokens(cachePrompt, true);
+
+            /* Count precise keyword intersections strictly against the prompt field */
+            const intersection = userTokens.filter(token => cacheTokens.includes(token));
+
+            /* Capture the layout index holding the absolute highest match count volume */
+            if (intersection.length > maxMatchesCount) {
+                maxMatchesCount = intersection.length;
+                bestIndex = index;
+            }
+        });
+    }
+
+    /* ----------------------------------------------------------------- */
+    /* STEP 2c: EVALUATE TOKEN THRESHOLD & PARAMETER PROPERTY CHANGES     */
+    /* ----------------------------------------------------------------- */
+    const matchPercentage = userTokens.length > 0 ? (maxMatchesCount / userTokens.length) * 100 : 0;
+
+    if (bestIndex !== -1 && matchPercentage >= MATCH_THRESHOLD_PERCENT) {
+        const matchedCategory = presets[bestIndex];
+        const originalPMap = matchedCategory.parameter_map || {};
+        
+        // Delegate dynamic variation tracking cleanly to our generic processor module
+        const changedProperties = extractParamDeltas(prompt, originalPMap);
+        const valueHasChanged = Object.keys(changedProperties).length > 0;
+
+        // 5-STEP CLASSIFICATION: DECOMPOSE USER AND CACHED PROMPTS
+        const cachePrompt = matchedCategory.example_prompt ? matchedCategory.example_prompt.toLowerCase().trim() : '';
+
+        // STEP 1 & 2: Extract parameter token deltas to isolate structural terms
+        const userParamTokens = Object.keys(extractParamDeltas(prompt, originalPMap, true));
+        const cacheParamTokens = Object.keys(extractParamDeltas(cachePrompt, originalPMap, true));
+
+        // Filter out parameter-associated words from primary tokens
+        const userStructuralTokens = userTokens.filter(t => !userParamTokens.includes(t));
+        const cacheStructuralTokens = getCleanTokens(cachePrompt, true).filter(t => !cacheParamTokens.includes(t));
+
+        // STEP 3: Extract Action Words (words ending in 'ing' excluding non-action domain nouns)
+        const userActions = userStructuralTokens.filter(t => t.endsWith('ing') && !NON_ACTION_ING.has(t));
+        const cacheActions = cacheStructuralTokens.filter(t => t.endsWith('ing') && !NON_ACTION_ING.has(t));
+
+        // STEP 4 & 5: Isolate Core Domain Terms / Nouns and apply irregular dictionary + singular stemming
+        const stem = t => IRREGULAR_PLURALS[t] || t.replace(/s$/, '');
+        const userPrimaryNouns = userStructuralTokens.filter(t => !t.endsWith('ing') || NON_ACTION_ING.has(t)).map(stem);
+        const cachePrimaryNouns = cacheStructuralTokens.filter(t => !t.endsWith('ing') || NON_ACTION_ING.has(t)).map(stem);
+
+        // ONE-WAY SUBSET GATEWAY: 100% of user primary nouns and actions MUST exist in the cached entry
+        const nounsMatch = userPrimaryNouns.length > 0 && 
+                           userPrimaryNouns.every(noun => cachePrimaryNouns.includes(noun));
+
+        const actionsMatch = userActions.length === 0 || 
+                             userActions.every(act => cacheActions.includes(act));
+
+        // FORCE CACHE MISS IF USER DOMAIN NOUNS OR ACTIONS ARE NOT FULLY SATISFIED BY THE CACHE ENTRY
+        if (!nounsMatch || !actionsMatch) {
+            // Skip cache return and proceed to Step 2d / LLM fetch
+        } else {
+            /* Step 2.c.i: Values have changed -> return target index paired with isolated delta maps */
+            if (valueHasChanged) {
+                return {
+                    index: bestIndex,
+                    properties: changedProperties,
+                    is_custom: false,
+                    status: "SUCCESS_CACHE_HIT_WITH_CHANGES"
+                };
+            }
+
+            /* Step 2.c.ii: Prompts differ slightly but data values are identical -> skip parameter maps */
+            return {
+                index: bestIndex,
+                properties: {},
+                is_custom: false,
+                status: "SUCCESS_CACHE_HIT"
+            };
+        }
+    }
+
+    /* ----------------------------------------------------------------- */
+    /* STEP 2d: PRE-FLIGHT LLM FIREBREAK VALIDATOR                       */
+    /* ----------------------------------------------------------------- */
+    
+    /* Guard A: Prompt completely empty or contains only non-descriptive stop words */
+    if (userTokens.length === 0) {
+        return {
+            index: -1,
+            properties: {},
+            is_custom: true,
+            status: "TRY_A_DIFFERENT_PROMPT",
+            message: "Instructions were not clear. Please try again with descriptive keywords."
+        };
+    }
+
+    /* Guard B: Phonotactic and Character Mash Verification (Catching "aeplp") */
+    const isGibberish = (token) => {
+        // Skip short symbols or remnants from split notation strings (e.g., 's', 'p')
+        if (token.length <= GIBBERISH_MIN_TOKEN_LEN) return false;
+        if (/([a-z])\1\1/.test(token)) return true; // Continuous repeating chars
+        
+        // Include 'y' in vowel checks to prevent valid words like 'rhythm' from being flagged
+        const vowels = (token.match(/[aeiouy]/g) || []).length;
+        const consonants = token.length - vowels;
+        
+        // Only run phonotactic check on long strings to let compound framework terms bypass safely
+        if (token.length > GIBBERISH_VOWEL_RULE_LEN && (vowels === 0 || consonants === 0)) return true;
+        
+        const invalidClusters = ['qx', 'zv', 'wq', 'jx', 'mx', 'lpp', 'bcz', 'aepl'];
+        return invalidClusters.some(cluster => token.includes(cluster));
+    };
+
+    let gibberishCount = 0;
+    for (let token of userTokens) {
+        if (isGibberish(token)) {
+            gibberishCount++;
+        }
+    }
+
+    const gibberishPercentage = (gibberishCount / userTokens.length) * 100;
+    if (gibberishPercentage > GIBBERISH_TOKENS_MAX_PERCENT) {
+        return {
+            index: -1,
+            properties: {},
+            is_custom: true,
+            status: "TRY_A_DIFFERENT_PROMPT",
+            message: "Unstructured word fragments detected. Instructions were not clear. Please try again."
+        };
+    }
+
+    /* Prompt is structured, meaningful, and safe to execute via a clean model pool pull */
+    return {
+        index: -1,
+        properties: {},
+        is_custom: true,
+        status: "PROCEED_TO_LLM"
+    };
+}
+
+// FInd if the prompt is a source type or create type.
+function determinePromptMode(prompt) {
+    if (!prompt || typeof prompt !== 'string') return 'create';
+    
+    const sourceVerbs = ["get", "bring", "source", "find", "list", "research", "showcase"];
+    const trimmedPrompt = prompt.trim().toLowerCase();
+    
+    // Split into tokens and look at only the first 3 words
+    const firstFewWords = trimmedPrompt.split(/\s+/).slice(0, 3);
+    
+    const isSource = firstFewWords.some(word => sourceVerbs.includes(word));
+    
+    return isSource ? 'source' : 'create';
+}
+
+window.handleCreation = async (currentId, currentName, currentPrivacy) => {
+    const promptInput = document.getElementById(`input-${currentId}`);
+    const input = promptInput ? promptInput.value.trim() : '';
+    if (!input) return;
+
+    const status = document.getElementById('engine-status-text');
+    status.textContent = "PROCESSING INFRASTRUCTURE...";
+
+    // Capture the hint from the bubble
+    const bubbleHint = promptInput.getAttribute('data-selected-capability');
+    
+    try {
+        // --- ADDED EARLY INTERCEPTOR FOR SOURCE PROMPTS ---
+        const promptMode = determinePromptMode(input);
+
+        if (promptMode === 'source') {
+            const defaultSourcePromptTypeObject = { name: 'Source', id: 'source', logic: 'source', image: '/assets/thumbnails/default.jpg', index: -1, properties: {}, is_custom: true };
+            await executeMassSpark(currentId, currentName, input, 'source', defaultSourcePromptTypeObject, currentPrivacy);
+            promptInput.value = '';
+            promptInput.removeAttribute('data-selected-capability');
+            return;
+        }
+        // --------------------------------------------------
+
+        // CENTRALIZED RESOLUTION FOR CREATE PROMPTS
+        const matchResult = resolveIndexFromPrompt(input, currentName, bubbleHint);
+        
+        // --- ADDED INTERCEPTOR FOR POORLY FORMED PROMPTS ---
+        if (matchResult.status === "TRY_A_DIFFERENT_PROMPT") {
+            status.textContent = matchResult.message || "Instructions were not clear. Please try again.";
+            return; /* Stop everything right here—no executeMassSpark, no LLM call */
+        }
+        // ----------------------------------------------------
+        
+        let resolvedCategory;
+        if (!matchResult.is_custom) {
+            // 1. Force a deep clone to snap the reference bond with databaseCache entirely
+            const cachedTemplate = databaseCache.settings['arcade-current-types'][matchResult.index];
+            resolvedCategory = JSON.parse(JSON.stringify(cachedTemplate));
+            
+            // 2. Safe property assignment isolated purely to this single execution context
+            resolvedCategory.index = matchResult.index;
+            resolvedCategory.is_custom = false;
+            
+            // 3. Explicitly pair parameter maps ONLY if structural updates were verified by the delta routine
+            if (matchResult.status === "SUCCESS_CACHE_HIT_WITH_CHANGES") {
+                resolvedCategory.properties = matchResult.properties;
+            } else {
+                // Bypasses property generation completely for exact matches, leaving the map clean
+                resolvedCategory.properties = {};
+            }
+        } else {
+            // Fallback for custom requests
+            resolvedCategory = { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg', index: -1, properties: {}, is_custom: true };
+        }
+
+        await executeMassSpark(
+            currentId, 
+            currentName, 
+            input, 
+            (!matchResult.is_custom) ? 'cache_hit' : ((resolvedCategory.logic === 'source' || /^(http|https):\/\/[^ "]+$/.test(input)) ? 'source' : 'create'), resolvedCategory,
+            currentPrivacy
+        );
+        
+        promptInput.value = '';
+        promptInput.removeAttribute('data-selected-capability');
+
+    } catch (e) {
+        console.error("Creation Error:", e);
+        await executeMassSpark(currentId, currentName, input, 'create', { name: 'Custom', id: 'custom', logic: 'create', image: '/assets/thumbnails/default.jpg', index: -1, properties: {}, is_custom: true }, currentPrivacy);
+    }
+};
+function resolveCapabilityFromKeywords(input) {
+    const query = input.toLowerCase().trim();
+    if (query.length < 2) return [];
+
+    // 2. Tokenize: Remove punctuation, strip numeric digits, and filter stop words
+    const tokens = query
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") 
+        .replace(/\d+/g, "")                         
+        .split(/\s+/)
+        .filter(t => t.length > 1 && !ARCADE_STOP_WORDS.has(t));
+
+    if (tokens.length === 0) return [];
+
+    const presets = databaseCache.settings?.['arcade-current-types'] || [];
+    
+    // 3. Match Intents: Only high-value nouns/verbs trigger the HUD
+    return presets.filter(cap => {
+        const id = (cap.id || '').toLowerCase();
+        const name = (cap.name || '').toLowerCase();
+        const regexStr = (cap.regex || '').toLowerCase();
+
+        return tokens.some(token => 
+            id.includes(token) || 
+            name.includes(token) || 
+            regexStr.includes(token)
+        );
+    }).map(cap => ({
+        name: cap.name,
+        prompt: cap.example_prompt,
+        id: cap.id
+    })).slice(0, 6);
+}
+
+// --- DYNAMIC CARD CANVAS PATTERN GENERATOR ---
+function getCircuitCardPattern(circuitId) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 160;
+    const ctx = canvas.getContext('2d');
+
+    // 1. Dark base background
+    ctx.fillStyle = '#080b10';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Color theme logic based on circuitId
+    let mainHue = 'rgba(0, 229, 255, '; // Default cyan
+    if (circuitId.includes('physics') || circuitId.includes('kinetic')) mainHue = 'rgba(255, 0, 128, ';
+    if (circuitId.includes('astro') || circuitId.includes('horizon')) mainHue = 'rgba(138, 43, 226, ';
+    if (circuitId.includes('biotech') || circuitId.includes('helix')) mainHue = 'rgba(0, 255, 128, ';
+
+    // 2. Draw standard background grid
+    ctx.strokeStyle = mainHue + '0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = 0; x < canvas.width; x += 20) {
+        ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height);
+    }
+    for (let y = 0; y < canvas.height; y += 20) {
+        ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
+    }
+    ctx.stroke();
+
+    // 3. Draw Faint Sinusoidal Wave Line at a Random Height
+    const waveY = 30 + Math.random() * (canvas.height - 60);
+    const frequency = 0.03 + Math.random() * 0.02;
+    const amplitude = 12 + Math.random() * 10;
+
+    ctx.strokeStyle = mainHue + '0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let x = 0; x < canvas.width; x++) {
+        const y = waveY + Math.sin(x * frequency) * amplitude;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // 4. Draw Intense Starfield with Bright Sparks (White, Yellow, Electric Cyan)
+    const sparkColors = ['#ffffff', '#fff066', '#00f0ff', '#ff00aa'];
+    for (let i = 0; i < 35; i++) {
+        const sx = Math.random() * canvas.width;
+        const sy = Math.random() * canvas.height;
+        const radius = Math.random() * 1.5 + 0.5;
+        const color = sparkColors[Math.floor(Math.random() * sparkColors.length)];
+
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = radius > 1.2 ? 6 : 2;
+        ctx.beginPath();
+        ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.shadowBlur = 0; // Reset glow state
+
+    return canvas.toDataURL();
+}
+
+/*
+ * Copies a selected circuit template from databaseCache into the user's infrastructure
+ * @param {string} ownerUid - Logged-in user's UID
+ * @param {string|null} templateId - Selected template ID or null for blank realm
+ */
+async function initializeUserRealm(ownerUid, templateId) {
+    try {
+        const updates = {};
+        const timestamp = Date.now();
+        
+        // 1. Mark setup_complete as true
+        updates[`users/${ownerUid}/profile/setup_complete`] = true;
+
+        // Synchronously update local cache for smooth UI transition
+        if (databaseCache.users?.[ownerUid]?.profile) {
+            databaseCache.users[ownerUid].profile.setup_complete = true;
+        }
+
+        // Write setup_complete update to database
+        await update(ref(db), updates);
+
+        // 2. If a specific template was selected, copy over its Currents & Sparks
+        if (templateId) {
+            const templates = databaseCache.settings?.['realm_circuits'] || [];
+            const selectedCircuit = templates.find(t => t.templateId === templateId);
+
+            if (selectedCircuit && selectedCircuit.currents) {
+                // Strip "REALM" from templateName for current type designation
+                const cleanType = (selectedCircuit.templateName || 'Custom')
+                    .replace(/\bREALM\b/gi, '')
+                    .trim();
+
+                for (let currIdx = 0; currIdx < selectedCircuit.currents.length; currIdx++) {
+                    const curr = selectedCircuit.currents[currIdx];
+                    
+                    // Generate lowercase hyphenated Current ID directly from currentName
+                    const currentId = (curr.currentName || `current-${currIdx}`)
+                        .toLowerCase()
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .trim()
+                        .replace(/\s+/g, '-');
+                        
+                    const currentPath = `users/${ownerUid}/infrastructure/currents/${currentId}`;
+                    
+                    // Build and save Current metadata shell
+                    const currentPayload = {
+                        id: currentId,
+                        name: curr.currentName,
+                        type: cleanType,
+                        privacy: 'private',
+                        date_created: timestamp,
+                        last_updated: timestamp
+                    };
+
+                    await saveToRealtimeDB(currentPath, currentPayload);
+
+                    // Update local databaseCache for current shell
+                    if (!databaseCache.users[ownerUid].infrastructure) {
+                        databaseCache.users[ownerUid].infrastructure = { currents: {} };
+                    }
+                    if (!databaseCache.users[ownerUid].infrastructure.currents) {
+                        databaseCache.users[ownerUid].infrastructure.currents = {};
+                    }
+                    databaseCache.users[ownerUid].infrastructure.currents[currentId] = {
+                        ...currentPayload,
+                        sparks: {}
+                    };
+
+                    // Copy Sparks mapped to sparkIndices via saveSpark
+                    if (curr.sparkIndices && Array.isArray(curr.sparkIndices)) {
+                        for (let sparkIdx = 0; sparkIdx < curr.sparkIndices.length; sparkIdx++) {
+                            const sparkIndex = curr.sparkIndices[sparkIdx];
+                            
+                            // Look up cached archetype from settings.arcade-current-types
+                            const cachedArchetype = databaseCache.settings?.['arcade-current-types']?.[sparkIndex] || {};
+                            
+                            const sparkData = {
+                                name: cachedArchetype.name || `Spark #${sparkIndex}`,
+                                image: cachedArchetype.image || '/assets/thumbnails/default.jpg',
+                                index: sparkIndex
+                            };
+
+                            const prompt = cachedArchetype.example_prompt || '';
+                            const detectedTemplate = cachedArchetype.name || 'Custom';
+                            const templateUrl = cachedArchetype.image || '/assets/thumbnails/default.jpg';
+
+                            // Delegate spark creation to saveSpark without overriding default parameter_map
+                            await saveSpark(currentId, sparkData, prompt, detectedTemplate, templateUrl, 'private');
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Re-render UI and refresh context
+        await refreshUI();
+
+    } catch (error) {
+        console.error("Failed to initialize user realm:", error);
+        alert("Failed to initialize realm. Please try again.");
+    }
+}
+
+// Expose helper to global window scope for inline onclick hooks
+window.initializeUserRealm = initializeUserRealm;
+
+// Expose helper to global window scope for inline onclick hooks
+window.initializeUserRealm = initializeUserRealm;
+function renderCurrents(currents, isOwner, ownerUid, profile, sharedCurrentId, sharedSparkId) {
+    const container = document.getElementById('currents-container');
+    if (!container) return;
+
+    // 1. DYNAMIC PLAN LOOKUP FOR THE OWNER
+    const ownerData = databaseCache.users?.[ownerUid] || {};
+    const planType = ownerData.profile?.plan_type || 'free';
+    const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
+    const maxSparks = planLimits.max_sparks_per_current;
+
+    // 2. PRIVACY FILTERING LOGIC
+    const currentsArray = currents ? Object.values(currents).filter(current => {
+        const isPublic = current.privacy === 'public';
+        const isTargetUnlisted = current.privacy === 'unlisted' && current.id === sharedCurrentId;
+        return isOwner || isPublic || isTargetUnlisted;
+    }) : [];
+    
+    // --- ARCADE SETUP / TEMPLATE SELECTOR ---
+    if (currentsArray.length === 0) {
+        if (isOwner) {
+            const firstName = profile?.display_name?.split(' ')[0] || "Engineer";
+            
+            if (profile?.setup_complete === true) {
+                container.innerHTML = `
+                    <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 6rem 2rem; border: 1px solid var(--glow-aura); border-radius: 20px; margin: 2rem; background: var(--card-bg);">
+                        <h1 class="metallic-text" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--branding-text-color);">
+                            LABORATORY: ${profile.arcade_title || 'ACTIVE'}
+                        </h1>
+                        <p style="color: var(--glow-color); opacity: 0.6; margin-bottom: 3rem; letter-spacing: 2px; font-size: 11px; font-family: 'Orbitron', sans-serif;">
+                            IDENTITY_VERIFIED // READY_FOR_INFRASTRUCTURE
+                        </p>
+                        <div style="display: flex; justify-content: center; gap: 20px;">
+                            <button onclick="window.openAddCurrentHud()" class="ethereal-btn-sm">
+                                <i class="fas fa-plus"></i> INITIALIZE_FIRST_CURRENT
+                            </button>
+                            <button onclick="window.showTutorial()" class="ethereal-btn-sm" style="opacity: 0.7;">
+                                <i class="fas fa-book-open"></i> VIEW_TUTORIAL
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Fetch circuit templates directly from databaseCache
+                const circuits = databaseCache.settings?.['realm_circuits'] || [];
+                const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
+                const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
+
+// --- CARD MAPPING INSIDE renderCurrents ---
+
+const circuitCardsHTML = circuits.map(circuit => {
+    const patternImg = getCircuitCardPattern(circuit.templateId);
+
+    return `
+        <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); transition: transform 0.3s ease;">
+            <div class="action-card" 
+                 onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')"
+                 style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px solid var(--glow-aura); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
+                
+                <!-- 3D Extruded Neon Title (1.5x taller, 2x thicker, inverted contrast shadow) -->
+                <span class="metallic-text" style="
+                    position: relative; 
+                    z-index: 10; 
+                    font-family: 'Orbitron', sans-serif; 
+                    font-size: 16px; 
+                    font-weight: 900; 
+                    letter-spacing: 2.5px; 
+                    text-transform: uppercase; 
+                    margin-bottom: 0.6rem; 
+                    color: var(--glow-color); 
+                    text-shadow: 
+                        1px 1px 0px #000,
+                        2px 2px 0px rgba(255, 255, 255, 0.85),
+                        3px 3px 0px #000,
+                        4px 4px 6px rgba(0, 229, 255, 0.9),
+                        0 0 12px var(--glow-color);
+                ">
+                    ${circuit.templateName}
+                </span>
+
+                <!-- Template Subtitle / Realm Title -->
+                <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 0.75rem; margin: 0; font-size: 11px; font-weight: 500; line-height: 1.3; max-width: 92%; word-break: break-word; white-space: normal; pointer-events: none; opacity: 0.9; text-shadow: 0 2px 4px rgba(0,0,0,0.9);">
+                    ${circuit.realmName}
+                </h4>
+                
+                <!-- Background Starfield + Sinusoidal Pattern -->
+                <img src="${patternImg}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; z-index: 1;">
+                
+                <!-- Soft Center Radial Vignette -->
+                <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(8,11,16,0.45) 0%, rgba(8,11,16,0.9) 100%); z-index: 2; pointer-events: none;"></div>
+            </div>
+
+            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
+                <!-- Subtitle Caption -->
+                <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; word-wrap: break-word; white-space: normal; min-height: 36px;">
+                    ${circuit.realmSubtitle}
+                </p>
+                <button onclick="window.initializeUserRealm('${ownerUid}', '${circuit.templateId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
+                    INITIALIZE REALM
+                </button>
+            </div>
+        </div>
+    `;
+}).join('');                
+// --- BLANK REALM CARD HTML ---
+const blankCardHTML = `
+    <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); transition: transform 0.3s ease;">
+        <div class="action-card" 
+             onclick="window.initializeUserRealm('${ownerUid}', null)"
+             style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px dashed var(--glow-color); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
+            
+            <i class="fas fa-plus-circle" style="font-size: 1.8rem; color: var(--glow-color); margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px var(--glow-color)); z-index: 10;"></i>
+            
+            <!-- 3D Extruded Neon Title matching the template cards -->
+            <span class="metallic-text" style="
+                position: relative; 
+                z-index: 10; 
+                font-family: 'Orbitron', sans-serif; 
+                font-size: 16px; 
+                font-weight: 900; 
+                letter-spacing: 2.5px; 
+                text-transform: uppercase; 
+                color: var(--glow-color); 
+                text-shadow: 
+                    1px 1px 0px #000,
+                    2px 2px 0px rgba(255, 255, 255, 0.85),
+                    3px 3px 0px #000,
+                    4px 4px 6px rgba(0, 229, 255, 0.9),
+                    0 0 12px var(--glow-color);
+            ">
+                BLANK REALM
+            </span>
+            
+            <!-- Soft Radial Background Overlay -->
+            <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(0, 229, 255, 0.08) 0%, rgba(8,11,16,0.95) 100%); z-index: 1; pointer-events: none;"></div>
+        </div>
+
+        <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
+            <!-- Updated Blank Realm Caption -->
+            <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; word-wrap: break-word; white-space: normal; min-height: 36px;">
+                Initialize an empty laboratory to construct custom currents and sparks from scratch.
+            </p>
+            <button onclick="window.initializeUserRealm('${ownerUid}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px; opacity: 0.85;">
+                CREATE BLANK
+            </button>
+        </div>
+    </div>
+`;
+// Outer container grid wrapper with Starfield Space Background
+container.innerHTML = `
+    <div class="welcome-zone animate-fadeIn" style="padding: 3rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 1.5rem; background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%), radial-gradient(circle at top, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 100% 100%, 40px 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 30px rgba(0,0,0,0.8);">
+        <div style="text-align: center; margin-bottom: 2.5rem;">
+            <h1 class="metallic-text" style="font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: 0.5rem; letter-spacing: -1px; color: var(--branding-text-color);">
+                ${firstName}, Select Your Realm Circuit
+            </h1>
+            <p style="color: var(--glow-color); opacity: 0.6; letter-spacing: 3px; font-size: 11px; font-family: 'Orbitron', sans-serif; margin: 0;">
+                SELECT A PRE-BUILT BLUEPRINT OR START BLANK TO INITIALIZE
+            </p>
+        </div>
+
+        <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.8rem; width: 100%;">
+            ${blankCardHTML}
+            ${circuitCardsHTML}
+        </div>
+    </div>
+`;
+            }
+        } else {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 5rem 0; opacity: 0.4; font-style: italic; letter-spacing: 2px; color: var(--branding-text-color);">
+                    OFFLINE: No infrastructure detected for ID: ${ownerUid.substring(0,8)}
+                </div>
+            `;
+        }
+        return;
+    }
+
+    // --- ACTIVE STATE ---
+    container.innerHTML = currentsArray.map(current => {
+        const sparks = current.sparks ? Object.values(current.sparks).filter(spark => {
+            const isSparkPublic = spark.privacy === 'public';
+            const isSparkTargetUnlisted = spark.privacy === 'unlisted' && spark.id === sharedSparkId;
+            return isOwner || isSparkPublic || isSparkTargetUnlisted;
+        }) : [];
+
+        const sparkCount = sparks.length;
+        const isFull = sparkCount >= maxSparks;
+        const capacityPct = Math.min((sparkCount / maxSparks) * 100, 100);
+        
+        // Dynamic Color Logic based on remaining capacity
+        let meterColor = 'var(--glow-color)';
+        if (capacityPct >= 90) {
+            meterColor = 'var(--error-color, #ef4444)';
+        } else if (capacityPct >= 80) {
+            meterColor = 'var(--warning-color, #ffcc00)';
+        }
+
+        const capacityMeterHTML = `
+            <div class="capacity-meter-wrapper" title="Sparks: ${sparkCount} / ${maxSparks}" style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-family: 'Courier New', monospace; font-size: 0.7rem; color: var(--branding-text-color);">CAPACITY</span>
+                <div class="fuel-rail" style="width: 50px; height: 10px; background: rgba(255,255,255,0.05); border: 1px solid ${meterColor}; border-radius: 2px; overflow: hidden;">
+                    <div class="fuel-fill" style="width: ${capacityPct}%; height: 100%; background: ${meterColor}; transition: width 0.4s ease;"></div>
+                </div>
+                <span style="font-family: 'Courier New', monospace; font-size: 0.7rem; color: ${meterColor};">${sparkCount}/${maxSparks}</span>
+            </div>
+        `;
+
+        const actionIcons = isOwner ? `
+            <div class="current-actions" style="display: flex; gap: 12px; margin-left: 10px; align-items: center;">
+                <i class="fas fa-sync-alt" onclick="window.updateCurrent('${current.id}')" title="Update" style="cursor: pointer; opacity: 0.6; color: var(--branding-text-color);"></i>
+                <i class="fas fa-trash-alt" onclick="window.confirmDeleteCurrent('${ownerUid}', '${current.id}')" title="Delete" style="cursor: pointer; opacity: 0.6; color: var(--error-color, #ef4444);"></i>
+            </div>
+        ` : '';
+        const controls = (isOwner && !isFull) ? `
+            <div class="current-prompt-container">
+                <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                   <div class="input-wrapper" style="flex-grow: 1; position: relative;">
+                       <input type="text" id="input-${current.id}" 
+                          class="current-prompt-input"
+                          placeholder="Type a prompt (e.g. 'game', 'logic', 'physics') or paste a URL..." 
+                          oninput="window.updatePromptInputHUD('${current.id}')"
+                           onfocus="window.updatePromptInputHUD('${current.id}')"
+                           onblur="setTimeout(() => { const h = document.getElementById('hud-${current.id}'); if(h) h.style.display = 'none'; }, 250)">
+                    <div id="hud-${current.id}" class="floating-hud-container" style="display: none;"></div>
+                </div>
+                   <button onclick="window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')" class="current-prompt-exec-button">EXEC</button>
+                      ${actionIcons}
+                </div>
+            </div>
+        ` : (isFull && isOwner) ? `
+            <div class="capacity-alert-container" style="display: flex; align-items: center; gap: 15px; width: 100%;">
+                <span style="color: var(--error-color, #ef4444); font-weight: bold; font-family: 'Orbitron', sans-serif; font-size: 0.8rem;">FULL</span>
+                ${capacityMeterHTML}
+                ${actionIcons}
+            </div>
+        ` : `
+            <div class="viewer-node-status" style="display: flex; align-items: center; gap: 15px; opacity: 0.8;">
+                ${capacityMeterHTML}
+                <div class="secure-node-static">Secure_Node [${ownerUid.substring(0,8)}]</div>
+            </div>
+        `;
+
+        return `
+            <div class="current-block animate-fadeIn">
+                <div class="current-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                    <h2 class="current-name" style="margin: 0; font-size: 14px; line-height: 1;">${current.name || 'Active Current'}</h2>
+                    ${!isOwner ? '' : capacityMeterHTML}
+                </div>
+                
+                ${controls}
+                
+                <div class="experiment-zone">
+                    <div id="sparks-${current.id}" class="grid">
+                        ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id, ownerUid)).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    if (isOwner) {
+        container.innerHTML += `
+            <div style="display: flex; justify-content: center; margin-top: 3rem; padding-bottom: 5rem;">
+                <button onclick="window.openAddCurrentHud()" class="terminal-btn" style="border: 1px dashed var(--glow-color); opacity: 0.6; color: var(--branding-text-color); background: var(--bg-color);">
+                    <i class="fas fa-plus"></i> INITIALIZE NEW CURRENT
+                </button>
+            </div>
+        `;
+    }
+}
+
+window.updatePromptInputHUD = (currentId) => {
+    const inputField = document.getElementById(`input-${currentId}`);
+    const hudContainer = document.getElementById(`hud-${currentId}`);
+    
+    if (!inputField || !hudContainer) return;
+
+    const query = inputField.value;
+    const matches = resolveCapabilityFromKeywords(query);
+
+    if (matches.length > 0) {
+        hudContainer.style.display = 'flex';
+        hudContainer.innerHTML = matches.map(m => {
+            const safePrompt = m.prompt.replace(/'/g, "\\'");
+            // Pass m.name as the third argument to applySuggestion
+            return `
+                <div class="hud-bubble" 
+                     onclick="window.applySuggestion('${currentId}', '${safePrompt}', '${m.name}');">
+                    ${m.name.toUpperCase()}
+                </div>
+            `;
+        }).join('');
+    } else {
+        hudContainer.style.display = 'none';
+    }
+};
+
+window.applySuggestion = (currentId, promptText, capabilityName) => {
+    const inputField = document.getElementById(`input-${currentId}`);
+    const hudContainer = document.getElementById(`hud-${currentId}`);
+    
+    if (inputField) {
+        inputField.value = promptText;
+        // Directly store the name we just passed in
+        inputField.setAttribute('data-selected-capability', capabilityName);
+    }
+
+    if (hudContainer) hudContainer.style.display = 'none';
+};
+    
+/*
+ * Objective: Initialize the update sequence for an existing Current.
+ * [cite: 2026-04-14]
+ */
+window.updateCurrent = (currentId) => {
+    console.log(`[ACTION]: Initiating update for Current: ${currentId}`);
+    // We pass the ID so the HUD knows which record to fetch/reference
+    window.openAddCurrentHud('update', currentId);
+};
+/* window.openAddCurrentHud */
+window.openAddCurrentHud = async (action = 'add', targetId = null) => {
+    const hud = document.getElementById('add-current-hud');
+    if (!hud) return;
+
+    const title = hud.querySelector('.current-title');
+    const submitBtn = document.getElementById('submit-current-btn');
+    const nameInput = document.getElementById('current-name-input');
+    const typeSelect = document.getElementById('current-type-select');
+    const typeInput = document.getElementById('current-type-input'); // The primary source
+    const privacySelect = document.getElementById('current-privacy-select');
+
+    // 1. Populate Picker Options
+    if (typeSelect) {
+        const types = databaseCache.settings?.['arcade-current-types'] || [];
+        let optionsHTML = `<option value="">-- PICK A TYPE --</option>`;
+        optionsHTML += types.map(t => 
+            `<option value="${t.name}">${t.name.toUpperCase()}</option>`
+        ).join('');
+        typeSelect.innerHTML = optionsHTML;
+    }
+
+    if (action === 'update' && targetId) {
+        if (title) title.innerText = "UPDATE_INFRASTRUCTURE";
+        if (submitBtn) submitBtn.innerText = "CONFIRM_CHANGES";
+        
+        const ownerUid = window.auth?.currentUser?.uid;
+        const currentData = databaseCache.users?.[ownerUid]?.infrastructure?.currents?.[targetId];
+
+        /* --- Inside openAddCurrentHud (Update Block) --- */
+        if (currentData) {
+            if (nameInput) nameInput.value = currentData.name || '';
+            if (typeInput) typeInput.value = currentData.type || '';
+            if (typeSelect) typeSelect.value = ''; 
+            if (privacySelect) privacySelect.value = currentData.privacy || 'private';
+    
+            // THE FIX: Save the previous state for submitNewCurrent to compare against
+            hud.dataset.targetId = targetId;
+            hud.dataset.mode = 'update';
+            hud.dataset.prevName = (currentData.name || '').trim().toLowerCase();
+            hud.dataset.prevType = (currentData.type || '').trim().toLowerCase();
+            hud.dataset.prevPrivacy = (currentData.privacy || 'private').trim().toLowerCase();
+        }
+    } else {
+        if (title) title.innerText = "INITIALIZE_CURRENT";
+        if (submitBtn) submitBtn.innerText = "GENERATE_INFRASTRUCTURE";
+        
+        if (nameInput) nameInput.value = '';
+        if (typeInput) typeInput.value = ''; // Blank for new
+        if (typeSelect) typeSelect.value = '';
+        if (privacySelect) privacySelect.value = 'private';
+        
+        hud.dataset.mode = 'add';
+        delete hud.dataset.targetId;
+        // Add these to be perfectly clean:
+        delete hud.dataset.prevName;
+        delete hud.dataset.prevType;
+        delete hud.dataset.prevPrivacy;
+    }
+
+    hud.style.display = 'flex';
+    hud.classList.add('active');
+};
+
+/* The actual routine called from arcade/index.html on new and update current */
+window.submitNewCurrent = async () => {
+    const hud = document.getElementById('add-current-hud');
+    const mode = hud.dataset.mode; // 'add' or 'update'
+    const prevId = hud.dataset.targetId; // The ID before editing
+    
+    // 1. Grab current form values
+    const newName = document.getElementById('current-name-input').value.trim();
+    const newType = document.getElementById('current-type-input').value.trim() || "Custom";
+    const newPrivacy = document.getElementById('current-privacy-select').value;
+
+    // 2. Validation: Null Check
+    if (!newName || newName.toLowerCase() === 'null') {
+        console.warn("[SYSTEM] current name was null: Operation Aborted.");
+        return;
+    }
+
+    // 3. Identification & Comparison
+    // We assume the HUD was populated with these data attributes in openAddCurrentHud
+    const prevName = hud.dataset.prevName || '';
+    const prevType = hud.dataset.prevType || '';
+    const prevPrivacy = hud.dataset.prevPrivacy || 'private';
+    
+    // Enforce immutable identification mechanics across updates
+    let finalId;
+
+    if (mode === 'add') {
+        // Generates an unbreakable string token key with timestamp layout mapping
+        finalId = 'curr-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now().toString(36);
+    } else {
+        // Update mode strictly preserves the historical routing folder signature regardless of name renames
+        finalId = prevId;
+    }
+    
+    // Simple boolean track for modification guards
+    const nameChanged = newName !== prevName;
+    // 4. Change Detection Guard
+    const hasTypeChanged = newType !== prevType;
+    const hasPrivacyChanged = newPrivacy !== prevPrivacy;
+
+    if (mode === 'update' && !nameChanged && !hasTypeChanged && !hasPrivacyChanged) {
+        console.log("[SYSTEM] No modifications detected. Deployment bypassed.");
+        window.closeAddCurrentHud();
+        return;
+    }
+
+    // 5. Database Execution
+    try {
+        const ownerUid = auth.currentUser?.uid;
+        const timestamp = Date.now();
+        
+        // Prepare the data packet
+        const dataPacket = {
+            id: finalId,
+            name: newName,
+            type: newType,
+            privacy: newPrivacy,
+            last_updated: timestamp
+        };
+
+        if (mode === 'add') {
+            const path = `users/${ownerUid}/infrastructure/currents/${finalId}`;
+            await saveToRealtimeDB(path, { ...dataPacket, date_created: timestamp });
+        } else {
+            // UPDATE MODE
+            // Refactored Update Route: Target location remains identical, dropping complex subtree migrations entirely
+            const path = `users/${ownerUid}/infrastructure/currents/${prevId}`;
+            await update(ref(db, path), dataPacket);
+        }
+
+        window.closeAddCurrentHud();
+        await refreshUI();
+
+    } catch (e) {
+        console.error("Infrastructure Deployment Failed:", e);
+    }
+};
+
+function generateTemplateAndParameterMap(sparkNode, prompt = "") {
+    let rawCode = sparkNode.code || "";
+    
+    console.group("[DISTILLATION ENGINE] generateTemplateAndParameterMap");
+    /*console.log("[TELEMETRY INPUT] Raw Code Input String:\n", rawCode);*/
+
+    // 1. Cleanse invisible unicode/control characters
+    rawCode = rawCode.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '');
+
+    const foundParams = {};
+
+    // 2. SAFE COMMENT STRIPPER: Tokenizes strings, URLs, <script src>, and <link> tags first
+    function stripJSCommentsSafely(code) {
+        const tokenRegex = /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|<script[^>]*src=["'][^"']+["'][^>]*>[\s\S]*?<\/script>|<link[^>]*>|\/\*[\s\S]*?\*\/|\/\/[^\r\n]*/gi;
+        
+        return code.replace(tokenRegex, (match) => {
+            const lower = match.toLowerCase();
+            // Preserve strings, <script src="...">, and <link> tags verbatim
+            if (match.startsWith('"') || match.startsWith("'") || match.startsWith('`') || lower.startsWith('<script') || lower.startsWith('<link')) {
+                return match;
+            }
+            // Strip actual block comments (/* ... */) and line comments (// ...)
+            if (match.startsWith('/*') || match.startsWith('//')) {
+                console.log("[COMMENT CLEANUP] Safely Stripped Comment:", JSON.stringify(match));
+                return '';
+            }
+            return match;
+        });
+    }
+
+    // Clean style tags safely using the tokenizer
+    rawCode = rawCode.replace(/<style[\s\S]*?<\/style>/gi, styleBlock => stripJSCommentsSafely(styleBlock));
+
+    // 3. Extract and clean the inline script content cleanly
+    const scriptMatch = rawCode.match(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/i);
+    let logic = scriptMatch ? scriptMatch[1].trim() : rawCode;
+
+    // Apply the safe stripper to the inline JS logic block
+    logic = stripJSCommentsSafely(logic);
+
+    // 4. ADVANCED DICTIONARY DECONSTRUCTION ENGINE
+    // Matches primary configuration objects (e.g., 'params', 'p', 'config', 'settings', 'setup', 'options')
+    const objectMapPattern = /(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*\{([\s\S]*?)\};/i;
+    const objectMapMatch = logic.match(objectMapPattern);
+
+    if (objectMapMatch) {
+        const mapIdentifier = objectMapMatch[1];
+        const internalBody = objectMapMatch[2];
+        
+        const lineEntries = internalBody.split('\n');
+        const processedLines = lineEntries.map(line => {
+            const cleanLine = line.trim();
+            if (!cleanLine || cleanLine.startsWith('/*') || cleanLine.startsWith('//')) return line;
+            
+            const parts = cleanLine.split(/:(.+)/);
+            if (parts.length < 2) return line;
+            
+            const keyName = parts[0].trim().replace(/['"`]/g, "");
+            let rawVal = parts[1].trim().replace(/,$/, "").trim();
+            
+            const isNumericOrHex = /^-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)$/.test(rawVal);
+            const isQuotedString = /^(['"`])([\s\S]*?)\1$/.test(rawVal);
+            const isBoolean = /^(true|false)$/i.test(rawVal);
+
+            if (isNumericOrHex || isQuotedString || isBoolean) {
+                const lowercaseKey = keyName.toLowerCase();
+
+                if (isBoolean) {
+                    foundParams[lowercaseKey] = rawVal.toLowerCase() === 'true';
+                } else if (isNumericOrHex) {
+                    foundParams[lowercaseKey] = rawVal.toLowerCase().startsWith('0x') 
+                        ? parseInt(rawVal, 16) 
+                        : parseFloat(rawVal);
+                } else {
+                    foundParams[lowercaseKey] = rawVal.replace(/^['"`]|['"`]$/g, "");
+                }
+                
+                const originalIndent = line.match(/^\s*/)[0];
+                const isQuotedOrHex = isQuotedString || rawVal.toLowerCase().startsWith('0x');
+                
+                return `${originalIndent}${keyName}: ${isQuotedOrHex ? `"${`{{${lowercaseKey}}}`}"` : `{{${lowercaseKey}}}`},`;
+            }
+            return line;
+        });
+        
+        logic = logic.replace(objectMapMatch[0], `const ${mapIdentifier} = {\n${processedLines.join('\n')}\n};`);
+    }
+
+    // 5. BACKUP SCALAR VARIABLE SCANNER
+    const configPattern = /(?:const|let|var)\s+([^;]+);/g;
+    let templateWithVars = logic.replace(configPattern, (match, expression) => {
+        const matchIndex = logic.indexOf(match);
+        if (matchIndex > 0) {
+            const contextBefore = logic.substring(Math.max(0, matchIndex - 20), matchIndex);
+            if (/for\s*\($/i.test(contextBefore.trim())) return match;
+        }
+
+        const assignments = expression.split(',');
+        let processedAssignments = assignments.map(assign => {
+            const parts = assign.split('=');
+            if (parts.length !== 2) return assign;
+            
+            const name = parts[0].trim();
+            const value = parts[1].trim();
+            
+            if (name.length <= 1 || /^(iterator|index|clock|time|delta|frame|loop)$/i.test(name)) {
+                return assign;
+            }
+            
+            const isNumericOrHex = /^-?(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)$/.test(value);
+            const isQuotedString = /^(['"`])([\s\S]*?)\1$/.test(value);
+            const isBoolean = /^(true|false)$/i.test(value);
+
+            if (isNumericOrHex || isQuotedString || isBoolean) {
+                const key = name.toLowerCase();
+                
+                if (!foundParams[key]) {
+                    if (isBoolean) {
+                        foundParams[key] = value.toLowerCase() === 'true';
+                    } else if (isNumericOrHex) {
+                        foundParams[key] = value.toLowerCase().startsWith('0x') 
+                            ? parseInt(value, 16) 
+                            : parseFloat(value);
+                    } else {
+                        foundParams[key] = value.replace(/^['"`]|['"`]$/g, "");
+                    }
+                }
+                
+                const isQuotedOrHex = isQuotedString || value.toLowerCase().startsWith('0x');
+                return `${name} = ${isQuotedOrHex ? `"${`{{${key}}}`}"` : `{{${key}}}`}`;
+            }
+            return assign;
+        });
+        
+        const keyword = match.match(/^(const|let|var)/)[0];
+        return `${keyword} ${processedAssignments.join(', ')};`;
+    });
+
+    const finalScriptLogic = templateWithVars;
+
+    // 6. Re-assemble complete document matrix context ensuring valid HTML structure
+    let compiledTemplateDoc = "";
+    const cleanCheckCode = rawCode.trim().toUpperCase();
+    if (cleanCheckCode.startsWith("<!DOCTYPE") || cleanCheckCode.includes("<HTML")) {
+        compiledTemplateDoc = scriptMatch ? rawCode.replace(scriptMatch[1], `\n${finalScriptLogic}\n`) : rawCode;
+        if (!compiledTemplateDoc.trim().toUpperCase().startsWith("<!DOCTYPE")) {
+            compiledTemplateDoc = "<!DOCTYPE html>\n" + compiledTemplateDoc.trim();
+        }
+    } else {
+        compiledTemplateDoc = `<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <style>\n        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #050508; }\n    </style>\n</head>\n<body>\n    <script type="module">\n${finalScriptLogic}\n    </script>\n</body>\n</html>`;
+    }
+
+    /*console.log("[TELEMETRY OUTPUT] Cleaned and Processed Template Output:\n", compiledTemplateDoc);*/
+    console.log("[TELEMETRY OUTPUT] Extracted Parameter Map Dictionary Target:", foundParams);
+
+    // 7. SMART METADATA EXTRACTION LAYER
+    const titleMatch = rawCode.match(/<title>([\s\S]*?)<\/title>/i);
+    const h1Match = rawCode.match(/<h1>([\s\S]*?)<\/h1>/i);
+    const h2Match = rawCode.match(/<h2>([\s\S]*?)<\/h2>/i);
+    let resolvedName = sparkNode.name || "";
+    
+    if (!resolvedName || resolvedName.startsWith('spark_') || resolvedName === 'Unnamed Spark') {
+        resolvedName = titleMatch ? titleMatch[1].trim() : (h1Match ? h1Match[1].trim() : (h2Match ? h2Match[1].trim() : "Custom Simulation Space"));
+    }
+
+    // Dynamic Group Detector
+    let resolvedGroup = "Custom Labs";
+    if (rawCode.includes("three") || rawCode.includes("THREE") || rawCode.includes("WebGLRenderer")) {
+        resolvedGroup = "Visual Simulations";
+    } else if (rawCode.includes("addEventListener('keydown'") || rawCode.includes("score") || rawCode.includes("gameState")) {
+        resolvedGroup = "Realm Labs";
+    }
+
+    // Dynamic Description Setup
+    let resolvedDescription = prompt ? (prompt.trim().charAt(0).toUpperCase() + prompt.trim().slice(1)) : `${resolvedGroup} environment for ${resolvedName.toLowerCase()}.`;
+
+    // 8. Output Type Definition Entry
+    const newTypeEntry = {
+        id: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-'),
+        name: resolvedName,
+        example_prompt: prompt,
+        group: resolvedGroup,
+        image: sparkNode.image || "/assets/thumbnails/default.jpg",
+        description: resolvedDescription,
+        regex: resolvedName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '|'),
+        rules: `Execute interactive rendering threads via modular ${resolvedGroup.toLowerCase()} structures.`,
+        logic: "create",
+        is_custom: true,
+        parameter_map: { ...foundParams },
+        template: compiledTemplateDoc
+    };
+
+    console.groupEnd();
+
+    return {
+        typeData: newTypeEntry,
+        extractedProperties: JSON.parse(JSON.stringify(foundParams))
+    };
+}
+/*
+ * Objective: Clean and normalize raw LLM output.
+ * Tasks: Scrub Unicode, remove markdown fences, and strip trailing JSON metadata.
+ * Idempotency: Can be called multiple times without stripping valid HTML tags.
+ */
+function verifyAndFixCode(rawCode, isCodeMode = false) {
+    if (!rawCode || typeof rawCode !== 'string') return "";
+
+    // 1. Scrub UNICODE spaces and standardized line breaks
+    let fixed = rawCode
+        .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
+        .trim();
+
+    // 2. Remove Markdown code fences
+    fixed = fixed.replace(/^```[a-z]*\n?/gi, '').replace(/\n?```$/g, '');
+
+    // 3. Scrub orphaned comment delimiters at start/end of raw input
+    fixed = fixed.replace(/^(\/\*|\*\/|\/\/)+\s*/g, (match) => {
+        console.log("[VERIFY & FIX] Scrubbed orphaned start delimiter:\n  Before:", JSON.stringify(match));
+        return '';
+    }).replace(/\*\/\s*$/g, (match) => {
+        console.log("[VERIFY & FIX] Scrubbed orphaned end delimiter:\n  Before:", JSON.stringify(match));
+        return '';
+    });
+
+    // 4. Handle hybrid "Trailing Metadata"
+    const metadataMarker = /",\s*"thumbnail":\s*".*?"\s*\}?$/;
+    if (isCodeMode && metadataMarker.test(fixed)) {
+        console.log("[VERIFY & FIX] Removed trailing metadata JSON footer.");
+        fixed = fixed.replace(metadataMarker, '');
+    }
+
+    // 5. Case-insensitive document start finder (preferring <!DOCTYPE over <html)
+    if (isCodeMode) {
+        const doctypeIndex = fixed.search(/<!DOCTYPE/i);
+        const htmlIndex = fixed.search(/<html/i);
+        
+        let start = -1;
+        if (doctypeIndex !== -1) {
+            start = doctypeIndex;
+        } else if (htmlIndex !== -1) {
+            start = htmlIndex;
+        }
+
+        if (start > 0) fixed = fixed.substring(start);
+    }
+
+    return fixed.trim();
+}
+/*
+ * Objective: Extract structured name, code, and thumbnail from messy LLM responses.
+ * Tasks: Handle backticks, literal newlines in quotes, and multi-item arrays.
+ */
+function extractSparkData(rawResult, isCode) {
+    if (!rawResult || typeof rawResult !== 'string') return null;
+
+    let jsonToParse = rawResult.trim()
+        .replace(/```json/gi, '')
+        .replace(/```/g, '')
+        .trim();
+
+    const firstBrace = jsonToParse.indexOf('{');
+    const firstBracket = jsonToParse.indexOf('[');
+    let startIdx = (firstBrace !== -1 && firstBracket !== -1) 
+                   ? Math.min(firstBrace, firstBracket) 
+                   : (firstBrace !== -1 ? firstBrace : firstBracket);
+
+    const lastBrace = jsonToParse.lastIndexOf('}');
+    const lastBracket = jsonToParse.lastIndexOf(']');
+    const endIdx = Math.max(lastBrace, lastBracket);
+
+    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+        let jsonCandidate = jsonToParse.substring(startIdx, endIdx + 1);
+
+        // --- THE "SUPER-DIGESTER" ---
+        // 1. Handle Backticks (if present)
+        jsonCandidate = jsonCandidate.replace(/":\s*`([\s\S]*?)`/g, (match, content) => {
+            const sanitized = content.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+            return `": "${sanitized}"`;
+        });
+
+        // 2. Handle Literal Newlines inside double quotes (The current culprit)
+        // This looks for "code": " ... " where there are actual line breaks
+        jsonCandidate = jsonCandidate.replace(/":\s*"([\s\S]*?)"/g, (match, content) => {
+            // Only escape if there are actual unescaped newlines
+            if (content.includes('\n') || content.includes('\r')) {
+                const sanitized = content.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+                return `": "${sanitized}"`;
+            }
+            return match;
+        });
+
+        try {
+            const parsed = JSON.parse(jsonCandidate);
+            
+            const processItem = (item) => {
+                item.name = item.name || item.title || "Untitled Spark";
+                item.url = item.url || item.link || item.href || "N/A";
+                item.thumbnail = item.thumbnail || item.image || item.img || item.pic || null;
+                if (isCode) {
+                    let contentToFix = item.code || item.url || "";
+                    item.code = verifyAndFixCode(contentToFix, true);
+                }
+            };
+
+            Array.isArray(parsed) ? parsed.forEach(processItem) : processItem(parsed);
+            return parsed; 
+        } catch (e) {
+            console.error("[EXTRACTOR] Final Parse Failure:", e);
+        }
+    }
+
+    return isCode ? verifyAndFixCode(rawResult, true) : rawResult;
+}
+
+function verifyAndFixCodePrevious(rawCode, isCodeMode = false) {
+    if (!rawCode || typeof rawCode !== 'string') return "";
+
+    // 1. Scrub UNICODE spaces and Markdown ticks
+    let fixed = rawCode
+        .replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')
+        .replace(/^```[a-z]*\n?|```$/gi, '')
+        .trim();
+
+    // 2. If it's HTML code, ensure we start at the doctype
+    if (isCodeMode && (fixed.includes('<!DOCTYPE') || fixed.includes('<html'))) {
+        const start = Math.max(fixed.indexOf('<!DOCTYPE'), fixed.indexOf('<html'));
+        if (start !== -1) fixed = fixed.substring(start);
+    }
+
+    return fixed;
+}
+function verifyAndFixCodeComplex(rawCode, isCodeMode = false) {
+    if (!rawCode || typeof rawCode !== 'string') return "";
+
+    // A. Token Sanitization: Clean illegal characters and hidden control tokens
+    let fixed = rawCode
+        .replace(/\u00A0/g, ' ') // Replace non-breaking spaces
+        .replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F]/g, "") // Remove control characters
+        .replace(/^```[a-z]*\n?|```$/gi, '') // Strip markdown blocks
+        .trim();
+
+    // 1. Emergency Wrap: If the AI only sent raw JS, wrap it in a proper HTML shell
+    if (!fixed.includes('<script') && (fixed.includes('function') || fixed.includes('const') || fixed.includes('let') || fixed.includes('canvas'))) {
+        fixed = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;overflow:hidden;background:#000;}canvas{display:block;width:100vw;height:100vh;}</style></head><body><canvas id="canvas"></canvas><script>${fixed}<\/script></body></html>`;
+    }
+
+    // 2. HEALER LOGIC: Specialized for Code/Create modes
+    if (isCodeMode) {
+        const hasOnLoad = fixed.includes('window.onload') || 
+                         fixed.includes('addEventListener(\'load\'') || 
+                         fixed.includes('addEventListener("load"') ||
+                         fixed.includes('DOMContentLoaded');
+        
+        const hasInit = fixed.includes('function init') || fixed.includes('const init');
+        const hasLoop = fixed.match(/function (loop|draw|render|update)/) || fixed.match(/const (loop|draw|render|update)/);
+
+        // --- NEW: DE-DUPLICATION GUARD ---
+        // If a lifecycle runner is already present, do NOT inject a second one
+        const needsRunner = (hasInit || hasLoop) && !hasOnLoad;
+
+        // --- SCOPE & VISIBILITY HEALERS ---
+        if (fixed.includes('opacity') || fixed.includes('rgba')) {
+            fixed = fixed.replace(/\/\s*100(?!\d)/g, '/ 40'); 
+            fixed = fixed.replace(/\/\s*255(?!\d)/g, '/ 120');
+        }
+
+        // --- COORDINATE HEALER (Bounding Rect) ---
+        if (fixed.includes('clientX') && !fixed.includes('getBoundingClientRect')) {
+            fixed = fixed.replace(/(function|const|let)\s+(\w+Mouse\w+|handle\w+|on\w+)\s*=\s*\(?(e|evt)\)?\s*=>?\s*\{|function\s+(\w+)\s*\((e|evt)\)\s*\{/g, 
+            (match, p1, p2, p3, p4, p5) => {
+                const ev = p3 || p5;
+                return `${match} const rect = (document.querySelector('canvas') || ${ev}.target).getBoundingClientRect(); const mx = ${ev}.clientX - rect.left; const my = ${ev}.clientY - rect.top; `;
+            });
+        }
+
+        // --- AUDIO & MATH PROTECTION ---
+        fixed = fixed.replace(/Math\.sqrt\(([^)]+)\)/g, 'Math.max(0.001, Math.sqrt($1))');
+        if (fixed.includes('AudioContext')) {
+            fixed = fixed.replace(/oscillator\.frequency/g, '(window.oscillator && window.oscillator.frequency)');
+        }
+
+        // --- STRUCTURAL INTEGRITY ---
+        
+        // Ensure Canvas exists if context is called
+        if (fixed.includes('.getContext') && !fixed.includes('<canvas')) {
+            if (fixed.includes('<body>')) {
+                fixed = fixed.replace('<body>', '<body><canvas id="canvas"></canvas>');
+            } else {
+                fixed = `<canvas id="canvas"></canvas>${fixed}`;
+            }
+        }
+
+        // Inject Resize into Init if missing
+        if (hasInit && fixed.includes('function resize') && !fixed.match(/init\s*\([^)]*\)\s*\{[^}]*resize/)) {
+            fixed = fixed.replace(/init\s*\([^)]*\)\s*\{/, 'init() { if(typeof resize === "function") resize(); ');
+        }
+
+        // --- FINAL LIFECYCLE INJECTION (If missing) ---
+        if (needsRunner) {
+            const runner = `
+<script id="yertal-lifecycle-runner">
+    (function() {
+        const start = () => {
+            console.log('Yertal Lifecycle: Auto-starting sequence...');
+            if(typeof init === 'function') init(); 
+            if(typeof render === 'function') render();
+            else if(typeof loop === 'function') loop(); 
+            else if(typeof draw === 'function') draw(); 
+        };
+        if (document.readyState === 'complete') start();
+        else window.addEventListener('load', start);
+    })();
+<\/script>`;
+            
+            // Inject before closing body or at the end of the string
+            if (fixed.includes('</body>')) {
+                fixed = fixed.replace('</body>', `${runner}</body>`);
+            } else {
+                fixed += runner;
+            }
+        }
+
+        // Meta Viewport check
+        if (!fixed.includes('<meta name="viewport"')) {
+            fixed = fixed.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1.0">');
+        }
+    }
+
+    return fixed;
+}
+// UPDATED FUNCTION
+function getDynamicCardCover(themeObject) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 300; 
+    canvas.height = 180; 
+    const ctx = canvas.getContext('2d');
+    
+    // Fallback defaults if the active theme properties are somehow missing
+    const bgHigh = themeObject['bg-color-high'] || 'rgba(0, 8, 15, 1.0)';
+    const bgMid = themeObject['bg-color-mid'] || 'rgba(0, 2, 5, 1.0)';
+    const bgLow = themeObject['bg-color-low'] || 'rgba(0, 5, 10, 1.0)';
+    const glowColor = themeObject['glow-color'] || 'rgba(0, 242, 255, 1.0)';
+    
+    // 1. CREATE METALLIC GRADIENT BACKGROUND FROM THEME
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, bgLow);
+    gradient.addColorStop(0.3, bgMid);
+    gradient.addColorStop(0.5, bgHigh); // Highlight line centered
+    gradient.addColorStop(0.7, bgMid);
+    gradient.addColorStop(1, bgLow);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 2. RENDER RANDOM FRACTAL OVERLAY USING THEME GLOW
+    ctx.strokeStyle = glowColor;
+    ctx.globalAlpha = 0.12; // Ghostly, glowing fractal lines
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = glowColor;
+
+    const iterations = 1500;
+    let x = Math.random() * canvas.width;
+    let y = Math.random() * canvas.height;
+    
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    
+    for (let i = 0; i < iterations; i++) {
+        const nx = x + (Math.sin(x * 0.02 + y * 0.03) * 15);
+        const ny = y + (Math.cos(x * 0.03 - y * 0.02) * 15);
+        
+        ctx.lineTo(nx, ny);
+        x = nx;
+        y = ny;
+        
+        if (x < 0) x = canvas.width; if (x > canvas.width) x = 0;
+        if (y < 0) y = canvas.height; if (y > canvas.height) y = 0;
+    }
+    ctx.stroke();
+    
+    ctx.globalAlpha = 1.0;
+    ctx.shadowBlur = 0; 
+    
+    const finalImage = canvas.toDataURL('image/png');
+    return finalImage;
+}
+// NEW FUNCTION
+function getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpace) {
+    const actionVerbs = ['create', 'build', 'fetch', 'top', 'get', 'generate', 'show'];
+    const numberWords = { 
+        'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 
+        'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10 
+    };
+
+    // 1. Strip URLs to read pure command text
+    let cleanPrompt = prompt;
+    manualUrls.forEach(url => { cleanPrompt = cleanPrompt.replace(url, ''); });
+    const words = cleanPrompt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").split(/\s+/);
+
+    let requestedCount = null;
+
+    // 2. Priority Logic: Check immediately after an action word
+    for (let i = 0; i < words.length - 1; i++) {
+        const currentWord = words[i].toLowerCase();
+        
+        if (actionVerbs.includes(currentWord)) {
+            const nextWord = words[i + 1].toLowerCase();
+            
+            if (/^\d+$/.test(nextWord)) {
+                requestedCount = parseInt(nextWord, 10);
+                break;
+            } else if (numberWords[nextWord]) {
+                requestedCount = numberWords[nextWord];
+                break;
+            } else if (['a', 'an', 'the'].includes(nextWord)) {
+                requestedCount = 1;
+                break;
+            }
+        }
+    }
+
+    // 3. Fallback: Old regex search if direct priority didn't hit
+    if (requestedCount === null) {
+        const wordMatch = cleanPrompt.toLowerCase().match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/);
+        const digitMatch = cleanPrompt.match(/\b\d{1,2}\b/);
+        
+        if (wordMatch) {
+            requestedCount = numberWords[wordMatch[0]];
+        } else if (digitMatch) {
+            requestedCount = parseInt(digitMatch[0], 10);
+        } else {
+            requestedCount = 1;
+        }
+    }
+
+    // 4. Calculate bounded final counts
+    const cappedRequestedCount = Math.min(requestedCount, planLimits.num_mass_sparks);
+    const finalForgeCount = Math.min(cappedRequestedCount, remainingSpace);
+
+    // 5. Build workload collection for URLs if needed
+    const textChunks = cleanPrompt.split(/,|\n/).map(str => str.trim()).filter(Boolean);
+    
+    return {
+        count: finalForgeCount,
+        textChunks: textChunks,
+        isAiReferenceSearch: (manualUrls.length > 0 && requestedCount > 1)
+    };
+}
+
+// FUNCTION: shapeAiPrompt
+function shapeAiPrompt(providerName, rawPrompt, count, mode, currentName, promptTypeObject) {
+    const isSource = mode === 'source';
+    
+    // 1. DYNAMIC LOOKUP: Locate the provider in the manifest
+    const manifest = databaseCache.app_manifest?.llm_providers || [];
+    const providerConfig = manifest.find(p => p.provider_name === providerName);
+    const createInstructions = providerConfig.create_instructions + ". Do not add comments. Define reusable .css classes in a single <style> block. Name primary global variables using whole words from the prompt and define them inside a top-level params block. Shorten function names and all other variable names.";
+    
+    // 2. EXTRACTION: Pull the raw instructions from the JSON
+    const systemInstructions = providerConfig 
+        ? (isSource ? providerConfig.source_instructions : createInstructions) 
+        : "";
+
+    // 3. ASSEMBLE FINAL PROMPT
+    // Pure Intent + Provider-specific JSON logic + Quantity
+    const fullPrompt = `
+        PROMPT: ${rawPrompt}
+        
+        INSTRUCTIONS:
+        ${systemInstructions}
+        
+        QUANTITY: Return ${Math.max(1, count)} unique items.
+    `.trim();
+
+    console.log(`[SHAPER]: Raw prompt assembled for ${providerName}.`);
+    console.log("shapeAIPrompt: Raw prompt is:", fullPrompt);
+    return fullPrompt;
+}
+
+function shapeAiPromptBasic(rawPrompt, count, mode, currentName, promptTypeObject) {
+    const isSource = mode === 'source';
+    const isPictures = promptTypeObject.name === "Pictures";
+
+    let instructions = "";
+
+    if (isSource) {
+            instructions = `- Research specific items that match the task. Do not return database home pages.
+                            ${promptTypeObject.rules}
+                         - Format: JSON array [{"name", "url", "thumbnail"}] and name has maximum 3 words. The thumbnail is a publicly available and high resolution image that represents the item. Confirm the links to the item and the thumbnail exist in your latest index.`;
+    } else {
+        // Your existing code generation logic
+        instructions = `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
+                     - Format: JSON object {"name", "code", "thumbnail"} and name has maximum 3 words. The thumbnail is an image that perfectly represents the application.`;
+    } 
+
+    const returnString = isSource ? 
+        `Objective: ${rawPrompt}. Category to locate: ${promptTypeObject.name}.`: `${rawPrompt}. Use this capability: ${promptTypeObject.name}.`;
+
+    const fullPrompt = `
+        ${returnString}
+        ${instructions}
+        Quantity: ${Math.max(1, count)} ${isSource ? "entries" : "code variations"}.
+    `.trim();
+    console.log(`shapeAIPrompt: Category: ${promptTypeObject.name} Prompt: ${rawPrompt}. Full shaped Prompt: ${fullPrompt}`);
+    return fullPrompt;
+}
+
+function shapeAiPromptComplex(rawPrompt, count, mode, currentName, promptTypeObject) {
+    const isSource = mode === 'source';
+    const isPictures = promptTypeObject.name === "Pictures";
+
+    let instructions = "";
+
+    if (isSource) {
+            instructions = `- Research specific items that match the task.
+                            ${promptTypeObject.rules}
+                         - Format: JSON array [{"name", "url"}] and name has maximum 3 words.`;
+    } else {
+        // Your existing code generation logic
+        instructions = `Write a visually stunning, fully working HTML/Javascript application with gradient colors and 3D objects.
+                     - Format: JSON object {"name", "code"} and name has maximum 3 words.`;
+    }
+
+    const returnString = isSource ? 
+        `${rawPrompt}. Category to source: ${promptTypeObject.name}.`: `${rawPrompt}. Follow this model: ${promptTypeObject.name}.`;
+
+    const fullPrompt = `
+        ${returnString}
+        ${instructions}
+        Quantity: ${Math.max(1, count)} ${isSource ? "entries" : "code variations"}.
+    `.trim();
+    console.log(`shapeAIPrompt: Category: ${promptTypeObject.name} Prompt: ${rawPrompt}. Full shaped Prompt: ${fullPrompt}`);
+    return fullPrompt;
+}
+
+/*
+ * Task: Launch the HUD on EXEC click and cycle status messages.
+ */
+async function triggerExecHUD() {
+    const overlay = document.querySelector('.hud-overlay');
+    const hudWindow = document.querySelector('.hud-window');
+    
+    // Set up the internal content using your existing hud-window class
+    hudWindow.innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+            <div class="hud-spinner-metallic"></div>
+            <div id="succession-text" class="hud-message-fader">Initializing Forge...</div>
+        </div>
+    `;
+    
+    overlay.classList.add('active'); 
+    
+    const messages = [
+        "Generating the Spark could take a few minutes...",
+        "We will let you know when it is ready...",
+        "Do not close the window or click anywhere else until finished...",
+        "Check the status bar on the top left for status..."
+    ];
+    
+    let msgIndex = 0;
+    const textEl = document.getElementById('succession-text');
+
+    const intervalId = setInterval(() => {
+        textEl.classList.remove('active');
+        setTimeout(() => {
+            if (msgIndex < messages.length) {
+                textEl.innerText = messages[msgIndex];
+                textEl.classList.add('active');
+                msgIndex++;
+            } else {
+                msgIndex = 0; // Loop if LLM is slow
+            }
+        }, 800);
+    }, 5000);
+
+    return intervalId;
+}
+
+/*
+ * Task: Minimal HUD teardown.
+ */
+function closeExecHUD(intervalId) {
+    clearInterval(intervalId);
+    const textEl = document.getElementById('succession-text');
+    
+    textEl.classList.remove('active');
+    setTimeout(() => {
+        textEl.innerText = "The Spark is Ready!";
+        textEl.classList.add('active');
+        
+        // Final fade out of the overlay
+        setTimeout(() => {
+            document.querySelector('.hud-overlay').classList.remove('active');
+        }, 1500);
+    }, 800);
+}
+
+
+/*
+ * Processes the image field from the DB.
+ * Returns the Base64 string if present, or a formatted asset path.
+ */
+function genSparkImage(sparkImageFromDB) {
+    if (!sparkImageFromDB) {
+        console.warn("Result: Fallback to default.jpg");
+        return 'assets/thumbnails/default.jpg';
+    }
+
+    if (sparkImageFromDB.startsWith('data:image/')) {
+        console.log("Result: Valid Data URI detected. Length:", sparkImageFromDB.length);
+        // Check for common corruption: space at start or missing base64 tag
+        if (sparkImageFromDB.includes(" ")) console.error("Validation Error: Data URI contains spaces!");
+        return sparkImageFromDB;
+    }
+
+    console.log("genSparkImage: Treating the image as a standard path/URL");
+    return sparkImageFromDB;
+}
+
+// FUNCTION: renderSparkCard
+function renderSparkCard(spark, isOwner, currentId, ownerId) {
+    /* Overall Objective: Generate the HTML for a spark card with persistent 
+        neon state for likes and shares, and dynamic monetization labels based on plan type. */
+    
+    // Retrieve the page owner's metadata from the cache
+    const ownerData = databaseCache?.users?.[ownerId];
+    const userSlug = ownerData?.profile?.slug;
+    const targetUrl = `spark.html?user=${userSlug}&current=${currentId}&spark=${spark.id}`;
+
+    // Retrieve Monetization settings based on the owner's plan_type
+    const ownerPlanKey = ownerData?.profile?.plan_type || 'free';
+    const planLimits = databaseCache.settings?.['plan_types']?.[ownerPlanKey] || {};
+    
+    // Logic for Sales vs Tips branding
+    const isSalesMode = planLimits.monetization === 'sales';
+    const txLabel = isSalesMode ? 'SALES' : 'TIPS';
+    const txIcon = isSalesMode ? 'fa-shopping-cart' : 'fa-coins';
+    const txActionTitle = isSalesMode ? 'Purchase' : 'Tip Jar';
+
+    // Now check for the visitor user's credentials.
+    const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
+    const sparkElementId = `save-btn-${spark.id}`;
+
+    let finalRenderedImage = '/assets/thumbnails/default.jpg'; 
+    const sparkImage = genSparkImage(spark.image);
+    finalRenderedImage = sparkImage;
+        
+    if (!sparkImage || spark.image === "") {
+       const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
+       const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
+       finalRenderedImage = getDynamicCardCover(activeThemeData);
+    }
+
+    // 1. Core Color Palette
+    const pearlColor = "var(--list-color)";
+    const neonColor = "var(--glow-color)";
+    const neonGlow = "drop-shadow(0 0 5px var(--glow-color))";
+    
+    // 2. State Assignments (Persisting the Neon state)
+    const hasLiked = spark.stats?.likes?.users?.[visitorUid] ? true : false;
+    const likeIconColor = hasLiked ? neonColor : pearlColor;
+    const likeIconGlow = hasLiked ? neonGlow : "none";
+
+    const hasShared = spark.stats?.reshares?.users?.[visitorUid] ? true : false;
+    const shareIconColor = hasShared ? neonColor : pearlColor;
+    const shareIconGlow = hasShared ? neonGlow : "none";
+
+    // Forge State Check (Internal Async)
+    if (visitorUid && !isOwner) {
+        (async () => {
+            const savedRef = ref(db, `users/${visitorUid}/infrastructure/currents/${currentId}/sparks/${spark.id}`);
+            const snapshot = await get(savedRef);
+            if (snapshot.exists()) {
+                const btn = document.getElementById(sparkElementId);
+                if (btn) {
+                    const icon = btn.querySelector('i');
+                    icon.style.color = neonColor;
+                    icon.style.filter = neonGlow;
+                    btn.style.pointerEvents = "none";
+                    btn.title = "Already in Your Realm";
+                }
+            }
+        })();
+    }
+
+    const toolIconColor = pearlColor;
+
+    // 3. Extraction of Stats Counts (Corrected paths)
+    const viewCount = spark.stats?.views?.total_count || 0;
+    const likeCount = spark.stats?.likes?.count || 0;
+    const shareCount = spark.stats?.reshares?.count || 0;
+    const transactionAmt = spark.stats?.transactions?.total_amount || 0;
+    const feedbackCount = spark.stats?.feedback?.count || 0;
+
+    // Shared Styles
+    const btnStyle = `background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; filter: drop-shadow(0 0 2px var(--glow-color));`;
+    const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
+    const onOut = "this.style.filter='drop-shadow(0 0 2px var(--glow-color))'; this.style.transform='scale(1)';"
+    
+    const activeThemeKeyForHtml = localStorage.getItem('arcade-theme') || 'neon-dark';
+    const inlineFallbackJS = `console.error('IMAGE NETWORK FAILED: ${spark.id}'); this.onerror=null; try { const tk = localStorage.getItem('arcade-theme') || 'neon-dark'; const td = databaseCache.settings['themes'][tk] || {}; this.src=getDynamicCardCover(td); } catch(e) { this.src='/assets/thumbnails/default.jpg'; }`;
+
+    return `
+        <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center; width: 100%;">
+            <div class="action-card" 
+                  onclick="window.handleSparkLaunch('${currentId}', '${spark.id}', '${ownerId}', '${targetUrl}')"
+                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
+                
+                <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1.5rem; pointer-events: none;">
+                    ${spark.name}
+                </h4>
+                
+                <img src="${finalRenderedImage}" 
+                       class="spark-thumbnail"
+                       onerror="${inlineFallbackJS}"
+                       onload="this.style.opacity='1';"
+                       style="opacity: 0;">
+                
+                <div style="position: absolute; inset: 0; background: var(--bg-color); opacity: 0.1; z-index: 2; pointer-events: none;"></div>
+            </div>
+
+            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
+                
+                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 8px; color: rgba(var(--fg-color-high),0.4); border-bottom: 1px solid rgba(var(--fg-color-high),0.1); width: 85%; padding-bottom: 6px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <span class="stat-views" title="Total Views">
+                        <i class="fas fa-eye" style="margin-right: 2px;"></i> 
+                        VIEWS: ${viewCount}
+                    </span>
+                    <span class="stat-likes" title="Total Likes">
+                        <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> 
+                        LIKES: ${likeCount}
+                    </span>
+                    <span class="stat-feedback" title="Total Feedback">
+                        <i class="fas fa-comment-dots" style="margin-right: 2px;"></i> 
+                        FEEDBACK: ${feedbackCount}
+                    </span>
+                    <span class="stat-reshares" title="Total Shares">
+                        <i class="fas fa-retweet" style="margin-right: 2px;"></i> 
+                        SHARES: ${shareCount}
+                    </span>
+                    <span class="stat-transactions" title="Total ${txLabel}">
+                        <i class="fas ${txIcon}" style="margin-right: 2px;"></i> 
+                        ${txLabel}: ${transactionAmt}
+                    </span>
+                </div>
+
+                <div class="interaction-row" style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%;">
+                    <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none;">
+                        ${spark.link ? 'SOURCED' : 'FORGED'}: ${formatTimeAgo(spark.created)}
+                    </div>
+                    
+                    <div class="action-buttons" style="display: flex; gap: 0.8rem; align-items: center; justify-content: center;">
+                        <button onclick="likeSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Like" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <i class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
+                        </button>
+
+                        <button onclick="openFeedback(event, '${ownerId}', '${currentId}', '${spark.id}')" title="Leave Feedback" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <i class="fas fa-comment" style="font-size: 10px; color: ${toolIconColor};"></i>
+                        </button>
+
+                        ${isOwner ? `
+                            <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                                <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
+                            </button>
+                            <button onclick="deleteSpark('${currentId}', '${spark.id}', '${visitorUid}')" title="Delete" 
+                                    style="${btnStyle}" 
+                                    onmouseover="this.style.color='var(--error-color)'; this.style.filter='drop-shadow(0 0 8px var(--error-color))'; this.style.transform='scale(1.2)';" 
+                                    onmouseout="${onOut}">
+                                <i class="fas fa-trash" style="font-size: 10px; color: ${toolIconColor};"></i>
+                            </button>
+                        ` : `
+                            <button id="${sparkElementId}" onclick="cloneSpark(this, '${visitorUid}', '${ownerId}', '${currentId}', '${spark.id}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                                <i class="fas fa-save" style="font-size: 10px; color: ${toolIconColor};"></i>
+                            </button>
+                            <button onclick="shareSpark(this, '${ownerId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                                <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
+                            </button>
+                            <button onclick="window.payOwner(this, '${ownerId}', '${currentId}', '${spark.id}')" 
+                                    title="${txActionTitle}" 
+                                    style="${btnStyle}" 
+                                    onmouseover="${onHover}" 
+                                    onmouseout="${onOut}">
+                                    <i class="fas ${txIcon}" style="font-size: 10px; color: ${toolIconColor};"></i>
+                            </button>                        
+                            `}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/*
+ * Generates a concise Spark name: <CurrentName>-Spark#<DDMM-HHMM>
+ * @param {string} currentName - The name of the parent Current
+ * @returns {string}
+ */
+const generateSparkName = (currentName) => {
+    const now = new Date();
+    const datePart = now.getDate().toString().padStart(2, '0') + (now.getMonth() + 1).toString().padStart(2, '0');
+    const timePart = now.getHours().toString().padStart(2, '0') + now.getMinutes().toString().padStart(2, '0');
+    
+    return `${currentName}-Spark#${datePart}-${timePart}`;
+};
+
+function resolveCategoryFromPrompt(prompt, currentName) {
+    const cleanPrompt = prompt.toLowerCase().trim();
+    // Split into words/tokens and remove punctuation
+    const tokens = cleanPrompt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").split(/\s+/);
+    
+    console.log(`[resolveCategoryFromPrompt]: Evaluating prompt: "${cleanPrompt}"`);
+    console.log(`[resolveCategoryFromPrompt]: Extracted tokens:`, tokens);
+    
+    const presets = databaseCache.settings?.['arcade-current-types'] || [];
+    
+    // ========================================================
+    // 1. ACTIVE BOARD NAME CHECK (First Priority)
+    // ========================================================
+    // Check if any whole word in the prompt matches the active current's name
+    if (currentName) {
+        const cleanCurrentName = currentName.toLowerCase().trim();
+        const currentNameRegex = new RegExp(`\\b${cleanCurrentName}\\b`, 'i');
+        
+        // Test if the prompt contains the current board's name as a whole word
+        const boardMatches = currentNameRegex.test(cleanPrompt);
+        
+        if (boardMatches) {
+            // Find that actual preset in the DB so we can return its correct image and logic
+            const matchingPreset = presets.find(p => (p.name || '').toLowerCase().trim() === cleanCurrentName);
+            
+            if (matchingPreset) {
+                console.log(`[DEBUG_REGEX]: Match found! Prompt matches active board: [${matchingPreset.name}]`);
+                return {
+                    id: matchingPreset.id,
+                    name: matchingPreset.name,
+                    logic: matchingPreset.logic,
+                    image: matchingPreset.image,
+                    rules: matchingPreset.rules || ""
+                };
+            }
+        }
+    }
+
+    // ========================================================
+    // 2. DB ID, NAME, & REGEX SCAN (Second Priority)
+    // ========================================================
+    const matchedCategory = presets.find(category => {
+        const catId = (category.id || '').toLowerCase().trim();
+        const catName = (category.name || '').toLowerCase().trim();
+        
+        // A. Check ID match (Whole Word)
+        let idMatches = false;
+        if (catId) {
+            const idRegex = new RegExp(`\\b${catId}\\b`, 'i');
+            idMatches = idRegex.test(cleanPrompt);
+        }
+
+        // B. Check Name match (Whole Word)
+        let nameMatches = false;
+        if (catName) {
+            const nameRegex = new RegExp(`\\b${catName}\\b`, 'i');
+            nameMatches = nameRegex.test(cleanPrompt);
+        }
+        
+// C. Check Regex match (Whole Word)
+let regexMatches = false;
+if (category.regex) {
+    try {
+        // CLEANUP: Remove leading/trailing pipes and double pipes which create "empty" matches
+        const sanitizedRegex = category.regex.replace(/^\|+|\|+$/g, '').replace(/\|\|+/g, '|');
+        
+        if (sanitizedRegex) {
+            const boundedRegex = `\\b(${sanitizedRegex})\\b`;
+            const regexPattern = new RegExp(boundedRegex, 'i');
+            
+            const promptHitsRegex = regexPattern.test(cleanPrompt);
+            const tokenHitsRegex = tokens.some(token => regexPattern.test(token));
+            
+            regexMatches = promptHitsRegex || tokenHitsRegex;
+        }
+    } catch (regexErr) {
+        console.warn(`[resolveCategoryFromPrompt]: Invalid regex for ${category.id}:`, regexErr);
+    }
+}
+        
+        // If it specifically matches the ID, Name, or defined Regex:
+        if (idMatches || nameMatches || regexMatches) {
+            let matchType = [];
+            if (idMatches) matchType.push("ID");
+            if (nameMatches) matchType.push("Name");
+            if (regexMatches) matchType.push("Regex");
+            
+            console.log(`[DEBUG_REGEX]: DB Match found! Category [${category.name}] triggered via [${matchType.join(' + ')}]`);
+            return true;
+        }
+        return false;
+    });
+
+    if (matchedCategory) {
+        return {
+            id: matchedCategory.id,
+            name: matchedCategory.name,
+            logic: matchedCategory.logic,
+            image: matchedCategory.image,
+            rules: matchedCategory.rules || ""
+        };
+    }
+
+    // ==========================================
+    // 3. ULTIMATE FALLBACK
+    // ==========================================
+    console.log(`[resolveCategoryFromPrompt]: No matches found in DB. Falling back to [Custom].`);
+    
+    // Fallback still respects whole words
+    const isCreate = /\b(generate|build|create)\b/i.test(cleanPrompt);
+    
+    return {
+        id: 'custom',
+        name: 'Custom',
+        logic: isCreate ? 'create' : 'hybrid',
+        image: '/assets/thumbnails/default.jpg',
+        rules: "Maintain extreme flexibility. Do not enforce specialized rulesets."
+    };
+}
+
+
+/*
+ * Extracts valid URLs from a string based on common separators
+ * @param {string} text 
+ * @returns {string[]}
+ */
+const extractUrls = (text) => {
+    // Splits by comma, semicolon, space, or newline
+    const potentialUrls = text.split(/[\s,;\n]+/);
+    const urlPattern = /^(http|https):\/\/[^ "]+$/;
+    return potentialUrls.filter(item => urlPattern.test(item.trim()));
+};
+    
+
+
+
+async function refreshProviderModels(providerName, proxyKey) {
+    const providers = databaseCache.app_manifest?.llm_providers;
+    const config = providers?.find(p => p.provider_name === providerName);
+    if (!config) return null;
+
+    try {
+        const url = config.model_discovery_api.replace('API_KEY', proxyKey);
+        const res = await fetch(url, { method: 'GET' });
+        const data = await res.json();
+
+        let rawNames = (providerName === 'google') 
+            ? data.models?.filter(m => m.supportedGenerationMethods.includes('generateContent')).map(m => m.name.split('/')[1])
+            : data.data?.map(m => m.id);
+
+        if (!rawNames || rawNames.length === 0) throw new Error("No models found.");
+
+        const blacklist = ['embedding', 'aqa', 'vision', 'latest', 'lite', 'deprecated', 'experimental'];
+        const validatedModels = rawNames.filter(name => {
+            const n = name.toLowerCase();
+            return !blacklist.some(term => n.includes(term)) && !n.endsWith('-latest');
+        });
+
+        const categorize = (name) => {
+            const n = name.toLowerCase();
+            if (n.includes('pro') || n.includes('reasoner') || n.includes('70b') || n.includes('105b') || n.includes('v4')) return 'create';
+            return 'source';
+        };
+
+        const sourcePool = validatedModels.filter(m => categorize(m) === 'source').sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+        const createPool = validatedModels.filter(m => categorize(m) === 'create').sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+        const finalCreate = createPool.length > 0 ? [...createPool, ...sourcePool] : sourcePool;
+
+        if (!modelStats[providerName]) modelStats[providerName] = { source: [], create: [] };
+        
+        const updatePoolStats = (newNames, existingStats) => {
+            return newNames.map(name => {
+                const existing = existingStats.find(s => s[0] === name);
+                return existing ? existing : [name, 0];
+            });
+        };
+
+        modelStats[providerName].source = updatePoolStats(sourcePool, modelStats[providerName].source);
+        modelStats[providerName].create = updatePoolStats(finalCreate, modelStats[providerName].create);
+
+        const providerIndex = providers.findIndex(p => p.provider_name === providerName);
+        if (providerIndex !== -1) {
+            update(ref(db, `app_manifest/llm_providers/${providerIndex}`), {
+                model_pools: { create: finalCreate, source: sourcePool },
+                last_sync: new Date().toISOString()
+            });
+        }
+
+        return sourcePool[0];
+    } catch (e) {
+        console.warn(`[FORGE]: Using existing pool for ${providerName}.`);
+        return config.default_model;
+    }
+}
+
+/*
+ * Overall Objective: Log model failures without interrupting the user experience.
+ */
+function handleModelError(providerName, modelName) {
+    if (modelStats[providerName] && modelStats[providerName].hasOwnProperty(modelName)) {
+        modelStats[providerName][modelName] += 1;
+        console.warn(`[FORGE]: ${modelName} failure count: ${modelStats[providerName][modelName]}`);
+    }
+}
+
+// FUNCTION: getBestModels
+async function getBestModels(poolType) {
+    // 1. Initial Hydration
+    if (!modelStats || Object.keys(modelStats).length === 0) {
+        console.log(`[FORGE]: modelStats empty, retrieving providers...`);
+        await retrieveProvider();
+    }
+
+  console.log(`[DEBUG]: Starting getBestModels for pool: ${poolType}`);
+  console.log(`[DEBUG]: Current modelStats state:`, modelStats);
+
+    let candidates = [];
+    const manifest = databaseCache.app_manifest;
+
+  if (!manifest || !manifest.llm_providers) {
+      console.error("[DEBUG]: app_manifest or llm_providers is missing from databaseCache");
+      return [];
+  }
+
+    // 2. Build Candidate List
+    Object.keys(modelStats).forEach(providerName => {
+        const providerConfig = manifest.llm_providers.find(p => 
+            p.provider_name.toUpperCase() === providerName.toUpperCase()
+        );
+        
+      console.log(`[DEBUG]: Checking Provider: ${providerName} | Found in Manifest: ${!!providerConfig} | Enabled: ${providerConfig?.enabled}`);
+
+        if (providerConfig && providerConfig.enabled) {
+            const pool = modelStats[providerName][poolType] || [];
+          console.log(`[DEBUG]: Provider ${providerName} pool [${poolType}] has ${pool.length} models.`);
+            
+            pool.forEach(stat => {
+              console.log(`[DEBUG]: Evaluating model: ${stat[0]} | Failures: ${stat[1]}`);
+                candidates.push({
+                    provider: providerName,
+                    model: stat[0],
+                    failures: stat[1],
+                    config: providerConfig,
+                    statRef: stat 
+                });
+            });
+        }
+    });
+
+  console.log(`[DEBUG]: Total candidates found before reset logic: ${candidates.length}`);
+
+    if (candidates.length === 0) {
+      console.warn(`[DEBUG]: No candidates found. Check if poolType '${poolType}' exists in modelStats keys.`);
+        return [];
+    }
+
+    // 3. Logic: Reset if all failed
+    const allFailed = candidates.every(c => c.failures > 0);
+    if (allFailed) {
+        console.warn(`[FORGE]: All models failed. Resetting counts to circulate again.`);
+        candidates.forEach(c => {
+            c.statRef[1] = 0; 
+            c.failures = 0;   
+        });
+    }
+
+    const sorted = candidates.sort((a, b) => a.failures - b.failures || a.model.localeCompare(b.model));
+  console.log(`[DEBUG]: Final sorted candidates:`, sorted.map(c => `${c.provider}:${c.model}`));
+    
+    return sorted;
+}
+
+async function checkImageExists(url) {
+    if (!url || typeof url !== 'string') return false;
+    if (url.includes('custom.jpg') || url.includes('default.jpg')) return false;
+    
+    // 1. Establish a strict list of verified, trusted media domains
+    const trustedCDNs = ['unsplash.com', 'istockphoto.com', 'media.istockphoto.com', 'images.unsplash.com'];
+    const isTrustedDomain = trustedCDNs.some(domain => url.includes(domain));
+
+    try {
+        let response = await fetch(url, { method: 'HEAD', cache: 'no-cache' });
+        
+        if (!response.ok) {
+            response = await fetch(url, { 
+                method: 'GET', 
+                cache: 'no-cache',
+                headers: { 'Range': 'bytes=0-0' } 
+            });
+        }
+
+        if (response.ok) {
+            const contentType = response.headers.get('content-type');
+            
+            // 2. Strict Check: If it explicitly claims to be an image, let it pass
+            if (contentType?.startsWith('image/')) {
+                return true;
+            }
+            
+            // 3. Conditional Exemption: Only drop the header enforcement for verified CDNs
+            if (!contentType && isTrustedDomain) {
+                return true;
+            }
+        }
+        return false;
+    } catch (e) {
+        return false;
+    }
+}
+
+/*
+ * Distills the first 6 meaningful keywords from a prompt to fetch a target Unsplash asset.
+ * @param {string} prompt - The user's input string.
+ * @returns {string} Fully qualified direct Unsplash asset URL.
+ */
+function getArcadeImageFromPrompt(prompt) {
+    const NUM_WORDS_MATCH = 3;
+    if (!prompt) return 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=400&q=abstract';
+
+    // 2. Clean, tokenize, and filter down to descriptive keywords
+    const descriptiveTokens = prompt
+        .toLowerCase()
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Strip structural punctuation
+        .replace(/\d+/g, "")                         // Strip single numbers
+        .split(/\s+/)
+        .filter(t => t.length > 1 && !ARCADE_STOP_WORDS.has(t));
+
+    // 3. Slice exactly the first 6 high-priority words
+    const topKeywords = descriptiveTokens.slice(0, NUM_WORDS_MATCH).join('-');
+    const searchString = encodeURIComponent(topKeywords || 'abstract');
+
+    // 4. Return the finalized asset link optimized for your uniform layout grids
+    return `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&crop=entropy&w=400&h=400&q=80&q=${searchString}`;
+}
+
+/* The engine that creates the spark card(s) */
+async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeObject, currentPrivacy) {
+    const status = document.getElementById('engine-status-text');
+    console.group("[FORGE EXECUTIVE PIPELINE]");
+    console.log(`[ORCHESTRATOR CONFIG] mode: "${mode}" | Target Index: ${promptTypeObject?.index}`);
+    
+    // 1. CAPACITY VALIDATION
+    const planLimits = databaseCache.settings?.['plan_limits']?.[databaseCache.users?.[user.uid]?.profile?.plan_type || 'free'] || databaseCache.settings?.['plan_limits']?.['free'];
+    const remainingSpace = planLimits.max_sparks_per_current - Object.keys(databaseCache.users?.[user.uid]?.infrastructure?.currents?.[currentId]?.sparks || {}).length;
+
+    if (remainingSpace <= 0) {
+        status.textContent = `STORAGE FULL (${planLimits.max_sparks_per_current}/${planLimits.max_sparks_per_current})`;
+        alert(`Limit reached: ${planLimits.max_sparks_per_current} sparks.`);
+        console.groupEnd();
+        return;
+    }
+
+    const updateForgeStatus = (text) => {
+        if (!window.isInCooldown) status.textContent = text;
+    };
+
+    const hudInterval = await triggerExecHUD();
+    try {
+        // USE CASE 1: CACHE HIT REGISTRAR ROUTING
+        if (mode === 'cache_hit' && promptTypeObject && promptTypeObject.index !== -1) {
+            const cachedPreset = databaseCache.settings['arcade-current-types'][promptTypeObject.index];
+            const functionalTemplate = cachedPreset?.template || '';
+            
+            console.log(`[USE CASE 1] Found Cache Blueprint Match at index: ${promptTypeObject.index} ("${cachedPreset.name}")`);
+            
+            let sparkName = cachedPreset.name || generateSparkName(currentId);
+            let explicitOverrideMap = {};
+
+            // CASE A: STUB HIT (No template block present)
+            if (functionalTemplate.trim() === '') {
+                console.warn("[USE CASE 1] Template block is empty! Invoking LLM to build structural logic base...");
+                updateForgeStatus("STUB HIT! GENERATING BASE TEMPLATE...");
+                
+                const response = await callProviderAPI(prompt, currentName, {}, 0, 'create');
+                const isObj = response !== null && typeof response === 'object';
+                
+                const rawLLMContent = isObj ? (response.code || response.url) : response;
+                if (isObj) sparkName = response.name || sparkName;
+                const sparkImage = isObj ? response.thumbnail : cachedPreset.image;
+                
+                // Distill received raw content into clean templates using the helper function
+                const parserMockNode = { id: cachedPreset.id, name: sparkName, code: rawLLMContent, group: cachedPreset.group };
+                const distillation = generateTemplateAndParameterMap(parserMockNode, prompt);
+                
+                // Hydrate the central cache with the template and parameter map
+                cachedPreset.template = distillation.typeData.template;
+                cachedPreset.parameter_map = distillation.typeData.parameter_map;
+                
+                // Run real-time asynchronous path verification
+                const isCurrentImageValid = await checkImageExists(cachedPreset.image);
+
+                // If the current image in the cache is not loading, use response thumbnail or Unsplash fallback
+                if (!isCurrentImageValid) {
+                    if (isObj && response.thumbnail && await checkImageExists(sparkImage)) {
+                        cachedPreset.image = sparkImage;
+                    } else {
+                        cachedPreset.image = getArcadeImageFromPrompt(prompt);
+                    }
+                }
+            } 
+            // CASE B: BLUEPRINT LOADED (Template block exists but validating image path consistency)
+            else {
+                updateForgeStatus("FORGING INSTANT SPARK FROM CACHE...");
+                console.log("[USE CASE 1] Valid template present. Distilling prompt overrides without calling the LLM.");
+
+                explicitOverrideMap = { ...(promptTypeObject.properties || {}) };
+                
+                const isCachedImageValid = await checkImageExists(cachedPreset.image);
+                console.log(`[executeMassSpark]: Template exists. Image URL ${cachedPreset.image} is valid = ${isCachedImageValid}`);
+                
+                if (!isCachedImageValid) {
+                    console.warn(`[IMAGE REPAIR] Invalid image path detected for "${cachedPreset.name}". Fetching Unsplash fallback...`);
+                    cachedPreset.image = getArcadeImageFromPrompt(prompt);
+                }
+            }
+
+            // UNIFIED USE CASE 1 WRITEBACK & COMMITMENT
+            console.log("[CACHE REGISTRATION] Writing updated blueprint configuration to centralized registry index...");
+            await update(ref(db, `settings/arcade-current-types/${promptTypeObject.index}`), cachedPreset);
+            
+            await saveSpark(currentId, { 
+                name: sparkName, 
+                image: cachedPreset.image || '/assets/thumbnails/default.jpg',
+                index: promptTypeObject.index,
+                logic_used: cachedPreset.logic || 'create',
+                parameter_map: explicitOverrideMap
+            }, prompt, cachedPreset.name, cachedPreset.image, currentPrivacy);
+            
+            updateForgeStatus(functionalTemplate.trim() === '' ? "HYBRID HYDRATION COMPLETE" : "FORGING COMPLETE");
+        } 
+        // NATIVE RETAINED LOGIC: MEDIA DIRECT STREAM ROUTING
+        else if (mode === 'source') {
+            console.log("[MEDIA SOURCE ROUTE] Launching native stream content resolver...");
+            const manualUrls = extractUrls(prompt);
+            const resolution = getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpace);
+            let linksToSave = [];
+
+            if (manualUrls.length > 0 && !resolution.isAiReferenceSearch) {
+                for (let i = 0; i < Math.min(manualUrls.length, resolution.count); i++) {
+                    linksToSave.push({
+                        name: resolution.textChunks[i] || generateSparkName(currentId),
+                        url: manualUrls[i],
+                        image: '/assets/thumbnails/default.jpg'
+                    });
+                }
+            } else {
+                updateForgeStatus("CONSULTING MODEL POOL...");
+                const activeProvider = databaseCache.app_manifest?.llm_providers?.find(p => p.enabled)?.provider_name || 'google';
+                const isolatedSourceModels = modelStats[activeProvider]?.source || [];
+                const chosenSourceModel = isolatedSourceModels.length > 0 ? isolatedSourceModels[0][0] : databaseCache.app_manifest?.llm_providers?.find(p => p.provider_name === activeProvider)?.default_model;
+                
+                const response = await callProviderAPI(prompt, currentName, { default_model: chosenSourceModel }, resolution.count, mode);
+                const rawArray = Array.isArray(response) ? response : (typeof response === 'string' ? JSON.parse(response) : [response]);
+                
+                linksToSave = rawArray.slice(0, resolution.count).map((item, index) => {
+                    const isObject = item !== null && typeof item === 'object';
+                    return {
+                        name: (isObject ? (item.name || item.title) : null) || resolution.textChunks[index] || generateSparkName("Source Content"),
+                        url: isObject ? (item.url || item.link || item.code) : item,
+                        image: (isObject ? (item.thumbnail || item.image || item.img) : null) || '/assets/thumbnails/default.jpg'
+                    };
+                });                    
+            }
+
+            for (let i = 0; i < linksToSave.length; i++) {
+                const sparkName = linksToSave.length > 1 && linksToSave[i].name.startsWith('spark_') ? `${linksToSave[i].name}-${i + 1}` : linksToSave[i].name;
+                await saveSpark(currentId, {name: sparkName, link: linksToSave[i].url, image: linksToSave[i].image, logic_used: 'source'}, prompt, "Sourced Stream", linksToSave[i].image, currentPrivacy);
+                const progress = Math.round(((i + 1) / linksToSave.length) * 100);
+                updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
+            }
+        } 
+        // USE CASE 2: COMPLETE CACHE MISS / BRAND NEW BLUEPRINT GENERATION
+        else {
+            console.log("[USE CASE 2] Cache miss! Incurring full LLM compilation to create a brand new Class template...");
+            const manualUrls = extractUrls(prompt);
+            const resolution = getFinalSparkCountAndItems(prompt, manualUrls, planLimits, remainingSpace);
+
+            for (let i = 0; i < resolution.count; i++) {
+                const progress = Math.round((i / resolution.count) * 100);
+                updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
+
+                const response = await callProviderAPI(prompt, currentName, {}, i, mode);
+                const isObj = response !== null && typeof response === 'object';
+           
+                let sparkName = isObj ? response.name : generateSparkName(currentId);
+                let rawLLMContent = isObj ? (response.code || response.url) : response;
+                let sparkImage = isObj ? response.thumbnail : '/assets/thumbnails/default.jpg';
+                
+                // Call the helper to extract variables and construct the model entry data objects cleanly
+                const parserMockNode = { id: sparkName.toLowerCase().replace(/\s+/g, '-'), name: sparkName, code: rawLLMContent, group: "Custom Group" };
+                const distillation = generateTemplateAndParameterMap(parserMockNode, prompt);
+
+                // case mode is create and a new cache type has to be introduced
+                const nextCachedIndex = (databaseCache.settings?.['arcade-current-types'] || []).length;
+                const newRegisteredTypeObject = distillation.typeData;
+                newRegisteredTypeObject.image = sparkImage; // Sync generation imagery asset profile
+                
+                if (!databaseCache.settings['arcade-current-types']) databaseCache.settings['arcade-current-types'] = [];
+                databaseCache.settings['arcade-current-types'].push(newRegisteredTypeObject);
+                
+                console.log(`[CACHE REGISTRATION] Appending new archetype blueprint entry to index offset location: ${nextCachedIndex}`);
+                await update(ref(db, `settings/arcade-current-types/${nextCachedIndex}`), newRegisteredTypeObject);
+                
+                // Instantiation node setup matching strict registry indexing conventions
+                await saveSpark(currentId, { 
+                    name: sparkName, 
+                    image: sparkImage,
+                    index: nextCachedIndex,
+                    logic_used: 'create',
+                }, prompt, sparkName, sparkImage, currentPrivacy);
+            }
+            updateForgeStatus(`FORGING ${resolution.count} SPARKS [==========] 100%`);
+        }
+
+        setTimeout(async () => {
+            status.textContent = "SYSTEM READY";
+            closeExecHUD(hudInterval);
+            console.groupEnd();
+            await refreshUI(); 
+        }, 1000);
+
+    } catch (e) { 
+        console.error("Forge Error:", e);
+        if (!window.isInCooldown) status.textContent = "FORGE ERROR";
+        console.groupEnd();
+        closeExecHUD(hudInterval);
+    }
+}
+
+/*
+ * Objective: Primary Gateway for all LLM providers (Google, Sarvam, etc.)
+ * Tasks: 
+ * - Delegate URL resolution and API keys to the Proxy.
+ * - Log raw LLM output for debugging.
+ * - Parse standardized response from Apps Script Proxy.
+ * - Extract and log fields for creating a spark card and validation.
+ * - Double-circulation logic with 30s timeouts and handleModelError.
+ */
+async function callProviderAPI(prompt, currentName, promptTypeObject, val, type) {
+    const isCode = type === 'code' || type === 'create';
+    const poolType = isCode ? 'create' : 'source';
+    const statusText = document.getElementById('engine-status-text');
+    const PROXY_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbxS39QVHMsDqHgTgpNFWuMAZyS3lkPnd5ST9JhnoDKUu8etB1buYT3hq2A1ykWiKzu8/exec";
+
+    if (window.isInCooldown) {
+        console.warn("[FORGE]: Execution blocked by Cooldown.");
+        if (statusText) statusText.innerText = "System is cooling down. Please wait.";
+        throw new Error("System is cooling down.");
+    }
+
+    if (statusText) statusText.innerText = "FORGING SPARK [-----] 0%";
+
+    if (!modelStats || Object.keys(modelStats).length === 0) {
+        await retrieveProvider();
+    }
+
+    let candidates = await getBestModels(poolType);
+    if (candidates.length === 0) {
+        console.error(`callProviderAPI: [FORGE]: No models available for pool: ${poolType}`);
+        throw new Error("No enabled models found.");
+    }
+
+    let circulationCount = 0;
+    const maxCirculations = 1;
+
+    while (circulationCount < maxCirculations) {
+        for (let i = 0; i < candidates.length; i++) {
+            const { provider, model, config, statRef } = candidates[i];
+            const progress = Math.floor(((circulationCount * candidates.length + i) / (maxCirculations * candidates.length)) * 100);
+            
+            console.log(`callProviderAPI: [FORGE]: Round ${circulationCount + 1} | Attempting ${provider.toUpperCase()} : ${model}`);
+            
+            if (statusText) {
+                statusText.innerText = `FORGING SPARK [---] ${progress}% | Retrieving ${provider.toUpperCase()} ${model}...`;
+            }
+
+            const finalPrompt = shapeAiPrompt(provider, prompt, val, type, currentName, promptTypeObject);
+            console.log("callProviderAPI: finalPrompt=", finalPrompt);
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 180000);
+
+            try {
+                const response = await fetch(PROXY_GATEWAY_URL, {
+                    method: 'POST',
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        provider_name: provider,
+                        key: config.key, 
+                        execution_url: config.execution_url,
+                        model: model,
+                        prompt: finalPrompt
+                    })
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                
+                console.log(`callProviderAPI: [DEBUG] Raw Proxy JSON from ${model}:`, data);
+                
+                if (data.success === false) {
+                    throw new Error(data.error + (data.detail ? ": " + data.detail : ""));
+                }
+
+                console.log(`callProviderAPI: [FORGE SUCCESS]: Response received from ${model}`);
+                if (statusText) statusText.innerText = "SPARK FORGE SUCCESSFUL [======] 100% | Finalizing data...";
+                
+                // 1. Get raw result from Proxy
+                let rawResult = data.result;
+                if (!rawResult) throw new Error("Empty response content from Proxy.");
+
+                // 2. Extract Data (This now handles both Code and Source modes)
+                const extracted = extractSparkData(rawResult, isCode);
+                statRef[1] = 0; 
+                return extracted;
+
+            } catch (error) {
+                clearTimeout(timeoutId);
+                const isTimeout = error.name === 'AbortError';
+                const errorMsg = isTimeout ? "30s Timeout" : error.message;
+                
+                console.error(`callProviderAPI:[FORGE FAIL]: ${model} encountered an error:`, errorMsg);
+                
+                handleModelError(provider, model);
+                statRef[1] = modelStats[provider][model] || statRef[1] + 1;
+
+                if (statusText) {
+                    statusText.innerText = `FORGE ATTEMPT FAILED: ${provider} ${model} - ${errorMsg.substring(0, 30)}... Trying next.`;
+                }
+                
+                await new Promise(r => setTimeout(r, 1500));
+            }
+        }
+        circulationCount++;
+    }
+
+    console.error("callProviderAPI:[FORGE CRITICAL]: All attempts failed across two full circulations.");
+    if (statusText) statusText.innerText = "CRITICAL FAILURE: All models exhausted. Initiating Cooldown.";
+    await initiateSystemCooldown(statusText);
+    throw new Error("All model attempts exhausted after two full circulations.");
+}
+
+async function retrieveProvider() {
+    console.log("[FORGE]: Syncing with Firebase Manifest...");
+    try {
+        let manifest = databaseCache.app_manifest;
+        if (!manifest) {
+            const snap = await get(ref(db, 'app_manifest')).catch(() => null);
+            if (snap && snap.exists()) {
+                manifest = snap.val();
+                databaseCache.app_manifest = manifest;
+            }
+        }
+
+        if (!manifest || !Array.isArray(manifest.llm_providers)) {
+            console.error("[FORGE]: Invalid or missing manifest providers.");
+            return false;
+        }
+
+        if (!modelStats || Array.isArray(modelStats)) {
+            modelStats = {};
+        }
+
+        manifest.llm_providers.forEach(p => {
+            if (p.enabled) {
+                const pName = p.provider_name;
+                
+                if (!modelStats[pName]) {
+                    console.log(`[FORGE]: Registering Provider: ${pName.toUpperCase()}`);
+                    modelStats[pName] = {};
+                }
+                
+                const pools = p.model_pools || {};
+                
+              // Task: Correctly map models into their specific pool types (create/source)
+              ['create', 'source'].forEach(poolType => {
+                  const manifestModels = pools[poolType] || [];
+                  
+                  // Initialize or Update the pool array
+                  // We store as [[modelName, failureCount], ...]
+                  modelStats[pName][poolType] = manifestModels.map(modelName => {
+                      // Search existing modelStats to preserve failure counts if already present
+                      const existingPool = modelStats[pName][poolType] || [];
+                      const existingEntry = existingPool.find(m => m[0] === modelName);
+                      return [modelName, existingEntry ? existingEntry[1] : 0];
+                  });
+              });
+            }
+        });
+
+        console.log("[FORGE]: modelStats Hydrated:", modelStats);
+        return true;
+    } catch (e) {
+        console.error("[FORGE ERROR]: Hydration failed:", e);
+        return false;
+    }
+}
+/*
+ * System Cooldown & Reset Logic
+ */
+async function initiateSystemCooldown(statusElement) {
+    window.isInCooldown = true;
+    let timeLeft = 60;
+
+    return new Promise((resolve) => {
+        const timer = setInterval(() => {
+            if (statusElement) {
+                statusElement.textContent = `MODELS BUSY.  REATTEMPTING IN... ${timeLeft}s`;
+            }
+            timeLeft--;
+
+            if (timeLeft < 0) {
+                clearInterval(timer);
+                window.isInCooldown = false;
+                /*
+                // RECOVERY: Reset all failure counts in the new object structure
+                if (modelStats) {
+                    Object.keys(modelStats).forEach(provider => {
+                        Object.keys(modelStats[provider]).forEach(model => {
+                            modelStats[provider][model] = 0;
+                        });
+                    });
+                }
+                */
+                if (statusElement) statusElement.textContent = "SYSTEM READY";
+                resolve();
+            }
+        }, 1000);
+    });
+}
+async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg', currentPrivacy) {
+    const sparkId = `spark_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+    
+ console.group(`[PERSISTENCE] saveSpark -> ID: ${sparkId}`);
+ console.log("[PERSISTENCE] Incoming data mapping allocation from Orchestrator:", data);
+
+    const dbPath = `users/${user.uid}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
+    
+    const userNode = databaseCache.users?.[user.uid];
+    const currentCurrent = userNode?.infrastructure?.currents?.[currentId];
+    const rank = currentCurrent?.sparks ? Object.keys(currentCurrent.sparks).length + 1 : 1;
+
+     const payload = {
+        id: sparkId,
+        name: data.name || "Unnamed Spark",
+        prompt: prompt,
+        owner: user.uid, 
+        created: Date.now(),
+        template_type: detectedTemplate,
+        index: typeof data.index !== 'undefined' ? data.index : -1, // Transparent index logging pass-through
+        image: data.image || templateUrl || '/assets/thumbnails/default.jpg',
+        internal_rank: rank,
+        link: data.link || null,
+        privacy: currentPrivacy,
+        parameter_map: data.parameter_map || {}, // Transparent parameter map pass-through
+        stats: { views: 0, likes: 0, transactions: 0 }
+     };
+ 
+     console.log("[PERSISTENCE] Writing structural storage payload directly to dbPath:", payload);
+     await saveToRealtimeDB(dbPath, payload);
+     console.groupEnd();
+}
+
+window.deleteSpark = async (currentId, sparkId, ownerUid) => {
+    if (user.uid !== ownerUid) return alert("Unauthorized.");
+    if (!confirm("Decommission this spark?")) return;
+    
+    const dbPath = `users/${user.uid}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
+    await saveToRealtimeDB(dbPath, null);
+    
+    // Replaced: refreshUI is the newer version of initArcade.
+    await refreshUI(); 
+};
+
+function formatTimeAgo(timestamp) {
+    if (!timestamp) return 'RECENTLY'; // Handles local latency during creation
+    
+    let date;
+    
+    // 1. Check for Firestore Timestamp object with .toDate() method
+    if (typeof timestamp.toDate === 'function') {
+        date = timestamp.toDate();
+    } 
+    // 2. Check for Firebase 'seconds' object
+    else if (timestamp.seconds) {
+        date = new Date(timestamp.seconds * 1000);
+    } 
+    // 3. Fallback for ISO strings or Date objects
+    else {
+        date = new Date(timestamp);
+    }
+    
+    if (isNaN(date.getTime())) return 'SYNCING...';
+
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+    
+    // Ensure we don't show negative time due to clock drift
+    if (seconds < 5) return "JUST NOW";
+
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + "Y AGO";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + "MO AGO";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + "D AGO";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + "H AGO";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + "M AGO";
+    
+    return Math.floor(seconds) + "S AGO";
+}
+
+/*
+ * HUD Controls: Closes the Arcade Settings overlay
+ */
+window.closeArcadeSettings = () => {
+    const hud = document.getElementById('arcadesettings-hud');
+    
+    if (hud) {
+        // Option A: Instantly hide it
+        //hud.style.display = 'none';
+        // Highlighted changes to apply: Rollback logic to revert style preview if unsubmitted
+        const originalTheme = hud.dataset.originalTheme;
+        if (originalTheme && typeof applyTheme === 'function') {
+            applyTheme(originalTheme);
+        }
+        
+        // Option B: If you are using a fade-out animation in showroom_style.css or arcade.css
+        hud.classList.remove('active'); 
+        
+        console.log("[UI]: Realm Settings HUD closed.");
+    } else {
+        console.warn("[UI]: Could not find 'arcadesettings-hud' to close.");
+    }
+};
+
+async function formatPlanPrice(baseInrAmount) {
+    try {
+        let targetCurrency = 'INR';
+        let userLocale = 'en-IN';
+
+        // 1. Explicitly detect the user's real currency via a quick client-side IP lookup
+        try {
+            const geoResponse = await fetch('https://ipapi.co/json/');
+            if (geoResponse.ok) {
+                const geoData = await geoResponse.json();
+                if (geoData.currency) {
+                    targetCurrency = geoData.currency;
+                    // Dynamically map locale matching the detected country for cleaner symbols
+                    userLocale = navigator.languages ? navigator.languages[0] : navigator.language;
+                }
+            }
+        } catch (geoError) {
+            console.warn("Location check failed, defaulting to browser environment parsing:", geoError);
+            // Fallback system logic if the IP API is blocked or times out
+            const formatterOptions = new Intl.NumberFormat(navigator.language || 'en-IN', { style: 'currency', currency: 'INR' }).resolvedOptions();
+            targetCurrency = formatterOptions.currency || 'INR';
+            userLocale = navigator.language || 'en-IN';
+            if (targetCurrency === 'INR' && !userLocale.includes('IN')) {
+                targetCurrency = 'USD';
+            }
+        }
+
+        let symbol = '₹';
+        let convertedAmount = baseInrAmount;
+
+        // 2. Fetch conversion rates if the user is outside India
+        if (targetCurrency !== 'INR') {
+            const response = await fetch(`https://api.frankfurter.dev/v2/latest?base=INR&symbols=${targetCurrency}`);
+            if (response.ok) {
+                const data = await response.json();
+                convertedAmount = baseInrAmount * data.rates[targetCurrency];
+            }
+        }
+
+        // 3. Cleanly isolate the standalone currency symbol
+        // We use a clean target-matched fallback locale layout (e.g., 'en-US' for USD) 
+        // to strip extra country codes like 'US$' or 'CA$' from printing.
+        const symbolLocale = targetCurrency === 'USD' ? 'en-US' : (targetCurrency === 'EUR' ? 'de-DE' : userLocale);
+        const formatter = new Intl.NumberFormat(symbolLocale, {
+            style: 'currency',
+            currency: targetCurrency,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        const parts = formatter.formatToParts(convertedAmount);
+        symbol = parts.find(p => p.type === 'currency')?.value || symbol;
+        
+        // Strip out lingering alpha codes from the symbol if present (e.g. "US$" -> "$")
+        symbol = symbol.replace(/[A-Z]/g, '').trim();
+
+        // 4. Format the numeric value completely standalone
+        const costStr = new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(convertedAmount);
+
+        return { symbol, cost: costStr };
+
+    } catch (error) {
+        console.warn("Currency conversion routine encountered an error, running fallback:", error);
+        return { 
+            symbol: '₹', 
+            cost: new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(baseInrAmount) 
+        };
+    }
+}
+/* 
+ * Objective: Initialize or Re-Forge Arcade Identity
+ * Task: Dynamically generate HUD structure, populate from cache, and ensure Close UI is present.
+ */
+window.openArcadeSettings = async () => {
+    const hud = document.getElementById('arcadesettings-hud');
+    if (!hud) return;
+
+    // 1. IDENTITY & STATE CHECK
+    const currentUid = window.auth?.currentUser?.uid;
+    
+    // Retrieve profile from databaseCache as the Source of Truth
+    const profile = (databaseCache.users && currentUid && databaseCache.users[currentUid]) 
+                    ? databaseCache.users[currentUid].profile 
+                    : {};
+
+    const isSetup = profile.hasOwnProperty('setup_complete') && profile.setup_complete === true;
+    
+    console.log("openArcadeSettings - Profile Source:", isSetup ? "DATABASE_CACHE" : "NEW_USER");
+
+    // Target the dynamic zones defined in index.html
+    const profileZone = document.getElementById('arcade-profile-zone');
+    const planZone = document.getElementById('plan-selection-zone');
+
+    // 2. GENERATE DYNAMIC PROFILE STRUCTURE
+    if (profileZone) {
+        profileZone.innerHTML = `
+            <label class="hud-label-metallic">* REALM NAME</label>
+            <input type="text" id="new-arcade-name" placeholder="e.g., Quantum Lab" class="hud-input">
+            
+            <label class="hud-label-metallic">SYSTEM SUBTITLE</label>
+            <input type="text" id="new-arcade-subtitle" placeholder="Establish Your Realm to Start Creating" class="hud-input">
+
+            <label class="hud-label-metallic">INTERFACE THEME</label>
+            <select id="arcade-theme-select" class="hud-input"></select>
+
+            <label class="hud-label-metallic">PRIVACY_PROTOCOL</label>
+            <select id="arcade-privacy-select" class="hud-input">
+                <option value="public">PUBLIC</option>
+                <option value="unlisted">UNLISTED</option>
+                <option value="private">PRIVATE</option>
+            </select>
+        `;
+    }
+
+    // Capture newly created inputs
+    const nameInput = document.getElementById('new-arcade-name');
+    const subtitleInput = document.getElementById('new-arcade-subtitle');
+    const themeSelect = document.getElementById('arcade-theme-select');
+    const privacySelect = document.getElementById('arcade-privacy-select');
+    const submitBtn = document.getElementById('submit-onboarding');
+
+    // 3. PRE-POPULATE FIELDS FROM CACHE
+    if (nameInput) nameInput.value = isSetup ? (profile.arcade_title || '') : '';
+    if (subtitleInput) subtitleInput.value = isSetup ? (profile.arcade_subtitle || '') : '';
+    if (privacySelect) privacySelect.value = isSetup ? (profile.privacy || 'public') : 'public';
+
+    // 4. POPULATE THEMES & APPLY INITIAL STYLE
+    const themes = databaseCache.settings?.['ui-settings']?.themes;
+    if (themes && themeSelect) {
+        themeSelect.innerHTML = ''; 
+        Object.keys(themes).forEach(id => {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = themes[id].name.replace(/_/g, ' ').toUpperCase();
+            themeSelect.appendChild(opt);
+        });
+
+        const activeThemeId = isSetup ? (profile.theme || 'spring-bloom') : 'spring-bloom';
+        themeSelect.value = activeThemeId;
+
+        // Highlighted changes to apply: Store original theme state as a rollback checkpoint on open
+        hud.dataset.originalTheme = activeThemeId;
+
+        themeSelect.onchange = (e) => {
+            if (typeof applyTheme === 'function') applyTheme(e.target.value);
+            const selectedTheme = themes[e.target.value];
+            if (selectedTheme && selectedTheme['button-text-color'] && submitBtn) {
+                submitBtn.style.color = selectedTheme['button-text-color'];
+            }
+        };
+
+        if (typeof applyTheme === 'function') applyTheme(activeThemeId);
+    }
+
+    // 5. METALLIC HEADER REFINEMENT (WITH CANCEL BUTTON)
+    const hudHeader = hud.querySelector('.hud-header-content');
+    if (hudHeader) {
+        hudHeader.innerHTML = `
+            <div class="hud-header-text">
+                <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE LABORATORY' : 'INITIALIZE YOUR REALM'}</h2>
+                <p class="hud-subtitle-info">${isSetup ? 'Syncing Profile Data...' : 'Establish Your Realm to Start Creating'}</p>
+            </div>
+            <button onclick="closeArcadeSettings()" class="close-hud-corner" aria-label="Close Settings">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        `;
+    }
+
+    // 6. DYNAMIC PLAN GRID GENERATION
+    const allPlans = databaseCache.settings?.plan_limits;
+    if (allPlans && planZone) {
+        planZone.innerHTML = `
+            <label class="hud-label-metallic">SYSTEM_PLAN_SELECTION</label>
+            <div class="plans-grid plan-selection-container"></div>
+        `;
+
+        const planContainer = planZone.querySelector('.plan-selection-container');
+        
+        for (const planId of Object.keys(allPlans)) {
+            const plan = allPlans[planId];
+            const userCurrentPlan = profile.plan_type || 'free';
+            const isActive = (planId === userCurrentPlan);
+            const canSelect = (plan.enabled === true) || isActive;
+
+            const planBox = document.createElement('div');
+            planBox.className = `plan-card-rounded ${isActive ? 'active' : ''} ${!canSelect ? 'tier-locked' : ''}`;
+            
+            // Fetch converted prices asynchronously before injecting the HTML
+            const fPP = await formatPlanPrice(plan.cost);
+            const fPPAnnual = await formatPlanPrice(plan.cost * 10);
+            
+            planBox.innerHTML = `
+                <div class="plan-box-inner">
+                    <div class="tier-identity-metallic">${(planId).toUpperCase()}-TIER</div>
+                    <div class="tier-pitch">${plan.identity.toUpperCase()}</div>
+                    <div class="tier-pitch">${plan.pitch}</div>
+                    <div class="tier-pricing">
+                        <div class="price-main">
+                            ${fPP.symbol}${fPP.cost}<small>/mo</small> 
+                            <span class="price-annual" style="margin-left: 15px;">${fPPAnnual.symbol}${fPPAnnual.cost}<small>/yr</small></span>
+                        </div>                    
+                    </div>
+                    <ul class="tier-specs-list">
+                        <li><i class="fa-solid fa-folder"></i> <b>${plan.max_currents}</b> Topics</li>
+                        <li><i class="fa-solid fa-microchip"></i> <b>${plan.max_sparks_per_current}</b> Action Cards</li>
+                        <hr class="metallic-divider">
+                        <li><i class="fa-solid ${plan.analytics_enabled ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Analytics</li>
+                        <li><i class="fa-solid ${plan.monetization === 'sales' ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Direct Sales</li>
+                    </ul>
+                </div>
+                <div class="plan-radio-dock">
+                    <input type="radio" name="arcade-plan" id="radio-${planId}" value="${planId}" 
+                        ${isActive ? 'checked' : ''} 
+                        ${!canSelect ? 'disabled' : ''}>
+                    <label for="radio-${planId}">${isActive ? ' CURRENT PLAN' : (canSelect ? ' SELECT PLAN' : ' DISABLED')}</label>
+                </div>
+            `;
+
+            if (canSelect) {
+                planBox.onclick = () => {
+                    hud.querySelectorAll('.plan-card-rounded').forEach(el => el.classList.remove('active'));
+                    planBox.classList.add('active');
+                    planBox.querySelector('input').checked = true;
+                };
+            }
+            planContainer.appendChild(planBox);
+        }
+    }
+
+    // 7. BUTTON CONFIGURATION & VISIBILITY
+    if (submitBtn) {
+        submitBtn.innerText = isSetup ? "UPDATE IDENTITY" : "ESTABLISH IDENTITY";
+        submitBtn.style.display = "block";
+        submitBtn.style.margin = "30px auto 10px auto";
+
+        const activeTheme = themes?.[themeSelect.value];
+        if (activeTheme && activeTheme['button-text-color']) {
+            submitBtn.style.color = activeTheme['button-text-color'];
+        }
+    }
+    
+    hud.classList.add('active');
+};
+/*
+ * Objective: Retrieve dynamic limits based on the user's plan_type.
+ */
+function getPlanLimits(uid) {
+    // 1. Identify the user's plan type (default to 'free')
+    const userProfile = databaseCache.users?.[uid]?.profile || {};
+    const planType = userProfile.plan_type || 'free';
+    
+    // 2. Map that plan type to the global settings
+    const allPlanSettings = databaseCache.settings?.['plan_limits'] || {};
+    const currentPlanLimits = allPlanSettings[planType] || allPlanSettings['free'];
+
+    return {
+        type: planType,
+        maxCurrents: currentPlanLimits.max_currents || 3,
+        maxSparks: currentPlanLimits.max_sparks_per_current || 10,
+        initialRows: currentPlanLimits.display_rows_initial || 2,
+        sparksPerRow: currentPlanLimits.sparks_per_row_desktop || 6
+    };
+}
+
+
+/*
+ * Updates the UI status when a user selects a logo file.
+ */
+window.updateLogoStatus = (input) => {
+    const statusText = document.getElementById('logo-status-text');
+    if (input.files && input.files[0]) {
+        statusText.textContent = input.files[0].name;
+        statusText.style.color = 'var(--glow-color)';
+    } else {
+        statusText.textContent = "No file selected";
+        statusText.style.color = 'var(--text-secondary)';
+    }
+};
+
+window.saveArcadeSettings = async () => {
+    const nameInput = document.getElementById('new-arcade-name');
+    const subtitleInput = document.getElementById('new-arcade-subtitle');
+    const themeSelect = document.getElementById('arcade-theme-select');
+    const privacySelect = document.getElementById('arcade-privacy-select');
+    const planValue = document.querySelector('input[name="arcade-plan"]:checked')?.value || 'free';
+
+    const arcadeName = nameInput.value.trim().toUpperCase();
+    if (!arcadeName) {
+        nameInput.style.border = "1px solid var(--error-glow, --error-color)";
+        return;
+    }
+
+    const activeUser = window.auth?.currentUser;
+    if (!activeUser) return;
+
+    try {
+        const profilePath = `users/${activeUser.uid}/profile`;
+        
+        // Ensure local state exists
+        if (!window.pageOwnerData) window.pageOwnerData = {};
+        if (!window.pageOwnerData.profile) window.pageOwnerData.profile = {};
+        
+        const profile = window.pageOwnerData.profile;
+        
+        // --- RELIABLE SLUG RECOVERY ---
+        // We pull directly from the URL params (?user=slug) as the source of truth
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentSlug = urlParams.get('user') || profile.slug || window.currentPageOwnerSlug;
+        
+        const selectedPrivacy = privacySelect.value;
+
+        // 1. CONSTRUCT UPDATE PAYLOAD
+        const updates = {};
+        updates[`${profilePath}/arcade_title`] = arcadeName;
+        updates[`${profilePath}/arcade_subtitle`] = subtitleInput.value.trim();
+        updates[`${profilePath}/theme`] = themeSelect.value;
+        updates[`${profilePath}/privacy`] = selectedPrivacy;
+        updates[`${profilePath}/plan_type`] = planValue;
+
+        // Ensure slug is synced in the profile node if it was missing
+        if (currentSlug) {
+            updates[`${profilePath}/slug`] = currentSlug;
+        }
+
+        if (profile.setup_complete === undefined || profile.setup_complete === null) {
+            updates[`${profilePath}/setup_complete`] = true;
+        }
+
+        // 2. GRANULAR SEARCH INDEX MANAGEMENT
+        if (currentSlug) {
+            if (selectedPrivacy === 'public') {
+                // Map the slug to the active UID
+                updates[`search_index/${currentSlug}`] = activeUser.uid;
+                console.log(`[INDEX]: Syncing public access for ${currentSlug}`);
+            } else {
+                // Remove slug from index if private/unlisted
+                updates[`search_index/${currentSlug}`] = null;
+                console.log(`[INDEX]: Removing ${currentSlug} from public directory.`);
+            }
+        } else {
+            console.warn("[INDEX_SKIPPED]: No valid slug found in URL, Profile, or Global state.");
+        }
+
+        // 3. ATOMIC EXECUTION
+        // One update call handles both the user profile and the search index
+        await window.update(window.ref(window.db), updates);
+
+        // 4. SYNC LOCAL STATE
+        Object.keys(updates).forEach(path => {
+            if (path.startsWith(profilePath)) {
+                const key = path.split('/').pop();
+                window.pageOwnerData.profile[key] = updates[path];
+            }
+        });
+
+        // 5. UI REFRESH
+        if (typeof applyTheme === 'function') applyTheme(themeSelect.value);
+        document.getElementById('arcadesettings-hud').classList.remove('active');
+
+        await refreshUI();
+        console.log("[SYSTEM]: Settings and Search Index Synchronized.");
+
+    } catch (error) {
+        console.error("FORGE_FAILURE:", error);
+    }
+};
+
+/*
+ * Helper to pull the primary branding color from the cached theme data
+ */
+function getThemeBrandingColor(themeId) {
+    const themes = databaseCache.settings?.['ui-settings']?.themes;
+    return themes?.[themeId]?.['branding-color'] || "#00f2ff";
+}
+
+window.handleLauncherClick = function() {
+    const chatData = databaseCache?.chat_config;
+
+    if (!window.navigatorAgent && chatData) {
+        window.navigatorAgent = new ArcadeNavigator(chatData);
+        window.navigatorAgent.initChatAgent();
+        
+        // Use a small delay to let the DOM settle
+        setTimeout(() => {
+            const widget = document.querySelector('.yertal-navigator-widget');
+            if (widget) {
+                // Force it open directly to avoid the "flicker" of a toggle conflict
+                widget.classList.add('active');
+                // Also update the icon manually so it's in sync
+                const icon = document.querySelector('.navigator-launcher i');
+                if (icon) icon.className = 'fa-solid fa-xmark';
+            }
+        }, 50);
+        return;
+    }
+
+    if (window.navigatorAgent) {
+        window.navigatorAgent.toggleNavigator();
+    }
+};
+
+class ArcadeNavigator {
+    constructor(dbData) {
+        console.log("ArcadeNavigator: Initializing with data:", dbData);
+        this.nodes = dbData.nodes;
+        this.setup = dbData.setup;
+        this.currentNode = dbData.setup.initial_node;
+        this.history = [];
+    }
+
+    // Inside your ArcadeNavigator class in arcade.js
+
+    initChatAgent() {
+        console.log("ArcadeNavigator: initChatAgent called.");
+        let widget = document.getElementById('yertal-nav-container');
+    
+        if (!widget) {
+            console.log("ArcadeNavigator: Widget not found in HTML, creating dynamically...");
+            widget = document.createElement('div');
+            widget.id = 'yertal-nav-container';
+            widget.className = 'yertal-navigator-widget';
+            document.body.appendChild(widget);
+        }
+    
+        // Ensure it's visible and animated
+        widget.style.display = 'flex';
+        widget.style.opacity = '1';
+        widget.style.pointerEvents = 'all';
+        
+        this.renderNode(this.currentNode);
+    }
+
+// Inside your ArcadeNavigator class in arcade.js
+
+renderNode(nodeId) {
+    console.log("ArcadeNavigator: Rendering node ->", nodeId);
+    const node = this.nodes[nodeId];
+    
+    if (!node) {
+        console.error("ArcadeNavigator: Node ID '" + nodeId + "' not found in dbData.nodes!");
+        return;
+    }
+
+    const container = document.getElementById('yertal-nav-container');
+    
+    // Ensure container is visible when rendering
+    if (container.style.display === 'none') {
+        container.style.display = 'flex';
+    }
+
+    // Dynamically inject the agent name from your DB setup
+    container.innerHTML = `
+        <div class="navigator-header">
+            <span>${this.setup.agent_name}</span>
+            <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="window.navigatorAgent.closeNavigator()"></i>
+        </div>
+        <div class="navigator-body">
+            <div class="navigator-question">${node.question}</div>
+            <div id="nav-options"></div>
+        </div>
+    `;
+
+    const optionsBox = container.querySelector('#nav-options');
+    Object.entries(node.options).forEach(([key, data]) => {
+        const btn = document.createElement('div');
+        btn.className = 'navigator-option';
+        btn.innerText = data.text;
+        btn.onclick = () => this.processSelection(data);
+        optionsBox.appendChild(btn);
+    });
+}
+toggleNavigator() {
+    const widget = document.getElementById('yertal-nav-container');
+    const launcherIcon = document.querySelector('#yertal-nav-launcher i');
+    const isHidden = widget.style.display === 'none' || widget.style.display === '';
+
+    if (isHidden) {
+        launcherIcon.classList.remove('fa-comment-dots');
+        launcherIcon.classList.add('fa-xmark');
+        this.initChatAgent(); 
+    } else {
+        launcherIcon.classList.remove('fa-xmark');
+        launcherIcon.classList.add('fa-comment-dots');
+        this.closeNavigator();
+    }
+}
+closeNavigator() {
+    const widget = document.getElementById('yertal-nav-container');
+    const launcherIcon = document.querySelector('#yertal-nav-launcher i');
+    
+    if (widget) {
+        widget.style.display = 'none';
+        if (launcherIcon) {
+            launcherIcon.classList.remove('fa-xmark');
+            launcherIcon.classList.add('fa-comment-dots');
+        }
+    }
+}
+    submitPriorityMessage() {
+    const message = document.getElementById('nav-message-input').value;
+    if (!message.trim()) return;
+
+    // Placeholder for your Firebase push logic (Firestore or Realtime DB)
+    console.log("Saving Message:", message);
+
+    const body = document.querySelector('.navigator-body');
+    body.innerHTML = `
+        <div class="navigator-question">Thank you. Your message has been logged for review.</div>
+        <button class="navigator-option" onclick="window.navigatorAgent.renderNode('start')">Return to Start</button>
+    `;
+}
+    processSelection(option) {
+    console.log("ArcadeNavigator: Option selected:", option);
+    if (option.action === 'link') {
+        window.open(option.url, '_blank');
+    } else if (option.action === 'collect_message') {
+        this.renderMessageForm();
+    } else if (option.next) {
+        this.currentNode = option.next;
+        this.renderNode(this.currentNode);
+    }
+}
+    // Add these methods to your ArcadeNavigator class in arcade.js
+
+    renderMessageForm() {
+        console.log("ArcadeNavigator: Rendering priority message form.");
+        const container = document.getElementById('yertal-nav-container');
+        const body = container.querySelector('.navigator-body');
+    
+        body.innerHTML = `
+            <div class="navigator-question">Please enter your priority message below:</div>
+            <textarea id="nav-message-input" class="nav-textarea" placeholder="Describe the issue or request..."></textarea>
+            <button class="navigator-option" onclick="window.navigatorAgent.submitPriorityMessage()">Send Message</button>
+            <button class="navigator-option" style="opacity:0.6" onclick="window.navigatorAgent.renderNode('start')">Back</button>
+        `;
+    }
+}
+// ----------------------------------
+window.handleCreation = handleCreation;
+window.handleSparkLaunch = handleSparkLaunch;
+window.payOwner = payOwner;
+// Force the function to be global so the HTML button can see it
+window.closeArcadeSettings = closeArcadeSettings;
+// At the bottom of arcade.js
+window.likeSpark = likeSpark;
+console.log("likeSpark function has been successfully bridged to the window scope.");
+
+// Ensure this matches the function name in showroom.js and auth.js
+window.handleLogout = window.handleLogout || logout;
