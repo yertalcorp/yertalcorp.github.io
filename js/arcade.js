@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -35,6 +35,12 @@ const ARCADE_STOP_WORDS = new Set([
     'show', 'display', 'view', 'render', 'simulate', 'simulation', 'beautiful', 'steep',
     'build', 'animate', 'animation'
 ]);
+
+// --- GLOBAL PATH BUILDERS ---
+export const getRealmPath = (realmId) => `realms/${realmId}`;
+export const getCurrentPath = (realmId, currentId) => `realms/${realmId}/currents/${currentId}`;
+export const getSparkPath = (realmId, currentId, sparkId) => `realms/${realmId}/currents/${currentId}/sparks/${sparkId}`;
+export const getSparkStatsPath = (realmId, currentId, sparkId, statType = '') => `realms/${realmId}/currents/${currentId}/sparks/${sparkId}/stats${statType ? `/${statType}` : ''}`;
 
 /*
  * Global Model Stats: [ ["model-name", failureCount], ... ]
@@ -74,18 +80,18 @@ window.handleSparkLaunch = async function(currentId, sparkId, ownerId, targetUrl
     window.location.href = targetUrl;
 };
 
-window.confirmDeleteCurrent = async (userId, currentId) => {
+window.confirmDeleteCurrent = async (realmId, currentId) => {
     const confirmation = confirm(`Are you sure you want to delete the whole current [${currentId}]?\n\nAll associated sparks will be permanently deleted. This action cannot be undone.`);
     
     if (confirmation) {
         try {
             // 1. Database Removal
-            const dbPath = `users/${userId}/infrastructure/currents/${currentId}`;
+            const dbPath = getCurrentPath(realmId, currentId);
             await saveToRealtimeDB(dbPath, null);
 
             // 2. Cache Cleanup
-            if (databaseCache.users?.[userId]?.infrastructure?.currents?.[currentId]) {
-                delete databaseCache.users[userId].infrastructure.currents[currentId];
+            if (databaseCache.realms?.[realmId]?.currents?.[currentId]) {
+                delete databaseCache.realms[realmId].currents[currentId];
             }
 
             // 3. UI Refresh
