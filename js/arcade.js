@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:56:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -665,7 +665,7 @@ window.sendPayment = async function(realmId, currentId, sparkId, mode) {
     }
 };
 
-window.openFeedback = async (event, ownerId, currentId, sparkId) => {
+window.openFeedback = async (event, realmId, currentId, sparkId) => {
     if (event && event.stopPropagation) event.stopPropagation();
     
     let hudOverlay = document.getElementById('spark-feedback-overlay');
@@ -736,7 +736,7 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
     `;
     hudOverlay.appendChild(panel);
 
-    const feedbackPath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback/entries`;
+    const feedbackPath = `${getSparkStatsPath(realmId, currentId, sparkId, 'feedback')}/entries`;
     const snapshot = await get(ref(db, feedbackPath));
     const entries = snapshot.val() || {};
     const listContainer = panel.querySelector('#feedback-list');
@@ -781,10 +781,10 @@ window.openFeedback = async (event, ownerId, currentId, sparkId) => {
  * Objective: Remove feedback and decrement UI spark card count.
  * Task: Transactional delete + DOM update for the numeric stat.
  */
-window.deleteFeedback = async (ownerId, currentId, sparkId, entryKey) => {
+window.deleteFeedback = async (realmId, currentId, sparkId, entryKey) => {
     if (!confirm("Permanently delete this transmission?")) return;
     
-    const path = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback`;
+    const path = getSparkStatsPath(realmId, currentId, sparkId, 'feedback');
     const feedbackRef = ref(db, path);
 
     try {
@@ -834,11 +834,11 @@ window.editFeedbackPrompt = (ownerId, currentId, sparkId, entryKey) => {
 /*
  * Objective: Save edited feedback to Firebase.
  */
-window.saveEdit = async (ownerId, currentId, sparkId, entryKey) => {
+window.saveEdit = async (realmId, currentId, sparkId, entryKey) => {
     const newMessage = document.getElementById(`edit-area-${entryKey}`).value.trim();
     if (!newMessage) return;
 
-    const path = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback/entries/${entryKey}/message`;
+    const path = `${getSparkStatsPath(realmId, currentId, sparkId, 'feedback')}/entries/${entryKey}/message`;
     
     try {
         await set(ref(db, path), newMessage);
@@ -847,7 +847,7 @@ window.saveEdit = async (ownerId, currentId, sparkId, entryKey) => {
         console.error("Edit failed:", e);
     }
 };
-window.submitSparkFeedback = async (ownerId, currentId, sparkId) => {
+window.submitSparkFeedback = async (realmId, currentId, sparkId) => {
     const msgInput = document.getElementById('feedback-msg');
     const message = msgInput.value.trim();
     if (!message) return;
@@ -857,7 +857,7 @@ window.submitSparkFeedback = async (ownerId, currentId, sparkId) => {
     
     // Per your suggestion: Create key by date/timestamp
     const timestampKey = Date.now(); 
-    const feedbackRef = ref(db, `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback`);
+    const feedbackRef = ref(db, getSparkStatsPath(realmId, currentId, sparkId, 'feedback'));
 
     try {
         await runTransaction(feedbackRef, (currentData) => {
@@ -893,13 +893,13 @@ window.submitSparkFeedback = async (ownerId, currentId, sparkId) => {
     }
 };
 
-window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
+window.likeSpark = async (btnElement, realmId, currentId, sparkId) => {
     // 1. Internal Safety Check
     if (!auth.currentUser || !ownerUid || ownerUid === "undefined") return;
 
     const visitorUid = auth.currentUser.uid;
     const icon = btnElement.querySelector('i');
-    const likesRef = ref(db, `users/${ownerUid}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/likes`);
+    const likesRef = ref(db, getSparkStatsPath(realmId, currentId, sparkId, 'likes'));
 
     try {
         const result = await runTransaction(likesRef, (currentData) => {
@@ -941,8 +941,8 @@ window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
 
             // 3. Cache Synchronization
             try {
-                if (databaseCache?.users?.[ownerUid]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
-                    databaseCache.users[ownerUid].infrastructure.currents[currentId].sparks[sparkId].stats.likes = updated;
+                if (databaseCache?.realms?.[realmId]?.currents?.[currentId]?.sparks?.[sparkId]) {
+                    databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats.likes = updated;
                 }
             } catch (e) {}
         }
@@ -951,7 +951,7 @@ window.likeSpark = async (btnElement, ownerUid, currentId, sparkId) => {
     }
 };
 
-window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
+window.shareSpark = async (btnElement, realmId, currentId, sparkId) => {
     /* Overall Objective: Update share stats with timestamp and count, 
        then trigger sharing UI. Ensure user UID and Date are tracked. */
 
@@ -971,7 +971,7 @@ window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
 
     const performReshareUpdate = async () => {
         // Path matches the rules update we discussed earlier
-        const resharePath = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/reshares`;
+        const resharePath = getSparkStatsPath(realmId, currentId, sparkId, 'reshares');
         const reshareRef = ref(db, resharePath);
 
         try {
@@ -1011,8 +1011,8 @@ window.shareSpark = async (btnElement, ownerId, currentId, sparkId) => {
                 setNeonFeedback();
                 
                 try {
-                    if (databaseCache?.users?.[ownerId]?.infrastructure?.currents?.[currentId]?.sparks?.[sparkId]) {
-                        databaseCache.users[ownerId].infrastructure.currents[currentId].sparks[sparkId].stats.forges = updated;
+                    if (databaseCache?.realms?.[realmId]?.currents?.[currentId]?.sparks?.[sparkId]) {
+                        databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats.forges = updated;
                     }
                 } catch (e) {}
             }
@@ -1168,12 +1168,7 @@ async function refreshUI() {
         renderTopBar(pageOwnerData, isOwner, user, userSlug);
         
         // Currents needs the infrastructure and owner profile for context
-        renderCurrents(
-            pageOwnerData?.infrastructure?.currents || {}, 
-            isOwner, 
-            ownerUid, 
-            ownerProfile
-        );
+        renderCurrents(databaseCache.realms?.[realmId]?.currents || {}, isOwner, realmId, ownerProfile);
 
         console.log("--- [SYSTEM]: refreshUI COMPLETE ---");
 
@@ -1242,12 +1237,12 @@ watchAuthState(async (currentUser) => {
     refreshUI(); 
 });
 
-window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, sparkId) => {
+window.cloneSpark = async (btn, visitorUid, sourceRealmId, targetRealmId, sourceCurrentId, sparkId) => {
     // Paths
     const profilePath = `users/${visitorUid}/profile`;
-    const sourcePath = `users/${sourceOwnerId}/infrastructure/currents/${sourceCurrentId}/sparks/${sparkId}`;
-    const destinationCurrentPath = `users/${visitorUid}/infrastructure/currents/${sourceCurrentId}`;
-    const destinationSparkPath = `${destinationCurrentPath}/sparks/${sparkId}`;
+    const sourcePath = getSparkPath(sourceRealmId, sourceCurrentId, sparkId);
+    const destinationCurrentPath = getCurrentPath(targetRealmId, sourceCurrentId);
+    const destinationSparkPath = getSparkPath(targetRealmId, sourceCurrentId, sparkId);
 
     const setNeonPermanent = () => {
         const icon = btn.querySelector('i');
@@ -1279,7 +1274,7 @@ window.cloneSpark = async (btn, visitorUid, sourceOwnerId, sourceCurrentId, spar
 
         // 3. Fetch original spark and source current metadata
         const sourceSnapshot = await get(ref(db, sourcePath));
-        const sourceCurrentSnapshot = await get(ref(db, `users/${sourceOwnerId}/infrastructure/currents/${sourceCurrentId}`));
+        const sourceCurrentSnapshot = await get(ref(db, getCurrentPath(sourceRealmId, sourceCurrentId)));
 
         if (sourceSnapshot.exists() && sourceCurrentSnapshot.exists()) {
             const sparkData = sourceSnapshot.val();
@@ -2076,7 +2071,7 @@ function getCircuitCardPattern(circuitId) {
  * @param {string} ownerUid - Logged-in user's UID
  * @param {string|null} templateId - Selected template ID or null for blank realm
  */
-async function initializeUserRealm(ownerUid, templateId) {
+async function initializeUserRealm(realmId, templateId) {
     try {
         const updates = {};
         const timestamp = Date.now();
@@ -2113,7 +2108,7 @@ async function initializeUserRealm(ownerUid, templateId) {
                         .trim()
                         .replace(/\s+/g, '-');
                         
-                    const currentPath = `users/${ownerUid}/infrastructure/currents/${currentId}`;
+                    const currentPath = getCurrentPath(realmId, currentId);
                     
                     // Build and save Current metadata shell
                     const currentPayload = {
@@ -2128,17 +2123,11 @@ async function initializeUserRealm(ownerUid, templateId) {
                     await saveToRealtimeDB(currentPath, currentPayload);
 
                     // Update local databaseCache for current shell
-                    if (!databaseCache.users[ownerUid].infrastructure) {
-                        databaseCache.users[ownerUid].infrastructure = { currents: {} };
-                    }
-                    if (!databaseCache.users[ownerUid].infrastructure.currents) {
-                        databaseCache.users[ownerUid].infrastructure.currents = {};
-                    }
-                    databaseCache.users[ownerUid].infrastructure.currents[currentId] = {
-                        ...currentPayload,
-                        sparks: {}
-                    };
-
+                    if (!databaseCache.realms) databaseCache.realms = {};  
+                    if (!databaseCache.realms[realmId]) databaseCache.realms[realmId] = { currents: {} };
+                    if (!databaseCache.realms[realmId].currents) databaseCache.realms[realmId].currents = {};
+                    databaseCache.realms[realmId].currents[currentId] = { ...currentPayload, sparks: {} };
+                    
                     // Copy Sparks mapped to sparkIndices via saveSpark
                     if (curr.sparkIndices && Array.isArray(curr.sparkIndices)) {
                         for (let sparkIdx = 0; sparkIdx < curr.sparkIndices.length; sparkIdx++) {
@@ -2524,7 +2513,7 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
         if (submitBtn) submitBtn.innerText = "CONFIRM_CHANGES";
         
         const ownerUid = window.auth?.currentUser?.uid;
-        const currentData = databaseCache.users?.[ownerUid]?.infrastructure?.currents?.[targetId];
+        const currentData = databaseCache.realms?.[realmId]?.currents?.[targetId];
 
         /* --- Inside openAddCurrentHud (Update Block) --- */
         if (currentData) {
@@ -2622,12 +2611,12 @@ window.submitNewCurrent = async () => {
         };
 
         if (mode === 'add') {
-            const path = `users/${ownerUid}/infrastructure/currents/${finalId}`;
+            const path = getCurrentPath(realmId, finalId);
             await saveToRealtimeDB(path, { ...dataPacket, date_created: timestamp });
         } else {
             // UPDATE MODE
             // Refactored Update Route: Target location remains identical, dropping complex subtree migrations entirely
-            const path = `users/${ownerUid}/infrastructure/currents/${prevId}`;
+            const path = getCurrentPath(realmId, prevId);
             await update(ref(db, path), dataPacket);
         }
 
@@ -3880,14 +3869,14 @@ function getArcadeImageFromPrompt(prompt) {
 }
 
 /* The engine that creates the spark card(s) */
-async function executeMassSpark(currentId, currentName, prompt, mode, promptTypeObject, currentPrivacy) {
+async function executeMassSpark(realmId, currentId, currentName, prompt, mode, promptTypeObject, currentPrivacy) {
     const status = document.getElementById('engine-status-text');
     console.group("[FORGE EXECUTIVE PIPELINE]");
     console.log(`[ORCHESTRATOR CONFIG] mode: "${mode}" | Target Index: ${promptTypeObject?.index}`);
     
     // 1. CAPACITY VALIDATION
     const planLimits = databaseCache.settings?.['plan_limits']?.[databaseCache.users?.[user.uid]?.profile?.plan_type || 'free'] || databaseCache.settings?.['plan_limits']?.['free'];
-    const remainingSpace = planLimits.max_sparks_per_current - Object.keys(databaseCache.users?.[user.uid]?.infrastructure?.currents?.[currentId]?.sparks || {}).length;
+    const remainingSpace = planLimits.max_sparks_per_current - Object.keys(databaseCache.realms?.[realmId]?.currents?.[currentId]?.sparks || {}).length;
 
     if (remainingSpace <= 0) {
         status.textContent = `STORAGE FULL (${planLimits.max_sparks_per_current}/${planLimits.max_sparks_per_current})`;
@@ -4276,16 +4265,16 @@ async function initiateSystemCooldown(statusElement) {
         }, 1000);
     });
 }
-async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg', currentPrivacy) {
+async function saveSpark(realmId, currentId, data, prompt, detectedTemplate = 'Custom', templateUrl = '/assets/thumbnails/custom.jpg', currentPrivacy) {
     const sparkId = `spark_${Date.now()}_${Math.floor(Math.random()*1000)}`;
     
  console.group(`[PERSISTENCE] saveSpark -> ID: ${sparkId}`);
  console.log("[PERSISTENCE] Incoming data mapping allocation from Orchestrator:", data);
 
-    const dbPath = `users/${user.uid}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
+    const dbPath = getSparkPath(realmId, currentId, sparkId);
     
     const userNode = databaseCache.users?.[user.uid];
-    const currentCurrent = userNode?.infrastructure?.currents?.[currentId];
+    const currentCurrent = databaseCache.realms?.[realmId]?.currents?.[currentId];
     const rank = currentCurrent?.sparks ? Object.keys(currentCurrent.sparks).length + 1 : 1;
 
      const payload = {
@@ -4309,11 +4298,11 @@ async function saveSpark(currentId, data, prompt, detectedTemplate = 'Custom', t
      console.groupEnd();
 }
 
-window.deleteSpark = async (currentId, sparkId, ownerUid) => {
+window.deleteSpark = async (realmId, currentId, sparkId, ownerUid) => {
     if (user.uid !== ownerUid) return alert("Unauthorized.");
     if (!confirm("Decommission this spark?")) return;
     
-    const dbPath = `users/${user.uid}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
+    const dbPath = getSparkPath(realmId, currentId, sparkId);;
     await saveToRealtimeDB(dbPath, null);
     
     // Replaced: refreshUI is the newer version of initArcade.
