@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -458,7 +458,7 @@ async function updateSparkTransaction(realmId, currentId, sparkId, txData) {
 
 async function updateSparkFeedback(sparkId, userId, comment) {
     const timestamp = new Date().toISOString();
-    const sparkStatsPath = `infrastructure/currents/${currentId}/sparks/${sparkId}/stats/feedback`;
+    const sparkStatsPath = getSparkStatsPath(realmId, currentId, sparkId, 'feedback');
 
     const updates = {};
     const entryId = db.ref(sparkStatsPath).child('entries').push().key;
