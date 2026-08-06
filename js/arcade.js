@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:38:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -42,6 +42,9 @@ export const getCurrentPath = (realmId, currentId) => `realms/${realmId}/current
 export const getSparkPath = (realmId, currentId, sparkId) => `realms/${realmId}/currents/${currentId}/sparks/${sparkId}`;
 export const getSparkStatsPath = (realmId, currentId, sparkId, statType = '') => `realms/${realmId}/currents/${currentId}/sparks/${sparkId}/stats${statType ? `/${statType}` : ''}`;
 
+// --- ADDITIONAL REALM HELPERS ---
+export const generateRealmId = () => `realm-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
 /*
  * Global Model Stats: [ ["model-name", failureCount], ... ]
  * Replaces the old flat 'availableModels' array.
@@ -51,6 +54,44 @@ window.isInCooldown = false;
 
 let currentModelIndex = 0;
 
+export async function ensureActiveRealm(uid) {
+    let userProfile = databaseCache.users?.[uid]?.profile || {};
+    let activeRealmId = userProfile.active_realm_id;
+
+    if (!activeRealmId) {
+        activeRealmId = generateRealmId();
+        const timestamp = Date.now();
+        const updates = {};
+
+        updates[`realms/${activeRealmId}`] = {
+            realm_id: activeRealmId,
+            realm_ownerid: uid,
+            **realm_display_name: userProfile.display_name || "PILOT",**
+            realm_title: userProfile.display_name ? `${userProfile.display_name}'s Realm` : "NEW REALM",
+            realm_subtitle: "Welcome to my Realm",
+            realm_logo: userProfile.photoURL || "/assets/images/avatar.jpg",
+            realm_theme: "neon-dark",
+            realm_privacy: "public",
+            realm_plan_type: "free",
+            **realm_setup_complete: false,**
+            **realm_date_created: timestamp,**
+            **realm_last_updated: timestamp,**
+            currents: {}
+        };
+
+        updates[`users/${uid}/profile/active_realm_id`] = activeRealmId;
+        **// DELETED: updates[`users/${uid}/profile/setup_complete`] = true;**
+
+        await update(ref(db), updates);
+
+        if (!databaseCache.realms) databaseCache.realms = {};
+        databaseCache.realms[activeRealmId] = updates[`realms/${activeRealmId}`];
+        if (!databaseCache.users[uid]) databaseCache.users[uid] = { profile: {} };
+        databaseCache.users[uid].profile.active_realm_id = activeRealmId;
+    }
+
+    return activeRealmId;
+}
 window.getUserCountry = async function() {
     try {
         const response = await fetch('https://ipapi.co/json/');
@@ -957,7 +998,7 @@ window.shareSpark = async (btnElement, realmId, currentId, sparkId) => {
        then trigger sharing UI. Ensure user UID and Date are tracked. */
 
     const baseUrl = window.location.origin + window.location.pathname;
-    const shareUrl = `${baseUrl}?user=${ownerId}&current=${currentId}&spark=${sparkId}`;
+    const shareUrl = `${baseUrl}?realm=${realmId}&current=${currentId}&spark=${sparkId}`;
     const shareTitle = "Check out this Spark on the Yertal Realms!";
     const shareData = { title: shareTitle, text: 'Explore this brilliant spark:', url: shareUrl };
     const visitorUid = auth.currentUser ? auth.currentUser.uid : "anonymous";
@@ -1079,7 +1120,7 @@ window.copyToClipboard = (text, btn) => {
 };
 
 /*
- * Objective: Single Source of Truth for Rendering [cite: 2026-02-01]
+ * Objective: Single Source of Truth for Rendering
  * Logic: Fetches data, ensures user exists (Seeding), then triggers UI components.
  */
 async function refreshUI() {
@@ -1089,7 +1130,7 @@ async function refreshUI() {
         const data = await getArcadeData();
         databaseCache = data;
 
-        // 2. SILENT SEED: Ensure the logged-in user is registered [cite: 2026-02-01]
+        // 2. SILENT SEED: Ensure the logged-in user is registered
         // We check if the current auth UID exists in the fetched user tree
         if (!data.users?.[user.uid]) {
             console.log("[SYSTEM]: User record missing. Initializing via syncUserProfile...");
@@ -1103,48 +1144,47 @@ async function refreshUI() {
 
         // 3. ROUTE RESOLUTION
         const urlParams = new URLSearchParams(window.location.search);
-        const pageOwnerSlug = urlParams.get('user');
+        const targetRealmSlug = urlParams.get('realm');
 
-        if (!pageOwnerSlug) {
-            console.error("STRICT MODE: No slug detected in URL.");
+        if (!targetRealmSlug) {
+            console.error("STRICT MODE: No Realm ID detected in URL.");
             return;
         }
 
-        const allUsers = data.users || {};
-        
-        // Find the owner of the page by matching the URL slug to a profile slug
-        const ownerUid = Object.keys(allUsers).find(uid => 
-            allUsers[uid].profile && allUsers[uid].profile.slug === pageOwnerSlug
-        );
+        const allRealms = data.realms || {};
+        const realmData = allRealms[targetRealmSlug];
+        const realmOwnerId = realmData?.realm_ownerid;
 
-        const loggedInUserRecord = allUsers[user?.uid];
-        const userSlug = loggedInUserRecord?.profile?.slug || "NO_SLUG";
-        const isOwner = (user && user.uid === ownerUid);
+        const isOwner = Boolean(user && realmOwnerId && realmOwnerId === user.uid);
+
+        if (user && isOwner && databaseCache.users?.[user.uid]?.profile?.active_realm_id !== targetRealmSlug) {
+            await update(ref(db, `users/${user.uid}/profile`), { active_realm_id: targetRealmSlug });
+            databaseCache.users[user.uid].profile.active_realm_id = targetRealmSlug;
+        }
 
         console.table({
-            "Page Owner Slug": pageOwnerSlug,
-            "Page Owner UID": ownerUid || "NOT_FOUND",
-            "Logged in User Slug": userSlug,
+            "Target Realm Slug": targetRealmSlug,
+            "Realm Owner ID": realmOwnerId || "NOT_FOUND",
             "Access_Level": isOwner ? "OWNER" : "VIEWER",
         });
 
-        // 4. HANDLE MISSING OWNER
-        if (!ownerUid) {
+        // 4. HANDLE MISSING REALM
+        if (!realmData) {
             const container = document.getElementById('currents-container');
             if (container) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 5rem 0; opacity: 0.2; font-style: italic;">
-                        STRICT MODE: No user owns the slug '${pageOwnerSlug}'.
+                        STRICT MODE: Realm '${targetRealmSlug}' does not exist.
                     </div>`;
             }
             return;
         }
 
-        const pageOwnerData = allUsers[ownerUid];
+        const pageOwnerData = data.users?.[realmOwnerId] || {};
         const ownerProfile = pageOwnerData.profile || {};
         const branding = ownerProfile.branding || {};
 
-        // 5. SLUG-OWNER BRANDING & THEME [cite: 2026-02-17]
+        // 5. SLUG-OWNER BRANDING & THEME
         globalTheme = ownerProfile.theme || 'neon-dark';
         applyTheme(globalTheme);
         
@@ -1165,11 +1205,11 @@ async function refreshUI() {
         document.documentElement.style.setProperty('--neon-color', ui['color-neon'] || '#00f2ff');
 
         // 6. COMPONENT RENDERING
-        // TopBar needs the owner data and current user context
-        renderTopBar(pageOwnerData, isOwner, user, userSlug);
+        const userActiveRealmSlug = databaseCache.users?.[user?.uid]?.profile?.active_realm_id || targetRealmSlug;
+        renderTopBar(pageOwnerData, isOwner, user, userActiveRealmSlug);
         
         // Currents needs the realm and owner profile for context
-        renderCurrents(databaseCache.realms?.[realmId]?.currents || {}, isOwner, realmId, ownerProfile);
+        renderCurrents(realmData.currents || {}, isOwner, targetRealmSlug, ownerProfile);
 
         console.log("--- [SYSTEM]: refreshUI COMPLETE ---");
 
@@ -1177,6 +1217,7 @@ async function refreshUI() {
         console.error("SYSTEM ERROR in refreshUI:", e);
     }
 }
+
 /* Synchronize the user details */
 async function syncUserProfile(currentUser) {
     const profilePath = `users/${currentUser.uid}/profile`;
@@ -1196,14 +1237,7 @@ async function syncUserProfile(currentUser) {
             last_sync: new Date().toISOString()
         };
 
-        if (!existingData || !existingData.slug) {
-            updates.slug = currentUser.displayName.toLowerCase().replace(/\s+/g, '-') + 
-                           `-${Math.floor(1000 + Math.random() * 9000)}`;
-            updates.plan_type = "free";
-            updates.joined_date = new Date().toISOString();
-        }
-
-        await update(profileRef, updates);
+       await update(profileRef, updates);
     } catch (error) {
         console.error("Identity Sync Failed:", error);
     }
@@ -1223,15 +1257,15 @@ watchAuthState(async (currentUser) => {
 
     // Default to the Hub if no slug is present
     const urlParams = new URLSearchParams(window.location.search);
-    const slug = urlParams.get('user');
+    const realmSlug = urlParams.get('realm');
     
-    if (!slug) {
+    if (!realmSlug) {
         console.log("[ROUTING]: No 'user' slug in URL. Redirecting to yertal-arcade...");
-        window.location.href = "?user=yertal-arcade";
+        window.location.href = "?realm=realm-20260804-1785866761042";
         return;
     }
 
-    console.log(`[ROUTING]: Target Page Owner Slug: "${slug}"`);
+    console.log(`[ROUTING]: Target Page Realm Slug: "${realmSlug}"`);
     console.log("[UI]: Triggering refreshUI()...");
     
     // Trigger the single source of truth
@@ -1395,7 +1429,7 @@ window.genLogo = (name, profilePic, isOwner) => {
         </div>
     `;
 };
-function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
+function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const header = document.getElementById('arcade-header');
     if (!header) return;
 
@@ -1427,8 +1461,8 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
 
                 <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid var(--glow-aura); padding-left: 0.5rem; height: 16px; margin-left: 0.2rem;">
                     <a href="/index.html" title="Showroom" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size);; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-door-open"></i></a>
-                    <a href="?user=${userSlug}" title="My Realm" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size);; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
-                    <a href="?user=yertal-arcade" class="metallic-text" style="border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 3px; text-decoration: none; background: var(--branding-color); color: var(--bg-color); box-shadow: 0 0 5px var(--box-shadow-color); font-size: var(--nav-font-size); font-weight: 900;">HUB</a>
+                    <a href="?realm=${realmSlug}" title="My Realm" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size);; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
+                    <a href="?realm=yertal-arcade" class="metallic-text" style="border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 3px; text-decoration: none; background: var(--branding-color); color: var(--bg-color); box-shadow: 0 0 5px var(--box-shadow-color); font-size: var(--nav-font-size); font-weight: 900;">HUB</a>
                 </div>
             </div>
 
@@ -1448,10 +1482,10 @@ function renderTopBar(pageOwnerData, isOwner, authUser, userSlug) {
                     <i class="fa-solid fa-circle-question" title="Help Hub" onclick="window.toggleDrawer('help')" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.4rem; position: relative;">
-                    <input type="text" id="arcade-search-input" placeholder="GO TO SLUG..." class="glass" style="border: 2px solid var(--glow-aura); border-radius: 9999px; padding: 0.25rem 0.75rem; font-size: var(--nav-font-size); color: var(--branding-text-color); width: 9rem; outline: none; background: var(--bg-color);">
+                    <input type="text" id="arcade-search-input" placeholder="GO TO REALM..." class="glass" style="border: 2px solid var(--glow-aura); border-radius: 9999px; padding: 0.25rem 0.75rem; font-size: var(--nav-font-size); color: var(--branding-text-color); width: 9rem; outline: none; background: var(--bg-color);">
                     <i class="fa-solid fa-magnifying-glass" 
-                       onclick="const slug = document.getElementById('arcade-search-input').value; if(slug) window.location.href='?user=' + slug;" 
-                       onkeydown="const slug = document.getElementById('arcade-search-input').value; if(slug) window.location.href='?user=' + slug;" 
+                       onclick="const realmSlug = document.getElementById('arcade-search-input').value; if(realmSlug) window.location.href='?realm=' + realmSlug;" 
+                       onkeydown="const realmSlug = document.getElementById('arcade-search-input').value; if(realmSlug) window.location.href='?realm=' + realmSlug;" 
                        style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: transform 0.2s;" 
                        onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></i>
                 </div>
@@ -2079,14 +2113,14 @@ async function initializeUserRealm(realmId, templateId) {
         const timestamp = Date.now();
         
         // 1. Mark setup_complete as true
-        updates[`users/${ownerUid}/profile/setup_complete`] = true;
+        updates[`realms/${realmId}/realm_setup_complete`] = true;
+        updates[`realms/${realmId}/realm_last_updated`] = timestamp;
 
-        // Synchronously update local cache for smooth UI transition
-        if (databaseCache.users?.[ownerUid]?.profile) {
-            databaseCache.users[ownerUid].profile.setup_complete = true;
+        if (databaseCache.realms?.[realmId]) {
+            databaseCache.realms[realmId].realm_setup_complete = true;
+            databaseCache.realms[realmId].realm_last_updated = timestamp;
         }
 
-        // Write setup_complete update to database
         await update(ref(db), updates);
 
         // 2. If a specific template was selected, copy over its Currents & Sparks
@@ -2124,11 +2158,13 @@ async function initializeUserRealm(realmId, templateId) {
 
                     await saveToRealtimeDB(currentPath, currentPayload);
 
-                    // Update local databaseCache for current shell
-                    if (!databaseCache.realms) databaseCache.realms = {};  
-                    if (!databaseCache.realms[realmId]) databaseCache.realms[realmId] = { currents: {} };
-                    if (!databaseCache.realms[realmId].currents) databaseCache.realms[realmId].currents = {};
-                    databaseCache.realms[realmId].currents[currentId] = { ...currentPayload, sparks: {} };
+                    if (!databaseCache.realms[realmId].currents) {
+                        databaseCache.realms[realmId].currents = {};
+                    }
+                    databaseCache.realms[realmId].currents[currentId] = {
+                        ...currentPayload,
+                        sparks: {}
+                    };
                     
                     // Copy Sparks mapped to sparkIndices via saveSpark
                     if (curr.sparkIndices && Array.isArray(curr.sparkIndices)) {
@@ -3356,8 +3392,8 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     
     // Retrieve the page owner's metadata from the cache
     const ownerData = databaseCache?.users?.[ownerId];
-    const userSlug = ownerData?.profile?.slug;
-    const targetUrl = `spark.html?user=${userSlug}&current=${currentId}&spark=${spark.id}`;
+    const userSlug = ownerData?.profile?.active_realm_id;
+    const targetUrl = `spark.html?realm=${userSlug}&current=${currentId}&spark=${spark.id}`;
 
     // Retrieve Monetization settings based on the owner's plan_type
     const ownerPlanKey = ownerData?.profile?.plan_type || 'free';
@@ -4682,14 +4718,14 @@ window.saveArcadeSettings = async () => {
         
         const profile = window.pageOwnerData.profile;
         
-        // --- RELIABLE SLUG RECOVERY ---
-        // We pull directly from the URL params (?user=slug) as the source of truth
+        // --- RELIABLE REALM SLUG RECOVERY ---
+        // We pull directly from the URL params (?realm=realmSlug) as the source of truth
         const urlParams = new URLSearchParams(window.location.search);
-        const currentSlug = urlParams.get('user') || profile.slug || window.currentPageOwnerSlug;
+        const currentSlug = urlParams.get('realm');
         
         const selectedPrivacy = privacySelect.value;
 
-        // 1. CONSTRUCT UPDATE PAYLOAD
+        // 1. CONSTRUCT REALM UPDATE PAYLOAD
         const updates = {};
         updates[`${profilePath}/arcade_title`] = arcadeName;
         updates[`${profilePath}/arcade_subtitle`] = subtitleInput.value.trim();
