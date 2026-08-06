@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -456,7 +456,7 @@ async function updateSparkTransaction(realmId, currentId, sparkId, txData) {
     return db.ref().update(updates);
 }
 
-async function updateSparkFeedback(sparkId, userId, comment) {
+async function updateSparkFeedback(realmId, currentId, sparkId, userId, comment) {
     const timestamp = new Date().toISOString();
     const sparkStatsPath = getSparkStatsPath(realmId, currentId, sparkId, 'feedback');
 
@@ -475,13 +475,13 @@ async function updateSparkFeedback(sparkId, userId, comment) {
 
 const MAX_TRENDING_SPARKS = 50;
 
-window.updateSparkViews = async function(ownerId, currentId, sparkId, country = 'IN') {
+window.updateSparkViews = async function(realmId, currentId, sparkId, country = 'IN') {
     const now = new Date();
     const month = now.toISOString().slice(0, 7);
     
     // Path must include the ownerId to reach the correct user node
-    const sparkBase = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
-    const sparkPath = `${sparkBase}/stats/views`;
+    const sparkBase = getSparkPath(realmId, currentId, sparkId);
+    const sparkPath = getSparkStatsPath(realmId, currentId, sparkId, 'views');
 
     // Fetch the spark's privacy configuration to verify visibility
     const sparkSnap = await get(ref(db, sparkBase)).catch(() => null);
