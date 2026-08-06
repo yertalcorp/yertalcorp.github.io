@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -538,8 +538,8 @@ window.updateSparkViews = async function(realmId, currentId, sparkId, country = 
     }
 }
 // FUNCTION: payOwner
-window.payOwner = function(btn, ownerId, currentId, sparkId) {
-    const spark = databaseCache.users[ownerId].infrastructure.currents[currentId].sparks[sparkId];
+window.payOwner = function(btn, realmId, currentId, sparkId) {
+    const spark = databaseCache.realms?.[realmId]?.currents?.[currentId]?.sparks?.[sparkId];
     const isSale = spark.monetization_type === 'sales';
     const fixedPrice = spark.price || 0;
 
@@ -595,7 +595,8 @@ window.setPaymentAmount = function(amt) {
 window.updateDisplay = function(val) {
     document.getElementById('amount-display').innerText = `₹${val || 0}`;
 };
-window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
+
+window.sendPayment = async function(realmId, currentId, sparkId, mode) {
     const amount = parseFloat(document.getElementById('payment-input').value);
     const visitorUid = auth.currentUser?.uid;
     const paymentHud = document.getElementById('payment-hud');
@@ -615,7 +616,7 @@ window.sendPayment = async function(ownerId, currentId, sparkId, mode) {
     btn.disabled = true;
 
     const txId = "tx_" + Date.now();
-    const path = `users/${ownerId}/infrastructure/currents/${currentId}/sparks/${sparkId}/stats/transactions`;
+    const path = getSparkStatsPath(realmId, currentId, sparkId, 'transactions');
 
     const updates = {};
     updates[`${path}/ledger/${txId}`] = {
