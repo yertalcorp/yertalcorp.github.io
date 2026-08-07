@@ -113,35 +113,18 @@ export const protectRoute = (redirectPath = "../index.html") => {
 
 export async function handleArcadeRouting(authUser, database) {
     const urlParams = new URLSearchParams(window.location.search);
-    let urlSlug = urlParams.get('user'); 
+    const urlRealm = urlParams.get('realm');
     
-    const allUsers = database.users || {};
-    
-    // 1. Identify the logged-in user's slug
-    const myEntry = allUsers[authUser.uid];
-    const mySlug = myEntry?.profile?.slug || null;
+    const realms = database.realms || {};
+    const viewedRealm = realms[urlRealm];
 
-    // 2. Fallback: If URL is empty, go to user's slug or the superuser
-    if (!urlSlug || urlSlug === 'undefined') {
-        urlSlug = mySlug || 'yertal-arcade';
-    }
-
-    // 3. Find the UID by matching the URL string against the 'slug' field
-    const viewedUid = Object.keys(allUsers).find(uid => 
-        allUsers[uid].profile?.slug === urlSlug
-    );
-
-    const viewedData = allUsers[viewedUid];
-
-    if (!viewedData) {
-        console.warn(`Slug "${urlSlug}" not found. Falling back to Hub.`);
+    if (!viewedRealm) {
+        console.warn(`Realm "${urlRealm}" not found.`);
         return null; 
     }
 
     return {
-        userData: viewedData,
-        isOwner: authUser.uid === viewedUid,
-        mySlug: mySlug // The slug for the "Home" button
+        realmData: viewedRealm,
+        isOwner: authUser?.uid === viewedRealm.realm_ownerid
     };
 }
-
