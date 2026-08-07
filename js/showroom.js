@@ -160,7 +160,7 @@ async function renderAuthStatus(user, authData) {
     if (user) {
         const isSuperuser = user.email === 'yertalcorp@gmail.com';
         const cachedProfile = JSON.parse(sessionStorage.getItem('currentUser'));
-        const targetRealmId = isSuperuser ? 'yertal-arcade' : (await getActiveRealmId(user) || 'yertal-arcade');
+        const targetRealmId = isSuperuser ? 'realm-20260804-1785866761042' : await getActiveRealmId(user);
 
         console.log('--- Debugging Realm Resolution ---');
         console.log("The resolved realm ID is:", targetRealmId);        
@@ -324,6 +324,7 @@ watchAuthState(async (newUser) => {
                                 realm_display_name: firstName,
                                 realm_title: 'My Realm',
                                 realm_subtitle: 'Welcome to my space',
+                                realm_logo: '/assets/images/YERTAL LOGO SIMPLE.png',
                                 realm_theme: 'neon-dark',
                                 realm_privacy: 'private',
                                 realm_plan_type: 'free',
