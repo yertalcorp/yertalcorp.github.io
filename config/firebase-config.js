@@ -62,33 +62,29 @@ export async function getArcadeData() {
     }
 }
 /* Create a new user in the DB*/
+/* Create a new user profile in the DB */
 export async function initializeUserIfNeeded(user) {
-    const userRef = ref(db, `users/${user.uid}`);
+    const userRef = ref(db, `users/${user.uid}/profile`);
     const snapshot = await get(userRef);
 
     if (!snapshot.exists()) {
-        const fullName = user.displayName || "New Engineer";
-        const firstName = fullName.split(' ')[0];
-        const baseSlug = fullName.toLowerCase().replace(/\s+/g, '-') + `-${user.uid.substring(0, 4)}`;
+        const timestamp = Date.now();
+        const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const activeRealmId = `realm-${datePart}-${timestamp}`;
 
-        const initialData = {
-            profile: {
-                display_name: fullName,
-                slug: baseSlug,
-                arcade_title: `${firstName.toUpperCase()}'S ARCADE`,
-                arcade_subtitle: "System Standby. Awaiting Initial Sequence.",
-                branding_color: "#00f2ff",
-                arcade_logo: "/assets/images/Yertal_Logo_New_HR.png",
-                privacy: "private"
-            }
-            // Infrastructure is left empty here
+        const initialProfile = {
+            uid: user.uid,
+            email: user.email,
+            photoURL: user.photoURL || "/assets/images/avatar.jpg",
+            active_realm_id: activeRealmId,
+            last_sync: new Date().toISOString()
         };
 
-        await set(userRef, initialData);
-        await set(ref(db, `search_index/${baseSlug}`), user.uid);
-        return baseSlug;
+        await set(userRef, initialProfile);
+        return activeRealmId;
     }
-    return snapshot.val().profile.slug;
+    
+    return snapshot.val()?.active_realm_id || null;
 }
 
 export { ref, set, get, push, runTransaction, update, app, auth, db, increment };
