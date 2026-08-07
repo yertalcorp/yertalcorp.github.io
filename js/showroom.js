@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 09:57:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL SYSTEM-FX LOADED | ${new Date().toLocaleDateString()} @ 18:50:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -158,19 +158,18 @@ async function renderAuthStatus(user, authData) {
     authZone.innerHTML = '';
 
     if (user) {
-        const isSuperuser = user.email === 'yertalcorp@gmail.com';
         const cachedProfile = JSON.parse(sessionStorage.getItem('currentUser'));
-        const targetRealmId = isSuperuser ? 'realm-20260804-1785866761042' : await getActiveRealmId(user);
+        const targetRealmId = await getActiveRealmId(user);
 
         console.log('--- Debugging Realm Resolution ---');
-        console.log("The resolved realm ID is:", targetRealmId);        
+        console.log("The resolved user realm ID is:", targetRealmId);        
         
         /* LOGGED IN VIEW */
         authZone.innerHTML = `
             <div class="flex items-center justify-center gap-6 bg-black/20 backdrop-blur-md border border-white/10 p-1.5 rounded-full" 
                  style="animation: fadeIn 0.8s ease-out forwards;">
                 
-                <button onclick="window.location.href='./arcade/index.html?realm=${targetRealmId}'" 
+                <button onclick="${targetRealmId ? `window.location.href='./arcade/index.html?realm=${targetRealmId}'` : 'void(0)'}" 
                         class="auth-trigger-btn"
                         style="color: var(--neon-color); border-color: var(--neon-color); background: color-mix(in srgb, var(--neon-color), transparent 90%);"
                         onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 20px -5px var(--neon-color), 0 0 15px var(--neon-color)'; this.style.background='color-mix(in srgb, var(--neon-color), transparent 75%)'"
@@ -361,10 +360,8 @@ watchAuthState(async (newUser) => {
     }
 });
 
-// --- 3. HERO & INTERACTION ENGINE ---
 function renderHero(hero) {
     const container = document.getElementById('hero-container');
-    const ctaLink = hero.holographic_cta.link || './arcade/index.html?realm=yertal-arcade';
     container.innerHTML = `
         <div class="py-8 animate-fadeIn text-center">
             <h2 class="text-5xl lg:text-7xl uppercase tracking-tighter text-glow"
@@ -375,7 +372,7 @@ function renderHero(hero) {
                 ${hero.description}
             </p>
             <div class="w-full flex justify-center mt-8 mb-9" style="perspective: 1000px;">
-                <button id="arcade-trigger" data-link="${ctaLink}" onclick="window.openAuthHUD('superuser')" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl uppercase text-lg tracking-[0.5em] text-white">
+                <button id="arcade-trigger" onclick="window.openAuthHUD('superuser')" class="surreal-3d-btn group relative px-20 py-8 rounded-2xl uppercase text-lg tracking-[0.5em] text-white">
                     <div class="inner-content flex items-center gap-6">
                         <i class="fas fa-power-off text-blue-400 opacity-70 group-hover:scale-125 transition-transform"></i>
                         ${hero.holographic_cta.text}
@@ -551,15 +548,28 @@ window.openAuthHUD = async (mode = 'personal') => {
 
   if (activeUser) {
     if (mode === 'superuser') {
-        window.location.href = `./arcade/index.html?realm=yertal-arcade`;
+        try {
+            const superuserUid = 'plg5qjC5F1bFKgB54uBSDes4UT22';
+            const response = await fetch(`${firebaseConfig.databaseURL}/users/${superuserUid}/profile.json`);
+            const profile = await response.json();
+            const superuserRealmId = profile?.active_realm_id;
+
+            if (superuserRealmId) {
+                window.location.href = `./arcade/index.html?realm=${superuserRealmId}`;
+            } else {
+                console.warn("Superuser active_realm_id not found in profile.");
+            }
+        } catch (err) {
+            console.error("Error resolving superuser realm:", err);
+        }
     } else {
         try {
-            const response = await fetch(`${firebaseConfig.databaseURL}/users/${activeUser.uid}/profile.json`);
-            const profile = await response.json();
-            const realmId = profile?.active_realm_id || 'yertal-arcade';
-            window.location.href = `./arcade/index.html?realm=${realmId}`;
+            const realmId = await getActiveRealmId(activeUser);
+            if (realmId) {
+                window.location.href = `./arcade/index.html?realm=${realmId}`;
+            }
         } catch (err) {
-            window.location.href = `./arcade/index.html?realm=yertal-arcade`;
+            console.error("Error resolving active realm:", err);
         }
     }
     return; 
