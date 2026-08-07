@@ -69,7 +69,7 @@ export async function ensureActiveRealm(uid) {
             realm_display_name: userProfile.display_name || "PILOT",
             realm_title: userProfile.display_name ? `${userProfile.display_name}'s Realm` : "NEW REALM",
             realm_subtitle: "Welcome to my Realm",
-            realm_logo: userProfile.photoURL || "/assets/images/avatar.jpg",
+            realm_logo: userProfile.photoURL || "/assets/images/YERTAL LOGO SIMPLE.png",
             realm_theme: "neon-dark",
             realm_privacy: "public",
             realm_plan_type: "free",
