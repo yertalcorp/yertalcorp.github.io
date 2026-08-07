@@ -2224,7 +2224,7 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
     // --- ARCADE SETUP / TEMPLATE SELECTOR ---
     if (currentsArray.length === 0) {
         if (isOwner) {
-            const firstName = realm.realm_display_name?.split(' ')[0] || profile?.display_name?.split(' ')[0] || "Engineer";";
+            const firstName = realm.realm_display_name?.split(' ')[0] || profile?.display_name?.split(' ')[0] || "Engineer";
             
             if (realm.realm_setup_complete === true) {
                 container.innerHTML = `
