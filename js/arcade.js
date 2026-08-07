@@ -1161,7 +1161,8 @@ async function refreshUI() {
             await update(ref(db, `users/${user.uid}/profile`), { active_realm_id: targetRealmSlug });
             databaseCache.users[user.uid].profile.active_realm_id = targetRealmSlug;
         }
-
+        console.log(`Logged in uid is ${user.uid} and the targetRealmSlug is ${targetRealmSlug}`);
+        
         console.table({
             "Target Realm Slug": targetRealmSlug,
             "Realm Owner ID": realmOwnerId || "NOT_FOUND",
