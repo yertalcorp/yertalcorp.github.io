@@ -1,4 +1,4 @@
-import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, app } from '/config/firebase-config.js';;
+import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, app } from '/config/firebase-config.js';
 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
@@ -33,7 +33,6 @@ async function initShowroom() {
         paths.forEach((path, index) => { data[path] = results[index]; });
 
         if (data && data.settings) {
-            // ... Your existing assignment logic remains the same ...
             currentItems = data.navigation.menu_items;
             currentAuth = data.auth_ui;
             currentUi = data.settings['ui-settings'];
@@ -66,9 +65,10 @@ function applyGlobalStyles(settings) {
     }
     const root = document.documentElement;
     
-    //  DYNAMIC FONT LOADING: Get the font name from DB and request all weights
+    // DYNAMIC FONT LOADING: Get the font name from DB and request all weights
     const selectedFont = ui.nav_font ;
     const cleanFontUrl = `https://fonts.googleapis.com/css2?family=${selectedFont.replace(' ', '+')}:wght@100..900&display=swap`;
+    
     // Load the FA Fonts
     const faLink = document.getElementById('font-awesome-link');
     if (faLink) {
@@ -89,7 +89,7 @@ function applyGlobalStyles(settings) {
     root.style.setProperty('--nav-text-color', ui.nav_text_color);
     root.style.setProperty('--nav-hover-color', ui.nav_hover_color);
 
-    //set the icon font family and weight to be used as a variable
+    // set the icon font family and weight to be used as a variable
     root.style.setProperty('--icon-font-family', ui['icon-font-family'] || '"Font Awesome 6 Free"');
     root.style.setProperty('--icon-font-weight', ui['icon-font-weight'] || '900');
 }
@@ -120,40 +120,35 @@ function renderNavbar(items, ui) {
     `).join('');
 }
 
-const getSafeSlug = async (user) => {
-    // 1. Session Storage Trace (Keep this, it's efficient)
+const getActiveRealmId = async (user) => {
     let cachedStr = sessionStorage.getItem('currentUser');
     if (cachedStr) {
         let cached = JSON.parse(cachedStr);
-        if (cached?.slug) return cached.slug;
+        if (cached?.active_realm_id) return cached.active_realm_id;
     }
 
-    console.log("showroom.js: getSafeSlug: Fetching via SDK for UID:", user.uid);
+    console.log("showroom.js: getActiveRealmId: Fetching via SDK for UID:", user.uid);
     
     try {
-        // --- THE CHANGE IS HERE ---
-        // Use the Firebase SDK instead of fetch()
-        // Ensure 'get', 'ref', and 'db' are accessible (usually from firebase-config.js)
         const snapshot = await get(ref(db, `users/${user.uid}/profile`));
         
         if (snapshot.exists()) {
             const profile = snapshot.val();
-            console.log("getSafeSlug: Profile retrieved:", profile);
+            console.log("getActiveRealmId: Profile retrieved:", profile);
             
-            if (profile?.slug) {
+            if (profile?.active_realm_id) {
                 sessionStorage.setItem('currentUser', JSON.stringify(profile));
-                return profile.slug;
+                return profile.active_realm_id;
             }
         } else {
-            console.warn("getSafeSlug: No profile found in DB for this UID.");
+            console.warn("getActiveRealmId: No profile found in DB for this UID.");
         }
     } catch (error) {
-        console.error("getSafeSlug: SDK Error:", error);
+        console.error("getActiveRealmId: SDK Error:", error);
     }
 
-    // 3. Fallback to UID (Only if SDK fails or slug is missing)
-    console.warn("showroom.js: getSafeSlug: Couldn't find the slug so Falling back to UID.");
-    return user.uid; 
+    console.warn("showroom.js: getActiveRealmId: Active realm ID not found.");
+    return null; 
 };
 
 async function renderAuthStatus(user, authData) {
@@ -163,21 +158,19 @@ async function renderAuthStatus(user, authData) {
     authZone.innerHTML = '';
 
     if (user) {
-        // 1. CALCULATE CORRECT SLUG FOR LOGGED IN BUTTON
         const isSuperuser = user.email === 'yertalcorp@gmail.com';
         const cachedProfile = JSON.parse(sessionStorage.getItem('currentUser'));
-        // This line stops the ReferenceError by defining 'finalSlug' properly
-        const finalSlug = isSuperuser ? 'yertal-arcade' : await getSafeSlug(user);
+        const targetRealmId = isSuperuser ? 'yertal-arcade' : (await getActiveRealmId(user) || 'yertal-arcade');
 
-        console.log('--- Debugging Slug Resolution ---');
-        console.log("The resolved slug is:", finalSlug);        
+        console.log('--- Debugging Realm Resolution ---');
+        console.log("The resolved realm ID is:", targetRealmId);        
         
-    /* LOGGED IN VIEW */
+        /* LOGGED IN VIEW */
         authZone.innerHTML = `
             <div class="flex items-center justify-center gap-6 bg-black/20 backdrop-blur-md border border-white/10 p-1.5 rounded-full" 
                  style="animation: fadeIn 0.8s ease-out forwards;">
                 
-                <button onclick="window.location.href='./arcade/index.html?user=${finalSlug}'" 
+                <button onclick="window.location.href='./arcade/index.html?realm=${targetRealmId}'" 
                         class="auth-trigger-btn"
                         style="color: var(--neon-color); border-color: var(--neon-color); background: color-mix(in srgb, var(--neon-color), transparent 90%);"
                         onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 20px -5px var(--neon-color), 0 0 15px var(--neon-color)'; this.style.background='color-mix(in srgb, var(--neon-color), transparent 75%)'"
@@ -224,7 +217,7 @@ async function renderAuthStatus(user, authData) {
                 </div>
             </div>`;
     } else {
-    /* SIGN IN BUTTON VIEW */
+        /* SIGN IN BUTTON VIEW */
         authZone.innerHTML = `
             <button onclick="window.openAuthHUD('personal')" 
                     class="auth-trigger-btn group px-5 py-2 flex items-center justify-center w-full"
@@ -242,7 +235,6 @@ async function renderAuthStatus(user, authData) {
 watchAuthState(async (newUser) => {
     user = newUser;
 
-    // --- ENTRY LOGS ---
     console.log("%c [AUTH] STATE CHANGE DETECTED ", "background: #222; color: #bada55; padding: 2px 5px;");
     console.log("User Object:", newUser);
     
@@ -250,65 +242,97 @@ watchAuthState(async (newUser) => {
         try {
             let currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
             
-            // Only fetch from DB if session is empty or user has changed
             if (!currentUser || currentUser.uid !== user.uid) {
-                // Generate the ID token to authenticate the REST request
                 const idToken = await user.getIdToken();
                 const profileUrl = `${firebaseConfig.databaseURL}/users/${user.uid}/profile.json?auth=${idToken}`;
 
                 const response = await fetch(profileUrl);
                 let profile = await response.json();
 
+                const timestamp = Date.now();
+                let activeRealmId = profile?.active_realm_id;
+
                 if (!profile) {
-                    // CASE 1: Brand New User
-                    // LOG: Profile not detected, initiating creation
                     console.log("%c [SYSTEM] PROFILE NOT DETECTED | CREATING NEW ENTRY ", "color: #f6ad55;");
 
-                    const defaultTitle = 'My Realm';
-                    const defaultSubtitle = 'Welcome to My Space';
-                    const defaultPrivacy = 'private';
-                    const defaultTheme = 'neon-dark';
-                    const defaultPlan = 'free';
-                    const generatedSlug = (user.displayName || user.uid)
-                        .toLowerCase()
-                        .replace(/[^a-z0-9\s-]/g, '')
-                        .trim()
-                        .replace(/\s+/g, '-');
+                    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                    activeRealmId = `realm-${datePart}-${timestamp}`;
+                    
+                    const firstName = user.displayName ? user.displayName.trim().split(' ')[0] : "Pilot";
 
                     profile = {
                         display_name: user.displayName,
-                        slug: generatedSlug,
-                        arcade_logo: currentUi['default-logo'],
-                        plan_type: defaultPlan,
                         email: user.email,
                         photoURL: user.photoURL,
-                        arcade_title: defaultTitle,
-                        arcade_subtitle: defaultSubtitle,
-                        theme: defaultTheme,
-                        privacy: defaultPrivacy,
-                        setup_complete: false
+                        uid: user.uid,
+                        active_realm_id: activeRealmId,
+                        last_sync: new Date().toISOString()
                     };
                     
                     await fetch(profileUrl, {
                         method: 'PUT',
                         body: JSON.stringify(profile)
                     });
-                    console.log("%c [SYSTEM] NEW PROFILE CREATED ", "color: #00f2ff;");
+
+                    // Seed default initial realm under realms node
+                    const realmUrl = `${firebaseConfig.databaseURL}/realms/${activeRealmId}.json?auth=${idToken}`;
+                    const newRealmData = {
+                        realm_id: activeRealmId,
+                        realm_ownerid: user.uid,
+                        realm_display_name: firstName,
+                        realm_title: 'My Realm',
+                        realm_subtitle: 'Welcome to my space',
+                        realm_theme: 'neon-dark',
+                        realm_privacy: 'private',
+                        realm_plan_type: 'free',
+                        realm_setup_complete: false,
+                        realm_date_created: timestamp,
+                        realm_last_updated: timestamp
+                    };
+
+                    await fetch(realmUrl, {
+                        method: 'PUT',
+                        body: JSON.stringify(newRealmData)
+                    });
+
+                    console.log("%c [SYSTEM] NEW PROFILE & DEFAULT REALM CREATED ", "color: #00f2ff;");
                 } else {
-                    // CASE 2: Existing Profile - Update missing or changed Email/Photo
                     const updates = {};
                     
-                    // Check if email is missing or has changed
                     if (!profile.email || (user.email && profile.email !== user.email)) {
                         updates.email = user.email;
                     }
-                    
-                    // Check if photoURL is missing or has changed
                     if (!profile.photoURL || (user.photoURL && profile.photoURL !== user.photoURL)) {
                         updates.photoURL = user.photoURL;
                     }
 
-                    // Only send a PATCH request if there is actually something to update
+                    // Ensure an active_realm_id exists for older legacy profiles missing one
+                    if (!activeRealmId) {
+                        const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                        activeRealmId = `realm-${datePart}-${timestamp}`;
+                        updates.active_realm_id = activeRealmId;
+
+                        const firstName = user.displayName ? user.displayName.trim().split(' ')[0] : "Pilot";
+                        const realmUrl = `${firebaseConfig.databaseURL}/realms/${activeRealmId}.json?auth=${idToken}`;
+                        
+                        await fetch(realmUrl, {
+                            method: 'PUT',
+                            body: JSON.stringify({
+                                realm_id: activeRealmId,
+                                realm_ownerid: user.uid,
+                                realm_display_name: firstName,
+                                realm_title: 'My Realm',
+                                realm_subtitle: 'Welcome to my space',
+                                realm_theme: 'neon-dark',
+                                realm_privacy: 'private',
+                                realm_plan_type: 'free',
+                                realm_setup_complete: false,
+                                realm_date_created: timestamp,
+                                realm_last_updated: timestamp
+                            })
+                        });
+                    }
+
                     if (Object.keys(updates).length > 0) {
                         console.log("%c [SYSTEM] SYNCING PROFILE ATTRIBUTES ", "color: #f6ad55;", updates);
                         
@@ -317,18 +341,15 @@ watchAuthState(async (newUser) => {
                             body: JSON.stringify(updates)
                         });
 
-                        // Sync the local profile object so sessionStorage is up to date
                         profile = { ...profile, ...updates };
                     }
                 }
 
                 currentUser = profile;
-                // Add the UID to the object before storing in session for consistency
                 currentUser.uid = user.uid; 
                 sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             }
 
-            // UI is updated using the guaranteed data
             renderAuthStatus(user, currentAuth);
             console.log("%c [SYSTEM] USER RECOGNIZED | UI UPDATED ", "color: #00f2ff;");
 
@@ -337,10 +358,11 @@ watchAuthState(async (newUser) => {
         }
     }
 });
+
 // --- 3. HERO & INTERACTION ENGINE ---
 function renderHero(hero) {
     const container = document.getElementById('hero-container');
-    const ctaLink = hero.holographic_cta.link || './arcade/index.html?user=yertal-arcade';
+    const ctaLink = hero.holographic_cta.link || './arcade/index.html?realm=yertal-arcade';
     container.innerHTML = `
         <div class="py-8 animate-fadeIn text-center">
             <h2 class="text-5xl lg:text-7xl uppercase tracking-tighter text-glow"
@@ -386,7 +408,6 @@ async function renderActionCards(cards) {
     keys.forEach((key, i) => {
         const card = cards[key];
 
-    
         const cardEl = document.createElement('div');
         cardEl.className = 'glass-card action-card p-8 flex flex-col h-full group opacity-0 translate-y-4 transition-all duration-500 relative overflow-hidden';
         cardEl.onclick = () => window.open(card.link, '_blank');
@@ -439,6 +460,7 @@ function renderShowcase(items) {
             </div>`;
     }).join('');
 }
+
 function renderFooter(footer) {
     const container = document.getElementById('footer-container');
     container.innerHTML = `
@@ -483,13 +505,11 @@ window.handleSignupFlow = async () => {
      }
 };
 
-/* Tag/Function: handleLogout */
 window.handleLogout = async () => {
     try {
         const globalLogoutUrl = await logout();
 
         user = null;
-        // Restoring your explicit request to clear everything
         localStorage.clear();
         sessionStorage.clear();
 
@@ -503,56 +523,46 @@ window.handleLogout = async () => {
     }
 };
 
-/* Tag/Function: handleAuth */
 window.handleAuth = async (providerId, mode='personal') => {
- try {
- const result = await loginWithProvider(providerId);
- if (result) {
- window.closeAuthHUD();
- // The watchAuthState observer will now trigger and perform the redirect -> not really working.
-// Manually trigger the redirect since the one-time observer in openAuthHUD is finished
-window.openAuthHUD(mode);
- console.log("%c [AUTH] SUCCESS. HANDOVER TO OBSERVER.", "color: var(--neon-color)");
- }
- } catch (error) {
- console.error("Auth Bridge Error:", error);
- }
+    try {
+        const result = await loginWithProvider(providerId);
+        if (result) {
+            window.closeAuthHUD();
+            window.openAuthHUD(mode);
+            console.log("%c [AUTH] SUCCESS. HANDOVER TO OBSERVER.", "color: var(--neon-color)");
+        }
+    } catch (error) {
+        console.error("Auth Bridge Error:", error);
+    }
 };
     
-/* Tag/Function: openAuthHUD */
 window.openAuthHUD = async (mode = 'personal') => {
   
-  // 1. WAIT FOR FIREBASE
   const activeUser = await new Promise((resolve) => {
     const unsubscribe = watchAuthState((user) => {
-        
-        // Safety check: Only call if it's been defined
         if (typeof unsubscribe === 'function') {
             unsubscribe(); 
         }
-          resolve(user);
-        });
+        resolve(user);
+    });
   });
 
-  // 2. REDIRECT IF LOGGED IN
   if (activeUser) {
     if (mode === 'superuser') {
-        window.location.href = `./arcade/index.html?user=yertal-arcade`;
+        window.location.href = `./arcade/index.html?realm=yertal-arcade`;
     } else {
         try {
             const response = await fetch(`${firebaseConfig.databaseURL}/users/${activeUser.uid}/profile.json`);
             const profile = await response.json();
-            const slug = profile?.slug || (activeUser.displayName || activeUser.uid).toLowerCase().replace(/\s+/g, '-');
-            window.location.href = `./arcade/index.html?user=${slug}`;
+            const realmId = profile?.active_realm_id || 'yertal-arcade';
+            window.location.href = `./arcade/index.html?realm=${realmId}`;
         } catch (err) {
-            const fallback = (activeUser.displayName || activeUser.uid).toLowerCase().replace(/\s+/g, '-');
-            window.location.href = `./arcade/index.html?user=${fallback}`;
+            window.location.href = `./arcade/index.html?realm=yertal-arcade`;
         }
     }
     return; 
   }
 
-  // 3. INITIALIZE HUD ONLY IF NO USER
   const hud = document.getElementById('auth-hud');
   const list = document.getElementById('provider-list');
 
@@ -561,7 +571,6 @@ window.openAuthHUD = async (mode = 'personal') => {
       return;
   }
 
-  // Since user is not logged in, show the HUD
   if (hud && list) {
     hud.classList.add('active'); 
     list.innerHTML = currentAuth.enabled_providers.map(provider => `
