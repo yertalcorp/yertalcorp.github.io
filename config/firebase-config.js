@@ -27,53 +27,33 @@ export async function saveToRealtimeDB(path, data) {
 export async function getArcadeData() {
     const currentUser = auth.currentUser;
     const urlParams = new URLSearchParams(window.location.search);
-    const pageOwnerSlug = urlParams.get('user') || 'yertal-arcade';
+    // 1. Read the ?realm= URL parameter directly
+    const realmId = urlParams.get('realm');
 
     const data = {};
-    const publicPaths = ['app_manifest', 'chat_config', 'settings', 'search_index', 'analytics']; // Simplified for brevity
+    const publicPaths = ['app_manifest', 'chat_config', 'settings', 'search_index', 'analytics'];
 
     try {
+        // 2. Fetch standard global paths
         const snapshots = await Promise.all(
             publicPaths.map(path => get(ref(db, path)).catch(() => null))
         );
         publicPaths.forEach((path, i) => { data[path] = snapshots[i]?.val(); });
 
-        const slugToIndex = data.search_index || {};
-        let ownerUid = slugToIndex[pageOwnerSlug];
-
-        // --- NEW MULTI-TIER RESOLUTION ---
-        
-        // Tier 2: Check if the slug IS a UID (Direct Access)
-        if (!ownerUid && pageOwnerSlug.length > 20) {
-            ownerUid = pageOwnerSlug;
-        }
-
-        // Tier 3: Authenticated Owner Fallback 
-        // If we still have no UID, but the user is logged in, check their own profile slug
-        if (!ownerUid && currentUser) {
-            // We fetch the logged-in user's profile to see if their slug matches the URL
-            const ownProfileSnap = await get(ref(db, `users/${currentUser.uid}/profile`)).catch(() => null);
-            const ownProfile = ownProfileSnap?.val();
+        // 3. Fetch the target realm directly if present in the URL
+        if (realmId) {
+            const realmSnap = await get(ref(db, `realms/${realmId}`)).catch(() => null);
+            data.realmData = realmSnap?.val() || null;
             
-            if (ownProfile?.slug === pageOwnerSlug) {
-                console.log("getArcadeData: Resolved via Authenticated Profile Match.");
-                ownerUid = currentUser.uid;
-            }
-        }
-
-        if (ownerUid) {
-            const [profileSnap, infraSnap] = await Promise.all([
-                get(ref(db, `users/${ownerUid}/profile`)).catch(() => null),
-                get(ref(db, `users/${ownerUid}/infrastructure`)).catch(() => null)
-            ]);
-            
-            data.users = {
-                [ownerUid]: {
-                    profile: profileSnap?.val(),
-                    infrastructure: infraSnap?.val()
-                }
+            // Map to realms dictionary expected by frontend renderers
+            data.realms = {
+                [realmId]: data.realmData
             };
+        } else {
+            data.realmData = null;
+            data.realms = {};
         }
+
         console.log(`getArcadeData chat_config object is ${data.chat_config}`);
         return data;
     } catch (error) {
@@ -81,7 +61,6 @@ export async function getArcadeData() {
         throw error;
     }
 }
-
 /* Create a new user in the DB*/
 export async function initializeUserIfNeeded(user) {
     const userRef = ref(db, `users/${user.uid}`);
