@@ -288,14 +288,13 @@ function navigate(dir) {
     
     const nextSpark = allSparks[currentIndex];
     
-    // Highlighted changes to apply: Read and preserve the active user slug
+    // Read and preserve active realm parameter
     const currentParams = new URLSearchParams(window.location.search);
-    const userParam = currentParams.get('user');
+    const realmParam = currentParams.get('realm');
     
-    // Highlighted changes to apply: Conditionally append user back into the string
     let newUrl = `${window.location.pathname}?current=${currentId}&spark=${nextSpark.id}`;
-    if (userParam) {
-        newUrl += `&user=${userParam}`;
+    if (realmParam) {
+        newUrl += `&realm=${realmParam}`;
     }
     
     window.history.pushState({path: newUrl}, '', newUrl);
@@ -422,7 +421,7 @@ function setupInteractions(currentUid, spark) {
         };
     }
 
-    // 6. Exit Logic: Return to Showroom
+    // 6. Exit Logic: Return to Arcade
     const exitBtn = document.getElementById('exit-btn');
     if (exitBtn) {
         exitBtn.addEventListener('click', (e) => {
@@ -430,13 +429,13 @@ function setupInteractions(currentUid, spark) {
             e.stopPropagation();
 
             const params = new URLSearchParams(window.location.search);
-            const userSlug = params.get('user') || 'yertal-arcade';
+            const realmId = params.get('realm') || 'yertal-arcade';
 
             const container = document.getElementById('spark-content-container');
             if (container) container.innerHTML = '';
 
-            console.log("[SYSTEM] Exiting to Showroom...");
-            window.location.href = `/arcade/index.html?user=${userSlug}`;
+            console.log("[SYSTEM] Exiting to Arcade...");
+            window.location.href = `/arcade/index.html?realm=${realmId}`;
         }, true);
     }
 
@@ -472,7 +471,6 @@ function setupInteractions(currentUid, spark) {
 }
 
 function assembleSpark(spark) {
-    // Highlighted changes to apply:
     if ((spark.code || spark.link) && (spark.index === undefined || spark.index === null)) {
         return spark;
     }
@@ -537,12 +535,12 @@ function assembleSpark(spark) {
         parameter_map: finalParameters 
     };
 }
+
 /*
  * Objective: Hydrate a blueprint template with the established hierarchy of truth.
  * Task: Ensure session values (Layer 3) take absolute precedence during string replacement.
  */
 function prevAssembleSpark(spark) {
-    // Highlighted changes to apply:
     if ((spark.code || spark.link) && (spark.index === undefined || spark.index === null)) {
         return spark;
     }
@@ -602,64 +600,47 @@ function prevAssembleSpark(spark) {
     };
 }
 
-
 watchAuthState(async (user) => {
     console.log("%c[AUTH] State Changed", "color: #00ff00;");
     if (!user) return;
 
     userId = user.uid; 
-    // load the spark for the user, current, spark defined in the URL
+    // Load the spark for the realm, current, spark defined in the URL
     const params = new URLSearchParams(window.location.search);
-    const pageOwnerSlug = params.get('user'); 
+    const realmId = params.get('realm') || 'yertal-arcade'; 
     currentId = params.get('current');
     const initialSparkId = params.get('spark');
 
-    // 1. Helper to scan the cache
-    const findOwnerInCache = (data) => {
-        const users = data?.users || {};
-        // Check for explicit slug match OR fallback to the superuser ID
-        return Object.keys(users).find(uid => {
-            const profile = users[uid].profile || {};
-            return profile.slug === pageOwnerSlug || uid === 'yertal-arcade';
-        });
-    };
-
-    let ownerUid = findOwnerInCache(databaseCache);
-
-    // 2. Fetch if missing
-    if (!databaseCache || Object.keys(databaseCache).length === 0 || !ownerUid) {
-        console.log("[CACHE] Cache miss for owner:", pageOwnerSlug, ". Fetching...");
+    // 1. Fetch data if missing or if the realm isn't loaded
+    if (!databaseCache || Object.keys(databaseCache).length === 0 || !databaseCache.realms?.[realmId]) {
+        console.log("[CACHE] Cache miss for realm:", realmId, ". Fetching...");
         const freshData = await getArcadeData(); 
-        ownerUid = findOwnerInCache(freshData);
+        databaseCache = freshData;
     }
 
-// 3. RESOLUTION LOGIC REFINEMENT
-const targetUid = ownerUid || userId;
-let userRecord = databaseCache?.users?.[targetUid];
+    // 2. Fetch target realm record directly
+    const realmRecord = databaseCache?.realms?.[realmId];
 
-// Logic change: If targetUid is found but infrastructure is missing, 
-// it's likely a partial cache. Force a refresh.
-if (!userRecord || !userRecord.infrastructure) {
-    console.log("[SYSTEM] Infrastructure missing for:", targetUid, ". Requesting sync...");
-    const freshData = await getArcadeData(); // This should hit the actual DB
-    userRecord = freshData?.users?.[targetUid];
-}
-
-// Ensure the specific current exists
-const currents = userRecord?.infrastructure?.currents || {};
-const path = currents[currentId];
-
-if (!path) {
-    // Fallback: If 'neural-void' isn't found, try to grab the first available current
-    const fallbackCurrent = Object.values(currents)[0];
-    if (fallbackCurrent) {
-        console.warn("[DATA] Redirecting to fallback current infrastructure.");
-        path = fallbackCurrent;
-    } else {
-        console.error("[DATA] No record for current:", currentId);
+    if (!realmRecord || !realmRecord.currents) {
+        console.warn("[DATA] Currents missing for realm:", realmId);
         return;
     }
-}
+
+    // 3. Ensure the specific current exists under the realm
+    const currents = realmRecord.currents || {};
+    let path = currents[currentId];
+
+    if (!path) {
+        // Fallback: If target current isn't found, try to grab the first available current in the realm
+        const fallbackCurrent = Object.values(currents)[0];
+        if (fallbackCurrent) {
+            console.warn("[DATA] Redirecting to fallback current infrastructure.");
+            path = fallbackCurrent;
+        } else {
+            console.error("[DATA] No record for current:", currentId);
+            return;
+        }
+    }
 
     // 4. Load the Spark
     const sparksObj = path.sparks || {};
@@ -675,7 +656,6 @@ if (!path) {
         activeSpark = allSparks[0];
     }
     if (activeSpark) {
-        // NEW: Assemble the spark before loading
         const preparedSpark = assembleSpark(activeSpark);
         loadSpark(preparedSpark);
     } else {
@@ -765,13 +745,12 @@ async function openSparkEditor(spark) {
 
         // --- FIND AND INSERT DEFAULT TEMPLATE IMAGE ---
         const types = databaseCache?.settings?.['arcade-current-types'] || {};
-        // Note: Corrected to toLowerCase() and checked for existence of spark.template_type
         const defaultTemplate = Object.values(types).find(t => 
             t.name && spark.template_type && 
             t.name.toLowerCase().trim() === spark.template_type.toLowerCase().trim()
         );
 
-        console.log("spark.js: openSparkEditor: spark.image URL=", defaultTemplate.image);
+        console.log("spark.js: openSparkEditor: spark.image URL=", defaultTemplate?.image);
         
         if (defaultTemplate && defaultTemplate.image) {
             images.unshift({
@@ -779,7 +758,6 @@ async function openSparkEditor(spark) {
                 photographer: "System Generated"
             });
         }
-        // ----------------------------------------------
 
         const grid = document.getElementById('unsplash-grid');
         const attrLabel = document.getElementById('attribution-label');
@@ -819,18 +797,18 @@ async function openSparkEditor(spark) {
         const newName = document.getElementById('edit-name-input').value;
         const params = new URLSearchParams(window.location.search);
         
+        const realmId = params.get('realm');
         const currentId = params.get('current');
         const sparkId = params.get('spark') || spark.id;
 
-        if (!currentId || !sparkId) {
+        if (!realmId || !currentId || !sparkId) {
             console.error("[CRITICAL] Missing identifiers for DB sync.");
             return;
         }
 
-        // 2. PROTECT DATA: Construct a clean update object
-        // This ensures we only change specific fields and don't overwrite template_type accidentally
+        // Construct a clean update object
         const updateData = {
-            ...spark, // Start with original data
+            ...spark,
             name: newName
         };
 
@@ -839,7 +817,7 @@ async function openSparkEditor(spark) {
             updateData.photographer = window.selectedPhotographer; 
         }
 
-        const dbPath = `users/${spark.owner}/infrastructure/currents/${currentId}/sparks/${sparkId}`;
+        const dbPath = `realms/${realmId}/currents/${currentId}/sparks/${sparkId}`;
         
         try {
             await saveToRealtimeDB(dbPath, updateData);
@@ -856,7 +834,7 @@ async function openSparkEditor(spark) {
             
             document.getElementById('spark-editor-modal').remove();
             
-            // 3. CLEAN UP globals after successful save
+            // Clean up globals after successful save
             window.selectedCover = null;
             window.selectedPhotographer = null;
             const hudStatus = document.getElementById('hud-status');
