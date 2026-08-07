@@ -282,6 +282,7 @@ watchAuthState(async (newUser) => {
                         realm_display_name: firstName,
                         realm_title: 'My Realm',
                         realm_subtitle: 'Welcome to my space',
+                        realm_logo: '/assets/images/YERTAL LOGO SIMPLE.png',
                         realm_theme: 'neon-dark',
                         realm_privacy: 'private',
                         realm_plan_type: 'free',
