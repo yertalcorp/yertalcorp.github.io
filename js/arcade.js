@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @10:31:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -521,6 +521,9 @@ window.updateSparkViews = async function(realmId, currentId, sparkId, country = 
     const now = new Date();
     const month = now.toISOString().slice(0, 7);
     
+**    // Resolve owner ID from local cache or fallback to UNKNOWN**
+**    const ownerId = databaseCache.realms?.[realmId]?.realm_ownerid || 'UNKNOWN';**
+
     // Path must include the ownerId to reach the correct user node
     const sparkBase = getSparkPath(realmId, currentId, sparkId);
     const sparkPath = getSparkStatsPath(realmId, currentId, sparkId, 'views');
@@ -542,15 +545,12 @@ window.updateSparkViews = async function(realmId, currentId, sparkId, country = 
         const trendingPath = `analytics/trending_sparks/${sparkId}`;
         const currentViews = (sparkData?.stats?.views?.total_count || 0) + 1;
 
-        // Fetch the user's profile to extract the human-readable slug dynamically
-        const profileSnap = await get(ref(db, `users/${ownerId}/profile`)).catch(() => null);
-        const userSlug = profileSnap?.val()?.slug || 'yertal-arcade';
         const sparkImage = sparkData?.image || '';
         
         updates[`${trendingPath}/spark_id`] = sparkId;
         updates[`${trendingPath}/current_id`] = currentId;
         updates[`${trendingPath}/user_id`] = ownerId;
-        updates[`${trendingPath}/user_slug`] = userSlug;
+**        updates[`${trendingPath}/user_realm_id`] = realmId;**
         updates[`${trendingPath}/spark_image`] = sparkImage;
         // updates[`${trendingPath}/image_url`] = sparkImage;
         updates[`${trendingPath}/view_count`] = currentViews;
@@ -2210,6 +2210,7 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
     if (!container) return;
 
     // 1. DYNAMIC PLAN LOOKUP FOR THE OWNER
+    const ownerUid = databaseCache.realms?.[realmId]?.realm_ownerid || 'UNKNOWN';
     const realm = databaseCache.realms?.[realmId] || {};
     const planType = realm.realm_plan_type || 'free';
     const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'];
@@ -3390,9 +3391,10 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
         neon state for likes and shares, and dynamic monetization labels based on plan type. */
     
     // Retrieve the page owner's metadata from the cache
+    const ownerId = databaseCache?.realms?.[realmId]?.realm_ownerid || spark.owner || 'UNKNOWN';
     const ownerData = databaseCache?.users?.[ownerId];
-    const userSlug = ownerData?.profile?.active_realm_id;
-    const targetUrl = `spark.html?realm=${userSlug}&current=${currentId}&spark=${spark.id}`;
+    const realmSlug = ownerData?.profile?.active_realm_id;
+    const targetUrl = `spark.html?realm=${realmId}&current=${currentId}&spark=${spark.id}`;
 
     // Retrieve Monetization settings based on the owner's plan_type
     const ownerPlanKey = ownerData?.profile?.plan_type || 'free';
