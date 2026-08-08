@@ -3490,7 +3490,6 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
             const visitorRealmId = databaseCache?.users?.[visitorUid]?.profile?.active_realm_id;
             if (!visitorRealmId) return;
             const savedRef = ref(db, getSparkPath(visitorRealmId, currentId, spark.id));
-            savedRef = ref(db, getSparkPath(visitorRealmId, currentId, spark.id));
             const snapshot = await get(savedRef);
             if (snapshot.exists()) {
                 const btn = document.getElementById(sparkElementId);
