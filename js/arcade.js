@@ -1275,9 +1275,9 @@ watchAuthState(async (currentUser) => {
     refreshUI(); 
 });
 
-window.cloneSpark = async (btn, visitorUid, sourceRealmId, targetRealmId, sourceCurrentId, sparkId) => {
+**window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) => {**
     console.group(`[CLONE SPARK] Initiated for Spark: ${sparkId}`);
-    console.log("Input Args:", { visitorUid, sourceRealmId, targetRealmId, sourceCurrentId, sparkId });
+    console.log("Input Args:", { visitorUid, sourceRealmId, sourceCurrentId, sparkId });
 
     // Paths
     const sourceOwnerId = databaseCache.realms?.[sourceRealmId]?.realm_ownerid || 'UNKNOWN';
@@ -1451,6 +1451,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, targetRealmId, source
         console.groupEnd();
     }
 };
+
 window.genLogo = (name, profilePic, isOwner) => {
     // SYSTEM LOGS: Debugging the state
     console.log(`[genLogo Debug]: Name: "${name}" | isOwner: ${isOwner} | Photo: ${profilePic ? 'FOUND' : 'MISSING'}`);
@@ -3615,7 +3616,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
                                 <i class="fas fa-trash" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                         ` : `
-                            <button id="${sparkElementId}" onclick="cloneSpark(this, '${visitorUid}', '${realmId}', '${currentId}', '${spark.id}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <button id="${sparkElementId}" onclick="window.cloneSpark(this, '${visitorUid}', '${realmId}', '${currentId}', '${spark.id}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-save" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
                             <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
