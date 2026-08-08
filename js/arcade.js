@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1298,15 +1298,13 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
         console.log(`[CLONE STEP 1] Fetching profile for visitor: ${visitorUid}`);
         const profileSnapshot = await get(ref(db, profilePath));
         const profileData = profileSnapshot.val() || {};
-        const visitorRealmId = profileData.active_realm_id;
+        let visitorRealmId = profileData.active_realm_id;
         console.log("Resolved Visitor Profile:", { arcade_title: profileData.arcade_title, visitorRealmId });
 
-        // Identity Intercept: Only launch setup if the user has no active realm established
+        // Identity Intercept: Auto-create a standard default Realm if none exists
         if (!visitorRealmId) {
-            console.warn("[CLONE HALT] No Active Realm ID found. Launching Setup HUD...");
-            window.openArcadeSettings(); 
-            console.groupEnd();
-            return;
+            console.log("[Identity Gate] No Active Realm ID found. Auto-creating default Realm...");
+            visitorRealmId = await ensureActiveRealm(visitorUid);
         }
 
         const destinationCurrentPath = getCurrentPath(visitorRealmId, sourceCurrentId);
@@ -1438,15 +1436,18 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
 
             // 9. UI Feedback
             setNeonPermanent();
+            alert(`Spark '${sparkData.name || sparkId}' successfully forged into your collection!`);
             console.log(`[Forge Success] Spark ${sparkId} cloned from ${sourceOwnerId} to ${visitorUid} in active realm ${visitorRealmId}.`);
         } else {
             console.error("[CLONE ERROR] Source spark or source current metadata was not found in database.");
+            alert("Cloning Failed: Source spark or current metadata could not be found in the database.");
         }
     } catch (error) {
         console.error("[Clone Error]", error);
-        if (error.message.includes("PERMISSION_DENIED")) {
-            console.warn("Permission Denied: Check auth state or .validate rules.");
-        }
+        const reason = error.message.includes("PERMISSION_DENIED")
+            ? "Permission Denied: You do not have authorization to save this spark."
+            : (error.message || "An unexpected error occurred during cloning.");
+        alert(`Cloning Failed: ${reason}`);
     } finally {
         console.groupEnd();
     }
