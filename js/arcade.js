@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1280,8 +1280,6 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, targetRealmId, source
     const sourceOwnerId = databaseCache.realms?.[sourceRealmId]?.realm_ownerid || 'UNKNOWN';
     const profilePath = `users/${visitorUid}/profile`;
     const sourcePath = getSparkPath(sourceRealmId, sourceCurrentId, sparkId);
-    const destinationCurrentPath = getCurrentPath(targetRealmId, sourceCurrentId);
-    const destinationSparkPath = getSparkPath(targetRealmId, sourceCurrentId, sparkId);
 
     const setNeonPermanent = () => {
         const icon = btn.querySelector('i');
@@ -1293,17 +1291,22 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, targetRealmId, source
     };
 
     try {
-        // 1. Check if Arcade Identity exists. If not, Intercept with HUD and exit.
+        // 1. Fetch visitor profile and resolve target active realm
         const profileSnapshot = await get(ref(db, profilePath));
-        const profileData = profileSnapshot.val();
+        const profileData = profileSnapshot.val() || {};
+        const visitorRealmId = profileData.active_realm_id;
 
-        if (!profileData || !profileData.arcade_title) {
-            console.log("[Identity Gate] No Realm Name found. Launching Setup HUD...");
+        // Identity Intercept: Only launch setup if the user has no active realm established
+        if (!visitorRealmId) {
+            console.log("[Identity Gate] No Active Realm ID found. Launching Setup HUD...");
             window.openArcadeSettings(); 
-            return; // Exit here. The user will click Forge again after Establish Identity.
+            return;
         }
 
-        // 2. Check if spark already exists in visitor's collection
+        const destinationCurrentPath = getCurrentPath(visitorRealmId, sourceCurrentId);
+        const destinationSparkPath = getSparkPath(visitorRealmId, sourceCurrentId, sparkId);
+
+        // 2. Check if spark already exists in visitor's active realm
         const checkSnapshot = await get(ref(db, destinationSparkPath));
         if (checkSnapshot.exists()) {
             setNeonPermanent();
@@ -1311,7 +1314,32 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, targetRealmId, source
             return;
         }
 
-        // 3. Fetch original spark and source current metadata
+        // 3. CAPACITY & PLAN LIMIT CHECK
+        const visitorRealm = databaseCache.realms?.[visitorRealmId] || {};
+        const visitorPlanType = profileData.plan_type || visitorRealm.realm_plan_type || 'free';
+        const planLimits = databaseCache.settings?.['plan_limits']?.[visitorPlanType] || databaseCache.settings?.['plan_limits']?.['free'] || {};
+
+        const maxCurrents = planLimits.max_currents || 3;
+        const maxSparksPerCurrent = planLimits.max_sparks_per_current || 10;
+
+        const visitorCurrents = visitorRealm.currents || {};
+        const currentCount = Object.keys(visitorCurrents).length;
+        const targetCurrentExists = Boolean(visitorCurrents[sourceCurrentId]);
+
+        // Guard A: Verify Current limit if a new Current container must be initialized
+        if (!targetCurrentExists && currentCount >= maxCurrents) {
+            alert(`Capacity Limit Reached: Your active realm has reached its maximum allowed topics/currents (${maxCurrents}). Upgrade your plan to clone more sparks into new currents.`);
+            return;
+        }
+
+        // Guard B: Verify Spark limit inside the target Current
+        const existingSparksCount = Object.keys(visitorCurrents[sourceCurrentId]?.sparks || {}).length;
+        if (existingSparksCount >= maxSparksPerCurrent) {
+            alert(`Capacity Limit Reached: Target current '${sourceCurrentId}' has reached its maximum spark capacity (${maxSparksPerCurrent}).`);
+            return;
+        }
+
+        // 4. Fetch original spark and source current metadata
         const sourceSnapshot = await get(ref(db, sourcePath));
         const sourceCurrentSnapshot = await get(ref(db, getCurrentPath(sourceRealmId, sourceCurrentId)));
 
@@ -1320,7 +1348,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, targetRealmId, source
             const currentMeta = sourceCurrentSnapshot.val();
             const saveDate = new Date().toISOString();
 
-            // 4. Ensure the Realm "Current" container exists for the visitor
+            // 5. Ensure the target Current container exists for the visitor
             const visitorCurrentSnapshot = await get(ref(db, destinationCurrentPath));
             if (!visitorCurrentSnapshot.exists()) {
                 await set(ref(db, destinationCurrentPath), {
@@ -1332,7 +1360,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, targetRealmId, source
                 });
             }
 
-            // 5. Update forges analytic field on the ORIGINAL spark
+            // 6. Update forges analytic field on the ORIGINAL spark
             const sourceForgeRef = ref(db, `${sourcePath}/stats/forges`);
             await runTransaction(sourceForgeRef, (forgeObj) => {
                 if (!forgeObj) {
@@ -1347,7 +1375,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, targetRealmId, source
                 return forgeObj;
             });
 
-            // 6. Create the forged copy for the visitor (Rule Compliant Stats)
+            // 7. Create the forged copy for the visitor
             const clonedData = {
                 ...sparkData,
                 id: sparkId, 
@@ -1364,12 +1392,31 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, targetRealmId, source
                 }
             };
 
-            // 7. Write to Visitor's DB
+            // 8. Write to Visitor's DB & Sync Local Cache
             await set(ref(db, destinationSparkPath), clonedData);
             
-            // 8. UI Feedback
+            if (!databaseCache.realms[visitorRealmId]) {
+                databaseCache.realms[visitorRealmId] = { currents: {} };
+            }
+            if (!databaseCache.realms[visitorRealmId].currents) {
+                databaseCache.realms[visitorRealmId].currents = {};
+            }
+            if (!databaseCache.realms[visitorRealmId].currents[sourceCurrentId]) {
+                databaseCache.realms[visitorRealmId].currents[sourceCurrentId] = {
+                    id: sourceCurrentId,
+                    name: currentMeta.name || "My Collection",
+                    privacy: "public",
+                    sparks: {}
+                };
+            }
+            if (!databaseCache.realms[visitorRealmId].currents[sourceCurrentId].sparks) {
+                databaseCache.realms[visitorRealmId].currents[sourceCurrentId].sparks = {};
+            }
+            databaseCache.realms[visitorRealmId].currents[sourceCurrentId].sparks[sparkId] = clonedData;
+
+            // 9. UI Feedback
             setNeonPermanent();
-            console.log(`[Forge Success] Spark ${sparkId} cloned from ${sourceOwnerId} to ${visitorUid}.`);
+            console.log(`[Forge Success] Spark ${sparkId} cloned from ${sourceOwnerId} to ${visitorUid} in active realm ${visitorRealmId}.`);
         }
     } catch (error) {
         console.error("[Clone Error]", error);
