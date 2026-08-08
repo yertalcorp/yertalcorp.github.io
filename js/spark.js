@@ -615,7 +615,7 @@ watchAuthState(async (user) => {
     if (!databaseCache || Object.keys(databaseCache).length === 0 || !databaseCache.realms?.[realmId]) {
         console.log("[CACHE] Cache miss for realm:", realmId, ". Fetching...");
         const freshData = await getArcadeData(); 
-        databaseCache = freshData;
+        Object.assign(databaseCache, freshData);
     }
 
     // 2. Fetch target realm record directly
