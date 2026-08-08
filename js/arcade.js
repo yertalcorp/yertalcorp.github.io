@@ -1275,7 +1275,7 @@ watchAuthState(async (currentUser) => {
     refreshUI(); 
 });
 
-**window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) => {**
+window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) => {
     console.group(`[CLONE SPARK] Initiated for Spark: ${sparkId}`);
     console.log("Input Args:", { visitorUid, sourceRealmId, sourceCurrentId, sparkId });
 
