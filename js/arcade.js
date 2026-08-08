@@ -937,6 +937,7 @@ window.submitSparkFeedback = async (realmId, currentId, sparkId) => {
 
 window.likeSpark = async (btnElement, realmId, currentId, sparkId) => {
     // 1. Internal Safety Check
+    const ownerUid = databaseCache.realms?.[realmId]?.realm_ownerid;
     if (!auth.currentUser || !ownerUid || ownerUid === "undefined") return;
 
     const visitorUid = auth.currentUser.uid;
