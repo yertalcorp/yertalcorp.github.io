@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @10:31:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @11:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -521,8 +521,8 @@ window.updateSparkViews = async function(realmId, currentId, sparkId, country = 
     const now = new Date();
     const month = now.toISOString().slice(0, 7);
     
-**    // Resolve owner ID from local cache or fallback to UNKNOWN**
-**    const ownerId = databaseCache.realms?.[realmId]?.realm_ownerid || 'UNKNOWN';**
+    // Resolve owner ID from local cache or fallback to UNKNOWN
+    const ownerId = databaseCache.realms?.[realmId]?.realm_ownerid || 'UNKNOWN';
 
     // Path must include the ownerId to reach the correct user node
     const sparkBase = getSparkPath(realmId, currentId, sparkId);
@@ -550,7 +550,7 @@ window.updateSparkViews = async function(realmId, currentId, sparkId, country = 
         updates[`${trendingPath}/spark_id`] = sparkId;
         updates[`${trendingPath}/current_id`] = currentId;
         updates[`${trendingPath}/user_id`] = ownerId;
-**        updates[`${trendingPath}/user_realm_id`] = realmId;**
+        updates[`${trendingPath}/user_realm_id`] = realmId;
         updates[`${trendingPath}/spark_image`] = sparkImage;
         // updates[`${trendingPath}/image_url`] = sparkImage;
         updates[`${trendingPath}/view_count`] = currentViews;
