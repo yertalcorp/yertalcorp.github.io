@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @11:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -709,6 +709,7 @@ window.sendPayment = async function(realmId, currentId, sparkId, mode) {
 
 window.openFeedback = async (event, realmId, currentId, sparkId) => {
     if (event && event.stopPropagation) event.stopPropagation();
+    const ownerId = databaseCache.realms?.[realmId]?.realm_ownerid || 'UNKNOWN';
     
     let hudOverlay = document.getElementById('spark-feedback-overlay');
     let existingPanel = document.querySelector('.feedback-panel');
@@ -1276,6 +1277,7 @@ watchAuthState(async (currentUser) => {
 
 window.cloneSpark = async (btn, visitorUid, sourceRealmId, targetRealmId, sourceCurrentId, sparkId) => {
     // Paths
+    const sourceOwnerId = databaseCache.realms?.[sourceRealmId]?.realm_ownerid || 'UNKNOWN';
     const profilePath = `users/${visitorUid}/profile`;
     const sourcePath = getSparkPath(sourceRealmId, sourceCurrentId, sparkId);
     const destinationCurrentPath = getCurrentPath(targetRealmId, sourceCurrentId);
@@ -2416,7 +2418,7 @@ container.innerHTML = `
         const actionIcons = isOwner ? `
             <div class="current-actions" style="display: flex; gap: 12px; margin-left: 10px; align-items: center;">
                 <i class="fas fa-sync-alt" onclick="window.updateCurrent('${current.id}')" title="Update" style="cursor: pointer; opacity: 0.6; color: var(--branding-text-color);"></i>
-                <i class="fas fa-trash-alt" onclick="window.confirmDeleteCurrent('${ownerUid}', '${current.id}')" title="Delete" style="cursor: pointer; opacity: 0.6; color: var(--error-color, #ef4444);"></i>
+                <i class="fas fa-trash-alt" onclick="window.confirmDeleteCurrent('${realmId}', '${current.id}')" title="Delete" style="cursor: pointer; opacity: 0.6; color: var(--error-color, #ef4444);"></i>
             </div>
         ` : '';
         const controls = (isOwner && !isFull) ? `
@@ -3532,7 +3534,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
                             <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
                             </button>
-                            <button onclick="deleteSpark('${realmId}', '${currentId}', '${spark.id}', '${visitorUid}')" title="Delete" 
+                            <button onclick="deleteSpark('${realmId}', '${currentId}', '${spark.id}', '${ownerId}')" title="Delete" 
                                     style="${btnStyle}" 
                                     onmouseover="this.style.color='var(--error-color)'; this.style.filter='drop-shadow(0 0 8px var(--error-color))'; this.style.transform='scale(1.2)';" 
                                     onmouseout="${onOut}">
