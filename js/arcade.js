@@ -3393,7 +3393,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     // Retrieve the page owner's metadata from the cache
     const ownerId = databaseCache?.realms?.[realmId]?.realm_ownerid || spark.owner || 'UNKNOWN';
     const ownerData = databaseCache?.users?.[ownerId];
-    const realmSlug = ownerData?.profile?.active_realm_id;
+    
     const targetUrl = `spark.html?realm=${realmId}&current=${currentId}&spark=${spark.id}`;
 
     // Retrieve Monetization settings based on the owner's plan_type
