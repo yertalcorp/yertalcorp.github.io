@@ -999,7 +999,7 @@ window.shareSpark = async (btnElement, realmId, currentId, sparkId) => {
     /* Overall Objective: Update share stats with timestamp and count, 
        then trigger sharing UI. Ensure user UID and Date are tracked. */
 
-    const baseUrl = window.location.origin + window.location.pathname;
+    const baseUrl = window.location.origin + '/arcade/spark.html';
     const shareUrl = `${baseUrl}?realm=${realmId}&current=${currentId}&spark=${sparkId}`;
     const shareTitle = "Check out this Spark on the Yertal Realms!";
     const shareData = { title: shareTitle, text: 'Explore this brilliant spark:', url: shareUrl };
