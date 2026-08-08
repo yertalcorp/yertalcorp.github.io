@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3487,6 +3487,9 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     // Forge State Check (Internal Async)
     if (visitorUid && !isOwner) {
         (async () => {
+            const visitorRealmId = databaseCache?.users?.[visitorUid]?.profile?.active_realm_id;
+            if (!visitorRealmId) return;
+            const savedRef = ref(db, getSparkPath(visitorRealmId, currentId, spark.id));
             savedRef = ref(db, getSparkPath(visitorRealmId, currentId, spark.id));
             const snapshot = await get(savedRef);
             if (snapshot.exists()) {
