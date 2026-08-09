@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @11:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @11:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1294,14 +1294,14 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
     };
 
     try {
-        // 1. CHECK ACTIVE REALM (Auto-create if non-existent)
+        // 1. RESOLVE ACTIVE REALM FROM PROFILE
         console.log(`[CLONE STEP 1] Fetching profile for visitor: ${visitorUid}`);
         const profileSnapshot = await get(ref(db, profilePath));
         const profileData = profileSnapshot.val() || {};
         let visitorRealmId = profileData.active_realm_id;
 
         if (!visitorRealmId) {
-            console.log("[Identity Gate] No active_realm_id found in profile. Auto-creating default Realm...");
+            console.log("[Identity Gate] No active_realm_id in profile. Auto-creating default Realm...");
             visitorRealmId = await ensureActiveRealm(visitorUid);
             console.log(`[Identity Gate] Created new active realm: ${visitorRealmId}`);
         } else {
@@ -1322,31 +1322,44 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
             return;
         }
 
-        // 2 & 3. STRICT databaseCache CAPACITY & CURRENT CHECKS
+        // 2 & 3. REALM PLAN & CAPACITY CHECKS
         console.log("[CLONE STEP 3] Evaluating current existence and capacity limits via databaseCache...");
         
-        // Locate visitor realm directly from global databaseCache
-        const visitorRealm = databaseCache.realms?.[visitorRealmId] || {};
-        const visitorPlanType = profileData.plan_type || visitorRealm.realm_plan_type || 'free';
-        const planLimits = databaseCache.settings?.['plan_limits']?.[visitorPlanType] || databaseCache.settings?.['plan_limits']?.['free'] || {};
+        let visitorRealm = databaseCache.realms?.[visitorRealmId];
+        
+        // If visitor's realm or currents are missing from local cache, fetch direct snapshot
+        if (!visitorRealm || !visitorRealm.currents) {
+            console.log("[CLONE STEP 3] Visitor realm missing from cache. Fetching live snapshot...");
+            const realmSnap = await get(ref(db, `realms/${visitorRealmId}`));
+            visitorRealm = realmSnap.val() || {};
+            if (!databaseCache.realms) databaseCache.realms = {};
+            databaseCache.realms[visitorRealmId] = visitorRealm;
+        }
 
-        const maxCurrents = planLimits.max_currents || 3;
-        const maxSparksPerCurrent = planLimits.max_sparks_per_current || 10;
+        // Read plan_type strictly from the Realm node
+        const realmPlanType = visitorRealm.realm_plan_type || 'free';
+        
+        // Resolve limits from settings.plan_limits
+        const planLimits = databaseCache.settings?.['plan_limits']?.[realmPlanType]
+            || databaseCache.settings?.['plan_types']?.[realmPlanType] 
+            || databaseCache.settings?.['plan_limits']?.['free'] 
+            || {};
 
-        // Safely extract currents object from databaseCache
-        const rawVisitorCurrents = visitorRealm.currents;
-        const visitorCurrents = (rawVisitorCurrents && typeof rawVisitorCurrents === 'object') ? rawVisitorCurrents : {};
+        const maxCurrents = Number(planLimits.max_currents) || 3;
+        const maxSparksPerCurrent = Number(planLimits.max_sparks_per_current) || 10;
 
-        // Calculate valid active current keys
-        const currentKeys = Object.keys(visitorCurrents).filter(k => visitorCurrents[k] && typeof visitorCurrents[k] === 'object');
+        const visitorCurrents = (visitorRealm.currents && typeof visitorRealm.currents === 'object') ? visitorRealm.currents : {};
+
+        // Calculate valid active currents count
+        const currentKeys = Object.keys(visitorCurrents).filter(k => visitorCurrents[k] !== null && visitorCurrents[k] !== undefined);
         const currentCount = currentKeys.length;
         
-        // Exact match check for target current existence in databaseCache
+        // Exact match check for target current existence
         const targetCurrentExists = currentKeys.includes(sourceCurrentId);
 
-        console.log("Capacity Metrics (databaseCache):", { 
+        console.log("Capacity Metrics (Evaluated):", { 
             visitorRealmId,
-            visitorPlanType, 
+            realmPlanType, 
             targetCurrentExists, 
             currentCount, 
             maxCurrents, 
@@ -1354,7 +1367,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
             activeCurrentKeys: currentKeys
         });
 
-        // RULE 3: If target current DOES NOT exist, check max_currents BEFORE creating
+        // RULE: If target current DOES NOT exist, enforce max_currents
         if (!targetCurrentExists) {
             if (currentCount >= maxCurrents) {
                 console.warn(`[CLONE HALT] Reached current limit (${currentCount}/${maxCurrents}).`);
@@ -1364,7 +1377,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
             }
         } 
         
-        // RULE 2: If target current DOES exist (or will be created), check max_sparks_per_current
+        // RULE: Enforce max_sparks_per_current inside target current
         const targetCurrentSparksObj = visitorCurrents[sourceCurrentId]?.sparks || {};
         const existingSparksCount = Object.keys(targetCurrentSparksObj).filter(k => targetCurrentSparksObj[k] !== null).length;
 
@@ -1473,7 +1486,6 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
         console.groupEnd();
     }
 };
-
 window.genLogo = (name, profilePic, isOwner) => {
     // SYSTEM LOGS: Debugging the state
     console.log(`[genLogo Debug]: Name: "${name}" | isOwner: ${isOwner} | Photo: ${profilePic ? 'FOUND' : 'MISSING'}`);
