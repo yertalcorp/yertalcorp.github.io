@@ -27,40 +27,52 @@ export async function saveToRealtimeDB(path, data) {
 export async function getArcadeData() {
     const currentUser = auth.currentUser;
     const urlParams = new URLSearchParams(window.location.search);
-    // 1. Read the ?realm= URL parameter directly
-    const realmId = urlParams.get('realm');
+    const targetRealmId = urlParams.get('realm');
 
-    const data = {};
+    const data = { realms: {} };
     const publicPaths = ['app_manifest', 'chat_config', 'settings', 'search_index', 'analytics'];
 
     try {
-        // 2. Fetch standard global paths
+        // 1. Fetch static global configurations
         const snapshots = await Promise.all(
             publicPaths.map(path => get(ref(db, path)).catch(() => null))
         );
         publicPaths.forEach((path, i) => { data[path] = snapshots[i]?.val(); });
 
-        // 3. Fetch the target realm directly if present in the URL
-        if (realmId) {
-            const realmSnap = await get(ref(db, `realms/${realmId}`)).catch(() => null);
-            data.realmData = realmSnap?.val() || null;
-            
-            // Map to realms dictionary expected by frontend renderers
-            data.realms = {
-                [realmId]: data.realmData
-            };
-        } else {
-            data.realmData = null;
-            data.realms = {};
+        // 2. Fetch Circuit Templates
+        const templatesQuery = query(ref(db, 'realms'), orderByChild('is_circuit_template'), equalTo(true));
+        const templatesSnap = await get(templatesQuery).catch(() => null);
+        if (templatesSnap?.exists()) {
+            Object.assign(data.realms, templatesSnap.val());
         }
 
-        console.log(`getArcadeData chat_config object is ${data.chat_config}`);
+        // 3. Fetch User-Owned Realms
+        if (currentUser?.uid) {
+            const ownedQuery = query(ref(db, 'realms'), orderByChild('realm_ownerid'), equalTo(currentUser.uid));
+            const ownedSnap = await get(ownedQuery).catch(() => null);
+            if (ownedSnap?.exists()) {
+                Object.assign(data.realms, ownedSnap.val());
+            }
+        }
+
+        // 4. Fetch Targeted External Realm (if specified in URL and not in cache)
+        if (targetRealmId && !data.realms[targetRealmId]) {
+            const externalSnap = await get(ref(db, `realms/${targetRealmId}`)).catch(() => null);
+            if (externalSnap?.exists()) {
+                data.realms[targetRealmId] = externalSnap.val();
+            }
+        }
+
+        // Reference helper pointer for active target
+        data.realmData = targetRealmId ? data.realms[targetRealmId] || null : null;
+
         return data;
     } catch (error) {
         console.error("Critical Failure in getArcadeData:", error);
         throw error;
     }
 }
+
 /* Create a new user in the DB*/
 /* Create a new user profile in the DB */
 export async function initializeUserIfNeeded(user) {
