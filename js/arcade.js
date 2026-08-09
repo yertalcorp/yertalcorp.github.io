@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2363,9 +2363,21 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                     </div>
                 `;
 } else {
-                // Fetch circuit templates directly from databaseCache.realms filtering for is_circuit_template === true
+                // Fetch circuit templates directly from databaseCache.realms
                 const allRealms = Object.values(databaseCache.realms || {});
-                const circuits = allRealms.filter(r => r.is_circuit_template === true);
+                
+                // Diagnostic check for local cache payload
+                console.log("[DEBUG renderCurrents] Total realms in cache:", allRealms.length, allRealms);
+
+                // Robust filter handling both boolean true and string "true"
+                const circuits = allRealms.filter(r => 
+                    r.is_circuit_template === true || 
+                    r.is_circuit_template === 'true' || 
+                    String(r.is_circuit_template).toLowerCase() === 'true'
+                );
+
+                console.log("[DEBUG renderCurrents] Matched circuit templates:", circuits.length, circuits);
+
                 const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
                 const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
 
