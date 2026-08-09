@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 16:26:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 18:15:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /*
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Directly update the spark object's parameter_map with current UI values.
@@ -745,7 +745,10 @@ async function openSparkEditor(spark) {
 
         // --- FIND AND INSERT DEFAULT TEMPLATE IMAGE ---
         const types = databaseCache?.settings?.['arcade-current-types'] || {};
-        const defaultTemplate = Object.values(types).find(t => 
+        
+        // Lookup using spark.index directly against arcade-current-types array/dictionary
+        const sparkIndex = spark.index !== undefined ? spark.index : 0;
+        const defaultTemplate = types[sparkIndex] || Object.values(types).find(t => 
             t.name && spark.template_type && 
             t.name.toLowerCase().trim() === spark.template_type.toLowerCase().trim()
         );
