@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3574,7 +3574,8 @@ function genSparkImage(sparkImageFromDB) {
     return sparkImageFromDB;
 }
 
-async function renderSparkCard(spark, isOwner, currentId, realmId) {
+// DELETE: async function renderSparkCard(spark, isOwner, currentId, realmId) {
+function renderSparkCard(spark, isOwner, currentId, realmId) {
     const ownerId = databaseCache?.realms?.[realmId]?.realm_ownerid || spark.owner || 'UNKNOWN';
     const ownerData = databaseCache?.users?.[ownerId];
     const targetUrl = `spark.html?realm=${realmId}&current=${currentId}&spark=${spark.id}`;
@@ -3596,30 +3597,9 @@ async function renderSparkCard(spark, isOwner, currentId, realmId) {
     const archetypeImg = archetype.image;
 
     // --- 3-TIER IMAGE RESOLUTION PIPELINE ---
-    let finalRenderedImage = spark.image;
-    let requiresSync = false;
-
-    // Step 1: Check if {spark-id}.image is valid
-    if (!finalRenderedImage || !(await checkImageExists(finalRenderedImage))) {
-        // Step 2: Check if archetype image in arcade-current-types is valid
-        if (archetypeImg && (await checkImageExists(archetypeImg))) {
-            finalRenderedImage = archetypeImg;
-            requiresSync = true;
-        } else {
-            // Step 3: Fetch new Unsplash image using spark name
-            finalRenderedImage = getArcadeImageFromPrompt(spark.name || archetype.name);
-            requiresSync = true;
-        }
-    }
-
-    // Persist resolved fallback URL to memory cache and Firebase if changed
-    if (requiresSync) {
-        spark.image = finalRenderedImage;
-        if (databaseCache.realms?.[realmId]?.currents?.[currentId]?.sparks?.[spark.id]) {
-            databaseCache.realms[realmId].currents[currentId].sparks[spark.id].image = finalRenderedImage;
-        }
-        saveToRealtimeDB(`realms/${realmId}/currents/${currentId}/sparks/${spark.id}/image`, finalRenderedImage).catch(() => {});
-    }
+    
+    // Synchronous image assignment prevents returning a Promise to renderCurrents
+    let finalRenderedImage = spark.image || archetypeImg || getArcadeImageFromPrompt(spark.name || archetype.name);
 
     const pearlColor = "var(--list-color)";
     const neonColor = "var(--glow-color)";
@@ -3664,7 +3644,8 @@ async function renderSparkCard(spark, isOwner, currentId, realmId) {
     const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
     const onOut = "this.style.filter='drop-shadow(0 0 2px var(--glow-color))'; this.style.transform='scale(1)';"
     
-    const inlineFallbackJS = `this.onerror=null; this.src='/assets/thumbnails/default.jpg';`;
+    // DELETE: const inlineFallbackJS = `this.onerror=null; this.src='/assets/thumbnails/default.jpg';`;
+    const inlineFallbackJS = `this.onerror=null; this.src=getArcadeImageFromPrompt('${(spark.name || archetype.name || '').replace(/'/g, "\\'")}');`;
 
     return `
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center; width: 100%;">
@@ -3749,7 +3730,6 @@ async function renderSparkCard(spark, isOwner, currentId, realmId) {
         </div>
     `;
 }
-
 /*
  * Generates a concise Spark name: <CurrentName>-Spark#<DDMM-HHMM>
  * @param {string} currentName - The name of the parent Current
