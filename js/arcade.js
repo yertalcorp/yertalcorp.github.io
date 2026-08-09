@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @10:56:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @11:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1322,8 +1322,10 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
             return;
         }
 
-        // 2 & 3. CURRENT EXISTENCE & CAPACITY CHECKS (Strict databaseCache Evaluation)
+        // 2 & 3. STRICT databaseCache CAPACITY & CURRENT CHECKS
         console.log("[CLONE STEP 3] Evaluating current existence and capacity limits via databaseCache...");
+        
+        // Locate visitor realm directly from global databaseCache
         const visitorRealm = databaseCache.realms?.[visitorRealmId] || {};
         const visitorPlanType = profileData.plan_type || visitorRealm.realm_plan_type || 'free';
         const planLimits = databaseCache.settings?.['plan_limits']?.[visitorPlanType] || databaseCache.settings?.['plan_limits']?.['free'] || {};
@@ -1335,12 +1337,12 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
         const rawVisitorCurrents = visitorRealm.currents;
         const visitorCurrents = (rawVisitorCurrents && typeof rawVisitorCurrents === 'object') ? rawVisitorCurrents : {};
 
-        // Calculate active current keys (filtering out null/undefined entries)
-        const currentKeys = Object.keys(visitorCurrents).filter(k => visitorCurrents[k] !== null && visitorCurrents[k] !== undefined);
+        // Calculate valid active current keys
+        const currentKeys = Object.keys(visitorCurrents).filter(k => visitorCurrents[k] && typeof visitorCurrents[k] === 'object');
         const currentCount = currentKeys.length;
         
-        // Exact match check for current existence
-        const targetCurrentExists = Boolean(visitorCurrents[sourceCurrentId]);
+        // Exact match check for target current existence in databaseCache
+        const targetCurrentExists = currentKeys.includes(sourceCurrentId);
 
         console.log("Capacity Metrics (databaseCache):", { 
             visitorRealmId,
@@ -1471,6 +1473,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
         console.groupEnd();
     }
 };
+
 window.genLogo = (name, profilePic, isOwner) => {
     // SYSTEM LOGS: Debugging the state
     console.log(`[genLogo Debug]: Name: "${name}" | isOwner: ${isOwner} | Photo: ${profilePic ? 'FOUND' : 'MISSING'}`);
