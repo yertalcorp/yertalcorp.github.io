@@ -2237,19 +2237,19 @@ async function initializeUserRealm(realmId, templateId) {
         // 2. If a specific template was selected, copy over its Currents & Sparks
         if (templateId) {
             // Find selected template directly from databaseCache.realms
-**            const allRealms = Object.values(databaseCache.realms || {});**
-**            const selectedCircuit = allRealms.find(r => r.is_circuit_template === true && (r.realm_circuit === templateId || r.realm_id === templateId));**
+            const allRealms = Object.values(databaseCache.realms || {});
+            const selectedCircuit = allRealms.find(r => r.is_circuit_template === true && (r.realm_circuit === templateId || r.realm_id === templateId));
 
             if (selectedCircuit && selectedCircuit.currents) {
                 // Strip "REALM" from templateName/display_name for current type designation
-**                const cleanType = (selectedCircuit.realm_display_name || selectedCircuit.realm_title || 'Custom')**
+                const cleanType = (selectedCircuit.realm_display_name || selectedCircuit.realm_title || 'Custom')
                     .replace(/\bREALM\b/gi, '')
                     .trim();
 
-**                const templateCurrents = Object.values(selectedCircuit.currents);**
+                const templateCurrents = Object.values(selectedCircuit.currents);
 
-**                for (let currIdx = 0; currIdx < templateCurrents.length; currIdx++) {**
-**                    const curr = templateCurrents[currIdx];**
+                for (let currIdx = 0; currIdx < templateCurrents.length; currIdx++) {
+                    const curr = templateCurrents[currIdx];
                     
                     // Generate lowercase hyphenated Current ID directly from current name
                     const currentId = (curr.name || `current-${currIdx}`)
@@ -2281,18 +2281,18 @@ async function initializeUserRealm(realmId, templateId) {
                     };
                     
                     // Copy sparks directly from template current node
-**                    if (curr.sparks && typeof curr.sparks === 'object') {**
-**                        const templateSparks = Object.values(curr.sparks);**
-**                        for (let sparkIdx = 0; sparkIdx < templateSparks.length; sparkIdx++) {**
-**                            const templateSpark = templateSparks[sparkIdx];**
+                    if (curr.sparks && typeof curr.sparks === 'object') {
+                        const templateSparks = Object.values(curr.sparks);
+                        for (let sparkIdx = 0; sparkIdx < templateSparks.length; sparkIdx++) {
+                            const templateSpark = templateSparks[sparkIdx];
                             
                             // Look up archetype index from template spark or index
-**                            const sparkIndex = templateSpark.index !== undefined ? templateSpark.index : sparkIdx;**
+                            const sparkIndex = templateSpark.index !== undefined ? templateSpark.index : sparkIdx;
                             const cachedArchetype = databaseCache.settings?.['arcade-current-types']?.[sparkIndex] || {};
                             
                             const sparkData = {
-**                                name: templateSpark.name || cachedArchetype.name || `Spark #${sparkIndex}`,**
-**                                image: templateSpark.image || cachedArchetype.image || '/assets/thumbnails/default.jpg',**
+                                name: templateSpark.name || cachedArchetype.name || `Spark #${sparkIndex}`,
+                                image: templateSpark.image || cachedArchetype.image || '/assets/thumbnails/default.jpg',
                                 index: sparkIndex
                             };
 
@@ -2364,21 +2364,21 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                 `;
 } else {
                 // Fetch circuit templates directly from databaseCache.realms filtering for is_circuit_template === true
-**                const allRealms = Object.values(databaseCache.realms || {});**
-**                const circuits = allRealms.filter(r => r.is_circuit_template === true);**
+                const allRealms = Object.values(databaseCache.realms || {});
+                const circuits = allRealms.filter(r => r.is_circuit_template === true);
                 const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
                 const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
 
 // --- CARD MAPPING INSIDE renderCurrents ---
 
 const circuitCardsHTML = circuits.map(circuit => {
-**    const circuitId = circuit.realm_circuit || circuit.realm_id;**
-**    const patternImg = getCircuitCardPattern(circuitId);**
+    const circuitId = circuit.realm_circuit || circuit.realm_id;
+    const patternImg = getCircuitCardPattern(circuitId);
 
     return `
         <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); transition: transform 0.3s ease;">
             <div class="action-card" 
-**                 onclick="window.initializeUserRealm('${realmId}', '${circuitId}')"**
+                 onclick="window.initializeUserRealm('${realmId}', '${circuitId}')"
                  style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px solid var(--glow-aura); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
                 
                 <!-- 3D Extruded Neon Title -->
@@ -2399,12 +2399,12 @@ const circuitCardsHTML = circuits.map(circuit => {
                         4px 4px 6px rgba(0, 229, 255, 0.9),
                         0 0 12px var(--glow-color);
                 ">
-**                    ${circuit.realm_display_name || circuit.realm_title}**
+                    ${circuit.realm_display_name || circuit.realm_title}
                 </span>
 
                 <!-- Template Subtitle / Realm Title -->
                 <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 0.75rem; margin: 0; font-size: 11px; font-weight: 500; line-height: 1.3; max-width: 92%; word-break: break-word; white-space: normal; pointer-events: none; opacity: 0.9; text-shadow: 0 2px 4px rgba(0,0,0,0.9);">
-**                    ${circuit.realm_title}**
+                    ${circuit.realm_title}
                 </h4>
                 
                 <!-- Background Starfield + Sinusoidal Pattern -->
@@ -2417,9 +2417,9 @@ const circuitCardsHTML = circuits.map(circuit => {
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
                 <!-- Subtitle Caption -->
                 <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; word-wrap: break-word; white-space: normal; min-height: 36px;">
-**                    ${circuit.realm_subtitle || ''}**
+                    ${circuit.realm_subtitle || ''}
                 </p>
-**                <button onclick="window.initializeUserRealm('${realmId}', '${circuitId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">**
+                <button onclick="window.initializeUserRealm('${realmId}', '${circuitId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
                     INITIALIZE REALM
                 </button>
             </div>
