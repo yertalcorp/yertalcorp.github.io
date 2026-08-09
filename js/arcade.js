@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2223,7 +2223,6 @@ async function initializeUserRealm(realmId, templateId) {
         const updates = {};
         const timestamp = Date.now();
         
-        // 1. Mark setup_complete as true
         updates[`realms/${realmId}/realm_setup_complete`] = true;
         updates[`realms/${realmId}/realm_last_updated`] = timestamp;
 
@@ -2234,24 +2233,27 @@ async function initializeUserRealm(realmId, templateId) {
 
         await update(ref(db), updates);
 
-        // 2. If a specific template was selected, copy over its Currents & Sparks
         if (templateId) {
-            // Find selected template directly from databaseCache.realms
-            const allRealms = Object.values(databaseCache.realms || {});
-            const selectedCircuit = allRealms.find(r => r.is_circuit_template === true && (r.realm_circuit === templateId || r.realm_id === templateId));
+            // LEVEL 1: Convert realms object map to array
+            const allRealms = databaseCache.realms ? Object.values(databaseCache.realms) : [];
+            const selectedCircuit = allRealms.find(r => 
+                (r.is_circuit_template === true || String(r.is_circuit_template).toLowerCase() === 'true') && 
+                (r.realm_circuit === templateId || r.realm_id === templateId)
+            );
 
             if (selectedCircuit && selectedCircuit.currents) {
-                // Strip "REALM" from templateName/display_name for current type designation
                 const cleanType = (selectedCircuit.realm_display_name || selectedCircuit.realm_title || 'Custom')
                     .replace(/\bREALM\b/gi, '')
                     .trim();
 
-                const templateCurrents = Object.values(selectedCircuit.currents);
+                // LEVEL 2: Convert nested currents object into array
+                const templateCurrents = typeof selectedCircuit.currents === 'object' 
+                    ? Object.values(selectedCircuit.currents) 
+                    : [];
 
                 for (let currIdx = 0; currIdx < templateCurrents.length; currIdx++) {
                     const curr = templateCurrents[currIdx];
                     
-                    // Generate lowercase hyphenated Current ID directly from current name
                     const currentId = (curr.name || `current-${currIdx}`)
                         .toLowerCase()
                         .replace(/[^a-z0-9\s-]/g, '')
@@ -2260,10 +2262,9 @@ async function initializeUserRealm(realmId, templateId) {
                         
                     const currentPath = getCurrentPath(realmId, currentId);
                     
-                    // Build and save Current metadata shell
                     const currentPayload = {
                         id: currentId,
-                        name: curr.name,
+                        name: curr.name || "Active Current",
                         type: cleanType,
                         privacy: 'private',
                         date_created: timestamp,
@@ -2280,13 +2281,12 @@ async function initializeUserRealm(realmId, templateId) {
                         sparks: {}
                     };
                     
-                    // Copy sparks directly from template current node
+                    // LEVEL 3: Convert nested sparks object into array
                     if (curr.sparks && typeof curr.sparks === 'object') {
                         const templateSparks = Object.values(curr.sparks);
                         for (let sparkIdx = 0; sparkIdx < templateSparks.length; sparkIdx++) {
                             const templateSpark = templateSparks[sparkIdx];
                             
-                            // Look up archetype index from template spark or index
                             const sparkIndex = templateSpark.index !== undefined ? templateSpark.index : sparkIdx;
                             const cachedArchetype = databaseCache.settings?.['arcade-current-types']?.[sparkIndex] || {};
                             
@@ -2300,7 +2300,6 @@ async function initializeUserRealm(realmId, templateId) {
                             const detectedTemplate = cachedArchetype.name || 'Custom';
                             const templateUrl = sparkData.image;
 
-                            // Delegate spark creation to saveSpark without overriding default parameter_map
                             await saveSpark(realmId, currentId, sparkData, prompt, detectedTemplate, templateUrl, 'private');
                         }
                     }
@@ -2308,7 +2307,6 @@ async function initializeUserRealm(realmId, templateId) {
             }
         }
 
-        // 3. Re-render UI and refresh context
         await refreshUI();
 
     } catch (error) {
@@ -2411,12 +2409,12 @@ const circuitCardsHTML = circuits.map(circuit => {
                         4px 4px 6px rgba(0, 229, 255, 0.9),
                         0 0 12px var(--glow-color);
                 ">
-                    ${circuit.realm_display_name || circuit.realm_title}
+                    ${circuit.realm_display_name || circuit.realm_title || 'UNTITLED REALM'}
                 </span>
 
                 <!-- Template Subtitle / Realm Title -->
                 <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 0.75rem; margin: 0; font-size: 11px; font-weight: 500; line-height: 1.3; max-width: 92%; word-break: break-word; white-space: normal; pointer-events: none; opacity: 0.9; text-shadow: 0 2px 4px rgba(0,0,0,0.9);">
-                    ${circuit.realm_title}
+                    ${circuit.realm_title || ''}
                 </h4>
                 
                 <!-- Background Starfield + Sinusoidal Pattern -->
