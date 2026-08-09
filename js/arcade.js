@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @10:56:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1322,8 +1322,8 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
             return;
         }
 
-        // 2 & 3. CURRENT EXISTENCE & CAPACITY CHECKS
-        console.log("[CLONE STEP 3] Evaluating current existence and capacity limits...");
+        // 2 & 3. CURRENT EXISTENCE & CAPACITY CHECKS (Strict databaseCache Evaluation)
+        console.log("[CLONE STEP 3] Evaluating current existence and capacity limits via databaseCache...");
         const visitorRealm = databaseCache.realms?.[visitorRealmId] || {};
         const visitorPlanType = profileData.plan_type || visitorRealm.realm_plan_type || 'free';
         const planLimits = databaseCache.settings?.['plan_limits']?.[visitorPlanType] || databaseCache.settings?.['plan_limits']?.['free'] || {};
@@ -1331,16 +1331,25 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
         const maxCurrents = planLimits.max_currents || 3;
         const maxSparksPerCurrent = planLimits.max_sparks_per_current || 10;
 
-        const visitorCurrents = visitorRealm.currents || {};
-        const currentCount = Object.keys(visitorCurrents).length;
+        // Safely extract currents object from databaseCache
+        const rawVisitorCurrents = visitorRealm.currents;
+        const visitorCurrents = (rawVisitorCurrents && typeof rawVisitorCurrents === 'object') ? rawVisitorCurrents : {};
+
+        // Calculate active current keys (filtering out null/undefined entries)
+        const currentKeys = Object.keys(visitorCurrents).filter(k => visitorCurrents[k] !== null && visitorCurrents[k] !== undefined);
+        const currentCount = currentKeys.length;
+        
+        // Exact match check for current existence
         const targetCurrentExists = Boolean(visitorCurrents[sourceCurrentId]);
 
-        console.log("Capacity Metrics:", { 
+        console.log("Capacity Metrics (databaseCache):", { 
+            visitorRealmId,
             visitorPlanType, 
             targetCurrentExists, 
             currentCount, 
             maxCurrents, 
-            maxSparksPerCurrent 
+            maxSparksPerCurrent,
+            activeCurrentKeys: currentKeys
         });
 
         // RULE 3: If target current DOES NOT exist, check max_currents BEFORE creating
@@ -1354,7 +1363,9 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
         } 
         
         // RULE 2: If target current DOES exist (or will be created), check max_sparks_per_current
-        const existingSparksCount = Object.keys(visitorCurrents[sourceCurrentId]?.sparks || {}).length;
+        const targetCurrentSparksObj = visitorCurrents[sourceCurrentId]?.sparks || {};
+        const existingSparksCount = Object.keys(targetCurrentSparksObj).filter(k => targetCurrentSparksObj[k] !== null).length;
+
         if (existingSparksCount >= maxSparksPerCurrent) {
             console.warn(`[CLONE HALT] Reached spark limit in current (${existingSparksCount}/${maxSparksPerCurrent}).`);
             alert(`Cloning Failed: Target current '${sourceCurrentId}' has reached its maximum spark capacity (${maxSparksPerCurrent}).`);
@@ -1422,6 +1433,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
             console.log("[CLONE STEP 8] Writing cloned spark to destination and syncing local cache...");
             await set(ref(db, destinationSparkPath), clonedData);
             
+            if (!databaseCache.realms) databaseCache.realms = {};
             if (!databaseCache.realms[visitorRealmId]) {
                 databaseCache.realms[visitorRealmId] = { currents: {} };
             }
