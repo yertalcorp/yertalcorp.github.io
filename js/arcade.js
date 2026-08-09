@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2281,7 +2281,7 @@ async function initializeUserRealm(realmId, templateId) {
                         sparks: {}
                     };
                     
-// LEVEL 3: Convert nested sparks object into array
+                    // LEVEL 3: Convert nested sparks object into array
                     if (curr.sparks && typeof curr.sparks === 'object') {
                         const templateSparks = Object.values(curr.sparks);
                         for (let sparkIdx = 0; sparkIdx < templateSparks.length; sparkIdx++) {
@@ -3574,7 +3574,7 @@ function genSparkImage(sparkImageFromDB) {
     return sparkImageFromDB;
 }
 
-// DELETE: async function renderSparkCard(spark, isOwner, currentId, realmId) {
+// function renderSparkCard(spark, isOwner, currentId, realmId) {
 function renderSparkCard(spark, isOwner, currentId, realmId) {
     const ownerId = databaseCache?.realms?.[realmId]?.realm_ownerid || spark.owner || 'UNKNOWN';
     const ownerData = databaseCache?.users?.[ownerId];
@@ -3594,12 +3594,10 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     // Archetype Template Lookup
     const sparkIndex = spark.index !== undefined ? spark.index : 0;
     const archetype = databaseCache?.settings?.['arcade-current-types']?.[sparkIndex] || {};
-    const archetypeImg = archetype.image;
+    const archetypeImg = archetype.image || '';
 
-    // --- 3-TIER IMAGE RESOLUTION PIPELINE ---
-    
-    // Synchronous image assignment prevents returning a Promise to renderCurrents
-    let finalRenderedImage = spark.image || archetypeImg || getArcadeImageFromPrompt(spark.name || archetype.name);
+    // Primary Image Selection
+    let finalRenderedImage = spark.image || archetypeImg || (typeof getArcadeImageFromPrompt === 'function' ? getArcadeImageFromPrompt(spark.name || archetype.name) : '');
 
     const pearlColor = "var(--list-color)";
     const neonColor = "var(--glow-color)";
@@ -3644,8 +3642,9 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
     const onOut = "this.style.filter='drop-shadow(0 0 2px var(--glow-color))'; this.style.transform='scale(1)';"
     
-    // DELETE: const inlineFallbackJS = `this.onerror=null; this.src='/assets/thumbnails/default.jpg';`;
-    const inlineFallbackJS = `this.onerror=null; this.src=getArcadeImageFromPrompt('${(spark.name || archetype.name || '').replace(/'/g, "\\'")}');`;
+    const safeArchetypeImg = archetypeImg.replace(/'/g, "\\'");
+    const safeSparkName = (spark.name || archetype.name || '').replace(/'/g, "\\'");
+    const inlineFallbackJS = `window.handleSparkImageError(this, '${safeArchetypeImg}', '${safeSparkName}');`;
 
     return `
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center; width: 100%;">
@@ -3730,6 +3729,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
         </div>
     `;
 }
+
 /*
  * Generates a concise Spark name: <CurrentName>-Spark#<DDMM-HHMM>
  * @param {string} currentName - The name of the parent Current
@@ -4015,6 +4015,24 @@ async function getBestModels(poolType) {
     return sorted;
 }
 
+window.getArcadeImageFromPrompt = getArcadeImageFromPrompt;
+
+window.handleSparkImageError = function(imgElem, archetypeImg, sparkName) {
+    // Step 2: If spark.image failed and archetype image exists and hasn't been attempted
+    if (archetypeImg && archetypeImg.trim() !== '' && !imgElem.dataset.archetypeTried) {
+        imgElem.dataset.archetypeTried = 'true';
+        imgElem.src = archetypeImg;
+        return;
+    }
+
+    // Step 3: If archetype image failed or was missing, fetch Unsplash fallback
+    imgElem.onerror = null; // Prevent infinite loop
+    if (typeof window.getArcadeImageFromPrompt === 'function') {
+        imgElem.src = window.getArcadeImageFromPrompt(sparkName || 'Spark');
+    } else {
+        imgElem.src = 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=400&h=400&q=80';
+    }
+};
 async function checkImageExists(url) {
     if (!url || typeof url !== 'string') return false;
     if (url.includes('custom.jpg') || url.includes('default.jpg')) return false;
