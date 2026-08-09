@@ -2281,7 +2281,7 @@ async function initializeUserRealm(realmId, templateId) {
                         sparks: {}
                     };
                     
-                    // LEVEL 3: Convert nested sparks object into array
+// LEVEL 3: Convert nested sparks object into array
                     if (curr.sparks && typeof curr.sparks === 'object') {
                         const templateSparks = Object.values(curr.sparks);
                         for (let sparkIdx = 0; sparkIdx < templateSparks.length; sparkIdx++) {
@@ -2289,10 +2289,25 @@ async function initializeUserRealm(realmId, templateId) {
                             
                             const sparkIndex = templateSpark.index !== undefined ? templateSpark.index : sparkIdx;
                             const cachedArchetype = databaseCache.settings?.['arcade-current-types']?.[sparkIndex] || {};
-                            
+                            const archetypeImg = cachedArchetype.image;
+
+                            // --- 3-TIER IMAGE RESOLUTION PIPELINE ---
+                            let resolvedImage = templateSpark.image;
+
+                            // Step 1: Check if templateSpark.image is valid
+                            if (!resolvedImage || !(await checkImageExists(resolvedImage))) {
+                                // Step 2: Check if arcade-current-types archetype image is valid
+                                if (archetypeImg && (await checkImageExists(archetypeImg))) {
+                                    resolvedImage = archetypeImg;
+                                } else {
+                                    // Step 3: Fetch new Unsplash image using spark name
+                                    resolvedImage = getArcadeImageFromPrompt(templateSpark.name || cachedArchetype.name);
+                                }
+                            }
+
                             const sparkData = {
                                 name: templateSpark.name || cachedArchetype.name || `Spark #${sparkIndex}`,
-                                image: templateSpark.image || cachedArchetype.image || '/assets/thumbnails/default.jpg',
+                                image: resolvedImage,
                                 index: sparkIndex
                             };
 
@@ -3559,47 +3574,57 @@ function genSparkImage(sparkImageFromDB) {
     return sparkImageFromDB;
 }
 
-// FUNCTION: renderSparkCard
-function renderSparkCard(spark, isOwner, currentId, realmId) {
-    /* Overall Objective: Generate the HTML for a spark card with persistent 
-        neon state for likes and shares, and dynamic monetization labels based on plan type. */
-    
-    // Retrieve the page owner's metadata from the cache
+async function renderSparkCard(spark, isOwner, currentId, realmId) {
     const ownerId = databaseCache?.realms?.[realmId]?.realm_ownerid || spark.owner || 'UNKNOWN';
     const ownerData = databaseCache?.users?.[ownerId];
-    
     const targetUrl = `spark.html?realm=${realmId}&current=${currentId}&spark=${spark.id}`;
 
-    // Retrieve Monetization settings based on the owner's plan_type
     const ownerPlanKey = ownerData?.profile?.plan_type || 'free';
     const planLimits = databaseCache.settings?.['plan_types']?.[ownerPlanKey] || {};
     
-    // Logic for Sales vs Tips branding
     const isSalesMode = planLimits.monetization === 'sales';
     const txLabel = isSalesMode ? 'SALES' : 'TIPS';
     const txIcon = isSalesMode ? 'fa-shopping-cart' : 'fa-coins';
     const txActionTitle = isSalesMode ? 'Purchase' : 'Tip Jar';
 
-    // Now check for the visitor user's credentials.
     const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
     const sparkElementId = `save-btn-${spark.id}`;
 
-    let finalRenderedImage = '/assets/thumbnails/default.jpg'; 
-    const sparkImage = genSparkImage(spark.image);
-    finalRenderedImage = sparkImage;
-        
-    if (!sparkImage || spark.image === "") {
-       const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
-       const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
-       finalRenderedImage = getDynamicCardCover(activeThemeData);
+    // Archetype Template Lookup
+    const sparkIndex = spark.index !== undefined ? spark.index : 0;
+    const archetype = databaseCache?.settings?.['arcade-current-types']?.[sparkIndex] || {};
+    const archetypeImg = archetype.image;
+
+    // --- 3-TIER IMAGE RESOLUTION PIPELINE ---
+    let finalRenderedImage = spark.image;
+    let requiresSync = false;
+
+    // Step 1: Check if {spark-id}.image is valid
+    if (!finalRenderedImage || !(await checkImageExists(finalRenderedImage))) {
+        // Step 2: Check if archetype image in arcade-current-types is valid
+        if (archetypeImg && (await checkImageExists(archetypeImg))) {
+            finalRenderedImage = archetypeImg;
+            requiresSync = true;
+        } else {
+            // Step 3: Fetch new Unsplash image using spark name
+            finalRenderedImage = getArcadeImageFromPrompt(spark.name || archetype.name);
+            requiresSync = true;
+        }
     }
 
-    // 1. Core Color Palette
+    // Persist resolved fallback URL to memory cache and Firebase if changed
+    if (requiresSync) {
+        spark.image = finalRenderedImage;
+        if (databaseCache.realms?.[realmId]?.currents?.[currentId]?.sparks?.[spark.id]) {
+            databaseCache.realms[realmId].currents[currentId].sparks[spark.id].image = finalRenderedImage;
+        }
+        saveToRealtimeDB(`realms/${realmId}/currents/${currentId}/sparks/${spark.id}/image`, finalRenderedImage).catch(() => {});
+    }
+
     const pearlColor = "var(--list-color)";
     const neonColor = "var(--glow-color)";
     const neonGlow = "drop-shadow(0 0 5px var(--glow-color))";
     
-    // 2. State Assignments (Persisting the Neon state)
     const hasLiked = spark.stats?.likes?.users?.[visitorUid] ? true : false;
     const likeIconColor = hasLiked ? neonColor : pearlColor;
     const likeIconGlow = hasLiked ? neonGlow : "none";
@@ -3608,7 +3633,6 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     const shareIconColor = hasShared ? neonColor : pearlColor;
     const shareIconGlow = hasShared ? neonGlow : "none";
 
-    // Forge State Check (Internal Async)
     if (visitorUid && !isOwner) {
         (async () => {
             const visitorRealmId = databaseCache?.users?.[visitorUid]?.profile?.active_realm_id;
@@ -3630,26 +3654,23 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
 
     const toolIconColor = pearlColor;
 
-    // 3. Extraction of Stats Counts (Corrected paths)
     const viewCount = spark.stats?.views?.total_count || 0;
     const likeCount = spark.stats?.likes?.count || 0;
     const shareCount = spark.stats?.reshares?.count || 0;
     const transactionAmt = spark.stats?.transactions?.total_amount || 0;
     const feedbackCount = spark.stats?.feedback?.count || 0;
 
-    // Shared Styles
     const btnStyle = `background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; filter: drop-shadow(0 0 2px var(--glow-color));`;
     const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
     const onOut = "this.style.filter='drop-shadow(0 0 2px var(--glow-color))'; this.style.transform='scale(1)';"
     
-    const activeThemeKeyForHtml = localStorage.getItem('arcade-theme') || 'neon-dark';
-    const inlineFallbackJS = `console.error('IMAGE NETWORK FAILED: ${spark.id}'); this.onerror=null; try { const tk = localStorage.getItem('arcade-theme') || 'neon-dark'; const td = databaseCache.settings['themes'][tk] || {}; this.src=getDynamicCardCover(td); } catch(e) { this.src='/assets/thumbnails/default.jpg'; }`;
+    const inlineFallbackJS = `this.onerror=null; this.src='/assets/thumbnails/default.jpg';`;
 
     return `
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center; width: 100%;">
             <div class="action-card" 
-                  onclick="window.handleSparkLaunch('${realmId}', '${currentId}', '${spark.id}', '${targetUrl}')"
-                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
+                 onclick="window.handleSparkLaunch('${realmId}', '${currentId}', '${spark.id}', '${targetUrl}')"
+                 style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
                 
                 <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1.5rem; pointer-events: none;">
                     ${spark.name}
@@ -3665,27 +3686,21 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
             </div>
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
-                
                 <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 8px; color: rgba(var(--fg-color-high),0.4); border-bottom: 1px solid rgba(var(--fg-color-high),0.1); width: 85%; padding-bottom: 6px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
                     <span class="stat-views" title="Total Views">
-                        <i class="fas fa-eye" style="margin-right: 2px;"></i> 
-                        VIEWS: ${viewCount}
+                        <i class="fas fa-eye" style="margin-right: 2px;"></i> VIEWS: ${viewCount}
                     </span>
                     <span class="stat-likes" title="Total Likes">
-                        <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> 
-                        LIKES: ${likeCount}
+                        <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> LIKES: ${likeCount}
                     </span>
                     <span class="stat-feedback" title="Total Feedback">
-                        <i class="fas fa-comment-dots" style="margin-right: 2px;"></i> 
-                        FEEDBACK: ${feedbackCount}
+                        <i class="fas fa-comment-dots" style="margin-right: 2px;"></i> FEEDBACK: ${feedbackCount}
                     </span>
                     <span class="stat-reshares" title="Total Shares">
-                        <i class="fas fa-retweet" style="margin-right: 2px;"></i> 
-                        SHARES: ${shareCount}
+                        <i class="fas fa-retweet" style="margin-right: 2px;"></i> SHARES: ${shareCount}
                     </span>
                     <span class="stat-transactions" title="Total ${txLabel}">
-                        <i class="fas ${txIcon}" style="margin-right: 2px;"></i> 
-                        ${txLabel}: ${transactionAmt}
+                        <i class="fas ${txIcon}" style="margin-right: 2px;"></i> ${txLabel}: ${transactionAmt}
                     </span>
                 </div>
 
@@ -3727,7 +3742,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
                                     onmouseout="${onOut}">
                                     <i class="fas ${txIcon}" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>                        
-                            `}
+                        `}
                     </div>
                 </div>
             </div>
