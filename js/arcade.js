@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:40:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1335,17 +1335,16 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
             databaseCache.realms[visitorRealmId] = visitorRealm;
         }
 
-        // Read plan_type strictly from the Realm node
-        const realmPlanType = visitorRealm.realm_plan_type || 'free';
+        // Read plan_type strictly from user profile
+        const userPlanType = databaseCache.users?.[visitorUid]?.profile?.plan_type || 'free';
         
         // Resolve limits from settings.plan_limits
-        const planLimits = databaseCache.settings?.['plan_limits']?.[realmPlanType]
-            || databaseCache.settings?.['plan_types']?.[realmPlanType] 
+        const planLimits = databaseCache.settings?.['plan_limits']?.[userPlanType]
             || databaseCache.settings?.['plan_limits']?.['free'] 
             || {};
 
         const maxCurrents = Number(planLimits.max_currents) || 3;
-        const maxSparksPerCurrent = Number(planLimits.max_sparks_per_current) || 10;
+        const maxSparksPerCurrent = Number(planLimits.max_sparks_per_current) || Number(planLimits.max_currents_per_spark) || 10;
 
         const visitorCurrents = (visitorRealm.currents && typeof visitorRealm.currents === 'object') ? visitorRealm.currents : {};
 
@@ -2353,9 +2352,9 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
     // 1. DYNAMIC PLAN LOOKUP FOR THE OWNER
     const ownerUid = databaseCache.realms?.[realmId]?.realm_ownerid || 'UNKNOWN';
     const realm = databaseCache.realms?.[realmId] || {};
-    const planType = realm.realm_plan_type || 'free';
-    const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || databaseCache.settings?.['plan_limits']?.['free'] || {};
-    const maxSparks = planLimits.max_sparks_per_current || 10;
+    const userPlanType = databaseCache.users?.[ownerUid]?.profile?.plan_type || 'free';
+    const planLimits = databaseCache.settings?.['plan_limits']?.[userPlanType] || databaseCache.settings?.['plan_limits']?.['free'] || {};
+    const maxSparks = planLimits.max_sparks_per_current || planLimits.max_currents_per_spark || 10;
 
     console.log("[renderCurrents] Realm Context:", {
         ownerUid,
@@ -4102,8 +4101,10 @@ async function executeMassSpark(realmId, currentId, currentName, prompt, mode, p
     console.log(`[ORCHESTRATOR CONFIG] mode: "${mode}" | Target Index: ${promptTypeObject?.index}`);
     
     // 1. CAPACITY VALIDATION
-    const planLimits = databaseCache.settings?.['plan_limits']?.[databaseCache.users?.[user.uid]?.profile?.plan_type || 'free'] || databaseCache.settings?.['plan_limits']?.['free'];
-    const remainingSpace = planLimits.max_sparks_per_current - Object.keys(databaseCache.realms?.[realmId]?.currents?.[currentId]?.sparks || {}).length;
+    const userPlanType = databaseCache.users?.[user.uid]?.profile?.plan_type || 'free';
+    const planLimits = databaseCache.settings?.['plan_limits']?.[userPlanType] || databaseCache.settings?.['plan_limits']?.['free'] || {};
+    const maxSparksLimit = planLimits.max_sparks_per_current || planLimits.max_currents_per_spark || 10;
+    const remainingSpace = maxSparksLimit - Object.keys(databaseCache.realms?.[realmId]?.currents?.[currentId]?.sparks || {}).length;
 
     if (remainingSpace <= 0) {
         status.textContent = `STORAGE FULL (${planLimits.max_sparks_per_current}/${planLimits.max_sparks_per_current})`;
@@ -4910,7 +4911,6 @@ window.saveArcadeSettings = async () => {
         updates[`${realmPath}/realm_subtitle`] = subtitleInput.value.trim();
         updates[`${realmPath}/realm_theme`] = themeSelect.value;
         updates[`${realmPath}/realm_privacy`] = selectedPrivacy;
-        updates[`${realmPath}/realm_plan_type`] = planValue;
         updates[`${realmPath}/realm_setup_complete`] = true;
         updates[`${realmPath}/realm_last_updated`] = timestamp;
 
