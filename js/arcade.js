@@ -3582,7 +3582,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     const targetUrl = `spark.html?realm=${realmId}&current=${currentId}&spark=${spark.id}`;
 
     const ownerPlanKey = ownerData?.profile?.plan_type || 'free';
-    const planLimits = databaseCache.settings?.['plan_types']?.[ownerPlanKey] || {};
+    const planLimits = databaseCache.settings?.['plan_limits']?.[ownerPlanKey] || {};
     
     const isSalesMode = planLimits.monetization === 'sales';
     const txLabel = isSalesMode ? 'SALES' : 'TIPS';
