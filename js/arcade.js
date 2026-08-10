@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:05:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1277,6 +1277,10 @@ watchAuthState(async (currentUser) => {
     refreshUI(); 
 });
 
+/* 
+ * Objective: Clone Spark into visitor's active realm.
+ * Task: Handle capacity verification, write cloned spark, and set realm_setup_complete on success.
+ */
 window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) => {
     console.group(`[CLONE SPARK] Initiated for Spark: ${sparkId}`);
     console.log("Input Args:", { visitorUid, sourceRealmId, sourceCurrentId, sparkId });
@@ -1447,12 +1451,21 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
 
             // 8. WRITE TO DB & SYNC LOCAL CACHE
             console.log("[CLONE STEP 8] Writing cloned spark to destination and syncing local cache...");
-            await set(ref(db, destinationSparkPath), clonedData);
+            
+            // Atomic updates to persist cloned spark and update setup status
+            const cloneUpdates = {};
+            cloneUpdates[destinationSparkPath] = clonedData;
+            cloneUpdates[`realms/${visitorRealmId}/realm_setup_complete`] = true;
+            await window.update(ref(db), cloneUpdates);
             
             if (!databaseCache.realms) databaseCache.realms = {};
             if (!databaseCache.realms[visitorRealmId]) {
                 databaseCache.realms[visitorRealmId] = { currents: {} };
             }
+            
+            // Evolve setup status in local cache
+            databaseCache.realms[visitorRealmId].realm_setup_complete = true;
+
             if (!databaseCache.realms[visitorRealmId].currents) {
                 databaseCache.realms[visitorRealmId].currents = {};
             }
