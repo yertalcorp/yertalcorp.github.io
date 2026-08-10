@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1190,7 +1190,8 @@ async function refreshUI() {
         const branding = ownerProfile.branding || {};
 
         // 5. SLUG-OWNER BRANDING & THEME
-        globalTheme = ownerProfile.theme || 'neon-dark';
+        // DELETED: globalTheme = ownerProfile.theme || 'neon-dark';
+        globalTheme = realmData?.realm_theme || 'neon-dark';
         applyTheme(globalTheme);
         
         document.title = `${ownerProfile.display_name || 'Realm'} | Showroom`;
