@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1360,7 +1360,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
 
         console.log("Capacity Metrics (Evaluated):", { 
             visitorRealmId,
-            realmPlanType, 
+            userPlanType, 
             targetCurrentExists, 
             currentCount, 
             maxCurrents, 
@@ -2361,7 +2361,7 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
 
     console.log("[renderCurrents] Realm Context:", {
         ownerUid,
-        planType,
+        userPlanType,
         maxSparks,
         realmSetupComplete: realm.realm_setup_complete
     });
