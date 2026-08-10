@@ -4676,6 +4676,141 @@ async function formatPlanPrice(baseInrAmount) {
         };
     }
 }
+
+/*
+ * HUD Controls: Closes the Plan Settings overlay
+ */
+window.closePlanSettings = () => {
+    const hud = document.getElementById('plansettings-hud');
+    if (hud) {
+        hud.classList.remove('active');
+        console.log("[UI]: Plan Settings HUD closed.");
+    } else {
+        console.warn("[UI]: Could not find 'plansettings-hud' to close.");
+    }
+};
+
+/* 
+ * Objective: Open Standalone Plan Settings HUD
+ * Task: Populate plan tier selections dynamically and activate HUD overlay
+ */
+window.openPlanSettings = async () => {
+    const hud = document.getElementById('plansettings-hud');
+    if (!hud) return;
+
+    const currentUid = window.auth?.currentUser?.uid;
+    const profile = (databaseCache.users && currentUid && databaseCache.users[currentUid]) 
+                    ? databaseCache.users[currentUid].profile 
+                    : {};
+
+    const planZone = document.getElementById('standalone-plan-zone');
+    const submitBtn = document.getElementById('submit-plan-settings');
+
+    const allPlans = databaseCache.settings?.plan_limits;
+    if (allPlans && planZone) {
+        planZone.innerHTML = `
+            <label class="hud-label-metallic">SYSTEM_PLAN_SELECTION</label>
+            <div class="plans-grid plan-selection-container"></div>
+        `;
+
+        const planContainer = planZone.querySelector('.plan-selection-container');
+        
+        for (const planId of Object.keys(allPlans)) {
+            const plan = allPlans[planId];
+            const userCurrentPlan = profile.plan_type || 'free';
+            const isActive = (planId === userCurrentPlan);
+            const canSelect = (plan.enabled === true) || isActive;
+
+            const planBox = document.createElement('div');
+            planBox.className = `plan-card-rounded ${isActive ? 'active' : ''} ${!canSelect ? 'tier-locked' : ''}`;
+            
+            const fPP = await formatPlanPrice(plan.cost);
+            const fPPAnnual = await formatPlanPrice(plan.cost * 10);
+            
+            planBox.innerHTML = `
+                <div class="plan-box-inner">
+                    <div class="tier-identity-metallic">${(planId).toUpperCase()}-TIER</div>
+                    <div class="tier-pitch">${plan.identity.toUpperCase()}</div>
+                    <div class="tier-pitch">${plan.pitch}</div>
+                    <div class="tier-pricing">
+                        <div class="price-main">
+                            ${fPP.symbol}${fPP.cost}<small>/mo</small> 
+                        </div>
+                        <div class="price-annual">
+                            ${fPPAnnual.symbol}${fPPAnnual.cost}<small>/yr</small>
+                        </div>                   
+                    </div>
+                    <ul class="tier-specs-list">
+                        <li><i class="fa-solid fa-folder"></i> <b>${plan.max_currents}</b> Topics</li>
+                        <li><i class="fa-solid fa-microchip"></i> <b>${plan.max_sparks_per_current}</b> Action Cards</li>
+                        <hr class="metallic-divider">
+                        <li><i class="fa-solid ${plan.analytics_enabled ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Analytics</li>
+                        <li><i class="fa-solid ${plan.monetization === 'sales' ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Direct Sales</li>
+                    </ul>
+                </div>
+                <div class="plan-radio-dock">
+                    <input type="radio" name="standalone-plan" id="plan-radio-${planId}" value="${planId}" 
+                        ${isActive ? 'checked' : ''} 
+                        ${!canSelect ? 'disabled' : ''}>
+                    <label for="plan-radio-${planId}">${isActive ? ' CURRENT PLAN' : (canSelect ? ' SELECT PLAN' : ' DISABLED')}</label>
+                </div>
+            `;
+
+            if (canSelect) {
+                planBox.onclick = () => {
+                    hud.querySelectorAll('.plan-card-rounded').forEach(el => el.classList.remove('active'));
+                    planBox.classList.add('active');
+                    planBox.querySelector('input').checked = true;
+                };
+            }
+            planContainer.appendChild(planBox);
+        }
+    }
+
+    if (submitBtn) {
+        submitBtn.style.display = "block";
+        submitBtn.style.margin = "30px auto 10px auto";
+    }
+
+    hud.classList.add('active');
+};
+
+/*
+ * Objective: Save updated Plan Settings to Firebase
+ */
+window.savePlanSettings = async () => {
+    const selectedPlan = document.querySelector('input[name="standalone-plan"]:checked')?.value;
+    if (!selectedPlan) return;
+
+    const activeUser = window.auth?.currentUser;
+    if (!activeUser) return;
+
+    try {
+        const userProfilePath = `users/${activeUser.uid}/profile`;
+        const timestamp = Date.now();
+
+        const updates = {};
+        updates[`${userProfilePath}/plan_type`] = selectedPlan;
+        updates[`${userProfilePath}/plan_last_updated`] = timestamp;
+
+        await window.update(window.ref(window.db), updates);
+
+        if (!databaseCache.users) databaseCache.users = {};
+        if (!databaseCache.users[activeUser.uid]) databaseCache.users[activeUser.uid] = { profile: {} };
+        if (!databaseCache.users[activeUser.uid].profile) databaseCache.users[activeUser.uid].profile = {};
+
+        databaseCache.users[activeUser.uid].profile.plan_type = selectedPlan;
+        databaseCache.users[activeUser.uid].profile.plan_last_updated = timestamp;
+
+        document.getElementById('plansettings-hud').classList.remove('active');
+
+        await refreshUI();
+        console.log("[SYSTEM]: Plan Settings successfully updated.");
+
+    } catch (error) {
+        console.error("PLAN_UPDATE_FAILURE:", error);
+    }
+};
 /* 
  * Objective: Initialize or Re-Forge Arcade Identity
  * Task: Dynamically generate HUD structure, populate from cache, and ensure Close UI is present.
