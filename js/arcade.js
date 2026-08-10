@@ -1347,7 +1347,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
             || {};
 
         const maxCurrents = Number(planLimits.max_currents) || 3;
-        const maxSparksPerCurrent = Number(planLimits.max_sparks_per_current) || Number(planLimits.max_currents_per_spark) || 10;
+        const maxSparksPerCurrent = Number(planLimits.max_sparks_per_current)  || 12;
 
         const visitorCurrents = (visitorRealm.currents && typeof visitorRealm.currents === 'object') ? visitorRealm.currents : {};
 
@@ -2357,7 +2357,7 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
     const realm = databaseCache.realms?.[realmId] || {};
     const userPlanType = databaseCache.users?.[ownerUid]?.profile?.plan_type || 'free';
     const planLimits = databaseCache.settings?.['plan_limits']?.[userPlanType] || databaseCache.settings?.['plan_limits']?.['free'] || {};
-    const maxSparks = planLimits.max_sparks_per_current || planLimits.max_currents_per_spark || 10;
+    const maxSparks = planLimits.max_sparks_per_current  || 12;
 
     console.log("[renderCurrents] Realm Context:", {
         ownerUid,
@@ -4106,7 +4106,7 @@ async function executeMassSpark(realmId, currentId, currentName, prompt, mode, p
     // 1. CAPACITY VALIDATION
     const userPlanType = databaseCache.users?.[user.uid]?.profile?.plan_type || 'free';
     const planLimits = databaseCache.settings?.['plan_limits']?.[userPlanType] || databaseCache.settings?.['plan_limits']?.['free'] || {};
-    const maxSparksLimit = planLimits.max_sparks_per_current || planLimits.max_currents_per_spark || 10;
+    const maxSparksLimit = planLimits.max_sparks_per_current || 12;
     const remainingSpace = maxSparksLimit - Object.keys(databaseCache.realms?.[realmId]?.currents?.[currentId]?.sparks || {}).length;
 
     if (remainingSpace <= 0) {
