@@ -56,6 +56,20 @@ main.max-width-limit {
 }
 
 /* --- PLAN CARD INTERNALS --- */
+/* ==========================================================================
+   PLAN SETTINGS HUD OVERRIDES
+   ========================================================================== */
+
+#plansettings-hud .hud-window {
+    max-width: 850px;
+    width: 95%;
+}
+
+.plan-card-rounded.tier-locked {
+    filter: grayscale(1) opacity(0.4);
+    cursor: not-allowed;
+}
+
 .plan-box-inner {
     padding: 5px;
     width: 100%;
