@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:09:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -4841,13 +4841,16 @@ window.openRealmSettings = async () => {
                     ? databaseCache.users[currentUid].profile 
                     : {};
 
-    const isSetup = profile.hasOwnProperty('setup_complete') && profile.setup_complete === true;
+    // Resolve active realm ID and current realm data from databaseCache
+    const activeRealmId = profile.active_realm_id || await ensureActiveRealm(currentUid);
+    const activeRealm = databaseCache.realms?.[activeRealmId] || {};
+
+    const isSetup = activeRealm.realm_setup_complete === true || profile.setup_complete === true;
     
     console.log("openRealmSettings - Profile Source:", isSetup ? "DATABASE_CACHE" : "NEW_USER");
 
     // Target the dynamic zones defined in index.html
     const profileZone = document.getElementById('realm-profile-zone');
-    // DELETED: const planZone = document.getElementById('plan-selection-zone');
 
     // 2. GENERATE DYNAMIC PROFILE STRUCTURE
     if (profileZone) {
@@ -4877,18 +4880,18 @@ window.openRealmSettings = async () => {
     const privacySelect = document.getElementById('arcade-privacy-select');
     const submitBtn = document.getElementById('submit-onboarding');
 
-    // 3. PRE-POPULATE FIELDS FROM CACHE
-    if (nameInput) nameInput.value = isSetup ? (profile.arcade_title || '') : '';
-    if (subtitleInput) subtitleInput.value = isSetup ? (profile.arcade_subtitle || '') : '';
-    if (privacySelect) privacySelect.value = isSetup ? (profile.privacy || 'public') : 'public';
+    // 3. PRE-POPULATE FIELDS FROM CACHE (Reading from activeRealm node)
+    if (nameInput) nameInput.value = isSetup ? (activeRealm.realm_title || profile.arcade_title || '') : '';
+    if (subtitleInput) subtitleInput.value = isSetup ? (activeRealm.realm_subtitle || profile.arcade_subtitle || '') : '';
+    if (privacySelect) privacySelect.value = isSetup ? (activeRealm.realm_privacy || profile.privacy || 'public') : 'public';
 
     // 4. POPULATE THEMES & APPLY INITIAL STYLE
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     if (themes && themeSelect) {
         themeSelect.innerHTML = ''; 
         
-        // Resolve default active theme from realm/profile configuration
-        const activeThemeId = profile.realm_theme || profile.theme || 'spring-bloom';
+        // Resolve default active theme directly from activeRealm node
+        const activeThemeId = activeRealm.realm_theme || profile.theme || 'neon-dark';
 
         Object.keys(themes).forEach(id => {
             const opt = document.createElement('option');
@@ -4927,8 +4930,6 @@ window.openRealmSettings = async () => {
             </button>
         `;
     }
-
-    // DELETED: 6. DYNAMIC PLAN GRID GENERATION (Removed section entirely)
 
     // 6. BUTTON CONFIGURATION & VISIBILITY
     if (submitBtn) {
