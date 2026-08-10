@@ -1539,7 +1539,7 @@ window.genLogo = (name, profilePic, isOwner) => {
     `;
 };
 function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
-    const header = document.getElementById('arcade-header');
+    const header = document.getElementById('realm-header');
     if (!header) return;
 
     const profile = pageOwnerData?.profile || {};
@@ -4580,8 +4580,8 @@ function formatTimeAgo(timestamp) {
 /*
  * HUD Controls: Closes the Arcade Settings overlay
  */
-window.closeArcadeSettings = () => {
-    const hud = document.getElementById('arcadesettings-hud');
+window.closeRealmSettings = () => {
+    const hud = document.getElementById('realmsettings-hud');
     
     if (hud) {
         // Option A: Instantly hide it
@@ -4597,7 +4597,7 @@ window.closeArcadeSettings = () => {
         
         console.log("[UI]: Realm Settings HUD closed.");
     } else {
-        console.warn("[UI]: Could not find 'arcadesettings-hud' to close.");
+        console.warn("[UI]: Could not find 'realmsettings-hud' to close.");
     }
 };
 
@@ -4677,8 +4677,8 @@ async function formatPlanPrice(baseInrAmount) {
  * Objective: Initialize or Re-Forge Arcade Identity
  * Task: Dynamically generate HUD structure, populate from cache, and ensure Close UI is present.
  */
-window.openArcadeSettings = async () => {
-    const hud = document.getElementById('arcadesettings-hud');
+window.openRealmSettings = async () => {
+    const hud = document.getElementById('realmsettings-hud');
     if (!hud) return;
 
     // 1. IDENTITY & STATE CHECK
@@ -4691,7 +4691,7 @@ window.openArcadeSettings = async () => {
 
     const isSetup = profile.hasOwnProperty('setup_complete') && profile.setup_complete === true;
     
-    console.log("openArcadeSettings - Profile Source:", isSetup ? "DATABASE_CACHE" : "NEW_USER");
+    console.log("openRealmSettings - Profile Source:", isSetup ? "DATABASE_CACHE" : "NEW_USER");
 
     // Target the dynamic zones defined in index.html
     const profileZone = document.getElementById('arcade-profile-zone');
@@ -4766,7 +4766,7 @@ window.openArcadeSettings = async () => {
                 <h2 class="hud-title-metallic">${isSetup ? 'RE-FORGE LABORATORY' : 'INITIALIZE YOUR REALM'}</h2>
                 <p class="hud-subtitle-info">${isSetup ? 'Syncing Profile Data...' : 'Establish Your Realm to Start Creating'}</p>
             </div>
-            <button onclick="closeArcadeSettings()" class="close-hud-corner" aria-label="Close Settings">
+            <button onclick="closeRealmSettings()" class="close-hud-corner" aria-label="Close Settings">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         `;
@@ -4883,7 +4883,7 @@ window.updateLogoStatus = (input) => {
     }
 };
 
-window.saveArcadeSettings = async () => {
+window.saveRealmSettings = async () => {
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
     const themeSelect = document.getElementById('arcade-theme-select');
@@ -4942,7 +4942,7 @@ window.saveArcadeSettings = async () => {
 
         // 5. UI REFRESH
         if (typeof applyTheme === 'function') applyTheme(themeSelect.value);
-        document.getElementById('arcadesettings-hud').classList.remove('active');
+        document.getElementById('realmsettings-hud').classList.remove('active');
 
         await refreshUI();
         console.log("[SYSTEM]: Realm Settings and Search Index Synchronized.");
@@ -5127,7 +5127,7 @@ window.handleCreation = handleCreation;
 window.handleSparkLaunch = handleSparkLaunch;
 window.payOwner = payOwner;
 // Force the function to be global so the HTML button can see it
-window.closeArcadeSettings = closeArcadeSettings;
+window.closeRealmSettings = closeRealmSettings;
 // At the bottom of arcade.js
 window.likeSpark = likeSpark;
 console.log("likeSpark function has been successfully bridged to the window scope.");
