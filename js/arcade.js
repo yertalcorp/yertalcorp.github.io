@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -4698,8 +4698,9 @@ window.openPlanSettings = async () => {
     const planZone = document.getElementById('standalone-plan-zone');
     const submitBtn = document.getElementById('submit-plan-settings');
 
-    // DELETED: const allPlans = databaseCache.settings?.plan_limits;
-    const allPlans = (typeof getPlanLimits === 'function') ? await getPlanLimits() : databaseCache.settings?.plan_limits;
+    // Pull the plan tiers dictionary directly from databaseCache settings
+    const allPlans = databaseCache.settings?.plan_limits || databaseCache.settings?.['plan_limits'];
+    
     if (allPlans && planZone) {
         planZone.innerHTML = `
             <label class="hud-label-metallic">SYSTEM_PLAN_SELECTION</label>
@@ -4717,14 +4718,14 @@ window.openPlanSettings = async () => {
             const planBox = document.createElement('div');
             planBox.className = `plan-card-rounded ${isActive ? 'active' : ''} ${!canSelect ? 'tier-locked' : ''}`;
             
-            const fPP = await formatPlanPrice(plan.cost);
-            const fPPAnnual = await formatPlanPrice(plan.cost * 10);
+            const fPP = await formatPlanPrice(plan.cost || 0);
+            const fPPAnnual = await formatPlanPrice((plan.cost || 0) * 10);
             
             planBox.innerHTML = `
                 <div class="plan-box-inner">
                     <div class="tier-identity-metallic">${(planId).toUpperCase()}-TIER</div>
-                    <div class="tier-pitch">${plan.identity.toUpperCase()}</div>
-                    <div class="tier-pitch">${plan.pitch}</div>
+                    <div class="tier-pitch">${(plan.identity || planId).toUpperCase()}</div>
+                    <div class="tier-pitch">${plan.pitch || ''}</div>
                     <div class="tier-pricing">
                         <div class="price-main">
                             ${fPP.symbol}${fPP.cost}<small>/mo</small> 
@@ -4734,8 +4735,8 @@ window.openPlanSettings = async () => {
                         </div>                   
                     </div>
                     <ul class="tier-specs-list">
-                        <li><i class="fa-solid fa-folder"></i> <b>${plan.max_currents}</b> Topics</li>
-                        <li><i class="fa-solid fa-microchip"></i> <b>${plan.max_sparks_per_current}</b> Action Cards</li>
+                        <li><i class="fa-solid fa-folder"></i> <b>${plan.max_currents || 0}</b> Topics</li>
+                        <li><i class="fa-solid fa-microchip"></i> <b>${plan.max_sparks_per_current || 0}</b> Action Cards</li>
                         <hr class="metallic-divider">
                         <li><i class="fa-solid ${plan.analytics_enabled ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Analytics</li>
                         <li><i class="fa-solid ${plan.monetization === 'sales' ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Direct Sales</li>
@@ -4753,7 +4754,8 @@ window.openPlanSettings = async () => {
                 planBox.onclick = () => {
                     hud.querySelectorAll('.plan-card-rounded').forEach(el => el.classList.remove('active'));
                     planBox.classList.add('active');
-                    planBox.querySelector('input').checked = true;
+                    const radio = planBox.querySelector('input');
+                    if (radio) radio.checked = true;
                 };
             }
             planContainer.appendChild(planBox);
@@ -4770,6 +4772,7 @@ window.openPlanSettings = async () => {
 
 /*
  * Objective: Save updated Plan Settings to Firebase
+ * Task: Persist plan_type to user profile, update local cache, close HUD, and trigger refreshUI.
  */
 window.savePlanSettings = async () => {
     const selectedPlan = document.querySelector('input[name="standalone-plan"]:checked')?.value;
@@ -4786,8 +4789,10 @@ window.savePlanSettings = async () => {
         updates[`${userProfilePath}/plan_type`] = selectedPlan;
         updates[`${userProfilePath}/plan_last_updated`] = timestamp;
 
-        await window.update(window.ref(window.db), updates);
+        // Use direct ref/update references aligned with Firebase module setup
+        await update(ref(db), updates);
 
+        // Synchronize local cache immediately
         if (!databaseCache.users) databaseCache.users = {};
         if (!databaseCache.users[activeUser.uid]) databaseCache.users[activeUser.uid] = { profile: {} };
         if (!databaseCache.users[activeUser.uid].profile) databaseCache.users[activeUser.uid].profile = {};
@@ -4795,16 +4800,18 @@ window.savePlanSettings = async () => {
         databaseCache.users[activeUser.uid].profile.plan_type = selectedPlan;
         databaseCache.users[activeUser.uid].profile.plan_last_updated = timestamp;
 
-        document.getElementById('plansettings-hud').classList.remove('active');
+        // Hide HUD overlay
+        const hud = document.getElementById('plansettings-hud');
+        if (hud) hud.classList.remove('active');
 
         await refreshUI();
         console.log("[SYSTEM]: Plan Settings successfully updated.");
 
     } catch (error) {
         console.error("PLAN_UPDATE_FAILURE:", error);
+        alert("Failed to update plan settings. Please try again.");
     }
 };
-
 /*
  * HUD Controls: Closes the Arcade Settings overlay and rolls back unsubmitted theme previews
  */
