@@ -1545,20 +1545,19 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const header = document.getElementById('realm-header');
     if (!header) return;
 
+    // 1. PROFILE NODE: Strictly user-identity properties
     const profile = pageOwnerData?.profile || {};
-    const arcadeLogo = profile.arcade_logo;
-    const brandName = profile.display_name;
-    const arcadeTitle = profile.arcade_title;
-    const arcadeSubtitle = profile.arcade_subtitle;
     const avatarPath = '/assets/images/avatar.jpg';
-    
-    // Resolve setup_complete directly from the realm data in databaseCache
+    const ownerPhotoUrl = profile.photoURL || avatarPath;
+
+    // 2. REALMS NODE: All realm/laboratory configuration properties
     const targetRealm = databaseCache.realms?.[realmSlug] || {};
-    const isSetupComplete = targetRealm.realm_setup_complete === true || targetRealm.setup_complete === true;
+    const arcadeTitle = targetRealm.realm_title || '';
+    const arcadeSubtitle = targetRealm.realm_subtitle || '';
+    const isSetupComplete = targetRealm.realm_setup_complete === true;
 
+    const brandName = profile.display_name || targetRealm.realm_display_name || 'PILOT';
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
-
-    const ownerPhotoUrl = profile.photoURL || avatarPath; 
 
     const logoContent = window.genLogo(brandName, ownerPhotoUrl, isOwner);
         
@@ -1576,8 +1575,8 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
                 </div>
 
                 <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid var(--glow-aura); padding-left: 0.5rem; height: 16px; margin-left: 0.2rem;">
-                    <a href="/index.html" title="Showroom" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size);; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-door-open"></i></a>
-                    <a href="?realm=${realmSlug}" title="My Realm" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size);; transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
+                    <a href="/index.html" title="Showroom" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size); transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-door-open"></i></a>
+                    <a href="?realm=${realmSlug}" title="My Realm" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size); transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
                     <a href="?realm=realm-20260804-1785866761042" class="metallic-text" style="border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 3px; text-decoration: none; background: var(--branding-color); color: var(--bg-color); box-shadow: 0 0 5px var(--box-shadow-color); font-size: var(--nav-font-size); font-weight: 900;">HUB</a>
                 </div>
             </div>
@@ -1586,7 +1585,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
                 ${arcadeTitle ? `
                 <h1 style="margin: 0; font-size: 1.4rem; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; line-height: 1;">
                     <span style="color: var(--branding-text-color);">${titleParts[0] || ''} ${titleParts[1] || ''}</span> 
-                    <span style="color: var(--glow-color); filter: drop-shadow(0 0 8px var(--glow-color));">${titleParts[2] || ''}</span>
+                    <span style="color: var(--glow-color); filter: drop-shadow(0 0 8px var(--glow-color));">${titleParts.slice(2).join(' ') || ''}</span>
                 </h1>
                 <p id="hero-subheading" style="color: var(--branding-text-color); opacity: 0.6; font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${arcadeSubtitle}</p>
                 ` : ''}
