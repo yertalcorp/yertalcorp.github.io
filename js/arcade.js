@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:18:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:05:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -75,6 +75,7 @@ export async function ensureActiveRealm(uid) {
             realm_logo: userProfile.photoURL || "/assets/images/YERTAL LOGO SIMPLE.png",
             realm_theme: "neon-dark",
             realm_privacy: "private",
+            realm_circuit: "custom",
             realm_setup_complete: false,
             realm_date_created: timestamp,
             realm_last_updated: timestamp,
@@ -82,7 +83,6 @@ export async function ensureActiveRealm(uid) {
         };
 
         updates[`users/${uid}/profile/active_realm_id`] = activeRealmId;
-        // DELETED: updates[`users/${uid}/profile/setup_complete`] = true;
 
         await update(ref(db), updates);
 
@@ -2217,11 +2217,6 @@ function getCircuitCardPattern(circuitId) {
     return canvas.toDataURL();
 }
 
-/*
- * Copies a selected circuit template from databaseCache into the user's Realm
- * @param {string} ownerUid - Logged-in user's UID
- * @param {string|null} templateId - Selected template ID or null for blank realm
- */
 async function initializeUserRealm(realmId, templateId) {
     try {
         const updates = {};
@@ -2229,10 +2224,13 @@ async function initializeUserRealm(realmId, templateId) {
         
         updates[`realms/${realmId}/realm_setup_complete`] = true;
         updates[`realms/${realmId}/realm_last_updated`] = timestamp;
+        // Set selected template ID or default to "custom" if blank option is chosen
+        updates[`realms/${realmId}/realm_circuit`] = templateId || "custom";
 
         if (databaseCache.realms?.[realmId]) {
             databaseCache.realms[realmId].realm_setup_complete = true;
             databaseCache.realms[realmId].realm_last_updated = timestamp;
+            databaseCache.realms[realmId].realm_circuit = templateId || "custom";
         }
 
         await update(ref(db), updates);
@@ -2295,16 +2293,12 @@ async function initializeUserRealm(realmId, templateId) {
                             const cachedArchetype = databaseCache.settings?.[REALM_CACHE]?.[sparkIndex] || {};
                             const archetypeImg = cachedArchetype.image;
 
-                            // --- 3-TIER IMAGE RESOLUTION PIPELINE ---
                             let resolvedImage = templateSpark.image;
 
-                            // Step 1: Check if templateSpark.image is valid
                             if (!resolvedImage || !(await checkImageExists(resolvedImage))) {
-                                // Step 2: Check if the REALM_CACHE archetype image is valid
                                 if (archetypeImg && (await checkImageExists(archetypeImg))) {
                                     resolvedImage = archetypeImg;
                                 } else {
-                                    // Step 3: Fetch new Unsplash image using spark name
                                     resolvedImage = getArcadeImageFromPrompt(templateSpark.name || cachedArchetype.name);
                                 }
                             }
@@ -2333,7 +2327,7 @@ async function initializeUserRealm(realmId, templateId) {
         alert("Failed to initialize realm. Please try again.");
     }
 }
-
+    
 // Expose helper to global window scope for inline onclick hooks
 window.initializeUserRealm = initializeUserRealm;
 
