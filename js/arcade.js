@@ -1281,6 +1281,10 @@ watchAuthState(async (currentUser) => {
  * Objective: Clone Spark into visitor's active realm.
  * Task: Handle capacity verification, write cloned spark, and set realm_setup_complete on success.
  */
+/* 
+ * Objective: Clone Spark into visitor's active realm.
+ * Task: Handle capacity verification, write cloned spark, and set realm_setup_complete on success.
+ */
 window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) => {
     console.group(`[CLONE SPARK] Initiated for Spark: ${sparkId}`);
     console.log("Input Args:", { visitorUid, sourceRealmId, sourceCurrentId, sparkId });
@@ -1351,7 +1355,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
             || {};
 
         const maxCurrents = Number(planLimits.max_currents) || 3;
-        const maxSparksPerCurrent = Number(planLimits.max_sparks_per_current)  || 12;
+        const maxSparksPerCurrent = Number(planLimits.max_sparks_per_current) || 12;
 
         const visitorCurrents = (visitorRealm.currents && typeof visitorRealm.currents === 'object') ? visitorRealm.currents : {};
 
@@ -1452,7 +1456,6 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
             // 8. WRITE TO DB & SYNC LOCAL CACHE
             console.log("[CLONE STEP 8] Writing cloned spark to destination and syncing local cache...");
             
-            // Atomic updates to persist cloned spark and update setup status
             const cloneUpdates = {};
             cloneUpdates[destinationSparkPath] = clonedData;
             cloneUpdates[`realms/${visitorRealmId}/realm_setup_complete`] = true;
@@ -1463,7 +1466,6 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
                 databaseCache.realms[visitorRealmId] = { currents: {} };
             }
             
-            // Evolve setup status in local cache
             databaseCache.realms[visitorRealmId].realm_setup_complete = true;
 
             if (!databaseCache.realms[visitorRealmId].currents) {
@@ -1500,6 +1502,7 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
         console.groupEnd();
     }
 };
+
 window.genLogo = (name, profilePic, isOwner) => {
     // SYSTEM LOGS: Debugging the state
     console.log(`[genLogo Debug]: Name: "${name}" | isOwner: ${isOwner} | Photo: ${profilePic ? 'FOUND' : 'MISSING'}`);
