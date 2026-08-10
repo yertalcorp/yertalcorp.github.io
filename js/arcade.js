@@ -4694,7 +4694,7 @@ window.openRealmSettings = async () => {
     console.log("openRealmSettings - Profile Source:", isSetup ? "DATABASE_CACHE" : "NEW_USER");
 
     // Target the dynamic zones defined in index.html
-    const profileZone = document.getElementById('arcade-profile-zone');
+    const profileZone = document.getElementById('realm-profile-zone');
     const planZone = document.getElementById('plan-selection-zone');
 
     // 2. GENERATE DYNAMIC PROFILE STRUCTURE
