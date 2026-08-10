@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:18:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1551,7 +1551,11 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const arcadeTitle = profile.arcade_title;
     const arcadeSubtitle = profile.arcade_subtitle;
     const avatarPath = '/assets/images/avatar.jpg';
-    const isSetupComplete = profile.setup_complete === true;
+    
+    // Resolve setup_complete directly from the realm data in databaseCache
+    const targetRealm = databaseCache.realms?.[realmSlug] || {};
+    const isSetupComplete = targetRealm.realm_setup_complete === true || targetRealm.setup_complete === true;
+
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
     const ownerPhotoUrl = profile.photoURL || avatarPath; 
