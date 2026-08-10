@@ -72,7 +72,6 @@ export async function ensureActiveRealm(uid) {
             realm_logo: userProfile.photoURL || "/assets/images/YERTAL LOGO SIMPLE.png",
             realm_theme: "neon-dark",
             realm_privacy: "private",
-            realm_plan_type: "free",
             realm_setup_complete: false,
             realm_date_created: timestamp,
             realm_last_updated: timestamp,
