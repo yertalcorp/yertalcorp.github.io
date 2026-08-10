@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:40:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -4580,29 +4580,7 @@ function formatTimeAgo(timestamp) {
     return Math.floor(seconds) + "S AGO";
 }
 
-/*
- * HUD Controls: Closes the Arcade Settings overlay
- */
-window.closeRealmSettings = () => {
-    const hud = document.getElementById('realmsettings-hud');
-    
-    if (hud) {
-        // Option A: Instantly hide it
-        //hud.style.display = 'none';
-        // Highlighted changes to apply: Rollback logic to revert style preview if unsubmitted
-        const originalTheme = hud.dataset.originalTheme;
-        if (originalTheme && typeof applyTheme === 'function') {
-            applyTheme(originalTheme);
-        }
-        
-        // Option B: If you are using a fade-out animation in showroom_style.css or arcade.css
-        hud.classList.remove('active'); 
-        
-        console.log("[UI]: Realm Settings HUD closed.");
-    } else {
-        console.warn("[UI]: Could not find 'realmsettings-hud' to close.");
-    }
-};
+
 
 async function formatPlanPrice(baseInrAmount) {
     try {
@@ -4692,7 +4670,7 @@ window.closePlanSettings = () => {
 
 /* 
  * Objective: Open Standalone Plan Settings HUD
- * Task: Populate plan tier selections dynamically and activate HUD overlay
+ * Task: Populate plan tier selections dynamically using helper functions and activate HUD overlay
  */
 window.openPlanSettings = async () => {
     const hud = document.getElementById('plansettings-hud');
@@ -4706,7 +4684,8 @@ window.openPlanSettings = async () => {
     const planZone = document.getElementById('standalone-plan-zone');
     const submitBtn = document.getElementById('submit-plan-settings');
 
-    const allPlans = databaseCache.settings?.plan_limits;
+    // DELETED: const allPlans = databaseCache.settings?.plan_limits;
+    const allPlans = (typeof getPlanLimits === 'function') ? await getPlanLimits() : databaseCache.settings?.plan_limits;
     if (allPlans && planZone) {
         planZone.innerHTML = `
             <label class="hud-label-metallic">SYSTEM_PLAN_SELECTION</label>
@@ -4811,6 +4790,28 @@ window.savePlanSettings = async () => {
         console.error("PLAN_UPDATE_FAILURE:", error);
     }
 };
+
+/*
+ * HUD Controls: Closes the Arcade Settings overlay and rolls back unsubmitted theme previews
+ */
+window.closeRealmSettings = () => {
+    const hud = document.getElementById('realmsettings-hud');
+    
+    if (hud) {
+        // Rollback logic to revert style preview if unsubmitted
+        const originalTheme = hud.dataset.originalTheme;
+        if (originalTheme && typeof applyTheme === 'function') {
+            applyTheme(originalTheme);
+        }
+        
+        hud.classList.remove('active'); 
+        
+        console.log("[UI]: Realm Settings HUD closed.");
+    } else {
+        console.warn("[UI]: Could not find 'realmsettings-hud' to close.");
+    }
+};
+
 /* 
  * Objective: Initialize or Re-Forge Arcade Identity
  * Task: Dynamically generate HUD structure, populate from cache, and ensure Close UI is present.
@@ -4833,7 +4834,7 @@ window.openRealmSettings = async () => {
 
     // Target the dynamic zones defined in index.html
     const profileZone = document.getElementById('realm-profile-zone');
-    const planZone = document.getElementById('plan-selection-zone');
+    // DELETED: const planZone = document.getElementById('plan-selection-zone');
 
     // 2. GENERATE DYNAMIC PROFILE STRUCTURE
     if (profileZone) {
@@ -4872,17 +4873,21 @@ window.openRealmSettings = async () => {
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     if (themes && themeSelect) {
         themeSelect.innerHTML = ''; 
+        
+        // Resolve default active theme from realm/profile configuration
+        const activeThemeId = profile.realm_theme || profile.theme || 'spring-bloom';
+
         Object.keys(themes).forEach(id => {
             const opt = document.createElement('option');
             opt.value = id;
             opt.textContent = themes[id].name.replace(/_/g, ' ').toUpperCase();
+            if (id === activeThemeId) opt.selected = true;
             themeSelect.appendChild(opt);
         });
 
-        const activeThemeId = isSetup ? (profile.theme || 'spring-bloom') : 'spring-bloom';
         themeSelect.value = activeThemeId;
 
-        // Highlighted changes to apply: Store original theme state as a rollback checkpoint on open
+        // Store original theme state as a rollback checkpoint on open
         hud.dataset.originalTheme = activeThemeId;
 
         themeSelect.onchange = (e) => {
@@ -4910,68 +4915,9 @@ window.openRealmSettings = async () => {
         `;
     }
 
-    // 6. DYNAMIC PLAN GRID GENERATION
-    const allPlans = databaseCache.settings?.plan_limits;
-    if (allPlans && planZone) {
-        planZone.innerHTML = `
-            <label class="hud-label-metallic">SYSTEM_PLAN_SELECTION</label>
-            <div class="plans-grid plan-selection-container"></div>
-        `;
+    // DELETED: 6. DYNAMIC PLAN GRID GENERATION (Removed section entirely)
 
-        const planContainer = planZone.querySelector('.plan-selection-container');
-        
-        for (const planId of Object.keys(allPlans)) {
-            const plan = allPlans[planId];
-            const userCurrentPlan = profile.plan_type || 'free';
-            const isActive = (planId === userCurrentPlan);
-            const canSelect = (plan.enabled === true) || isActive;
-
-            const planBox = document.createElement('div');
-            planBox.className = `plan-card-rounded ${isActive ? 'active' : ''} ${!canSelect ? 'tier-locked' : ''}`;
-            
-            // Fetch converted prices asynchronously before injecting the HTML
-            const fPP = await formatPlanPrice(plan.cost);
-            const fPPAnnual = await formatPlanPrice(plan.cost * 10);
-            
-            planBox.innerHTML = `
-                <div class="plan-box-inner">
-                    <div class="tier-identity-metallic">${(planId).toUpperCase()}-TIER</div>
-                    <div class="tier-pitch">${plan.identity.toUpperCase()}</div>
-                    <div class="tier-pitch">${plan.pitch}</div>
-                    <div class="tier-pricing">
-                        <div class="price-main">
-                            ${fPP.symbol}${fPP.cost}<small>/mo</small> 
-                            <span class="price-annual" style="margin-left: 15px;">${fPPAnnual.symbol}${fPPAnnual.cost}<small>/yr</small></span>
-                        </div>                    
-                    </div>
-                    <ul class="tier-specs-list">
-                        <li><i class="fa-solid fa-folder"></i> <b>${plan.max_currents}</b> Topics</li>
-                        <li><i class="fa-solid fa-microchip"></i> <b>${plan.max_sparks_per_current}</b> Action Cards</li>
-                        <hr class="metallic-divider">
-                        <li><i class="fa-solid ${plan.analytics_enabled ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Analytics</li>
-                        <li><i class="fa-solid ${plan.monetization === 'sales' ? 'fa-square-check text-glow-green' : 'fa-square-xmark text-dim'}"></i> Direct Sales</li>
-                    </ul>
-                </div>
-                <div class="plan-radio-dock">
-                    <input type="radio" name="arcade-plan" id="radio-${planId}" value="${planId}" 
-                        ${isActive ? 'checked' : ''} 
-                        ${!canSelect ? 'disabled' : ''}>
-                    <label for="radio-${planId}">${isActive ? ' CURRENT PLAN' : (canSelect ? ' SELECT PLAN' : ' DISABLED')}</label>
-                </div>
-            `;
-
-            if (canSelect) {
-                planBox.onclick = () => {
-                    hud.querySelectorAll('.plan-card-rounded').forEach(el => el.classList.remove('active'));
-                    planBox.classList.add('active');
-                    planBox.querySelector('input').checked = true;
-                };
-            }
-            planContainer.appendChild(planBox);
-        }
-    }
-
-    // 7. BUTTON CONFIGURATION & VISIBILITY
+    // 6. BUTTON CONFIGURATION & VISIBILITY
     if (submitBtn) {
         submitBtn.innerText = isSetup ? "UPDATE IDENTITY" : "ESTABLISH IDENTITY";
         submitBtn.style.display = "block";
@@ -4985,48 +4931,13 @@ window.openRealmSettings = async () => {
     
     hud.classList.add('active');
 };
-/*
- * Objective: Retrieve dynamic limits based on the user's plan_type.
- */
-function getPlanLimits(uid) {
-    // 1. Identify the user's plan type (default to 'free')
-    const userProfile = databaseCache.users?.[uid]?.profile || {};
-    const planType = userProfile.plan_type || 'free';
-    
-    // 2. Map that plan type to the global settings
-    const allPlanSettings = databaseCache.settings?.['plan_limits'] || {};
-    const currentPlanLimits = allPlanSettings[planType] || allPlanSettings['free'];
-
-    return {
-        type: planType,
-        maxCurrents: currentPlanLimits.max_currents || 3,
-        maxSparks: currentPlanLimits.max_sparks_per_current || 10,
-        initialRows: currentPlanLimits.display_rows_initial || 2,
-        sparksPerRow: currentPlanLimits.sparks_per_row_desktop || 6
-    };
-}
-
-
-/*
- * Updates the UI status when a user selects a logo file.
- */
-window.updateLogoStatus = (input) => {
-    const statusText = document.getElementById('logo-status-text');
-    if (input.files && input.files[0]) {
-        statusText.textContent = input.files[0].name;
-        statusText.style.color = 'var(--glow-color)';
-    } else {
-        statusText.textContent = "No file selected";
-        statusText.style.color = 'var(--text-secondary)';
-    }
-};
 
 window.saveRealmSettings = async () => {
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
     const themeSelect = document.getElementById('arcade-theme-select');
     const privacySelect = document.getElementById('arcade-privacy-select');
-    const planValue = document.querySelector('input[name="arcade-plan"]:checked')?.value || 'free';
+    // DELETED: const planValue = document.querySelector('input[name="arcade-plan"]:checked')?.value || 'free';
 
     const arcadeName = nameInput.value.trim().toUpperCase();
     if (!arcadeName) {
@@ -5073,10 +4984,14 @@ window.saveRealmSettings = async () => {
             realm_subtitle: subtitleInput.value.trim(),
             realm_theme: themeSelect.value,
             realm_privacy: selectedPrivacy,
-            realm_plan_type: planValue,
+            // DELETED: realm_plan_type: planValue,
             realm_setup_complete: true,
             realm_last_updated: timestamp
         });
+
+        // Clear originalTheme dataset checkpoint on successful save to prevent rollback on later close
+        const hud = document.getElementById('realmsettings-hud');
+        if (hud) delete hud.dataset.originalTheme;
 
         // 5. UI REFRESH
         if (typeof applyTheme === 'function') applyTheme(themeSelect.value);
@@ -5089,6 +5004,42 @@ window.saveRealmSettings = async () => {
         console.error("FORGE_FAILURE:", error);
     }
 };
+/*
+ * Objective: Retrieve dynamic limits based on the user's plan_type.
+ */
+function getPlanLimits(uid) {
+    // 1. Identify the user's plan type (default to 'free')
+    const userProfile = databaseCache.users?.[uid]?.profile || {};
+    const planType = userProfile.plan_type || 'free';
+    
+    // 2. Map that plan type to the global settings
+    const allPlanSettings = databaseCache.settings?.['plan_limits'] || {};
+    const currentPlanLimits = allPlanSettings[planType] || allPlanSettings['free'];
+
+    return {
+        type: planType,
+        maxCurrents: currentPlanLimits.max_currents || 3,
+        maxSparks: currentPlanLimits.max_sparks_per_current || 10,
+        initialRows: currentPlanLimits.display_rows_initial || 2,
+        sparksPerRow: currentPlanLimits.sparks_per_row_desktop || 6
+    };
+}
+
+
+/*
+ * Updates the UI status when a user selects a logo file.
+ */
+window.updateLogoStatus = (input) => {
+    const statusText = document.getElementById('logo-status-text');
+    if (input.files && input.files[0]) {
+        statusText.textContent = input.files[0].name;
+        statusText.style.color = 'var(--glow-color)';
+    } else {
+        statusText.textContent = "No file selected";
+        statusText.style.color = 'var(--text-secondary)';
+    }
+};
+
 
 /*
  * Helper to pull the primary branding color from the cached theme data
