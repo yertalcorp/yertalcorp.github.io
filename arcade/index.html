@@ -13,7 +13,7 @@
 
 <body id="lab-body">
 
-    <header id="arcade-header">
+    <header id="realm-header">
     </header>
     <div class="tutorial-mask"></div>
     <div class="tutorial-tooltip"></div>
@@ -41,7 +41,7 @@
             <div class="back-btn" onclick="showMainMenu()"><i class="fa-solid fa-chevron-left"></i> BACK</div>
     
             <div class="settings-group">
-                <div class="menu-item" onclick="openArcadeSettings()">
+                <div class="menu-item" onclick="openRealmSettings()">
                     <i class="fa-solid fa-palette"></i> <span class="metallic-text">REALM_SETTINGS</span>
                 </div>
 
@@ -118,7 +118,7 @@
         </div>
     </div>
 </div>
-        <div id="arcadesettings-hud" class="hud-overlay">
+        <div id="realmsettings-hud" class="hud-overlay">
         <div class="hud-window glass-3d animate-slideUp">
             
             <div class="hud-header-content">
@@ -128,7 +128,7 @@
             <div class="hud-body">
                 <div class="hud-onboarding-grid">
                     
-                    <section class="hud-step" id="arcade-profile-zone">
+                    <section class="hud-step" id="realm-profile-zone">
                         </section>
 
                     <section class="hud-step" id="plan-selection-zone">
@@ -138,7 +138,7 @@
             </div>
 
             <div class="hud-footer">
-                <button id="submit-onboarding" class="ethereal-btn-sm" onclick="saveArcadeSettings()">
+                <button id="submit-onboarding" class="ethereal-btn-sm" onclick="saveRealmSettings()">
                     ESTABLISH IDENTITY
                 </button>
             </div>
