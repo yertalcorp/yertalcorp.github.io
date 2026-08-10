@@ -42,6 +42,9 @@ export const getCurrentPath = (realmId, currentId) => `realms/${realmId}/current
 export const getSparkPath = (realmId, currentId, sparkId) => `realms/${realmId}/currents/${currentId}/sparks/${sparkId}`;
 export const getSparkStatsPath = (realmId, currentId, sparkId, statType = '') => `realms/${realmId}/currents/${currentId}/sparks/${sparkId}/stats${statType ? `/${statType}` : ''}`;
 
+// SCHEMAS & DATABASE KEYS
+export const REALM_CACHE = 'arcade-current-types';
+
 // --- ADDITIONAL REALM HELPERS ---
 export const generateRealmId = () => `realm-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -1833,7 +1836,7 @@ const IRREGULAR_PLURALS = {
 
 function resolveIndexFromPrompt(prompt, currentName, forcedCategoryName = null) {
     const cleanPrompt = prompt.toLowerCase().trim();
-    const presets = databaseCache.settings?.['arcade-current-types'] || [];
+    const presets = databaseCache.settings?.[REALM_CACHE] || [];
     
     // --- INTEGRATED METRIC CONFIGURATION TUNERS ---
     const MATCH_THRESHOLD_PERCENT = 75; 
@@ -2078,7 +2081,7 @@ window.handleCreation = async (realmId, currentId, currentName, currentPrivacy) 
         let resolvedCategory;
         if (!matchResult.is_custom) {
             // 1. Force a deep clone to snap the reference bond with databaseCache entirely
-            const cachedTemplate = databaseCache.settings['arcade-current-types'][matchResult.index];
+            const cachedTemplate = databaseCache.settings[REALM_CACHE][matchResult.index];
             resolvedCategory = JSON.parse(JSON.stringify(cachedTemplate));
             
             // 2. Safe property assignment isolated purely to this single execution context
@@ -2127,7 +2130,7 @@ function resolveCapabilityFromKeywords(input) {
 
     if (tokens.length === 0) return [];
 
-    const presets = databaseCache.settings?.['arcade-current-types'] || [];
+    const presets = databaseCache.settings?.[REALM_CACHE] || [];
     
     // 3. Match Intents: Only high-value nouns/verbs trigger the HUD
     return presets.filter(cap => {
@@ -2286,7 +2289,7 @@ async function initializeUserRealm(realmId, templateId) {
                             const templateSpark = templateSparks[sparkIdx];
                             
                             const sparkIndex = templateSpark.index !== undefined ? templateSpark.index : sparkIdx;
-                            const cachedArchetype = databaseCache.settings?.['arcade-current-types']?.[sparkIndex] || {};
+                            const cachedArchetype = databaseCache.settings?.[REALM_CACHE]?.[sparkIndex] || {};
                             const archetypeImg = cachedArchetype.image;
 
                             // --- 3-TIER IMAGE RESOLUTION PIPELINE ---
@@ -2294,7 +2297,7 @@ async function initializeUserRealm(realmId, templateId) {
 
                             // Step 1: Check if templateSpark.image is valid
                             if (!resolvedImage || !(await checkImageExists(resolvedImage))) {
-                                // Step 2: Check if arcade-current-types archetype image is valid
+                                // Step 2: Check if the REALM_CACHE archetype image is valid
                                 if (archetypeImg && (await checkImageExists(archetypeImg))) {
                                     resolvedImage = archetypeImg;
                                 } else {
@@ -2725,7 +2728,7 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
 
     // 1. Populate Picker Options
     if (typeSelect) {
-        const types = databaseCache.settings?.['arcade-current-types'] || [];
+        const types = databaseCache.settings?.[REALM_CACHE] || [];
         let optionsHTML = `<option value="">-- PICK A TYPE --</option>`;
         optionsHTML += types.map(t => 
             `<option value="${t.name}">${t.name.toUpperCase()}</option>`
@@ -3591,7 +3594,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
 
     // Archetype Template Lookup
     const sparkIndex = spark.index !== undefined ? spark.index : 0;
-    const archetype = databaseCache?.settings?.['arcade-current-types']?.[sparkIndex] || {};
+    const archetype = databaseCache?.settings?.[REALM_CACHE]?.[sparkIndex] || {};
     const archetypeImg = archetype.image || '';
 
     // Primary Image Selection
@@ -3749,7 +3752,7 @@ function resolveCategoryFromPrompt(prompt, currentName) {
     console.log(`[resolveCategoryFromPrompt]: Evaluating prompt: "${cleanPrompt}"`);
     console.log(`[resolveCategoryFromPrompt]: Extracted tokens:`, tokens);
     
-    const presets = databaseCache.settings?.['arcade-current-types'] || [];
+    const presets = databaseCache.settings?.[REALM_CACHE] || [];
     
     // ========================================================
     // 1. ACTIVE BOARD NAME CHECK (First Priority)
@@ -4121,7 +4124,7 @@ async function executeMassSpark(realmId, currentId, currentName, prompt, mode, p
     try {
         // USE CASE 1: CACHE HIT REGISTRAR ROUTING
         if (mode === 'cache_hit' && promptTypeObject && promptTypeObject.index !== -1) {
-            const cachedPreset = databaseCache.settings['arcade-current-types'][promptTypeObject.index];
+            const cachedPreset = databaseCache.settings[REALM_CACHE][promptTypeObject.index];
             const functionalTemplate = cachedPreset?.template || '';
             
             console.log(`[USE CASE 1] Found Cache Blueprint Match at index: ${promptTypeObject.index} ("${cachedPreset.name}")`);
@@ -4179,7 +4182,7 @@ async function executeMassSpark(realmId, currentId, currentName, prompt, mode, p
 
             // UNIFIED USE CASE 1 WRITEBACK & COMMITMENT
             console.log("[CACHE REGISTRATION] Writing updated blueprint configuration to centralized registry index...");
-            await update(ref(db, `settings/arcade-current-types/${promptTypeObject.index}`), cachedPreset);
+                await update(ref(db, `settings/${REALM_CACHE}/${promptTypeObject.index}`), cachedPreset);
             
             await saveSpark(realmId, currentId, { 
                 name: sparkName, 
@@ -4254,15 +4257,15 @@ async function executeMassSpark(realmId, currentId, currentName, prompt, mode, p
                 const distillation = generateTemplateAndParameterMap(parserMockNode, prompt);
 
                 // case mode is create and a new cache type has to be introduced
-                const nextCachedIndex = (databaseCache.settings?.['arcade-current-types'] || []).length;
+                const nextCachedIndex = (databaseCache.settings?.[REALM_CACHE] || []).length;
                 const newRegisteredTypeObject = distillation.typeData;
                 newRegisteredTypeObject.image = sparkImage; // Sync generation imagery asset profile
                 
-                if (!databaseCache.settings['arcade-current-types']) databaseCache.settings['arcade-current-types'] = [];
-                databaseCache.settings['arcade-current-types'].push(newRegisteredTypeObject);
+                if (!databaseCache.settings[REALM_CACHE]) databaseCache.settings[REALM_CACHE] = [];
+                databaseCache.settings[REALM_CACHE].push(newRegisteredTypeObject);
                 
                 console.log(`[CACHE REGISTRATION] Appending new archetype blueprint entry to index offset location: ${nextCachedIndex}`);
-                await update(ref(db, `settings/arcade-current-types/${nextCachedIndex}`), newRegisteredTypeObject);
+                await update(ref(db, `settings/${REALM_CACHE}/${nextCachedIndex}`), newRegisteredTypeObject);
                 
                 // Instantiation node setup matching strict registry indexing conventions
                 await saveSpark(realmId, currentId, { 
