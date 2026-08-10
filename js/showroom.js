@@ -265,6 +265,7 @@ watchAuthState(async (newUser) => {
                         photoURL: user.photoURL,
                         uid: user.uid,
                         active_realm_id: activeRealmId,
+                        plan_type: "free",
                         last_sync: new Date().toISOString()
                     };
                     
