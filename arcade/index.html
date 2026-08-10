@@ -45,12 +45,16 @@
                     <i class="fa-solid fa-palette"></i> <span class="metallic-text">REALM_SETTINGS</span>
                 </div>
 
+                <div class="menu-item" onclick="openPlanSettings()">
+                    <i class="fa-solid fa-microchip"></i> <span class="metallic-text">PLAN_SETTINGS</span>
+                </div>
+
                 <div id="admin-settings-trigger" class="menu-item" onclick="openAdminSettings()" style="display:none;">
                     <i class="fa-solid fa-shield-halved"></i> <span class="metallic-text">ADMIN_SETTINGS</span>
                 </div>
             </div>
         </div>
-
+        
         <div id="drawer-help" class="sub-menu" style="display:none;">
             <div class="back-btn" onclick="showMainMenu()"><i class="fa-solid fa-chevron-left"></i> BACK</div>
             <div class="menu-item" onclick="window.handleMenuTrigger('chat')"><i class="fa-solid fa-comments"></i> <span class="metallic-text">CHAT</span></div>
@@ -118,7 +122,7 @@
         </div>
     </div>
 </div>
-        <div id="realmsettings-hud" class="hud-overlay">
+<div id="realmsettings-hud" class="hud-overlay">
         <div class="hud-window glass-3d animate-slideUp">
             
             <div class="hud-header-content">
@@ -127,13 +131,8 @@
             
             <div class="hud-body">
                 <div class="hud-onboarding-grid">
-                    
                     <section class="hud-step" id="realm-profile-zone">
                         </section>
-
-                    <section class="hud-step" id="plan-selection-zone">
-                        </section>
-
                 </div>
             </div>
 
@@ -145,7 +144,36 @@
 
         </div>
     </div>
-<div id="yertal-nav-launcher" class="navigator-launcher" onclick="handleLauncherClick()">
+
+    <div id="plansettings-hud" class="hud-overlay">
+        <div class="hud-window glass-3d animate-slideUp">
+            
+            <div class="hud-header-content">
+                <div class="hud-header-text">
+                    <h2 class="hud-title-metallic">PLAN_CONFIGURATION</h2>
+                    <p class="hud-subtitle-info">Manage System Tier and Resource Allocations</p>
+                </div>
+                <button onclick="closePlanSettings()" class="close-hud-corner" aria-label="Close Plan Settings">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="hud-body">
+                <div class="hud-onboarding-grid">
+                    <section class="hud-step" id="standalone-plan-zone">
+                    </section>
+                </div>
+            </div>
+
+            <div class="hud-footer">
+                <button id="submit-plan-settings" class="ethereal-btn-sm" onclick="savePlanSettings()">
+                    UPDATE PLAN
+                </button>
+            </div>
+
+        </div>
+    </div>
+    <div id="yertal-nav-launcher" class="navigator-launcher" onclick="handleLauncherClick()">
         <i class="fa-solid fa-comment-dots"></i>
     </div>
     <div id="yertal-nav-container" class="yertal-navigator-widget"></div>
