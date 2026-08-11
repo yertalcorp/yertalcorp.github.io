@@ -1047,7 +1047,9 @@ header {
 
 /* Generate Button: Metallic Glow */
 .generate-btn {
-    box-shadow: 0 0 15px var(--glow-color);
+    color: var(--glow-color);
+    text-color: var(--main-text-color);
+    box-shadow: 0 0 15px var(--button-shadow-color);
     border: 1px solid var(--glow-color-aura);
     position: relative;
     overflow: hidden;
