@@ -1108,7 +1108,7 @@ header {
 }
 /* --- THE PHYSICAL SPARK GRID --- */
 .experiment-zone {
-    background: var(--bg-color-low); /* Ensuring the gray background is set */
+    background: var(--bg-color-mid); /* Ensuring the gray background is set */
     border-radius: 12px;
     border: 1px solid color-mix(in srgb, var(--border-color) 20%, transparent);
     box-shadow: inset 2px 2px 8px color-mix(in srgb, var(--box-shadow-color) 15%, transparent); /* Creates the "recessed" look */
