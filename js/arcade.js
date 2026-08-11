@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -79,6 +79,15 @@ export async function ensureActiveRealm(uid) {
             realm_setup_complete: false,
             realm_date_created: timestamp,
             realm_last_updated: timestamp,
+            config: {
+                show_views: true,
+                show_likes: true,
+                show_feedback: true,
+                show_shares: true,
+                show_tips: false,
+                show_sales: false,
+                show_pay_owner: false
+            },
             currents: {}
         };
 
@@ -3589,7 +3598,6 @@ function genSparkImage(sparkImageFromDB) {
     return sparkImageFromDB;
 }
 
-// function renderSparkCard(spark, isOwner, currentId, realmId) {
 function renderSparkCard(spark, isOwner, currentId, realmId) {
     const ownerId = databaseCache?.realms?.[realmId]?.realm_ownerid || spark.owner || 'UNKNOWN';
     const ownerData = databaseCache?.users?.[ownerId];
@@ -3602,6 +3610,32 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     const txLabel = isSalesMode ? 'SALES' : 'TIPS';
     const txIcon = isSalesMode ? 'fa-shopping-cart' : 'fa-coins';
     const txActionTitle = isSalesMode ? 'Purchase' : 'Tip Jar';
+
+    // 1. CONFIG & FEATURE FLAGS RESOLUTION
+    const realmConfig = databaseCache?.realms?.[realmId]?.config || {};
+    const masterFlags = databaseCache?.settings?.feature_flags || {};
+
+    const isViewsEnabled = realmConfig.show_views !== false;
+    const isLikesEnabled = realmConfig.show_likes !== false;
+    const isFeedbackEnabled = realmConfig.show_feedback !== false;
+    const isSharesEnabled = realmConfig.show_shares !== false;
+
+    const isMonetizationEnabled = (masterFlags.enable_monetization_stats === true) && 
+                                 (isSalesMode ? realmConfig.show_sales === true : realmConfig.show_tips === true);
+
+    const isPayOwnerEnabled = (masterFlags.enable_pay_owner_icon === true) && (realmConfig.show_pay_owner === true);
+
+    // 2. VISIBILITY ELIGIBILITY
+    const showViews = isOwner || isViewsEnabled;
+    const showLikes = isOwner || isLikesEnabled;
+    const showFeedback = isOwner || isFeedbackEnabled;
+    const showShares = isOwner || isSharesEnabled;
+    const showMonetizationStat = isOwner || isMonetizationEnabled;
+    const showPayOwnerIcon = isOwner || isPayOwnerEnabled;
+
+    // 3. THEME DYNAMICS (NO HARDCODED COLORS)
+    const activeStatStyle = `color: var(--glow-color); filter: drop-shadow(0 0 5px var(--glow-color)); font-weight: 800;`;
+    const dormantStatStyle = `color: var(--fg-color-low); opacity: 0.35; filter: none; font-weight: 400;`;
 
     const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
     const sparkElementId = `save-btn-${spark.id}`;
@@ -3665,7 +3699,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center; width: 100%;">
             <div class="action-card" 
                  onclick="window.handleSparkLaunch('${realmId}', '${currentId}', '${spark.id}', '${targetUrl}')"
-                 style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: #111 !important;">
+                 style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--bg-color-high) !important;">
                 
                 <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 1.5rem; pointer-events: none;">
                     ${spark.name}
@@ -3681,22 +3715,31 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
             </div>
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
-                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 8px; color: rgba(var(--fg-color-high),0.4); border-bottom: 1px solid rgba(var(--fg-color-high),0.1); width: 85%; padding-bottom: 6px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
-                    <span class="stat-views" title="Total Views">
+                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 8px; border-bottom: 1px solid var(--border-color); width: 85%; padding-bottom: 6px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
+                    ${showViews ? `
+                    <span class="stat-views" style="${isViewsEnabled ? activeStatStyle : dormantStatStyle}" title="${isViewsEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
                         <i class="fas fa-eye" style="margin-right: 2px;"></i> VIEWS: ${viewCount}
-                    </span>
-                    <span class="stat-likes" title="Total Likes">
+                    </span>` : ''}
+
+                    ${showLikes ? `
+                    <span class="stat-likes" style="${isLikesEnabled ? activeStatStyle : dormantStatStyle}" title="${isLikesEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
                         <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> LIKES: ${likeCount}
-                    </span>
-                    <span class="stat-feedback" title="Total Feedback">
+                    </span>` : ''}
+
+                    ${showFeedback ? `
+                    <span class="stat-feedback" style="${isFeedbackEnabled ? activeStatStyle : dormantStatStyle}" title="${isFeedbackEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
                         <i class="fas fa-comment-dots" style="margin-right: 2px;"></i> FEEDBACK: ${feedbackCount}
-                    </span>
-                    <span class="stat-reshares" title="Total Shares">
+                    </span>` : ''}
+
+                    ${showShares ? `
+                    <span class="stat-reshares" style="${isSharesEnabled ? activeStatStyle : dormantStatStyle}" title="${isSharesEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
                         <i class="fas fa-retweet" style="margin-right: 2px;"></i> SHARES: ${shareCount}
-                    </span>
-                    <span class="stat-transactions" title="Total ${txLabel}">
+                    </span>` : ''}
+
+                    ${showMonetizationStat ? `
+                    <span class="stat-transactions" style="${isMonetizationEnabled ? activeStatStyle : dormantStatStyle}" title="${isMonetizationEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
                         <i class="fas ${txIcon}" style="margin-right: 2px;"></i> ${txLabel}: ${transactionAmt}
-                    </span>
+                    </span>` : ''}
                 </div>
 
                 <div class="interaction-row" style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%;">
@@ -3730,6 +3773,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
                             <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
                             </button>
+                            ${showPayOwnerIcon ? `
                             <button onclick="window.payOwner(this, '${realmId}', '${currentId}', '${spark.id}')" 
                                     title="${txActionTitle}" 
                                     style="${btnStyle}" 
@@ -3737,6 +3781,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
                                     onmouseout="${onOut}">
                                     <i class="fas ${txIcon}" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>                        
+                            ` : ''}
                         `}
                     </div>
                 </div>
@@ -3744,7 +3789,6 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
         </div>
     `;
 }
-
 /*
  * Generates a concise Spark name: <CurrentName>-Spark#<DDMM-HHMM>
  * @param {string} currentName - The name of the parent Current
