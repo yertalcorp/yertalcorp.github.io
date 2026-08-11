@@ -3721,7 +3721,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
             </div>
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.25rem; width: 100%; align-items: center;">
-                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.6rem; font-size: 8px; border-bottom: 1px solid var(--fg-color); width: 68%; padding-bottom: 3px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
+                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.6rem; font-size: 7px; border-bottom: 1px solid var(--fg-color); width: 68%; padding-bottom: 3px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
                     ${showViews ? `
                     <span class="stat-views" style="${isViewsEnabled ? activeStatStyle : dormantStatStyle}" title="${isViewsEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
                         <i class="fas fa-eye" style="margin-right: 2px;"></i> VIEWS: ${viewCount}
