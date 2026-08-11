@@ -3633,9 +3633,9 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     const showMonetizationStat = isOwner || isMonetizationEnabled;
     const showPayOwnerIcon = isOwner || isPayOwnerEnabled;
 
-    // 3. THEME DYNAMICS (NO HARDCODED COLORS)
-    const activeStatStyle = `color: var(--glow-color); filter: drop-shadow(0 0 5px var(--glow-color)); font-weight: 800;`;
-    const dormantStatStyle = `color: var(--fg-color-low); opacity: 0.35; filter: none; font-weight: 400;`;
+    // 3. THEME DYNAMICS (Pearl for active stats, fg-color-mid for dormant)
+    const activeStatStyle = `color: var(--list-color); font-weight: 600; opacity: 1; filter: none;`;
+    const dormantStatStyle = `color: var(--fg-color-mid); font-weight: 400; opacity: 0.65; filter: none;`;
 
     const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
     const sparkElementId = `save-btn-${spark.id}`;
@@ -3687,7 +3687,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     const transactionAmt = spark.stats?.transactions?.total_amount || 0;
     const feedbackCount = spark.stats?.feedback?.count || 0;
 
-    const btnStyle = `background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; filter: drop-shadow(0 0 2px var(--glow-color));`;
+    const btnStyle = `background: none; border: none; cursor: pointer; padding: 2px 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; filter: drop-shadow(0 0 2px var(--glow-color));`;
     const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
     const onOut = "this.style.filter='drop-shadow(0 0 2px var(--glow-color))'; this.style.transform='scale(1)';"
     
@@ -3696,7 +3696,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     const inlineFallbackJS = `window.handleSparkImageError(this, '${safeArchetypeImg}', '${safeSparkName}');`;
 
     return `
-        <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center; width: 100%;">
+        <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
             <div class="action-card" 
                  onclick="window.handleSparkLaunch('${realmId}', '${currentId}', '${spark.id}', '${targetUrl}')"
                  style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 180px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--bg-color-high) !important;">
@@ -3714,8 +3714,8 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
                 <div style="position: absolute; inset: 0; background: var(--bg-color); opacity: 0.1; z-index: 2; pointer-events: none;"></div>
             </div>
 
-            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
-                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.8rem; font-size: 8px; border-bottom: 1px solid var(--border-color); width: 85%; padding-bottom: 6px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
+            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.25rem; width: 100%; align-items: center;">
+                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.6rem; font-size: 8px; border-bottom: 1px solid var(--fg-color); width: 68%; padding-bottom: 3px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
                     ${showViews ? `
                     <span class="stat-views" style="${isViewsEnabled ? activeStatStyle : dormantStatStyle}" title="${isViewsEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
                         <i class="fas fa-eye" style="margin-right: 2px;"></i> VIEWS: ${viewCount}
@@ -3742,12 +3742,12 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
                     </span>` : ''}
                 </div>
 
-                <div class="interaction-row" style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%;">
+                <div class="interaction-row" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; width: 100%;">
                     <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none;">
                         ${spark.link ? 'SOURCED' : 'FORGED'}: ${formatTimeAgo(spark.created)}
                     </div>
                     
-                    <div class="action-buttons" style="display: flex; gap: 0.8rem; align-items: center; justify-content: center;">
+                    <div class="action-buttons" style="display: flex; gap: 0.7rem; align-items: center; justify-content: center;">
                         <button onclick="likeSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="Like" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                             <i class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
                         </button>
@@ -3789,6 +3789,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
         </div>
     `;
 }
+
 /*
  * Generates a concise Spark name: <CurrentName>-Spark#<DDMM-HHMM>
  * @param {string} currentName - The name of the parent Current
