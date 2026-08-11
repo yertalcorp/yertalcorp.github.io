@@ -351,7 +351,8 @@ function setupInteractions(currentUid, spark) {
 
     if (editBtn) {
         const isOwner = currentUid && spark && spark.owner === currentUid;
-        const isSuperUser = currentUid === 'yertal-arcade';
+        const userProfile = databaseCache.users?.[currentUid]?.profile || {};
+        const isSuperUser = userProfile.superuser === true;
 
         if (isOwner || isSuperUser) {
             editBtn.style.display = 'flex';
@@ -429,7 +430,8 @@ function setupInteractions(currentUid, spark) {
             e.stopPropagation();
 
             const params = new URLSearchParams(window.location.search);
-            const realmId = params.get('realm') || 'yertal-arcade';
+            const activeProfile = databaseCache.users?.[currentUid]?.profile || {};
+            const realmId = params.get('realm') || activeProfile.active_realm_id || 'realm-20260804-1785866761042';
 
             const container = document.getElementById('spark-content-container');
             if (container) container.innerHTML = '';
