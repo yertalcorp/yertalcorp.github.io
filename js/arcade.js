@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:37:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -4891,23 +4891,24 @@ window.openRealmSettings = async () => {
     const hud = document.getElementById('realmsettings-hud');
     if (!hud) return;
 
-    // 1. IDENTITY & STATE CHECK
     const currentUid = window.auth?.currentUser?.uid;
-    
-    // Retrieve profile from databaseCache as the Source of Truth
     const profile = (databaseCache.users && currentUid && databaseCache.users[currentUid]) 
                     ? databaseCache.users[currentUid].profile 
                     : {};
 
-    // Resolve active realm ID and current realm data from databaseCache
     const activeRealmId = profile.active_realm_id || await ensureActiveRealm(currentUid);
     const activeRealm = databaseCache.realms?.[activeRealmId] || {};
-
     const isSetup = activeRealm.realm_setup_complete === true || profile.setup_complete === true;
-    
-    console.log("openRealmSettings - Profile Source:", isSetup ? "DATABASE_CACHE" : "NEW_USER");
 
-    // Target the dynamic zones defined in index.html
+    // 1. RESOLVE MONETIZATION FEATURE FLAGS & PLAN TYPE
+    const masterFlags = databaseCache?.settings?.feature_flags || {};
+    const ownerPlanKey = profile.plan_type || 'free';
+    const planLimits = databaseCache.settings?.['plan_limits']?.[ownerPlanKey] || {};
+    const isSalesMode = planLimits.monetization === 'sales';
+
+    const canControlMonetizationStats = masterFlags.enable_monetization_stats === true;
+    const canControlPayOwner = masterFlags.enable_pay_owner_icon === true;
+
     const profileZone = document.getElementById('realm-profile-zone');
 
     // 2. GENERATE DYNAMIC PROFILE STRUCTURE
@@ -4928,27 +4929,59 @@ window.openRealmSettings = async () => {
                 <option value="unlisted">UNLISTED</option>
                 <option value="private">PRIVATE</option>
             </select>
+
+            <label class="hud-label-metallic">PUBLIC STATS VISIBILITY</label>
+            <div class="hud-toggle-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                <label class="hud-checkbox-label">
+                    <input type="checkbox" id="cfg-show-views" ${activeRealm.config?.show_views !== false ? 'checked' : ''}>
+                    <span>SHOW VIEWS</span>
+                </label>
+                <label class="hud-checkbox-label">
+                    <input type="checkbox" id="cfg-show-likes" ${activeRealm.config?.show_likes !== false ? 'checked' : ''}>
+                    <span>SHOW LIKES</span>
+                </label>
+                <label class="hud-checkbox-label">
+                    <input type="checkbox" id="cfg-show-feedback" ${activeRealm.config?.show_feedback !== false ? 'checked' : ''}>
+                    <span>SHOW FEEDBACK</span>
+                </label>
+                <label class="hud-checkbox-label">
+                    <input type="checkbox" id="cfg-show-shares" ${activeRealm.config?.show_shares !== false ? 'checked' : ''}>
+                    <span>SHOW SHARES</span>
+                </label>
+
+                ${canControlMonetizationStats ? `
+                <label class="hud-checkbox-label">
+                    <input type="checkbox" id="cfg-show-monetization" ${
+                        (isSalesMode ? activeRealm.config?.show_sales === true : activeRealm.config?.show_tips === true) ? 'checked' : ''
+                    }>
+                    <span>SHOW ${isSalesMode ? 'SALES' : 'TIPS'}</span>
+                </label>
+                ` : ''}
+
+                ${canControlPayOwner ? `
+                <label class="hud-checkbox-label">
+                    <input type="checkbox" id="cfg-show-pay-owner" ${activeRealm.config?.show_pay_owner === true ? 'checked' : ''}>
+                    <span>ALLOW ${isSalesMode ? 'PURCHASES' : 'TIPPING'}</span>
+                </label>
+                ` : ''}
+            </div>
         `;
     }
 
-    // Capture newly created inputs
+    // Populate theme select options & header handlers...
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
     const themeSelect = document.getElementById('arcade-theme-select');
     const privacySelect = document.getElementById('arcade-privacy-select');
     const submitBtn = document.getElementById('submit-onboarding');
 
-    // 3. PRE-POPULATE FIELDS FROM CACHE (Reading from activeRealm node)
     if (nameInput) nameInput.value = isSetup ? (activeRealm.realm_title || profile.arcade_title || '') : '';
     if (subtitleInput) subtitleInput.value = isSetup ? (activeRealm.realm_subtitle || profile.arcade_subtitle || '') : '';
     if (privacySelect) privacySelect.value = isSetup ? (activeRealm.realm_privacy || profile.privacy || 'public') : 'public';
 
-    // 4. POPULATE THEMES & APPLY INITIAL STYLE
     const themes = databaseCache.settings?.['ui-settings']?.themes;
     if (themes && themeSelect) {
         themeSelect.innerHTML = ''; 
-        
-        // Resolve default active theme directly from activeRealm node
         const activeThemeId = activeRealm.realm_theme || profile.theme || 'neon-dark';
 
         Object.keys(themes).forEach(id => {
@@ -4960,8 +4993,6 @@ window.openRealmSettings = async () => {
         });
 
         themeSelect.value = activeThemeId;
-
-        // Store original theme state as a rollback checkpoint on open
         hud.dataset.originalTheme = activeThemeId;
 
         themeSelect.onchange = (e) => {
@@ -4975,7 +5006,6 @@ window.openRealmSettings = async () => {
         if (typeof applyTheme === 'function') applyTheme(activeThemeId);
     }
 
-    // 5. METALLIC HEADER REFINEMENT (WITH CANCEL BUTTON)
     const hudHeader = hud.querySelector('.hud-header-content');
     if (hudHeader) {
         hudHeader.innerHTML = `
@@ -4989,27 +5019,22 @@ window.openRealmSettings = async () => {
         `;
     }
 
-    // 6. BUTTON CONFIGURATION & VISIBILITY
     if (submitBtn) {
         submitBtn.innerText = isSetup ? "UPDATE IDENTITY" : "ESTABLISH IDENTITY";
         submitBtn.style.display = "block";
         submitBtn.style.margin = "30px auto 10px auto";
-
-        const activeTheme = themes?.[themeSelect.value];
-        if (activeTheme && activeTheme['button-text-color']) {
-            submitBtn.style.color = activeTheme['button-text-color'];
-        }
     }
-    
+
     hud.classList.add('active');
 };
+
+// Inside saveRealmSettings in js/arcade.js
 
 window.saveRealmSettings = async () => {
     const nameInput = document.getElementById('new-arcade-name');
     const subtitleInput = document.getElementById('new-arcade-subtitle');
     const themeSelect = document.getElementById('arcade-theme-select');
     const privacySelect = document.getElementById('arcade-privacy-select');
-    // DELETED: const planValue = document.querySelector('input[name="arcade-plan"]:checked')?.value || 'free';
 
     const arcadeName = nameInput.value.trim().toUpperCase();
     if (!arcadeName) {
@@ -5023,31 +5048,64 @@ window.saveRealmSettings = async () => {
     try {
         const activeRealmId = await ensureActiveRealm(activeUser.uid);
         const realmPath = `realms/${activeRealmId}`;
+        const activeRealm = databaseCache.realms?.[activeRealmId] || {};
         const selectedPrivacy = privacySelect.value;
         const timestamp = Date.now();
 
-        // 1. CONSTRUCT REALM UPDATE PAYLOAD
+        // Check plan mode for sales vs tips
+        const userProfile = databaseCache.users?.[activeUser.uid]?.profile || {};
+        const ownerPlanKey = userProfile.plan_type || 'free';
+        const planLimits = databaseCache.settings?.['plan_limits']?.[ownerPlanKey] || {};
+        const isSalesMode = planLimits.monetization === 'sales';
+
+        // Check if monetization elements were rendered in DOM
+        const monEl = document.getElementById('cfg-show-monetization');
+        const payEl = document.getElementById('cfg-show-pay-owner');
+
+        // Preserve current values if inputs were not rendered
+        let showTipsVal = activeRealm.config?.show_tips || false;
+        let showSalesVal = activeRealm.config?.show_sales || false;
+
+        if (monEl) {
+            if (isSalesMode) {
+                showSalesVal = monEl.checked;
+            } else {
+                showTipsVal = monEl.checked;
+            }
+        }
+
+        const showPayOwnerVal = payEl ? payEl.checked : (activeRealm.config?.show_pay_owner || false);
+
+        // Construct new config packet
+        const newConfig = {
+            show_views: document.getElementById('cfg-show-views').checked,
+            show_likes: document.getElementById('cfg-show-likes').checked,
+            show_feedback: document.getElementById('cfg-show-feedback').checked,
+            show_shares: document.getElementById('cfg-show-shares').checked,
+            show_tips: showTipsVal,
+            show_sales: showSalesVal,
+            show_pay_owner: showPayOwnerVal
+        };
+
+        // Construct atomic update payload
         const updates = {};
         updates[`${realmPath}/realm_title`] = arcadeName;
         updates[`${realmPath}/realm_subtitle`] = subtitleInput.value.trim();
         updates[`${realmPath}/realm_theme`] = themeSelect.value;
         updates[`${realmPath}/realm_privacy`] = selectedPrivacy;
+        updates[`${realmPath}/config`] = newConfig;
         updates[`${realmPath}/realm_setup_complete`] = true;
         updates[`${realmPath}/realm_last_updated`] = timestamp;
 
-        // 2. GRANULAR SEARCH INDEX MANAGEMENT
         if (selectedPrivacy === 'public') {
             updates[`search_index/${activeRealmId}`] = activeUser.uid;
-            console.log(`[INDEX]: Syncing public access for ${activeRealmId}`);
         } else {
             updates[`search_index/${activeRealmId}`] = null;
-            console.log(`[INDEX]: Removing ${activeRealmId} from public directory.`);
         }
 
-        // 3. ATOMIC EXECUTION
         await window.update(window.ref(window.db), updates);
 
-        // 4. SYNC LOCAL STATE (REALMS NODE)
+        // Sync local cache
         if (!databaseCache.realms) databaseCache.realms = {};
         if (!databaseCache.realms[activeRealmId]) databaseCache.realms[activeRealmId] = {};
 
@@ -5056,26 +5114,25 @@ window.saveRealmSettings = async () => {
             realm_subtitle: subtitleInput.value.trim(),
             realm_theme: themeSelect.value,
             realm_privacy: selectedPrivacy,
-            // DELETED: realm_plan_type: planValue,
+            config: newConfig,
             realm_setup_complete: true,
             realm_last_updated: timestamp
         });
 
-        // Clear originalTheme dataset checkpoint on successful save to prevent rollback on later close
         const hud = document.getElementById('realmsettings-hud');
-        if (hud) delete hud.dataset.originalTheme;
+        if (hud) {
+            delete hud.dataset.originalTheme;
+            hud.classList.remove('active');
+        }
 
-        // 5. UI REFRESH
         if (typeof applyTheme === 'function') applyTheme(themeSelect.value);
-        document.getElementById('realmsettings-hud').classList.remove('active');
-
         await refreshUI();
-        console.log("[SYSTEM]: Realm Settings and Search Index Synchronized.");
 
     } catch (error) {
         console.error("FORGE_FAILURE:", error);
     }
 };
+
 /*
  * Objective: Retrieve dynamic limits based on the user's plan_type.
  */
