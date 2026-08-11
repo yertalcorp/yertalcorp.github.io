@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -4684,7 +4684,7 @@ window.closePlanSettings = () => {
 
 /* 
  * Objective: Open Standalone Plan Settings HUD
- * Task: Populate plan tier selections dynamically using helper functions and activate HUD overlay
+ * Task: Populate plan tier selections dynamically using helper functions, enforcing superuser overrides, and activate HUD overlay
  */
 window.openPlanSettings = async () => {
     const hud = document.getElementById('plansettings-hud');
@@ -4701,6 +4701,9 @@ window.openPlanSettings = async () => {
     // Pull the plan tiers dictionary directly from databaseCache settings
     const allPlans = databaseCache.settings?.plan_limits || databaseCache.settings?.['plan_limits'];
     
+    // Check for superuser permission flag dynamically from profile
+    const isSuperUser = profile.superuser === true;
+
     if (allPlans && planZone) {
         planZone.innerHTML = `
             <label class="hud-label-metallic">SYSTEM_PLAN_SELECTION</label>
@@ -4713,7 +4716,9 @@ window.openPlanSettings = async () => {
             const plan = allPlans[planId];
             const userCurrentPlan = profile.plan_type || 'free';
             const isActive = (planId === userCurrentPlan);
-            const canSelect = (plan.enabled === true) || isActive;
+
+            // Superusers bypass restrictions; standard users respect plan.enabled flag or current active tier
+            const canSelect = isSuperUser || (plan.enabled === true) || isActive;
 
             const planBox = document.createElement('div');
             planBox.className = `plan-card-rounded ${isActive ? 'active' : ''} ${!canSelect ? 'tier-locked' : ''}`;
