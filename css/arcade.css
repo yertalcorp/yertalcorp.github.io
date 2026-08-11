@@ -597,7 +597,7 @@ main.max-width-limit {
     cursor: not-allowed;
     border-style: dashed;
 }
-.text-glow-green { color: #00ff88; filter: none; }
+.text-glow-green { color: var(--glow-color); filter: none; }
 .text-dim { color: var(--text-muted-color); }
 
 /* --- Trigger Icon --- */
