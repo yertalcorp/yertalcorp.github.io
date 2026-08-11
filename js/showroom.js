@@ -550,19 +550,19 @@ window.openAuthHUD = async (mode = 'personal') => {
   if (activeUser) {
     if (mode === 'superuser') {
         try {
-            const superuserUid = 'plg5qjC5F1bFKgB54uBSDes4UT22';
-            const response = await fetch(`${firebaseConfig.databaseURL}/users/${superuserUid}/profile.json`);
-            const profile = await response.json();
-            const superuserRealmId = profile?.active_realm_id;
+            const cachedProfile = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+            const isSuperUser = cachedProfile?.superuser === true;
 
-            if (superuserRealmId) {
-                window.location.href = `./arcade/index.html?realm=${superuserRealmId}`;
+            if (isSuperUser && cachedProfile?.active_realm_id) {
+                window.location.href = `./arcade/index.html?realm=${cachedProfile.active_realm_id}`;
             } else {
-                console.warn("Superuser active_realm_id not found in profile.");
-            }
-        } catch (err) {
-            console.error("Error resolving superuser realm:", err);
+                // Fallback to normal active realm routing if not a superuser or active_realm_id missing
+                const realmId = await getActiveRealmId(activeUser);
+                if (realmId) window.location.href = `./arcade/index.html?realm=${realmId}`;
         }
+    } catch (err) {
+        console.error("Error resolving superuser realm:", err);
+    }
     } else {
         try {
             const realmId = await getActiveRealmId(activeUser);
