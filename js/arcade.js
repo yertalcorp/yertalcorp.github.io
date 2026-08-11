@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:37:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3715,7 +3715,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
             </div>
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.25rem; width: 100%; align-items: center;">
-                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.6rem; font-size: 8px; border-bottom: 1px solid var(--fg-color); width: 68%; padding-bottom: 3px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
+                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.6rem; font-size: 7px; border-bottom: 1px solid var(--fg-color); width: 68%; padding-bottom: 3px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
                     ${showViews ? `
                     <span class="stat-views" style="${isViewsEnabled ? activeStatStyle : dormantStatStyle}" title="${isViewsEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
                         <i class="fas fa-eye" style="margin-right: 2px;"></i> VIEWS: ${viewCount}
