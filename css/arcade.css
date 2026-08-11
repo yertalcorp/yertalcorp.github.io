@@ -1074,6 +1074,22 @@ header {
     left: 100%;
 }
 
+.drawer-header .generate-btn {
+    color: var(--glow-color);
+    text-shadow: 0 0 5px var(--glow-color-aura);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.drawer-header .generate-btn:hover {
+    color: var(--branding-text-color);
+    text-shadow: 0 0 8px var(--glow-color);
+    background: transparent;
+}
 /* Arcade Button for HUB, spark card */
 .arcade-button {
     border: 1px solid var(--border-color);
