@@ -3620,18 +3620,24 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     const isFeedbackEnabled = realmConfig.show_feedback !== false;
     const isSharesEnabled = realmConfig.show_shares !== false;
 
-    const isMonetizationEnabled = (masterFlags.enable_monetization_stats === true) && 
-                                 (isSalesMode ? realmConfig.show_sales === true : realmConfig.show_tips === true);
+    // Platform Master Feature Flags
+    const masterMonetizationOn = masterFlags.enable_monetization_stats === true;
+    const masterPayOwnerOn = masterFlags.enable_pay_owner_icon === true;
 
-    const isPayOwnerEnabled = (masterFlags.enable_pay_owner_icon === true) && (realmConfig.show_pay_owner === true);
+    // Individual Realm Toggles
+    const isMonetizationEnabled = isSalesMode ? realmConfig.show_sales === true : realmConfig.show_tips === true;
+    const isPayOwnerEnabled = realmConfig.show_pay_owner === true;
 
     // 2. VISIBILITY ELIGIBILITY
+    // Standard engagement: Owner sees enabled + dormant; Visitor sees enabled only
     const showViews = isOwner || isViewsEnabled;
     const showLikes = isOwner || isLikesEnabled;
     const showFeedback = isOwner || isFeedbackEnabled;
     const showShares = isOwner || isSharesEnabled;
-    const showMonetizationStat = isOwner || isMonetizationEnabled;
-    const showPayOwnerIcon = isOwner || isPayOwnerEnabled;
+
+    // Monetization: Master flags strictly gate feature existence for EVERYONE (including owners)
+    const showMonetizationStat = masterMonetizationOn && (isOwner || isMonetizationEnabled);
+    const showPayOwnerIcon = masterPayOwnerOn && (isOwner || isPayOwnerEnabled);
 
     // 3. THEME DYNAMICS (Pearl for active stats, fg-color-mid for dormant)
     const activeStatStyle = `color: var(--list-color); font-weight: 600; opacity: 1; filter: none;`;
@@ -3715,7 +3721,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
             </div>
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.25rem; width: 100%; align-items: center;">
-                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.6rem; font-size: 7px; border-bottom: 1px solid var(--fg-color); width: 68%; padding-bottom: 3px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
+                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.6rem; font-size: 8px; border-bottom: 1px solid var(--fg-color); width: 68%; padding-bottom: 3px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
                     ${showViews ? `
                     <span class="stat-views" style="${isViewsEnabled ? activeStatStyle : dormantStatStyle}" title="${isViewsEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
                         <i class="fas fa-eye" style="margin-right: 2px;"></i> VIEWS: ${viewCount}
