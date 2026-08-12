@@ -372,27 +372,39 @@ main.max-width-limit {
     pointer-events: auto; 
 }
 
-/* 2. Tooltip Window Layer */
 .tutorial-tooltip {
-    position: fixed ;
-    z-index: 100000 ;
+    position: fixed;
+    z-index: 100000;
     display: none; 
     width: 90%;
     max-width: 380px;
     max-height: 80vh;
     overflow-y: auto;
     box-sizing: border-box;
-    background: #080b10 ;
-    border: 1px solid var(--glow-aura) ;
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.95), 0 20px 50px rgba(0,0,0,0.9) ;
+    background: linear-gradient(135deg, #0d131d 0%, #04060a 100%);
+    border: 1px solid var(--glow-color);
+    border-top: 1px solid rgba(255, 255, 255, 0.35);
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.9);
+    border-right: 2px solid rgba(0, 0, 0, 0.9);
+    box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.3), inset -2px -2px 4px rgba(0, 0, 0, 0.9), 0 20px 50px rgba(0, 0, 0, 0.9);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-radius: 8px;
     padding: 1.25rem;
-    font-family: var(--text-main-font);
+    font-family: 'Courier New', Courier, monospace;
     color: var(--text-main-color);
     pointer-events: auto;
     transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.tutorial-tooltip p {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    letter-spacing: 0.5px;
+    color: var(--branding-text-color);
+    margin: 10px 0 18px 0;
 }
 
 .tutorial-tooltip.active {
@@ -445,14 +457,6 @@ main.max-width-limit {
     border-bottom: 1px solid color-mix(in srgb, var(--button-text-color), transparent 70%);
     text-shadow: 0.5px 0.5px 0px rgba(255, 255, 255, 0.2);
     padding-bottom: 8px;
-}
-
-.tutorial-tooltip p {
-    color: var(--button-text-color);
-    font-size: var(--text-main-size);
-    font-weight: 500;
-    line-height: 1.6;
-    margin: 0 0 24px 0;
 }
 
 /* 3. Navigation Buttons */
