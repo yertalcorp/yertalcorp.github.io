@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -174,34 +174,34 @@ window.closeAddCurrentHud = () => {
 let currentTutorialStep = 0;
 const steps = [
     {
-        target: null,
-        title: "REALM_INIT",
-        content: "Welcome to your Realm. This is a versatile showroom for your Simulations, a social hub for friends, or a business storefront where you can create and share with your network."
+        target: ".action-card",
+        title: "CIRCUIT_BLUEPRINT",
+        content: "Select a pre-built Realm Circuit template to auto-populate layout infrastructure or choose BLANK REALM to construct from scratch."
     },
     {
-        target: ".settings-trigger", // Assuming three dots
-        title: "OS_PREFERENCES",
-        content: "Access System Settings to change the name, subtitle, theme (like Autumn Ember) and privacy of your Realm."
+        target: "#system-menu-trigger",
+        title: "REALM_INITIALIZATION",
+        content: "Access System Settings to establish your Realm identity, refine name and subtitle, select interface themes, and set privacy protocols."
     },
     {
-        target: ".terminal-btn", 
-        title: "INFRASTRUCTURE",
-        content: "Initialize a 'Current' to organize your work. You can Add, Rename (Update), or Decommission (Delete) Currents to manage your lab's data streams."
+        target: ".current-prompt-container",
+        title: "CURRENT_STREAMS",
+        content: "Initialize Currents to organize your data streams. Create, rename, or decommission Currents to manage separate laboratory topics."
     },
     {
-        target: ".generate-btn",
-        title: "FORGE_GENERATION",
-        content: "This is the Forge. Paste a URL to scrape content or type a prompt—try: 'Top 3 movies for the current year'—to generate a Spark instantly."
+        target: ".current-prompt-input",
+        title: "SPARK_FORGING",
+        content: "Type prompts (e.g., '3d physics simulation') or paste web URLs into the Forge input bar and hit EXEC to generate Sparks instantly."
     },
     {
-        target: ".spark-stats-row", // Target the icons/stats row on a card
+        target: ".action-buttons",
         title: "ENGAGEMENT_PROTOCOLS",
-        content: "Interact with Sparks via the Like, Save, Share and Feedback icons under each card."
+        content: "Interact with individual Sparks via Likes, Feedback, Share, and Monetization (Tipping/Sales) protocols beneath each card."
     },
     {
         target: null,
-        title: "SYSTEM_READY",
-        content: "Your Realm is online. Start forging Currents and share your unique URL to begin growing your audience and network."
+        title: "NETWORK_EXPANSION",
+        content: "Your Realm is live. Share your unique Realm URL to attract visitors, collect community feedback, and grow your creator network."
     }
 ];
 
@@ -303,7 +303,7 @@ function renderTutorialStep() {
 
 function createTooltip(percentX, percentY, step) {
     const tooltip = document.createElement('div');
-    tooltip.className = 'tutorial-tooltip active';
+    tooltip.className = 'tutorial-tooltip action-card active';
     
     // Apply viewport-relative percentage coordinates
     tooltip.style.left = `${percentX}%`;
@@ -311,17 +311,17 @@ function createTooltip(percentX, percentY, step) {
     tooltip.style.transform = 'translate(-50%, 0)'; /* Anchor from top-center */
 
     tooltip.innerHTML = `
-        <div class="tooltip-header">
+        <div class="tooltip-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
             <span class="metallic-text">PHASE_${currentTutorialStep + 1} // ${steps.length}</span>
             <button onclick="window.endTutorial()" class="close-tutorial">&times;</button>
         </div>
         
-        <h3>${step.title}</h3>
-        <p>${step.content}</p>
+        <h3 class="metallic-text" style="color: var(--glow-color); margin-top: 10px;">${step.title}</h3>
+        <p style="font-size: 11px; opacity: 0.9;">${step.content}</p>
 
-        <div class="tooltip-nav" style="display: flex; gap: 12px;">
-            <button onclick="window.prevStep()" class="tutorial-next-btn" style="clip-path: none; flex: 1;" ${currentTutorialStep === 0 ? 'disabled' : ''}>PREV</button>
-            <button onclick="window.nextStep()" class="tutorial-next-btn" style="flex: 2;">
+        <div class="tooltip-nav" style="display: flex; gap: 12px; margin-top: auto;">
+            <button onclick="window.prevStep()" class="tutorial-next-btn ethereal-btn-sm" style="clip-path: none; flex: 1;" ${currentTutorialStep === 0 ? 'disabled' : ''}>PREV</button>
+            <button onclick="window.nextStep()" class="tutorial-next-btn ethereal-btn-sm" style="flex: 2;">
                 ${currentTutorialStep === steps.length - 1 ? 'FINISH_INIT' : 'NEXT_PHASE'}
             </button>
         </div>
