@@ -5268,32 +5268,38 @@ class ArcadeNavigator {
 
     // Inside your ArcadeNavigator class in arcade.js
 
-    initChatAgent() {
-    console.log("ArcadeNavigator: initChatAgent called.");
-    let widget = document.getElementById('yertal-nav-container');
+/* Objective: Enforce top-level <body> mounting to bypass layout container traps */
+ensureGlobalMount() {
+    const launcher = document.querySelector('.navigator-launcher');
+    const widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
 
-    if (!widget) {
-        console.log("ArcadeNavigator: Widget not found in HTML, creating dynamically...");
-        widget = document.createElement('div');
-        widget.id = 'yertal-nav-container';
-        widget.className = 'yertal-navigator-widget';
-        document.body.appendChild(widget);
-    } else if (widget.parentElement !== document.body) {
-        // Re-parent to body to prevent stacking context or scrolling inheritance
-        document.body.appendChild(widget);
-    }
-
-    // Ensure launcher button is also anchored directly to body
-    let launcher = document.querySelector('.navigator-launcher');
     if (launcher && launcher.parentElement !== document.body) {
         document.body.appendChild(launcher);
     }
 
-    // Ensure it's visible and animated
+    if (widget && widget.parentElement !== document.body) {
+        document.body.appendChild(widget);
+    }
+}
+
+initChatAgent() {
+    console.log("ArcadeNavigator: initChatAgent called.");
+    
+    // Ensure nodes are attached to <body> prior to rendering
+    this.ensureGlobalMount();
+
+    let widget = document.getElementById('yertal-nav-container');
+    if (!widget) {
+        widget = document.createElement('div');
+        widget.id = 'yertal-nav-container';
+        widget.className = 'yertal-navigator-widget';
+        document.body.appendChild(widget);
+    }
+
     widget.style.display = 'flex';
     widget.style.opacity = '1';
     widget.style.pointerEvents = 'all';
-    
+
     this.renderNode(this.currentNode);
 }
 
