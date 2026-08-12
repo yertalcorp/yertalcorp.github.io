@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:18:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2375,12 +2375,18 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
         return;
     }
 
+    // Clean up any existing lazy load observers from previous renders
+    if (window._currentsLazyObserver) {
+        window._currentsLazyObserver.disconnect();
+        window._currentsLazyObserver = null;
+    }
+
     // 1. DYNAMIC PLAN LOOKUP FOR THE OWNER
     const ownerUid = databaseCache.realms?.[realmId]?.realm_ownerid || 'UNKNOWN';
     const realm = databaseCache.realms?.[realmId] || {};
     const userPlanType = databaseCache.users?.[ownerUid]?.profile?.plan_type || 'free';
     const planLimits = databaseCache.settings?.['plan_limits']?.[userPlanType] || databaseCache.settings?.['plan_limits']?.['free'] || {};
-    const maxSparks = planLimits.max_sparks_per_current  || 12;
+    const maxSparks = planLimits.max_sparks_per_current || 12;
 
     console.log("[renderCurrents] Realm Context:", {
         ownerUid,
@@ -2390,11 +2396,20 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
     });
 
     // 2. PRIVACY FILTERING LOGIC
-    const currentsArray = currents ? Object.values(currents).filter(current => {
+    let currentsArray = currents ? Object.values(currents).filter(current => {
         const isPublic = current.privacy === 'public';
         const isTargetUnlisted = current.privacy === 'unlisted' && current.id === sharedCurrentId;
         return isOwner || isPublic || isTargetUnlisted;
     }) : [];
+
+    // Prioritize shared current if present so it renders in the initial view
+    if (sharedCurrentId) {
+        const sharedIdx = currentsArray.findIndex(c => c.id === sharedCurrentId);
+        if (sharedIdx > 0) {
+            const [sharedItem] = currentsArray.splice(sharedIdx, 1);
+            currentsArray.unshift(sharedItem);
+        }
+    }
 
     console.log(`[renderCurrents] Filtered Active Currents Count: ${currentsArray.length}`);
     
@@ -2428,14 +2443,12 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
             } else {
                 console.log("[renderCurrents] Setup NOT complete. Inspecting databaseCache.realms for templates...");
                 
-                // Diagnostic cache inspection
                 const rawRealmsCache = databaseCache.realms || {};
                 const allRealms = Object.values(rawRealmsCache);
                 
                 console.log("[DEBUG renderCurrents] Total raw keys in databaseCache.realms:", Object.keys(rawRealmsCache).length);
                 console.log("[DEBUG renderCurrents] Raw databaseCache.realms payload:", rawRealmsCache);
                 
-                // Detailed breakdown of each realm's circuit flag
                 console.table(allRealms.map(r => ({
                     realm_id: r.realm_id || 'N/A',
                     realm_title: r.realm_title || 'N/A',
@@ -2443,7 +2456,6 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                     typeOf_flag: typeof r.is_circuit_template
                 })));
 
-                // Filter templates
                 const circuits = allRealms.filter(r => 
                     r.is_circuit_template === true || 
                     r.is_circuit_template === 'true' || 
@@ -2455,7 +2467,6 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                 const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
                 const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
 
-                // --- CARD MAPPING INSIDE renderCurrents ---
                 const circuitCardsHTML = circuits.map((circuit, idx) => {
                     const circuitId = circuit.realm_circuit || circuit.realm_id;
                     const patternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern(circuitId) : '';
@@ -2473,7 +2484,6 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                                  onclick="window.initializeUserRealm('${realmId}', '${circuitId}')"
                                  style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px solid var(--glow-aura); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
                                 
-                                <!-- 3D Extruded Neon Title -->
                                 <span class="metallic-text" style="
                                     position: relative; 
                                     z-index: 10; 
@@ -2494,20 +2504,16 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                                     ${circuit.realm_display_name || circuit.realm_title || 'UNTITLED REALM'}
                                 </span>
 
-                                <!-- Template Subtitle / Realm Title -->
                                 <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 0.75rem; margin: 0; font-size: 11px; font-weight: 500; line-height: 1.3; max-width: 92%; word-break: break-word; white-space: normal; pointer-events: none; opacity: 0.9; text-shadow: 0 2px 4px rgba(0,0,0,0.9);">
                                     ${circuit.realm_title || ''}
                                 </h4>
                                 
-                                <!-- Background Starfield + Sinusoidal Pattern -->
                                 <img src="${patternImg}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; z-index: 1;">
                                 
-                                <!-- Soft Center Radial Vignette -->
                                 <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(8,11,16,0.45) 0%, rgba(8,11,16,0.9) 100%); z-index: 2; pointer-events: none;"></div>
                             </div>
 
                             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
-                                <!-- Subtitle Caption -->
                                 <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; word-wrap: break-word; white-space: normal; min-height: 36px;">
                                     ${circuit.realm_subtitle || ''}
                                 </p>
@@ -2519,7 +2525,6 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                     `;
                 }).join('');
 
-                // --- BLANK REALM CARD HTML ---
                 const blankCardHTML = `
                     <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); transition: transform 0.3s ease;">
                         <div class="action-card" 
@@ -2592,9 +2597,11 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
         return;
     }
 
-    // --- ACTIVE STATE ---
-    console.log("[renderCurrents] Rendering active currents array...");
-    container.innerHTML = currentsArray.map(current => {
+    // --- ACTIVE STATE: LAZY LOADING IMPLEMENTATION ---
+    console.log("[renderCurrents] Preparing active currents with Lazy Loading...");
+
+    // Helper to generate HTML string for a single current item
+    const generateCurrentHTML = (current) => {
         const sparks = current.sparks ? Object.values(current.sparks).filter(spark => {
             const isSparkPublic = spark.privacy === 'public';
             const isSparkTargetUnlisted = spark.privacy === 'unlisted' && spark.id === sharedSparkId;
@@ -2637,8 +2644,8 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                           class="current-prompt-input"
                           placeholder="Type a prompt (e.g. 'game', 'logic', 'physics') or paste a URL..." 
                           oninput="window.updatePromptInputHUD('${current.id}')"
-                           onfocus="window.updatePromptInputHUD('${current.id}')"
-                           onblur="setTimeout(() => { const h = document.getElementById('hud-${current.id}'); if(h) h.style.display = 'none'; }, 250)">
+                          onfocus="window.updatePromptInputHUD('${current.id}')"
+                          onblur="setTimeout(() => { const h = document.getElementById('hud-${current.id}'); if(h) h.style.display = 'none'; }, 250)">
                     <div id="hud-${current.id}" class="floating-hud-container" style="display: none;"></div>
                 </div>
                    <button onclick="window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')" class="current-prompt-exec-button">EXEC</button>
@@ -2659,7 +2666,7 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
         `;
 
         return `
-            <div class="current-block animate-fadeIn">
+            <div class="current-block animate-fadeIn" id="current-block-${current.id}">
                 <div class="current-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
                     <h2 class="current-name" style="margin: 0; font-size: 14px; line-height: 1;">${current.name || 'Active Current'}</h2>
                     ${!isOwner ? '' : capacityMeterHTML}
@@ -2674,11 +2681,21 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                 </div>
             </div>
         `;
-    }).join('');
+    };
 
+    // Lazy load state & initial batch execution
+    const BATCH_SIZE = 2; // Initial batch count
+    let currentIndex = BATCH_SIZE;
+
+    // Render initial batch
+    const initialBatch = currentsArray.slice(0, BATCH_SIZE);
+    let initialHTML = initialBatch.map(generateCurrentHTML).join('');
+
+    // Append owner action button wrapper container
+    let ownerBtnHTML = '';
     if (isOwner) {
-        container.innerHTML += `
-            <div style="display: flex; justify-content: center; margin-top: 3rem; padding-bottom: 5rem;">
+        ownerBtnHTML = `
+            <div id="add-current-btn-wrapper" style="display: flex; justify-content: center; margin-top: 3rem; padding-bottom: 5rem;">
                 <button onclick="window.openAddCurrentHud()" class="terminal-btn" style="border: 1px dashed var(--glow-color); opacity: 0.6; color: var(--branding-text-color); background: var(--bg-color);">
                     <i class="fas fa-plus"></i> INITIALIZE NEW CURRENT
                 </button>
@@ -2686,9 +2703,53 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
         `;
     }
 
+    // Append Sentinel element if more currents exist to fetch
+    let sentinelHTML = '';
+    if (currentsArray.length > BATCH_SIZE) {
+        sentinelHTML = `
+            <div id="currents-lazy-sentinel" style="text-align: center; padding: 2rem; color: var(--glow-color); opacity: 0.6; font-family: 'Orbitron', sans-serif; font-size: 11px;">
+                <i class="fas fa-circle-notch fa-spin"></i> FETCHING_NEXT_CURRENT...
+            </div>
+        `;
+    }
+
+    container.innerHTML = initialHTML + sentinelHTML + ownerBtnHTML;
+
+    // Attach IntersectionObserver if remaining currents exist
+    if (currentsArray.length > BATCH_SIZE) {
+        const sentinel = document.getElementById('currents-lazy-sentinel');
+        
+        window._currentsLazyObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    if (currentIndex < currentsArray.length) {
+                        const currentToRender = currentsArray[currentIndex];
+                        console.log(`[renderCurrents] Lazy loading current #${currentIndex + 1} (${currentToRender.id})`);
+
+                        const currentHTML = generateCurrentHTML(currentToRender);
+                        sentinel.insertAdjacentHTML('beforebegin', currentHTML);
+
+                        currentIndex++;
+
+                        // Remove sentinel once all currents are rendered
+                        if (currentIndex >= currentsArray.length) {
+                            console.log("[renderCurrents] All currents lazy-loaded. Disconnecting observer.");
+                            sentinel.remove();
+                            window._currentsLazyObserver.disconnect();
+                            window._currentsLazyObserver = null;
+                        }
+                    }
+                }
+            });
+        }, { rootMargin: '200px' });
+
+        if (sentinel) {
+            window._currentsLazyObserver.observe(sentinel);
+        }
+    }
+
     console.groupEnd();
 }
-
 window.updatePromptInputHUD = (currentId) => {
     const inputField = document.getElementById(`input-${currentId}`);
     const hudContainer = document.getElementById(`hud-${currentId}`);
