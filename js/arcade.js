@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:04:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -303,7 +303,8 @@ function renderTutorialStep() {
 
 function createTooltip(percentX, percentY, step) {
     const tooltip = document.createElement('div');
-    tooltip.className = 'tutorial-tooltip action-card active';
+    // REMOVED 'action-card' to prevent layout collisions
+    tooltip.className = 'tutorial-tooltip active';
     
     // Apply viewport-relative percentage coordinates
     tooltip.style.left = `${percentX}%`;
@@ -311,15 +312,15 @@ function createTooltip(percentX, percentY, step) {
     tooltip.style.transform = 'translate(-50%, 0)'; /* Anchor from top-center */
 
     tooltip.innerHTML = `
-        <div class="tooltip-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+        <div class="tooltip-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; width: 100%;">
             <span class="metallic-text">PHASE_${currentTutorialStep + 1} // ${steps.length}</span>
-            <button onclick="window.endTutorial()" class="close-tutorial">&times;</button>
+            <button onclick="window.endTutorial()" class="close-tutorial" style="background: none; border: none; color: var(--branding-color); font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
         </div>
         
-        <h3 class="metallic-text" style="color: var(--glow-color); margin-top: 10px;">${step.title}</h3>
-        <p style="font-size: 11px; opacity: 0.9;">${step.content}</p>
+        <h3 class="metallic-text" style="color: var(--glow-color); margin-top: 10px; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${step.title}</h3>
+        <p style="font-size: 11px; opacity: 0.9; margin: 8px 0 16px 0; line-height: 1.5; color: var(--text-main-color);">${step.content}</p>
 
-        <div class="tooltip-nav" style="display: flex; gap: 12px; margin-top: auto;">
+        <div class="tooltip-nav" style="display: flex; gap: 12px; margin-top: auto; width: 100%;">
             <button onclick="window.prevStep()" class="tutorial-next-btn ethereal-btn-sm" style="clip-path: none; flex: 1;" ${currentTutorialStep === 0 ? 'disabled' : ''}>PREV</button>
             <button onclick="window.nextStep()" class="tutorial-next-btn ethereal-btn-sm" style="flex: 2;">
                 ${currentTutorialStep === steps.length - 1 ? 'FINISH_INIT' : 'NEXT_PHASE'}
