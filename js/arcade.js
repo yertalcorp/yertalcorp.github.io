@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:26:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1225,13 +1225,11 @@ async function refreshUI() {
         // Currents needs the realm and owner profile for context
         renderCurrents(realmData.currents || {}, isOwner, targetRealmSlug, ownerProfile);
 
-        // Ensure navigator is reparented to document.body on every UI refresh
-    if (window.arcadeNavigator) {
+if (window.arcadeNavigator) {
         window.arcadeNavigator.ensureGlobalMount();
     } else if (typeof ArcadeNavigator === 'function') {
-        window.arcadeNavigator = new ArcadeNavigator();
+        window.arcadeNavigator = new ArcadeNavigator(window.chatConfig);
         window.arcadeNavigator.ensureGlobalMount();
-    }
 
     console.log("--- [SYSTEM]: refreshUI COMPLETE ---");
         console.log("--- [SYSTEM]: refreshUI COMPLETE ---");
@@ -5267,12 +5265,19 @@ window.handleLauncherClick = function() {
 };
 
 class ArcadeNavigator {
-    constructor(dbData) {
-        console.log("ArcadeNavigator: Initializing with data:", dbData);
-        this.nodes = dbData.nodes;
-        this.setup = dbData.setup;
-        this.currentNode = dbData.setup.initial_node;
-        this.history = [];
+constructor(data = window.chatConfig) {
+        console.log("ArcadeNavigator: Initializing with data:", data);
+        
+        // Fallback handling to prevent runtime errors if chatConfig is not yet loaded
+        if (!data || !data.nodes) {
+            console.warn("ArcadeNavigator: Missing or invalid nodes configuration. Initializing with fallback structure.");
+            data = data || {};
+            data.nodes = data.nodes || {};
+        }
+
+        this.config = data;
+        this.nodes = data.nodes;
+        this.currentNode = data.setup?.initial_node || 'start';
     }
 
     // Inside your ArcadeNavigator class in arcade.js
