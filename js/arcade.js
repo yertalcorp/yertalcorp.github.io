@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:04:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:18:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -303,13 +303,11 @@ function renderTutorialStep() {
 
 function createTooltip(percentX, percentY, step) {
     const tooltip = document.createElement('div');
-    // REMOVED 'action-card' to prevent layout collisions
     tooltip.className = 'tutorial-tooltip active';
     
-    // Apply viewport-relative percentage coordinates
     tooltip.style.left = `${percentX}%`;
     tooltip.style.top = `${percentY}%`;
-    tooltip.style.transform = 'translate(-50%, 0)'; /* Anchor from top-center */
+    tooltip.style.transform = 'translate(-50%, 0)';
 
     tooltip.innerHTML = `
         <div class="tooltip-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; width: 100%;">
@@ -318,7 +316,7 @@ function createTooltip(percentX, percentY, step) {
         </div>
         
         <h3 class="metallic-text" style="color: var(--glow-color); margin-top: 10px; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${step.title}</h3>
-        <p style="font-size: 11px; opacity: 0.9; margin: 8px 0 16px 0; line-height: 1.5; color: var(--text-main-color);">${step.content}</p>
+        <p style="font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.6; color: var(--branding-text-color); margin: 10px 0 18px 0;">${step.content}</p>
 
         <div class="tooltip-nav" style="display: flex; gap: 12px; margin-top: auto; width: 100%;">
             <button onclick="window.prevStep()" class="tutorial-next-btn ethereal-btn-sm" style="clip-path: none; flex: 1;" ${currentTutorialStep === 0 ? 'disabled' : ''}>PREV</button>
