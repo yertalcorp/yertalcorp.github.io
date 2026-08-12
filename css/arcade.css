@@ -372,6 +372,7 @@ main.max-width-limit {
     pointer-events: auto; 
 }
 
+/* 1. Tooltip Window Container */
 .tutorial-tooltip {
     position: fixed;
     z-index: 100000;
@@ -381,38 +382,69 @@ main.max-width-limit {
     max-height: 80vh;
     overflow-y: auto;
     box-sizing: border-box;
-    background: linear-gradient(135deg, #0d131d 0%, #04060a 100%);
-    border: 1px solid var(--glow-color);
-    border-top: 1px solid rgba(255, 255, 255, 0.35);
-    border-left: 1px solid rgba(255, 255, 255, 0.2);
-    border-bottom: 2px solid rgba(0, 0, 0, 0.9);
-    border-right: 2px solid rgba(0, 0, 0, 0.9);
-    box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.3), inset -2px -2px 4px rgba(0, 0, 0, 0.9), 0 20px 50px rgba(0, 0, 0, 0.9);
+    background: var(--card-bg, var(--bg-color-mid));
+    border: 1px solid var(--border-color);
+    border-top: 1px solid var(--fg-color-high);
+    border-left: 1px solid var(--fg-color-mid);
+    border-bottom: 2px solid var(--box-shadow-color);
+    border-right: 2px solid var(--box-shadow-color);
+    box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.2), inset -2px -2px 4px var(--box-shadow-color-glow), 0 20px 50px var(--card-shadow-color);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-radius: 8px;
     padding: 1.25rem;
-    font-family: var(--text-main-font, 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif);
-    color: var(--text-main-color);
+    font-family: var(--text-main-font, 'Segoe UI', sans-serif);
+    color: var(--card-text-color, var(--text-main-color));
     pointer-events: auto;
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
+.tutorial-tooltip.active {
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 2. Text Content */
 .tutorial-tooltip p {
-    font-family: var(--text-main-font, 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif) !important;
+    font-family: var(--text-main-font, 'Segoe UI', sans-serif);
     font-size: 15px;
     line-height: 1.65;
-    letter-spacing: 0.3px !important;
-    color: var(--branding-text-color);
+    letter-spacing: 0.3px;
+    color: var(--card-text-color, var(--text-main-color));
     margin: 10px 0 18px 0;
 }
 
-.tutorial-tooltip.active {
-    display: flex ;
-    flex-direction: column ;
-    opacity: 1 ;
-    visibility: visible ;
+/* 3. Navigation Buttons with Universal Contrast */
+.tutorial-next-btn {
+    background: var(--btn-gradient, var(--button-color));
+    color: var(--button-text-color, #ffffff);
+    border: 1px solid var(--button-border-color);
+    text-shadow: 0 1px 2px var(--button-text-shadow-color);
+    padding: 8px 12px;
+    font-family: var(--branding-font);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
 }
+
+.tutorial-next-btn:hover {
+    border-color: var(--glow-color);
+    box-shadow: 0 0 12px var(--glow-color-aura);
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+}
+
+.tutorial-next-btn:disabled {
+    opacity: 0.4;
+    filter: grayscale(1);
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* Header/Close button styling */
 .tooltip-header {
     display: flex;
@@ -459,31 +491,6 @@ main.max-width-limit {
     padding-bottom: 8px;
 }
 
-/* 3. Navigation Buttons */
-.tutorial-next-btn {
-    background: transparent;
-    color: var(--branding-text-color);
-    border: 1px solid var(--border-color);
-    padding: 8px 12px;
-    font-family: var(--branding-font);
-    font-size: 10px;
-    font-weight: 700;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.3s ease;
-}
-
-.tutorial-next-btn:hover {
-    border-color: var(--glow-color);
-    box-shadow: 0 0 10px var(--glow-aura);
-    color: var(--glow-color);
-}
-
-.tutorial-next-btn:disabled {
-    opacity: 0.3;
-    filter: grayscale(1);
-    cursor: not-allowed;
-}
 
 /* --- THEMED HUD PLAN GRID --- */
 .plans-grid {
