@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:54:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -5279,23 +5279,19 @@ constructor(data = window.chatConfig) {
 
     // Inside your ArcadeNavigator class in arcade.js
 
-/* Objective: Expand parent layout details inline and asynchronously fallback-fetch chatConfig */
+/* Objective: Reset body transform traps and reparent navigator elements */
 ensureGlobalMount() {
     const launcher = document.querySelector('.navigator-launcher');
     const widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
 
-    const logElementDetails = (name, el) => {
-        if (!el) {
-            console.warn(`[ArcadeNavigator Debug] ${name} NOT FOUND in DOM.`);
-            return;
-        }
-        const rect = el.getBoundingClientRect();
-        const style = window.getComputedStyle(el);
-        console.log(`[ArcadeNavigator Debug] ${name} -> Parent: <${el.parentElement?.tagName.toLowerCase()} id="${el.parentElement?.id || ''}" class="${el.parentElement?.className || ''}"> | Pos: ${style.position} | Top: ${Math.round(rect.top)}px | Bottom: ${Math.round(rect.bottom)}px | Right: ${Math.round(rect.right)}px`);
-    };
-
-    logElementDetails('Launcher', launcher);
-    logElementDetails('Widget', widget);
+    // Reset computed body properties that trap position: fixed
+    const bodyStyle = window.getComputedStyle(document.body);
+    if (bodyStyle.transform !== 'none' || bodyStyle.filter !== 'none' || bodyStyle.perspective !== 'none') {
+        console.warn('[ArcadeNavigator] Clearing body transform/filter properties trapping fixed elements.');
+        document.body.style.transform = 'none';
+        document.body.style.filter = 'none';
+        document.body.style.perspective = 'none';
+    }
 
     if (launcher && launcher.parentElement !== document.body) {
         console.log('[ArcadeNavigator Debug] Reparenting Launcher to document.body...');
@@ -5308,10 +5304,10 @@ ensureGlobalMount() {
     }
 }
 
+/* Objective: Dynamic fallback fetch for chat_config.json if undefined at startup */
 async initChatAgent() {
     console.log("ArcadeNavigator: initChatAgent called.");
-    
-    // Async fallback if window.chatConfig was not populated prior to refreshUI
+
     if (!this.nodes || Object.keys(this.nodes).length === 0) {
         try {
             const res = await fetch('./config/chat_config.json');
@@ -5319,9 +5315,9 @@ async initChatAgent() {
             this.config = data;
             this.nodes = data.nodes;
             this.currentNode = data.setup?.initial_node || 'start';
-            console.log("ArcadeNavigator: Successfully loaded chat_config.json dynamically.");
+            console.log("ArcadeNavigator: Dynamically loaded chat_config.json.");
         } catch (err) {
-            console.error("ArcadeNavigator: Failed to fetch fallback config:", err);
+            console.error("ArcadeNavigator: Failed to fetch chat_config.json:", err);
         }
     }
 
@@ -5340,8 +5336,7 @@ async initChatAgent() {
     widget.style.pointerEvents = 'all';
 
     this.renderNode(this.currentNode);
-}// Inside your ArcadeNavigator class in arcade.js
-
+}
 renderNode(nodeId) {
     console.log("ArcadeNavigator: Rendering node ->", nodeId);
     const node = this.nodes[nodeId];
