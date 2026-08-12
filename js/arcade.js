@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:05:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -5268,20 +5268,43 @@ class ArcadeNavigator {
 
     // Inside your ArcadeNavigator class in arcade.js
 
-/* Objective: Enforce top-level <body> mounting to bypass layout container traps */
+/* Objective: Log detailed mounting context and bounding rects for navigator elements */
 ensureGlobalMount() {
     const launcher = document.querySelector('.navigator-launcher');
     const widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
 
+    // Helper function to inspect DOM placement and computed coordinates
+    const logElementDetails = (name, el) => {
+        if (!el) {
+            console.warn(`[ArcadeNavigator Debug] ${name} element not found in DOM.`);
+            return;
+        }
+        const rect = el.getBoundingClientRect();
+        const style = window.getComputedStyle(el);
+        console.log(`[ArcadeNavigator Debug] ${name} Diagnostics:`, {
+            parentTag: el.parentElement ? el.parentElement.tagName : 'None',
+            parentId: el.parentElement ? el.parentElement.id : 'None',
+            parentClass: el.parentElement ? el.parentElement.className : 'None',
+            computedPosition: style.position,
+            computedZIndex: style.zIndex,
+            rect: { top: rect.top, bottom: rect.bottom, right: rect.right, left: rect.left },
+            viewport: { width: window.innerWidth, height: window.innerHeight }
+        });
+    };
+
+    logElementDetails('Launcher', launcher);
+    logElementDetails('Widget', widget);
+
     if (launcher && launcher.parentElement !== document.body) {
+        console.log('[ArcadeNavigator Debug] Reparenting Launcher to document.body...');
         document.body.appendChild(launcher);
     }
 
     if (widget && widget.parentElement !== document.body) {
+        console.log('[ArcadeNavigator Debug] Reparenting Widget to document.body...');
         document.body.appendChild(widget);
     }
 }
-
 initChatAgent() {
     console.log("ArcadeNavigator: initChatAgent called.");
     
