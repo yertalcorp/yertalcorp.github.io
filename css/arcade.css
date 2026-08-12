@@ -1635,9 +1635,9 @@ button:hover {
     will-change: auto;
 
     position: fixed; /* LOCK TO SCREEN */
-    top: 35%; /* PULLED DOWN A BIT (from 30% to 35%) */
-    right: 30px;
-    bottom: auto;
+    top: auto; /* PULLED DOWN A BIT (from 30% to 35%) */
+    right: 24px;
+    bottom: 24px;
     left: auto;
     width: 65px;        /* Slightly larger bubble */
     height: 65px;
@@ -1667,8 +1667,8 @@ button:hover {
     position: fixed;
     /* Positions it above the launcher (35% top) */
     top: auto;
-    bottom: calc(65% + 10px); /* 100% - 35% = 65% from bottom, plus gap */
-    right: 30px;
+    bottom: 98px;
+    right: 24px;
     width: 340px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
