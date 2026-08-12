@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -5261,8 +5261,9 @@ window.handleLauncherClick = function() {
     }
 };
 
+/* Class ArcadeNavigator start */
 class ArcadeNavigator {
-constructor(data = window.chatConfig) {
+    constructor(data = window.chatConfig) {
         console.log("ArcadeNavigator: Initializing with data:", data);
         
         // Fallback handling to prevent runtime errors if chatConfig is not yet loaded
@@ -5274,163 +5275,188 @@ constructor(data = window.chatConfig) {
 
         this.config = data;
         this.nodes = data.nodes;
+        this.setup = data.setup || { agent_name: 'Yertal Navigator' };
         this.currentNode = data.setup?.initial_node || 'start';
+
+        // Assign global handle for inline onclick bindings
+        window.navigatorAgent = this;
     }
 
-    // Inside your ArcadeNavigator class in arcade.js
+    /* Objective: Reset body transform traps and reparent navigator elements */
+    ensureGlobalMount() {
+        // Reset computed body properties that trap position: fixed
+        if (document.body) {
+            const bodyStyle = window.getComputedStyle(document.body);
+            if (bodyStyle.transform !== 'none' || bodyStyle.filter !== 'none' || bodyStyle.perspective !== 'none') {
+                console.warn('[ArcadeNavigator] Clearing body transform/filter properties trapping fixed elements.');
+                document.body.style.transform = 'none';
+                document.body.style.filter = 'none';
+                document.body.style.perspective = 'none';
+            }
+        }
 
-/* Objective: Reset body transform traps and reparent navigator elements */
-ensureGlobalMount() {
-    const launcher = document.querySelector('.navigator-launcher');
-    const widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
+        let launcher = document.querySelector('.navigator-launcher') || document.getElementById('yertal-nav-launcher');
+        let widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
 
-    // Reset computed body properties that trap position: fixed
-    const bodyStyle = window.getComputedStyle(document.body);
-    if (bodyStyle.transform !== 'none' || bodyStyle.filter !== 'none' || bodyStyle.perspective !== 'none') {
-        console.warn('[ArcadeNavigator] Clearing body transform/filter properties trapping fixed elements.');
-        document.body.style.transform = 'none';
-        document.body.style.filter = 'none';
-        document.body.style.perspective = 'none';
-    }
+        if (launcher && launcher.parentElement !== document.body) {
+            console.log('[ArcadeNavigator Debug] Reparenting Launcher to document.body...');
+            document.body.appendChild(launcher);
+        }
 
-    if (launcher && launcher.parentElement !== document.body) {
-        console.log('[ArcadeNavigator Debug] Reparenting Launcher to document.body...');
-        document.body.appendChild(launcher);
-    }
-
-    if (widget && widget.parentElement !== document.body) {
-        console.log('[ArcadeNavigator Debug] Reparenting Widget to document.body...');
-        document.body.appendChild(widget);
-    }
-}
-
-/* Objective: Dynamic fallback fetch for chat_config.json if undefined at startup */
-async initChatAgent() {
-    console.log("ArcadeNavigator: initChatAgent called.");
-
-    if (!this.nodes || Object.keys(this.nodes).length === 0) {
-        try {
-            const res = await fetch('./config/chat_config.json');
-            const data = await res.json();
-            this.config = data;
-            this.nodes = data.nodes;
-            this.currentNode = data.setup?.initial_node || 'start';
-            console.log("ArcadeNavigator: Dynamically loaded chat_config.json.");
-        } catch (err) {
-            console.error("ArcadeNavigator: Failed to fetch chat_config.json:", err);
+        if (widget && widget.parentElement !== document.body) {
+            console.log('[ArcadeNavigator Debug] Reparenting Widget to document.body...');
+            document.body.appendChild(widget);
         }
     }
 
-    this.ensureGlobalMount();
+    /* Objective: Dynamic fallback fetch for chat_config.json if undefined at startup */
+    async initChatAgent() {
+        console.log("ArcadeNavigator: initChatAgent called.");
 
-    let widget = document.getElementById('yertal-nav-container');
-    if (!widget) {
-        widget = document.createElement('div');
-        widget.id = 'yertal-nav-container';
-        widget.className = 'yertal-navigator-widget';
-        document.body.appendChild(widget);
-    }
-
-    widget.style.display = 'flex';
-    widget.style.opacity = '1';
-    widget.style.pointerEvents = 'all';
-
-    this.renderNode(this.currentNode);
-}
-renderNode(nodeId) {
-    console.log("ArcadeNavigator: Rendering node ->", nodeId);
-    const node = this.nodes[nodeId];
-    
-    if (!node) {
-        console.error("ArcadeNavigator: Node ID '" + nodeId + "' not found in dbData.nodes!");
-        return;
-    }
-
-    const container = document.getElementById('yertal-nav-container');
-    
-    // Ensure container is visible when rendering
-    if (container.style.display === 'none') {
-        container.style.display = 'flex';
-    }
-
-    // Dynamically inject the agent name from your DB setup
-    container.innerHTML = `
-        <div class="navigator-header">
-            <span>${this.setup.agent_name}</span>
-            <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="window.navigatorAgent.closeNavigator()"></i>
-        </div>
-        <div class="navigator-body">
-            <div class="navigator-question">${node.question}</div>
-            <div id="nav-options"></div>
-        </div>
-    `;
-
-    const optionsBox = container.querySelector('#nav-options');
-    Object.entries(node.options).forEach(([key, data]) => {
-        const btn = document.createElement('div');
-        btn.className = 'navigator-option';
-        btn.innerText = data.text;
-        btn.onclick = () => this.processSelection(data);
-        optionsBox.appendChild(btn);
-    });
-}
-toggleNavigator() {
-    const widget = document.getElementById('yertal-nav-container');
-    const launcherIcon = document.querySelector('#yertal-nav-launcher i');
-    const isHidden = widget.style.display === 'none' || widget.style.display === '';
-
-    if (isHidden) {
-        launcherIcon.classList.remove('fa-comment-dots');
-        launcherIcon.classList.add('fa-xmark');
-        this.initChatAgent(); 
-    } else {
-        launcherIcon.classList.remove('fa-xmark');
-        launcherIcon.classList.add('fa-comment-dots');
-        this.closeNavigator();
-    }
-}
-closeNavigator() {
-    const widget = document.getElementById('yertal-nav-container');
-    const launcherIcon = document.querySelector('#yertal-nav-launcher i');
-    
-    if (widget) {
-        widget.style.display = 'none';
-        if (launcherIcon) {
-            launcherIcon.classList.remove('fa-xmark');
-            launcherIcon.classList.add('fa-comment-dots');
+        if (!this.nodes || Object.keys(this.nodes).length === 0) {
+            try {
+                const res = await fetch('./config/chat_config.json');
+                const data = await res.json();
+                this.config = data;
+                this.nodes = data.nodes;
+                this.setup = data.setup || { agent_name: 'Yertal Navigator' };
+                this.currentNode = data.setup?.initial_node || 'start';
+                console.log("ArcadeNavigator: Dynamically loaded chat_config.json.");
+            } catch (err) {
+                console.error("ArcadeNavigator: Failed to fetch chat_config.json:", err);
+            }
         }
-    }
-}
-    submitPriorityMessage() {
-    const message = document.getElementById('nav-message-input').value;
-    if (!message.trim()) return;
 
-    // Placeholder for your Firebase push logic (Firestore or Realtime DB)
-    console.log("Saving Message:", message);
+        this.ensureGlobalMount();
 
-    const body = document.querySelector('.navigator-body');
-    body.innerHTML = `
-        <div class="navigator-question">Thank you. Your message has been logged for review.</div>
-        <button class="navigator-option" onclick="window.navigatorAgent.renderNode('start')">Return to Start</button>
-    `;
-}
-    processSelection(option) {
-    console.log("ArcadeNavigator: Option selected:", option);
-    if (option.action === 'link') {
-        window.open(option.url, '_blank');
-    } else if (option.action === 'collect_message') {
-        this.renderMessageForm();
-    } else if (option.next) {
-        this.currentNode = option.next;
+        let widget = document.getElementById('yertal-nav-container');
+        if (!widget) {
+            widget = document.createElement('div');
+            widget.id = 'yertal-nav-container';
+            widget.className = 'yertal-navigator-widget';
+            document.body.appendChild(widget);
+        }
+
+        widget.style.display = 'flex';
+        widget.style.opacity = '1';
+        widget.style.pointerEvents = 'all';
+
         this.renderNode(this.currentNode);
     }
-}
-    // Add these methods to your ArcadeNavigator class in arcade.js
+
+    renderNode(nodeId) {
+        console.log("ArcadeNavigator: Rendering node ->", nodeId);
+        const node = this.nodes[nodeId];
+        
+        if (!node) {
+            console.error("ArcadeNavigator: Node ID '" + nodeId + "' not found in dbData.nodes!");
+            return;
+        }
+
+        const container = document.getElementById('yertal-nav-container');
+        if (!container) return;
+        
+        // Ensure container is visible when rendering
+        if (container.style.display === 'none') {
+            container.style.display = 'flex';
+        }
+
+        // Dynamically inject the agent name from DB setup
+        const agentName = this.setup?.agent_name || 'Yertal Navigator';
+        container.innerHTML = `
+            <div class="navigator-header">
+                <span>${agentName}</span>
+                <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="window.navigatorAgent.closeNavigator()"></i>
+            </div>
+            <div class="navigator-body">
+                <div class="navigator-question">${node.question}</div>
+                <div id="nav-options"></div>
+            </div>
+        `;
+
+        const optionsBox = container.querySelector('#nav-options');
+        if (node.options && optionsBox) {
+            Object.entries(node.options).forEach(([key, data]) => {
+                const btn = document.createElement('div');
+                btn.className = 'navigator-option';
+                btn.innerText = data.text;
+                btn.onclick = () => this.processSelection(data);
+                optionsBox.appendChild(btn);
+            });
+        }
+    }
+
+    toggleNavigator() {
+        const widget = document.getElementById('yertal-nav-container');
+        const launcherIcon = document.querySelector('.navigator-launcher i') || document.querySelector('#yertal-nav-launcher i');
+        const isHidden = !widget || widget.style.display === 'none' || widget.style.display === '';
+
+        if (isHidden) {
+            if (launcherIcon) {
+                launcherIcon.classList.remove('fa-comment-dots', 'fa-compass');
+                launcherIcon.classList.add('fa-xmark');
+            }
+            this.initChatAgent(); 
+        } else {
+            this.closeNavigator();
+        }
+    }
+
+    closeNavigator() {
+        const widget = document.getElementById('yertal-nav-container');
+        const launcherIcon = document.querySelector('.navigator-launcher i') || document.querySelector('#yertal-nav-launcher i');
+        
+        if (widget) {
+            widget.style.display = 'none';
+            if (launcherIcon) {
+                launcherIcon.classList.remove('fa-xmark');
+                launcherIcon.classList.add('fa-comment-dots');
+            }
+        }
+    }
+
+    submitPriorityMessage() {
+        const input = document.getElementById('nav-message-input');
+        if (!input) return;
+        const message = input.value;
+        if (!message.trim()) return;
+
+        console.log("Saving Message:", message);
+
+        const body = document.querySelector('.navigator-body');
+        if (body) {
+            body.innerHTML = `
+                <div class="navigator-question">Thank you. Your message has been logged for review.</div>
+                <button class="navigator-option" onclick="window.navigatorAgent.renderNode('start')">Return to Start</button>
+            `;
+        }
+    }
+
+    processSelection(option) {
+        console.log("ArcadeNavigator: Option selected:", option);
+        if (option.action === 'trigger_tutorial') {
+            this.closeNavigator();
+            if (typeof window.showTutorial === 'function') {
+                window.showTutorial();
+            } else {
+                console.error("ArcadeNavigator: window.showTutorial function is missing on window scope.");
+            }
+        } else if (option.action === 'link') {
+            window.open(option.url, '_blank');
+        } else if (option.action === 'collect_message') {
+            this.renderMessageForm();
+        } else if (option.next) {
+            this.currentNode = option.next;
+            this.renderNode(this.currentNode);
+        }
+    }
 
     renderMessageForm() {
         console.log("ArcadeNavigator: Rendering priority message form.");
         const container = document.getElementById('yertal-nav-container');
+        if (!container) return;
         const body = container.querySelector('.navigator-body');
+        if (!body) return;
     
         body.innerHTML = `
             <div class="navigator-question">Please enter your priority message below:</div>
@@ -5440,6 +5466,8 @@ closeNavigator() {
         `;
     }
 }
+
+/* Class ArcadeNavigator end */
 // ----------------------------------
 window.handleCreation = handleCreation;
 window.handleSparkLaunch = handleSparkLaunch;
