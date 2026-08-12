@@ -402,12 +402,10 @@ main.max-width-limit {
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* 2. Nested Frame Layers (Lines 2, 3 & 4) */
+/* 1. Fine-tune inner frame box-shadow radii & clip bounds */
 .tutorial-tooltip::before {
     content: '';
     position: absolute;
-    
-    /* Offset for Line 2: glow-color (6px inside outer boundary) */
     top: 6px;
     left: 6px;
     right: 6px;
@@ -415,11 +413,10 @@ main.max-width-limit {
     border: 1px solid var(--glow-color);
     border-radius: 8px;
     pointer-events: none;
-    
-    /* Inset for Line 3: fg-color-high (9px inside) | Inset for Line 4: glow-color-aura (12px inside) */
-    box-shadow: inset 0 0 0 3px var(--fg-color-high), inset 0 0 0 6px var(--glow-color-aura);
+    box-shadow: inset 0 0 0 2px var(--fg-color-high), inset 0 0 0 4px var(--glow-color-aura);
     opacity: 0.85;
 }
+
 .tutorial-tooltip.active {
     display: flex;
     flex-direction: column;
@@ -437,12 +434,11 @@ main.max-width-limit {
     margin: 10px 0 18px 0;
 }
 
-/* 3. Navigation Buttons with Universal Contrast */
+/* 2. Enforce balanced button states and readable typography */
 .tutorial-next-btn {
-    background: var(--btn-gradient, var(--button-color));
-    color: var(--button-text-color, #ffffff);
-    border: 1px solid var(--button-border-color);
-    text-shadow: 0 1px 2px var(--button-text-shadow-color);
+    background: var(--card-bg, var(--bg-color-mid));
+    color: var(--branding-text-color, var(--text-main-color));
+    border: 1px solid var(--border-color);
     padding: 8px 12px;
     font-family: var(--branding-font);
     font-size: 11px;
@@ -452,20 +448,27 @@ main.max-width-limit {
     transition: all 0.3s ease;
 }
 
-.tutorial-next-btn:hover {
+/* Secondary / Next Action Highlighting */
+.tutorial-next-btn:last-child {
+    background: var(--btn-gradient, var(--button-color));
+    color: var(--button-text-color, #ffffff);
+    border: 1px solid var(--button-border-color);
+    text-shadow: 0 1px 2px var(--button-text-shadow-color);
+}
+
+.tutorial-next-btn:hover:not(:disabled) {
     border-color: var(--glow-color);
-    box-shadow: 0 0 12px var(--glow-color-aura);
-    filter: brightness(1.15);
+    box-shadow: 0 0 10px var(--glow-color-aura);
+    filter: brightness(1.1);
     transform: translateY(-1px);
 }
 
 .tutorial-next-btn:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     filter: grayscale(1);
     cursor: not-allowed;
     transform: none;
 }
-
 /* Header/Close button styling */
 .tooltip-header {
     display: flex;
