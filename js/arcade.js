@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -5262,6 +5262,7 @@ window.handleLauncherClick = function() {
 };
 
 /* Class ArcadeNavigator start */
+/* Task Objective: Trigger asynchronous config loading directly inside constructor when initialized before window.chatConfig resolves */
 class ArcadeNavigator {
     constructor(data = window.chatConfig) {
         console.log("ArcadeNavigator: Initializing with data:", data);
@@ -5271,6 +5272,8 @@ class ArcadeNavigator {
             console.warn("ArcadeNavigator: Missing or invalid nodes configuration. Initializing with fallback structure.");
             data = data || {};
             data.nodes = data.nodes || {};
+            // Auto-fetch config when data is undefined during initial instantiation
+            this.loadConfigAsync();
         }
 
         this.config = data;
@@ -5282,6 +5285,23 @@ class ArcadeNavigator {
         window.navigatorAgent = this;
     }
 
+    /* Task Objective: Asynchronously fetch and populate config nodes into class instance */
+    async loadConfigAsync() {
+        try {
+            console.log("ArcadeNavigator: Fetching chat_config.json asynchronously...");
+            const res = await fetch('./config/chat_config.json');
+            const data = await res.json();
+            window.chatConfig = data;
+            this.config = data;
+            this.nodes = data.nodes || {};
+            this.setup = data.setup || { agent_name: 'Yertal Navigator' };
+            this.currentNode = data.setup?.initial_node || 'start';
+            console.log("ArcadeNavigator: Config successfully loaded async.");
+        } catch (err) {
+            console.error("ArcadeNavigator: Failed to fetch chat_config.json:", err);
+        }
+    }
+}
     /* Objective: Reset body transform traps and reparent navigator elements */
     ensureGlobalMount() {
         // Reset computed body properties that trap position: fixed
