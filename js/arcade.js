@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:18:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2375,10 +2375,14 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
         return;
     }
 
-    // Clean up any existing lazy load observers from previous renders
+    // Clean up active observers from previous runs
     if (window._currentsLazyObserver) {
         window._currentsLazyObserver.disconnect();
         window._currentsLazyObserver = null;
+    }
+    if (window._circuitsLazyObserver) {
+        window._circuitsLazyObserver.disconnect();
+        window._circuitsLazyObserver = null;
     }
 
     // 1. DYNAMIC PLAN LOOKUP FOR THE OWNER
@@ -2388,13 +2392,6 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
     const planLimits = databaseCache.settings?.['plan_limits']?.[userPlanType] || databaseCache.settings?.['plan_limits']?.['free'] || {};
     const maxSparks = planLimits.max_sparks_per_current || 12;
 
-    console.log("[renderCurrents] Realm Context:", {
-        ownerUid,
-        userPlanType,
-        maxSparks,
-        realmSetupComplete: realm.realm_setup_complete
-    });
-
     // 2. PRIVACY FILTERING LOGIC
     let currentsArray = currents ? Object.values(currents).filter(current => {
         const isPublic = current.privacy === 'public';
@@ -2402,7 +2399,7 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
         return isOwner || isPublic || isTargetUnlisted;
     }) : [];
 
-    // Prioritize shared current if present so it renders in the initial view
+    // Prioritize shared current if requested
     if (sharedCurrentId) {
         const sharedIdx = currentsArray.findIndex(c => c.id === sharedCurrentId);
         if (sharedIdx > 0) {
@@ -2412,16 +2409,14 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
     }
 
     console.log(`[renderCurrents] Filtered Active Currents Count: ${currentsArray.length}`);
-    
-    // --- ARCADE SETUP / TEMPLATE SELECTOR ---
-    if (currentsArray.length === 0) {
-        console.log("[renderCurrents] Active currents is 0. Branching to setup/selector flow...");
-        
+
+    // 3. ROUTING / DISPATCHING
+    if (currentsArray.length > 0) {
+        renderExistingRealm(container, currentsArray, isOwner, realmId, maxSparks, sharedSparkId, ownerUid);
+    } else {
         if (isOwner) {
-            const firstName = realm.realm_display_name?.split(' ')[0] || profile?.display_name?.split(' ')[0] || "Engineer";
-            
             if (realm.realm_setup_complete === true) {
-                console.log("[renderCurrents] Setup is complete. Rendering empty laboratory welcome zone.");
+                console.log("[renderCurrents] Setup complete with 0 currents. Rendering welcome zone.");
                 container.innerHTML = `
                     <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 6rem 2rem; border: 1px solid var(--glow-aura); border-radius: 20px; margin: 2rem; background: var(--card-bg);">
                         <h1 class="metallic-text" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--branding-text-color);">
@@ -2441,166 +2436,24 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                     </div>
                 `;
             } else {
-                console.log("[renderCurrents] Setup NOT complete. Inspecting databaseCache.realms for templates...");
-                
-                const rawRealmsCache = databaseCache.realms || {};
-                const allRealms = Object.values(rawRealmsCache);
-                
-                console.log("[DEBUG renderCurrents] Total raw keys in databaseCache.realms:", Object.keys(rawRealmsCache).length);
-                console.log("[DEBUG renderCurrents] Raw databaseCache.realms payload:", rawRealmsCache);
-                
-                console.table(allRealms.map(r => ({
-                    realm_id: r.realm_id || 'N/A',
-                    realm_title: r.realm_title || 'N/A',
-                    is_circuit_template: r.is_circuit_template,
-                    typeOf_flag: typeof r.is_circuit_template
-                })));
-
-                const circuits = allRealms.filter(r => 
-                    r.is_circuit_template === true || 
-                    r.is_circuit_template === 'true' || 
-                    String(r.is_circuit_template).toLowerCase() === 'true'
-                );
-
-                console.log(`[DEBUG renderCurrents] Matched circuit templates (${circuits.length}):`, circuits);
-
-                const activeThemeKey = localStorage.getItem('arcade-theme') || 'neon-dark';
-                const activeThemeData = databaseCache.settings?.['themes']?.[activeThemeKey] || {};
-
-                const circuitCardsHTML = circuits.map((circuit, idx) => {
-                    const circuitId = circuit.realm_circuit || circuit.realm_id;
-                    const patternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern(circuitId) : '';
-
-                    console.log(`[DEBUG Template Card #${idx + 1}]`, {
-                        circuitId,
-                        title: circuit.realm_display_name || circuit.realm_title,
-                        subtitle: circuit.realm_subtitle,
-                        patternImg
-                    });
-
-                    return `
-                        <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); transition: transform 0.3s ease;">
-                            <div class="action-card" 
-                                 onclick="window.initializeUserRealm('${realmId}', '${circuitId}')"
-                                 style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px solid var(--glow-aura); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
-                                
-                                <span class="metallic-text" style="
-                                    position: relative; 
-                                    z-index: 10; 
-                                    font-family: 'Orbitron', sans-serif; 
-                                    font-size: 16px; 
-                                    font-weight: 900; 
-                                    letter-spacing: 2.5px; 
-                                    text-transform: uppercase; 
-                                    margin-bottom: 0.6rem; 
-                                    color: var(--glow-color); 
-                                    text-shadow: 
-                                        1px 1px 0px #000,
-                                        2px 2px 0px rgba(255, 255, 255, 0.85),
-                                        3px 3px 0px #000,
-                                        4px 4px 6px rgba(0, 229, 255, 0.9),
-                                        0 0 12px var(--glow-color);
-                                ">
-                                    ${circuit.realm_display_name || circuit.realm_title || 'UNTITLED REALM'}
-                                </span>
-
-                                <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 0.75rem; margin: 0; font-size: 11px; font-weight: 500; line-height: 1.3; max-width: 92%; word-break: break-word; white-space: normal; pointer-events: none; opacity: 0.9; text-shadow: 0 2px 4px rgba(0,0,0,0.9);">
-                                    ${circuit.realm_title || ''}
-                                </h4>
-                                
-                                <img src="${patternImg}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; z-index: 1;">
-                                
-                                <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(8,11,16,0.45) 0%, rgba(8,11,16,0.9) 100%); z-index: 2; pointer-events: none;"></div>
-                            </div>
-
-                            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
-                                <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; word-wrap: break-word; white-space: normal; min-height: 36px;">
-                                    ${circuit.realm_subtitle || ''}
-                                </p>
-                                <button onclick="window.initializeUserRealm('${realmId}', '${circuitId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
-                                    INITIALIZE REALM
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                const blankCardHTML = `
-                    <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); transition: transform 0.3s ease;">
-                        <div class="action-card" 
-                             onclick="window.initializeUserRealm('${realmId}', null)"
-                             style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px dashed var(--glow-color); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
-                            
-                            <i class="fas fa-plus-circle" style="font-size: 1.8rem; color: var(--glow-color); margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px var(--glow-color)); z-index: 10;"></i>
-                            
-                            <span class="metallic-text" style="
-                                position: relative; 
-                                z-index: 10; 
-                                font-family: 'Orbitron', sans-serif; 
-                                font-size: 16px; 
-                                font-weight: 900; 
-                                letter-spacing: 2.5px; 
-                                text-transform: uppercase; 
-                                color: var(--glow-color); 
-                                text-shadow: 
-                                    1px 1px 0px #000,
-                                    2px 2px 0px rgba(255, 255, 255, 0.85),
-                                    3px 3px 0px #000,
-                                    4px 4px 6px rgba(0, 229, 255, 0.9),
-                                    0 0 12px var(--glow-color);
-                            ">
-                                BLANK REALM
-                            </span>
-                            
-                            <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(0, 229, 255, 0.08) 0%, rgba(8,11,16,0.95) 100%); z-index: 1; pointer-events: none;"></div>
-                        </div>
-
-                        <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
-                            <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; word-wrap: break-word; white-space: normal; min-height: 36px;">
-                                Initialize an empty laboratory to construct custom currents and sparks from scratch.
-                            </p>
-                            <button onclick="window.initializeUserRealm('${realmId}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px; opacity: 0.85;">
-                                CREATE BLANK
-                            </button>
-                        </div>
-                    </div>
-                `;
-
-                console.log("[renderCurrents] Injecting Template Selector DOM Grid into #currents-container...");
-                container.innerHTML = `
-                    <div class="welcome-zone animate-fadeIn" style="padding: 3rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 1.5rem; background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%), radial-gradient(circle at top, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 100% 100%, 40px 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 30px rgba(0,0,0,0.8);">
-                        <div style="text-align: center; margin-bottom: 2.5rem;">
-                            <h1 class="metallic-text" style="font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: 0.5rem; letter-spacing: -1px; color: var(--branding-text-color);">
-                                ${firstName}, Select Your Realm Circuit
-                            </h1>
-                            <p style="color: var(--glow-color); opacity: 0.6; letter-spacing: 3px; font-size: 11px; font-family: 'Orbitron', sans-serif; margin: 0;">
-                                SELECT A PRE-BUILT BLUEPRINT OR START BLANK TO INITIALIZE
-                            </p>
-                        </div>
-
-                        <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.8rem; width: 100%;">
-                            ${blankCardHTML}
-                            ${circuitCardsHTML}
-                        </div>
-                    </div>
-                `;
+                renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid);
             }
         } else {
-            console.warn("[renderCurrents] Visitor is not owner and realm has no active currents.");
+            console.warn("[renderCurrents] Visitor viewing empty realm.");
             container.innerHTML = `
                 <div style="text-align: center; padding: 5rem 0; opacity: 0.4; font-style: italic; letter-spacing: 2px; color: var(--branding-text-color);">
                     OFFLINE: No infrastructure detected for ID: ${ownerUid.substring(0,8)}
                 </div>
             `;
         }
-        console.groupEnd();
-        return;
     }
 
-    // --- ACTIVE STATE: LAZY LOADING IMPLEMENTATION ---
-    console.log("[renderCurrents] Preparing active currents with Lazy Loading...");
+    console.groupEnd();
+}
 
-    // Helper to generate HTML string for a single current item
+function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSparks, sharedSparkId, ownerUid) {
+    console.log("[renderExistingRealm] Rendering active currents array with lazy loading...");
+
     const generateCurrentHTML = (current) => {
         const sparks = current.sparks ? Object.values(current.sparks).filter(spark => {
             const isSparkPublic = spark.privacy === 'public';
@@ -2671,9 +2524,7 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                     <h2 class="current-name" style="margin: 0; font-size: 14px; line-height: 1;">${current.name || 'Active Current'}</h2>
                     ${!isOwner ? '' : capacityMeterHTML}
                 </div>
-                
                 ${controls}
-                
                 <div class="experiment-zone">
                     <div id="sparks-${current.id}" class="grid">
                         ${sparks.map(spark => renderSparkCard(spark, isOwner, current.id, realmId)).join('')}
@@ -2683,73 +2534,209 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
         `;
     };
 
-    // Lazy load state & initial batch execution
-    const BATCH_SIZE = 2; // Initial batch count
+    const BATCH_SIZE = 2;
     let currentIndex = BATCH_SIZE;
 
-    // Render initial batch
     const initialBatch = currentsArray.slice(0, BATCH_SIZE);
     let initialHTML = initialBatch.map(generateCurrentHTML).join('');
 
-    // Append owner action button wrapper container
-    let ownerBtnHTML = '';
-    if (isOwner) {
-        ownerBtnHTML = `
-            <div id="add-current-btn-wrapper" style="display: flex; justify-content: center; margin-top: 3rem; padding-bottom: 5rem;">
-                <button onclick="window.openAddCurrentHud()" class="terminal-btn" style="border: 1px dashed var(--glow-color); opacity: 0.6; color: var(--branding-text-color); background: var(--bg-color);">
-                    <i class="fas fa-plus"></i> INITIALIZE NEW CURRENT
-                </button>
-            </div>
-        `;
-    }
+    let ownerBtnHTML = isOwner ? `
+        <div id="add-current-btn-wrapper" style="display: flex; justify-content: center; margin-top: 3rem; padding-bottom: 5rem;">
+            <button onclick="window.openAddCurrentHud()" class="terminal-btn" style="border: 1px dashed var(--glow-color); opacity: 0.6; color: var(--branding-text-color); background: var(--bg-color);">
+                <i class="fas fa-plus"></i> INITIALIZE NEW CURRENT
+            </button>
+        </div>
+    ` : '';
 
-    // Append Sentinel element if more currents exist to fetch
-    let sentinelHTML = '';
-    if (currentsArray.length > BATCH_SIZE) {
-        sentinelHTML = `
-            <div id="currents-lazy-sentinel" style="text-align: center; padding: 2rem; color: var(--glow-color); opacity: 0.6; font-family: 'Orbitron', sans-serif; font-size: 11px;">
-                <i class="fas fa-circle-notch fa-spin"></i> FETCHING_NEXT_CURRENT...
-            </div>
-        `;
-    }
+    let sentinelHTML = currentsArray.length > BATCH_SIZE ? `
+        <div id="currents-lazy-sentinel" style="text-align: center; padding: 2rem; color: var(--glow-color); opacity: 0.6; font-family: 'Orbitron', sans-serif; font-size: 11px;">
+            <i class="fas fa-circle-notch fa-spin"></i> FETCHING_NEXT_CURRENT...
+        </div>
+    ` : '';
 
     container.innerHTML = initialHTML + sentinelHTML + ownerBtnHTML;
 
-    // Attach IntersectionObserver if remaining currents exist
     if (currentsArray.length > BATCH_SIZE) {
         const sentinel = document.getElementById('currents-lazy-sentinel');
-        
         window._currentsLazyObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    if (currentIndex < currentsArray.length) {
-                        const currentToRender = currentsArray[currentIndex];
-                        console.log(`[renderCurrents] Lazy loading current #${currentIndex + 1} (${currentToRender.id})`);
+                if (entry.isIntersecting && currentIndex < currentsArray.length) {
+                    const currentToRender = currentsArray[currentIndex];
+                    sentinel.insertAdjacentHTML('beforebegin', generateCurrentHTML(currentToRender));
+                    currentIndex++;
 
-                        const currentHTML = generateCurrentHTML(currentToRender);
-                        sentinel.insertAdjacentHTML('beforebegin', currentHTML);
-
-                        currentIndex++;
-
-                        // Remove sentinel once all currents are rendered
-                        if (currentIndex >= currentsArray.length) {
-                            console.log("[renderCurrents] All currents lazy-loaded. Disconnecting observer.");
-                            sentinel.remove();
-                            window._currentsLazyObserver.disconnect();
-                            window._currentsLazyObserver = null;
-                        }
+                    if (currentIndex >= currentsArray.length) {
+                        sentinel.remove();
+                        window._currentsLazyObserver.disconnect();
+                        window._currentsLazyObserver = null;
                     }
                 }
             });
         }, { rootMargin: '200px' });
 
-        if (sentinel) {
-            window._currentsLazyObserver.observe(sentinel);
+        if (sentinel) window._currentsLazyObserver.observe(sentinel);
+    }
+}
+
+function renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid) {
+    console.log("[renderCircuitTemplates] Initializing template selector flow with search and pagination...");
+
+    const firstName = realm.realm_display_name?.split(' ')[0] || profile?.display_name?.split(' ')[0] || "Engineer";
+    const rawRealmsCache = databaseCache.realms || {};
+    const allRealms = Object.values(rawRealmsCache);
+
+    const allCircuits = allRealms.filter(r => 
+        r.is_circuit_template === true || 
+        r.is_circuit_template === 'true' || 
+        String(r.is_circuit_template).toLowerCase() === 'true'
+    );
+
+    let activeFilterTerm = '';
+    const CIRCUIT_BATCH_SIZE = 12;
+    let currentCircuitIndex = 0;
+
+    // Helper: Blank Realm Card HTML
+    const blankCardHTML = `
+        <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9));">
+            <div class="action-card" onclick="window.initializeUserRealm('${realmId}', null)"
+                 style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px dashed var(--glow-color); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
+                <i class="fas fa-plus-circle" style="font-size: 1.8rem; color: var(--glow-color); margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px var(--glow-color)); z-index: 10;"></i>
+                <span class="metallic-text" style="position: relative; z-index: 10; font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; color: var(--glow-color);">
+                    BLANK REALM
+                </span>
+                <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(0, 229, 255, 0.08) 0%, rgba(8,11,16,0.95) 100%); z-index: 1; pointer-events: none;"></div>
+            </div>
+            <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
+                <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; min-height: 36px;">
+                    Initialize an empty laboratory to construct custom currents and sparks from scratch.
+                </p>
+                <button onclick="window.initializeUserRealm('${realmId}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px; opacity: 0.85;">
+                    CREATE BLANK
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Helper: Single Template Card HTML
+    const generateCircuitCardHTML = (circuit) => {
+        const circuitId = circuit.realm_circuit || circuit.realm_id;
+        const patternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern(circuitId) : '';
+
+        return `
+            <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9));">
+                <div class="action-card" onclick="window.initializeUserRealm('${realmId}', '${circuitId}')"
+                     style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px solid var(--glow-aura); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
+                    <span class="metallic-text" style="position: relative; z-index: 10; font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 0.6rem; color: var(--glow-color);">
+                        ${circuit.realm_display_name || circuit.realm_title || 'UNTITLED REALM'}
+                    </span>
+                    <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 0.75rem; margin: 0; font-size: 11px; font-weight: 500; line-height: 1.3; max-width: 92%; opacity: 0.9;">
+                        ${circuit.realm_title || ''}
+                    </h4>
+                    <img src="${patternImg}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; z-index: 1;">
+                    <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(8,11,16,0.45) 0%, rgba(8,11,16,0.9) 100%); z-index: 2; pointer-events: none;"></div>
+                </div>
+                <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
+                    <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; min-height: 36px;">
+                        ${circuit.realm_subtitle || ''}
+                    </p>
+                    <button onclick="window.initializeUserRealm('${realmId}', '${circuitId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
+                        INITIALIZE REALM
+                    </button>
+                </div>
+            </div>
+        `;
+    };
+
+    // Inject Search Controls + Master Layout Frame
+    container.innerHTML = `
+        <div class="welcome-zone animate-fadeIn" style="padding: 3rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 1.5rem; background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%); box-shadow: 0 20px 50px rgba(0,0,0,0.9);">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1 class="metallic-text" style="font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: 0.5rem; color: var(--branding-text-color);">
+                    ${firstName}, Select Your Realm Circuit
+                </h1>
+                <p style="color: var(--glow-color); opacity: 0.6; letter-spacing: 3px; font-size: 11px; font-family: 'Orbitron', sans-serif; margin-bottom: 1.5rem;">
+                    SELECT A PRE-BUILT BLUEPRINT OR START BLANK TO INITIALIZE
+                </p>
+                
+                <!-- Circuit Search Control -->
+                <div style="max-width: 500px; margin: 0 auto; position: relative;">
+                    <input type="text" id="circuit-search-input" 
+                           placeholder="Search blueprints (e.g., 'Arcade', '3D', 'Physics')..." 
+                           style="width: 100%; padding: 10px 16px; border-radius: 25px; border: 1px solid var(--glow-aura); background: rgba(8, 11, 16, 0.8); color: var(--branding-text-color); font-size: 13px; outline: none; transition: border-color 0.3s;">
+                </div>
+            </div>
+
+            <div id="circuits-grid" class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.8rem; width: 100%;">
+                ${blankCardHTML}
+            </div>
+            
+            <div id="circuits-lazy-sentinel" style="text-align: center; padding: 2rem; color: var(--glow-color); opacity: 0.6; font-family: 'Orbitron', sans-serif; font-size: 11px;">
+                <i class="fas fa-circle-notch fa-spin"></i> LOADING_BLUEPRINTS...
+            </div>
+        </div>
+    `;
+
+    const grid = document.getElementById('circuits-grid');
+    const sentinel = document.getElementById('circuits-lazy-sentinel');
+    const searchInput = document.getElementById('circuit-search-input');
+
+    // Filter & Lazy Load Engine
+    const loadNextCircuitBatch = () => {
+        const query = activeFilterTerm.toLowerCase().trim();
+        const filtered = allCircuits.filter(c => {
+            if (!query) return true;
+            const title = (c.realm_display_name || c.realm_title || '').toLowerCase();
+            const subtitle = (c.realm_subtitle || '').toLowerCase();
+            return title.includes(query) || subtitle.includes(query);
+        });
+
+        const batch = filtered.slice(currentCircuitIndex, currentCircuitIndex + CIRCUIT_BATCH_SIZE);
+        if (batch.length > 0) {
+            const batchHTML = batch.map(generateCircuitCardHTML).join('');
+            grid.insertAdjacentHTML('beforeend', batchHTML);
+            currentCircuitIndex += batch.length;
         }
+
+        if (currentCircuitIndex >= filtered.length) {
+            sentinel.style.display = 'none';
+        } else {
+            sentinel.style.display = 'block';
+        }
+    };
+
+    // Setup Observer for Infinite Scroll Pagination
+    const attachCircuitObserver = () => {
+        if (window._circuitsLazyObserver) window._circuitsLazyObserver.disconnect();
+
+        window._circuitsLazyObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    loadNextCircuitBatch();
+                }
+            });
+        }, { rootMargin: '200px' });
+
+        if (sentinel) window._circuitsLazyObserver.observe(sentinel);
+    };
+
+    // Live Search Event Handler
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            activeFilterTerm = e.target.value;
+            currentCircuitIndex = 0;
+            // Clear current grid cards (keep Blank Realm card at index 0)
+            grid.innerHTML = blankCardHTML;
+            sentinel.style.display = 'block';
+            loadNextCircuitBatch();
+            attachCircuitObserver();
+        });
     }
 
-    console.groupEnd();
+    // Initial Load
+    loadNextCircuitBatch();
+    attachCircuitObserver();
 }
+
 window.updatePromptInputHUD = (currentId) => {
     const inputField = document.getElementById(`input-${currentId}`);
     const hudContainer = document.getElementById(`hud-${currentId}`);
