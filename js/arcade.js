@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:42:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -5301,7 +5301,7 @@ class ArcadeNavigator {
             console.error("ArcadeNavigator: Failed to fetch chat_config.json:", err);
         }
     }
-}
+
     /* Objective: Reset body transform traps and reparent navigator elements */
     ensureGlobalMount() {
         // Reset computed body properties that trap position: fixed
