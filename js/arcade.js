@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @22:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @23:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -5262,47 +5262,27 @@ window.handleLauncherClick = function() {
 };
 
 /* Class ArcadeNavigator start */
-/* Task Objective: Trigger asynchronous config loading directly inside constructor when initialized before window.chatConfig resolves */
 class ArcadeNavigator {
-    constructor(data = window.chatConfig) {
+    constructor(data = databaseCache?.chat_config) {
         console.log("ArcadeNavigator: Initializing with data:", data);
         
-        // Fallback handling to prevent runtime errors if chatConfig is not yet loaded
-        if (!data || !data.nodes) {
+        // Pull directly from databaseCache if data is undefined during early instantiation
+        const configData = data || databaseCache?.chat_config || {};
+        
+        if (!configData || !configData.nodes) {
             console.warn("ArcadeNavigator: Missing or invalid nodes configuration. Initializing with fallback structure.");
-            data = data || {};
-            data.nodes = data.nodes || {};
-            // Auto-fetch config when data is undefined during initial instantiation
-            this.loadConfigAsync();
         }
 
-        this.config = data;
-        this.nodes = data.nodes;
-        this.setup = data.setup || { agent_name: 'Yertal Navigator' };
-        this.currentNode = data.setup?.initial_node || 'start';
+        this.config = configData;
+        this.nodes = configData.nodes || {};
+        this.setup = configData.setup || { agent_name: 'Yertal Navigator' };
+        this.currentNode = configData.setup?.initial_node || 'start';
 
         // Assign global handle for inline onclick bindings
         window.navigatorAgent = this;
     }
 
-    /* Task Objective: Asynchronously fetch and populate config nodes into class instance */
-    async loadConfigAsync() {
-        try {
-            console.log("ArcadeNavigator: Fetching chat_config.json asynchronously...");
-            const res = await fetch('./config/chat_config.json');
-            const data = await res.json();
-            window.chatConfig = data;
-            this.config = data;
-            this.nodes = data.nodes || {};
-            this.setup = data.setup || { agent_name: 'Yertal Navigator' };
-            this.currentNode = data.setup?.initial_node || 'start';
-            console.log("ArcadeNavigator: Config successfully loaded async.");
-        } catch (err) {
-            console.error("ArcadeNavigator: Failed to fetch chat_config.json:", err);
-        }
-    }
-
-    /* Objective: Reset body transform traps and reparent navigator elements */
+    /* Objective: Reset body transform traps and log layout coordinates */
     ensureGlobalMount() {
         // Reset computed body properties that trap position: fixed
         if (document.body) {
@@ -5318,6 +5298,24 @@ class ArcadeNavigator {
         let launcher = document.querySelector('.navigator-launcher') || document.getElementById('yertal-nav-launcher');
         let widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
 
+        // Diagnostic logger for element parentage and coordinates
+        const logElementDetails = (name, el) => {
+            if (!el) {
+                console.warn(`[ArcadeNavigator Debug] ${name} NOT FOUND in DOM.`);
+                return;
+            }
+            const rect = el.getBoundingClientRect();
+            const style = window.getComputedStyle(el);
+            const parentTag = el.parentElement ? el.parentElement.tagName.toLowerCase() : 'none';
+            const parentId = el.parentElement?.id ? `#${el.parentElement.id}` : '';
+            const parentClass = el.parentElement?.className ? `.${el.parentElement.className.replace(/\s+/g, '.')}` : '';
+
+            console.log(`[ArcadeNavigator Debug] ${name} -> Parent: <${parentTag}${parentId}${parentClass}> | Pos: ${style.position} | Top: ${Math.round(rect.top)}px | Bottom: ${Math.round(rect.bottom)}px | Right: ${Math.round(rect.right)}px | Viewport Height: ${window.innerHeight}px`);
+        };
+
+        logElementDetails('Launcher', launcher);
+        logElementDetails('Widget', widget);
+
         if (launcher && launcher.parentElement !== document.body) {
             console.log('[ArcadeNavigator Debug] Reparenting Launcher to document.body...');
             document.body.appendChild(launcher);
@@ -5329,22 +5327,18 @@ class ArcadeNavigator {
         }
     }
 
-    /* Objective: Dynamic fallback fetch for chat_config.json if undefined at startup */
-    async initChatAgent() {
+    /* Objective: Initialize chat agent using databaseCache directly */
+    initChatAgent() {
         console.log("ArcadeNavigator: initChatAgent called.");
 
-        if (!this.nodes || Object.keys(this.nodes).length === 0) {
-            try {
-                const res = await fetch('./config/chat_config.json');
-                const data = await res.json();
-                this.config = data;
-                this.nodes = data.nodes;
-                this.setup = data.setup || { agent_name: 'Yertal Navigator' };
-                this.currentNode = data.setup?.initial_node || 'start';
-                console.log("ArcadeNavigator: Dynamically loaded chat_config.json.");
-            } catch (err) {
-                console.error("ArcadeNavigator: Failed to fetch chat_config.json:", err);
-            }
+        // Re-sync nodes from databaseCache if initial construct ran before Firebase data resolved
+        if ((!this.nodes || Object.keys(this.nodes).length === 0) && databaseCache?.chat_config) {
+            console.log("ArcadeNavigator: Hydrating nodes from databaseCache.chat_config...");
+            const chatData = databaseCache.chat_config;
+            this.config = chatData;
+            this.nodes = chatData.nodes || {};
+            this.setup = chatData.setup || { agent_name: 'Yertal Navigator' };
+            this.currentNode = chatData.setup?.initial_node || 'start';
         }
 
         this.ensureGlobalMount();
@@ -5395,7 +5389,7 @@ class ArcadeNavigator {
         `;
 
         const optionsBox = container.querySelector('#nav-options');
-        if (node.options && optionsBox) {
+        if (node?.options && optionsBox) {
             Object.entries(node.options).forEach(([key, data]) => {
                 const btn = document.createElement('div');
                 btn.className = 'navigator-option';
@@ -5486,7 +5480,6 @@ class ArcadeNavigator {
         `;
     }
 }
-
 /* Class ArcadeNavigator end */
 // ----------------------------------
 window.handleCreation = handleCreation;
