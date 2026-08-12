@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -5269,24 +5269,33 @@ class ArcadeNavigator {
     // Inside your ArcadeNavigator class in arcade.js
 
     initChatAgent() {
-        console.log("ArcadeNavigator: initChatAgent called.");
-        let widget = document.getElementById('yertal-nav-container');
-    
-        if (!widget) {
-            console.log("ArcadeNavigator: Widget not found in HTML, creating dynamically...");
-            widget = document.createElement('div');
-            widget.id = 'yertal-nav-container';
-            widget.className = 'yertal-navigator-widget';
-            document.body.appendChild(widget);
-        }
-    
-        // Ensure it's visible and animated
-        widget.style.display = 'flex';
-        widget.style.opacity = '1';
-        widget.style.pointerEvents = 'all';
-        
-        this.renderNode(this.currentNode);
+    console.log("ArcadeNavigator: initChatAgent called.");
+    let widget = document.getElementById('yertal-nav-container');
+
+    if (!widget) {
+        console.log("ArcadeNavigator: Widget not found in HTML, creating dynamically...");
+        widget = document.createElement('div');
+        widget.id = 'yertal-nav-container';
+        widget.className = 'yertal-navigator-widget';
+        document.body.appendChild(widget);
+    } else if (widget.parentElement !== document.body) {
+        // Re-parent to body to prevent stacking context or scrolling inheritance
+        document.body.appendChild(widget);
     }
+
+    // Ensure launcher button is also anchored directly to body
+    let launcher = document.querySelector('.navigator-launcher');
+    if (launcher && launcher.parentElement !== document.body) {
+        document.body.appendChild(launcher);
+    }
+
+    // Ensure it's visible and animated
+    widget.style.display = 'flex';
+    widget.style.opacity = '1';
+    widget.style.pointerEvents = 'all';
+    
+    this.renderNode(this.currentNode);
+}
 
 // Inside your ArcadeNavigator class in arcade.js
 
