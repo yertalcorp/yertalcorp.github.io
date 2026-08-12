@@ -1225,6 +1225,15 @@ async function refreshUI() {
         // Currents needs the realm and owner profile for context
         renderCurrents(realmData.currents || {}, isOwner, targetRealmSlug, ownerProfile);
 
+        // Ensure navigator is reparented to document.body on every UI refresh
+    if (window.arcadeNavigator) {
+        window.arcadeNavigator.ensureGlobalMount();
+    } else if (typeof ArcadeNavigator === 'function') {
+        window.arcadeNavigator = new ArcadeNavigator();
+        window.arcadeNavigator.ensureGlobalMount();
+    }
+
+    console.log("--- [SYSTEM]: refreshUI COMPLETE ---");
         console.log("--- [SYSTEM]: refreshUI COMPLETE ---");
 
     } catch (e) {
