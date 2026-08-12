@@ -1757,6 +1757,31 @@ button:hover {
     border-color: var(--glow-color);
     box-shadow: 0 0 5px var(--glow-color-aura);
 }
+/* Lock Launcher to Viewport */
+body > .navigator-launcher,
+.navigator-launcher {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    top: auto;
+    left: auto;
+    transform: none;
+    will-change: auto;
+    z-index: 9999999;
+}
+
+/* Lock Widget directly above Launcher */
+body > .yertal-navigator-widget,
+.yertal-navigator-widget {
+    position: fixed;
+    bottom: 105px;
+    right: 28px;
+    top: auto;
+    left: auto;
+    transform: none;
+    z-index: 10000000;
+}
+
 /* Feedback and Chats */
 /* --- FEEDBACK HUD REFINEMENTS --- */
 
