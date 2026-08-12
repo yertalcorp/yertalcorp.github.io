@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:18:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -316,7 +316,7 @@ function createTooltip(percentX, percentY, step) {
         </div>
         
         <h3 class="metallic-text" style="color: var(--glow-color); margin-top: 10px; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${step.title}</h3>
-        <p style="font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.6; color: var(--branding-text-color); margin: 10px 0 18px 0;">${step.content}</p>
+        <p style="font-family: var(--text-main-font, 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif); font-size: 15px; line-height: 1.65; color: var(--branding-text-color); margin: 10px 0 18px 0;">${step.content}</p>
 
         <div class="tooltip-nav" style="display: flex; gap: 12px; margin-top: auto; width: 100%;">
             <button onclick="window.prevStep()" class="tutorial-next-btn ethereal-btn-sm" style="clip-path: none; flex: 1;" ${currentTutorialStep === 0 ? 'disabled' : ''}>PREV</button>
