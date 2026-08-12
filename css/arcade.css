@@ -191,6 +191,11 @@ main.max-width-limit {
     box-shadow: 0 0 10px var(--glow-aura);
 }
 #lab-body {
+    /* newly added properties for launcher to be visible */
+    transform: none;
+    filter: none;
+    perspective: none;
+    /* end of newly added properties for launcher to be visible */
     background-color: var(--bg-color);
     color: var(--text-main-color);
     font-family: var(--text-main-font);
@@ -1631,6 +1636,8 @@ button:hover {
 /* --- Yertal Navigator Launcher --- */
 .navigator-launcher {
     /* Cage Breakers: Prevents parents from breaking 'fixed' position */
+    position: fixed;
+    
     transform: none;
     will-change: auto;
 
