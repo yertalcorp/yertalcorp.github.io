@@ -392,17 +392,17 @@ main.max-width-limit {
     -webkit-backdrop-filter: blur(16px);
     border-radius: 8px;
     padding: 1.25rem;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: var(--text-main-font, 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif);
     color: var(--text-main-color);
     pointer-events: auto;
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .tutorial-tooltip p {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 13px;
-    line-height: 1.6;
-    letter-spacing: 0.5px;
+    font-family: var(--text-main-font, 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif) !important;
+    font-size: 15px;
+    line-height: 1.65;
+    letter-spacing: 0.3px !important;
     color: var(--branding-text-color);
     margin: 10px 0 18px 0;
 }
