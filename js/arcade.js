@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:12:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -5264,7 +5264,10 @@ window.handleLauncherClick = function() {
 };
 
 /* Class ArcadeNavigator start */
+/* Class ArcadeNavigator start */
 class ArcadeNavigator {
+    constructor(data = databaseCache?.chat_config) {
+        console.log("ArcadeNavigator: Initializing with data:", data);
         
         // Pull directly from databaseCache if data is undefined during early instantiation
         const configData = data || databaseCache?.chat_config || {};
@@ -5281,42 +5284,56 @@ class ArcadeNavigator {
         // Assign global handle for inline onclick bindings
         window.navigatorAgent = this;
 
-        // Actively recalculate viewport positioning on scroll and window resize
-        window.addEventListener('scroll', () => this.reposition());
-        window.addEventListener('resize', () => this.reposition());
+        // Attach passive listeners to sync GPU updates seamlessly with screen refresh
+        window.addEventListener('scroll', () => this.reposition(), { passive: true });
+        window.addEventListener('resize', () => this.reposition(), { passive: true });
     }
 
-/* Objective: Dynamically calculate position relative to viewport dimensions */
-reposition() {
-    const launcher = document.querySelector('.navigator-launcher') || document.getElementById('yertal-nav-launcher');
-    const widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
+    /* Objective: Hardware-accelerated 60fps positioning synced with display refresh */
+    reposition() {
+        if (this.isRepositioning) return;
+        this.isRepositioning = true;
 
-    const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-    const scrollX = window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0;
-    const vh = window.innerHeight;
-    const vw = window.innerWidth;
+        window.requestAnimationFrame(() => {
+            const launcher = document.querySelector('.navigator-launcher') || document.getElementById('yertal-nav-launcher');
+            const widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
 
-    if (launcher) {
-        const launcherHeight = launcher.offsetHeight || 65;
-        const launcherWidth = launcher.offsetWidth || 65;
-        launcher.style.position = 'absolute';
-        launcher.style.top = `${scrollY + vh - 24 - launcherHeight}px`;
-        launcher.style.left = `${scrollX + vw - 24 - launcherWidth}px`;
-        launcher.style.right = 'auto';
-        launcher.style.bottom = 'auto';
+            const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+            const scrollX = window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0;
+            const vh = window.innerHeight;
+            const vw = window.innerWidth;
+
+            if (launcher) {
+                const launcherHeight = launcher.offsetHeight || 65;
+                const launcherWidth = launcher.offsetWidth || 65;
+                const targetTop = scrollY + vh - 24 - launcherHeight;
+                const targetLeft = scrollX + vw - 24 - launcherWidth;
+
+                launcher.style.position = 'absolute';
+                launcher.style.top = '0px';
+                launcher.style.left = '0px';
+                launcher.style.right = 'auto';
+                launcher.style.bottom = 'auto';
+                launcher.style.transform = `translate3d(${targetLeft}px, ${targetTop}px, 0)`;
+            }
+
+            if (widget) {
+                const widgetHeight = widget.offsetHeight || 400;
+                const widgetWidth = widget.offsetWidth || 340;
+                const targetTop = scrollY + vh - 24 - 65 - 12 - widgetHeight;
+                const targetLeft = scrollX + vw - 24 - widgetWidth;
+
+                widget.style.position = 'absolute';
+                widget.style.top = '0px';
+                widget.style.left = '0px';
+                widget.style.right = 'auto';
+                widget.style.bottom = 'auto';
+                widget.style.transform = `translate3d(${targetLeft}px, ${targetTop}px, 0)`;
+            }
+
+            this.isRepositioning = false;
+        });
     }
-
-    if (widget) {
-        const widgetHeight = widget.offsetHeight || 400;
-        const widgetWidth = widget.offsetWidth || 340;
-        widget.style.position = 'absolute';
-        widget.style.top = `${scrollY + vh - 24 - 65 - 12 - widgetHeight}px`;
-        widget.style.left = `${scrollX + vw - 24 - widgetWidth}px`;
-        widget.style.right = 'auto';
-        widget.style.bottom = 'auto';
-    }
-}
-
 /* Objective: Reset body transform traps and log layout coordinates */
 ensureGlobalMount() {
     // Reset computed body properties that trap position: fixed
