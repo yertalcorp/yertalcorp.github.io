@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @23:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1225,12 +1225,13 @@ async function refreshUI() {
         // Currents needs the realm and owner profile for context
         renderCurrents(realmData.currents || {}, isOwner, targetRealmSlug, ownerProfile);
 
-        if (window.arcadeNavigator) {
-            window.arcadeNavigator.ensureGlobalMount();
-        } else if (typeof ArcadeNavigator === 'function') {
-            window.arcadeNavigator = new ArcadeNavigator(window.chatConfig);
-            window.arcadeNavigator.ensureGlobalMount();
-        }
+    if (window.arcadeNavigator) {
+        window.arcadeNavigator.ensureGlobalMount();
+        window.arcadeNavigator.reposition();
+    } else if (typeof ArcadeNavigator === 'function') {
+        window.arcadeNavigator = new ArcadeNavigator(window.chatConfig);
+        window.arcadeNavigator.ensureGlobalMount();
+        window.arcadeNavigator.reposition();
     } catch (err) {
         console.error("SYSTEM ERROR in refreshUI:", err);
     }
@@ -5280,6 +5281,39 @@ class ArcadeNavigator {
 
         // Assign global handle for inline onclick bindings
         window.navigatorAgent = this;
+
+        // Actively recalculate viewport positioning on scroll and window resize
+        window.addEventListener('scroll', () => this.reposition());
+        window.addEventListener('resize', () => this.reposition());
+    }
+
+    /* Objective: Dynamically calculate position relative to viewport dimensions */
+    reposition() {
+        const launcher = document.querySelector('.navigator-launcher') || document.getElementById('yertal-nav-launcher');
+        const widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
+
+        const vh = window.innerHeight;
+        const vw = window.innerWidth;
+
+        if (launcher) {
+            const launcherHeight = launcher.offsetHeight || 65;
+            const launcherWidth = launcher.offsetWidth || 65;
+            launcher.style.position = 'fixed';
+            launcher.style.top = `${vh - 24 - launcherHeight}px`;
+            launcher.style.left = `${vw - 24 - launcherWidth}px`;
+            launcher.style.right = 'auto';
+            launcher.style.bottom = 'auto';
+        }
+
+        if (widget) {
+            const widgetHeight = widget.offsetHeight || 400;
+            const widgetWidth = widget.offsetWidth || 340;
+            widget.style.position = 'fixed';
+            widget.style.top = `${vh - 24 - 65 - 12 - widgetHeight}px`;
+            widget.style.left = `${vw - 24 - widgetWidth}px`;
+            widget.style.right = 'auto';
+            widget.style.bottom = 'auto';
+        }
     }
 
     /* Objective: Reset body transform traps and log layout coordinates */
@@ -5325,6 +5359,9 @@ class ArcadeNavigator {
             console.log('[ArcadeNavigator Debug] Reparenting Widget to document.body...');
             document.body.appendChild(widget);
         }
+
+        // Recalculate layout after global mounting
+        this.reposition();
     }
 
     /* Objective: Initialize chat agent using databaseCache directly */
