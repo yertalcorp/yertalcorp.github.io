@@ -5299,12 +5299,12 @@ class ArcadeNavigator {
             launcher.style.right = '24px';
             launcher.style.top = 'auto';
             launcher.style.left = 'auto';
--           const launcherHeight = launcher.offsetHeight || 65;
--           const launcherWidth = launcher.offsetWidth || 65;
--           launcher.style.top = `${vh - 24 - launcherHeight}px`;
--           launcher.style.left = `${vw - 24 - launcherWidth}px`;
--           launcher.style.right = 'auto';
--           launcher.style.bottom = 'auto';
+            const launcherHeight = launcher.offsetHeight || 65;
+            const launcherWidth = launcher.offsetWidth || 65;
+            launcher.style.top = `${vh - 24 - launcherHeight}px`;
+            launcher.style.left = `${vw - 24 - launcherWidth}px`;
+            launcher.style.right = 'auto';
+            launcher.style.bottom = 'auto';
         }
 
         if (widget) {
@@ -5313,12 +5313,12 @@ class ArcadeNavigator {
             widget.style.right = '24px';
             widget.style.top = 'auto';
             widget.style.left = 'auto';
--           const widgetHeight = widget.offsetHeight || 400;
--           const widgetWidth = widget.offsetWidth || 340;
--           widget.style.top = `${vh - 24 - 65 - 12 - widgetHeight}px`;
--           widget.style.left = `${vw - 24 - widgetWidth}px`;
--           widget.style.right = 'auto';
--           widget.style.bottom = 'auto';
+           const widgetHeight = widget.offsetHeight || 400;
+           const widgetWidth = widget.offsetWidth || 340;
+           widget.style.top = `${vh - 24 - 65 - 12 - widgetHeight}px`;
+           widget.style.left = `${vw - 24 - widgetWidth}px`;
+           widget.style.right = 'auto';
+           widget.style.bottom = 'auto';
         }
     }
 
