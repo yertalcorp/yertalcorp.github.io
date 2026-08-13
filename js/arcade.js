@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:08:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -5293,30 +5293,22 @@ reposition() {
     const launcher = document.querySelector('.navigator-launcher') || document.getElementById('yertal-nav-launcher');
     const widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
 
-    const vh = window.innerHeight;
-    const vw = window.innerWidth;
-
     if (launcher) {
         launcher.style.position = 'fixed';
-        const launcherHeight = launcher.offsetHeight || 65;
-        const launcherWidth = launcher.offsetWidth || 65;
-        launcher.style.top = `${vh - 24 - launcherHeight}px`;
-        launcher.style.left = `${vw - 24 - launcherWidth}px`;
-        launcher.style.right = 'auto';
-        launcher.style.bottom = 'auto';
+        launcher.style.bottom = '24px';
+        launcher.style.right = '24px';
+        launcher.style.top = 'auto';
+        launcher.style.left = 'auto';
     }
 
     if (widget) {
         widget.style.position = 'fixed';
-        const widgetHeight = widget.offsetHeight || 400;
-        const widgetWidth = widget.offsetWidth || 340;
-        widget.style.top = `${vh - 24 - 65 - 12 - widgetHeight}px`;
-        widget.style.left = `${vw - 24 - widgetWidth}px`;
-        widget.style.right = 'auto';
-        widget.style.bottom = 'auto';
+        widget.style.bottom = '97px';
+        widget.style.right = '24px';
+        widget.style.top = 'auto';
+        widget.style.left = 'auto';
     }
 }
-
 /* Objective: Reset body transform traps and log layout coordinates */
 ensureGlobalMount() {
     // Reset computed body properties that trap position: fixed
