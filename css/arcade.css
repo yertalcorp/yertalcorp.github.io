@@ -1674,7 +1674,7 @@ button:hover {
     position: fixed;
     /* Positions it above the launcher (35% top) */
     top: auto;
-    bottom: 105px;
+    bottom: 97px;
     right: 28px;
     width: 340px;
     background: var(--card-bg);
