@@ -5288,32 +5288,37 @@ class ArcadeNavigator {
         window.addEventListener('resize', () => this.reposition());
     }
 
-    /* Objective: Dynamically calculate position relative to viewport dimensions */
+/* Objective: Dynamically calculate position relative to viewport dimensions */
     reposition() {
         const launcher = document.querySelector('.navigator-launcher') || document.getElementById('yertal-nav-launcher');
         const widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
 
-        const vh = window.innerHeight;
-        const vw = window.innerWidth;
-
         if (launcher) {
-            const launcherHeight = launcher.offsetHeight || 65;
-            const launcherWidth = launcher.offsetWidth || 65;
             launcher.style.position = 'fixed';
-            launcher.style.top = `${vh - 24 - launcherHeight}px`;
-            launcher.style.left = `${vw - 24 - launcherWidth}px`;
-            launcher.style.right = 'auto';
-            launcher.style.bottom = 'auto';
+            launcher.style.bottom = '24px';
+            launcher.style.right = '24px';
+            launcher.style.top = 'auto';
+            launcher.style.left = 'auto';
+-           const launcherHeight = launcher.offsetHeight || 65;
+-           const launcherWidth = launcher.offsetWidth || 65;
+-           launcher.style.top = `${vh - 24 - launcherHeight}px`;
+-           launcher.style.left = `${vw - 24 - launcherWidth}px`;
+-           launcher.style.right = 'auto';
+-           launcher.style.bottom = 'auto';
         }
 
         if (widget) {
-            const widgetHeight = widget.offsetHeight || 400;
-            const widgetWidth = widget.offsetWidth || 340;
             widget.style.position = 'fixed';
-            widget.style.top = `${vh - 24 - 65 - 12 - widgetHeight}px`;
-            widget.style.left = `${vw - 24 - widgetWidth}px`;
-            widget.style.right = 'auto';
-            widget.style.bottom = 'auto';
+            widget.style.bottom = '97px';
+            widget.style.right = '24px';
+            widget.style.top = 'auto';
+            widget.style.left = 'auto';
+-           const widgetHeight = widget.offsetHeight || 400;
+-           const widgetWidth = widget.offsetWidth || 340;
+-           widget.style.top = `${vh - 24 - 65 - 12 - widgetHeight}px`;
+-           widget.style.left = `${vw - 24 - widgetWidth}px`;
+-           widget.style.right = 'auto';
+-           widget.style.bottom = 'auto';
         }
     }
 
@@ -5351,20 +5356,28 @@ class ArcadeNavigator {
         logElementDetails('Launcher', launcher);
         logElementDetails('Widget', widget);
 
-        if (launcher && launcher.parentElement !== document.body) {
-            console.log('[ArcadeNavigator Debug] Reparenting Launcher to document.body...');
-            document.body.appendChild(launcher);
+        if (launcher && launcher.parentElement !== document.documentElement) {
+            console.log('[ArcadeNavigator Debug] Reparenting Launcher to document.documentElement...');
+            document.documentElement.appendChild(launcher);
         }
+-       if (launcher && launcher.parentElement !== document.body) {
+-           console.log('[ArcadeNavigator Debug] Reparenting Launcher to document.body...');
+-           document.body.appendChild(launcher);
+-       }
 
-        if (widget && widget.parentElement !== document.body) {
-            console.log('[ArcadeNavigator Debug] Reparenting Widget to document.body...');
-            document.body.appendChild(widget);
+        if (widget && widget.parentElement !== document.documentElement) {
+            console.log('[ArcadeNavigator Debug] Reparenting Widget to document.documentElement...');
+            document.documentElement.appendChild(widget);
         }
+-       if (widget && widget.parentElement !== document.body) {
+-           console.log('[ArcadeNavigator Debug] Reparenting Widget to document.body...');
+-           document.body.appendChild(widget);
+-       }
 
         // Recalculate layout after global mounting
         this.reposition();
     }
-
+    
     /* Objective: Initialize chat agent using databaseCache directly */
     initChatAgent() {
         console.log("ArcadeNavigator: initChatAgent called.");
