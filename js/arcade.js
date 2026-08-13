@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:32:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1225,13 +1225,14 @@ async function refreshUI() {
         // Currents needs the realm and owner profile for context
         renderCurrents(realmData.currents || {}, isOwner, targetRealmSlug, ownerProfile);
 
-    if (window.arcadeNavigator) {
-        window.arcadeNavigator.ensureGlobalMount();
-        window.arcadeNavigator.reposition();
-    } else if (typeof ArcadeNavigator === 'function') {
-        window.arcadeNavigator = new ArcadeNavigator(window.chatConfig);
-        window.arcadeNavigator.ensureGlobalMount();
-        window.arcadeNavigator.reposition();
+        if (window.arcadeNavigator) {
+            window.arcadeNavigator.ensureGlobalMount();
+            window.arcadeNavigator.reposition();
+        } else if (typeof ArcadeNavigator === 'function') {
+            window.arcadeNavigator = new ArcadeNavigator(window.chatConfig);
+            window.arcadeNavigator.ensureGlobalMount();
+            window.arcadeNavigator.reposition();
+        } /* close the try block*/
     } catch (err) {
         console.error("SYSTEM ERROR in refreshUI:", err);
     }
