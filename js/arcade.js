@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:48:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -5265,7 +5265,7 @@ window.handleLauncherClick = function() {
 
 /* Class ArcadeNavigator start */
 class ArcadeNavigator {
-    constructor(data = databaseCache?.chat_config) {
+constructor(data = databaseCache?.chat_config) {
         console.log("ArcadeNavigator: Initializing with data:", data);
         
         // Pull directly from databaseCache if data is undefined during early instantiation
@@ -5283,89 +5283,82 @@ class ArcadeNavigator {
         // Assign global handle for inline onclick bindings
         window.navigatorAgent = this;
 
-        // Actively recalculate viewport positioning on scroll and window resize
-        window.addEventListener('scroll', () => this.reposition());
+        // Only listen to window resize (removed scroll event listener to prevent scroll lag)
         window.addEventListener('resize', () => this.reposition());
     }
 
-/* Objective: Dynamically calculate position relative to viewport dimensions */
-reposition() {
-    const launcher = document.querySelector('.navigator-launcher') || document.getElementById('yertal-nav-launcher');
-    const widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
+/* Objective: Lock elements to viewport using GPU-accelerated fixed positioning */
+    reposition() {
+        const launcher = document.querySelector('.navigator-launcher') || document.getElementById('yertal-nav-launcher');
+        const widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
 
-    const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-    const scrollX = window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0;
-    const vh = window.innerHeight;
-    const vw = window.innerWidth;
+        if (launcher) {
+            launcher.style.position = 'fixed';
+            launcher.style.bottom = '24px';
+            launcher.style.right = '24px';
+            launcher.style.top = 'auto';
+            launcher.style.left = 'auto';
+            launcher.style.transform = 'translateZ(0)'; // Hardware acceleration
+        }
 
-    if (launcher) {
-        const launcherHeight = launcher.offsetHeight || 65;
-        const launcherWidth = launcher.offsetWidth || 65;
-        launcher.style.position = 'absolute';
-        launcher.style.top = `${scrollY + vh - 24 - launcherHeight}px`;
-        launcher.style.left = `${scrollX + vw - 24 - launcherWidth}px`;
-        launcher.style.right = 'auto';
-        launcher.style.bottom = 'auto';
-    }
-
-    if (widget) {
-        const widgetHeight = widget.offsetHeight || 400;
-        const widgetWidth = widget.offsetWidth || 340;
-        widget.style.position = 'absolute';
-        widget.style.top = `${scrollY + vh - 24 - 65 - 12 - widgetHeight}px`;
-        widget.style.left = `${scrollX + vw - 24 - widgetWidth}px`;
-        widget.style.right = 'auto';
-        widget.style.bottom = 'auto';
-    }
-}
-
-/* Objective: Reset body transform traps and log layout coordinates */
-ensureGlobalMount() {
-    // Reset computed body properties that trap position: fixed
-    if (document.body) {
-        const bodyStyle = window.getComputedStyle(document.body);
-        if (bodyStyle.transform !== 'none' || bodyStyle.filter !== 'none' || bodyStyle.perspective !== 'none') {
-            console.warn('[ArcadeNavigator] Clearing body transform/filter properties trapping fixed elements.');
-            document.body.style.transform = 'none';
-            document.body.style.filter = 'none';
-            document.body.style.perspective = 'none';
+        if (widget) {
+            widget.style.position = 'fixed';
+            widget.style.bottom = '97px';
+            widget.style.right = '24px';
+            widget.style.top = 'auto';
+            widget.style.left = 'auto';
+            widget.style.transform = 'translateZ(0)'; // Hardware acceleration
         }
     }
 
-    let launcher = document.querySelector('.navigator-launcher') || document.getElementById('yertal-nav-launcher');
-    let widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
-
-    // Diagnostic logger for element parentage and coordinates
-    const logElementDetails = (name, el) => {
-        if (!el) {
-            console.warn(`[ArcadeNavigator Debug] ${name} NOT FOUND in DOM.`);
-            return;
+    /* Objective: Reset body transform traps and reparent directly to document.body */
+    ensureGlobalMount() {
+        // Reset computed body properties that trap position: fixed
+        if (document.body) {
+            const bodyStyle = window.getComputedStyle(document.body);
+            if (bodyStyle.transform !== 'none' || bodyStyle.filter !== 'none' || bodyStyle.perspective !== 'none') {
+                console.warn('[ArcadeNavigator] Clearing body transform/filter properties trapping fixed elements.');
+                document.body.style.transform = 'none';
+                document.body.style.filter = 'none';
+                document.body.style.perspective = 'none';
+            }
         }
-        const rect = el.getBoundingClientRect();
-        const style = window.getComputedStyle(el);
-        const parentTag = el.parentElement ? el.parentElement.tagName.toLowerCase() : 'none';
-        const parentId = el.parentElement?.id ? `#${el.parentElement.id}` : '';
-        const parentClass = el.parentElement?.className ? `.${el.parentElement.className.replace(/\s+/g, '.')}` : '';
 
-        console.log(`[ArcadeNavigator Debug] ${name} -> Parent: <${parentTag}${parentId}${parentClass}> | Pos: ${style.position} | Top: ${Math.round(rect.top)}px | Bottom: ${Math.round(rect.bottom)}px | Right: ${Math.round(rect.right)}px | Viewport Height: ${window.innerHeight}px`);
-    };
+        let launcher = document.querySelector('.navigator-launcher') || document.getElementById('yertal-nav-launcher');
+        let widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
 
-    logElementDetails('Launcher', launcher);
-    logElementDetails('Widget', widget);
+        // Diagnostic logger for element parentage and coordinates
+        const logElementDetails = (name, el) => {
+            if (!el) {
+                console.warn(`[ArcadeNavigator Debug] ${name} NOT FOUND in DOM.`);
+                return;
+            }
+            const rect = el.getBoundingClientRect();
+            const style = window.getComputedStyle(el);
+            const parentTag = el.parentElement ? el.parentElement.tagName.toLowerCase() : 'none';
+            const parentId = el.parentElement?.id ? `#${el.parentElement.id}` : '';
+            const parentClass = el.parentElement?.className ? `.${el.parentElement.className.replace(/\s+/g, '.')}` : '';
 
-    if (launcher && launcher.parentElement !== document.body) {
-        console.log('[ArcadeNavigator Debug] Reparenting Launcher to document.body...');
-        document.body.appendChild(launcher);
+            console.log(`[ArcadeNavigator Debug] ${name} -> Parent: <${parentTag}${parentId}${parentClass}> | Pos: ${style.position} | Top: ${Math.round(rect.top)}px | Bottom: ${Math.round(rect.bottom)}px | Right: ${Math.round(rect.right)}px | Viewport Height: ${window.innerHeight}px`);
+        };
+
+        logElementDetails('Launcher', launcher);
+        logElementDetails('Widget', widget);
+
+        if (launcher && launcher.parentElement !== document.body) {
+            console.log('[ArcadeNavigator Debug] Reparenting Launcher to document.body...');
+            document.body.appendChild(launcher);
+        }
+
+        if (widget && widget.parentElement !== document.body) {
+            console.log('[ArcadeNavigator Debug] Reparenting Widget to document.body...');
+            document.body.appendChild(widget);
+        }
+
+        // Force position reset after mount
+        this.reposition();
     }
 
-    if (widget && widget.parentElement !== document.body) {
-        console.log('[ArcadeNavigator Debug] Reparenting Widget to document.body...');
-        document.body.appendChild(widget);
-    }
-
-    // Recalculate layout after global mounting
-    this.reposition();
-}
 /* Objective: Initialize chat agent using databaseCache directly */
     initChatAgent() {
         console.log("ArcadeNavigator: initChatAgent called.");
