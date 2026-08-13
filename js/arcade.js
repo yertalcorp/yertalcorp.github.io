@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -5293,22 +5293,32 @@ reposition() {
     const launcher = document.querySelector('.navigator-launcher') || document.getElementById('yertal-nav-launcher');
     const widget = document.getElementById('yertal-nav-container') || document.querySelector('.yertal-navigator-widget');
 
+    const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+    const scrollX = window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0;
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+
     if (launcher) {
-        launcher.style.position = 'fixed';
-        launcher.style.bottom = '24px';
-        launcher.style.right = '24px';
-        launcher.style.top = 'auto';
-        launcher.style.left = 'auto';
+        const launcherHeight = launcher.offsetHeight || 65;
+        const launcherWidth = launcher.offsetWidth || 65;
+        launcher.style.position = 'absolute';
+        launcher.style.top = `${scrollY + vh - 24 - launcherHeight}px`;
+        launcher.style.left = `${scrollX + vw - 24 - launcherWidth}px`;
+        launcher.style.right = 'auto';
+        launcher.style.bottom = 'auto';
     }
 
     if (widget) {
-        widget.style.position = 'fixed';
-        widget.style.bottom = '97px';
-        widget.style.right = '24px';
-        widget.style.top = 'auto';
-        widget.style.left = 'auto';
+        const widgetHeight = widget.offsetHeight || 400;
+        const widgetWidth = widget.offsetWidth || 340;
+        widget.style.position = 'absolute';
+        widget.style.top = `${scrollY + vh - 24 - 65 - 12 - widgetHeight}px`;
+        widget.style.left = `${scrollX + vw - 24 - widgetWidth}px`;
+        widget.style.right = 'auto';
+        widget.style.bottom = 'auto';
     }
 }
+
 /* Objective: Reset body transform traps and log layout coordinates */
 ensureGlobalMount() {
     // Reset computed body properties that trap position: fixed
@@ -5343,20 +5353,20 @@ ensureGlobalMount() {
     logElementDetails('Launcher', launcher);
     logElementDetails('Widget', widget);
 
-    if (launcher && launcher.parentElement !== document.documentElement) {
-        console.log('[ArcadeNavigator Debug] Reparenting Launcher to document.documentElement...');
-        document.documentElement.appendChild(launcher);
+    if (launcher && launcher.parentElement !== document.body) {
+        console.log('[ArcadeNavigator Debug] Reparenting Launcher to document.body...');
+        document.body.appendChild(launcher);
     }
 
-    if (widget && widget.parentElement !== document.documentElement) {
-        console.log('[ArcadeNavigator Debug] Reparenting Widget to document.documentElement...');
-        document.documentElement.appendChild(widget);
+    if (widget && widget.parentElement !== document.body) {
+        console.log('[ArcadeNavigator Debug] Reparenting Widget to document.body...');
+        document.body.appendChild(widget);
     }
 
     // Recalculate layout after global mounting
     this.reposition();
 }
-    /* Objective: Initialize chat agent using databaseCache directly */
+/* Objective: Initialize chat agent using databaseCache directly */
     initChatAgent() {
         console.log("ArcadeNavigator: initChatAgent called.");
 
