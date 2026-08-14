@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -133,30 +133,51 @@ window.handleSparkLaunch = async function(realmId, currentId, sparkId, targetUrl
     window.location.href = targetUrl;
 };
 
-window.confirmDeleteCurrent = async (realmId, currentId) => {
-    const confirmation = confirm(`Are you sure you want to delete the whole current [${currentId}]?\n\nAll associated sparks will be permanently deleted. This action cannot be undone.`);
-    
-    if (confirmation) {
-        try {
-            // 1. Database Removal
-            const dbPath = getCurrentPath(realmId, currentId);
-            await saveToRealtimeDB(dbPath, null);
+window.confirmDeleteCurrentRealm = async () => {
+    const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
+    if (!authUser) return;
 
-            // 2. Cache Cleanup
-            if (databaseCache.realms?.[realmId]?.currents?.[currentId]) {
-                delete databaseCache.realms[realmId].currents[currentId];
-            }
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentRealmId = urlParams.get('realm');
 
-            // 3. UI Refresh
-            await refreshUI();
-            
-            console.log(`System: Infra for ${currentId} decommissioned.`);
-        } catch (error) {
-            console.error("Critical: Deletion protocol failed.", error);
-            alert("System error: Could not decommission Infra.");
+    if (!currentRealmId) {
+        alert('NO_ACTIVE_REALM_SELECTED');
+        return;
+    }
+
+    if (!confirm('WARNING: Are you sure you want to delete this realm? This action cannot be undone.')) {
+        return;
+    }
+
+    // 1. Delete the current realm node
+    await update(ref(db), { [`realms/${currentRealmId}`]: null });
+    if (databaseCache.realms?.[currentRealmId]) {
+        delete databaseCache.realms[currentRealmId];
+    }
+
+    // 2. Find remaining realms owned by user
+    const remainingRealms = Object.entries(databaseCache.realms || {})
+        .filter(([id, realm]) => (realm.realm_ownerid === authUser.uid || realm.owner_uid === authUser.uid) && id !== currentRealmId)
+        .map(([id]) => id);
+
+    if (remainingRealms.length > 0) {
+        // Switch active_realm_id to another existing realm
+        const nextRealmId = remainingRealms[0];
+        await update(ref(db), { [`users/${authUser.uid}/profile/active_realm_id`]: nextRealmId });
+        if (databaseCache.users?.[authUser.uid]?.profile) {
+            databaseCache.users[authUser.uid].profile.active_realm_id = nextRealmId;
         }
+        window.location.href = `?realm=${nextRealmId}`;
+    } else {
+        // Delete active_realm_id property if no realms remain (System Restart)
+        await update(ref(db), { [`users/${authUser.uid}/profile/active_realm_id`]: null });
+        if (databaseCache.users?.[authUser.uid]?.profile) {
+            delete databaseCache.users[authUser.uid].profile.active_realm_id;
+        }
+        window.location.href = '/index.html';
     }
 };
+
 /*
  * Objective: Close the Add Current HUD and reset visibility.
  */
@@ -1806,15 +1827,19 @@ window.openRealmSwitcherHud = () => {
 };
 
 window.switchActiveRealm = async (targetRealmId) => {
-    const authUser = firebase.auth().currentUser;
+    const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
     if (!authUser) return;
 
-    // Set user's active_realm_id to the selected realm ID
-    await firebase.database().ref(`users/${authUser.uid}/profile/active_realm_id`).set(targetRealmId);
+    // Set user's active_realm_id to the selected realm ID using modular Firebase functions
+    await update(ref(db), { [`users/${authUser.uid}/profile/active_realm_id`]: targetRealmId });
+    if (databaseCache.users?.[authUser.uid]?.profile) {
+        databaseCache.users[authUser.uid].profile.active_realm_id = targetRealmId;
+    }
 
     // Redirect to chosen realm
     window.location.href = `?realm=${targetRealmId}`;
 };
+
 function extractParamDeltas(prompt, originalPMap, returnTokensOnly = false) {
     const changedProperties = {};
     const matchedParamTokens = {};
@@ -2508,7 +2533,7 @@ async function initializeUserRealm(realmId, templateId) {
 // Expose helper to global window scope for inline onclick hooks
 window.initializeUserRealm = initializeUserRealm;
 
-function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sharedSparkId`, createNewRealm = false`) {
+function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sharedSparkId, createNewRealm = false) {
     console.group(`[renderCurrents] Execution for Realm: ${realmId}`);
     console.log("[renderCurrents] Input Parameters:", {
         hasCurrentsParam: Boolean(currents),
@@ -2516,8 +2541,8 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
         realmId,
         sharedCurrentId,
         sharedSparkId,
-        profileData: profile`,
-        createNewRealm`
+        profileData: profile,
+        createNewRealm
     });
 
     const container = document.getElementById('currents-container');
@@ -2617,6 +2642,7 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
 
     console.groupEnd();
 }
+
 function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSparks, sharedSparkId, ownerUid) {
     console.log("[renderExistingRealm] Rendering active currents array with lazy loading...");
 
