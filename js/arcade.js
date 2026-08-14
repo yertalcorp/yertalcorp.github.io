@@ -59,6 +59,11 @@ let currentModelIndex = 0;
 
 export async function ensureActiveRealm(uid) {
     let userProfile = databaseCache.users?.[uid]?.profile || {};
+    
+    // Resolve display name: Priority Auth User -> Cache Profile -> Fallback 'PILOT'
+    const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
+    const resolvedDisplayName = authUser?.displayName || userProfile.display_name || "PILOT";
+
     let activeRealmId = userProfile.active_realm_id;
 
     if (!activeRealmId) {
@@ -69,10 +74,10 @@ export async function ensureActiveRealm(uid) {
         updates[`realms/${activeRealmId}`] = {
             realm_id: activeRealmId,
             realm_ownerid: uid,
-            realm_display_name: userProfile.display_name || "PILOT",
-            realm_title: userProfile.display_name ? `${userProfile.display_name}'s Realm` : "NEW REALM",
+            realm_display_name: resolvedDisplayName,
+            realm_title: resolvedDisplayName !== "PILOT" ? `${resolvedDisplayName}'s Realm` : "MY REALM",
             realm_subtitle: "Welcome to my Realm",
-            realm_logo: userProfile.photoURL || "/assets/images/YERTAL LOGO SIMPLE.png",
+            realm_logo: userProfile.photoURL || authUser?.photoURL || "/assets/images/YERTAL LOGO SIMPLE.png",
             realm_theme: "neon-dark",
             realm_privacy: "private",
             realm_circuit: "custom",
