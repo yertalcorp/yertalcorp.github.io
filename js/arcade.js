@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:33:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:07:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1696,23 +1696,124 @@ window.addEventListener('click', () => {
     if (menu) menu.style.display = 'none';
 });
 
+// 1. ADD REALM WORKFLOW
 window.handlePlusAction = (action) => {
     const menu = document.getElementById('plus-dropdown-menu');
     if (menu) menu.style.display = 'none';
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const targetRealmSlug = urlParams.get('realm');
-    const realmData = databaseCache.realms?.[targetRealmSlug] || {};
-    const ownerProfile = databaseCache.users?.[user.uid]?.profile || {};
-
     if (action === 'add_realm') {
-        const container = document.getElementById('currents-container');
-        if (container) {
-            renderCurrents(realmData.currents || {}, true, targetRealmSlug, ownerProfile, null, null, true);
+        const authUser = firebase.auth().currentUser;
+        if (!authUser) return;
+
+        const profile = databaseCache.users?.[authUser.uid]?.profile || {};
+        const maxRealms = profile.max_realms || 1;
+
+        // Count realms owned by the current user
+        const userRealms = Object.entries(databaseCache.realms || {}).filter(
+            ([id, realm]) => realm.owner_uid === authUser.uid
+        );
+
+        if (userRealms.length >= maxRealms) {
+            alert(`REALM_LIMIT_REACHED: Your plan allows a maximum of ${maxRealms} realm(s).`);
+            return;
         }
+
+        // Show Circuit Selection Modal
+        window.openCircuitSelectionHud();
     } else if (action === 'add_current') {
         window.openAddCurrentHud('add');
     }
+};
+
+// 2. DELETE REALM WORKFLOW
+window.confirmDeleteCurrentRealm = async () => {
+    const authUser = firebase.auth().currentUser;
+    if (!authUser) return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentRealmId = urlParams.get('realm');
+
+    if (!currentRealmId) {
+        alert('NO_ACTIVE_REALM_SELECTED');
+        return;
+    }
+
+    if (!confirm('WARNING: Are you sure you want to delete this realm? This action cannot be undone.')) {
+        return;
+    }
+
+    // 1. Delete the current realm node
+    await firebase.database().ref(`realms/${currentRealmId}`).remove();
+
+    // 2. Find remaining realms owned by user
+    const remainingRealms = Object.entries(databaseCache.realms || {})
+        .filter(([id, realm]) => realm.owner_uid === authUser.uid && id !== currentRealmId)
+        .map(([id]) => id);
+
+    if (remainingRealms.length > 0) {
+        // Switch active_realm_id to another existing realm
+        const nextRealmId = remainingRealms[0];
+        await firebase.database().ref(`users/${authUser.uid}/profile/active_realm_id`).set(nextRealmId);
+        window.location.href = `?realm=${nextRealmId}`;
+    } else {
+        // Delete active_realm_id property if no realms remain (System Restart)
+        await firebase.database().ref(`users/${authUser.uid}/profile/active_realm_id`).remove();
+        window.location.href = '/index.html';
+    }
+};
+
+// 3. SWITCH REALM WORKFLOW
+window.openRealmSwitcherHud = () => {
+    const authUser = firebase.auth().currentUser;
+    if (!authUser) return;
+
+    const userRealms = Object.entries(databaseCache.realms || {}).filter(
+        ([id, realm]) => realm.owner_uid === authUser.uid
+    );
+
+    if (userRealms.length === 0) {
+        alert('NO_AVAILABLE_REALMS');
+        return;
+    }
+
+    let hudHtml = `
+        <div id="realm-switcher-modal" class="glass-hud" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:20000; padding:20px; border:1px solid var(--border-color); background:var(--card-bg);">
+            <h3 class="metallic-text">SWITCH_REALM</h3>
+            <div class="realm-list" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+    `;
+
+    userRealms.forEach(([id, realm]) => {
+        const title = realm.realm_title || 'UNTITLED_REALM';
+        hudHtml += `
+            <div class="menu-item" onclick="window.switchActiveRealm('${id}')" style="cursor:pointer; padding:8px; border:1px solid var(--glow-aura);">
+                <span class="metallic-text">${title}</span>
+                <span style="font-size:9px; opacity:0.6; display:block;">ID: ${id}</span>
+            </div>
+        `;
+    });
+
+    hudHtml += `
+            </div>
+            <button onclick="document.getElementById('realm-switcher-modal').remove()" style="margin-top:12px;">CLOSE</button>
+        </div>
+    `;
+
+    // Remove existing instance if present, then append
+    const existingModal = document.getElementById('realm-switcher-modal');
+    if (existingModal) existingModal.remove();
+
+    document.body.insertAdjacentHTML('beforeend', hudHtml);
+};
+
+window.switchActiveRealm = async (targetRealmId) => {
+    const authUser = firebase.auth().currentUser;
+    if (!authUser) return;
+
+    // Set user's active_realm_id to the selected realm ID
+    await firebase.database().ref(`users/${authUser.uid}/profile/active_realm_id`).set(targetRealmId);
+
+    // Redirect to chosen realm
+    window.location.href = `?realm=${targetRealmId}`;
 };
 function extractParamDeltas(prompt, originalPMap, returnTokensOnly = false) {
     const changedProperties = {};
