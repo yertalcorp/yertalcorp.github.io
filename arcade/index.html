@@ -29,6 +29,9 @@
         </div>
 
         <div id="drawer-main-nav">
+            <div class="menu-item" onclick="showSubMenu('manage-realms')">
+                <i class="fa-solid fa-cubes"></i> <span class="metallic-text">MANAGE_REALMS</span>
+            </div>
             <div class="menu-item" onclick="showSubMenu('settings')">
                 <i class="fa-solid fa-gear"></i> <span class="metallic-text">SETTINGS</span>
             </div>
@@ -36,7 +39,18 @@
                 <i class="fa-solid fa-circle-question"></i> <span class="metallic-text">HELP</span>
             </div>
         </div>
-
+        <div id="drawer-manage-realms" class="sub-menu" style="display:none;">
+            <div class="back-btn" onclick="showMainMenu()"><i class="fa-solid fa-chevron-left"></i> BACK</div>
+            <div class="menu-item" onclick="window.handlePlusAction('add_realm')">
+                <i class="fa-solid fa-plus"></i> <span class="metallic-text">ADD_REALM</span>
+            </div>
+            <div class="menu-item" onclick="window.confirmDeleteCurrentRealm()">
+                <i class="fa-solid fa-trash" style="color: var(--error-color);"></i> <span class="metallic-text" style="color: var(--error-color);">DELETE_REALM</span>
+            </div>
+            <div class="menu-item" onclick="window.openRealmSwitcherHud()">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i> <span class="metallic-text">SWITCH_REALM</span>
+            </div>
+        </div>
         <div id="drawer-settings" class="sub-menu" style="display:none;">
             <div class="back-btn" onclick="showMainMenu()"><i class="fa-solid fa-chevron-left"></i> BACK</div>
     
