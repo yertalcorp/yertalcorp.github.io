@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:13:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2362,7 +2362,7 @@ async function initializeUserRealm(realmId, templateId) {
 // Expose helper to global window scope for inline onclick hooks
 window.initializeUserRealm = initializeUserRealm;
 
-function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sharedSparkId) {
+function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sharedSparkId`, createNewRealm = false`) {
     console.group(`[renderCurrents] Execution for Realm: ${realmId}`);
     console.log("[renderCurrents] Input Parameters:", {
         hasCurrentsParam: Boolean(currents),
@@ -2370,7 +2370,8 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
         realmId,
         sharedCurrentId,
         sharedSparkId,
-        profileData: profile
+        profileData: profile`,
+        createNewRealm`
     });
 
     const container = document.getElementById('currents-container');
@@ -2416,6 +2417,21 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
     console.log(`[renderCurrents] Filtered Active Currents Count: ${currentsArray.length}`);
 
     // 3. ROUTING / DISPATCHING
+    if (createNewRealm && isOwner) {
+        const maxRealms = planLimits.max_realms || 1;
+        const ownedRealmsCount = Object.values(databaseCache.realms || {}).filter(r => r.realm_ownerid === ownerUid).length;
+
+        if (ownedRealmsCount < maxRealms) {
+            renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid);
+            console.groupEnd();
+            return;
+        } else {
+            alert(`Maximum realm limit reached (${maxRealms}). Upgrade your plan to create more realms.`);
+            console.groupEnd();
+            return;
+        }
+    }
+
     if (currentsArray.length > 0) {
         renderExistingRealm(container, currentsArray, isOwner, realmId, maxSparks, sharedSparkId, ownerUid);
     } else {
@@ -2455,7 +2471,6 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
 
     console.groupEnd();
 }
-
 function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSparks, sharedSparkId, ownerUid) {
     console.log("[renderExistingRealm] Rendering active currents array with lazy loading...");
 
