@@ -1655,12 +1655,12 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
                     <!-- TOP BAR (+) DROPDOWN MENU -->
                     <div class="plus-dropdown-wrapper" style="position: relative;">
                         <i class="fa-solid fa-square-plus" id="top-bar-plus-icon" title="Add Options" onclick="window.togglePlusMenu(event)" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
-                        <div id="plus-dropdown-menu" class="glass-3d" style="display: none; position: absolute; top: 28px; left: 0; width: **160px**; border-radius: 6px; padding: 6px 0; z-index: **20000**;">
+                        <div id="plus-dropdown-menu" class="glass-3d" style="display: none; position: absolute; top: 28px; left: 0; width: 160px; border-radius: 6px; padding: 6px 0; z-index: 20000;">
                             <div class="dropdown-item" onclick="window.handlePlusAction('add_realm')">
-                                <i class="fas fa-globe" style="margin-right: 8px;"></i> **ADD REALM**
+                                <i class="fas fa-globe" style="margin-right: 8px;"></i> ADD REALM
                             </div>
                             <div class="dropdown-item" onclick="window.handlePlusAction('add_current')">
-                                <i class="fas fa-layer-group" style="margin-right: 8px;"></i> **ADD CURRENT**
+                                <i class="fas fa-layer-group" style="margin-right: 8px;"></i> ADD CURRENT
                             </div>
                         </div>
                     </div>
