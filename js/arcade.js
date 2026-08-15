@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:05:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1653,13 +1653,13 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
             <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
                 <div style="display: flex; align-items: center; gap: 0.8rem; margin-right: 0.5rem; position: relative;">
                     <!-- TOP BAR (+) DROPDOWN MENU -->
-                    <div class="plus-dropdown-wrapper" style="position: relative;">
+                    <div class="plus-dropdown-wrapper" style="position: relative; z-index: 10001;">
                         <i class="fa-solid fa-square-plus" id="top-bar-plus-icon" title="Add Options" onclick="window.togglePlusMenu(event)" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
-                        <div id="plus-dropdown-menu" class="glass-3d" style="display: none; position: fixed; top: 50px; right: 120px; left: auto; width: 160px; border-radius: 6px; padding: 6px 0; z-index: 999999;">
-                            <div class="dropdown-item" onclick="window.handlePlusAction('add_realm')">
+                        <div id="plus-dropdown-menu" class="glass-3d" style="display: none; position: absolute; top: 100%; right: 0; left: auto; width: 160px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 0; z-index: 100000; box-shadow: 0 8px 24px var(--card-shadow-color);">
+                            <div class="dropdown-item" onclick="window.handlePlusAction('add_realm')" style="position: relative; z-index: 100001; padding: 6px 12px; cursor: pointer; font-size: 11px; font-family: var(--branding-font); color: var(--branding-text-color);" onmouseover="this.style.background='var(--bg-color-mid)'" onmouseout="this.style.background='transparent'">
                                 <i class="fas fa-globe" style="margin-right: 8px;"></i> ADD REALM
                             </div>
-                            <div class="dropdown-item" onclick="window.handlePlusAction('add_current')">
+                            <div class="dropdown-item" onclick="window.handlePlusAction('add_current')" style="position: relative; z-index: 100001; padding: 6px 12px; cursor: pointer; font-size: 11px; font-family: var(--branding-font); color: var(--branding-text-color);" onmouseover="this.style.background='var(--bg-color-mid)'" onmouseout="this.style.background='transparent'">
                                 <i class="fas fa-layer-group" style="margin-right: 8px;"></i> ADD CURRENT
                             </div>
                         </div>
