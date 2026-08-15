@@ -1621,7 +1621,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const logoContent = window.genLogo(brandName, ownerPhotoUrl, isOwner);
         
     header.innerHTML = `
-        <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura); position: relative; z-index: 9999;">
+        <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura); position: relative; z-index: 99999;">
             
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='/index.html'">
