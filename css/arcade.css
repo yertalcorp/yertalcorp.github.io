@@ -295,6 +295,29 @@ main.max-width-limit {
     animation: fadeIn 0.3s ease-out;
 }
 
+/* --- TOP BAR (+) DROPDOWN MENU ITEMS --- */
+.dropdown-item {
+    font-size: 11px;
+    font-weight: 800;
+    font-family: var(--branding-font);
+    letter-spacing: 1px;
+    line-height: 1.4;
+    padding: 8px 14px;
+    cursor: pointer;
+    color: var(--branding-text-color);
+    text-shadow: 
+        0.5px 0.5px 0px var(--bg-color-high), 
+        1px 1px 3px var(--box-shadow-color);
+    transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background: var(--bg-color-mid);
+    color: var(--branding-color);
+    text-shadow: 0 0 8px var(--glow-aura);
+    transform: translateX(2px);
+}
+
 .back-btn {
     display: flex;
     align-items: center;
