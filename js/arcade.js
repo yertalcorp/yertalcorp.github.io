@@ -1723,6 +1723,7 @@ window.addEventListener('click', () => {
 });
 
 // 1. ADD REALM WORKFLOW
+// 1. ADD REALM WORKFLOW
 window.handlePlusAction = (action) => {
     const menu = document.getElementById('plus-dropdown-menu');
     if (menu) menu.style.display = 'none';
@@ -1745,12 +1746,14 @@ window.handlePlusAction = (action) => {
         }
 
         // Show Circuit Selection Modal
-        window.openCircuitSelectionHud();
+        const container = document.getElementById('currents-container');
+        const currentRealmId = new URLSearchParams(window.location.search).get('realm');
+        const activeRealm = databaseCache.realms?.[currentRealmId] || {};
+        renderCurrents(activeRealm.currents || {}, true, currentRealmId, profile, null, null, true);
     } else if (action === 'add_current') {
         window.openAddCurrentHud('add');
     }
 };
-
 // 2. DELETE REALM WORKFLOW
 window.confirmDeleteCurrentRealm = async () => {
     const authUser = firebase.auth().currentUser;
