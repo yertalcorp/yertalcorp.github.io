@@ -2659,7 +2659,10 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
 
 function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSparks, sharedSparkId, ownerUid) {
     console.log("[renderExistingRealm] Rendering active currents array with lazy loading...");
-
+    // Re-enable the + menu icon when viewing an established realm
+    const plusIcon = document.getElementById('top-bar-plus-icon');
+    if (plusIcon) plusIcon.style.display = 'inline-block';
+    
     const generateCurrentHTML = (current) => {
         const sparks = current.sparks ? Object.values(current.sparks).filter(spark => {
             const isSparkPublic = spark.privacy === 'public';
@@ -2786,6 +2789,10 @@ function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSpar
 
 function renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid) {
     console.log("[renderCircuitTemplates] Initializing template selector flow with search and pagination...");
+
+    // Hide the + menu icon while selecting a circuit template
+    const plusIcon = document.getElementById('top-bar-plus-icon');
+    if (plusIcon) plusIcon.style.display = 'none';
 
     const firstName = realm.realm_display_name?.split(' ')[0] || profile?.display_name?.split(' ')[0] || "Engineer";
     const rawRealmsCache = databaseCache.realms || {};
