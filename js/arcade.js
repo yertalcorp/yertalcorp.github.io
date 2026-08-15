@@ -1723,21 +1723,22 @@ window.addEventListener('click', () => {
 });
 
 // 1. ADD REALM WORKFLOW
-// 1. ADD REALM WORKFLOW
 window.handlePlusAction = (action) => {
     const menu = document.getElementById('plus-dropdown-menu');
     if (menu) menu.style.display = 'none';
 
     if (action === 'add_realm') {
-        const authUser = firebase.auth().currentUser;
+        const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
         if (!authUser) return;
 
         const profile = databaseCache.users?.[authUser.uid]?.profile || {};
-        const maxRealms = profile.max_realms || 1;
+        const userPlanType = profile.plan_type || 'free';
+        const planLimits = databaseCache.settings?.['plan_limits']?.[userPlanType] || {};
+        const maxRealms = profile.max_realms || planLimits.max_realms || 1;
 
-        // Count realms owned by the current user
+        // Count realms owned by the current user using both field references
         const userRealms = Object.entries(databaseCache.realms || {}).filter(
-            ([id, realm]) => realm.owner_uid === authUser.uid
+            ([id, realm]) => realm.realm_ownerid === authUser.uid || realm.owner_uid === authUser.uid
         );
 
         if (userRealms.length >= maxRealms) {
@@ -1745,7 +1746,7 @@ window.handlePlusAction = (action) => {
             return;
         }
 
-        // Show Circuit Selection Modal
+        // Trigger Circuit Selection Template View
         const container = document.getElementById('currents-container');
         const currentRealmId = new URLSearchParams(window.location.search).get('realm');
         const activeRealm = databaseCache.realms?.[currentRealmId] || {};
@@ -1754,6 +1755,7 @@ window.handlePlusAction = (action) => {
         window.openAddCurrentHud('add');
     }
 };
+
 // 2. DELETE REALM WORKFLOW
 window.confirmDeleteCurrentRealm = async () => {
     const authUser = firebase.auth().currentUser;
