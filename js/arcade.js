@@ -1621,7 +1621,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const logoContent = window.genLogo(brandName, ownerPhotoUrl, isOwner);
         
     header.innerHTML = `
-        <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura); position: relative; z-index: 99999;">
+        <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura);">
             
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='/index.html'">
@@ -1655,7 +1655,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
                     <!-- TOP BAR (+) DROPDOWN MENU -->
                     <div class="plus-dropdown-wrapper" style="position: relative; z-index: 10001;">
                         <i class="fa-solid fa-square-plus" id="top-bar-plus-icon" title="Add Options" onclick="window.togglePlusMenu(event)" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
-                        <div id="plus-dropdown-menu" class="glass-3d" style="display: none; position: absolute; top: 100%; right: 0; left: auto; width: 160px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 0; z-index: 100000; box-shadow: 0 8px 24px var(--card-shadow-color);">
+                        <div id="plus-dropdown-menu" class="glass-3d" style="display: none; position: absolute; top: 10px; right: 0; left: auto; width: 160px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 0; z-index: 100000; box-shadow: 0 8px 24px var(--card-shadow-color);">
                             <div class="dropdown-item" onclick="window.handlePlusAction('add_realm')" style="position: relative; z-index: 100001; padding: 6px 12px; cursor: pointer; font-size: 11px; font-family: var(--branding-font); color: var(--branding-text-color);" onmouseover="this.style.background='var(--bg-color-mid)'" onmouseout="this.style.background='transparent'">
                                 <i class="fas fa-globe" style="margin-right: 8px;"></i> ADD REALM
                             </div>
