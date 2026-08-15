@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:02:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2376,18 +2376,24 @@ function getCircuitCardPattern(circuitId) {
     canvas.height = 160;
     const ctx = canvas.getContext('2d');
 
-    // 1. Dark base background
-    ctx.fillStyle = '#080b10';
+    // Pull active root theme color or fallback to neon-dark high-bg
+    const computedStyle = getComputedStyle(document.documentElement);
+    const bgHigh = computedStyle.getPropertyValue('--bg-color-high').trim() || '#000102';
+    const glowColor = computedStyle.getPropertyValue('--glow-color').trim() || '#00f2ff';
+
+    // 1. Theme-aware base background
+    ctx.fillStyle = bgHigh;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Color theme logic based on circuitId
-    let mainHue = 'rgba(0, 229, 255, '; // Default cyan
-    if (circuitId.includes('physics') || circuitId.includes('kinetic')) mainHue = 'rgba(255, 0, 128, ';
-    if (circuitId.includes('astro') || circuitId.includes('horizon')) mainHue = 'rgba(138, 43, 226, ';
-    if (circuitId.includes('biotech') || circuitId.includes('helix')) mainHue = 'rgba(0, 255, 128, ';
+    let mainHue = glowColor; // Default to theme active glow
+    if (circuitId.includes('physics') || circuitId.includes('kinetic')) mainHue = 'rgba(255, 0, 128, 0.8)';
+    if (circuitId.includes('astro') || circuitId.includes('horizon')) mainHue = 'rgba(138, 43, 226, 0.8)';
+    if (circuitId.includes('biotech') || circuitId.includes('helix')) mainHue = 'rgba(0, 255, 128, 0.8)';
 
     // 2. Draw standard background grid
-    ctx.strokeStyle = mainHue + '0.25)';
+    ctx.strokeStyle = mainHue;
+    ctx.globalAlpha = 0.25;
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (let x = 0; x < canvas.width; x += 20) {
@@ -2403,7 +2409,8 @@ function getCircuitCardPattern(circuitId) {
     const frequency = 0.03 + Math.random() * 0.02;
     const amplitude = 12 + Math.random() * 10;
 
-    ctx.strokeStyle = mainHue + '0.35)';
+    ctx.strokeStyle = mainHue;
+    ctx.globalAlpha = 0.35;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let x = 0; x < canvas.width; x++) {
@@ -2413,8 +2420,9 @@ function getCircuitCardPattern(circuitId) {
     }
     ctx.stroke();
 
-    // 4. Draw Intense Starfield with Bright Sparks (White, Yellow, Electric Cyan)
-    const sparkColors = ['#ffffff', '#fff066', '#00f0ff', '#ff00aa'];
+    // 4. Draw Intense Starfield with Bright Sparks
+    ctx.globalAlpha = 1.0;
+    const sparkColors = ['#ffffff', glowColor];
     for (let i = 0; i < 35; i++) {
         const sx = Math.random() * canvas.width;
         const sy = Math.random() * canvas.height;
@@ -2428,7 +2436,7 @@ function getCircuitCardPattern(circuitId) {
         ctx.arc(sx, sy, radius, 0, Math.PI * 2);
         ctx.fill();
     }
-    ctx.shadowBlur = 0; // Reset glow state
+    ctx.shadowBlur = 0;
 
     return canvas.toDataURL();
 }
@@ -2790,7 +2798,7 @@ function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSpar
 function renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid) {
     console.log("[renderCircuitTemplates] Initializing template selector flow with search and pagination...");
 
-    // Hide the + menu icon while selecting a circuit template
+    // Hide top bar plus icon on circuit templates view
     const plusIcon = document.getElementById('top-bar-plus-icon');
     if (plusIcon) plusIcon.style.display = 'none';
 
@@ -2810,20 +2818,20 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
 
     // Helper: Blank Realm Card HTML
     const blankCardHTML = `
-        <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9));">
+        <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px var(--card-shadow-color));">
             <div class="action-card" onclick="window.initializeUserRealm('${realmId}', null)"
-                 style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px dashed var(--glow-color); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
-                <i class="fas fa-plus-circle" style="font-size: 1.8rem; color: var(--glow-color); margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px var(--glow-color)); z-index: 10;"></i>
-                <span class="metallic-text" style="position: relative; z-index: 10; font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; color: var(--glow-color);">
+                 style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px dashed var(--glow-color); box-shadow: inset 0 0 20px var(--box-shadow-color-glow);">
+                <i class="fas fa-plus-circle" style="font-size: 1.8rem; color: var(--glow-color); margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px var(--glow-color-aura)); z-index: 10;"></i>
+                <span class="metallic-text" style="position: relative; z-index: 10; font-family: var(--branding-font); font-size: 16px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; color: var(--glow-color);">
                     BLANK REALM
                 </span>
-                <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(0, 229, 255, 0.08) 0%, rgba(8,11,16,0.95) 100%); z-index: 1; pointer-events: none;"></div>
+                <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, var(--glow-color-aura) 0%, var(--bg-color-high) 100%); z-index: 1; pointer-events: none; opacity: 0.5;"></div>
             </div>
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
-                <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; min-height: 36px;">
+                <p style="font-size: 12px; color: var(--text-main-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; min-height: 36px;">
                     Initialize an empty laboratory to construct custom currents and sparks from scratch.
                 </p>
-                <button onclick="window.initializeUserRealm('${realmId}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px; opacity: 0.85;">
+                <button onclick="window.initializeUserRealm('${realmId}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 99px 12px; font-size: 11px; letter-spacing: 1.5px; opacity: 0.85;">
                     CREATE BLANK
                 </button>
             </div>
@@ -2836,20 +2844,20 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
         const patternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern(circuitId) : '';
 
         return `
-            <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9));">
+            <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px var(--card-shadow-color));">
                 <div class="action-card" onclick="window.initializeUserRealm('${realmId}', '${circuitId}')"
-                     style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: #080b10 !important; border: 1px solid var(--glow-aura); box-shadow: inset 0 0 20px rgba(0,0,0,0.95);">
-                    <span class="metallic-text" style="position: relative; z-index: 10; font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 0.6rem; color: var(--glow-color);">
+                     style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px solid var(--border-color); box-shadow: inset 0 0 20px var(--box-shadow-color-glow);">
+                    <span class="metallic-text" style="position: relative; z-index: 10; font-family: var(--branding-font); font-size: 16px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 0.6rem; color: var(--glow-color);">
                         ${circuit.realm_display_name || circuit.realm_title || 'UNTITLED REALM'}
                     </span>
                     <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 0.75rem; margin: 0; font-size: 11px; font-weight: 500; line-height: 1.3; max-width: 92%; opacity: 0.9;">
                         ${circuit.realm_title || ''}
                     </h4>
                     <img src="${patternImg}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; z-index: 1;">
-                    <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(8,11,16,0.45) 0%, rgba(8,11,16,0.9) 100%); z-index: 2; pointer-events: none;"></div>
+                    <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, var(--card-bg) 0%, var(--bg-color-high) 100%); z-index: 2; pointer-events: none; opacity: 0.6;"></div>
                 </div>
                 <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
-                    <p style="font-size: 12px; color: var(--branding-text-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; min-height: 36px;">
+                    <p style="font-size: 12px; color: var(--text-main-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; min-height: 36px;">
                         ${circuit.realm_subtitle || ''}
                     </p>
                     <button onclick="window.initializeUserRealm('${realmId}', '${circuitId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
@@ -2862,12 +2870,12 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
 
     // Inject Search Controls + Master Layout Frame
     container.innerHTML = `
-        <div class="welcome-zone animate-fadeIn" style="padding: 3rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 1.5rem; background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%); box-shadow: 0 20px 50px rgba(0,0,0,0.9);">
+        <div class="welcome-zone animate-fadeIn" style="padding: 3rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 1.5rem; background: var(--bg-color-mid); box-shadow: 0 20px 50px var(--card-shadow-color);">
             <div style="text-align: center; margin-bottom: 2rem;">
                 <h1 class="metallic-text" style="font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: 0.5rem; color: var(--branding-text-color);">
                     ${firstName}, Select Your Realm Circuit
                 </h1>
-                <p style="color: var(--glow-color); opacity: 0.6; letter-spacing: 3px; font-size: 11px; font-family: 'Orbitron', sans-serif; margin-bottom: 1.5rem;">
+                <p style="color: var(--glow-color); opacity: 0.8; letter-spacing: 3px; font-size: 11px; font-family: var(--branding-font); margin-bottom: 1.5rem;">
                     SELECT A PRE-BUILT BLUEPRINT OR START BLANK TO INITIALIZE
                 </p>
                 
@@ -2875,7 +2883,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
                 <div style="max-width: 500px; margin: 0 auto; position: relative;">
                     <input type="text" id="circuit-search-input" 
                            placeholder="Search blueprints (e.g., 'Arcade', '3D', 'Physics')..." 
-                           style="width: 100%; padding: 10px 16px; border-radius: 25px; border: 1px solid var(--glow-aura); background: rgba(8, 11, 16, 0.8); color: var(--branding-text-color); font-size: 13px; outline: none; transition: border-color 0.3s;">
+                           style="width: 100%; padding: 10px 16px; border-radius: 25px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main-color); font-size: 13px; outline: none; transition: border-color 0.3s;">
                 </div>
             </div>
 
@@ -2883,7 +2891,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
                 ${blankCardHTML}
             </div>
             
-            <div id="circuits-lazy-sentinel" style="text-align: center; padding: 2rem; color: var(--glow-color); opacity: 0.6; font-family: 'Orbitron', sans-serif; font-size: 11px;">
+            <div id="circuits-lazy-sentinel" style="text-align: center; padding: 2rem; color: var(--glow-color); opacity: 0.8; font-family: var(--branding-font); font-size: 11px;">
                 <i class="fas fa-circle-notch fa-spin"></i> LOADING_BLUEPRINTS...
             </div>
         </div>
@@ -2937,7 +2945,6 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
         searchInput.addEventListener('input', (e) => {
             activeFilterTerm = e.target.value;
             currentCircuitIndex = 0;
-            // Clear current grid cards (keep Blank Realm card at index 0)
             grid.innerHTML = blankCardHTML;
             sentinel.style.display = 'block';
             loadNextCircuitBatch();
