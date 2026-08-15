@@ -1659,7 +1659,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
                             <div class="dropdown-item" onclick="window.handlePlusAction('add_realm')" style="position: relative; z-index: 10000002;">
                                 <i class="fas fa-globe" style="margin-right: 8px;"></i> ADD REALM
                             </div>
-                            <div class="dropdown-item" onclick="window.handlePlusAction('add_current')" style="position: relative; z-index: 100002;">
+                            <div class="dropdown-item" onclick="window.handlePlusAction('add_current')" style="position: relative; z-index: 10000002;">
                                 <i class="fas fa-layer-group" style="margin-right: 8px;"></i> ADD CURRENT
                             </div>
                         </div>
