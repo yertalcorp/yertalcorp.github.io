@@ -296,10 +296,25 @@ main.max-width-limit {
 }
 
 /* --- TOP BAR (+) DROPDOWN MENU ITEMS --- */
+/* Ensure NAV sits on top of the status bar line */
+header#realm-header nav {
+    position: relative;
+    z-index: 1000;
+}
+
+/* --- TOP BAR (+) DROPDOWN MENU --- */
+#plus-dropdown-menu {
+    background: var(--card-bg, rgba(8, 11, 16, 0.85)) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px var(--glow-aura);
+}
+
 .dropdown-item {
     font-size: 11px;
     font-weight: 800;
-    font-family: var(--branding-font);
+    font-family: var(--branding-font, 'Orbitron', sans-serif);
     letter-spacing: 1px;
     line-height: 1.4;
     padding: 8px 14px;
