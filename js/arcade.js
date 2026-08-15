@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1727,6 +1727,10 @@ window.handlePlusAction = (action) => {
     const menu = document.getElementById('plus-dropdown-menu');
     if (menu) menu.style.display = 'none';
 
+    // Close side drawer when action is triggered
+    const drawer = document.getElementById('main-drawer');
+    if (drawer) drawer.classList.remove('active');
+
     if (action === 'add_realm') {
         const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
         if (!authUser) return;
@@ -1736,7 +1740,7 @@ window.handlePlusAction = (action) => {
         const planLimits = databaseCache.settings?.['plan_limits']?.[userPlanType] || {};
         const maxRealms = profile.max_realms || planLimits.max_realms || 1;
 
-        // Count realms owned by the current user using both field references
+        // Count realms owned by the current user
         const userRealms = Object.entries(databaseCache.realms || {}).filter(
             ([id, realm]) => realm.realm_ownerid === authUser.uid || realm.owner_uid === authUser.uid
         );
