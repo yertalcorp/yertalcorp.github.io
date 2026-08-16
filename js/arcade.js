@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:33:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -136,13 +136,14 @@ window.switchActiveRealm = async (targetRealmId) => {
 
     try {
         console.log(`[SWITCH REALM] Writing active_realm_id update to DB path: users/${authUser.uid}/profile/active_realm_id`);
-        // Explicitly set active_realm_id in Realtime DB
-        await update(ref(db), { [`users/${authUser.uid}/profile/active_realm_id`]: targetRealmId });
+        // Directly target the profile node for active_realm_id update
+        await update(ref(db, `users/${authUser.uid}/profile`), { active_realm_id: targetRealmId });
         
-        // Sync local memory cache
-        if (databaseCache.users?.[authUser.uid]?.profile) {
-            databaseCache.users[authUser.uid].profile.active_realm_id = targetRealmId;
-        }
+        // Sync local memory cache safely
+        if (!databaseCache.users) databaseCache.users = {};
+        if (!databaseCache.users[authUser.uid]) databaseCache.users[authUser.uid] = { profile: {} };
+        if (!databaseCache.users[authUser.uid].profile) databaseCache.users[authUser.uid].profile = {};
+        databaseCache.users[authUser.uid].profile.active_realm_id = targetRealmId;
 
         console.log(`[SWITCH REALM] Cache updated. Navigating to ?realm=${targetRealmId}`);
         window.location.href = `?realm=${targetRealmId}`;
