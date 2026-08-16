@@ -125,9 +125,13 @@ export async function createRealmNode(uid) {
 }
 
 
-// Function: openRealmSwitcherHud
 window.openRealmSwitcherHud = () => {
     console.log("[SWITCH REALM] Initiating openRealmSwitcherHud...");
+
+    // Close menu drawer when HUD is invoked
+    const drawer = document.getElementById('main-drawer');
+    if (drawer) drawer.classList.remove('active');
+
     const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
     console.log("[SWITCH REALM] Authenticated User:", authUser ? authUser.uid : "NONE");
     console.log("[SWITCH REALM] databaseCache.realms state:", databaseCache.realms);
@@ -150,7 +154,7 @@ window.openRealmSwitcherHud = () => {
     }
 
     let hudHtml = `
-        <div id="realm-switcher-modal" class="glass-hud" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:20000; padding:20px; border:1px solid var(--border-color); background:var(--card-bg);">
+        <div id="realm-switcher-modal" class="glass-hud" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:100005; padding:20px; border:1px solid var(--border-color); background:var(--card-bg);">
             <h3 class="metallic-text">SWITCH_REALM</h3>
             <div class="realm-list" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
     `;
@@ -179,8 +183,7 @@ window.openRealmSwitcherHud = () => {
     console.log("[SWITCH REALM] Modal appended to DOM successfully.");
 };
 
-
-// Function: switchActiveRealm
+// Function: switchActiveRealm *
 window.switchActiveRealm = async (targetRealmId) => {
     console.log(`[SWITCH REALM] switchActiveRealm invoked for targetRealmId: ${targetRealmId}`);
     const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
@@ -191,14 +194,15 @@ window.switchActiveRealm = async (targetRealmId) => {
 
     try {
         console.log(`[SWITCH REALM] Writing active_realm_id update to DB path: users/${authUser.uid}/profile/active_realm_id`);
-        // Set user's active_realm_id to the selected realm ID using modular Firebase functions
+        // Explicitly set active_realm_id in Realtime DB
         await update(ref(db), { [`users/${authUser.uid}/profile/active_realm_id`]: targetRealmId });
+        
+        // Sync local memory cache
         if (databaseCache.users?.[authUser.uid]?.profile) {
             databaseCache.users[authUser.uid].profile.active_realm_id = targetRealmId;
         }
 
         console.log(`[SWITCH REALM] Cache updated. Navigating to ?realm=${targetRealmId}`);
-        // Redirect to chosen realm
         window.location.href = `?realm=${targetRealmId}`;
     } catch (err) {
         console.error("[SWITCH REALM] Error executing switchActiveRealm:", err);
