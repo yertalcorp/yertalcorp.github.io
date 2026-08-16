@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:29:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3116,6 +3116,7 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
         if (submitBtn) submitBtn.innerText = "CONFIRM_CHANGES";
         
         const ownerUid = window.auth?.currentUser?.uid;
+        const realmId = new URLSearchParams(window.location.search).get('realm') || databaseCache.users?.[ownerUid]?.profile?.active_realm_id;
         const currentData = databaseCache.realms?.[realmId]?.currents?.[targetId];
 
         /* --- Inside openAddCurrentHud (Update Block) --- */
