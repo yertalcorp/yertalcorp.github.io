@@ -1992,7 +1992,7 @@ body > .yertal-navigator-widget,
 .hud-bubble:hover {
     background: var(--bg-color-mid);
     border-color: var(--glow-color);
-    color: var(--button-color);
+    color: var(--glow-color);
     transform: translateY(-3px);
     
     /* Apply the theme's specific glow color */
