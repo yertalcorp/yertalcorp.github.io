@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @11:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @11:55:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2783,30 +2783,30 @@ function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSpar
         ` : '';
         
         const controls = (isOwner && !isFull) ? `
-            <div class="current-prompt-container" style="padding: 4px 12px; box-sizing: border-box; overflow: hidden; width: 100%;">
+            <div class="current-prompt-container" style="padding: 6px 12px; box-sizing: border-box; overflow: hidden; width: 100%; background: var(--bg-color-low); border: none; border-radius: 4px;">
                 <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
                    <div class="input-wrapper" style="flex-grow: 1; position: relative; margin: 0; padding: 0;">
                        <input type="text" id="input-${current.id}" 
                           class="current-prompt-input"
-                          style="box-sizing: border-box; margin: 0; width: 100%; background: var(--card-bg); color: var(--text-main-color); border: 1px solid var(--border-color); font-family: var(--text-main-font);"
+                          style="box-sizing: border-box; margin: 0; width: 100%; background: var(--card-bg); color: var(--text-main-color); border: 1px solid var(--border-color); border-radius: 3px; font-family: var(--text-main-font);"
                           placeholder="Type a prompt (e.g. 'game', 'logic', 'physics') or paste a URL..." 
                           oninput="window.updatePromptInputHUD('${current.id}')"
                           onfocus="window.updatePromptInputHUD('${current.id}')"
                           onblur="setTimeout(() => { const h = document.getElementById('hud-${current.id}'); if(h) h.style.display = 'none'; }, 250)">
                     <div id="hud-${current.id}" class="floating-hud-container" style="display: none; background: var(--bg-color-mid); border: 1px solid var(--border-color);"></div>
                 </div>
-                   <button onclick="window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')" class="current-prompt-exec-button" style="background: var(--button-color); color: var(--button-text-color); border: 1px solid var(--button-border-color); font-family: var(--branding-font);">EXEC</button>
+                   <button onclick="window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')" class="current-prompt-exec-button">EXEC</button>
                       ${actionIcons}
                 </div>
             </div>
         ` : (isFull && isOwner) ? `
-            <div class="capacity-alert-container" style="display: flex; align-items: center; gap: 15px; width: 100%; padding: 4px 12px; box-sizing: border-box;">
+            <div class="capacity-alert-container" style="display: flex; align-items: center; gap: 15px; width: 100%; padding: 6px 12px; box-sizing: border-box; background: var(--bg-color-low); border: none; border-radius: 4px;">
                 <span style="color: var(--error-color); font-weight: bold; font-family: var(--branding-font); font-size: 0.8rem;">FULL</span>
                 ${capacityMeterHTML}
                 ${actionIcons}
             </div>
         ` : `
-            <div class="viewer-node-status" style="display: flex; align-items: center; gap: 15px; opacity: 0.8; padding: 4px 12px; box-sizing: border-box; width: 100%;">
+            <div class="viewer-node-status" style="display: flex; align-items: center; gap: 15px; opacity: 0.8; padding: 6px 12px; box-sizing: border-box; width: 100%; background: var(--bg-color-low); border: none; border-radius: 4px;">
                 ${capacityMeterHTML}
                 <div class="secure-node-static" style="color: var(--text-muted-color); font-family: var(--text-main-font);">Secure_Node [${ownerUid.substring(0,8)}]</div>
             </div>
