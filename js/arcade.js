@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:40:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -4094,9 +4094,15 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     const likeIconColor = hasLiked ? neonColor : pearlColor;
     const likeIconGlow = hasLiked ? neonGlow : "none";
 
+    // Privacy Hierarchy Check
+    const realmData = databaseCache?.realms?.[realmId] || {};
+    const currentData = realmData?.currents?.[currentId] || {};
+    const isHierarchyPrivate = realmData.realm_privacy === 'private' || currentData.privacy === 'private' || spark.privacy === 'private';
+
+    const disabledColor = "var(--fg-color-mid)";
     const hasShared = spark.stats?.reshares?.users?.[visitorUid] ? true : false;
-    const shareIconColor = hasShared ? neonColor : pearlColor;
-    const shareIconGlow = hasShared ? neonGlow : "none";
+    const shareIconColor = isHierarchyPrivate ? disabledColor : (hasShared ? neonColor : pearlColor);
+    const shareIconGlow = isHierarchyPrivate ? "none" : (hasShared ? neonGlow : "none");
 
     if (visitorUid && !isOwner) {
         (async () => {
@@ -4195,7 +4201,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
                         </button>
 
                         ${isOwner ? `
-                            <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="${isHierarchyPrivate ? 'Restricted: Private Node' : 'Share'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
                             </button>
                             <button onclick="deleteSpark('${realmId}', '${currentId}', '${spark.id}', '${ownerId}')" title="Delete" 
@@ -4208,7 +4214,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
                             <button id="${sparkElementId}" onclick="window.cloneSpark(this, '${visitorUid}', '${realmId}', '${currentId}', '${spark.id}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-save" style="font-size: 10px; color: ${toolIconColor};"></i>
                             </button>
-                            <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="Share" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                            <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="${isHierarchyPrivate ? 'Restricted: Private Node' : 'Share'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                                 <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
                             </button>
                             ${showPayOwnerIcon ? `
