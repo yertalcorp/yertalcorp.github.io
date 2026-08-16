@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:32:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1854,6 +1854,7 @@ window.confirmDeleteCurrentRealm = async () => {
     }
 };
 
+/* OpenRealmSwitcherHud */
 window.openRealmSwitcherHud = () => {
     console.log("[SWITCH REALM] Initiating openRealmSwitcherHud...");
 
@@ -1883,7 +1884,7 @@ window.openRealmSwitcherHud = () => {
     }
 
     let hudHtml = `
-        <div id="realm-switcher-modal" class="glass-hud" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:100005; padding:20px; border:1px solid var(--border-color); background:var(--card-bg);">
+        <div id="realm-switcher-modal" class="glass-hud active" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:999999; display:flex !important; flex-direction:column; opacity:1 !important; visibility:visible !important; pointer-events:auto !important; padding:20px; border:1px solid var(--border-color); background:var(--card-bg) !important; color:var(--branding-text-color); min-width:320px; box-shadow: 0 12px 40px rgba(0,0,0,0.85);">
             <h3 class="metallic-text">SWITCH_REALM</h3>
             <div class="realm-list" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
     `;
@@ -1900,7 +1901,7 @@ window.openRealmSwitcherHud = () => {
 
     hudHtml += `
             </div>
-            <button onclick="document.getElementById('realm-switcher-modal').remove()" style="margin-top:12px;">CLOSE</button>
+            <button onclick="document.getElementById('realm-switcher-modal').remove()" style="margin-top:12px;" class="ethereal-btn-sm">CLOSE</button>
         </div>
     `;
 
