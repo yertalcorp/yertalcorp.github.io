@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:29:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -59,55 +59,76 @@ let currentModelIndex = 0;
 
 export async function ensureActiveRealm(uid) {
     let userProfile = databaseCache.users?.[uid]?.profile || {};
-    
-    // Resolve display name: Priority Auth User -> Cache Profile -> Fallback 'PILOT'
-    const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
-    const resolvedDisplayName = authUser?.displayName || userProfile.display_name || "PILOT";
+    // Pure resolver: Returns active_realm_id if set; otherwise returns null without creating a stub in advance.
+    return userProfile.active_realm_id || null;
+}
+window.ensureActiveRealm = ensureActiveRealm;
 
-    let activeRealmId = userProfile.active_realm_id;
+export async function createRealmNode(uid) {
+    const userProfile = databaseCache.users?.[uid]?.profile || {};
+    const planType = userProfile.plan_type || 'free';
+    const planLimits = databaseCache.settings?.['plan_limits']?.[planType] || {};
+    const maxRealms = userProfile.max_realms || planLimits.max_realms || 1;
 
-    if (!activeRealmId) {
-        activeRealmId = generateRealmId();
-        const timestamp = Date.now();
-        const updates = {};
+    // 1. Central Quota Verification
+    const userRealms = Object.entries(databaseCache.realms || {}).filter(
+        ([id, realm]) => realm.realm_ownerid === uid || realm.owner_uid === uid
+    );
 
-        updates[`realms/${activeRealmId}`] = {
-            realm_id: activeRealmId,
-            realm_ownerid: uid,
-            realm_display_name: resolvedDisplayName,
-            realm_title: resolvedDisplayName !== "PILOT" ? `${resolvedDisplayName}'s Realm` : "MY REALM",
-            realm_subtitle: "Welcome to my Realm",
-            realm_logo: userProfile.photoURL || authUser?.photoURL || "/assets/images/YERTAL LOGO SIMPLE.png",
-            realm_theme: "neon-dark",
-            realm_privacy: "private",
-            realm_circuit: "custom",
-            realm_setup_complete: false,
-            realm_date_created: timestamp,
-            realm_last_updated: timestamp,
-            config: {
-                show_views: true,
-                show_likes: true,
-                show_feedback: true,
-                show_shares: true,
-                show_tips: false,
-                show_sales: false,
-                show_pay_owner: false
-            },
-            currents: {}
-        };
-
-        updates[`users/${uid}/profile/active_realm_id`] = activeRealmId;
-
-        await update(ref(db), updates);
-
-        if (!databaseCache.realms) databaseCache.realms = {};
-        databaseCache.realms[activeRealmId] = updates[`realms/${activeRealmId}`];
-        if (!databaseCache.users[uid]) databaseCache.users[uid] = { profile: {} };
-        databaseCache.users[uid].profile.active_realm_id = activeRealmId;
+    if (userRealms.length >= maxRealms) {
+        alert(`REALM_LIMIT_REACHED: Your plan allows a maximum of ${maxRealms} realm(s).`);
+        return null;
     }
 
-    return activeRealmId;
+    const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
+    const resolvedDisplayName = authUser?.displayName || userProfile.display_name || "PILOT";
+    const newRealmId = generateRealmId();
+    const timestamp = Date.now();
+
+    // 2. Build Stub Payload (realm_setup_complete = false)
+    const realmPayload = {
+        realm_id: newRealmId,
+        realm_ownerid: uid,
+        realm_display_name: resolvedDisplayName,
+        realm_title: resolvedDisplayName !== "PILOT" ? `${resolvedDisplayName}'s Realm` : "MY REALM",
+        realm_subtitle: "Welcome to my Realm",
+        realm_logo: userProfile.photoURL || authUser?.photoURL || "/assets/images/YERTAL LOGO SIMPLE.png",
+        realm_theme: "neon-dark",
+        realm_privacy: "private",
+        realm_circuit: "custom",
+        realm_setup_complete: false,
+        realm_date_created: timestamp,
+        realm_last_updated: timestamp,
+        config: {
+            show_views: true,
+            show_likes: true,
+            show_feedback: true,
+            show_shares: true,
+            show_tips: false,
+            show_sales: false,
+            show_pay_owner: false
+        },
+        currents: {}
+    };
+
+    // 3. Commit Database Node Creation & Active Pointer Update
+    const updates = {};
+    updates[`realms/${newRealmId}`] = realmPayload;
+    updates[`users/${uid}/profile/active_realm_id`] = newRealmId;
+
+    await update(ref(db), updates);
+
+    // 4. Local Cache Synchronization
+    if (!databaseCache.realms) databaseCache.realms = {};
+    databaseCache.realms[newRealmId] = realmPayload;
+    if (!databaseCache.users) databaseCache.users = {};
+    if (!databaseCache.users[uid]) databaseCache.users[uid] = { profile: {} };
+    databaseCache.users[uid].profile.active_realm_id = newRealmId;
+
+    return newRealmId;
 }
+window.createRealmNode = createRealmNode;
+
 window.getUserCountry = async function() {
     try {
         const response = await fetch('https://ipapi.co/json/');
@@ -1747,7 +1768,6 @@ window.addEventListener('click', () => {
     if (menu) menu.style.display = 'none';
 });
 
-// 1. ADD REALM WORKFLOW
 window.handlePlusAction = (action) => {
     const menu = document.getElementById('plus-dropdown-menu');
     if (menu) menu.style.display = 'none';
@@ -1760,31 +1780,18 @@ window.handlePlusAction = (action) => {
         const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
         if (!authUser) return;
 
-        const profile = databaseCache.users?.[authUser.uid]?.profile || {};
-        const userPlanType = profile.plan_type || 'free';
-        const planLimits = databaseCache.settings?.['plan_limits']?.[userPlanType] || {};
-        const maxRealms = profile.max_realms || planLimits.max_realms || 1;
-
-        // Count realms owned by the current user
-        const userRealms = Object.entries(databaseCache.realms || {}).filter(
-            ([id, realm]) => realm.realm_ownerid === authUser.uid || realm.owner_uid === authUser.uid
-        );
-
-        if (userRealms.length >= maxRealms) {
-            alert(`REALM_LIMIT_REACHED: Your plan allows a maximum of ${maxRealms} realm(s).`);
-            return;
-        }
-
-        // Trigger Circuit Selection Template View
+        // Render circuit template selector
+        // Quota is enforced centrally by createRealmNode when a template card is clicked
         const container = document.getElementById('currents-container');
         const currentRealmId = new URLSearchParams(window.location.search).get('realm');
+        const profile = databaseCache.users?.[authUser.uid]?.profile || {};
         const activeRealm = databaseCache.realms?.[currentRealmId] || {};
+        
         renderCurrents(activeRealm.currents || {}, true, currentRealmId, profile, null, null, true);
     } else if (action === 'add_current') {
         window.openAddCurrentHud('add');
     }
 };
-
 // 2. DELETE REALM WORKFLOW
 window.confirmDeleteCurrentRealm = async () => {
     const authUser = firebase.auth().currentUser;
@@ -2466,45 +2473,22 @@ function getCircuitCardPattern(circuitId) {
     return canvas.toDataURL();
 }
 
-async function initializeUserRealm(targetRealmId, templateId) {
+async function initializeUserRealm(targetRealmId, templateId = null) {
     try {
         const user = auth.currentUser;
-        if (!user) {
-            alert("Authentication required.");
+        if (!user || !targetRealmId) {
+            alert("Authentication and valid Target Realm ID required.");
             return null;
         }
 
-        const uid = user.uid;
         const timestamp = Date.now();
-        const userProfile = databaseCache.users?.[uid]?.profile || {};
+        const userProfile = databaseCache.users?.[user.uid]?.profile || {};
         const settings = databaseCache.settings || {};
         const planType = userProfile.plan_type || 'free';
-        const limits = settings.plan_limits?.[planType] || { max_realms: 3, max_currents: 5, max_sparks: 10 };
-
+        const limits = settings.plan_limits?.[planType] || { max_currents: 5, max_sparks: 10 };
         const allRealms = databaseCache.realms ? Object.values(databaseCache.realms) : [];
-        const userRealms = allRealms.filter(r => r.realm_ownerid === uid);
 
-        let finalRealmId = targetRealmId;
-        let isNewRealm = false;
-
-        // Determine if we are creating a brand new realm ID
-        if (!finalRealmId || finalRealmId === 'NEW' || targetRealmId === null) {
-            isNewRealm = true;
-        }
-
-        // Quota check if initializing a NEW realm
-        if (isNewRealm) {
-            if (userRealms.length >= limits.max_realms) {
-                alert(`Realm creation limit reached (${userRealms.length}/${limits.max_realms}) for your ${planType.toUpperCase()} plan.`);
-                return null;
-            }
-            finalRealmId = `realm-${timestamp}-${Math.floor(Math.random() * 1000000)}`;
-        }
-
-        // Setup base realm payload
-        const updates = {};
         let selectedCircuit = null;
-
         if (templateId) {
             selectedCircuit = allRealms.find(r => 
                 (r.is_circuit_template === true || String(r.is_circuit_template).toLowerCase() === 'true') && 
@@ -2512,29 +2496,29 @@ async function initializeUserRealm(targetRealmId, templateId) {
             );
         }
 
-        const realmPayload = {
-            realm_id: finalRealmId,
-            realm_ownerid: uid,
-            created_at: timestamp,
-            realm_last_updated: timestamp,
-            realm_setup_complete: true,
-            is_circuit_template: false,
-            realm_circuit: templateId || "custom",
-            realm_title: selectedCircuit?.realm_title || "Custom Laboratory",
-            realm_subtitle: selectedCircuit?.realm_subtitle || "Workspace",
-            realm_display_name: selectedCircuit?.realm_display_name || "New Realm"
-        };
-
-        // Write realm container & update active realm pointer
-        updates[`realms/${finalRealmId}`] = realmPayload;
-        updates[`users/${uid}/profile/active_realm_id`] = finalRealmId;
-
-        if (!databaseCache.realms) databaseCache.realms = {};
-        databaseCache.realms[finalRealmId] = { ...realmPayload, currents: {} };
+        // 1. Mark existing stub as complete and apply circuit metadata
+        const updates = {};
+        updates[`realms/${targetRealmId}/realm_setup_complete`] = true;
+        updates[`realms/${targetRealmId}/realm_last_updated`] = timestamp;
+        updates[`realms/${targetRealmId}/realm_circuit`] = templateId || "custom";
+        updates[`realms/${targetRealmId}/realm_title`] = selectedCircuit?.realm_title || "Custom Laboratory";
+        updates[`realms/${targetRealmId}/realm_subtitle`] = selectedCircuit?.realm_subtitle || "Workspace";
+        updates[`realms/${targetRealmId}/realm_display_name`] = selectedCircuit?.realm_display_name || "New Realm";
 
         await update(ref(db), updates);
 
-        // Process currents and sparks from template (if selected)
+        if (databaseCache.realms?.[targetRealmId]) {
+            Object.assign(databaseCache.realms[targetRealmId], {
+                realm_setup_complete: true,
+                realm_last_updated: timestamp,
+                realm_circuit: templateId || "custom",
+                realm_title: updates[`realms/${targetRealmId}/realm_title`],
+                realm_subtitle: updates[`realms/${targetRealmId}/realm_subtitle`],
+                realm_display_name: updates[`realms/${targetRealmId}/realm_display_name`]
+            });
+        }
+
+        // 2. Populate currents and sparks into the allocated node
         if (selectedCircuit && selectedCircuit.currents) {
             const cleanType = (selectedCircuit.realm_display_name || selectedCircuit.realm_title || 'Custom')
                 .replace(/\bREALM\b/gi, '')
@@ -2543,21 +2527,17 @@ async function initializeUserRealm(targetRealmId, templateId) {
             const templateCurrents = typeof selectedCircuit.currents === 'object' 
                 ? Object.values(selectedCircuit.currents) 
                 : [];
-
-            // Respect max_currents quota limit
             const currentsToProcess = templateCurrents.slice(0, limits.max_currents);
 
             for (let currIdx = 0; currIdx < currentsToProcess.length; currIdx++) {
                 const curr = currentsToProcess[currIdx];
-                
                 const currentId = (curr.name || `current-${currIdx}`)
                     .toLowerCase()
                     .replace(/[^a-z0-9\s-]/g, '')
                     .trim()
                     .replace(/\s+/g, '-');
                     
-                const currentPath = getCurrentPath(finalRealmId, currentId);
-                
+                const currentPath = getCurrentPath(targetRealmId, currentId);
                 const currentPayload = {
                     id: currentId,
                     name: curr.name || "Active Current",
@@ -2569,64 +2549,61 @@ async function initializeUserRealm(targetRealmId, templateId) {
 
                 await saveToRealtimeDB(currentPath, currentPayload);
 
-                if (!databaseCache.realms[finalRealmId].currents) {
-                    databaseCache.realms[finalRealmId].currents = {};
+                if (!databaseCache.realms[targetRealmId].currents) {
+                    databaseCache.realms[targetRealmId].currents = {};
                 }
-                databaseCache.realms[finalRealmId].currents[currentId] = {
+                databaseCache.realms[targetRealmId].currents[currentId] = {
                     ...currentPayload,
                     sparks: {}
                 };
-                
-                // Process sparks with max_sparks quota enforcement
+
                 if (curr.sparks && typeof curr.sparks === 'object') {
                     const templateSparks = Object.values(curr.sparks);
                     const sparksToProcess = templateSparks.slice(0, limits.max_sparks);
 
                     for (let sparkIdx = 0; sparkIdx < sparksToProcess.length; sparkIdx++) {
                         const templateSpark = sparksToProcess[sparkIdx];
-                        
                         const sparkIndex = templateSpark.index !== undefined ? templateSpark.index : sparkIdx;
                         const cachedArchetype = databaseCache.settings?.[REALM_CACHE]?.[sparkIndex] || {};
-                        const archetypeImg = cachedArchetype.image;
-
-                        let resolvedImage = templateSpark.image;
-
-                        if (!resolvedImage || !(await checkImageExists(resolvedImage))) {
-                            if (archetypeImg && (await checkImageExists(archetypeImg))) {
-                                resolvedImage = archetypeImg;
-                            } else {
-                                resolvedImage = getArcadeImageFromPrompt(templateSpark.name || cachedArchetype.name);
-                            }
-                        }
-
+                        
                         const sparkData = {
                             name: templateSpark.name || cachedArchetype.name || `Spark #${sparkIndex}`,
-                            image: resolvedImage,
+                            image: templateSpark.image || cachedArchetype.image || getArcadeImageFromPrompt(templateSpark.name),
                             index: sparkIndex
                         };
 
-                        const prompt = cachedArchetype.example_prompt || '';
-                        const detectedTemplate = cachedArchetype.name || 'Custom';
-                        const templateUrl = sparkData.image;
-
-                        await saveSpark(finalRealmId, currentId, sparkData, prompt, detectedTemplate, templateUrl, 'private');
+                        await saveSpark(targetRealmId, currentId, sparkData, cachedArchetype.example_prompt || '', cachedArchetype.name || 'Custom', sparkData.image, 'private');
                     }
                 }
             }
         }
 
-        // Set active realm location and reload workspace
-        window.location.href = `?realm=${finalRealmId}`;
-        return finalRealmId;
+        window.location.href = `?realm=${targetRealmId}`;
+        return targetRealmId;
 
     } catch (error) {
-        console.error("Failed to initialize user realm:", error);
-        alert("Failed to initialize realm. Please try again.");
+        console.error("Failed to populate user realm:", error);
+        alert("Failed to populate realm content.");
         return null;
     }
 }
+window.initializeUserRealm = initializeUserRealm;
+// Orchestrator: Allocates a new node on card click, then populates it immediately
+window.selectAndInitializeCircuit = async (templateId = null) => {
+    const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
+    if (!authUser) {
+        alert("Authentication required.");
+        return;
+    }
 
-// Expose helper to global window scope for inline onclick hooks
+    // 1. Allocate stub node on demand (enforces quota)
+    const newRealmId = await window.createRealmNode(authUser.uid);
+    if (!newRealmId) return;
+
+    // 2. Populate node with chosen circuit or blank template
+    await window.initializeUserRealm(newRealmId, templateId);
+};
+
 window.initializeUserRealm = initializeUserRealm;
 
 function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sharedSparkId, createNewRealm = false) {
