@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:33:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:46:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1899,22 +1899,26 @@ window.openRealmSwitcherHud = () => {
                     <button onclick="document.getElementById('realm-switcher-overlay').remove()" style="background: none; border: none; color: var(--branding-text-color, #fff); font-size: 1.2rem; cursor: pointer; opacity: 0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</button>
                 </div>
 
-                <div class="realm-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
-                    ${userRealms.map(([id, realm]) => {
-                        const title = realm.realm_title || 'UNTITLED_REALM';
-                        const isActive = id === databaseCache.users?.[authUser.uid]?.profile?.active_realm_id;
-                        return `
-                            <div onclick="window.switchActiveRealm('${id}')" style="cursor: pointer; padding: 12px; border-radius: 6px; border: 1px solid ${isActive ? 'var(--glow-color, #00f2ff)' : 'var(--border-color, rgba(255,255,255,0.15))'}; background: ${isActive ? 'var(--bg-color-mid, rgba(0, 242, 255, 0.1))' : 'var(--bg-color-low, rgba(255,255,255,0.03))'}; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--glow-color, #00f2ff)';" onmouseout="this.style.borderColor='${isActive ? 'var(--glow-color, #00f2ff)' : 'var(--border-color, rgba(255,255,255,0.15))'}';">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span class="metallic-text" style="font-weight: 700; font-size: 13px; color: var(--branding-text-color, #fff);">${title}</span>
-                                    ${isActive ? '<span style="font-size: 9px; padding: 2px 6px; border-radius: 3px; background: var(--glow-color, #00f2ff); color: var(--bg-color, #000); font-weight: 900;">ACTIVE</span>' : ''}
-                                </div>
-                                <span style="font-size: 10px; opacity: 0.5; font-family: monospace;">${id}</span>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
+// Inside Function: openRealmSwitcherHud
 
+    <div class="realm-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+        ${userRealms.map(([id, realm]) => {
+            const title = realm.realm_title || 'UNTITLED_REALM';
+            const isActive = id === databaseCache.users?.[authUser.uid]?.profile?.active_realm_id;
+            return `
+                <div onclick="window.switchActiveRealm('${id}')" 
+                     style="cursor: pointer; padding: 12px; border-radius: 6px; border: 1px solid ${isActive ? 'var(--glow-color, #00f2ff)' : 'var(--border-color, rgba(255,255,255,0.15))'}; background: ${isActive ? 'var(--bg-color-mid, rgba(0, 242, 255, 0.1))' : 'var(--bg-color-low, rgba(255,255,255,0.03))'}; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s;" 
+                     onmouseover="this.style.background='var(--glow-color)'; this.style.borderColor='var(--glow-color)'; this.querySelectorAll('.realm-card-text').forEach(el => el.style.color='var(--bg-color)');"
+                     onmouseout="this.style.background='${isActive ? 'var(--bg-color-mid, rgba(0, 242, 255, 0.1))' : 'var(--bg-color-low, rgba(255,255,255,0.03))'}'; this.style.borderColor='${isActive ? 'var(--glow-color, #00f2ff)' : 'var(--border-color, rgba(255,255,255,0.15))'}'; this.querySelectorAll('.realm-card-text').forEach(el => el.style.color='');">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="metallic-text realm-card-text" style="font-weight: 700; font-size: 13px; color: var(--branding-text-color, #fff); transition: color 0.2s;">${title}</span>
+                        ${isActive ? '<span style="font-size: 9px; padding: 2px 6px; border-radius: 3px; background: var(--glow-color, #00f2ff); color: var(--bg-color, #000); font-weight: 900;">ACTIVE</span>' : ''}
+                    </div>
+                    <span class="realm-card-text" style="font-size: 10px; opacity: 0.7; font-family: monospace; transition: color 0.2s;">${id}</span>
+                </div>
+            `;
+        }).join('')}
+    </div>
                 <button onclick="document.getElementById('realm-switcher-overlay').remove()" class="ethereal-btn-sm" style="width: 100%; padding: 10px; font-size: 11px; letter-spacing: 1.5px; margin-top: 6px;">
                     CANCEL
                 </button>
