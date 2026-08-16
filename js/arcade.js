@@ -2441,117 +2441,166 @@ function getCircuitCardPattern(circuitId) {
     return canvas.toDataURL();
 }
 
-async function initializeUserRealm(realmId, templateId) {
+async function initializeUserRealm(targetRealmId, templateId) {
     try {
-        const updates = {};
-        const timestamp = Date.now();
-        
-        updates[`realms/${realmId}/realm_setup_complete`] = true;
-        updates[`realms/${realmId}/realm_last_updated`] = timestamp;
-        // Set selected template ID or default to "custom" if blank option is chosen
-        updates[`realms/${realmId}/realm_circuit`] = templateId || "custom";
-
-        if (databaseCache.realms?.[realmId]) {
-            databaseCache.realms[realmId].realm_setup_complete = true;
-            databaseCache.realms[realmId].realm_last_updated = timestamp;
-            databaseCache.realms[realmId].realm_circuit = templateId || "custom";
+        const user = auth.currentUser;
+        if (!user) {
+            alert("Authentication required.");
+            return null;
         }
 
-        await update(ref(db), updates);
+        const uid = user.uid;
+        const timestamp = Date.now();
+        const userProfile = databaseCache.users?.[uid]?.profile || {};
+        const settings = databaseCache.settings || {};
+        const planType = userProfile.plan_type || 'free';
+        const limits = settings.plan_limits?.[planType] || { max_realms: 3, max_currents: 5, max_sparks: 10 };
+
+        const allRealms = databaseCache.realms ? Object.values(databaseCache.realms) : [];
+        const userRealms = allRealms.filter(r => r.realm_ownerid === uid);
+
+        let finalRealmId = targetRealmId;
+        let isNewRealm = false;
+
+        // Determine if we are creating a brand new realm ID
+        if (!finalRealmId || finalRealmId === 'NEW' || targetRealmId === null) {
+            isNewRealm = true;
+        }
+
+        // Quota check if initializing a NEW realm
+        if (isNewRealm) {
+            if (userRealms.length >= limits.max_realms) {
+                alert(`Realm creation limit reached (${userRealms.length}/${limits.max_realms}) for your ${planType.toUpperCase()} plan.`);
+                return null;
+            }
+            finalRealmId = `realm-${timestamp}-${Math.floor(Math.random() * 1000000)}`;
+        }
+
+        // Setup base realm payload
+        const updates = {};
+        let selectedCircuit = null;
 
         if (templateId) {
-            // LEVEL 1: Convert realms object map to array
-            const allRealms = databaseCache.realms ? Object.values(databaseCache.realms) : [];
-            const selectedCircuit = allRealms.find(r => 
+            selectedCircuit = allRealms.find(r => 
                 (r.is_circuit_template === true || String(r.is_circuit_template).toLowerCase() === 'true') && 
                 (r.realm_circuit === templateId || r.realm_id === templateId)
             );
+        }
 
-            if (selectedCircuit && selectedCircuit.currents) {
-                const cleanType = (selectedCircuit.realm_display_name || selectedCircuit.realm_title || 'Custom')
-                    .replace(/\bREALM\b/gi, '')
-                    .trim();
+        const realmPayload = {
+            realm_id: finalRealmId,
+            realm_ownerid: uid,
+            created_at: timestamp,
+            realm_last_updated: timestamp,
+            realm_setup_complete: true,
+            is_circuit_template: false,
+            realm_circuit: templateId || "custom",
+            realm_title: selectedCircuit?.realm_title || "Custom Laboratory",
+            realm_subtitle: selectedCircuit?.realm_subtitle || "Workspace",
+            realm_display_name: selectedCircuit?.realm_display_name || "New Realm"
+        };
 
-                // LEVEL 2: Convert nested currents object into array
-                const templateCurrents = typeof selectedCircuit.currents === 'object' 
-                    ? Object.values(selectedCircuit.currents) 
-                    : [];
+        // Write realm container & update active realm pointer
+        updates[`realms/${finalRealmId}`] = realmPayload;
+        updates[`users/${uid}/profile/active_realm_id`] = finalRealmId;
 
-                for (let currIdx = 0; currIdx < templateCurrents.length; currIdx++) {
-                    const curr = templateCurrents[currIdx];
+        if (!databaseCache.realms) databaseCache.realms = {};
+        databaseCache.realms[finalRealmId] = { ...realmPayload, currents: {} };
+
+        await update(ref(db), updates);
+
+        // Process currents and sparks from template (if selected)
+        if (selectedCircuit && selectedCircuit.currents) {
+            const cleanType = (selectedCircuit.realm_display_name || selectedCircuit.realm_title || 'Custom')
+                .replace(/\bREALM\b/gi, '')
+                .trim();
+
+            const templateCurrents = typeof selectedCircuit.currents === 'object' 
+                ? Object.values(selectedCircuit.currents) 
+                : [];
+
+            // Respect max_currents quota limit
+            const currentsToProcess = templateCurrents.slice(0, limits.max_currents);
+
+            for (let currIdx = 0; currIdx < currentsToProcess.length; currIdx++) {
+                const curr = currentsToProcess[currIdx];
+                
+                const currentId = (curr.name || `current-${currIdx}`)
+                    .toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .trim()
+                    .replace(/\s+/g, '-');
                     
-                    const currentId = (curr.name || `current-${currIdx}`)
-                        .toLowerCase()
-                        .replace(/[^a-z0-9\s-]/g, '')
-                        .trim()
-                        .replace(/\s+/g, '-');
+                const currentPath = getCurrentPath(finalRealmId, currentId);
+                
+                const currentPayload = {
+                    id: currentId,
+                    name: curr.name || "Active Current",
+                    type: cleanType,
+                    privacy: 'private',
+                    date_created: timestamp,
+                    last_updated: timestamp
+                };
+
+                await saveToRealtimeDB(currentPath, currentPayload);
+
+                if (!databaseCache.realms[finalRealmId].currents) {
+                    databaseCache.realms[finalRealmId].currents = {};
+                }
+                databaseCache.realms[finalRealmId].currents[currentId] = {
+                    ...currentPayload,
+                    sparks: {}
+                };
+                
+                // Process sparks with max_sparks quota enforcement
+                if (curr.sparks && typeof curr.sparks === 'object') {
+                    const templateSparks = Object.values(curr.sparks);
+                    const sparksToProcess = templateSparks.slice(0, limits.max_sparks);
+
+                    for (let sparkIdx = 0; sparkIdx < sparksToProcess.length; sparkIdx++) {
+                        const templateSpark = sparksToProcess[sparkIdx];
                         
-                    const currentPath = getCurrentPath(realmId, currentId);
-                    
-                    const currentPayload = {
-                        id: currentId,
-                        name: curr.name || "Active Current",
-                        type: cleanType,
-                        privacy: 'private',
-                        date_created: timestamp,
-                        last_updated: timestamp
-                    };
+                        const sparkIndex = templateSpark.index !== undefined ? templateSpark.index : sparkIdx;
+                        const cachedArchetype = databaseCache.settings?.[REALM_CACHE]?.[sparkIndex] || {};
+                        const archetypeImg = cachedArchetype.image;
 
-                    await saveToRealtimeDB(currentPath, currentPayload);
+                        let resolvedImage = templateSpark.image;
 
-                    if (!databaseCache.realms[realmId].currents) {
-                        databaseCache.realms[realmId].currents = {};
-                    }
-                    databaseCache.realms[realmId].currents[currentId] = {
-                        ...currentPayload,
-                        sparks: {}
-                    };
-                    
-                    // LEVEL 3: Convert nested sparks object into array
-                    if (curr.sparks && typeof curr.sparks === 'object') {
-                        const templateSparks = Object.values(curr.sparks);
-                        for (let sparkIdx = 0; sparkIdx < templateSparks.length; sparkIdx++) {
-                            const templateSpark = templateSparks[sparkIdx];
-                            
-                            const sparkIndex = templateSpark.index !== undefined ? templateSpark.index : sparkIdx;
-                            const cachedArchetype = databaseCache.settings?.[REALM_CACHE]?.[sparkIndex] || {};
-                            const archetypeImg = cachedArchetype.image;
-
-                            let resolvedImage = templateSpark.image;
-
-                            if (!resolvedImage || !(await checkImageExists(resolvedImage))) {
-                                if (archetypeImg && (await checkImageExists(archetypeImg))) {
-                                    resolvedImage = archetypeImg;
-                                } else {
-                                    resolvedImage = getArcadeImageFromPrompt(templateSpark.name || cachedArchetype.name);
-                                }
+                        if (!resolvedImage || !(await checkImageExists(resolvedImage))) {
+                            if (archetypeImg && (await checkImageExists(archetypeImg))) {
+                                resolvedImage = archetypeImg;
+                            } else {
+                                resolvedImage = getArcadeImageFromPrompt(templateSpark.name || cachedArchetype.name);
                             }
-
-                            const sparkData = {
-                                name: templateSpark.name || cachedArchetype.name || `Spark #${sparkIndex}`,
-                                image: resolvedImage,
-                                index: sparkIndex
-                            };
-
-                            const prompt = cachedArchetype.example_prompt || '';
-                            const detectedTemplate = cachedArchetype.name || 'Custom';
-                            const templateUrl = sparkData.image;
-
-                            await saveSpark(realmId, currentId, sparkData, prompt, detectedTemplate, templateUrl, 'private');
                         }
+
+                        const sparkData = {
+                            name: templateSpark.name || cachedArchetype.name || `Spark #${sparkIndex}`,
+                            image: resolvedImage,
+                            index: sparkIndex
+                        };
+
+                        const prompt = cachedArchetype.example_prompt || '';
+                        const detectedTemplate = cachedArchetype.name || 'Custom';
+                        const templateUrl = sparkData.image;
+
+                        await saveSpark(finalRealmId, currentId, sparkData, prompt, detectedTemplate, templateUrl, 'private');
                     }
                 }
             }
         }
 
-        await refreshUI();
+        // Set active realm location and reload workspace
+        window.location.href = `?realm=${finalRealmId}`;
+        return finalRealmId;
 
     } catch (error) {
         console.error("Failed to initialize user realm:", error);
         alert("Failed to initialize realm. Please try again.");
+        return null;
     }
 }
-    
+
 // Expose helper to global window scope for inline onclick hooks
 window.initializeUserRealm = initializeUserRealm;
 
