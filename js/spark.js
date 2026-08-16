@@ -707,7 +707,7 @@ async function openSparkEditor(spark) {
         editorOverlay.id = 'spark-editor-modal';
         editorOverlay.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(12px);
             display: flex; justify-content: center; align-items: center; z-index: 10000;
         `;
         document.body.appendChild(editorOverlay);
@@ -715,38 +715,73 @@ async function openSparkEditor(spark) {
 
     const currentPrivacy = spark.privacy || 'public';
 
+    // Concentric bands created via stacked alternating box-shadows (3px intervals)
+    const concentricRingStyle = `
+        position: relative;
+        background: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: 
+            0 0 0 3px var(--bg-color),
+            0 0 0 6px var(--glow-color),
+            0 0 0 9px var(--bg-color),
+            0 0 0 12px var(--glow-color),
+            0 0 35px var(--glow-aura),
+            0 15px 40px var(--card-shadow-color);
+        margin: 16px;
+    `;
+
+    const abortBtnStyle = `
+        transition: all 0.3s ease;
+        border: 1px solid var(--branding-text-color);
+        color: var(--branding-text-color);
+        background: transparent;
+        font-family: var(--branding-font);
+        letter-spacing: 1px;
+    `;
+
     editorOverlay.innerHTML = `
-        <div class="hud-body-centered glass-3d w-full max-w-xl p-8">
-            <h2 class="hud-title-metallic">Modify Spark</h2>
-            <hr class="metallic-divider w-full">
+        <div class="hud-body-centered glass-3d w-full max-w-xl p-8" style="${concentricRingStyle}">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 0.5rem;">
+                <i class="fas fa-sliders-h" style="color: var(--glow-color); font-size: 1.2rem; filter: drop-shadow(0 0 8px var(--glow-color));"></i>
+                <h2 class="hud-title-metallic" style="margin: 0; letter-spacing: 2px;">MODIFY SPARK</h2>
+            </div>
+            <hr class="metallic-divider w-full" style="border-color: var(--glow-aura); opacity: 0.6; margin-bottom: 1.5rem;">
 
             <div class="hud-input-group mt-4">
-                <label class="hud-label-metallic">Internal Identity (Name)</label>
-                <input type="text" id="edit-name-input" value="${spark.name}" class="hud-input">
+                <label class="hud-label-metallic" style="font-size: 10px; letter-spacing: 1.5px; opacity: 0.8;">INTERNAL IDENTITY (NAME)</label>
+                <input type="text" id="edit-name-input" value="${spark.name}" class="hud-input" style="border: 1px solid var(--glow-aura); background: var(--bg-color-low); color: var(--branding-text-color);">
             </div>
 
-            <div class="hud-input-group">
-                <label class="hud-label-metallic">Visibility Protocol (Privacy)</label>
-                <select id="edit-privacy-select" class="hud-input" style="background: var(--bg-color-mid); color: var(--branding-text-color);">
+            <div class="hud-input-group mt-3">
+                <label class="hud-label-metallic" style="font-size: 10px; letter-spacing: 1.5px; opacity: 0.8;">VISIBILITY PROTOCOL (PRIVACY)</label>
+                <select id="edit-privacy-select" class="hud-input" style="background: var(--bg-color-mid); color: var(--branding-text-color); border: 1px solid var(--glow-aura);">
                     <option value="public" ${currentPrivacy === 'public' ? 'selected' : ''}>PUBLIC</option>
                     <option value="unlisted" ${currentPrivacy === 'unlisted' ? 'selected' : ''}>UNLISTED</option>
                     <option value="private" ${currentPrivacy === 'private' ? 'selected' : ''}>PRIVATE</option>
                 </select>
             </div>
 
-            <div class="hud-input-group">
-                <label class="hud-label-metallic">Choose Cover</label>
-                <div id="unsplash-grid" class="grid grid-cols-4 gap-3 mb-2 experiment-zone min-h-[120px]">
+            <div class="hud-input-group mt-3">
+                <label class="hud-label-metallic" style="font-size: 10px; letter-spacing: 1.5px; opacity: 0.8;">CHOOSE COVER</label>
+                <div id="unsplash-grid" class="grid grid-cols-4 gap-3 mb-2 experiment-zone min-h-[120px]" style="border: 1px solid var(--glow-aura); padding: 8px; border-radius: 6px; background: var(--bg-color-low);">
                     <div class="col-span-4 text-center metallic-text py-10">Scanning Assets...</div>
                 </div>
-                <div id="attribution-label" class="hud-subtitle-info text-[10px] italic mb-6 min-h-[15px]"></div>
+                <div id="attribution-label" class="hud-subtitle-info text-[10px] italic mb-6 min-h-[15px]" style="color: var(--glow-color); opacity: 0.8;"></div>
             </div>
 
-            <div class="flex gap-4 w-full justify-center">
+            <div class="flex gap-4 w-full justify-center mt-6">
                 <button onclick="document.getElementById('spark-editor-modal').remove()" 
-                        class="ethereal-btn-xs">ABORT</button>
+                        class="ethereal-btn-xs px-8 py-2 rounded" 
+                        style="${abortBtnStyle}"
+                        onmouseover="this.style.background='var(--branding-text-color)'; this.style.color='var(--bg-color)';" 
+                        onmouseout="this.style.background='transparent'; this.style.color='var(--branding-text-color)';">
+                    ABORT
+                </button>
                 <button id="save-spark-changes" 
-                        class="arcade-button px-10">SAVE & SYNC</button>
+                        class="arcade-button px-10 py-2" 
+                        style="box-shadow: 0 0 15px var(--glow-aura); font-family: var(--branding-font); letter-spacing: 1px;">
+                    SAVE & SYNC
+                </button>
             </div>
         </div>
     `;
@@ -759,7 +794,6 @@ async function openSparkEditor(spark) {
         // --- FIND AND INSERT DEFAULT TEMPLATE IMAGE ---
         const types = databaseCache?.settings?.['arcade-current-types'] || {};
         
-        // Lookup using spark.index directly against arcade-current-types array/dictionary
         const sparkIndex = spark.index !== undefined ? spark.index : 0;
         const defaultTemplate = types[sparkIndex] || Object.values(types).find(t => 
             t.name && spark.template_type && 
@@ -784,7 +818,7 @@ async function openSparkEditor(spark) {
                 images.slice(0, 8).forEach(imgData => {
                     const img = document.createElement('img');
                     img.src = imgData.url; 
-                    img.className = 'h-20 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all duration-300 shadow-lg';
+                    img.className = 'h-20 w-full object-cover cursor-pointer border-2 border-transparent hover:border-cyan-400 transition-all duration-300 shadow-lg rounded';
                     
                     if (spark.image === imgData.url) {
                         img.style.borderColor = 'var(--branding-color)';
@@ -823,7 +857,6 @@ async function openSparkEditor(spark) {
             return;
         }
 
-        // Construct a clean update object
         const updateData = {
             ...spark,
             name: newName,
@@ -840,7 +873,6 @@ async function openSparkEditor(spark) {
         try {
             await saveToRealtimeDB(dbPath, updateData);
             
-            // Sync local state
             spark.name = updateData.name;
             spark.privacy = updateData.privacy;
             if (window.selectedCover) {
@@ -853,7 +885,6 @@ async function openSparkEditor(spark) {
             
             document.getElementById('spark-editor-modal').remove();
             
-            // Clean up globals after successful save
             window.selectedCover = null;
             window.selectedPhotographer = null;
             const hudStatus = document.getElementById('hud-status');
@@ -863,6 +894,8 @@ async function openSparkEditor(spark) {
         }
     };
 }
+
+/* FETCH UNSPLASH COVERS */
 async function fetchUnsplashCovers(query) {
     const ACCESS_KEY = databaseCache?.app_manifest?.unsplashkey; 
     
