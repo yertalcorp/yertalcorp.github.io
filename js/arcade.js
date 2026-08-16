@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1198,10 +1198,6 @@ window.copyToClipboard = (text, btn) => {
     setTimeout(() => btn.innerHTML = originalIcon, 2000);
 };
 
-/*
- * Objective: Single Source of Truth for Rendering
- * Logic: Fetches data, ensures user exists (Seeding), then triggers UI components.
- */
 async function refreshUI() {
     console.log("--- [SYSTEM]: refreshUI START ---");
     try {
@@ -1210,7 +1206,6 @@ async function refreshUI() {
         databaseCache = data;
 
         // 2. SILENT SEED: Ensure the logged-in user is registered
-        // We check if the current auth UID exists in the fetched user tree
         if (!data.users?.[user.uid]) {
             console.log("[SYSTEM]: User record missing. Initializing via syncUserProfile...");
             await syncUserProfile(user);
@@ -1252,9 +1247,10 @@ async function refreshUI() {
         if (!realmData) {
             const container = document.getElementById('currents-container');
             if (container) {
+                const safeRealmIdTag = (targetRealmSlug || '').slice(-8);
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 5rem 0; opacity: 0.2; font-style: italic;">
-                        STRICT MODE: Realm '${targetRealmSlug}' does not exist.
+                    <div style="text-align: center; padding: 5rem 0; opacity: 0.4; font-style: italic; letter-spacing: 2px; color: var(--branding-text-color);">
+                        OFFLINE: No infrastructure detected for REALMxxxxxxxx${safeRealmIdTag}
                     </div>`;
             }
             return;
@@ -1265,7 +1261,6 @@ async function refreshUI() {
         const branding = ownerProfile.branding || {};
 
         // 5. SLUG-OWNER BRANDING & THEME
-        // DELETED: globalTheme = ownerProfile.theme || 'neon-dark';
         globalTheme = realmData?.realm_theme || 'neon-dark';
         applyTheme(globalTheme);
         
@@ -1286,8 +1281,7 @@ async function refreshUI() {
         document.documentElement.style.setProperty('--neon-color', ui['color-neon'] || '#00f2ff');
 
         // 6. COMPONENT RENDERING
-        const userActiveRealmSlug = databaseCache.users?.[user?.uid]?.profile?.active_realm_id || targetRealmSlug;
-        renderTopBar(pageOwnerData, isOwner, user, userActiveRealmSlug);
+        renderTopBar(pageOwnerData, isOwner, user, targetRealmSlug);
         
         // Currents needs the realm and owner profile for context
         renderCurrents(realmData.currents || {}, isOwner, targetRealmSlug, ownerProfile);
@@ -1299,7 +1293,7 @@ async function refreshUI() {
             window.arcadeNavigator = new ArcadeNavigator(window.chatConfig);
             window.arcadeNavigator.ensureGlobalMount();
             window.arcadeNavigator.reposition();
-        } /* close the try block*/
+        }
     } catch (err) {
         console.error("SYSTEM ERROR in refreshUI:", err);
     }
@@ -2692,39 +2686,6 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
     if (window._circuitsLazyObserver) {
         window._circuitsLazyObserver.disconnect();
         window._circuitsLazyObserver = null;
-    }
-
-    // SYNCHRONOUS CHECK: If missing, fire async fetch & re-trigger renderCurrents on completion
-    if (!databaseCache.realms) databaseCache.realms = {};
-    if (realmId && !databaseCache.realms[realmId]) {
-        console.log(`[renderCurrents] Realm [${realmId}] not cached. Triggering background fetch...`);
-        get(ref(db, `realms/${realmId}`)).then(snapshot => {
-            if (snapshot.exists()) {
-                const fetchedRealm = snapshot.val();
-                databaseCache.realms[realmId] = fetchedRealm;
-
-                // Re-evaluate ownership, owner profile, and currents for newly fetched realm
-                const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
-                const updatedIsOwner = authUser?.uid === fetchedRealm.realm_ownerid;
-                const fetchedCurrents = fetchedRealm.currents || {};
-                const ownerProfile = databaseCache.users?.[fetchedRealm.realm_ownerid]?.profile || profile;
-
-                console.log(`[renderCurrents] Background fetch completed for [${realmId}]. Re-rendering...`);
-                renderCurrents(fetchedCurrents, updatedIsOwner, realmId, ownerProfile, sharedCurrentId, sharedSparkId, createNewRealm);
-            } else {
-                console.warn(`[renderCurrents] Realm [${realmId}] does not exist or access denied.`);
-                const safeRealmIdTag = (realmId || '').slice(-8);
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 5rem 0; opacity: 0.4; font-style: italic; letter-spacing: 2px; color: var(--branding-text-color);">
-                        OFFLINE: No infrastructure detected for REALMxxxxxxxx${safeRealmIdTag}
-                    </div>
-                `;
-            }
-        }).catch(err => {
-            console.error(`[renderCurrents] Background fetch failed for [${realmId}]:`, err);
-        });
-        console.groupEnd();
-        return; // Exit current execution until fetch resolves
     }
 
     // 1. DYNAMIC PLAN LOOKUP FOR THE OWNER
