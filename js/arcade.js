@@ -1633,6 +1633,7 @@ window.genLogo = (name, profilePic, isOwner) => {
         </div>
     `;
 };
+/* RENDER TOP BAR */
 function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const header = document.getElementById('realm-header');
     if (!header) return;
@@ -1693,7 +1694,8 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
 
             <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
                 <div style="display: flex; align-items: center; gap: 0.8rem; margin-right: 0.5rem; position: relative;">
-                    <!-- TOP BAR (+) DROPDOWN MENU -->
+                    <!-- TOP BAR (+) DROPDOWN MENU (ONLY RENDERED FOR REALM OWNER) -->
+                    ${isOwner ? `
                     <div class="plus-dropdown-wrapper" style="position: relative; z-index: 10001;">
                         <i class="fa-solid fa-square-plus" id="top-bar-plus-icon" title="Add Options" onclick="window.togglePlusMenu(event)" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
                         <div id="plus-dropdown-menu" class="glass-3d" style="display: none; position: absolute; top: 10px; right: 0; left: auto; width: 160px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 0; z-index: 100000; box-shadow: 0 8px 24px var(--card-shadow-color);">
@@ -1705,6 +1707,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
                             </div>
                         </div>
                     </div>
+                    ` : ''}
                     <i class="fa-solid fa-circle-question" title="Help Hub" onclick="window.toggleDrawer('help')" style="cursor: pointer; color: var(--branding-color); font-size: var(--nav-font-size); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></i>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.4rem; position: relative;">
