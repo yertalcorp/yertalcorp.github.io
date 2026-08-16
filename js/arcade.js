@@ -9,14 +9,14 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:12:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
 export let globalTheme = "neon-dark";
 
 /* local variables of entire file scope */
-let user
+let user;
 let selectedCategory = null;
 let cachedGKey = null;
 let MAXTIP = 100000;
@@ -1828,7 +1828,7 @@ window.openRealmSwitcherHud = () => {
     if (!authUser) return;
 
     const userRealms = Object.entries(databaseCache.realms || {}).filter(
-        ([id, realm]) => realm.owner_uid === authUser.uid
+        ([id, realm]) => realm.realm_ownerid === authUser.uid
     );
 
     if (userRealms.length === 0) {
