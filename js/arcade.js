@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -5225,7 +5225,11 @@ window.openRealmSettings = async () => {
                     ? databaseCache.users[currentUid].profile 
                     : {};
 
-    const activeRealmId = profile.active_realm_id || await createRealmNode(currentUid);
+    const activeRealmId = profile.active_realm_id;
+    if (!activeRealmId) {
+        alert("NO_ACTIVE_REALM_DETECTED: Please select or initialize a Realm first.");
+        return;
+    }
     const activeRealm = databaseCache.realms?.[activeRealmId] || {};
     const isSetup = activeRealm.realm_setup_complete === true || profile.setup_complete === true;
 
@@ -5375,14 +5379,20 @@ window.saveRealmSettings = async () => {
     if (!activeUser) return;
 
     try {
-        const activeRealmId = profile.active_realm_id || await createRealmNode(currentUid);
+        const userProfile = databaseCache.users?.[activeUser.uid]?.profile || {};
+        const activeRealmId = userProfile.active_realm_id;
+        if (!activeRealmId) {
+            alert("ACTIVE_REALM_NOT_DETECTED: Cannot save settings without an active realm.");
+            return;
+        }
+
+        // Proceed only if the user has an active realm.  Do not create one!
         const realmPath = `realms/${activeRealmId}`;
         const activeRealm = databaseCache.realms?.[activeRealmId] || {};
         const selectedPrivacy = privacySelect.value;
         const timestamp = Date.now();
 
         // Check plan mode for sales vs tips
-        const userProfile = databaseCache.users?.[activeUser.uid]?.profile || {};
         const ownerPlanKey = userProfile.plan_type || 'free';
         const planLimits = databaseCache.settings?.['plan_limits']?.[ownerPlanKey] || {};
         const isSalesMode = planLimits.monetization === 'sales';
