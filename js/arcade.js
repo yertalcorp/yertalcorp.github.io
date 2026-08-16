@@ -2783,7 +2783,7 @@ function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSpar
         ` : '';
         
         const controls = (isOwner && !isFull) ? `
-            <div class="current-prompt-container" style="padding: 6px 12px; box-sizing: border-box; overflow: hidden; width: 100%; background: var(--bg-color-low); border: none; border-radius: 4px;">
+            <div class="current-prompt-container" style="padding: 6px 12px; box-sizing: border-box; overflow: visible; width: 100%; background: var(--bg-color-low); border: none; border-radius: 4px;">
                 <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
                    <div class="input-wrapper" style="flex-grow: 1; position: relative; margin: 0; padding: 0;">
                        <input type="text" id="input-${current.id}" 
