@@ -813,7 +813,11 @@ main.max-width-limit {
     font-weight: 900;
     text-transform: uppercase;
     color: var(--branding-text-color);
+    font-family: var(--branding-font);
+    text-shadow: 0 1px 3px var(--card-shadow-color);
+    letter-spacing: 0.5px;
     margin: 0;
+    
     /* Metallic Chrome Effect */
     background: linear-gradient(180deg, #fff 0%, var(--branding-text-color) 45%, #222 50%, var(--branding-text-color) 100%);
     -webkit-background-clip: text;
