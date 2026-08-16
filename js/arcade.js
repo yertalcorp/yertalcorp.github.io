@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2793,7 +2793,7 @@ function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSpar
                           oninput="window.updatePromptInputHUD('${current.id}')"
                           onfocus="window.updatePromptInputHUD('${current.id}')"
                           onblur="setTimeout(() => { const h = document.getElementById('hud-${current.id}'); if(h) h.style.display = 'none'; }, 250)">
-                    <div id="hud-${current.id}" class="floating-hud-container" style="display: none; background: var(--bg-color-mid); border: 1px solid var(--border-color);"></div>
+                    <div id="hud-${current.id}" class="floating-hud-container" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; z-index: 100; background: transparent; border: none;"></div>
                 </div>
                    <button onclick="window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')" class="current-prompt-exec-button">EXEC</button>
                       ${actionIcons}
