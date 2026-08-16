@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:32:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1854,7 +1854,6 @@ window.confirmDeleteCurrentRealm = async () => {
     }
 };
 
-/* OpenRealmSwitcherHud */
 window.openRealmSwitcherHud = () => {
     console.log("[SWITCH REALM] Initiating openRealmSwitcherHud...");
 
@@ -1864,7 +1863,6 @@ window.openRealmSwitcherHud = () => {
 
     const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
     console.log("[SWITCH REALM] Authenticated User:", authUser ? authUser.uid : "NONE");
-    console.log("[SWITCH REALM] databaseCache.realms state:", databaseCache.realms);
 
     if (!authUser) {
         console.warn("[SWITCH REALM] Aborted: No authenticated user found.");
@@ -1883,36 +1881,53 @@ window.openRealmSwitcherHud = () => {
         return;
     }
 
-    let hudHtml = `
-        <div id="realm-switcher-modal" class="glass-hud active" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:999999; display:flex !important; flex-direction:column; opacity:1 !important; visibility:visible !important; pointer-events:auto !important; padding:20px; border:1px solid var(--border-color); background:var(--card-bg) !important; color:var(--branding-text-color); min-width:320px; box-shadow: 0 12px 40px rgba(0,0,0,0.85);">
-            <h3 class="metallic-text">SWITCH_REALM</h3>
-            <div class="realm-list" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
-    `;
+    // Remove any existing overlay or modal instance first
+    const existingOverlay = document.getElementById('realm-switcher-overlay');
+    if (existingOverlay) existingOverlay.remove();
 
-    userRealms.forEach(([id, realm]) => {
-        const title = realm.realm_title || 'UNTITLED_REALM';
-        hudHtml += `
-            <div class="menu-item" onclick="window.switchActiveRealm('${id}')" style="cursor:pointer; padding:8px; border:1px solid var(--glow-aura);">
-                <span class="metallic-text">${title}</span>
-                <span style="font-size:9px; opacity:0.6; display:block;">ID: ${id}</span>
-            </div>
-        `;
-    });
+    const hudHtml = `
+        <div id="realm-switcher-overlay" style="position: fixed; inset: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 999999; display: flex; align-items: center; justify-content: center; pointer-events: auto;" onclick="if(event.target === this) this.remove()">
+            <div id="realm-switcher-modal" style="position: relative; width: 90%; max-width: 420px; padding: 24px; border-radius: 12px; border: 1px solid var(--border-color, var(--glow-aura, #00f2ff)); background: var(--card-bg, #0a0e17) !important; color: var(--branding-text-color, #ffffff) !important; box-shadow: 0 0 35px rgba(0, 0, 0, 0.9), inset 0 0 15px var(--box-shadow-color-glow, rgba(0, 242, 255, 0.1)); display: flex; flex-direction: column; gap: 16px;">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.1)); padding-bottom: 10px;">
+                    <h3 class="metallic-text" style="margin: 0; font-family: var(--branding-font); font-size: 16px; letter-spacing: 2px; color: var(--glow-color, #00f2ff);">SELECT_ACTIVE_REALM</h3>
+                    <button onclick="document.getElementById('realm-switcher-overlay').remove()" style="background: none; border: none; color: var(--branding-text-color, #fff); font-size: 1.2rem; cursor: pointer; opacity: 0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</button>
+                </div>
 
-    hudHtml += `
+                <div class="realm-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+                    ${userRealms.map(([id, realm]) => {
+                        const title = realm.realm_title || 'UNTITLED_REALM';
+                        const isActive = id === databaseCache.users?.[authUser.uid]?.profile?.active_realm_id;
+                        return `
+                            <div onclick="window.switchActiveRealm('${id}')" style="cursor: pointer; padding: 12px; border-radius: 6px; border: 1px solid ${isActive ? 'var(--glow-color, #00f2ff)' : 'var(--border-color, rgba(255,255,255,0.15))'}; background: ${isActive ? 'var(--bg-color-mid, rgba(0, 242, 255, 0.1))' : 'var(--bg-color-low, rgba(255,255,255,0.03))'}; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--glow-color, #00f2ff)';" onmouseout="this.style.borderColor='${isActive ? 'var(--glow-color, #00f2ff)' : 'var(--border-color, rgba(255,255,255,0.15))'}';">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="metallic-text" style="font-weight: 700; font-size: 13px; color: var(--branding-text-color, #fff);">${title}</span>
+                                    ${isActive ? '<span style="font-size: 9px; padding: 2px 6px; border-radius: 3px; background: var(--glow-color, #00f2ff); color: var(--bg-color, #000); font-weight: 900;">ACTIVE</span>' : ''}
+                                </div>
+                                <span style="font-size: 10px; opacity: 0.5; font-family: monospace;">${id}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                <button onclick="document.getElementById('realm-switcher-overlay').remove()" class="ethereal-btn-sm" style="width: 100%; padding: 10px; font-size: 11px; letter-spacing: 1.5px; margin-top: 6px;">
+                    CANCEL
+                </button>
             </div>
-            <button onclick="document.getElementById('realm-switcher-modal').remove()" style="margin-top:12px;" class="ethereal-btn-sm">CLOSE</button>
         </div>
     `;
 
-    // Remove existing instance if present, then append
-    const existingModal = document.getElementById('realm-switcher-modal');
-    if (existingModal) existingModal.remove();
-
     document.body.insertAdjacentHTML('beforeend', hudHtml);
-    console.log("[SWITCH REALM] Modal appended to DOM successfully.");
+
+    const modalEl = document.getElementById('realm-switcher-modal');
+    if (modalEl) {
+        const rect = modalEl.getBoundingClientRect();
+        console.log(`[SWITCH REALM] Modal mounted successfully. Rendered bounds: ${rect.width}x${rect.height} at (${rect.left}, ${rect.top})`);
+    }
 };
 
+/*--------------------------------*/
+/* Extract Parameter Deltas! */
 function extractParamDeltas(prompt, originalPMap, returnTokensOnly = false) {
     const changedProperties = {};
     const matchedParamTokens = {};
