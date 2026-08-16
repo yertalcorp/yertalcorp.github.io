@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:10:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -209,50 +209,6 @@ window.confirmDeleteCurrent = async (realmId, currentId) => {
     }
 };
 
-window.confirmDeleteCurrentRealm = async () => {
-    const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
-    if (!authUser) return;
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentRealmId = urlParams.get('realm');
-
-    if (!currentRealmId) {
-        alert('NO_ACTIVE_REALM_SELECTED');
-        return;
-    }
-
-    if (!confirm('WARNING: Are you sure you want to delete this realm? This action cannot be undone.')) {
-        return;
-    }
-
-    // 1. Delete the current realm node
-    await update(ref(db), { [`realms/${currentRealmId}`]: null });
-    if (databaseCache.realms?.[currentRealmId]) {
-        delete databaseCache.realms[currentRealmId];
-    }
-
-    // 2. Find remaining realms owned by user
-    const remainingRealms = Object.entries(databaseCache.realms || {})
-        .filter(([id, realm]) => (realm.realm_ownerid === authUser.uid || realm.owner_uid === authUser.uid) && id !== currentRealmId)
-        .map(([id]) => id);
-
-    if (remainingRealms.length > 0) {
-        // Switch active_realm_id to another existing realm
-        const nextRealmId = remainingRealms[0];
-        await update(ref(db), { [`users/${authUser.uid}/profile/active_realm_id`]: nextRealmId });
-        if (databaseCache.users?.[authUser.uid]?.profile) {
-            databaseCache.users[authUser.uid].profile.active_realm_id = nextRealmId;
-        }
-        window.location.href = `?realm=${nextRealmId}`;
-    } else {
-        // Delete active_realm_id property if no realms remain (System Restart)
-        await update(ref(db), { [`users/${authUser.uid}/profile/active_realm_id`]: null });
-        if (databaseCache.users?.[authUser.uid]?.profile) {
-            delete databaseCache.users[authUser.uid].profile.active_realm_id;
-        }
-        window.location.href = '/index.html';
-    }
-};
 
 /*
  * Objective: Close the Add Current HUD and reset visibility.
@@ -1819,7 +1775,11 @@ window.handlePlusAction = (action) => {
 };
 // 2. DELETE REALM WORKFLOW
 window.confirmDeleteCurrentRealm = async () => {
-    const authUser = firebase.auth().currentUser;
+    // Close menu drawer when HUD is invoked
+    const drawer = document.getElementById('main-drawer');
+    if (drawer) drawer.classList.remove('active');
+
+    const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
     if (!authUser) return;
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -1830,30 +1790,74 @@ window.confirmDeleteCurrentRealm = async () => {
         return;
     }
 
-    if (!confirm('WARNING: Are you sure you want to delete this realm? This action cannot be undone.')) {
-        return;
-    }
+    // Remove any existing modal instance
+    const existingOverlay = document.getElementById('delete-realm-overlay');
+    if (existingOverlay) existingOverlay.remove();
+
+    const activeRealm = databaseCache.realms?.[currentRealmId] || {};
+    const realmTitle = activeRealm.realm_title || currentRealmId;
+
+    const hudHtml = `
+        <div id="delete-realm-overlay" style="position: fixed; inset: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 999999; display: flex; align-items: center; justify-content: center; pointer-events: auto;" onclick="if(event.target === this) this.remove()">
+            <div id="delete-realm-modal" style="position: relative; width: 90%; max-width: 420px; padding: 24px; border-radius: 12px; border: 1px solid var(--error-color, #ff4444); background: var(--card-bg, #0a0e17) !important; color: var(--branding-text-color, #ffffff) !important; box-shadow: 0 0 35px rgba(255, 68, 68, 0.3), inset 0 0 15px rgba(255, 68, 68, 0.1); display: flex; flex-direction: column; gap: 16px;">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.1)); padding-bottom: 10px;">
+                    <h3 class="metallic-text" style="margin: 0; font-family: var(--branding-font); font-size: 16px; letter-spacing: 2px; color: var(--error-color, #ff4444);">DELETE_REALM</h3>
+                    <button onclick="document.getElementById('delete-realm-overlay').remove()" style="background: none; border: none; color: var(--branding-text-color, #fff); font-size: 1.2rem; cursor: pointer; opacity: 0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</button>
+                </div>
+
+                <div style="font-size: 13px; line-height: 1.5; color: var(--text-main-color, #fff);">
+                    Are you sure you want to delete <b style="color: var(--glow-color, #00f2ff);">${realmTitle}</b>?<br>
+                    <span style="font-size: 11px; opacity: 0.7; color: var(--error-color, #ff4444);">This action cannot be undone and all internal currents will be removed.</span>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 8px;">
+                    <button onclick="window.executeRealmDeletion('${currentRealmId}')" class="ethereal-btn-sm" style="flex: 1; padding: 10px; font-size: 11px; letter-spacing: 1.5px; border-color: var(--error-color, #ff4444); color: var(--error-color, #ff4444);">
+                        DELETE
+                    </button>
+                    <button onclick="document.getElementById('delete-realm-overlay').remove()" class="ethereal-btn-sm" style="flex: 1; padding: 10px; font-size: 11px; letter-spacing: 1.5px;">
+                        CANCEL
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', hudHtml);
+};
+
+window.executeRealmDeletion = async (currentRealmId) => {
+    const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
+    if (!authUser) return;
 
     // 1. Delete the current realm node
-    await firebase.database().ref(`realms/${currentRealmId}`).remove();
+    await update(ref(db), { [`realms/${currentRealmId}`]: null });
+    if (databaseCache.realms?.[currentRealmId]) {
+        delete databaseCache.realms[currentRealmId];
+    }
 
-    // 2. Find remaining realms owned by user
+    // 2. Find remaining realms owned by user matching realm_ownerid strictly
     const remainingRealms = Object.entries(databaseCache.realms || {})
-        .filter(([id, realm]) => realm.owner_uid === authUser.uid && id !== currentRealmId)
+        .filter(([id, realm]) => realm.realm_ownerid === authUser.uid && id !== currentRealmId)
         .map(([id]) => id);
 
     if (remainingRealms.length > 0) {
         // Switch active_realm_id to another existing realm
         const nextRealmId = remainingRealms[0];
-        await firebase.database().ref(`users/${authUser.uid}/profile/active_realm_id`).set(nextRealmId);
+        await update(ref(db), { [`users/${authUser.uid}/profile/active_realm_id`]: nextRealmId });
+        if (databaseCache.users?.[authUser.uid]?.profile) {
+            databaseCache.users[authUser.uid].profile.active_realm_id = nextRealmId;
+        }
         window.location.href = `?realm=${nextRealmId}`;
     } else {
-        // Delete active_realm_id property if no realms remain (System Restart)
-        await firebase.database().ref(`users/${authUser.uid}/profile/active_realm_id`).remove();
+        // Delete active_realm_id property if no realms remain
+        await update(ref(db), { [`users/${authUser.uid}/profile/active_realm_id`]: null });
+        if (databaseCache.users?.[authUser.uid]?.profile) {
+            delete databaseCache.users[authUser.uid].profile.active_realm_id;
+        }
         window.location.href = '/index.html';
     }
 };
-
 window.openRealmSwitcherHud = () => {
     console.log("[SWITCH REALM] Initiating openRealmSwitcherHud...");
 
