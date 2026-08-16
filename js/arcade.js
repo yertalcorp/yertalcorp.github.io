@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:36:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:47:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2870,7 +2870,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
     // Helper: Standardized Blank Realm Card HTML
     const blankCardHTML = `
         <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px var(--card-shadow-color));">
-            <div class="action-card" onclick="window.initializeUserRealm('${realmId}', null)"
+            <div class="action-card" onclick="window.selectAndInitializeCircuit(null)"
                  style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px solid var(--border-color); box-shadow: inset 0 0 20px var(--box-shadow-color-glow);">
                 <i class="fas fa-plus-circle" style="font-size: 1.6rem; color: var(--glow-color); margin-bottom: 0.6rem; filter: drop-shadow(0 0 10px var(--glow-color-aura)); z-index: 10;"></i>
                 <span class="metallic-text" style="position: relative; z-index: 10; font-family: var(--branding-font); font-size: 16px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; color: var(--glow-color);">
@@ -2900,7 +2900,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
 
         return `
             <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px var(--card-shadow-color));">
-                <div class="action-card" onclick="window.initializeUserRealm('${realmId}', '${circuitId}')"
+                <div class="action-card" onclick="window.selectAndInitializeCircuit('${circuitId}')"
                      style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px solid var(--border-color); box-shadow: inset 0 0 20px var(--box-shadow-color-glow);">
                     <span class="metallic-text" style="position: relative; z-index: 10; font-family: var(--branding-font); font-size: 16px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 0.6rem; color: var(--glow-color);">
                         ${circuit.realm_display_name || circuit.realm_title || 'UNTITLED REALM'}
