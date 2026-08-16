@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:46:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:13:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2683,12 +2683,36 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
         window._circuitsLazyObserver = null;
     }
 
+    // SYNCHRONOUS CHECK: If missing, fire async fetch & re-trigger renderCurrents on completion
+    if (!databaseCache.realms) databaseCache.realms = {};
+    if (realmId && !databaseCache.realms[realmId]) {
+        console.log(`[renderCurrents] Realm [${realmId}] not cached. Triggering background fetch...`);
+        get(ref(db, `realms/${realmId}`)).then(snapshot => {
+            if (snapshot.exists()) {
+                databaseCache.realms[realmId] = snapshot.val();
+                console.log(`[renderCurrents] Background fetch completed for [${realmId}]. Re-rendering...`);
+                renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sharedSparkId, createNewRealm);
+            } else {
+                console.warn(`[renderCurrents] Realm [${realmId}] does not exist or access denied.`);
+            }
+        }).catch(err => {
+            console.error(`[renderCurrents] Background fetch failed for [${realmId}]:`, err);
+        });
+        console.groupEnd();
+        return; // Exit current execution until fetch resolves
+    }
+
     // 1. DYNAMIC PLAN LOOKUP FOR THE OWNER
     const ownerUid = databaseCache.realms?.[realmId]?.realm_ownerid || 'UNKNOWN';
     const realm = databaseCache.realms?.[realmId] || {};
     const userPlanType = databaseCache.users?.[ownerUid]?.profile?.plan_type || 'free';
     const planLimits = databaseCache.settings?.['plan_limits']?.[userPlanType] || databaseCache.settings?.['plan_limits']?.['free'] || {};
     const maxSparks = planLimits.max_sparks_per_current || 12;
+
+    // Re-populate currents parameter if missing from arguments
+    if (!currents && realm.currents) {
+        currents = realm.currents;
+    }
 
     // 2. PRIVACY FILTERING LOGIC
     let currentsArray = currents ? Object.values(currents).filter(current => {
@@ -2753,9 +2777,10 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
             }
         } else {
             console.warn("[renderCurrents] Visitor viewing empty realm.");
+            const safeRealmIdTag = (realmId || '').slice(-8);
             container.innerHTML = `
                 <div style="text-align: center; padding: 5rem 0; opacity: 0.4; font-style: italic; letter-spacing: 2px; color: var(--branding-text-color);">
-                    OFFLINE: No infrastructure detected for ID: ${ownerUid.substring(0,8)}
+                   OFFLINE: No infrastructure detected for REALMxxxxxxxx${safeRealmIdTag}
                 </div>
             `;
         }
