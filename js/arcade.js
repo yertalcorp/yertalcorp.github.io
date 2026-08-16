@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:32:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2692,13 +2692,14 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                 const fetchedRealm = snapshot.val();
                 databaseCache.realms[realmId] = fetchedRealm;
 
-                // Re-evaluate ownership and currents for the newly fetched realm
+                // Re-evaluate ownership, owner profile, and currents for newly fetched realm
                 const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
                 const updatedIsOwner = authUser?.uid === fetchedRealm.realm_ownerid;
                 const fetchedCurrents = fetchedRealm.currents || {};
+                const ownerProfile = databaseCache.users?.[fetchedRealm.realm_ownerid]?.profile || profile;
 
                 console.log(`[renderCurrents] Background fetch completed for [${realmId}]. Re-rendering...`);
-                renderCurrents(fetchedCurrents, updatedIsOwner, realmId, profile, sharedCurrentId, sharedSparkId, createNewRealm);
+                renderCurrents(fetchedCurrents, updatedIsOwner, realmId, ownerProfile, sharedCurrentId, sharedSparkId, createNewRealm);
             } else {
                 console.warn(`[renderCurrents] Realm [${realmId}] does not exist or access denied.`);
                 const safeRealmIdTag = (realmId || '').slice(-8);
@@ -2789,11 +2790,16 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                 renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid);
             }
         } else {
-            console.warn("[renderCurrents] Visitor viewing empty realm.");
+            console.warn("[renderCurrents] Visitor viewing empty or restricted private realm.");
             const safeRealmIdTag = (realmId || '').slice(-8);
+            const isPrivateRealm = realm.realm_privacy === 'private';
+            const statusMessage = isPrivateRealm 
+                ? `ACCESS_DENIED: REALMxxxxxxxx${safeRealmIdTag} IS PRIVATE` 
+                : `OFFLINE OR PRIVATE: No accessible infrastructure detected for REALMxxxxxxxx${safeRealmIdTag}`;
+
             container.innerHTML = `
                 <div style="text-align: center; padding: 5rem 0; opacity: 0.4; font-style: italic; letter-spacing: 2px; color: var(--branding-text-color);">
-                    OFFLINE: No infrastructure detected for REALMxxxxxxxx${safeRealmIdTag}
+                    ${statusMessage}
                 </div>
             `;
         }
@@ -2801,7 +2807,6 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
 
     console.groupEnd();
 }
-
 function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSparks, sharedSparkId, ownerUid) {
     console.log("[renderExistingRealm] Rendering active currents array with lazy loading...");
     
