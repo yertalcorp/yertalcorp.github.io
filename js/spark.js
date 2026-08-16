@@ -697,6 +697,24 @@ window.addEventListener('message', (event) => {
 async function openSparkEditor(spark) {
     if (!spark) return;
 
+    // 0. HIDE CONTROL PANEL WHILE MODAL IS ACTIVE
+    const controlPanel = document.getElementById('hud-controls') || 
+                         document.getElementById('controls') || 
+                         document.getElementById('hud-status')?.closest('div[style*="position"], div[class*="control"]');
+    
+    if (controlPanel) {
+        controlPanel.style.display = 'none';
+    }
+
+    const restoreUIAndClose = () => {
+        const modal = document.getElementById('spark-editor-modal');
+        if (modal) modal.remove();
+        if (controlPanel) controlPanel.style.display = '';
+    };
+
+    // Attach to global window scope so inline button onclicks can invoke it safely
+    window.closeSparkEditor = restoreUIAndClose;
+
     // 1. RESET GLOBAL SELECTIONS to prevent data-bleeding between sparks
     window.selectedCover = null;
     window.selectedPhotographer = null;
@@ -708,7 +726,7 @@ async function openSparkEditor(spark) {
         editorOverlay.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(12px);
-            display: flex; justify-content: center; align-items: center; z-index: 10000;
+            display: flex; justify-content: center; align-items: center; z-index: 100000;
         `;
         document.body.appendChild(editorOverlay);
     }
@@ -770,7 +788,7 @@ async function openSparkEditor(spark) {
             </div>
 
             <div class="flex gap-4 w-full justify-center mt-6">
-                <button onclick="document.getElementById('spark-editor-modal').remove()" 
+                <button onclick="window.closeSparkEditor()" 
                         class="ethereal-btn-xs px-8 py-2 rounded" 
                         style="${abortBtnStyle}"
                         onmouseover="this.style.background='var(--branding-text-color)'; this.style.color='var(--bg-color)';" 
@@ -883,7 +901,7 @@ async function openSparkEditor(spark) {
             const activeHeader = document.getElementById('active-spark-name');
             if (activeHeader) activeHeader.textContent = newName;
             
-            document.getElementById('spark-editor-modal').remove();
+            window.closeSparkEditor();
             
             window.selectedCover = null;
             window.selectedPhotographer = null;
@@ -894,7 +912,6 @@ async function openSparkEditor(spark) {
         }
     };
 }
-
 /* FETCH UNSPLASH COVERS */
 async function fetchUnsplashCovers(query) {
     const ACCESS_KEY = databaseCache?.app_manifest?.unsplashkey; 
