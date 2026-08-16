@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:22:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -57,6 +57,7 @@ window.isInCooldown = false;
 
 let currentModelIndex = 0;
 
+// Function: createRealmNode
 export async function createRealmNode(uid) {
     const userProfile = databaseCache.users?.[uid]?.profile || {};
     const planType = userProfile.plan_type || 'free';
@@ -118,8 +119,93 @@ export async function createRealmNode(uid) {
     if (!databaseCache.users[uid]) databaseCache.users[uid] = { profile: {} };
     databaseCache.users[uid].profile.active_realm_id = newRealmId;
 
+    console.log(`[createRealmNode] Allocated realm node [${newRealmId}] and updated active_realm_id for user [${uid}]`);
+
     return newRealmId;
 }
+
+
+// Function: openRealmSwitcherHud
+window.openRealmSwitcherHud = () => {
+    console.log("[SWITCH REALM] Initiating openRealmSwitcherHud...");
+    const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
+    console.log("[SWITCH REALM] Authenticated User:", authUser ? authUser.uid : "NONE");
+    console.log("[SWITCH REALM] databaseCache.realms state:", databaseCache.realms);
+
+    if (!authUser) {
+        console.warn("[SWITCH REALM] Aborted: No authenticated user found.");
+        return;
+    }
+
+    const userRealms = Object.entries(databaseCache.realms || {}).filter(
+        ([id, realm]) => realm.realm_ownerid === authUser.uid
+    );
+
+    console.log(`[SWITCH REALM] Matched ${userRealms.length} realm(s) for owner [${authUser.uid}]:`, userRealms);
+
+    if (userRealms.length === 0) {
+        console.warn("[SWITCH REALM] Zero realms matched realm_ownerid equality check.");
+        alert('NO_AVAILABLE_REALMS');
+        return;
+    }
+
+    let hudHtml = `
+        <div id="realm-switcher-modal" class="glass-hud" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:20000; padding:20px; border:1px solid var(--border-color); background:var(--card-bg);">
+            <h3 class="metallic-text">SWITCH_REALM</h3>
+            <div class="realm-list" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+    `;
+
+    userRealms.forEach(([id, realm]) => {
+        const title = realm.realm_title || 'UNTITLED_REALM';
+        hudHtml += `
+            <div class="menu-item" onclick="window.switchActiveRealm('${id}')" style="cursor:pointer; padding:8px; border:1px solid var(--glow-aura);">
+                <span class="metallic-text">${title}</span>
+                <span style="font-size:9px; opacity:0.6; display:block;">ID: ${id}</span>
+            </div>
+        `;
+    });
+
+    hudHtml += `
+            </div>
+            <button onclick="document.getElementById('realm-switcher-modal').remove()" style="margin-top:12px;">CLOSE</button>
+        </div>
+    `;
+
+    // Remove existing instance if present, then append
+    const existingModal = document.getElementById('realm-switcher-modal');
+    if (existingModal) existingModal.remove();
+
+    document.body.insertAdjacentHTML('beforeend', hudHtml);
+    console.log("[SWITCH REALM] Modal appended to DOM successfully.");
+};
+
+
+// Function: switchActiveRealm
+window.switchActiveRealm = async (targetRealmId) => {
+    console.log(`[SWITCH REALM] switchActiveRealm invoked for targetRealmId: ${targetRealmId}`);
+    const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
+    if (!authUser) {
+        console.warn("[SWITCH REALM] switchActiveRealm aborted: No authUser found.");
+        return;
+    }
+
+    try {
+        console.log(`[SWITCH REALM] Writing active_realm_id update to DB path: users/${authUser.uid}/profile/active_realm_id`);
+        // Set user's active_realm_id to the selected realm ID using modular Firebase functions
+        await update(ref(db), { [`users/${authUser.uid}/profile/active_realm_id`]: targetRealmId });
+        if (databaseCache.users?.[authUser.uid]?.profile) {
+            databaseCache.users[authUser.uid].profile.active_realm_id = targetRealmId;
+        }
+
+        console.log(`[SWITCH REALM] Cache updated. Navigating to ?realm=${targetRealmId}`);
+        // Redirect to chosen realm
+        window.location.href = `?realm=${targetRealmId}`;
+    } catch (err) {
+        console.error("[SWITCH REALM] Error executing switchActiveRealm:", err);
+        alert("Failed to switch realm: " + err.message);
+    }
+};
+
 window.createRealmNode = createRealmNode;
 
 window.getUserCountry = async function() {
@@ -1865,19 +1951,6 @@ window.openRealmSwitcherHud = () => {
     document.body.insertAdjacentHTML('beforeend', hudHtml);
 };
 
-window.switchActiveRealm = async (targetRealmId) => {
-    const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
-    if (!authUser) return;
-
-    // Set user's active_realm_id to the selected realm ID using modular Firebase functions
-    await update(ref(db), { [`users/${authUser.uid}/profile/active_realm_id`]: targetRealmId });
-    if (databaseCache.users?.[authUser.uid]?.profile) {
-        databaseCache.users[authUser.uid].profile.active_realm_id = targetRealmId;
-    }
-
-    // Redirect to chosen realm
-    window.location.href = `?realm=${targetRealmId}`;
-};
 
 function extractParamDeltas(prompt, originalPMap, returnTokensOnly = false) {
     const changedProperties = {};
