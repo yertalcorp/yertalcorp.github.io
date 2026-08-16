@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:02:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @09:47:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2795,6 +2795,8 @@ function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSpar
     }
 }
 
+// Function: renderCircuitTemplates
+
 function renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid) {
     console.log("[renderCircuitTemplates] Initializing template selector flow with search and pagination...");
 
@@ -2816,23 +2818,30 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
     const CIRCUIT_BATCH_SIZE = 12;
     let currentCircuitIndex = 0;
 
-    // Helper: Blank Realm Card HTML
+    // Standardized Blank Realm Card Pattern
+    const blankPatternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern('blank-realm') : '';
+
+    // Helper: Standardized Blank Realm Card HTML
     const blankCardHTML = `
         <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px var(--card-shadow-color));">
             <div class="action-card" onclick="window.initializeUserRealm('${realmId}', null)"
-                 style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px dashed var(--glow-color); box-shadow: inset 0 0 20px var(--box-shadow-color-glow);">
-                <i class="fas fa-plus-circle" style="font-size: 1.8rem; color: var(--glow-color); margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px var(--glow-color-aura)); z-index: 10;"></i>
+                 style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px solid var(--border-color); box-shadow: inset 0 0 20px var(--box-shadow-color-glow);">
+                <i class="fas fa-plus-circle" style="font-size: 1.6rem; color: var(--glow-color); margin-bottom: 0.6rem; filter: drop-shadow(0 0 10px var(--glow-color-aura)); z-index: 10;"></i>
                 <span class="metallic-text" style="position: relative; z-index: 10; font-family: var(--branding-font); font-size: 16px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; color: var(--glow-color);">
                     BLANK REALM
                 </span>
-                <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, var(--glow-color-aura) 0%, var(--bg-color-high) 100%); z-index: 1; pointer-events: none; opacity: 0.5;"></div>
+                <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 0.75rem; margin: 0; font-size: 11px; font-weight: 500; line-height: 1.3; max-width: 92%; opacity: 0.9;">
+                    EMPTY BLUEPRINT
+                </h4>
+                <img src="${blankPatternImg}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; z-index: 1;">
+                <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, var(--card-bg) 0%, var(--bg-color-high) 100%); z-index: 2; pointer-events: none; opacity: 0.6;"></div>
             </div>
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
                 <p style="font-size: 12px; color: var(--text-main-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; min-height: 36px;">
                     Initialize an empty laboratory to construct custom currents and sparks from scratch.
                 </p>
-                <button onclick="window.initializeUserRealm('${realmId}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 99px 12px; font-size: 11px; letter-spacing: 1.5px; opacity: 0.85;">
-                    CREATE BLANK
+                <button onclick="window.initializeUserRealm('${realmId}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
+                    INITIALIZE BLANK
                 </button>
             </div>
         </div>
@@ -2956,7 +2965,6 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
     loadNextCircuitBatch();
     attachCircuitObserver();
 }
-
 window.updatePromptInputHUD = (currentId) => {
     const inputField = document.getElementById(`input-${currentId}`);
     const hudContainer = document.getElementById(`hud-${currentId}`);
