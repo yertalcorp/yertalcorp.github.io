@@ -39,18 +39,25 @@
                 <i class="fa-solid fa-circle-question"></i> <span class="metallic-text">HELP</span>
             </div>
         </div>
-        <div id="drawer-manage-realms" class="sub-menu" style="display:none;">
-            <div class="back-btn" onclick="showMainMenu()"><i class="fa-solid fa-chevron-left"></i> BACK</div>
-            <div class="menu-item" onclick="window.handlePlusAction('add_realm')">
-                <i class="fa-solid fa-plus"></i> <span class="metallic-text">ADD_REALM</span>
-            </div>
-            <div class="menu-item" onclick="window.confirmDeleteCurrentRealm()">
-                <i class="fa-solid fa-trash" style="color: var(--error-color);"></i> <span class="metallic-text" style="color: var(--error-color);">DELETE_REALM</span>
-            </div>
-            <div class="menu-item" onclick="window.openRealmSwitcherHud()">
-                <i class="fa-solid fa-arrow-right-arrow-left"></i> <span class="metallic-text">SWITCH_REALM</span>
-            </div>
-        </div>
+<div id="drawer-manage-realms" class="drawer-section" style="display: none;">
+    <div class="back-btn" onclick="window.showMainMenu()" style="cursor: pointer; display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; color: var(--branding-text-color); opacity: 0.8;">
+        <i class="fas fa-arrow-left"></i> BACK TO MENU
+    </div>
+
+    <div class="menu-item" onclick="window.handlePlusAction('add_realm')" style="cursor: pointer; padding: 10px 12px; font-family: var(--branding-font); font-size: 11px; color: var(--branding-text-color); display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-plus-circle" style="color: var(--glow-color);"></i> ADD_REALM
+    </div>
+
+    <div class="menu-item" onclick="window.openRealmSwitcherHud()" style="cursor: pointer; padding: 10px 12px; font-family: var(--branding-font); font-size: 11px; color: var(--branding-text-color); display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-exchange-alt" style="color: var(--branding-color);"></i> SWITCH_REALM
+    </div>
+
+    <hr style="border: none; border-top: 1px solid var(--border-color); margin: 12px 0; opacity: 0.4;">
+
+    <div class="menu-item" onclick="window.confirmDeleteCurrentRealm()" style="cursor: pointer; padding: 10px 12px; font-family: var(--branding-font); font-size: 11px; color: var(--error-color); display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-trash-alt" style="color: var(--error-color);"></i> DELETE_REALM
+    </div>
+</div>        
         <div id="drawer-settings" class="sub-menu" style="display:none;">
             <div class="back-btn" onclick="showMainMenu()"><i class="fa-solid fa-chevron-left"></i> BACK</div>
     
