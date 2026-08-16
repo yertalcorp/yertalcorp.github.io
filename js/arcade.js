@@ -1807,9 +1807,9 @@ window.confirmDeleteCurrentRealm = async () => {
                     <button onclick="document.getElementById('delete-realm-overlay').remove()" style="background: none; border: none; color: var(--branding-text-color, #fff); font-size: 1.2rem; cursor: pointer; opacity: 0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</button>
                 </div>
 
-                <div style="font-size: 13px; line-height: 1.5; color: var(--text-main-color, #fff);">
+                <div style="font-size: 18px; line-height: 1.5; color: var(--text-main-color, #fff);">
                     Are you sure you want to delete <b style="color: var(--glow-color, #00f2ff);">${realmTitle}</b>?<br>
-                    <span style="font-size: 11px; opacity: 0.7; color: var(--error-color, #ff4444);">This action cannot be undone and all internal currents will be removed.</span>
+                    <span style="font-size: 13px; font-weight: 600; margin-top: 6px; display: inline-block; color: var(--error-color, #ff4444);">This action cannot be undone and all internal currents will be removed.</span>
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 8px;">
