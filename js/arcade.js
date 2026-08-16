@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @09:47:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @11:45:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -136,6 +136,31 @@ window.handleSparkLaunch = async function(realmId, currentId, sparkId, targetUrl
     // 2. ONLY navigate after the promise has resolved or failed
     // Disable this if the view count has issues, otherwise you cannot see logs
     window.location.href = targetUrl;
+};
+
+window.confirmDeleteCurrent = async (realmId, currentId) => {
+    const confirmation = confirm(`Are you sure you want to delete the whole current [${currentId}]?\n\nAll associated sparks will be permanently deleted. This action cannot be undone.`);
+    
+    if (confirmation) {
+        try {
+            // 1. Database Removal under active realm node
+            const dbPath = `realms/${realmId}/currents/${currentId}`;
+            await saveToRealtimeDB(dbPath, null);
+
+            // 2. Cache Cleanup
+            if (databaseCache.realms?.[realmId]?.currents?.[currentId]) {
+                delete databaseCache.realms[realmId].currents[currentId];
+            }
+
+            // 3. UI Refresh
+            await refreshUI();
+            
+            console.log(`System: Infrastructure for current [${currentId}] in realm [${realmId}] decommissioned.`);
+        } catch (error) {
+            console.error("Critical: Deletion protocol failed.", error);
+            alert("System error: Could not decommission infrastructure.");
+        }
+    }
 };
 
 window.confirmDeleteCurrentRealm = async () => {
@@ -2716,7 +2741,8 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
 
 function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSparks, sharedSparkId, ownerUid) {
     console.log("[renderExistingRealm] Rendering active currents array with lazy loading...");
-    // Re-enable the + menu icon when viewing an established realm
+    
+    // Re-enable top bar plus menu icon for established realm
     const plusIcon = document.getElementById('top-bar-plus-icon');
     if (plusIcon) plusIcon.style.display = 'inline-block';
     
@@ -2731,63 +2757,65 @@ function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSpar
         const isFull = sparkCount >= maxSparks;
         const capacityPct = Math.min((sparkCount / maxSparks) * 100, 100);
         
+        // Dynamically resolve capacity threshold colors using theme variables
         let meterColor = 'var(--glow-color)';
         if (capacityPct >= 90) {
-            meterColor = 'var(--error-color, #ef4444)';
+            meterColor = 'var(--error-color)';
         } else if (capacityPct >= 80) {
-            meterColor = 'var(--warning-color, #ffcc00)';
+            meterColor = 'var(--branding-color)';
         }
 
         const capacityMeterHTML = `
             <div class="capacity-meter-wrapper" title="Sparks: ${sparkCount} / ${maxSparks}" style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-family: 'Courier New', monospace; font-size: 0.7rem; color: var(--branding-text-color);">CAPACITY</span>
-                <div class="fuel-rail" style="width: 50px; height: 10px; background: rgba(255,255,255,0.05); border: 1px solid ${meterColor}; border-radius: 2px; overflow: hidden;">
+                <span style="font-family: var(--branding-font); font-size: 0.7rem; color: var(--branding-text-color);">CAPACITY</span>
+                <div class="fuel-rail" style="width: 50px; height: 10px; background: var(--box-shadow-color-aura); border: 1px solid ${meterColor}; border-radius: 2px; overflow: hidden;">
                     <div class="fuel-fill" style="width: ${capacityPct}%; height: 100%; background: ${meterColor}; transition: width 0.4s ease;"></div>
                 </div>
-                <span style="font-family: 'Courier New', monospace; font-size: 0.7rem; color: ${meterColor};">${sparkCount}/${maxSparks}</span>
+                <span style="font-family: var(--branding-font); font-size: 0.7rem; color: ${meterColor};">${sparkCount}/${maxSparks}</span>
             </div>
         `;
 
         const actionIcons = isOwner ? `
-            <div class="current-actions" style="display: flex; gap: 12px; margin-left: 10px; align-items: center;">
-                <i class="fas fa-sync-alt" onclick="window.updateCurrent('${current.id}')" title="Update" style="cursor: pointer; opacity: 0.6; color: var(--branding-text-color);"></i>
-                <i class="fas fa-trash-alt" onclick="window.confirmDeleteCurrent('${realmId}', '${current.id}')" title="Delete" style="cursor: pointer; opacity: 0.6; color: var(--error-color, #ef4444);"></i>
+            <div class="current-actions" style="display: flex; gap: 12px; margin-left: 6px; padding-right: 12px; flex-shrink: 0; align-items: center;">
+                <i class="fas fa-sync-alt" onclick="window.updateCurrent('${current.id}')" title="Update" style="cursor: pointer; opacity: 0.7; color: var(--branding-text-color);"></i>
+                <i class="fas fa-trash-alt" onclick="window.confirmDeleteCurrent('${realmId}', '${current.id}')" title="Delete" style="cursor: pointer; opacity: 0.7; color: var(--error-color);"></i>
             </div>
         ` : '';
         
         const controls = (isOwner && !isFull) ? `
-            <div class="current-prompt-container">
+            <div class="current-prompt-container" style="padding: 4px 12px; box-sizing: border-box; overflow: hidden; width: 100%;">
                 <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
-                   <div class="input-wrapper" style="flex-grow: 1; position: relative;">
+                   <div class="input-wrapper" style="flex-grow: 1; position: relative; margin: 0; padding: 0;">
                        <input type="text" id="input-${current.id}" 
                           class="current-prompt-input"
+                          style="box-sizing: border-box; margin: 0; width: 100%; background: var(--card-bg); color: var(--text-main-color); border: 1px solid var(--border-color); font-family: var(--text-main-font);"
                           placeholder="Type a prompt (e.g. 'game', 'logic', 'physics') or paste a URL..." 
                           oninput="window.updatePromptInputHUD('${current.id}')"
                           onfocus="window.updatePromptInputHUD('${current.id}')"
                           onblur="setTimeout(() => { const h = document.getElementById('hud-${current.id}'); if(h) h.style.display = 'none'; }, 250)">
-                    <div id="hud-${current.id}" class="floating-hud-container" style="display: none;"></div>
+                    <div id="hud-${current.id}" class="floating-hud-container" style="display: none; background: var(--bg-color-mid); border: 1px solid var(--border-color);"></div>
                 </div>
-                   <button onclick="window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')" class="current-prompt-exec-button">EXEC</button>
+                   <button onclick="window.handleCreation('${current.id}', '${current.name}', '${current.privacy}')" class="current-prompt-exec-button" style="background: var(--button-color); color: var(--button-text-color); border: 1px solid var(--button-border-color); font-family: var(--branding-font);">EXEC</button>
                       ${actionIcons}
                 </div>
             </div>
         ` : (isFull && isOwner) ? `
-            <div class="capacity-alert-container" style="display: flex; align-items: center; gap: 15px; width: 100%;">
-                <span style="color: var(--error-color, #ef4444); font-weight: bold; font-family: 'Orbitron', sans-serif; font-size: 0.8rem;">FULL</span>
+            <div class="capacity-alert-container" style="display: flex; align-items: center; gap: 15px; width: 100%; padding: 4px 12px; box-sizing: border-box;">
+                <span style="color: var(--error-color); font-weight: bold; font-family: var(--branding-font); font-size: 0.8rem;">FULL</span>
                 ${capacityMeterHTML}
                 ${actionIcons}
             </div>
         ` : `
-            <div class="viewer-node-status" style="display: flex; align-items: center; gap: 15px; opacity: 0.8;">
+            <div class="viewer-node-status" style="display: flex; align-items: center; gap: 15px; opacity: 0.8; padding: 4px 12px; box-sizing: border-box; width: 100%;">
                 ${capacityMeterHTML}
-                <div class="secure-node-static">Secure_Node [${ownerUid.substring(0,8)}]</div>
+                <div class="secure-node-static" style="color: var(--text-muted-color); font-family: var(--text-main-font);">Secure_Node [${ownerUid.substring(0,8)}]</div>
             </div>
         `;
 
         return `
-            <div class="current-block animate-fadeIn" id="current-block-${current.id}">
+            <div class="current-block animate-fadeIn" id="current-block-${current.id}" style="background: var(--bg-color-mid); border: 1px solid var(--border-color); box-shadow: 0 4px 20px var(--card-shadow-color);">
                 <div class="current-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-                    <h2 class="current-name" style="margin: 0; font-size: 14px; line-height: 1;">${current.name || 'Active Current'}</h2>
+                    <h2 class="current-name" style="margin: 0; font-size: 14px; line-height: 1; color: var(--branding-text-color); font-family: var(--branding-font);">${current.name || 'Active Current'}</h2>
                     ${!isOwner ? '' : capacityMeterHTML}
                 </div>
                 ${controls}
@@ -2808,14 +2836,14 @@ function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSpar
 
     let ownerBtnHTML = isOwner ? `
         <div id="add-current-btn-wrapper" style="display: flex; justify-content: center; margin-top: 3rem; padding-bottom: 5rem;">
-            <button onclick="window.openAddCurrentHud()" class="terminal-btn" style="border: 1px dashed var(--glow-color); opacity: 0.6; color: var(--branding-text-color); background: var(--bg-color);">
-                <i class="fas fa-plus"></i> INITIALIZE NEW CURRENT
+            <button onclick="window.openAddCurrentHud()" class="terminal-btn" style="border: 1px dashed var(--glow-color); color: var(--branding-text-color); background: var(--button-color); font-family: var(--branding-font);">
+                <i class="fas fa-plus" style="color: var(--glow-color);"></i> INITIALIZE NEW CURRENT
             </button>
         </div>
     ` : '';
 
     let sentinelHTML = currentsArray.length > BATCH_SIZE ? `
-        <div id="currents-lazy-sentinel" style="text-align: center; padding: 2rem; color: var(--glow-color); opacity: 0.6; font-family: 'Orbitron', sans-serif; font-size: 11px;">
+        <div id="currents-lazy-sentinel" style="text-align: center; padding: 2rem; color: var(--glow-color); opacity: 0.8; font-family: var(--branding-font); font-size: 11px;">
             <i class="fas fa-circle-notch fa-spin"></i> FETCHING_NEXT_CURRENT...
         </div>
     ` : '';
@@ -2845,7 +2873,6 @@ function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSpar
 }
 
 // Function: renderCircuitTemplates
-
 function renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid) {
     console.log("[renderCircuitTemplates] Initializing template selector flow with search and pagination...");
 
