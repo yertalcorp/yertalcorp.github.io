@@ -1371,6 +1371,8 @@ button:hover {
     background: transparent;
     border: 1px solid var(--branding-color);
     color: var(--button-text-color);
+    text-shadow: 0 1px 2px var(--button-text-shadow-color);
+    border-color: var(--button-border-color);
     button-border-color: var(--button-border-color);
     padding: 0.8rem 1.5rem;
     font-family: var(--branding-font);
@@ -1385,10 +1387,11 @@ button:hover {
 }
 
 .ethereal-btn-sm:hover {
-    background: var(--btn-gradient);
-    color: var(--button-color);
-    border-color: var(--button-border-color);
+    background: var(--glow-color);
+    color: var(--bg-color-high);
+    border-color: var(--glow-color);
     box-shadow: 0 0 20px var(--glow-color);
+    text-shadow: none;
     transform: translateY(-2px);
 }
 .btn-glow {
@@ -1600,17 +1603,22 @@ button:hover {
 
 .terminal-btn {
     background: var(--glow-color);
-    color: var(--bg-color-high);
+    color: var(--button-text-color);
+    text-shadow: 0 1px 2px var(--button-text-shadow-color);
+    border-color: var(--button-border-color);
     border: none;
     padding: 5px 15px;
     font-family: 'Orbitron', sans-serif;
     letter-spacing: 2px;
     font-size: 10px;
-    font-weight: 900;
+    font-weight: 900;l
     cursor: pointer;
 }
 .terminal-btn:hover {
-    background: var(--bg-color-high);
+    color: var(--bg-color-high);
+    background: var(--glow-color);
+    border-color: var(--glow-color);
+    text-shadow: none;
     box-shadow: 0 0 20px var(--glow-color-aura);
     transform: translateY(-2px);
 }
