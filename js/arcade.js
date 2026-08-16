@@ -1898,9 +1898,6 @@ window.openRealmSwitcherHud = () => {
                     <h3 class="metallic-text" style="margin: 0; font-family: var(--branding-font); font-size: 16px; letter-spacing: 2px; color: var(--glow-color, #00f2ff);">SELECT_ACTIVE_REALM</h3>
                     <button onclick="document.getElementById('realm-switcher-overlay').remove()" style="background: none; border: none; color: var(--branding-text-color, #fff); font-size: 1.2rem; cursor: pointer; opacity: 0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</button>
                 </div>
-
-// Inside Function: openRealmSwitcherHud
-
     <div class="realm-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
         ${userRealms.map(([id, realm]) => {
             const title = realm.realm_title || 'UNTITLED_REALM';
