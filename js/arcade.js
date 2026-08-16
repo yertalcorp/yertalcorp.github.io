@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:32:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:40:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1064,6 +1064,17 @@ window.likeSpark = async (btnElement, realmId, currentId, sparkId) => {
 window.shareSpark = async (btnElement, realmId, currentId, sparkId) => {
     /* Overall Objective: Update share stats with timestamp and count, 
        then trigger sharing UI. Ensure user UID and Date are tracked. */
+
+    // 0. PRIVACY HIERARCHY CHECK
+    const realm = databaseCache?.realms?.[realmId] || {};
+    const current = realm?.currents?.[currentId] || {};
+    const spark = current?.sparks?.[sparkId] || {};
+
+    const isHierarchyPrivate = realm.realm_privacy === 'private' || current.privacy === 'private' || spark.privacy === 'private';
+    if (isHierarchyPrivate) {
+        alert('RESTRICTED: Private items cannot be shared.');
+        return;
+    }
 
     const baseUrl = window.location.origin + '/arcade/spark.html';
     const shareUrl = `${baseUrl}?realm=${realmId}&current=${currentId}&spark=${sparkId}`;
