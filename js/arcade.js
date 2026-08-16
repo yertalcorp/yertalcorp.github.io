@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:47:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1637,13 +1637,16 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const header = document.getElementById('realm-header');
     if (!header) return;
 
-    // 1. PROFILE NODE: Strictly user-identity properties
-    const profile = pageOwnerData?.profile || {};
+    // 1. REALMS NODE: Target realm configuration properties
+    const targetRealm = databaseCache.realms?.[realmSlug] || {};
+    const ownerUid = targetRealm.realm_ownerid;
+    const realmOwnerData = ownerUid && databaseCache.users?.[ownerUid] ? databaseCache.users[ownerUid] : pageOwnerData;
+
+    // 2. PROFILE NODE: User-identity properties of target realm owner
+    const profile = realmOwnerData?.profile || {};
     const avatarPath = '/assets/images/avatar.jpg';
     const ownerPhotoUrl = profile.photoURL || avatarPath;
 
-    // 2. REALMS NODE: All realm/laboratory configuration properties
-    const targetRealm = databaseCache.realms?.[realmSlug] || {};
     const arcadeTitle = targetRealm.realm_title || '';
     const arcadeSubtitle = targetRealm.realm_subtitle || '';
     const isSetupComplete = targetRealm.realm_setup_complete === true;
@@ -1652,6 +1655,11 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
     const logoContent = window.genLogo(brandName, ownerPhotoUrl, isOwner);
+
+    // 3. HOME LINK RESOLUTION: Always point to the current logged-in user's active realm ID if set
+    const loggedInUid = authUser?.uid;
+    const myActiveRealmId = databaseCache.users?.[loggedInUid]?.profile?.active_realm_id;
+    const homeHref = myActiveRealmId ? `?realm=${myActiveRealmId}` : 'index.html';
         
     header.innerHTML = `
         <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura);">
@@ -1668,7 +1676,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
 
                 <div style="display: flex; gap: 0.6rem; align-items: center; border-left: 1px solid var(--glow-aura); padding-left: 0.5rem; height: 16px; margin-left: 0.2rem;">
                     <a href="/index.html" title="Showroom" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size); transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-door-open"></i></a>
-                    <a href="?realm=${realmSlug}" title="My Realm" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size); transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
+                    <a href="${homeHref}" title="My Realm" style="color: var(--branding-text-color); opacity: 0.7; font-size: var(--nav-font-size); transition: color 0.3s;" onmouseover="this.style.color='var(--branding-color)'" onmouseout="this.style.color='var(--branding-text-color)'"><i class="fas fa-home"></i></a>
                     <a href="?realm=realm-20260804-1785866761042" class="metallic-text" style="border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 3px; text-decoration: none; background: var(--branding-color); color: var(--bg-color); box-shadow: 0 0 5px var(--box-shadow-color); font-size: var(--nav-font-size); font-weight: 900;">HUB</a>
                 </div>
             </div>
