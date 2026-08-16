@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -56,13 +56,6 @@ let modelStats = {};
 window.isInCooldown = false;
 
 let currentModelIndex = 0;
-
-export async function ensureActiveRealm(uid) {
-    let userProfile = databaseCache.users?.[uid]?.profile || {};
-    // Pure resolver: Returns active_realm_id if set; otherwise returns null without creating a stub in advance.
-    return userProfile.active_realm_id || null;
-}
-window.ensureActiveRealm = ensureActiveRealm;
 
 export async function createRealmNode(uid) {
     const userProfile = databaseCache.users?.[uid]?.profile || {};
@@ -1400,9 +1393,9 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
         let visitorRealmId = profileData.active_realm_id;
 
         if (!visitorRealmId) {
-            console.log("[Identity Gate] No active_realm_id in profile. Auto-creating default Realm...");
-            visitorRealmId = await ensureActiveRealm(visitorUid);
-            console.log(`[Identity Gate] Created new active realm: ${visitorRealmId}`);
+            console.log("[Identity Gate] No active_realm_id in profile. Allocating new Realm node...");
+            visitorRealmId = await createRealmNode(visitorUid);
+            if (!visitorRealmId) return; // Quota limit check failed
         } else {
             console.log(`[Identity Gate] Active realm found: ${visitorRealmId}`);
         }
@@ -2587,7 +2580,7 @@ async function initializeUserRealm(targetRealmId, templateId = null) {
         return null;
     }
 }
-window.initializeUserRealm = initializeUserRealm;
+
 // Orchestrator: Allocates a new node on card click, then populates it immediately
 window.selectAndInitializeCircuit = async (templateId = null) => {
     const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
@@ -2893,7 +2886,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
                 <p style="font-size: 12px; color: var(--text-main-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; min-height: 36px;">
                     Initialize an empty laboratory to construct custom currents and sparks from scratch.
                 </p>
-                <button onclick="window.initializeUserRealm('${realmId}', null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
+                <button onclick="window.selectAndInitializeCircuit(null)" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
                     INITIALIZE BLANK
                 </button>
             </div>
@@ -2922,7 +2915,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
                     <p style="font-size: 12px; color: var(--text-main-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; min-height: 36px;">
                         ${circuit.realm_subtitle || ''}
                     </p>
-                    <button onclick="window.initializeUserRealm('${realmId}', '${circuitId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
+                    <button onclick="window.selectAndInitializeCircuit('${circuitId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
                         INITIALIZE REALM
                     </button>
                 </div>
@@ -5232,7 +5225,7 @@ window.openRealmSettings = async () => {
                     ? databaseCache.users[currentUid].profile 
                     : {};
 
-    const activeRealmId = profile.active_realm_id || await ensureActiveRealm(currentUid);
+    const activeRealmId = profile.active_realm_id || await createRealmNode(currentUid);
     const activeRealm = databaseCache.realms?.[activeRealmId] || {};
     const isSetup = activeRealm.realm_setup_complete === true || profile.setup_complete === true;
 
@@ -5382,7 +5375,7 @@ window.saveRealmSettings = async () => {
     if (!activeUser) return;
 
     try {
-        const activeRealmId = await ensureActiveRealm(activeUser.uid);
+        const activeRealmId = profile.active_realm_id || await createRealmNode(currentUid);
         const realmPath = `realms/${activeRealmId}`;
         const activeRealm = databaseCache.realms?.[activeRealmId] || {};
         const selectedPrivacy = privacySelect.value;
