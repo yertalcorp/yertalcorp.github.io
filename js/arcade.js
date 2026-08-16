@@ -2631,7 +2631,7 @@ async function initializeUserRealm(targetRealmId, templateId = null) {
                             index: sparkIndex
                         };
 
-                        await saveSpark(targetRealmId, currentId, sparkData, cachedArchetype.example_prompt || '', cachedArchetype.name || 'Custom', sparkData.image, 'private');
+                        await saveSpark(targetRealmId, currentId, sparkData, cachedArchetype.example_prompt || '', cachedArchetype.name || 'Custom', sparkData.image, 'public');
                     }
                 }
             }
