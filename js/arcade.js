@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:13:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:01:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2689,11 +2689,24 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
         console.log(`[renderCurrents] Realm [${realmId}] not cached. Triggering background fetch...`);
         get(ref(db, `realms/${realmId}`)).then(snapshot => {
             if (snapshot.exists()) {
-                databaseCache.realms[realmId] = snapshot.val();
+                const fetchedRealm = snapshot.val();
+                databaseCache.realms[realmId] = fetchedRealm;
+
+                // Re-evaluate ownership and currents for the newly fetched realm
+                const authUser = auth?.currentUser || (typeof firebase !== 'undefined' && firebase.auth ? firebase.auth().currentUser : null);
+                const updatedIsOwner = authUser?.uid === fetchedRealm.realm_ownerid;
+                const fetchedCurrents = fetchedRealm.currents || {};
+
                 console.log(`[renderCurrents] Background fetch completed for [${realmId}]. Re-rendering...`);
-                renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sharedSparkId, createNewRealm);
+                renderCurrents(fetchedCurrents, updatedIsOwner, realmId, profile, sharedCurrentId, sharedSparkId, createNewRealm);
             } else {
                 console.warn(`[renderCurrents] Realm [${realmId}] does not exist or access denied.`);
+                const safeRealmIdTag = (realmId || '').slice(-8);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 5rem 0; opacity: 0.4; font-style: italic; letter-spacing: 2px; color: var(--branding-text-color);">
+                        OFFLINE: No infrastructure detected for REALMxxxxxxxx${safeRealmIdTag}
+                    </div>
+                `;
             }
         }).catch(err => {
             console.error(`[renderCurrents] Background fetch failed for [${realmId}]:`, err);
@@ -2780,7 +2793,7 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
             const safeRealmIdTag = (realmId || '').slice(-8);
             container.innerHTML = `
                 <div style="text-align: center; padding: 5rem 0; opacity: 0.4; font-style: italic; letter-spacing: 2px; color: var(--branding-text-color);">
-                   OFFLINE: No infrastructure detected for REALMxxxxxxxx${safeRealmIdTag}
+                    OFFLINE: No infrastructure detected for REALMxxxxxxxx${safeRealmIdTag}
                 </div>
             `;
         }
