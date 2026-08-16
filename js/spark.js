@@ -707,12 +707,15 @@ async function openSparkEditor(spark) {
     }
 
     const restoreUIAndClose = () => {
+        // Clean up hover preview tooltip if active
+        const tooltip = document.getElementById('spark-image-magnifier-tooltip');
+        if (tooltip) tooltip.remove();
+
         const modal = document.getElementById('spark-editor-modal');
         if (modal) modal.remove();
         if (controlPanel) controlPanel.style.display = '';
     };
 
-    // Attach to global window scope so inline button onclicks can invoke it safely
     window.closeSparkEditor = restoreUIAndClose;
 
     // 1. RESET GLOBAL SELECTIONS to prevent data-bleeding between sparks
@@ -729,6 +732,34 @@ async function openSparkEditor(spark) {
             display: flex; justify-content: center; align-items: center; z-index: 100000;
         `;
         document.body.appendChild(editorOverlay);
+    }
+
+    // CREATE DYNAMIC MAGNIFIER TOOLTIP CONTAINER
+    let tooltip = document.getElementById('spark-image-magnifier-tooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'spark-image-magnifier-tooltip';
+        tooltip.style.cssText = `
+            position: fixed;
+            pointer-events: none;
+            display: none;
+            z-index: 200000;
+            width: 220px;
+            height: 140px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--card-bg);
+            border: 2px solid var(--glow-color);
+            box-shadow: 0 0 20px var(--glow-aura), 0 10px 30px rgba(0,0,0,0.8);
+            transform: translate(15px, 15px);
+            transition: opacity 0.15s ease-out;
+            opacity: 0;
+        `;
+        tooltip.innerHTML = `
+            <img id="spark-magnifier-img" src="" style="width: 100%; height: 100%; object-fit: cover;">
+            <div id="spark-magnifier-caption" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.75); color: var(--glow-color); font-size: 8px; font-family: var(--branding-font); text-align: center; padding: 2px 4px; text-transform: uppercase; letter-spacing: 0.5px;"></div>
+        `;
+        document.body.appendChild(tooltip);
     }
 
     const currentPrivacy = spark.privacy || 'public';
@@ -780,7 +811,7 @@ async function openSparkEditor(spark) {
             </div>
 
             <div class="hud-input-group mt-3">
-                <label class="hud-label-metallic" style="font-size: 10px; letter-spacing: 1.5px; opacity: 0.8;">CHOOSE COVER</label>
+                <label class="hud-label-metallic" style="font-size: 10px; letter-spacing: 1.5px; opacity: 0.8;">CHOOSE COVER (HOVER TO MAGNIFY)</label>
                 <div id="unsplash-grid" class="grid grid-cols-4 gap-3 mb-2 experiment-zone min-h-[120px]" style="border: 1px solid var(--glow-aura); padding: 8px; border-radius: 6px; background: var(--bg-color-low);">
                     <div class="col-span-4 text-center metallic-text py-10">Scanning Assets...</div>
                 </div>
@@ -809,7 +840,6 @@ async function openSparkEditor(spark) {
         const apiImages = await fetchUnsplashCovers(searchQuery); 
         let images = [...apiImages];
 
-        // --- FIND AND INSERT DEFAULT TEMPLATE IMAGE ---
         const types = databaseCache?.settings?.['arcade-current-types'] || {};
         
         const sparkIndex = spark.index !== undefined ? spark.index : 0;
@@ -818,8 +848,6 @@ async function openSparkEditor(spark) {
             t.name.toLowerCase().trim() === spark.template_type.toLowerCase().trim()
         );
 
-        console.log("spark.js: openSparkEditor: spark.image URL=", defaultTemplate?.image);
-        
         if (defaultTemplate && defaultTemplate.image) {
             images.unshift({
                 url: defaultTemplate.image,
@@ -829,6 +857,8 @@ async function openSparkEditor(spark) {
 
         const grid = document.getElementById('unsplash-grid');
         const attrLabel = document.getElementById('attribution-label');
+        const tooltipImg = document.getElementById('spark-magnifier-img');
+        const tooltipCap = document.getElementById('spark-magnifier-caption');
         
         if (grid) {
             grid.innerHTML = '';
@@ -842,6 +872,30 @@ async function openSparkEditor(spark) {
                         img.style.borderColor = 'var(--branding-color)';
                         attrLabel.textContent = `Photo By: ${imgData.photographer}`;
                     }
+
+                    // --- HOVER MAGNIFIER LISTENERS ---
+                    img.addEventListener('mouseenter', (e) => {
+                        if (tooltipImg) tooltipImg.src = imgData.url;
+                        if (tooltipCap) tooltipCap.textContent = `PREVIEW // ${imgData.photographer}`;
+                        if (tooltip) {
+                            tooltip.style.display = 'block';
+                            tooltip.style.opacity = '1';
+                        }
+                    });
+
+                    img.addEventListener('mousemove', (e) => {
+                        if (tooltip) {
+                            tooltip.style.left = `${e.clientX}px`;
+                            tooltip.style.top = `${e.clientY}px`;
+                        }
+                    });
+
+                    img.addEventListener('mouseleave', () => {
+                        if (tooltip) {
+                            tooltip.style.opacity = '0';
+                            tooltip.style.display = 'none';
+                        }
+                    });
 
                     img.onclick = () => {
                         document.querySelectorAll('#unsplash-grid img').forEach(i => i.style.borderColor = 'transparent');
@@ -912,6 +966,7 @@ async function openSparkEditor(spark) {
         }
     };
 }
+
 /* FETCH UNSPLASH COVERS */
 async function fetchUnsplashCovers(query) {
     const ACCESS_KEY = databaseCache?.app_manifest?.unsplashkey; 
