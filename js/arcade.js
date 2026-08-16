@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:16:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3197,13 +3197,28 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
 /* The actual routine called from arcade/index.html on new and update current */
 window.submitNewCurrent = async () => {
     const hud = document.getElementById('add-current-hud');
+    if (!hud) return;
+
     const mode = hud.dataset.mode; // 'add' or 'update'
     const prevId = hud.dataset.targetId; // The ID before editing
+
+    // Resolve target realm ID from HUD data attribute or current URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const realmId = hud.dataset.realmId || urlParams.get('realm');
+
+    if (!realmId) {
+        console.error("[SYSTEM] submitNewCurrent HALT: Unable to resolve active realmId.");
+        return;
+    }
     
     // 1. Grab current form values
-    const newName = document.getElementById('current-name-input').value.trim();
-    const newType = document.getElementById('current-type-input').value.trim() || "Custom";
-    const newPrivacy = document.getElementById('current-privacy-select').value;
+    const nameInput = document.getElementById('current-name-input');
+    const typeInput = document.getElementById('current-type-input');
+    const privacySelect = document.getElementById('current-privacy-select');
+
+    const newName = nameInput ? nameInput.value.trim() : '';
+    const newType = typeInput ? typeInput.value.trim() || "Custom" : "Custom";
+    const newPrivacy = privacySelect ? privacySelect.value : 'public';
 
     // 2. Validation: Null Check
     if (!newName || newName.toLowerCase() === 'null') {
@@ -3212,25 +3227,18 @@ window.submitNewCurrent = async () => {
     }
 
     // 3. Identification & Comparison
-    // We assume the HUD was populated with these data attributes in openAddCurrentHud
     const prevName = hud.dataset.prevName || '';
     const prevType = hud.dataset.prevType || '';
-    const prevPrivacy = hud.dataset.prevPrivacy || 'private';
+    const prevPrivacy = hud.dataset.prevPrivacy || '';
     
-    // Enforce immutable identification mechanics across updates
     let finalId;
-
     if (mode === 'add') {
-        // Generates an unbreakable string token key with timestamp layout mapping
         finalId = 'curr-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now().toString(36);
     } else {
-        // Update mode strictly preserves the historical routing folder signature regardless of name renames
         finalId = prevId;
     }
     
-    // Simple boolean track for modification guards
     const nameChanged = newName !== prevName;
-    // 4. Change Detection Guard
     const hasTypeChanged = newType !== prevType;
     const hasPrivacyChanged = newPrivacy !== prevPrivacy;
 
@@ -3242,10 +3250,8 @@ window.submitNewCurrent = async () => {
 
     // 5. Database Execution
     try {
-        const ownerUid = auth.currentUser?.uid;
         const timestamp = Date.now();
         
-        // Prepare the data packet
         const dataPacket = {
             id: finalId,
             name: newName,
@@ -3259,7 +3265,6 @@ window.submitNewCurrent = async () => {
             await saveToRealtimeDB(path, { ...dataPacket, date_created: timestamp });
         } else {
             // UPDATE MODE
-            // Refactored Update Route: Target location remains identical, dropping complex subtree migrations entirely
             const path = getCurrentPath(realmId, prevId);
             await update(ref(db, path), dataPacket);
         }
