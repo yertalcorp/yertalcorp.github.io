@@ -713,6 +713,8 @@ async function openSparkEditor(spark) {
         document.body.appendChild(editorOverlay);
     }
 
+    const currentPrivacy = spark.privacy || 'public';
+
     editorOverlay.innerHTML = `
         <div class="hud-body-centered glass-3d w-full max-w-xl p-8">
             <h2 class="hud-title-metallic">Modify Spark</h2>
@@ -721,6 +723,15 @@ async function openSparkEditor(spark) {
             <div class="hud-input-group mt-4">
                 <label class="hud-label-metallic">Internal Identity (Name)</label>
                 <input type="text" id="edit-name-input" value="${spark.name}" class="hud-input">
+            </div>
+
+            <div class="hud-input-group">
+                <label class="hud-label-metallic">Visibility Protocol (Privacy)</label>
+                <select id="edit-privacy-select" class="hud-input" style="background: var(--bg-color-mid); color: var(--branding-text-color);">
+                    <option value="public" ${currentPrivacy === 'public' ? 'selected' : ''}>PUBLIC</option>
+                    <option value="unlisted" ${currentPrivacy === 'unlisted' ? 'selected' : ''}>UNLISTED</option>
+                    <option value="private" ${currentPrivacy === 'private' ? 'selected' : ''}>PRIVATE</option>
+                </select>
             </div>
 
             <div class="hud-input-group">
@@ -800,6 +811,7 @@ async function openSparkEditor(spark) {
 
     document.getElementById('save-spark-changes').onclick = async () => {
         const newName = document.getElementById('edit-name-input').value;
+        const newPrivacy = document.getElementById('edit-privacy-select').value;
         const params = new URLSearchParams(window.location.search);
         
         const realmId = params.get('realm');
@@ -814,7 +826,8 @@ async function openSparkEditor(spark) {
         // Construct a clean update object
         const updateData = {
             ...spark,
-            name: newName
+            name: newName,
+            privacy: newPrivacy
         };
 
         if (window.selectedCover) {
@@ -829,6 +842,7 @@ async function openSparkEditor(spark) {
             
             // Sync local state
             spark.name = updateData.name;
+            spark.privacy = updateData.privacy;
             if (window.selectedCover) {
                 spark.image = updateData.image;
                 spark.photographer = updateData.photographer;
@@ -849,7 +863,6 @@ async function openSparkEditor(spark) {
         }
     };
 }
-
 async function fetchUnsplashCovers(query) {
     const ACCESS_KEY = databaseCache?.app_manifest?.unsplashkey; 
     
