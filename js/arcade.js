@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:23:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -3129,7 +3129,6 @@ window.updateCurrent = (currentId) => {
     // We pass the ID so the HUD knows which record to fetch/reference
     window.openAddCurrentHud('update', currentId);
 };
-/* window.openAddCurrentHud */
 window.openAddCurrentHud = async (action = 'add', targetId = null) => {
     const hud = document.getElementById('add-current-hud');
     if (!hud) return;
@@ -3138,10 +3137,19 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
     const submitBtn = document.getElementById('submit-current-btn');
     const nameInput = document.getElementById('current-name-input');
     const typeSelect = document.getElementById('current-type-select');
-    const typeInput = document.getElementById('current-type-input'); // The primary source
+    const typeInput = document.getElementById('current-type-input');
     const privacySelect = document.getElementById('current-privacy-select');
 
-    // 1. Populate Picker Options
+    // 1. Resolve active realmId
+    const ownerUid = window.auth?.currentUser?.uid;
+    const realmId = new URLSearchParams(window.location.search).get('realm') || databaseCache?.users?.[ownerUid]?.profile?.active_realm_id;
+    
+    // Store realmId directly on the HUD for submitNewCurrent
+    if (realmId) {
+        hud.dataset.realmId = realmId;
+    }
+
+    // 2. Populate Picker Options
     if (typeSelect) {
         const types = databaseCache.settings?.[REALM_CACHE] || [];
         let optionsHTML = `<option value="">-- PICK A TYPE --</option>`;
@@ -3155,36 +3163,32 @@ window.openAddCurrentHud = async (action = 'add', targetId = null) => {
         if (title) title.innerText = "UPDATE_INFRASTRUCTURE";
         if (submitBtn) submitBtn.innerText = "CONFIRM_CHANGES";
         
-        const ownerUid = window.auth?.currentUser?.uid;
-        const realmId = new URLSearchParams(window.location.search).get('realm') || databaseCache.users?.[ownerUid]?.profile?.active_realm_id;
         const currentData = databaseCache.realms?.[realmId]?.currents?.[targetId];
 
-        /* --- Inside openAddCurrentHud (Update Block) --- */
         if (currentData) {
             if (nameInput) nameInput.value = currentData.name || '';
             if (typeInput) typeInput.value = currentData.type || '';
             if (typeSelect) typeSelect.value = ''; 
             if (privacySelect) privacySelect.value = currentData.privacy || 'private';
-    
-            // THE FIX: Save the previous state for submitNewCurrent to compare against
+
+            // Save previous state (preserve original case for accurate comparison)
             hud.dataset.targetId = targetId;
             hud.dataset.mode = 'update';
-            hud.dataset.prevName = (currentData.name || '').trim().toLowerCase();
-            hud.dataset.prevType = (currentData.type || '').trim().toLowerCase();
-            hud.dataset.prevPrivacy = (currentData.privacy || 'private').trim().toLowerCase();
+            hud.dataset.prevName = (currentData.name || '').trim();
+            hud.dataset.prevType = (currentData.type || '').trim();
+            hud.dataset.prevPrivacy = (currentData.privacy || 'private').trim();
         }
     } else {
         if (title) title.innerText = "INITIALIZE_CURRENT";
         if (submitBtn) submitBtn.innerText = "GENERATE_INFRASTRUCTURE";
         
         if (nameInput) nameInput.value = '';
-        if (typeInput) typeInput.value = ''; // Blank for new
+        if (typeInput) typeInput.value = '';
         if (typeSelect) typeSelect.value = '';
         if (privacySelect) privacySelect.value = 'private';
         
         hud.dataset.mode = 'add';
         delete hud.dataset.targetId;
-        // Add these to be perfectly clean:
         delete hud.dataset.prevName;
         delete hud.dataset.prevType;
         delete hud.dataset.prevPrivacy;
