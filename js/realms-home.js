@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 13:53:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 14:19:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -750,8 +750,8 @@ async function renderTrendingSparks(headerData) {
         }
 
         const buildCard = (spark) => {
-            **// DELETED: const ownerSlug = spark.user_slug || 'yertal-arcade';**
-            **const realmId = spark.user_realm_id || 'realm-default';**
+            // DELETED: const ownerSlug = spark.user_slug || 'yertal-arcade';
+            const realmId = spark.user_realm_id || 'realm-default';
             let imgUrl = spark.spark_image || spark.image_url || spark.image || '';
 
             // Escape double quotes in data URIs or image URLs to prevent HTML attribute breakage
@@ -767,10 +767,10 @@ async function renderTrendingSparks(headerData) {
             return `
                 <div class="ticker-card-wrapper flex flex-col items-center gap-1 shrink-0">
                     <span class="text-[10px] font-mono font-bold tracking-widest text-slate-400 uppercase truncate max-w-[220px]">
-                        **@${realmId}**
+                        @${realmId}
                     </span>
 
-                    **<a href="https://yertal.in/arcade/spark.html?realm=${realmId}&current=${currentId}&spark=${sparkId}"** 
+                    <a href="https://yertal.in/arcade/spark.html?realm=${realmId}&current=${currentId}&spark=${sparkId}" 
                        class="glass-card metallic-bezel ticker-spark-card relative group overflow-hidden flex flex-col justify-between p-3 text-left"
                        ${bgStyle}>
                         <div class="absolute inset-0 bg-slate-950/20 backdrop-blur-[1px] group-hover:bg-transparent transition-all duration-300 rounded-[1rem]"></div>
