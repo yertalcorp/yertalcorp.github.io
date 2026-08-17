@@ -349,16 +349,9 @@ function renderNavbar(items) {
     `).join('');
 }
 
-/* Function that gets the active Realm ID for a user */
-/* Function that gets the active Realm ID for a user */
 const getActiveRealmId = async (user) => {
-    let cachedStr = sessionStorage.getItem('currentUser');
-    if (cachedStr) {
-        let cached = JSON.parse(cachedStr);
-        if (cached?.active_realm_id) return cached.active_realm_id;
-    }
 
-    console.log("realms.js: getActiveRealmId: Fetching via SDK for UID:", user.uid);
+    console.log("realms-home.js: getActiveRealmId: Fetching via SDK for UID:", user.uid);
     
     try {
         const snapshot = await get(ref(db, `users/${user.uid}/profile`));
@@ -368,7 +361,9 @@ const getActiveRealmId = async (user) => {
             console.log("getActiveRealmId: Profile retrieved:", profile);
             
             if (profile?.active_realm_id) {
-                sessionStorage.setItem('currentUser', JSON.stringify(profile));
+                // Always overwrite sessionStorage with the latest profile state from Firebase DB
+                const currentSession = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+                sessionStorage.setItem('currentUser', JSON.stringify({ ...currentSession, ...profile }));
                 return profile.active_realm_id;
             }
         } else {
@@ -378,10 +373,9 @@ const getActiveRealmId = async (user) => {
         console.error("getActiveRealmId: SDK Error:", error);
     }
 
-    console.warn("realms.js: getActiveRealmId: Active realm ID not found.");
+    console.warn("realms-home.js: getActiveRealmId: Active realm ID not found.");
     return null; 
 };
-
 async function renderAuthStatus(user, authData) {
     const authZone = document.getElementById('auth-zone');
     if (!authZone || !authData) return;
