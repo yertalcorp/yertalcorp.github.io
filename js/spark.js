@@ -744,20 +744,24 @@ async function openSparkEditor(spark) {
             pointer-events: none;
             display: none;
             z-index: 200000;
-            width: 220px;
-            height: 140px;
+-           width: 220px;
+-           height: 140px;
++           width: 380px;
++           height: 240px;
             border-radius: 8px;
             overflow: hidden;
             background: var(--card-bg);
             border: 2px solid var(--glow-color);
-            box-shadow: 0 0 20px var(--glow-aura), 0 10px 30px rgba(0,0,0,0.8);
-            transform: translate(15px, 15px);
+            box-shadow: 0 0 25px var(--glow-aura), 0 12px 35px rgba(0,0,0,0.85);
+-           transform: translate(15px, 15px);
++           transform: translate(20px, -120px);
             transition: opacity 0.15s ease-out;
             opacity: 0;
         `;
         tooltip.innerHTML = `
             <img id="spark-magnifier-img" src="" style="width: 100%; height: 100%; object-fit: cover;">
-            <div id="spark-magnifier-caption" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.75); color: var(--glow-color); font-size: 8px; font-family: var(--branding-font); text-align: center; padding: 2px 4px; text-transform: uppercase; letter-spacing: 0.5px;"></div>
+-           <div id="spark-magnifier-caption" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.75); color: var(--glow-color); font-size: 8px; font-family: var(--branding-font); text-align: center; padding: 2px 4px; text-transform: uppercase; letter-spacing: 0.5px;"></div>
++           <div id="spark-magnifier-caption" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85); color: var(--glow-color); font-size: 10px; font-family: var(--branding-font); text-align: center; padding: 4px 6px; text-transform: uppercase; letter-spacing: 1px;"></div>
         `;
         document.body.appendChild(tooltip);
     }
