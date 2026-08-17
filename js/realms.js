@@ -349,41 +349,36 @@ function renderNavbar(items) {
     `).join('');
 }
 
-/* Function that gets the safe Slug for a user */
-const getSafeSlug = async (user) => {
-    // 1. Session Storage Trace (Keep this, it's efficient)
+/* Function that gets the active Realm ID for a user */
+const getActiveRealmId = async (user) => {
     let cachedStr = sessionStorage.getItem('currentUser');
     if (cachedStr) {
         let cached = JSON.parse(cachedStr);
-        if (cached?.slug) return cached.slug;
+        if (cached?.active_realm_id) return cached.active_realm_id;
     }
 
-    console.log("showroom.js: getSafeSlug: Fetching via SDK for UID:", user.uid);
+    console.log("showroom.js: getActiveRealmId: Fetching via SDK for UID:", user.uid);
     
     try {
-        // --- THE CHANGE IS HERE ---
-        // Use the Firebase SDK instead of fetch()
-        // Ensure 'get', 'ref', and 'db' are accessible (usually from firebase-config.js)
         const snapshot = await get(ref(db, `users/${user.uid}/profile`));
         
         if (snapshot.exists()) {
             const profile = snapshot.val();
-            console.log("getSafeSlug: Profile retrieved:", profile);
+            console.log("getActiveRealmId: Profile retrieved:", profile);
             
-            if (profile?.slug) {
+            if (profile?.active_realm_id) {
                 sessionStorage.setItem('currentUser', JSON.stringify(profile));
-                return profile.slug;
+                return profile.active_realm_id;
             }
         } else {
-            console.warn("getSafeSlug: No profile found in DB for this UID.");
+            console.warn("getActiveRealmId: No profile found in DB for this UID.");
         }
     } catch (error) {
-        console.error("getSafeSlug: SDK Error:", error);
+        console.error("getActiveRealmId: SDK Error:", error);
     }
 
-    // 3. Fallback to UID (Only if SDK fails or slug is missing)
-    console.warn("showroom.js: getSafeSlug: Couldn't find the slug so Falling back to UID.");
-    return user.uid; 
+    console.warn("showroom.js: getActiveRealmId: Active realm ID not found.");
+    return null; 
 };
 
 async function renderAuthStatus(user, authData) {
@@ -621,8 +616,8 @@ async function renderHero(user, hero) {
     
     if (user) {
         const isSuperuser = user.email === 'yertalcorp@gmail.com';
-        const finalSlug = isSuperuser ? 'yertal-arcade' : await getSafeSlug(user);
-        ctaLink = `window.location.href='./arcade/index.html?user=${finalSlug}'`;
+        const targetRealmId = await getActiveRealmId(user);
+        ctaLink = targetRealmId? window.location.href='./arcade/index.html?realm=${targetRealmId}'` : 'void(0)';`
         heroBtnTxt = hero.primary_button.entry_text;
     }
 
@@ -683,7 +678,7 @@ function renderFeaturedRealms(items) {
     if (!el || !Array.isArray(items)) return;
     el.innerHTML = items.map(item => `
         <div class="featured-card metallic-bezel pt-8 pb-2 rounded-[2rem] cursor-pointer aspect-video relative overflow-hidden group flex-1 min-w-[300px]"
-             onclick="window.location.href='./arcade/index.html?user=${item.realm_slug}'"
+             onclick="window.location.href='./arcade/index.html?realm=${item.realm_id || item.realm_slug}'"
              onmouseenter="const v=this.querySelector('video'); if(v && v.style.display !== 'none') { v.play().catch(err => console.warn('Video playback intercepted:', err.message)); }"
              onmouseleave="const v=this.querySelector('video'); if(v && v.style.display !== 'none') { v.pause(); v.currentTime=0; }">
             
