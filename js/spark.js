@@ -1,6 +1,6 @@
 import { getArcadeData, saveToRealtimeDB } from '/config/firebase-config.js';
 import { watchAuthState } from '/config/auth.js';
-import { globalTheme, applyTheme, databaseCache } from './arcade.js';
+import { globalTheme, applyTheme, databaseCache } from './realm-engine.js';
 
 let allSparks = [];
 let currentIndex = -1;
