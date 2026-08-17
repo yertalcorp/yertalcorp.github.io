@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:30:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:13:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1357,10 +1357,6 @@ watchAuthState(async (currentUser) => {
  * Objective: Clone Spark into visitor's active realm.
  * Task: Handle capacity verification, write cloned spark, and set realm_setup_complete on success.
  */
-/* 
- * Objective: Clone Spark into visitor's active realm.
- * Task: Handle capacity verification, write cloned spark, and set realm_setup_complete on success.
- */
 window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) => {
     console.group(`[CLONE SPARK] Initiated for Spark: ${sparkId}`);
     console.log("Input Args:", { visitorUid, sourceRealmId, sourceCurrentId, sparkId });
@@ -1528,7 +1524,13 @@ window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spar
                     feedback: { count: 0, entries: {} }
                 }
             };
-
+            
+            // Delete uneccessary properties from the copied spark data
+            delete clonedData.logic_used;
+            if (clonedData.index !== undefined && clonedData.index !== -1) {
+                delete clonedData.code;
+            }
+            
             // 8. WRITE TO DB & SYNC LOCAL CACHE
             console.log("[CLONE STEP 8] Writing cloned spark to destination and syncing local cache...");
             
