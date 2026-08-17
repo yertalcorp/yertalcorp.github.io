@@ -7,7 +7,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 18:15:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 10:36:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /*
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Directly update the spark object's parameter_map with current UI values.
@@ -284,6 +284,8 @@ function loadSpark(spark) {
  * Task: Maintain state continuity across transitions by preserving realm configuration URL parameters.
  */
 function navigate(dir) {
+    if (!allSparks || allSparks.length === 0) return;
+
     currentIndex = (currentIndex + dir + allSparks.length) % allSparks.length;
     
     const nextSpark = allSparks[currentIndex];
@@ -628,27 +630,53 @@ watchAuthState(async (user) => {
         return;
     }
 
+    // Evaluate Ownership & Realm-level Privacy
+    const isOwner = realmRecord.realm_ownerid === user.uid;
+    const isRealmPrivate = realmRecord.realm_privacy === 'private';
+
     // 3. Ensure the specific current exists under the realm
     const currents = realmRecord.currents || {};
     let path = currents[currentId];
 
     if (!path) {
-        // Fallback: If target current isn't found, try to grab the first available current in the realm
-        const fallbackCurrent = Object.values(currents)[0];
+        // Fallback to first current accessible by the user
+        const fallbackCurrent = Object.values(currents).find(c => isOwner || c.privacy !== 'private');
         if (fallbackCurrent) {
             console.warn("[DATA] Redirecting to fallback current infrastructure.");
             path = fallbackCurrent;
+            currentId = path.id;
         } else {
-            console.error("[DATA] No record for current:", currentId);
+            console.error("[DATA] No accessible record for current:", currentId);
+            document.getElementById('active-spark-name').textContent = "ACCESS DENIED: RESTRICTED CURRENT";
+            const container = document.getElementById('spark-content-container');
+            if (container) {
+                container.innerHTML = `<div style="text-align: center; padding: 5rem 0; color: var(--branding-text-color); opacity: 0.6; font-style: italic;">ACCESS DENIED: RESTRICTED NODE</div>`;
+            }
             return;
         }
     }
 
-    // 4. Load the Spark
+    const isCurrentPrivate = path.privacy === 'private';
+
+    // SECURITY CHECK 1: Realm or Current privacy gate for visitors
+    if (!isOwner && (isRealmPrivate || isCurrentPrivate)) {
+        console.warn("[SECURITY] Access denied to private realm or current node for visitor.");
+        document.getElementById('active-spark-name').textContent = "ACCESS DENIED: PRIVATE NODE";
+        const container = document.getElementById('spark-content-container');
+        if (container) {
+            container.innerHTML = `<div style="text-align: center; padding: 5rem 0; color: var(--branding-text-color); opacity: 0.6; font-style: italic;">ACCESS DENIED: THIS NODE IS PRIVATE</div>`;
+        }
+        return;
+    }
+
+    // 4. Load & Filter Sparks
     const sparksObj = path.sparks || {};
-    allSparks = Object.values(sparksObj).sort((a, b) => (a.created || 0) - (b.created || 0));
+    const rawSparks = Object.values(sparksObj).sort((a, b) => (a.created || 0) - (b.created || 0));
+
+    // FILTER NAVIGATION ARRAY: Non-owners only receive public sparks
+    allSparks = isOwner ? rawSparks : rawSparks.filter(s => s.privacy !== 'private');
     
-    // Use the ID from the URL or fallback to the first one
+    // Use the ID from the URL or fallback to the first accessible spark
     currentIndex = allSparks.findIndex(s => s.id === initialSparkId);
 
     let activeSpark = null;
@@ -656,16 +684,33 @@ watchAuthState(async (user) => {
         activeSpark = allSparks[currentIndex];
     } else if (allSparks.length > 0) {
         activeSpark = allSparks[0];
+        currentIndex = 0;
     }
+
+    // SECURITY CHECK 2: Validate target active spark privacy
     if (activeSpark) {
+        if (!isOwner && activeSpark.privacy === 'private') {
+            console.warn("[SECURITY] Direct URL access denied to private spark.");
+            document.getElementById('active-spark-name').textContent = "ACCESS DENIED: PRIVATE SPARK";
+            const container = document.getElementById('spark-content-container');
+            if (container) {
+                container.innerHTML = `<div style="text-align: center; padding: 5rem 0; color: var(--branding-text-color); opacity: 0.6; font-style: italic;">ACCESS DENIED: THIS SPARK IS PRIVATE</div>`;
+            }
+            return;
+        }
+
         const preparedSpark = assembleSpark(activeSpark);
         loadSpark(preparedSpark);
     } else {
-        document.getElementById('active-spark-name').textContent = "EMPTY CURRENT";
+        document.getElementById('active-spark-name').textContent = "NO ACCESSIBLE SPARKS";
+        const container = document.getElementById('spark-content-container');
+        if (container) {
+            container.innerHTML = `<div style="text-align: center; padding: 5rem 0; color: var(--branding-text-color); opacity: 0.6; font-style: italic;">NO PUBLIC SPARKS AVAILABLE IN THIS CURRENT</div>`;
+        }
     }
+
     setupInteractions(user.uid, activeSpark);
 });
-
 window.addEventListener('message', (event) => {
     // 1. Security check: Ensure we have data
     if (!event.data || event.data.type !== 'TICKER_UPDATE') return;
