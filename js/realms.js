@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 09:57:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 13:37:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -350,6 +350,7 @@ function renderNavbar(items) {
 }
 
 /* Function that gets the active Realm ID for a user */
+/* Function that gets the active Realm ID for a user */
 const getActiveRealmId = async (user) => {
     let cachedStr = sessionStorage.getItem('currentUser');
     if (cachedStr) {
@@ -357,7 +358,7 @@ const getActiveRealmId = async (user) => {
         if (cached?.active_realm_id) return cached.active_realm_id;
     }
 
-    console.log("showroom.js: getActiveRealmId: Fetching via SDK for UID:", user.uid);
+    console.log("realms.js: getActiveRealmId: Fetching via SDK for UID:", user.uid);
     
     try {
         const snapshot = await get(ref(db, `users/${user.uid}/profile`));
@@ -377,7 +378,7 @@ const getActiveRealmId = async (user) => {
         console.error("getActiveRealmId: SDK Error:", error);
     }
 
-    console.warn("showroom.js: getActiveRealmId: Active realm ID not found.");
+    console.warn("realms.js: getActiveRealmId: Active realm ID not found.");
     return null; 
 };
 
@@ -610,14 +611,13 @@ watchAuthState(async (newUser) => {
 async function renderHero(user, hero) {
     const el = document.getElementById('hero-container');
     if (!el) return;
-    // Calculate action based on the global user variable
+    
     let ctaLink = "window.openAuthHUD('personal')";
     let heroBtnTxt = hero.primary_button.create_text;
     
     if (user) {
-        const isSuperuser = user.email === 'yertalcorp@gmail.com';
         const targetRealmId = await getActiveRealmId(user);
-        ctaLink = targetRealmId? window.location.href='./arcade/index.html?realm=${targetRealmId}'` : 'void(0)';`
+        ctaLink = targetRealmId ? `window.location.href='./arcade/index.html?realm=${targetRealmId}'` : 'void(0)';
         heroBtnTxt = hero.primary_button.entry_text;
     }
 
@@ -653,6 +653,7 @@ async function renderHero(user, hero) {
     `;
     initTiltEngine();
 }
+
 function initTiltEngine() {
     const btn = document.getElementById('hero-primary-btn');
     if (!btn) return;
@@ -678,14 +679,14 @@ function renderFeaturedRealms(items) {
     if (!el || !Array.isArray(items)) return;
     el.innerHTML = items.map(item => `
         <div class="featured-card metallic-bezel pt-8 pb-2 rounded-[2rem] cursor-pointer aspect-video relative overflow-hidden group flex-1 min-w-[300px]"
-             onclick="window.location.href='./arcade/index.html?realm=${item.realm_id || item.realm_slug}'"
+             onclick="window.location.href='./arcade/index.html?realm=${item.realm_id}'"
              onmouseenter="const v=this.querySelector('video'); if(v && v.style.display !== 'none') { v.play().catch(err => console.warn('Video playback intercepted:', err.message)); }"
              onmouseleave="const v=this.querySelector('video'); if(v && v.style.display !== 'none') { v.pause(); v.currentTime=0; }">
             
-            <!-- Layer 1 (Bottom): Static Image (Visible by default, vanishes completely on hover) -->
-            <div id="fallback-img-${item.realm_id || item.realm_slug}" class="absolute inset-0 bg-cover bg-center transition-opacity duration-500 opacity-100 group-hover:opacity-0 rounded-[2rem]" style="background-image: url('${item.realm_image}')"></div>
+            <!-- Layer 1 (Bottom): Static Image -->
+            <div id="fallback-img-${item.realm_id}" class="absolute inset-0 bg-cover bg-center transition-opacity duration-500 opacity-100 group-hover:opacity-0 rounded-[2rem]" style="background-image: url('${item.realm_image}')"></div>
             
-            <!-- Layer 2: Video playing edge-to-edge (Forced geometric container matching layout rules) -->
+            <!-- Layer 2: Video playing edge-to-edge -->
             ${item.realm_animation_preview ? `<video src="${item.realm_animation_preview}" loop muted playsinline onerror="this.style.display='none'; console.warn('Media playback error.');" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; margin: 0; padding: 0;" class="opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem] pointer-events-none z-0"></video>` : ''}
             
             <!-- Layer 3: Glass Tint Overlay -->            
@@ -707,6 +708,7 @@ function renderFeaturedRealms(items) {
         </div>
     `).join('');
 }
+
 
 // Global configuration constant for trending sparks marquee
 const MAX_TRENDING_SPARK_CARDS = 50;
@@ -877,13 +879,16 @@ function renderFinalCTA(cta) {
 
 function renderFooter(footer) {
     const el = document.getElementById('footer-container');
-    if (!el || !footer.legal_links) return;
+    if (!el || !footer?.legal_links) return;
     el.innerHTML = `
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
             <div class="flex flex-wrap gap-6 text-xs text-slate-400">
                 ${footer.legal_links.map(l => `<button onclick="window.open('${l.url}', '_blank')" class="hover:text-white transition">${l.label}</button>`).join('')}
             </div>
-            <div class="text-[10px] text-slate-500 uppercase tracking-widest">© 2026 YERTAL CORPORATION &bull; LAB PARADIGM</div>
+            <div class="text-[10px] text-slate-500 uppercase tracking-widest flex flex-col justify-center md:items-end">
+                <span>© 2026 YERTAL CORPORATION</span>
+                <span class="mt-1 opacity-50 italic">Systems Built in the Lab</span>
+            </div>
         </div>
     `;
 }
