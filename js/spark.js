@@ -789,7 +789,7 @@ async function openSparkEditor(spark) {
             pointer-events: none;
             display: none;
             z-index: 200000;
-            width: 380px;
+            width: 370px;
             height: 240px;
             border-radius: 8px;
             overflow: hidden;
