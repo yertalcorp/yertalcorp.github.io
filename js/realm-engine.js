@@ -4672,7 +4672,6 @@ async function executeMassSpark(realmId, currentId, currentName, prompt, mode, p
                 name: sparkName, 
                 image: cachedPreset.image || '/assets/thumbnails/default.jpg',
                 index: promptTypeObject.index,
-                logic_used: cachedPreset.logic || 'create',
                 parameter_map: explicitOverrideMap
             }, prompt, cachedPreset.name, cachedPreset.image, currentPrivacy);
             
@@ -4714,7 +4713,7 @@ async function executeMassSpark(realmId, currentId, currentName, prompt, mode, p
 
             for (let i = 0; i < linksToSave.length; i++) {
                 const sparkName = linksToSave.length > 1 && linksToSave[i].name.startsWith('spark_') ? `${linksToSave[i].name}-${i + 1}` : linksToSave[i].name;
-                await saveSpark(realmId, currentId, {name: sparkName, link: linksToSave[i].url, image: linksToSave[i].image, logic_used: 'source'}, prompt, "Sourced Stream", linksToSave[i].image, currentPrivacy);
+                await saveSpark(realmId, currentId, {name: sparkName, link: linksToSave[i].url, image: linksToSave[i].image}, prompt, "Sourced Stream", linksToSave[i].image, currentPrivacy);
                 const progress = Math.round(((i + 1) / linksToSave.length) * 100);
                 updateForgeStatus(`FORGING ${resolution.count} SPARKS [${"=".repeat(Math.floor(progress/10))}${"-".repeat(10-Math.floor(progress/10))}] ${progress}%`);
             }
@@ -4756,7 +4755,6 @@ async function executeMassSpark(realmId, currentId, currentName, prompt, mode, p
                     name: sparkName, 
                     image: sparkImage,
                     index: nextCachedIndex,
-                    logic_used: 'create',
                 }, prompt, sparkName, sparkImage, currentPrivacy);
             }
             updateForgeStatus(`FORGING ${resolution.count} SPARKS [==========] 100%`);
