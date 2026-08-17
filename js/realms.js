@@ -397,17 +397,17 @@ async function renderAuthStatus(user, authData) {
         const isSuperuser = user.email === 'yertalcorp@gmail.com';
         const cachedProfile = JSON.parse(sessionStorage.getItem('currentUser'));
         // This line stops the ReferenceError by defining 'finalSlug' properly
-        const finalSlug = isSuperuser ? 'yertal-arcade' : await getSafeSlug(user);
+        const targetRealmId = await getActiveRealmId(user);
 
-        console.log('--- Debugging Slug Resolution ---');
-        console.log("The resolved slug is:", finalSlug);        
+        console.log('--- Debugging Realm Resolution ---');
+        console.log("The resolved user realm ID is:", targetRealmId);        
         
     /* LOGGED IN VIEW */
         authZone.innerHTML = `
             <div class="flex items-center justify-center gap-6 bg-black/20 backdrop-blur-md border border-white/10 p-1.5 rounded-full" 
                  style="animation: fadeIn 0.8s ease-out forwards;">
                 
-                <button onclick="window.location.href='./arcade/index.html?user=${finalSlug}'" 
+                <button onclick="${targetRealmId ? `window.location.href='./arcade/index.html?realm=${targetRealmId}'` : 'void(0)'}" 
                         class="auth-trigger-btn"
                         style="color: var(--neon-color); border-color: var(--neon-color); background: color-mix(in srgb, var(--neon-color), transparent 90%);"
                         onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 20px -5px var(--neon-color), 0 0 15px var(--neon-color)'; this.style.background='color-mix(in srgb, var(--neon-color), transparent 75%)'"
@@ -489,41 +489,57 @@ watchAuthState(async (newUser) => {
                 const response = await fetch(profileUrl);
                 let profile = await response.json();
 
+                const timestamp = Date.now();
+                let activeRealmId = profile?.active_realm_id;
+
                 if (!profile) {
                     // CASE 1: Brand New User
                     // LOG: Profile not detected, initiating creation
                     console.log("%c [SYSTEM] PROFILE NOT DETECTED | CREATING NEW ENTRY ", "color: #f6ad55;");
 
-                    const defaultTitle = 'My Realm';
-                    const defaultSubtitle = 'Welcome to My Space';
-                    const defaultPrivacy = 'private';
-                    const defaultTheme = 'neon-dark';
-                    const defaultPlan = 'free';
-                    const generatedSlug = (user.displayName || user.uid)
-                        .toLowerCase()
-                        .replace(/[^a-z0-9\s-]/g, '')
-                        .trim()
-                        .replace(/\s+/g, '-');
+                    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                    activeRealmId = `realm-${datePart}-${timestamp}`;
+                    
+                    const firstName = user.displayName ? user.displayName.trim().split(' ')[0] : "Pilot";
 
                     profile = {
                         display_name: user.displayName,
-                        slug: generatedSlug,
-                        arcade_logo: currentUi['default-logo'],
-                        plan_type: defaultPlan,
                         email: user.email,
                         photoURL: user.photoURL,
-                        arcade_title: defaultTitle,
-                        arcade_subtitle: defaultSubtitle,
-                        theme: defaultTheme,
-                        privacy: defaultPrivacy,
-                        setup_complete: false
+                        uid: user.uid,
+                        active_realm_id: activeRealmId,
+                        plan_type: "free",
+                        last_sync: new Date().toISOString()
                     };
                     
                     await fetch(profileUrl, {
                         method: 'PUT',
                         body: JSON.stringify(profile)
                     });
-                    console.log("%c [SYSTEM] NEW PROFILE CREATED ", "color: #00f2ff;");
+
+                    // Seed default initial realm under realms node
+                    const realmUrl = `${firebaseConfig.databaseURL}/realms/${activeRealmId}.json?auth=${idToken}`;
+                    const newRealmData = {
+                        realm_id: activeRealmId,
+                        realm_ownerid: user.uid,
+                        realm_display_name: firstName,
+                        realm_title: 'My Realm',
+                        realm_subtitle: 'Welcome to my space',
+                        realm_logo: '/assets/images/YERTAL LOGO SIMPLE.png',
+                        realm_theme: 'neon-dark',
+                        realm_privacy: 'private',
+                        realm_plan_type: 'free',
+                        realm_setup_complete: false,
+                        realm_date_created: timestamp,
+                        realm_last_updated: timestamp
+                    };
+
+                    await fetch(realmUrl, {
+                        method: 'PUT',
+                        body: JSON.stringify(newRealmData)
+                    });
+
+                    console.log("%c [SYSTEM] NEW PROFILE & DEFAULT REALM CREATED ", "color: #00f2ff;");
                 } else {
                     // CASE 2: Existing Profile - Update missing or changed Email/Photo
                     const updates = {};
@@ -536,6 +552,34 @@ watchAuthState(async (newUser) => {
                     // Check if photoURL is missing or has changed
                     if (!profile.photoURL || (user.photoURL && profile.photoURL !== user.photoURL)) {
                         updates.photoURL = user.photoURL;
+                    }
+
+                    // Ensure an active_realm_id exists for older legacy profiles missing one
+                    if (!activeRealmId) {
+                        const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                        activeRealmId = `realm-${datePart}-${timestamp}`;
+                        updates.active_realm_id = activeRealmId;
+
+                        const firstName = user.displayName ? user.displayName.trim().split(' ')[0] : "Pilot";
+                        const realmUrl = `${firebaseConfig.databaseURL}/realms/${activeRealmId}.json?auth=${idToken}`;
+                        
+                        await fetch(realmUrl, {
+                            method: 'PUT',
+                            body: JSON.stringify({
+                                realm_id: activeRealmId,
+                                realm_ownerid: user.uid,
+                                realm_display_name: firstName,
+                                realm_title: 'My Realm',
+                                realm_subtitle: 'Welcome to my space',
+                                realm_logo: '/assets/images/YERTAL LOGO SIMPLE.png',
+                                realm_theme: 'neon-dark',
+                                realm_privacy: 'private',
+                                realm_plan_type: 'free',
+                                realm_setup_complete: false,
+                                realm_date_created: timestamp,
+                                realm_last_updated: timestamp
+                            })
+                        });
                     }
 
                     // Only send a PATCH request if there is actually something to update
@@ -1507,16 +1551,28 @@ window.openAuthHUD = async (mode = 'personal') => {
   // 2. REDIRECT IF LOGGED IN
   if (activeUser) {
     if (mode === 'superuser') {
-        window.location.href = `./arcade/index.html?user=yertal-arcade`;
+        try {
+            const cachedProfile = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+            const isSuperUser = cachedProfile?.superuser === true;
+
+            if (isSuperUser && cachedProfile?.active_realm_id) {
+                window.location.href = `./arcade/index.html?realm=${cachedProfile.active_realm_id}`;
+            } else {
+                // Fallback to normal active realm routing if not a superuser or active_realm_id missing
+                const realmId = await getActiveRealmId(activeUser);
+                if (realmId) window.location.href = `./arcade/index.html?realm=${realmId}`;
+            }
+        } catch (err) {
+            console.error("Error resolving superuser realm:", err);
+        }
     } else {
         try {
-            const response = await fetch(`${firebaseConfig.databaseURL}/users/${activeUser.uid}/profile.json`);
-            const profile = await response.json();
-            const slug = profile?.slug || (activeUser.displayName || activeUser.uid).toLowerCase().replace(/\s+/g, '-');
-            window.location.href = `./arcade/index.html?user=${slug}`;
+            const realmId = await getActiveRealmId(activeUser);
+            if (realmId) {
+                window.location.href = `./arcade/index.html?realm=${realmId}`;
+            }
         } catch (err) {
-            const fallback = (activeUser.displayName || activeUser.uid).toLowerCase().replace(/\s+/g, '-');
-            window.location.href = `./arcade/index.html?user=${fallback}`;
+            console.error("Error resolving active realm:", err);
         }
     }
     return; 
