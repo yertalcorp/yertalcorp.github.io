@@ -789,14 +789,14 @@ async function openSparkEditor(spark) {
             pointer-events: none;
             display: none;
             z-index: 200000;
-            width: 300px;
-            height: 180px;
+            width: 380px;
+            height: 240px;
             border-radius: 8px;
             overflow: hidden;
             background: var(--card-bg);
             border: 2px solid var(--glow-color);
             box-shadow: 0 0 25px var(--glow-aura), 0 12px 35px rgba(0,0,0,0.85);
-            transform: translate(-50%, -195px);
+            transform: translate(-50%, -215px);
             transition: opacity 0.15s ease-out;
             opacity: 0;
         `;
