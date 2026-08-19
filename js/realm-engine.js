@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1648,7 +1648,6 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     // 2. PROFILE NODE: User-identity properties of target realm owner
     const profile = realmOwnerData?.profile || {};
     const avatarPath = '/assets/images/avatar.jpg';
-    const ownerPhotoUrl = profile.photoURL || avatarPath;
 
     const arcadeTitle = targetRealm.realm_title || '';
     const arcadeSubtitle = targetRealm.realm_subtitle || '';
@@ -1656,10 +1655,19 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
 
     const isCircuitTemplate = targetRealm.is_circuit_template === true || String(targetRealm.is_circuit_template).toLowerCase() === 'true';
 
-    const brandName = profile.display_name || targetRealm.realm_display_name || 'PILOT';
-    const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
+    // Realm Identity & Initial Extraction
+    const realmName = targetRealm.realm_display_name || targetRealm.realm_title || 'UNTITLED REALM';
+    const nameWords = realmName.trim().split(/\s+/);
+    const realmInitials = nameWords.slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'YR';
 
-    const logoContent = window.genLogo(brandName, ownerPhotoUrl, isOwner);
+    // Logo resolution: Use realm_logo if present; otherwise generate 3D logo from the first 2 words' initials
+    const logoContent = targetRealm.realm_logo
+        ? (targetRealm.realm_logo.startsWith('fa-') || targetRealm.realm_logo.startsWith('fas ') 
+            ? `<i class="${targetRealm.realm_logo}" style="font-size: 1.2rem; color: var(--branding-color);"></i>` 
+            : `<img src="${targetRealm.realm_logo}" alt="${realmName}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 3px;">`)
+        : window.genLogo(realmInitials);
+
+    const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
     // 3. HOME LINK RESOLUTION: Always point to the current logged-in user's active realm ID if set
     const loggedInUid = authUser?.uid;
@@ -1675,7 +1683,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
                         ${logoContent}
                     </div>
                     <h1 class="metallic-text" style="font-size: 1rem; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1;">
-                        <span style="color: var(--branding-text-color);">${brandName}</span>
+                        <span style="color: var(--branding-text-color);">${realmName}</span>
                     </h1>
                 </div>
 
