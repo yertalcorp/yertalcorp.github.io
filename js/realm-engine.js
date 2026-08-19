@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:05:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2954,13 +2954,15 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
 
     const firstName = realm.realm_display_name?.split(' ')[0] || profile?.display_name?.split(' ')[0] || "Engineer";
     const rawRealmsCache = databaseCache.realms || {};
-    const allRealms = Object.values(rawRealmsCache);
-
-    const allCircuits = allRealms.filter(r => 
-        r.is_circuit_template === true || 
-        r.is_circuit_template === 'true' || 
-        String(r.is_circuit_template).toLowerCase() === 'true'
-    );
+    
+    // Extract keys directly from databaseCache.realms dictionary to preserve realm-ids
+    const allCircuits = Object.entries(rawRealmsCache)
+        .map(([key, value]) => ({ ...value, _realm_key_id: key }))
+        .filter(r => 
+            r.is_circuit_template === true || 
+            r.is_circuit_template === 'true' || 
+            String(r.is_circuit_template).toLowerCase() === 'true'
+        );
 
     let activeFilterTerm = '';
     const CIRCUIT_BATCH_SIZE = 12;
@@ -2995,9 +2997,9 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
         </div>
     `;
 
- // Helper: Single Template Card HTML
+    // Helper: Single Template Card HTML
     const generateCircuitCardHTML = (circuit) => {
-        const circuitId = circuit.realm_circuit || circuit.realm_id;
+        const circuitId = circuit._realm_key_id;
         const patternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern(circuitId) : '';
         const accentColor = circuit.realm_accent_color || 'var(--glow-color)';
         const realmIcon = circuit.realm_icon || 'fas fa-microchip';
@@ -3034,7 +3036,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
             </div>
         `;
     };
-    
+
     // Inject Search Controls + Master Layout Frame
     container.innerHTML = `
         <div class="welcome-zone animate-fadeIn" style="padding: 3rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 1.5rem; background: var(--bg-color-mid); box-shadow: 0 20px 50px var(--card-shadow-color);">
