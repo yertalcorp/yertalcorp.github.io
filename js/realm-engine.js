@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:13:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:50:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1654,6 +1654,8 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const arcadeSubtitle = targetRealm.realm_subtitle || '';
     const isSetupComplete = targetRealm.realm_setup_complete === true;
 
+    const isCircuitTemplate = targetRealm.is_circuit_template === true || String(targetRealm.is_circuit_template).toLowerCase() === 'true';
+
     const brandName = profile.display_name || targetRealm.realm_display_name || 'PILOT';
     const titleParts = arcadeTitle ? arcadeTitle.split(' ') : [];
 
@@ -1695,6 +1697,16 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
             </div>
 
             <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
+                ${isCircuitTemplate ? `
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem;">
+                    <button onclick="window.selectAndInitializeCircuit('${realmSlug}')" class="ethereal-btn-sm" style="padding: 6px 12px; font-size: 10px; letter-spacing: 1px; font-weight: 900;">
+                        FORGE THIS REALM
+                    </button>
+                    <button onclick="window.history.back()" class="ethereal-btn-sm" style="padding: 6px 12px; font-size: 10px; letter-spacing: 1px; opacity: 0.8;">
+                        BACK
+                    </button>
+                </div>
+                ` : ''}
                 <div style="display: flex; align-items: center; gap: 0.8rem; margin-right: 0.5rem; position: relative;">
                     <!-- TOP BAR (+) DROPDOWN MENU (ONLY RENDERED FOR REALM OWNER) -->
                     ${isOwner ? `
@@ -2924,7 +2936,6 @@ function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSpar
         if (sentinel) window._currentsLazyObserver.observe(sentinel);
     }
 }
-
 // Function: renderCircuitTemplates
 function renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid) {
     console.log("[renderCircuitTemplates] Initializing template selector flow with search and pagination...");
@@ -2980,26 +2991,36 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
     const generateCircuitCardHTML = (circuit) => {
         const circuitId = circuit.realm_circuit || circuit.realm_id;
         const patternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern(circuitId) : '';
+        const accentColor = circuit.realm_accent_color || 'var(--glow-color)';
+        const realmIcon = circuit.realm_icon || 'fas fa-microchip';
+        const realmImage = circuit.realm_image || patternImg;
 
         return `
             <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px var(--card-shadow-color));">
-                <div class="action-card" onclick="window.selectAndInitializeCircuit('${circuitId}')"
-                     style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 165px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px solid var(--border-color); box-shadow: inset 0 0 20px var(--box-shadow-color-glow);">
-                    <span class="metallic-text" style="position: relative; z-index: 10; font-family: var(--branding-font); font-size: 16px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 0.6rem; color: var(--glow-color);">
+                <div class="action-card" onclick="window.location.href='/arcade/index.html?realm=${circuitId}'"
+                     style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 185px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px solid ${accentColor}; box-shadow: inset 0 0 20px ${accentColor}33;">
+                    
+                    <i class="${realmIcon}" 
+                       style="font-size: 1.8rem; color: var(--text-main-color); margin-bottom: 0.6rem; z-index: 10; transition: transform 0.6s ease, color 0.3s ease, filter 0.3s ease;" 
+                       onmouseover="this.style.transform='rotate(360deg) scale(1.1)'; this.style.color='${accentColor}'; this.style.filter='drop-shadow(0 0 12px ${accentColor})';" 
+                       onmouseout="this.style.transform='rotate(0deg) scale(1)'; this.style.color='var(--text-main-color)'; this.style.filter='none';"></i>
+
+                    <span class="metallic-text" style="position: relative; z-index: 10; font-family: var(--branding-font); font-size: 16px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 0.4rem; color: ${accentColor};">
                         ${circuit.realm_display_name || circuit.realm_title || 'UNTITLED REALM'}
                     </span>
                     <h4 class="metallic-text" style="position: relative; z-index: 10; text-align: center; padding: 0 0.75rem; margin: 0; font-size: 11px; font-weight: 500; line-height: 1.3; max-width: 92%; opacity: 0.9;">
                         ${circuit.realm_title || ''}
                     </h4>
-                    <img src="${patternImg}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; z-index: 1;">
+                    
+                    ${realmImage ? `<img src="${realmImage}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.45; z-index: 1;">` : ''}
                     <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, var(--card-bg) 0%, var(--bg-color-high) 100%); z-index: 2; pointer-events: none; opacity: 0.6;"></div>
                 </div>
                 <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
                     <p style="font-size: 12px; color: var(--text-main-color); opacity: 0.9; margin: 0; text-align: center; line-height: 1.4; min-height: 36px;">
                         ${circuit.realm_subtitle || ''}
                     </p>
-                    <button onclick="window.selectAndInitializeCircuit('${circuitId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px;">
-                        INITIALIZE REALM
+                    <button onclick="window.selectAndInitializeCircuit('${circuitId}')" class="ethereal-btn-sm" style="width: 100%; margin-top: 0.2rem; padding: 9px 12px; font-size: 11px; letter-spacing: 1.5px; border-color: ${accentColor};">
+                        DIRECTLY FORGE REALM
                     </button>
                 </div>
             </div>
@@ -3094,6 +3115,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
     loadNextCircuitBatch();
     attachCircuitObserver();
 }
+
 window.updatePromptInputHUD = (currentId) => {
     const inputField = document.getElementById(`input-${currentId}`);
     const hudContainer = document.getElementById(`hud-${currentId}`);
