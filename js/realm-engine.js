@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:05:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2995,7 +2995,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
         </div>
     `;
 
-    // Helper: Single Template Card HTML
+ // Helper: Single Template Card HTML
     const generateCircuitCardHTML = (circuit) => {
         const circuitId = circuit.realm_circuit || circuit.realm_id;
         const patternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern(circuitId) : '';
@@ -3006,12 +3006,12 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
         return `
             <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px var(--card-shadow-color));">
                 <div class="action-card" onclick="window.location.href='/arcade/index.html?realm=${circuitId}'"
+                     onmouseover="const i=this.querySelector('.realm-card-icon'); if(i){i.style.transform='rotate(360deg) scale(1.1)'; i.style.color='${accentColor}'; i.style.filter='drop-shadow(0 0 12px ${accentColor})';} const img=this.querySelector('.spark-thumbnail'); if(img){img.style.opacity='0.85'; img.style.filter='brightness(1.3)';}"
+                     onmouseout="const i=this.querySelector('.realm-card-icon'); if(i){i.style.transform='rotate(0deg) scale(1)'; i.style.color='var(--text-main-color)'; i.style.filter='none';} const img=this.querySelector('.spark-thumbnail'); if(img){img.style.opacity='0.45'; img.style.filter='none';}"
                      style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 185px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px solid ${accentColor}; box-shadow: inset 0 0 20px ${accentColor}33;">
                     
-                    <i class="${realmIcon}" 
-                       style="font-size: 1.8rem; color: var(--text-main-color); margin-bottom: 0.6rem; z-index: 10; transition: transform 0.6s ease, color 0.3s ease, filter 0.3s ease;" 
-                       onmouseover="this.style.transform='rotate(360deg) scale(1.1)'; this.style.color='${accentColor}'; this.style.filter='drop-shadow(0 0 12px ${accentColor})';" 
-                       onmouseout="this.style.transform='rotate(0deg) scale(1)'; this.style.color='var(--text-main-color)'; this.style.filter='none';"></i>
+                    <i class="${realmIcon} realm-card-icon" 
+                       style="font-size: 1.8rem; color: var(--text-main-color); margin-bottom: 0.6rem; z-index: 10; transition: transform 0.6s ease, color 0.3s ease, filter 0.3s ease;"></i>
 
                     <span class="metallic-text" style="position: relative; z-index: 10; font-family: var(--branding-font); font-size: 16px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 0.4rem; color: ${accentColor};">
                         ${circuit.realm_display_name || circuit.realm_title || 'UNTITLED REALM'}
@@ -3020,7 +3020,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
                         ${circuit.realm_title || ''}
                     </h4>
                     
-                    ${realmImage ? `<img src="${realmImage}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.45; z-index: 1;">` : ''}
+                    ${realmImage ? `<img src="${realmImage}" class="spark-thumbnail" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.45; z-index: 1; transition: opacity 0.4s ease, filter 0.4s ease;">` : ''}
                     <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, var(--card-bg) 0%, var(--bg-color-high) 100%); z-index: 2; pointer-events: none; opacity: 0.6;"></div>
                 </div>
                 <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; align-items: center; padding: 0 0.25rem;">
@@ -3034,7 +3034,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
             </div>
         `;
     };
-
+    
     // Inject Search Controls + Master Layout Frame
     container.innerHTML = `
         <div class="welcome-zone animate-fadeIn" style="padding: 3rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 1.5rem; background: var(--bg-color-mid); box-shadow: 0 20px 50px var(--card-shadow-color);">
