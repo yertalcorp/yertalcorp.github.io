@@ -1647,13 +1647,15 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
 
     // 2. PROFILE NODE: User-identity properties of target realm owner
     const profile = realmOwnerData?.profile || {};
-    const avatarPath = '/assets/images/avatar.jpg';
 
     const arcadeTitle = targetRealm.realm_title || '';
     const arcadeSubtitle = targetRealm.realm_subtitle || '';
     const isSetupComplete = targetRealm.realm_setup_complete === true;
 
     const isCircuitTemplate = targetRealm.is_circuit_template === true || String(targetRealm.is_circuit_template).toLowerCase() === 'true';
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPreviewMode = isCircuitTemplate || urlParams.get('mode') === 'preview';
+    const accentColor = targetRealm.realm_accent_color || 'var(--glow-color)';
 
     // Realm Identity & Initial Extraction
     const realmName = targetRealm.realm_display_name || targetRealm.realm_title || 'UNTITLED REALM';
@@ -1673,6 +1675,9 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const loggedInUid = authUser?.uid;
     const myActiveRealmId = databaseCache.users?.[loggedInUid]?.profile?.active_realm_id;
     const homeHref = myActiveRealmId ? `?realm=${myActiveRealmId}` : 'index.html';
+
+    // Back Navigation Resolver
+    const returnUrl = sessionStorage.getItem('circuit_return_url') || homeHref;
         
     header.innerHTML = `
         <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura);">
@@ -1705,16 +1710,6 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
             </div>
 
             <div id="auth-zone" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
-                ${isCircuitTemplate ? `
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem;">
-                    <button onclick="window.selectAndInitializeCircuit('${realmSlug}')" class="ethereal-btn-sm" style="padding: 6px 12px; font-size: 10px; letter-spacing: 1px; font-weight: 900;">
-                        FORGE THIS REALM
-                    </button>
-                    <button onclick="window.history.back()" class="ethereal-btn-sm" style="padding: 6px 12px; font-size: 10px; letter-spacing: 1px; opacity: 0.8;">
-                        BACK
-                    </button>
-                </div>
-                ` : ''}
                 <div style="display: flex; align-items: center; gap: 0.8rem; margin-right: 0.5rem; position: relative;">
                     <!-- TOP BAR (+) DROPDOWN MENU (ONLY RENDERED FOR REALM OWNER) -->
                     ${isOwner ? `
@@ -1761,6 +1756,33 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
                 </div>
             </div>
         </nav>
+
+        ${isPreviewMode ? `
+        <!-- HOVERING PREVIEW MODE SUB-BAR -->
+        <div id="circuit-preview-bar" class="animate-fadeIn" 
+             style="display: flex; align-items: center; justify-content: space-between; padding: 6px 1.5rem; background: rgba(var(--bg-color), 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid ${accentColor}; box-shadow: 0 4px 20px ${accentColor}22; position: relative; z-index: 999;">
+            
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <i class="fas fa-eye" style="color: ${accentColor}; font-size: 12px; filter: drop-shadow(0 0 8px ${accentColor});"></i>
+                <span style="font-family: var(--branding-font); font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--branding-text-color);">
+                    PREVIEW MODE <span style="opacity: 0.5; margin: 0 4px;">//</span> <span style="color: ${accentColor};">${realmName}</span>
+                </span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                <button onclick="window.location.href='${returnUrl}'" 
+                        class="ethereal-btn-sm" 
+                        style="min-width: 140px; padding: 6px 16px; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; border-color: ${accentColor}; background: transparent; color: var(--branding-text-color);">
+                    EXIT PREVIEW
+                </button>
+                <button onclick="window.selectAndInitializeCircuit('${realmSlug}')" 
+                        class="ethereal-btn-sm" 
+                        style="min-width: 140px; padding: 6px 16px; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; border-color: ${accentColor}; background: ${accentColor}; color: var(--bg-color); box-shadow: 0 0 12px ${accentColor}66;">
+                    FORGE THIS REALM
+                </button>
+            </div>
+        </div>
+        ` : ''}
         
         <div id="engine-status-container" class="status-bar" style="border-top: 1px solid var(--glow-color); background: rgba(var(--bg-color), 0.9); padding: 5px 1.5rem; display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -2997,7 +3019,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
         </div>
     `;
 
-    // Helper: Single Template Card HTML
+// Helper: Single Template Card HTML
     const generateCircuitCardHTML = (circuit) => {
         const circuitId = circuit._realm_key_id;
         const patternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern(circuitId) : '';
@@ -3007,7 +3029,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
 
         return `
             <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px var(--card-shadow-color));">
-                <div class="action-card" onclick="window.location.href='/arcade/index.html?realm=${circuitId}'"
+                <div class="action-card" onclick="sessionStorage.setItem('circuit_return_url', window.location.href); window.location.href='/arcade/index.html?realm=${circuitId}&mode=preview'"
                      onmouseover="const i=this.querySelector('.realm-card-icon'); if(i){i.style.transform='rotate(360deg) scale(1.1)'; i.style.color='${accentColor}'; i.style.filter='drop-shadow(0 0 12px ${accentColor})';} const img=this.querySelector('.spark-thumbnail'); if(img){img.style.opacity='0.85'; img.style.filter='brightness(1.3)';}"
                      onmouseout="const i=this.querySelector('.realm-card-icon'); if(i){i.style.transform='rotate(0deg) scale(1)'; i.style.color='var(--text-main-color)'; i.style.filter='none';} const img=this.querySelector('.spark-thumbnail'); if(img){img.style.opacity='0.45'; img.style.filter='none';}"
                      style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 185px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px solid ${accentColor}; box-shadow: inset 0 0 20px ${accentColor}33;">
@@ -3036,7 +3058,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
             </div>
         `;
     };
-
+    
     // Inject Search Controls + Master Layout Frame
     container.innerHTML = `
         <div class="welcome-zone animate-fadeIn" style="padding: 3rem 2rem; border: 1px dashed var(--glow-aura); border-radius: 20px; margin: 1.5rem; background: var(--bg-color-mid); box-shadow: 0 20px 50px var(--card-shadow-color);">
