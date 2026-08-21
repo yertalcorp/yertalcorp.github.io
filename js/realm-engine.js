@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2714,7 +2714,7 @@ window.selectAndInitializeCircuit = async (templateId = null) => {
 
 window.initializeUserRealm = initializeUserRealm;
 
-function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sharedSparkId, createNewRealm = false) {
+export function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sharedSparkId, createNewRealm = false) {
     console.group(`[renderCurrents] Execution for Realm: ${realmId}`);
     console.log("[renderCurrents] Input Parameters:", {
         hasCurrentsParam: Boolean(currents),
@@ -2755,7 +2755,20 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
         currents = realm.currents;
     }
 
-    // 2. PRIVACY FILTERING LOGIC
+    // --- URL & PREVIEW MODE PARSING ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const modeParam = urlParams.get('mode');
+    const isPreviewMode = modeParam === 'preview';
+    const isCircuitsMode = modeParam === 'circuits' || createNewRealm;
+
+    // 2. CIRCUITS GALLERY DISPATCH (Explicit mode check)
+    if (isCircuitsMode) {
+        renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid);
+        console.groupEnd();
+        return;
+    }
+
+    // 3. PRIVACY FILTERING LOGIC
     let currentsArray = currents ? Object.values(currents).filter(current => {
         const isPublic = current.privacy === 'public';
         const isTargetUnlisted = current.privacy === 'unlisted' && current.id === sharedCurrentId;
@@ -2773,27 +2786,18 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
 
     console.log(`[renderCurrents] Filtered Active Currents Count: ${currentsArray.length}`);
 
-    // 3. ROUTING / DISPATCHING
-    if (createNewRealm && isOwner) {
-        const maxRealms = planLimits.max_realms || 1;
-        const ownedRealmsCount = Object.values(databaseCache.realms || {}).filter(r => r.realm_ownerid === ownerUid).length;
-
-        if (ownedRealmsCount < maxRealms) {
-            renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid);
-            console.groupEnd();
-            return;
-        } else {
-            alert(`Maximum realm limit reached (${maxRealms}). Upgrade your plan to create more realms.`);
-            console.groupEnd();
-            return;
-        }
-    }
-
+    // 4. ROUTING / DISPATCHING
     if (currentsArray.length > 0) {
         renderExistingRealm(container, currentsArray, isOwner, realmId, maxSparks, sharedSparkId, ownerUid);
     } else {
         if (isOwner) {
-            if (realm.realm_setup_complete === true) {
+            // Check setup state: if setup is incomplete, force URL to mode=circuits
+            if (realm.realm_setup_complete !== true) {
+                const newParams = new URLSearchParams(window.location.search);
+                newParams.set('mode', 'circuits');
+                window.history.replaceState({}, '', `${window.location.pathname}?${newParams.toString()}`);
+                renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid);
+            } else {
                 console.log("[renderCurrents] Setup complete with 0 currents. Rendering welcome zone.");
                 container.innerHTML = `
                     <div class="welcome-zone animate-fadeIn" style="text-align: center; padding: 6rem 2rem; border: 1px solid var(--glow-aura); border-radius: 20px; margin: 2rem; background: var(--card-bg);">
@@ -2813,8 +2817,6 @@ function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sh
                         </div>
                     </div>
                 `;
-            } else {
-                renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid);
             }
         } else {
             console.warn("[renderCurrents] Visitor viewing empty or restricted private realm.");
@@ -2966,7 +2968,6 @@ function renderExistingRealm(container, currentsArray, isOwner, realmId, maxSpar
         if (sentinel) window._currentsLazyObserver.observe(sentinel);
     }
 }
-// Function: renderCircuitTemplates
 function renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid) {
     console.log("[renderCircuitTemplates] Initializing template selector flow with search and pagination...");
 
@@ -2989,6 +2990,10 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
     let activeFilterTerm = '';
     const CIRCUIT_BATCH_SIZE = 12;
     let currentCircuitIndex = 0;
+
+    // Check setup status to conditionally display the exit button for existing users
+    const isEstablishedUser = realm.realm_setup_complete === true;
+    const returnRealmId = databaseCache.users?.[ownerUid]?.profile?.active_realm_id || realmId;
 
     // Standardized Blank Realm Card Pattern
     const blankPatternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern('blank-realm') : '';
@@ -3019,7 +3024,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
         </div>
     `;
 
-// Helper: Single Template Card HTML
+    // Helper: Single Template Card HTML
     const generateCircuitCardHTML = (circuit) => {
         const circuitId = circuit._realm_key_id;
         const patternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern(circuitId) : '';
@@ -3029,7 +3034,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
 
         return `
             <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px var(--card-shadow-color));">
-                <div class="action-card" onclick="sessionStorage.setItem('circuit_return_url', window.location.href); window.location.href='/arcade/index.html?realm=${circuitId}&mode=preview'"
+                <div class="action-card" onclick="window.location.href='?realm=${circuitId}&mode=preview'"
                      onmouseover="const i=this.querySelector('.realm-card-icon'); if(i){i.style.transform='rotate(360deg) scale(1.1)'; i.style.color='${accentColor}'; i.style.filter='drop-shadow(0 0 12px ${accentColor})';} const img=this.querySelector('.spark-thumbnail'); if(img){img.style.opacity='0.85'; img.style.filter='brightness(1.3)';}"
                      onmouseout="const i=this.querySelector('.realm-card-icon'); if(i){i.style.transform='rotate(0deg) scale(1)'; i.style.color='var(--text-main-color)'; i.style.filter='none';} const img=this.querySelector('.spark-thumbnail'); if(img){img.style.opacity='0.45'; img.style.filter='none';}"
                      style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 185px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px solid ${accentColor}; box-shadow: inset 0 0 20px ${accentColor}33;">
@@ -3070,6 +3075,14 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
                     SELECT A PRE-BUILT BLUEPRINT OR START BLANK TO INITIALIZE
                 </p>
                 
+                ${isEstablishedUser ? `
+                <div style="margin-bottom: 1.5rem;">
+                    <button onclick="window.location.href='?realm=${returnRealmId}'" class="ethereal-btn-sm" style="padding: 8px 18px; font-size: 10px; letter-spacing: 2px;">
+                        <i class="fas fa-arrow-left" style="margin-right: 6px;"></i> GO BACK TO REALM
+                    </button>
+                </div>
+                ` : ''}
+
                 <!-- Circuit Search Control -->
                 <div style="max-width: 500px; margin: 0 auto; position: relative;">
                     <input type="text" id="circuit-search-input" 
