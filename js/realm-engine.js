@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @11:12:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1636,6 +1636,7 @@ window.genLogo = (name, profilePic, isOwner) => {
     `;
 };
 /* RENDER TOP BAR */
+/* RENDER TOP BAR */
 function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const header = document.getElementById('realm-header');
     if (!header) return;
@@ -1680,8 +1681,8 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const myActiveRealmId = databaseCache.users?.[loggedInUid]?.profile?.active_realm_id;
     const homeHref = myActiveRealmId ? `?realm=${myActiveRealmId}` : 'index.html';
 
-    // Back Navigation Resolver
-    const returnUrl = sessionStorage.getItem('circuit_return_url') || homeHref;
+    // Back Navigation Resolver: Route back to mode=circuits
+    const returnUrl = `?realm=${realmSlug}&mode=circuits`;
         
     header.innerHTML = `
         <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura);">
