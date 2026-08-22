@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:37:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1231,10 +1231,8 @@ async function refreshUI() {
 
         const isOwner = Boolean(user && realmOwnerId && realmOwnerId === user.uid);
 
-        if (user && isOwner && databaseCache.users?.[user.uid]?.profile?.active_realm_id !== targetRealmSlug) {
-            await update(ref(db, `users/${user.uid}/profile`), { active_realm_id: targetRealmSlug });
-            databaseCache.users[user.uid].profile.active_realm_id = targetRealmSlug;
-        }
+        // Pure read-only check: Do not update active_realm_id in Firebase during refreshUI
+        const activeRealmId = databaseCache.users?.[user.uid]?.profile?.active_realm_id || targetRealmSlug;
         console.log(`Logged in uid is ${user.uid} and the targetRealmSlug is ${targetRealmSlug}`);
         
         console.table({
