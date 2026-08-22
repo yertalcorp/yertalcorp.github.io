@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 14:19:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 21:34:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -479,25 +479,17 @@ watchAuthState(async (newUser) => {
                 const response = await fetch(profileUrl);
                 let profile = await response.json();
 
-                const timestamp = Date.now();
-                let activeRealmId = profile?.active_realm_id;
+                let redirectUrl = "";
 
                 if (!profile) {
                     // CASE 1: Brand New User
-                    // LOG: Profile not detected, initiating creation
                     console.log("%c [SYSTEM] PROFILE NOT DETECTED | CREATING NEW ENTRY ", "color: #f6ad55;");
-
-                    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-                    activeRealmId = `realm-${datePart}-${timestamp}`;
-                    
-                    const firstName = user.displayName ? user.displayName.trim().split(' ')[0] : "Pilot";
 
                     profile = {
                         display_name: user.displayName,
                         email: user.email,
                         photoURL: user.photoURL,
                         uid: user.uid,
-                        active_realm_id: activeRealmId,
                         plan_type: "free",
                         last_sync: new Date().toISOString()
                     };
@@ -507,31 +499,12 @@ watchAuthState(async (newUser) => {
                         body: JSON.stringify(profile)
                     });
 
-                    // Seed default initial realm under realms node
-                    const realmUrl = `${firebaseConfig.databaseURL}/realms/${activeRealmId}.json?auth=${idToken}`;
-                    const newRealmData = {
-                        realm_id: activeRealmId,
-                        realm_ownerid: user.uid,
-                        realm_display_name: firstName,
-                        realm_title: 'My Realm',
-                        realm_subtitle: 'Welcome to my space',
-                        realm_logo: '/assets/images/YERTAL LOGO SIMPLE.png',
-                        realm_theme: 'neon-dark',
-                        realm_privacy: 'private',
-                        realm_plan_type: 'free',
-                        realm_setup_complete: false,
-                        realm_date_created: timestamp,
-                        realm_last_updated: timestamp
-                    };
+                    console.log("%c [SYSTEM] NEW PROFILE CREATED ", "color: #00f2ff;");
 
-                    await fetch(realmUrl, {
-                        method: 'PUT',
-                        body: JSON.stringify(newRealmData)
-                    });
-
-                    console.log("%c [SYSTEM] NEW PROFILE & DEFAULT REALM CREATED ", "color: #00f2ff;");
+                    // Construct redirect URL for brand new user (no active_realm_id initialized)
+                    redirectUrl = "https://yertal.in/arcade/index.html?mode=circuits";
                 } else {
-                    // CASE 2: Existing Profile - Update missing or changed Email/Photo
+                    // CASE 2: Existing Profile - Sync missing or changed attributes
                     const updates = {};
                     
                     // Check if email is missing or has changed
@@ -542,34 +515,6 @@ watchAuthState(async (newUser) => {
                     // Check if photoURL is missing or has changed
                     if (!profile.photoURL || (user.photoURL && profile.photoURL !== user.photoURL)) {
                         updates.photoURL = user.photoURL;
-                    }
-
-                    // Ensure an active_realm_id exists for older legacy profiles missing one
-                    if (!activeRealmId) {
-                        const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-                        activeRealmId = `realm-${datePart}-${timestamp}`;
-                        updates.active_realm_id = activeRealmId;
-
-                        const firstName = user.displayName ? user.displayName.trim().split(' ')[0] : "Pilot";
-                        const realmUrl = `${firebaseConfig.databaseURL}/realms/${activeRealmId}.json?auth=${idToken}`;
-                        
-                        await fetch(realmUrl, {
-                            method: 'PUT',
-                            body: JSON.stringify({
-                                realm_id: activeRealmId,
-                                realm_ownerid: user.uid,
-                                realm_display_name: firstName,
-                                realm_title: 'My Realm',
-                                realm_subtitle: 'Welcome to my space',
-                                realm_logo: '/assets/images/YERTAL LOGO SIMPLE.png',
-                                realm_theme: 'neon-dark',
-                                realm_privacy: 'private',
-                                realm_plan_type: 'free',
-                                realm_setup_complete: false,
-                                realm_date_created: timestamp,
-                                realm_last_updated: timestamp
-                            })
-                        });
                     }
 
                     // Only send a PATCH request if there is actually something to update
@@ -584,12 +529,26 @@ watchAuthState(async (newUser) => {
                         // Sync the local profile object so sessionStorage is up to date
                         profile = { ...profile, ...updates };
                     }
+
+                    // Construct redirect URL based on extracted active_realm_id
+                    const activeRealmId = profile.active_realm_id;
+                    if (activeRealmId) {
+                        redirectUrl = `https://yertal.in/arcade/index.html?realm=${activeRealmId}`;
+                    } else {
+                        redirectUrl = "https://yertal.in/arcade/index.html?mode=circuits";
+                    }
                 }
 
                 currentUser = profile;
-                // Add the UID to the object before storing in session for consistency
                 currentUser.uid = user.uid; 
                 sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                // Execute redirection if needed
+                if (redirectUrl) {
+                    console.log(`[ROUTING]: Navigating user to -> ${redirectUrl}`);
+                    window.location.href = redirectUrl;
+                    return;
+                }
             }
 
             // UI is updated using the guaranteed data
