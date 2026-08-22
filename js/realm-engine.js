@@ -1633,7 +1633,7 @@ window.genLogo = (name, profilePic, isOwner) => {
         </div>
     `;
 };
-/* RENDER TOP BAR */
+
 /* RENDER TOP BAR */
 function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const header = document.getElementById('realm-header');
@@ -1679,8 +1679,9 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const myActiveRealmId = databaseCache.users?.[loggedInUid]?.profile?.active_realm_id;
     const homeHref = myActiveRealmId ? `?realm=${myActiveRealmId}` : 'index.html';
 
-    // Back Navigation Resolver: Route back to mode=circuits
-    const returnUrl = `?realm=${realmSlug}&mode=circuits`;
+    // Back Navigation Resolver: Route back to mode=circuits using the original realm ID
+    const returnRealmId = urlParams.get('return_realm') || myActiveRealmId || realmSlug;
+    const returnUrl = `?realm=${returnRealmId}&mode=circuits`;
         
     header.innerHTML = `
         <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura);">
@@ -3049,7 +3050,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
         </div>
     `;
 
-    // Helper: Single Template Card HTML
+// Helper: Single Template Card HTML
     const generateCircuitCardHTML = (circuit) => {
         const circuitId = circuit._realm_key_id;
         const patternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern(circuitId) : '';
@@ -3059,10 +3060,10 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
 
         return `
             <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px var(--card-shadow-color));">
-                <div class="action-card" onclick="window.location.href='?realm=${circuitId}&mode=preview'"
+                <div class="action-card" onclick="window.location.href='?realm=${circuitId}&mode=preview&return_realm=${returnRealmId}'"
                      onmouseover="const i=this.querySelector('.realm-card-icon'); if(i){i.style.transform='rotate(360deg) scale(1.1)'; i.style.color='${accentColor}'; i.style.filter='drop-shadow(0 0 12px ${accentColor})';} const img=this.querySelector('.spark-thumbnail'); if(img){img.style.opacity='0.85'; img.style.filter='brightness(1.3)';}"
                      onmouseout="const i=this.querySelector('.realm-card-icon'); if(i){i.style.transform='rotate(0deg) scale(1)'; i.style.color='var(--text-main-color)'; i.style.filter='none';} const img=this.querySelector('.spark-thumbnail'); if(img){img.style.opacity='0.45'; img.style.filter='none';}"
-                     style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 185px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px solid ${accentColor}; box-shadow: inset 0 0 20px ${accentColor}33;">
+                     style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 185px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px solid ${accentColor}; box-shadow: inset 0 0 20px ${accentColor}33;">                    
                     
                     <i class="${realmIcon} realm-card-icon" 
                        style="font-size: 1.8rem; color: var(--text-main-color); margin-bottom: 0.6rem; z-index: 10; transition: transform 0.6s ease, color 0.3s ease, filter 0.3s ease;"></i>
