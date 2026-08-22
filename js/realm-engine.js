@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1334,13 +1334,18 @@ watchAuthState(async (currentUser) => {
     console.log(`[AUTH]: Logged in as: ${currentUser.email} (${currentUser.uid})`);
     user = currentUser;
 
-    // Default to the Hub if no slug is present
     const urlParams = new URLSearchParams(window.location.search);
     const realmSlug = urlParams.get('realm');
     
-    if (!realmSlug) {
-        console.log("[ROUTING]: No 'user' slug in URL. Redirecting to yertal-arcade...");
-        window.location.href = "?realm=realm-20260804-1785866761042";
+    // Fetch the user's profile to check active realm existence
+    const userProfile = await getUserData(currentUser.uid);
+    const userRealms = await getUserRealms(currentUser.uid);
+    const hasActiveRealm = userProfile?.active_realm_id && userRealms?.hasOwnProperty(userProfile.active_realm_id);
+
+    // Redirect to mode=circuits if no valid active realm exists or no URL slug present
+    if (!realmSlug || !hasActiveRealm) {
+        console.log("[ROUTING]: No active realm found or missing URL slug. Routing to circuits mode...");
+        window.location.search = '?mode=circuits';
         return;
     }
 
