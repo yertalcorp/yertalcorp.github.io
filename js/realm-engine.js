@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:21:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -2745,6 +2745,7 @@ window.selectAndInitializeCircuit = async (templateId = null) => {
 
 window.initializeUserRealm = initializeUserRealm;
 
+
 export function renderCurrents(currents, isOwner, realmId, profile, sharedCurrentId, sharedSparkId, createNewRealm = false) {
     console.group(`[renderCurrents] Execution for Realm: ${realmId}`);
     console.log("[renderCurrents] Input Parameters:", {
@@ -2790,10 +2791,12 @@ export function renderCurrents(currents, isOwner, realmId, profile, sharedCurren
     const urlParams = new URLSearchParams(window.location.search);
     const modeParam = urlParams.get('mode');
     const isPreviewMode = modeParam === 'preview';
-    const isCircuitsMode = modeParam === 'circuits' || createNewRealm;
+    // UPDATED: Triggers circuits view if mode === 'circuits', createNewRealm === true, OR no realmId is present
+    const isCircuitsMode = modeParam === 'circuits' || createNewRealm || !realmId;
 
-    // 2. CIRCUITS GALLERY DISPATCH (Explicit mode check)
+    // 2. CIRCUITS GALLERY DISPATCH (Explicit mode or missing realmId check)
     if (isCircuitsMode) {
+        console.log("[renderCurrents]: No active realmId or mode=circuits detected. Rendering Circuits Gallery.");
         renderCircuitTemplates(container, isOwner, realmId, profile, realm, ownerUid);
         console.groupEnd();
         return;
@@ -3022,9 +3025,10 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
     const CIRCUIT_BATCH_SIZE = 12;
     let currentCircuitIndex = 0;
 
-    // Check setup status to conditionally display the exit button for existing users
-    const isEstablishedUser = realm.realm_setup_complete === true;
+    // Check setup status AND verify a valid return realm exists before displaying exit button
     const returnRealmId = databaseCache.users?.[ownerUid]?.profile?.active_realm_id || realmId;
+    // UPDATED: Only consider as established if both setup is complete AND returnRealmId is present
+    const isEstablishedUser = realm.realm_setup_complete === true && Boolean(returnRealmId);
 
     // Standardized Blank Realm Card Pattern
     const blankPatternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern('blank-realm') : '';
@@ -3055,7 +3059,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
         </div>
     `;
 
-// Helper: Single Template Card HTML
+    // Helper: Single Template Card HTML
     const generateCircuitCardHTML = (circuit) => {
         const circuitId = circuit._realm_key_id;
         const patternImg = typeof getCircuitCardPattern === 'function' ? getCircuitCardPattern(circuitId) : '';
@@ -3065,7 +3069,7 @@ function renderCircuitTemplates(container, isOwner, realmId, profile, realm, own
 
         return `
             <div class="spark-card" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%; filter: drop-shadow(0 12px 24px var(--card-shadow-color));">
-                <div class="action-card" onclick="window.location.href='?realm=${circuitId}&mode=preview&return_realm=${returnRealmId}'"
+                <div class="action-card" onclick="window.location.href='?realm=${circuitId}&mode=preview${returnRealmId ? `&return_realm=${returnRealmId}` : ''}'"
                      onmouseover="const i=this.querySelector('.realm-card-icon'); if(i){i.style.transform='rotate(360deg) scale(1.1)'; i.style.color='${accentColor}'; i.style.filter='drop-shadow(0 0 12px ${accentColor})';} const img=this.querySelector('.spark-thumbnail'); if(img){img.style.opacity='0.85'; img.style.filter='brightness(1.3)';}"
                      onmouseout="const i=this.querySelector('.realm-card-icon'); if(i){i.style.transform='rotate(0deg) scale(1)'; i.style.color='var(--text-main-color)'; i.style.filter='none';} const img=this.querySelector('.spark-thumbnail'); if(img){img.style.opacity='0.45'; img.style.filter='none';}"
                      style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 185px; width: 100%; cursor: pointer; border-radius: 8px; background: var(--card-bg) !important; border: 1px solid ${accentColor}; box-shadow: inset 0 0 20px ${accentColor}33;">                    
