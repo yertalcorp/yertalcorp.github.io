@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:27:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @11:12:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1654,8 +1654,12 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
 
     const isCircuitTemplate = targetRealm.is_circuit_template === true || String(targetRealm.is_circuit_template).toLowerCase() === 'true';
     const urlParams = new URLSearchParams(window.location.search);
-    const isPreviewMode = isCircuitTemplate || urlParams.get('mode') === 'preview';
+    const isPreviewMode = urlParams.get('mode') === 'preview';
     const accentColor = targetRealm.realm_accent_color || 'var(--glow-color)';
+
+    // Determine Preview vs Clone Sub-bar Rendering State
+    const showPreviewSubBar = isPreviewMode;
+    const showVisitorCloneBar = !isOwner && !isPreviewMode && isCircuitTemplate;
 
     // Realm Identity & Initial Extraction
     const realmName = targetRealm.realm_display_name || targetRealm.realm_title || 'UNTITLED REALM';
@@ -1757,7 +1761,7 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
             </div>
         </nav>
 
-        ${isPreviewMode ? `
+        ${showPreviewSubBar ? `
         <!-- HOVERING PREVIEW MODE SUB-BAR -->
         <div id="circuit-preview-bar" class="animate-fadeIn" 
              style="display: flex; align-items: center; justify-content: space-between; padding: 6px 1.5rem; background: rgba(var(--bg-color), 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid ${accentColor}; box-shadow: 0 4px 20px ${accentColor}22; position: relative; z-index: 999;">
@@ -1779,6 +1783,28 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
                         class="ethereal-btn-sm" 
                         style="min-width: 140px; padding: 6px 16px; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; border-color: ${accentColor}; background: ${accentColor}; color: var(--bg-color); box-shadow: 0 0 12px ${accentColor}66;">
                     FORGE THIS REALM
+                </button>
+            </div>
+        </div>
+        ` : ''}
+
+        ${showVisitorCloneBar ? `
+        <!-- HOVERING CLONE REALM SUB-BAR FOR VISITOR -->
+        <div id="circuit-visitor-bar" class="animate-fadeIn" 
+             style="display: flex; align-items: center; justify-content: space-between; padding: 6px 1.5rem; background: rgba(var(--bg-color), 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid ${accentColor}; box-shadow: 0 4px 20px ${accentColor}22; position: relative; z-index: 999;">
+            
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <i class="fas fa-cubes" style="color: ${accentColor}; font-size: 12px; filter: drop-shadow(0 0 8px ${accentColor});"></i>
+                <span style="font-family: var(--branding-font); font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--branding-text-color);">
+                    CIRCUIT BLUEPRINT <span style="opacity: 0.5; margin: 0 4px;">//</span> <span style="color: ${accentColor};">${realmName}</span>
+                </span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                <button onclick="window.selectAndInitializeCircuit('${realmSlug}')" 
+                        class="ethereal-btn-sm" 
+                        style="min-width: 160px; padding: 6px 16px; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; border-color: ${accentColor}; background: ${accentColor}; color: var(--bg-color); box-shadow: 0 0 12px ${accentColor}66;">
+                    CLONE THIS REALM
                 </button>
             </div>
         </div>
