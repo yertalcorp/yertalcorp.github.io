@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 21:34:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 22:01:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -383,11 +383,19 @@ async function renderAuthStatus(user, authData) {
     authZone.innerHTML = '';
 
     if (user) {
-        // 1. CALCULATE CORRECT SLUG FOR LOGGED IN BUTTON
+        // 1. CALCULATE CORRECT SLUG AND BUTTON TEXT FOR LOGGED IN USER
         const isSuperuser = user.email === 'yertalcorp@gmail.com';
         const cachedProfile = JSON.parse(sessionStorage.getItem('currentUser'));
-        // This line stops the ReferenceError by defining 'finalSlug' properly
         const targetRealmId = await getActiveRealmId(user);
+
+        // Determine dynamic target URL and button text based on active_realm_id presence
+        const targetUrl = targetRealmId
+            ? `./arcade/index.html?realm=${targetRealmId}`
+            : './arcade/index.html?mode=circuits';
+        
+        const buttonText = targetRealmId
+            ? (authData.entry_label || 'ENTER YOUR REALM').toUpperCase()
+            : 'CREATE YOUR REALM';
 
         console.log('--- Debugging Realm Resolution ---');
         console.log("The resolved user realm ID is:", targetRealmId);        
@@ -397,14 +405,14 @@ async function renderAuthStatus(user, authData) {
             <div class="flex items-center justify-center gap-6 bg-black/20 backdrop-blur-md border border-white/10 p-1.5 rounded-full" 
                  style="animation: fadeIn 0.8s ease-out forwards;">
                 
-                <button onclick="${targetRealmId ? `window.location.href='./arcade/index.html?realm=${targetRealmId}'` : 'void(0)'}" 
+                <button onclick="window.location.href='${targetUrl}'" 
                         class="auth-trigger-btn"
                         style="color: var(--neon-color); border-color: var(--neon-color); background: color-mix(in srgb, var(--neon-color), transparent 90%);"
                         onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 20px -5px var(--neon-color), 0 0 15px var(--neon-color)'; this.style.background='color-mix(in srgb, var(--neon-color), transparent 75%)'"
                         onmouseout="this.style.transform='translateY(0px)'; this.style.boxShadow='none'; this.style.background='color-mix(in srgb, var(--neon-color), transparent 90%)'"
                 >
                     <span style="font-size: 11px; font-weight: 900; letter-spacing: 0.2em; text-align: center; text-transform: uppercase; pointer-events: none;">
-                        ${authData.entry_label.toUpperCase()}
+                        ${buttonText}
                     </span>
                 </button>
 
@@ -458,7 +466,6 @@ async function renderAuthStatus(user, authData) {
             </button>`;
     }
 }
-
 watchAuthState(async (newUser) => {
     user = newUser;
 
@@ -570,8 +577,15 @@ async function renderHero(user, hero) {
     
     if (user) {
         const targetRealmId = await getActiveRealmId(user);
-        ctaLink = targetRealmId ? `window.location.href='./arcade/index.html?realm=${targetRealmId}'` : 'void(0)';
-        heroBtnTxt = hero.primary_button.entry_text;
+        
+        // Set target navigation and hero text dynamically
+        if (targetRealmId) {
+            ctaLink = `window.location.href='./arcade/index.html?realm=${targetRealmId}'`;
+            heroBtnTxt = hero.primary_button.entry_text;
+        } else {
+            ctaLink = `window.location.href='./arcade/index.html?mode=circuits'`;
+            heroBtnTxt = 'CREATE YOUR REALM';
+        }
     }
 
     console.log(`The final ctaLink is ${ctaLink} and the final hero button text is ${heroBtnTxt}.`);
