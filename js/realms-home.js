@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 22:01:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 11:41:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -469,7 +469,6 @@ async function renderAuthStatus(user, authData) {
 watchAuthState(async (newUser) => {
     user = newUser;
 
-    // --- ENTRY LOGS ---
     console.log("%c [AUTH] STATE CHANGE DETECTED ", "background: #222; color: #bada55; padding: 2px 5px;");
     console.log("User Object:", newUser);
     
@@ -477,16 +476,12 @@ watchAuthState(async (newUser) => {
         try {
             let currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
             
-            // Only fetch from DB if session is empty or user has changed
             if (!currentUser || currentUser.uid !== user.uid) {
-                // Generate the ID token to authenticate the REST request
                 const idToken = await user.getIdToken();
                 const profileUrl = `${firebaseConfig.databaseURL}/users/${user.uid}/profile.json?auth=${idToken}`;
 
                 const response = await fetch(profileUrl);
                 let profile = await response.json();
-
-                let redirectUrl = "";
 
                 if (!profile) {
                     // CASE 1: Brand New User
@@ -507,59 +502,37 @@ watchAuthState(async (newUser) => {
                     });
 
                     console.log("%c [SYSTEM] NEW PROFILE CREATED ", "color: #00f2ff;");
-
-                    // Construct redirect URL for brand new user (no active_realm_id initialized)
-                    redirectUrl = "https://yertal.in/arcade/index.html?mode=circuits";
                 } else {
-                    // CASE 2: Existing Profile - Sync missing or changed attributes
+                    // CASE 2: Existing Profile - Sync missing attributes
                     const updates = {};
                     
-                    // Check if email is missing or has changed
                     if (!profile.email || (user.email && profile.email !== user.email)) {
                         updates.email = user.email;
                     }
-                    
-                    // Check if photoURL is missing or has changed
                     if (!profile.photoURL || (user.photoURL && profile.photoURL !== user.photoURL)) {
                         updates.photoURL = user.photoURL;
                     }
 
-                    // Only send a PATCH request if there is actually something to update
                     if (Object.keys(updates).length > 0) {
                         console.log("%c [SYSTEM] SYNCING PROFILE ATTRIBUTES ", "color: #f6ad55;", updates);
-                        
                         await fetch(profileUrl, {
                             method: 'PATCH',
                             body: JSON.stringify(updates)
                         });
-
-                        // Sync the local profile object so sessionStorage is up to date
                         profile = { ...profile, ...updates };
-                    }
-
-                    // Construct redirect URL based on extracted active_realm_id
-                    const activeRealmId = profile.active_realm_id;
-                    if (activeRealmId) {
-                        redirectUrl = `https://yertal.in/arcade/index.html?realm=${activeRealmId}`;
-                    } else {
-                        redirectUrl = "https://yertal.in/arcade/index.html?mode=circuits";
                     }
                 }
 
                 currentUser = profile;
                 currentUser.uid = user.uid; 
                 sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-
-                // Execute redirection if needed
-                if (redirectUrl) {
-                    console.log(`[ROUTING]: Navigating user to -> ${redirectUrl}`);
-                    window.location.href = redirectUrl;
-                    return;
-                }
             }
 
-            // UI is updated using the guaranteed data
+            // Update home page elements with dynamic buttons
             renderAuthStatus(user, currentAuth);
+            if (currentUi?.hero) {
+                renderHero(user, currentUi.hero);
+            }
             console.log("%c [SYSTEM] USER RECOGNIZED | UI UPDATED ", "color: #00f2ff;");
 
         } catch (error) {
@@ -567,7 +540,6 @@ watchAuthState(async (newUser) => {
         }
     }
 });
-
 async function renderHero(user, hero) {
     const el = document.getElementById('hero-container');
     if (!el) return;
