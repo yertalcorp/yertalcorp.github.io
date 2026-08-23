@@ -99,4 +99,4 @@ export async function initializeUserIfNeeded(user) {
     return snapshot.val()?.active_realm_id || null;
 }
 
-export { ref, set, get, push, runTransaction, update, app, auth, db, increment };
+export { getDatabase, ref, set, get, push, update, increment, runTransaction, query, orderByChild, equalTo, db, getAuth, initializeApp };
