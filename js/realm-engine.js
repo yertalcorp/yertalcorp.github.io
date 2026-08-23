@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:43:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1321,6 +1321,68 @@ async function syncUserProfile(currentUser) {
         console.error("Identity Sync Failed:", error);
     }
 }    
+
+// Function: getUserData
+export async function getUserData(uid) {
+    if (!uid) return null;
+    
+    // Check local cache first
+    if (databaseCache.users?.[uid]?.profile) {
+        return databaseCache.users[uid].profile;
+    }
+
+    try {
+        const userRef = ref(db, `users/${uid}/profile`);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+            const profileData = snapshot.val();
+            // Cache locally
+            if (!databaseCache.users) databaseCache.users = {};
+            if (!databaseCache.users[uid]) databaseCache.users[uid] = {};
+            databaseCache.users[uid].profile = profileData;
+            return profileData;
+        }
+    } catch (error) {
+        console.error(`[getUserData] Error fetching profile for ${uid}:`, error);
+    }
+    return null;
+}
+
+// Function: getUserRealms
+export async function getUserRealms(uid) {
+    if (!uid) return {};
+
+    // Filter local cache first
+    const cachedRealms = databaseCache.realms || {};
+    const ownedRealms = {};
+
+    Object.entries(cachedRealms).forEach(([id, realm]) => {
+        if (realm.realm_ownerid === uid || realm.owner_uid === uid) {
+            ownedRealms[id] = realm;
+        }
+    });
+
+    if (Object.keys(ownedRealms).length > 0) {
+        return ownedRealms;
+    }
+
+    try {
+        const realmsRef = ref(db, 'realms');
+        const userRealmsQuery = query(realmsRef, orderByChild('realm_ownerid'), equalTo(uid));
+        const snapshot = await get(userRealmsQuery);
+        
+        if (snapshot.exists()) {
+            const realmsData = snapshot.val();
+            if (!databaseCache.realms) databaseCache.realms = {};
+            Object.assign(databaseCache.realms, realmsData);
+            return realmsData;
+        }
+    } catch (error) {
+        console.error(`[getUserRealms] Error fetching realms for ${uid}:`, error);
+    }
+
+    return {};
+}
 
 watchAuthState(async (currentUser) => {
     console.log("--- [DEBUG] watchAuthState Triggered ---");
