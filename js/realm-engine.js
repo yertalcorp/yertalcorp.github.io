@@ -2002,7 +2002,7 @@ window.executeRealmDeletion = async (currentRealmId) => {
         if (databaseCache.users?.[authUser.uid]?.profile) {
             delete databaseCache.users[authUser.uid].profile.active_realm_id;
         }
-        window.location.href = '/index.html';
+        window.location.href = '?mode=circuits';
     }
 };
 window.openRealmSwitcherHud = () => {
