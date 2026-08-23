@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @17:11:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1691,7 +1691,6 @@ window.genLogo = (name, profilePic, isOwner) => {
 };
 
 /* RENDER TOP BAR */
-/* RENDER TOP BAR */
 function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const header = document.getElementById('realm-header');
     if (!header) return;
@@ -1734,7 +1733,9 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     // 3. HOME LINK RESOLUTION: Always point to the current logged-in user's active realm ID if set
     const loggedInUid = authUser?.uid;
     const myActiveRealmId = databaseCache.users?.[loggedInUid]?.profile?.active_realm_id;
-    const homeHref = myActiveRealmId ? `?realm=${myActiveRealmId}` : 'index.html';
+
+    // DYNAMIC HOME LINK: Points to active realm workspace if present, otherwise ?mode=circuits
+    const homeHref = myActiveRealmId ? `?realm=${myActiveRealmId}` : '?mode=circuits';
 
     // Back Navigation Resolver: Return to active realm or fallback to mode=circuits
     const returnRealmId = urlParams.get('return_realm') || myActiveRealmId;
