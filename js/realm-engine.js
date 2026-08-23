@@ -1379,47 +1379,31 @@ export async function getUserRealms(uid) {
 watchAuthState(async (currentUser) => {
     console.log("--- [DEBUG] watchAuthState Triggered ---");
     
+    // 1. NOT LOGGED IN: Redirect to home login page
     if (!currentUser) {
-        console.warn("[AUTH]: No currentUser detected. Redirecting to index.html...");
-        window.location.href = "/index.html";
+        console.warn("[AUTH]: No currentUser detected. Redirecting to home...");
+        window.location.href = "https://yertal.in/index.html";
         return;
     }
     
     console.log(`[AUTH]: Logged in as: ${currentUser.email} (${currentUser.uid})`);
     user = currentUser;
 
-    // Parse fresh search parameters
-    const currentSearch = window.location.search;
-    const urlParams = new URLSearchParams(currentSearch);
+    const urlParams = new URLSearchParams(window.location.search);
     const realmSlug = urlParams.get('realm');
     const modeParam = urlParams.get('mode');
 
-    // Fetch profile and user realms asynchronously
-    const userProfile = await getUserData(currentUser.uid);
-    const userRealms = await getUserRealms(currentUser.uid);
-    
-    const activeRealmId = userProfile?.active_realm_id;
-    const hasActiveRealm = activeRealmId && Boolean(userRealms[activeRealmId]);
-
-    console.log("[ROUTING CHECK]", {
-        realmSlug,
-        modeParam,
-        activeRealmId,
-        hasActiveRealm
-    });
-
-    // Handle missing active realm state cleanly without browser reloads
-    if (!realmSlug || !hasActiveRealm) {
+    // 2. LOGGED IN BUT NO REALM ID IN URL: Soft-route to mode=circuits
+    if (!realmSlug) {
+        console.log("[ROUTING]: Logged in user without realm parameter. Ensuring mode=circuits...");
         if (modeParam !== 'circuits') {
-            console.warn("[ROUTING]: No valid active realm found. Updating URL parameter to mode=circuits");
-            
-            // Soft-update search string without triggering a hard browser reload
             const newUrl = `${window.location.pathname}?mode=circuits`;
             window.history.replaceState({}, '', newUrl);
         }
     }
 
-    console.log("[UI]: Triggering refreshUI()...");
+    // 3. REALM ID PRESENT OR MODE SET: Hand execution over to refreshUI
+    console.log(`[ROUTING]: Handing off execution to refreshUI(). Slug: "${realmSlug || 'None'}"`);
     refreshUI(); 
 });
 
