@@ -484,7 +484,6 @@ watchAuthState(async (newUser) => {
                 let profile = await response.json();
 
                 if (!profile) {
-                    // CASE 1: Brand New User
                     console.log("%c [SYSTEM] PROFILE NOT DETECTED | CREATING NEW ENTRY ", "color: #f6ad55;");
 
                     profile = {
@@ -503,7 +502,6 @@ watchAuthState(async (newUser) => {
 
                     console.log("%c [SYSTEM] NEW PROFILE CREATED ", "color: #00f2ff;");
                 } else {
-                    // CASE 2: Existing Profile - Sync missing attributes
                     const updates = {};
                     
                     if (!profile.email || (user.email && profile.email !== user.email)) {
@@ -525,21 +523,30 @@ watchAuthState(async (newUser) => {
 
                 currentUser = profile;
                 currentUser.uid = user.uid; 
-                sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                sessionStorage.getItem('currentUser') && sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             }
 
-            // Update home page elements with dynamic buttons
+            // Sync home UI elements
             renderAuthStatus(user, currentAuth);
             if (currentUi?.hero) {
                 renderHero(user, currentUi.hero);
             }
-            console.log("%c [SYSTEM] USER RECOGNIZED | UI UPDATED ", "color: #00f2ff;");
+
+            // DIRECT NAVIGATION UPON LOGIN COMPLETION
+            const activeRealmId = currentUser?.active_realm_id;
+            const targetDestination = activeRealmId 
+                ? `https://yertal.in/arcade/index.html?realm=${activeRealmId}`
+                : `https://yertal.in/arcade/index.html?mode=circuits`;
+
+            console.log(`[AUTH COMPLETE] Directing user to -> ${targetDestination}`);
+            window.location.href = targetDestination;
 
         } catch (error) {
             console.error("USER_RETRIEVAL_ERROR:", error);
         }
     }
 });
+
 async function renderHero(user, hero) {
     const el = document.getElementById('hero-container');
     if (!el) return;
