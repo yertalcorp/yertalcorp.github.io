@@ -1,4 +1,4 @@
-import { firebaseConfig, auth, saveToRealtimeDB, getArcadeData, db, get, set, ref, update, push, runTransaction, increment } from '/config/firebase-config.js';
+import { firebaseConfig, auth, saveToRealtimeDB, getArcadeData, db, get, set, ref, update, push, runTransaction, increment, query, orderByChild, equalTo } from '/config/firebase-config.js';
 import { watchAuthState, handleArcadeRouting, logout } from '/config/auth.js';
 
 // --- ADD THE GLOBAL BRIDGE HERE ---
@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:19:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:31:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1206,84 +1206,66 @@ async function refreshUI() {
         databaseCache = data;
 
         // 2. SILENT SEED: Ensure the logged-in user is registered
-        if (!data.users?.[user.uid]) {
+        if (user && !data.users?.[user.uid]) {
             console.log("[SYSTEM]: User record missing. Initializing via syncUserProfile...");
             await syncUserProfile(user);
             
-            // Refresh local cache after seeding so the rest of the function has valid data
+            // Refresh local cache after seeding
             const updatedUsers = await get(ref(db, 'users'));
             data.users = updatedUsers.val();
             databaseCache.users = data.users;
         }
 
-        // 3. ROUTE RESOLUTION
+        // 3. ROUTE & MODE RESOLUTION
         const urlParams = new URLSearchParams(window.location.search);
         const targetRealmSlug = urlParams.get('realm');
+        const modeParam = urlParams.get('mode');
 
-        if (!targetRealmSlug) {
-            console.error("STRICT MODE: No Realm ID detected in URL.");
-            return;
-        }
+        // DELETED: STRICT MODE return block that halted execution when targetRealmSlug was null
 
         const allRealms = data.realms || {};
-        const realmData = allRealms[targetRealmSlug];
-        const realmOwnerId = realmData?.realm_ownerid;
+        const realmData = targetRealmSlug ? allRealms[targetRealmSlug] : null;
+        const realmOwnerId = realmData?.realm_ownerid || user?.uid;
 
         const isOwner = Boolean(user && realmOwnerId && realmOwnerId === user.uid);
-
-        // Pure read-only check: Do not update active_realm_id in Firebase during refreshUI
-        const activeRealmId = databaseCache.users?.[user.uid]?.profile?.active_realm_id || targetRealmSlug;
-        console.log(`Logged in uid is ${user.uid} and the targetRealmSlug is ${targetRealmSlug}`);
-        
-        console.table({
-            "Target Realm Slug": targetRealmSlug,
-            "Realm Owner ID": realmOwnerId || "NOT_FOUND",
-            "Access_Level": isOwner ? "OWNER" : "VIEWER",
-        });
-
-        // 4. HANDLE MISSING REALM
-        if (!realmData) {
-            const container = document.getElementById('currents-container');
-            if (container) {
-                const safeRealmIdTag = (targetRealmSlug || '').slice(-8);
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 5rem 0; opacity: 0.4; font-style: italic; letter-spacing: 2px; color: var(--branding-text-color);">
-                        OFFLINE: No infrastructure detected for REALMxxxxxxxx${safeRealmIdTag}
-                    </div>`;
-            }
-            return;
-        }
 
         const pageOwnerData = data.users?.[realmOwnerId] || {};
         const ownerProfile = pageOwnerData.profile || {};
         const branding = ownerProfile.branding || {};
 
-        // 5. SLUG-OWNER BRANDING & THEME
-        globalTheme = realmData?.realm_theme || 'neon-dark';
+        // 4. BRANDING & THEME APPLICATION (Runs for both Realm and Circuits Mode)
+        globalTheme = realmData?.realm_theme || ownerProfile.realm_theme || 'neon-dark';
         applyTheme(globalTheme);
         
-        document.title = `${ownerProfile.display_name || 'Realm'} | Showroom`;
+        document.title = `${ownerProfile.display_name || user?.displayName || 'Pilot'} | Arcade`;
         
         const brandingLogo = document.getElementById('branding-logo');
         if (brandingLogo) {
-            brandingLogo.src = branding.logo || 'assets/default-logo.png';
+            brandingLogo.src = branding.logo || '/assets/images/YERTAL LOGO SIMPLE.png';
         }
 
         const brandingName = document.getElementById('branding-name');
         if (brandingName) {
-            brandingName.textContent = ownerProfile.display_name || 'Realm';
+            brandingName.textContent = ownerProfile.display_name || user?.displayName || 'Pilot';
         }
 
         // Apply owner-specific UI colors to CSS variables
         const ui = branding.ui_settings || {};
         document.documentElement.style.setProperty('--neon-color', ui['color-neon'] || '#00f2ff');
 
-        // 6. COMPONENT RENDERING
+        // 5. COMPONENT RENDERING
         renderTopBar(pageOwnerData, isOwner, user, targetRealmSlug);
         
-        // Currents needs the realm and owner profile for context
-        renderCurrents(realmData.currents || {}, isOwner, targetRealmSlug, ownerProfile);
+        // Handle Circuits Mode or Missing Realm gracefully without breaking the shell
+        if (modeParam === 'circuits' || !targetRealmSlug || !realmData) {
+            console.log("[refreshUI]: Dispatching Circuits Mode Gallery.");
+            renderCurrents(null, isOwner, targetRealmSlug, ownerProfile, null, null, true);
+        } else {
+            console.log(`[refreshUI]: Dispatching Active Realm Workspace [${targetRealmSlug}]`);
+            renderCurrents(realmData.currents || {}, isOwner, targetRealmSlug, ownerProfile);
+        }
 
+        // 6. NAVIGATOR INTEGRATION
         if (window.arcadeNavigator) {
             window.arcadeNavigator.ensureGlobalMount();
             window.arcadeNavigator.reposition();
@@ -1296,7 +1278,6 @@ async function refreshUI() {
         console.error("SYSTEM ERROR in refreshUI:", err);
     }
 }
-
 /* Synchronize the user details */
 async function syncUserProfile(currentUser) {
     const profilePath = `users/${currentUser.uid}/profile`;
@@ -1372,8 +1353,13 @@ export async function getUserRealms(uid) {
     try {
         console.log("[getUserRealms] Querying Firebase for owned realms...");
         const realmsRef = ref(db, 'realms');
-        const userRealmsQuery = query(realmsRef, orderByChild('realm_ownerid'), equalTo(uid));
-        const snapshot = await get(userRealmsQuery);
+        
+        // Ensure query functions are safely referenced
+        const q = (typeof query === 'function') 
+            ? query(realmsRef, orderByChild('realm_ownerid'), equalTo(uid))
+            : window.firebaseQuery(realmsRef, uid); // fallback if attached globally
+
+        const snapshot = await get(q);
         
         if (snapshot.exists()) {
             const realmsData = snapshot.val();
