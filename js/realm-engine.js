@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @13:31:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @16:35:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1691,6 +1691,7 @@ window.genLogo = (name, profilePic, isOwner) => {
 };
 
 /* RENDER TOP BAR */
+/* RENDER TOP BAR */
 function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const header = document.getElementById('realm-header');
     if (!header) return;
@@ -1735,9 +1736,11 @@ function renderTopBar(pageOwnerData, isOwner, authUser, realmSlug) {
     const myActiveRealmId = databaseCache.users?.[loggedInUid]?.profile?.active_realm_id;
     const homeHref = myActiveRealmId ? `?realm=${myActiveRealmId}` : 'index.html';
 
-    // Back Navigation Resolver: Route back to mode=circuits using the original realm ID
-    const returnRealmId = urlParams.get('return_realm') || myActiveRealmId || realmSlug;
-    const returnUrl = `?realm=${returnRealmId}&mode=circuits`;
+    // Back Navigation Resolver: Return to active realm or fallback to mode=circuits
+    const returnRealmId = urlParams.get('return_realm') || myActiveRealmId;
+    
+    // UPDATED: Dynamically construct returnUrl depending on presence of returnRealmId
+    const returnUrl = returnRealmId ? `?realm=${returnRealmId}&mode=circuits` : '?mode=circuits';
         
     header.innerHTML = `
         <nav style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.5rem; height: 64px; background: var(--bg-color); border-bottom: 1px solid var(--glow-aura);">
