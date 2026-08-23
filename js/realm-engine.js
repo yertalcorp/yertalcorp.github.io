@@ -1350,9 +1350,10 @@ export async function getUserData(uid) {
 
 // Function: getUserRealms
 export async function getUserRealms(uid) {
+    console.log(`%c [getUserRealms] Triggered for UID: ${uid}`, "color: #f6ad55;");
     if (!uid) return {};
 
-    // Filter local cache first
+    // 1. Check local cache first
     const cachedRealms = databaseCache.realms || {};
     const ownedRealms = {};
 
@@ -1363,22 +1364,27 @@ export async function getUserRealms(uid) {
     });
 
     if (Object.keys(ownedRealms).length > 0) {
+        console.log("[getUserRealms] Cache hit:", ownedRealms);
         return ownedRealms;
     }
 
+    // 2. Fetch from Realtime Database on cache miss
     try {
+        console.log("[getUserRealms] Querying Firebase for owned realms...");
         const realmsRef = ref(db, 'realms');
         const userRealmsQuery = query(realmsRef, orderByChild('realm_ownerid'), equalTo(uid));
         const snapshot = await get(userRealmsQuery);
         
         if (snapshot.exists()) {
             const realmsData = snapshot.val();
+            console.log("[getUserRealms] Fetched from DB:", realmsData);
+            
             if (!databaseCache.realms) databaseCache.realms = {};
             Object.assign(databaseCache.realms, realmsData);
             return realmsData;
         }
     } catch (error) {
-        console.error(`[getUserRealms] Error fetching realms for ${uid}:`, error);
+        console.error(`[getUserRealms] Error:`, error);
     }
 
     return {};
@@ -1396,25 +1402,38 @@ watchAuthState(async (currentUser) => {
     console.log(`[AUTH]: Logged in as: ${currentUser.email} (${currentUser.uid})`);
     user = currentUser;
 
-    const urlParams = new URLSearchParams(window.location.search);
+    // Parse fresh search parameters
+    const currentSearch = window.location.search;
+    const urlParams = new URLSearchParams(currentSearch);
     const realmSlug = urlParams.get('realm');
-    
-    // Fetch the user's profile to check active realm existence
+    const modeParam = urlParams.get('mode');
+
+    // Fetch profile and user realms asynchronously
     const userProfile = await getUserData(currentUser.uid);
     const userRealms = await getUserRealms(currentUser.uid);
-    const hasActiveRealm = userProfile?.active_realm_id && userRealms?.hasOwnProperty(userProfile.active_realm_id);
+    
+    const activeRealmId = userProfile?.active_realm_id;
+    const hasActiveRealm = activeRealmId && Boolean(userRealms[activeRealmId]);
 
-    // Redirect to mode=circuits if no valid active realm exists or no URL slug present
+    console.log("[ROUTING CHECK]", {
+        realmSlug,
+        modeParam,
+        activeRealmId,
+        hasActiveRealm
+    });
+
+    // Handle missing active realm state cleanly without browser reloads
     if (!realmSlug || !hasActiveRealm) {
-        console.log("[ROUTING]: No active realm found or missing URL slug. Routing to circuits mode...");
-        window.location.search = '?mode=circuits';
-        return;
+        if (modeParam !== 'circuits') {
+            console.warn("[ROUTING]: No valid active realm found. Updating URL parameter to mode=circuits");
+            
+            // Soft-update search string without triggering a hard browser reload
+            const newUrl = `${window.location.pathname}?mode=circuits`;
+            window.history.replaceState({}, '', newUrl);
+        }
     }
 
-    console.log(`[ROUTING]: Target Page Realm Slug: "${realmSlug}"`);
     console.log("[UI]: Triggering refreshUI()...");
-    
-    // Trigger the single source of truth
     refreshUI(); 
 });
 
