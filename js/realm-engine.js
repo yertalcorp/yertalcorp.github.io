@@ -155,7 +155,7 @@ window.switchActiveRealm = async (targetRealmId) => {
 
 window.createRealmNode = createRealmNode;
 
-window.getUserCountry = async function() {
+export window.getUserCountry = async function() {
     try {
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
@@ -172,10 +172,6 @@ window.handleSparkLaunch = async function(realmId, currentId, sparkId, targetUrl
     try {
         const country = await window.getUserCountry();
         console.log(`handleSparkLaunch: realmId: ${realmId}, currentId: ${currentId}, sparkId: ${sparkId}`);
-        
-        // Pass the dynamic country variable instead of 'IN'
-        await window.updateSparkViews(realmId, currentId, sparkId, country);
-        
         console.log("✅ View Logged");
     } catch (err) {
         console.warn("View tracking failed, but proceeding to launch:", err);
