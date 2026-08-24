@@ -583,7 +583,7 @@ async function updateSparkFeedback(realmId, currentId, sparkId, userId, comment)
 
 const MAX_TRENDING_SPARKS = 50;
 
-window.updateSparkViews = async function(realmId, currentId, sparkId, country = 'IN') {
+export window.updateSparkViews = async function(realmId, currentId, sparkId, country = 'IN') {
     const now = new Date();
     const month = now.toISOString().slice(0, 7);
     
