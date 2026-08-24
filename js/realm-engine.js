@@ -154,6 +154,7 @@ window.switchActiveRealm = async (targetRealmId) => {
 };
 
 window.createRealmNode = createRealmNode;
+window.getUserCountry = getUserCountry;
 
 export window.getUserCountry = async function() {
     try {
