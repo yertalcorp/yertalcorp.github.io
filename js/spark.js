@@ -8,7 +8,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 10:36:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 20:10:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /*
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Directly update the spark object's parameter_map with current UI values.
@@ -277,6 +277,18 @@ function loadSpark(spark) {
             container.style.opacity = '1';
             if (hudStatus) hudStatus.textContent = "SPARK FULLY LOADED";
         };
+    }
+
+    // 3. HUD INTERACTION MOUNT
+    const params = new URLSearchParams(window.location.search);
+    const activeRealmId = params.get('realm') || 'yertal-arcade';
+    const activeCurrentId = params.get('current') || (typeof currentId !== 'undefined' ? currentId : null);
+    const visitorUid = window.auth?.currentUser?.uid || (typeof userId !== 'undefined' ? userId : null);
+
+    const mountPoint = document.getElementById('spark-hud-actions-mount');
+    if (mountPoint && typeof renderSparkInteractionGroup === 'function') {
+        const liveSpark = databaseCache?.realms?.[activeRealmId]?.currents?.[activeCurrentId]?.sparks?.[spark.id] || spark;
+        mountPoint.innerHTML = renderSparkInteractionGroup(liveSpark, activeRealmId, activeCurrentId, visitorUid);
     }
 }
 
