@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:46:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -646,7 +646,7 @@ window.updateSparkViews = async function(realmId, currentId, sparkId, country = 
     }
 }
 // FUNCTION: payOwner
-window.payOwner = function(btn, realmId, currentId, sparkId) {
+export window.payOwner = function(btn, realmId, currentId, sparkId) {
     const spark = databaseCache.realms?.[realmId]?.currents?.[currentId]?.sparks?.[sparkId];
     const isSale = spark.monetization_type === 'sales';
     const fixedPrice = spark.price || 0;
@@ -773,7 +773,7 @@ window.sendPayment = async function(realmId, currentId, sparkId, mode) {
     }
 };
 
-window.openFeedback = async (event, realmId, currentId, sparkId) => {
+export window.openFeedback = async (event, realmId, currentId, sparkId) => {
     if (event && event.stopPropagation) event.stopPropagation();
     const ownerId = databaseCache.realms?.[realmId]?.realm_ownerid || 'UNKNOWN';
     
@@ -1002,7 +1002,7 @@ window.submitSparkFeedback = async (realmId, currentId, sparkId) => {
     }
 };
 
-window.likeSpark = async (btnElement, realmId, currentId, sparkId) => {
+export window.likeSpark = async (btnElement, realmId, currentId, sparkId) => {
     // 1. Internal Safety Check
     const ownerUid = databaseCache.realms?.[realmId]?.realm_ownerid;
     if (!auth.currentUser || !ownerUid || ownerUid === "undefined") return;
@@ -1061,7 +1061,7 @@ window.likeSpark = async (btnElement, realmId, currentId, sparkId) => {
     }
 };
 
-window.shareSpark = async (btnElement, realmId, currentId, sparkId) => {
+export window.shareSpark = async (btnElement, realmId, currentId, sparkId) => {
     /* Overall Objective: Update share stats with timestamp and count, 
        then trigger sharing UI. Ensure user UID and Date are tracked. */
 
@@ -1411,7 +1411,7 @@ watchAuthState(async (currentUser) => {
  * Objective: Clone Spark into visitor's active realm.
  * Task: Handle capacity verification, write cloned spark, and set realm_setup_complete on success.
  */
-window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) => {
+export window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) => {
     console.group(`[CLONE SPARK] Initiated for Spark: ${sparkId}`);
     console.log("Input Args:", { visitorUid, sourceRealmId, sourceCurrentId, sparkId });
 
@@ -4170,13 +4170,8 @@ function genSparkImage(sparkImageFromDB) {
     return sparkImageFromDB;
 }
 
-// Export core handlers so spark.js can import them directly
-export async function likeSpark(btnElement, realmId, currentId, sparkId) { ... }
-export async function openFeedback(event, realmId, currentId, sparkId) { ... }
-export async function shareSpark(btnElement, realmId, currentId, sparkId) { ... }
-export async function cloneSpark(btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) { ... }
 
-/
+/*
  * Renders standardized 2-row interaction panel for Spark HUD:
  * Row 1: Time Ago (SOURCED / FORGED)
  * Row 2: Inline [Icon : Number] Pairs
@@ -5163,7 +5158,7 @@ async function saveSpark(realmId, currentId, data, prompt, detectedTemplate = 'C
      console.groupEnd();
 }
 
-window.deleteSpark = async (realmId, currentId, sparkId, ownerUid) => {
+export window.deleteSpark = async (realmId, currentId, sparkId, ownerUid) => {
     if (user.uid !== ownerUid) return alert("Unauthorized.");
     if (!confirm("Decommission this spark?")) return;
     
@@ -5174,7 +5169,7 @@ window.deleteSpark = async (realmId, currentId, sparkId, ownerUid) => {
     await refreshUI(); 
 };
 
-function formatTimeAgo(timestamp) {
+export function formatTimeAgo(timestamp) {
     if (!timestamp) return 'RECENTLY'; // Handles local latency during creation
     
     let date;
