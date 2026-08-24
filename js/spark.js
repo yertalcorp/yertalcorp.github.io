@@ -226,6 +226,22 @@ function loadSpark(spark) {
         applyTheme(globalTheme);
     }
     
+    // VIEW LOGGING: Log view count asynchronously on every valid load state
+    const params = new URLSearchParams(window.location.search);
+    const activeRealmId = params.get('realm') || 'yertal-arcade';
+    const activeCurrentId = params.get('current') || (typeof currentId !== 'undefined' ? currentId : null);
+
+    if (activeRealmId && activeCurrentId && spark.id && typeof updateSparkViews === 'function') {
+        (async () => {
+            try {
+                const country = typeof window.getUserCountry === 'function' ? await window.getUserCountry() : 'IN';
+                await updateSparkViews(activeRealmId, activeCurrentId, spark.id, country);
+            } catch (err) {
+                console.warn("[VIEW TRACKER] Background view logging error:", err);
+            }
+        })();
+    }
+    
     console.log(`%c[YERTAL LAB] Loading Spark: ${spark.name}`, "color: #00f2ff; font-weight: bold;");
         
     container.style.opacity = '0';
@@ -280,18 +296,14 @@ function loadSpark(spark) {
     }
 
     // 3. HUD INTERACTION MOUNT
-    const params = new URLSearchParams(window.location.search);
-    const activeRealmId = params.get('realm') || 'yertal-arcade';
-    const activeCurrentId = params.get('current') || (typeof currentId !== 'undefined' ? currentId : null);
     const visitorUid = window.auth?.currentUser?.uid || (typeof userId !== 'undefined' ? userId : null);
-
     const mountPoint = document.getElementById('spark-hud-actions-mount');
+
     if (mountPoint && typeof renderSparkInteractionGroup === 'function') {
         const liveSpark = databaseCache?.realms?.[activeRealmId]?.currents?.[activeCurrentId]?.sparks?.[spark.id] || spark;
         mountPoint.innerHTML = renderSparkInteractionGroup(liveSpark, activeRealmId, activeCurrentId, visitorUid);
     }
 }
-
 /*
  * Objective: Change viewports to adjacent spark structures.
  * Task: Maintain state continuity across transitions by preserving realm configuration URL parameters.
