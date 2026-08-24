@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:20:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -166,9 +166,6 @@ export async function getUserCountry() {
         return 'US';
     }
 }
-
-// 2. Attach to window on its own line
-window.getUserCountry = getUserCountry;
 
 window.handleSparkLaunch = async function(realmId, currentId, sparkId, targetUrl) {
     console.log(`🚀 Launching Spark: ${sparkId}`);
@@ -583,7 +580,7 @@ async function updateSparkFeedback(realmId, currentId, sparkId, userId, comment)
 
 const MAX_TRENDING_SPARKS = 50;
 
-export window.updateSparkViews = async function(realmId, currentId, sparkId, country = 'IN') {
+const updateSparkViews = async function(realmId, currentId, sparkId, country = 'IN') {
     const now = new Date();
     const month = now.toISOString().slice(0, 7);
     
@@ -645,8 +642,22 @@ export window.updateSparkViews = async function(realmId, currentId, sparkId, cou
         }
     }
 }
+// Export for module consumers (like spark.js) for in spark interaction zone
+export {likeSpark, openFeedback,shareSpark,cloneSpark,updateSparkViews, deleteSpark, formatTimeAgo, getUserCountry, payOwner};
+
+// Bind to window for inline HTML event handlers
+window.likeSpark = likeSpark;
+window.openFeedback = openFeedback;
+window.shareSpark = shareSpark;
+window.cloneSpark = cloneSpark;
+window.updateSparkViews = updateSparkViews;
+window.deleteSpark = deleteSpark;
+window.formatTimeAgo = formatTimeAgo;
+window.getUserCountry = getUserCountry;
+window.payOwner = payOwner;
+
 // FUNCTION: payOwner
-export window.payOwner = function(btn, realmId, currentId, sparkId) {
+const payOwner = function(btn, realmId, currentId, sparkId) {
     const spark = databaseCache.realms?.[realmId]?.currents?.[currentId]?.sparks?.[sparkId];
     const isSale = spark.monetization_type === 'sales';
     const fixedPrice = spark.price || 0;
@@ -1002,7 +1013,7 @@ window.submitSparkFeedback = async (realmId, currentId, sparkId) => {
     }
 };
 
-export window.likeSpark = async (btnElement, realmId, currentId, sparkId) => {
+const likeSpark = async (btnElement, realmId, currentId, sparkId) => {
     // 1. Internal Safety Check
     const ownerUid = databaseCache.realms?.[realmId]?.realm_ownerid;
     if (!auth.currentUser || !ownerUid || ownerUid === "undefined") return;
@@ -1061,7 +1072,7 @@ export window.likeSpark = async (btnElement, realmId, currentId, sparkId) => {
     }
 };
 
-export window.shareSpark = async (btnElement, realmId, currentId, sparkId) => {
+const shareSpark = async (btnElement, realmId, currentId, sparkId) => {
     /* Overall Objective: Update share stats with timestamp and count, 
        then trigger sharing UI. Ensure user UID and Date are tracked. */
 
@@ -1411,7 +1422,7 @@ watchAuthState(async (currentUser) => {
  * Objective: Clone Spark into visitor's active realm.
  * Task: Handle capacity verification, write cloned spark, and set realm_setup_complete on success.
  */
-export window.cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) => {
+const cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) => {
     console.group(`[CLONE SPARK] Initiated for Spark: ${sparkId}`);
     console.log("Input Args:", { visitorUid, sourceRealmId, sourceCurrentId, sparkId });
 
@@ -5158,7 +5169,7 @@ async function saveSpark(realmId, currentId, data, prompt, detectedTemplate = 'C
      console.groupEnd();
 }
 
-export window.deleteSpark = async (realmId, currentId, sparkId, ownerUid) => {
+const deleteSpark = async (realmId, currentId, sparkId, ownerUid) => {
     if (user.uid !== ownerUid) return alert("Unauthorized.");
     if (!confirm("Decommission this spark?")) return;
     
@@ -6059,11 +6070,9 @@ ensureGlobalMount() {
 // ----------------------------------
 window.handleCreation = handleCreation;
 window.handleSparkLaunch = handleSparkLaunch;
-window.payOwner = payOwner;
 // Force the function to be global so the HTML button can see it
 window.closeRealmSettings = closeRealmSettings;
 // At the bottom of arcade.js
-window.likeSpark = likeSpark;
 console.log("likeSpark function has been successfully bridged to the window scope.");
 
 // Ensure this matches the function name in showroom.js and auth.js
