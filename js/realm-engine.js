@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @18:00:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @19:28:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -4170,21 +4170,39 @@ function genSparkImage(sparkImageFromDB) {
     return sparkImageFromDB;
 }
 
-function renderSparkCard(spark, isOwner, currentId, realmId) {
-    const ownerId = databaseCache?.realms?.[realmId]?.realm_ownerid || spark.owner || 'UNKNOWN';
-    const ownerData = databaseCache?.users?.[ownerId];
-    const targetUrl = `spark.html?realm=${realmId}&current=${currentId}&spark=${spark.id}`;
+// Export core handlers so spark.js can import them directly
+export async function likeSpark(btnElement, realmId, currentId, sparkId) { ... }
+export async function openFeedback(event, realmId, currentId, sparkId) { ... }
+export async function shareSpark(btnElement, realmId, currentId, sparkId) { ... }
+export async function cloneSpark(btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) { ... }
 
+/
+ * Renders standardized 2-row interaction panel for Spark HUD:
+ * Row 1: Time Ago (SOURCED / FORGED)
+ * Row 2: Inline [Icon : Number] Pairs
+ * Retains exact ID signatures (e.g. save-btn-${spark.id}) for seamless script integration.
+ */
+export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUid) {
+    if (!spark) return '';
+
+    const sparkId = spark.id;
+    const realmData = databaseCache?.realms?.[realmId] || {};
+    const currentData = realmData?.currents?.[currentId] || {};
+    const realmOwnerId = realmData.realm_ownerid || spark.owner || 'UNKNOWN';
+    const ownerData = databaseCache?.users?.[realmOwnerId];
+
+    const isOwner = visitorUid && (visitorUid === realmOwnerId || visitorUid === spark.owner);
+    const sparkElementId = `save-btn-${spark.id}`;
+
+    // 1. CONFIG & FEATURE FLAGS RESOLUTION
     const ownerPlanKey = ownerData?.profile?.plan_type || 'free';
     const planLimits = databaseCache.settings?.['plan_limits']?.[ownerPlanKey] || {};
-    
     const isSalesMode = planLimits.monetization === 'sales';
-    const txLabel = isSalesMode ? 'SALES' : 'TIPS';
+
     const txIcon = isSalesMode ? 'fa-shopping-cart' : 'fa-coins';
     const txActionTitle = isSalesMode ? 'Purchase' : 'Tip Jar';
 
-    // 1. CONFIG & FEATURE FLAGS RESOLUTION
-    const realmConfig = databaseCache?.realms?.[realmId]?.config || {};
+    const realmConfig = realmData.config || {};
     const masterFlags = databaseCache?.settings?.feature_flags || {};
 
     const isViewsEnabled = realmConfig.show_views !== false;
@@ -4196,27 +4214,118 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     const masterMonetizationOn = masterFlags.enable_monetization_stats === true;
     const masterPayOwnerOn = masterFlags.enable_pay_owner_icon === true;
 
-    // Individual Realm Toggles
+    // Realm Specific Toggles
     const isMonetizationEnabled = isSalesMode ? realmConfig.show_sales === true : realmConfig.show_tips === true;
     const isPayOwnerEnabled = realmConfig.show_pay_owner === true;
 
     // 2. VISIBILITY ELIGIBILITY
-    // Standard engagement: Owner sees enabled + dormant; Visitor sees enabled only
     const showViews = isOwner || isViewsEnabled;
     const showLikes = isOwner || isLikesEnabled;
     const showFeedback = isOwner || isFeedbackEnabled;
     const showShares = isOwner || isSharesEnabled;
 
-    // Monetization: Master flags strictly gate feature existence for EVERYONE (including owners)
     const showMonetizationStat = masterMonetizationOn && (isOwner || isMonetizationEnabled);
     const showPayOwnerIcon = masterPayOwnerOn && (isOwner || isPayOwnerEnabled);
 
-    // 3. THEME DYNAMICS (Pearl for active stats, fg-color-mid for dormant)
-    const activeStatStyle = `color: var(--list-color); font-weight: 600; opacity: 1; filter: none;`;
-    const dormantStatStyle = `color: var(--fg-color-mid); font-weight: 400; opacity: 0.65; filter: none;`;
+    // 3. PRIVACY & STATS RESOLUTION
+    const isHierarchyPrivate = realmData.realm_privacy === 'private' || currentData.privacy === 'private' || spark.privacy === 'private';
 
-    const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
-    const sparkElementId = `save-btn-${spark.id}`;
+    const viewCount = spark.stats?.views?.total_count || 0;
+    const likeCount = spark.stats?.likes?.count || 0;
+    const feedbackCount = spark.stats?.feedback?.count || 0;
+    const shareCount = spark.stats?.reshares?.count || 0;
+    const transactionAmt = spark.stats?.transactions?.total_amount || 0;
+
+    const hasLiked = visitorUid && spark.stats?.likes?.users?.[visitorUid];
+    const hasShared = visitorUid && spark.stats?.reshares?.users?.[visitorUid];
+
+    const pearlColor = "var(--list-color, #ffffff)";
+    const neonColor = "var(--glow-color, #00f2ff)";
+    const disabledColor = "var(--fg-color-mid, #888888)";
+
+    const likeIconColor = hasLiked ? neonColor : pearlColor;
+    const likeIconGlow = hasLiked ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
+
+    const shareIconColor = isHierarchyPrivate ? disabledColor : (hasShared ? neonColor : pearlColor);
+    const shareIconGlow = isHierarchyPrivate ? "none" : (hasShared ? "drop-shadow(0 0 5px var(--glow-color))" : "none");
+
+    const btnStyle = `background: none; border: none; cursor: pointer; padding: 2px 4px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.3s ease;`;
+    const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
+    const onOut = "this.style.filter='none'; this.style.transform='scale(1)';"
+
+    const timeAgoText = typeof formatTimeAgo === 'function' ? formatTimeAgo(spark.created) : '';
+
+    return `
+        <div class="spark-hud-panel" style="display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%;">
+            
+            <!-- ROW 1: TIME AGO -->
+            <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none; letter-spacing: 0.5px; text-transform: uppercase;">
+                ${spark.link ? 'SOURCED' : 'FORGED'}: ${timeAgoText}
+            </div>
+
+            <!-- ROW 2: ICON + NUM PAIRS -->
+            <div class="hud-action-row" style="display: flex; align-items: center; justify-content: center; gap: 0.7rem;">
+                
+                ${showViews ? `
+                <div class="hud-stat-pair" style="${btnStyle}" title="${isViewsEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
+                    <i class="fas fa-eye" style="font-size: 10px; color: ${isViewsEnabled ? pearlColor : disabledColor};"></i>
+                    <span style="font-size: 9px; color: ${isViewsEnabled ? pearlColor : disabledColor}; font-weight: 600;">${viewCount}</span>
+                </div>
+                ` : ''}
+
+                ${showLikes ? `
+                <button onclick="likeSpark(this, '${realmId}', '${currentId}', '${sparkId}')" title="${isLikesEnabled ? 'Like' : 'Disabled (Owner Only)'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                    <i class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
+                    <span style="font-size: 9px; color: ${isLikesEnabled ? pearlColor : disabledColor}; font-weight: 600;">${likeCount}</span>
+                </button>
+                ` : ''}
+
+                ${showFeedback ? `
+                <button onclick="openFeedback(event, '${realmId}', '${currentId}', '${sparkId}')" title="${isFeedbackEnabled ? 'Leave Feedback' : 'Disabled (Owner Only)'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                    <i class="fas fa-comment" style="font-size: 10px; color: ${isFeedbackEnabled ? pearlColor : disabledColor};"></i>
+                    <span style="font-size: 9px; color: ${isFeedbackEnabled ? pearlColor : disabledColor}; font-weight: 600;">${feedbackCount}</span>
+                </button>
+                ` : ''}
+
+                ${showShares ? `
+                <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${sparkId}')" title="${isHierarchyPrivate ? 'Restricted: Private Node' : (isSharesEnabled ? 'Share' : 'Disabled (Owner Only)')}" style="${btnStyle}" ${isHierarchyPrivate ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : `onmouseover="${onHover}" onmouseout="${onOut}"`}>
+                    <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
+                    <span style="font-size: 9px; color: ${isSharesEnabled ? pearlColor : disabledColor}; font-weight: 600;">${shareCount}</span>
+                </button>
+                ` : ''}
+
+                ${showMonetizationStat ? `
+                <div class="hud-stat-pair" style="${btnStyle}" title="${isMonetizationEnabled ? txActionTitle : 'Disabled (Owner Only)'}">
+                    <i class="fas ${txIcon}" style="font-size: 10px; color: ${isMonetizationEnabled ? pearlColor : disabledColor};"></i>
+                    <span style="font-size: 9px; color: ${isMonetizationEnabled ? pearlColor : disabledColor}; font-weight: 600;">${transactionAmt}</span>
+                </div>
+                ` : ''}
+
+                ${!isOwner && visitorUid ? `
+                <button id="${sparkElementId}" onclick="window.cloneSpark(this, '${visitorUid}', '${realmId}', '${currentId}', '${sparkId}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                    <i class="fas fa-save" style="font-size: 10px; color: ${pearlColor};"></i>
+                </button>
+                ` : ''}
+
+                ${!isOwner && showPayOwnerIcon ? `
+                <button onclick="window.payOwner(this, '${realmId}', '${currentId}', '${sparkId}')" title="${txActionTitle}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                    <i class="fas ${txIcon}" style="font-size: 10px; color: ${pearlColor};"></i>
+                </button>
+                ` : ''}
+
+                ${isOwner ? `
+                <button onclick="deleteSpark('${realmId}', '${currentId}', '${sparkId}', '${realmOwnerId}')" title="Delete" style="${btnStyle}" onmouseover="this.style.color='var(--error-color)'; this.style.filter='drop-shadow(0 0 8px var(--error-color))'; this.style.transform='scale(1.2)';" onmouseout="${onOut}">
+                    <i class="fas fa-trash" style="font-size: 10px; color: ${pearlColor};"></i>
+                </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function renderSparkCard(spark, isOwner, currentId, realmId) {
+    const ownerId = databaseCache?.realms?.[realmId]?.realm_ownerid || spark.owner || 'UNKNOWN';
+    const targetUrl = `spark.html?realm=${realmId}&current=${currentId}&spark=${spark.id}`;
 
     // Archetype Template Lookup
     const sparkIndex = spark.index !== undefined ? spark.index : 0;
@@ -4226,58 +4335,11 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
     // Primary Image Selection
     let finalRenderedImage = spark.image || archetypeImg || (typeof getArcadeImageFromPrompt === 'function' ? getArcadeImageFromPrompt(spark.name || archetype.name) : '');
 
-    const pearlColor = "var(--list-color)";
-    const neonColor = "var(--glow-color)";
-    const neonGlow = "drop-shadow(0 0 5px var(--glow-color))";
-    
-    const hasLiked = spark.stats?.likes?.users?.[visitorUid] ? true : false;
-    const likeIconColor = hasLiked ? neonColor : pearlColor;
-    const likeIconGlow = hasLiked ? neonGlow : "none";
-
-    // Privacy Hierarchy Check
-    const realmData = databaseCache?.realms?.[realmId] || {};
-    const currentData = realmData?.currents?.[currentId] || {};
-    const isHierarchyPrivate = realmData.realm_privacy === 'private' || currentData.privacy === 'private' || spark.privacy === 'private';
-
-    const disabledColor = "var(--fg-color-mid)";
-    const hasShared = spark.stats?.reshares?.users?.[visitorUid] ? true : false;
-    const shareIconColor = isHierarchyPrivate ? disabledColor : (hasShared ? neonColor : pearlColor);
-    const shareIconGlow = isHierarchyPrivate ? "none" : (hasShared ? neonGlow : "none");
-
-    if (visitorUid && !isOwner) {
-        (async () => {
-            const visitorRealmId = databaseCache?.users?.[visitorUid]?.profile?.active_realm_id;
-            if (!visitorRealmId) return;
-            const savedRef = ref(db, getSparkPath(visitorRealmId, currentId, spark.id));
-            const snapshot = await get(savedRef);
-            if (snapshot.exists()) {
-                const btn = document.getElementById(sparkElementId);
-                if (btn) {
-                    const icon = btn.querySelector('i');
-                    icon.style.color = neonColor;
-                    icon.style.filter = neonGlow;
-                    btn.style.pointerEvents = "none";
-                    btn.title = "Already in Your Realm";
-                }
-            }
-        })();
-    }
-
-    const toolIconColor = pearlColor;
-
-    const viewCount = spark.stats?.views?.total_count || 0;
-    const likeCount = spark.stats?.likes?.count || 0;
-    const shareCount = spark.stats?.reshares?.count || 0;
-    const transactionAmt = spark.stats?.transactions?.total_amount || 0;
-    const feedbackCount = spark.stats?.feedback?.count || 0;
-
-    const btnStyle = `background: none; border: none; cursor: pointer; padding: 2px 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; filter: drop-shadow(0 0 2px var(--glow-color));`;
-    const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
-    const onOut = "this.style.filter='drop-shadow(0 0 2px var(--glow-color))'; this.style.transform='scale(1)';"
-    
     const safeArchetypeImg = archetypeImg.replace(/'/g, "\\'");
     const safeSparkName = (spark.name || archetype.name || '').replace(/'/g, "\\'");
     const inlineFallbackJS = `window.handleSparkImageError(this, '${safeArchetypeImg}', '${safeSparkName}');`;
+
+    const visitorUid = auth.currentUser ? auth.currentUser.uid : null;
 
     return `
         <div class="spark-card" data-spark-id="${spark.id}" style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%;">
@@ -4299,76 +4361,7 @@ function renderSparkCard(spark, isOwner, currentId, realmId) {
             </div>
 
             <div class="card-footer" style="display: flex; flex-direction: column; gap: 0.25rem; width: 100%; align-items: center;">
-                <div class="stats-row" style="display: flex; justify-content: center; align-items: center; gap: 0.6rem; font-size: 7px; border-bottom: 1px solid var(--fg-color); width: 68%; padding-bottom: 3px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
-                    ${showViews ? `
-                    <span class="stat-views" style="${isViewsEnabled ? activeStatStyle : dormantStatStyle}" title="${isViewsEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
-                        <i class="fas fa-eye" style="margin-right: 2px;"></i> VIEWS: ${viewCount}
-                    </span>` : ''}
-
-                    ${showLikes ? `
-                    <span class="stat-likes" style="${isLikesEnabled ? activeStatStyle : dormantStatStyle}" title="${isLikesEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
-                        <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> LIKES: ${likeCount}
-                    </span>` : ''}
-
-                    ${showFeedback ? `
-                    <span class="stat-feedback" style="${isFeedbackEnabled ? activeStatStyle : dormantStatStyle}" title="${isFeedbackEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
-                        <i class="fas fa-comment-dots" style="margin-right: 2px;"></i> FEEDBACK: ${feedbackCount}
-                    </span>` : ''}
-
-                    ${showShares ? `
-                    <span class="stat-reshares" style="${isSharesEnabled ? activeStatStyle : dormantStatStyle}" title="${isSharesEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
-                        <i class="fas fa-retweet" style="margin-right: 2px;"></i> SHARES: ${shareCount}
-                    </span>` : ''}
-
-                    ${showMonetizationStat ? `
-                    <span class="stat-transactions" style="${isMonetizationEnabled ? activeStatStyle : dormantStatStyle}" title="${isMonetizationEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
-                        <i class="fas ${txIcon}" style="margin-right: 2px;"></i> ${txLabel}: ${transactionAmt}
-                    </span>` : ''}
-                </div>
-
-                <div class="interaction-row" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; width: 100%;">
-                    <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none;">
-                        ${spark.link ? 'SOURCED' : 'FORGED'}: ${formatTimeAgo(spark.created)}
-                    </div>
-                    
-                    <div class="action-buttons" style="display: flex; gap: 0.7rem; align-items: center; justify-content: center;">
-                        <button onclick="likeSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="Like" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                            <i class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
-                        </button>
-
-                        <button onclick="openFeedback(event, '${realmId}', '${currentId}', '${spark.id}')" title="Leave Feedback" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                            <i class="fas fa-comment" style="font-size: 10px; color: ${toolIconColor};"></i>
-                        </button>
-
-                        ${isOwner ? `
-                            <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="${isHierarchyPrivate ? 'Restricted: Private Node' : 'Share'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
-                            </button>
-                            <button onclick="deleteSpark('${realmId}', '${currentId}', '${spark.id}', '${ownerId}')" title="Delete" 
-                                    style="${btnStyle}" 
-                                    onmouseover="this.style.color='var(--error-color)'; this.style.filter='drop-shadow(0 0 8px var(--error-color))'; this.style.transform='scale(1.2)';" 
-                                    onmouseout="${onOut}">
-                                <i class="fas fa-trash" style="font-size: 10px; color: ${toolIconColor};"></i>
-                            </button>
-                        ` : `
-                            <button id="${sparkElementId}" onclick="window.cloneSpark(this, '${visitorUid}', '${realmId}', '${currentId}', '${spark.id}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas fa-save" style="font-size: 10px; color: ${toolIconColor};"></i>
-                            </button>
-                            <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${spark.id}')" title="${isHierarchyPrivate ? 'Restricted: Private Node' : 'Share'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                                <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
-                            </button>
-                            ${showPayOwnerIcon ? `
-                            <button onclick="window.payOwner(this, '${realmId}', '${currentId}', '${spark.id}')" 
-                                    title="${txActionTitle}" 
-                                    style="${btnStyle}" 
-                                    onmouseover="${onHover}" 
-                                    onmouseout="${onOut}">
-                                    <i class="fas ${txIcon}" style="font-size: 10px; color: ${toolIconColor};"></i>
-                            </button>                        
-                            ` : ''}
-                        `}
-                    </div>
-                </div>
+                ${renderSparkInteractionGroup(spark, realmId, currentId, visitorUid)}
             </div>
         </div>
     `;
