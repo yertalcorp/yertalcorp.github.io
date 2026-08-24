@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @20:55:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:03:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -155,7 +155,8 @@ window.switchActiveRealm = async (targetRealmId) => {
 
 window.createRealmNode = createRealmNode;
 
-export window.getUserCountry = async function() {
+// 1. Export the function declaration cleanly
+export async function getUserCountry() {
     try {
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
@@ -164,9 +165,11 @@ export window.getUserCountry = async function() {
         console.warn("Country lookup failed, defaulting to US", err);
         return 'US';
     }
-};
+}
 
+// 2. Attach to window on its own line
 window.getUserCountry = getUserCountry;
+
 window.handleSparkLaunch = async function(realmId, currentId, sparkId, targetUrl) {
     console.log(`🚀 Launching Spark: ${sparkId}`);
 
