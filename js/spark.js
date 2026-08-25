@@ -295,15 +295,15 @@ function loadSpark(spark) {
         };
     }
 
-// 3. HUD INTERACTION MOUNT
-    const visitorUid = window.auth?.currentUser?.uid || (typeof userId !== 'undefined' ? userId : null);
-    const mountPoint = document.getElementById('spark-hud-actions-mount') || document.getElementById('spark-interaction-container');
+    // 3. HUD INTERACTION MOUNT
+        const visitorUid = window.auth?.currentUser?.uid || (typeof userId !== 'undefined' ? userId : null);
+        const mountPoint = document.getElementById('spark-hud-actions-mount') || document.getElementById('spark-interaction-container');
 
-    if (mountPoint && typeof renderSparkInteractionGroup === 'function') {
-        const liveSpark = databaseCache?.realms?.[activeRealmId]?.currents?.[activeCurrentId]?.sparks?.[spark.id] || spark;
-        mountPoint.innerHTML = renderSparkInteractionGroup(activeRealmId, activeCurrentId, spark.id, liveSpark);
+        if (mountPoint && typeof renderSparkInteractionGroup === 'function') {
+            const liveSpark = databaseCache?.realms?.[activeRealmId]?.currents?.[activeCurrentId]?.sparks?.[spark.id] || spark;
+            mountPoint.innerHTML = renderSparkInteractionGroup(liveSpark, activeRealmId, activeCurrentId, visitorUid);
+        }
     }
-}
 /*
  * Objective: Change viewports to adjacent spark structures.
  * Task: Maintain state continuity across transitions by preserving realm configuration URL parameters.
