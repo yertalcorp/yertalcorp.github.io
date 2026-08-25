@@ -295,13 +295,13 @@ function loadSpark(spark) {
         };
     }
 
-    // 3. HUD INTERACTION MOUNT
+// 3. HUD INTERACTION MOUNT
     const visitorUid = window.auth?.currentUser?.uid || (typeof userId !== 'undefined' ? userId : null);
-    const mountPoint = document.getElementById('spark-hud-actions-mount');
+    const mountPoint = document.getElementById('spark-hud-actions-mount') || document.getElementById('spark-interaction-container');
 
     if (mountPoint && typeof renderSparkInteractionGroup === 'function') {
         const liveSpark = databaseCache?.realms?.[activeRealmId]?.currents?.[activeCurrentId]?.sparks?.[spark.id] || spark;
-        mountPoint.innerHTML = renderSparkInteractionGroup(liveSpark, activeRealmId, activeCurrentId, visitorUid);
+        mountPoint.innerHTML = renderSparkInteractionGroup(activeRealmId, activeCurrentId, spark.id, liveSpark);
     }
 }
 /*
