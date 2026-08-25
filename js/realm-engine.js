@@ -645,18 +645,6 @@ const updateSparkViews = async function(realmId, currentId, sparkId, country = '
 // Export for module consumers (like spark.js) for in spark interaction zone
 export {likeSpark, openFeedback,shareSpark,cloneSpark,updateSparkViews, deleteSpark, payOwner};
 
-// Bind to window for inline HTML event handlers
-window.likeSpark = likeSpark;
-window.openFeedback = openFeedback;
-window.shareSpark = shareSpark;
-window.cloneSpark = cloneSpark;
-window.updateSparkViews = updateSparkViews;
-window.deleteSpark = deleteSpark;
-window.formatTimeAgo = formatTimeAgo;
-window.getUserCountry = getUserCountry;
-window.payOwner = payOwner;
-window.openFeedback = openFeedback;
-
 // FUNCTION: payOwner
 const payOwner = function(btn, realmId, currentId, sparkId) {
     const spark = databaseCache.realms?.[realmId]?.currents?.[currentId]?.sparks?.[sparkId];
@@ -6075,6 +6063,18 @@ window.handleSparkLaunch = handleSparkLaunch;
 window.closeRealmSettings = closeRealmSettings;
 // At the bottom of arcade.js
 console.log("likeSpark function has been successfully bridged to the window scope.");
+// Bind to window for inline HTML event handlers
+window.likeSpark = likeSpark;
+window.openFeedback = openFeedback;
+window.shareSpark = shareSpark;
+window.cloneSpark = cloneSpark;
+window.updateSparkViews = updateSparkViews;
+window.deleteSpark = deleteSpark;
+window.formatTimeAgo = formatTimeAgo;
+window.getUserCountry = getUserCountry;
+window.payOwner = payOwner;
+window.openFeedback = openFeedback;
 
 // Ensure this matches the function name in showroom.js and auth.js
 window.handleLogout = window.handleLogout || logout;
+
