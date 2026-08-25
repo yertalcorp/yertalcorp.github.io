@@ -4170,12 +4170,10 @@ function genSparkImage(sparkImageFromDB) {
     return sparkImageFromDB;
 }
 
-
 /*
  * Renders standardized 2-row interaction panel for Spark HUD:
  * Row 1: Time Ago (SOURCED / FORGED)
- * Row 2: Inline [Icon : Number] Pairs
- * Retains exact ID signatures (e.g. save-btn-${spark.id}) for seamless script integration.
+ * Row 2: Inline [Icon : Number] Pairs with dedicated Icon & Count DOM Signatures
  */
 export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUid) {
     if (!spark) return '';
@@ -4187,7 +4185,7 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
     const ownerData = databaseCache?.users?.[realmOwnerId];
 
     const isOwner = visitorUid && (visitorUid === realmOwnerId || visitorUid === spark.owner);
-    const sparkElementId = `save-btn-${spark.id}`;
+    const sparkElementId = `save-btn-${sparkId}`;
 
     // 1. CONFIG & FEATURE FLAGS RESOLUTION
     const ownerPlanKey = ownerData?.profile?.plan_type || 'free';
@@ -4233,6 +4231,7 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
     const transactionAmt = spark.stats?.transactions?.total_amount || 0;
 
     const hasLiked = visitorUid && spark.stats?.likes?.users?.[visitorUid];
+    const hasFeedback = visitorUid && spark.stats?.feedback?.users?.[visitorUid];
     const hasShared = visitorUid && spark.stats?.reshares?.users?.[visitorUid];
 
     const pearlColor = "var(--list-color, #ffffff)";
@@ -4241,6 +4240,9 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
 
     const likeIconColor = hasLiked ? neonColor : pearlColor;
     const likeIconGlow = hasLiked ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
+
+    const feedbackIconColor = hasFeedback ? neonColor : pearlColor;
+    const feedbackIconGlow = hasFeedback ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
 
     const shareIconColor = isHierarchyPrivate ? disabledColor : (hasShared ? neonColor : pearlColor);
     const shareIconGlow = isHierarchyPrivate ? "none" : (hasShared ? "drop-shadow(0 0 5px var(--glow-color))" : "none");
@@ -4264,49 +4266,49 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
                 
                 ${showViews ? `
                 <div class="hud-stat-pair" style="${btnStyle}" title="${isViewsEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
-                    <i class="fas fa-eye" style="font-size: 10px; color: ${isViewsEnabled ? pearlColor : disabledColor};"></i>
+                    <i id="view-icon-${sparkId}" class="fas fa-eye" style="font-size: 10px; color: ${isViewsEnabled ? pearlColor : disabledColor};"></i>
                     <span id="view-count-${sparkId}" style="font-size: 9px; color: ${isViewsEnabled ? pearlColor : disabledColor}; font-weight: 600;">${viewCount}</span>
                 </div>
                 ` : ''}
 
                 ${showLikes ? `
                 <button onclick="likeSpark(this, '${realmId}', '${currentId}', '${sparkId}')" title="${isLikesEnabled ? 'Like' : 'Disabled (Owner Only)'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                    <i class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
+                    <i id="like-icon-${sparkId}" class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
                     <span id="like-count-${sparkId}" style="font-size: 9px; color: ${isLikesEnabled ? pearlColor : disabledColor}; font-weight: 600;">${likeCount}</span>
                 </button>
                 ` : ''}
 
                 ${showFeedback ? `
                 <button onclick="openFeedback(event, '${realmId}', '${currentId}', '${sparkId}')" title="${isFeedbackEnabled ? 'Leave Feedback' : 'Disabled (Owner Only)'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                    <i class="fas fa-comment" style="font-size: 10px; color: ${isFeedbackEnabled ? pearlColor : disabledColor};"></i>
+                    <i id="feedback-icon-${sparkId}" class="fas fa-comment" style="font-size: 10px; color: ${feedbackIconColor}; filter: ${feedbackIconGlow};"></i>
                     <span id="feedback-count-${sparkId}" style="font-size: 9px; color: ${isFeedbackEnabled ? pearlColor : disabledColor}; font-weight: 600;">${feedbackCount}</span>
                 </button>
                 ` : ''}
 
                 ${showShares ? `
                 <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${sparkId}')" title="${isHierarchyPrivate ? 'Restricted: Private Node' : (isSharesEnabled ? 'Share' : 'Disabled (Owner Only)')}" style="${btnStyle}" ${isHierarchyPrivate ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : `onmouseover="${onHover}" onmouseout="${onOut}"`}>
-                    <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
+                    <i id="share-icon-${sparkId}" class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
                     <span id="share-count-${sparkId}" style="font-size: 9px; color: ${isSharesEnabled ? pearlColor : disabledColor}; font-weight: 600;">${shareCount}</span>
                 </button>
                 ` : ''}
 
                 ${showMonetizationStat ? `
                 <div class="hud-stat-pair" style="${btnStyle}" title="${isMonetizationEnabled ? txActionTitle : 'Disabled (Owner Only)'}">
-                    <i class="fas ${txIcon}" style="font-size: 10px; color: ${isMonetizationEnabled ? pearlColor : disabledColor};"></i>
+                    <i id="monetization-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 10px; color: ${isMonetizationEnabled ? pearlColor : disabledColor};"></i>
                     <span id="monetization-count-${sparkId}" style="font-size: 9px; color: ${isMonetizationEnabled ? pearlColor : disabledColor}; font-weight: 600;">${transactionAmt}</span>
                 </div>
                 ` : ''}
 
                 ${!isOwner && visitorUid ? `
                 <button id="${sparkElementId}" onclick="window.cloneSpark(this, '${visitorUid}', '${realmId}', '${currentId}', '${sparkId}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                    <i class="fas fa-save" style="font-size: 10px; color: ${pearlColor};"></i>
+                    <i id="clone-icon-${sparkId}" class="fas fa-save" style="font-size: 10px; color: ${pearlColor};"></i>
                     <span id="clone-count-${sparkId}" style="font-size: 9px; color: ${pearlColor}; font-weight: 600;">${cloneCount}</span>
                 </button>
                 ` : ''}
 
                 ${!isOwner && showPayOwnerIcon ? `
                 <button onclick="window.payOwner(this, '${realmId}', '${currentId}', '${sparkId}')" title="${txActionTitle}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                    <i class="fas ${txIcon}" style="font-size: 10px; color: ${pearlColor};"></i>
+                    <i id="tip-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 10px; color: ${pearlColor};"></i>
                     <span id="tip-action-amount-${sparkId}" style="font-size: 9px; color: ${pearlColor}; font-weight: 600;">${transactionAmt}</span>
                 </button>
                 ` : ''}
@@ -4320,7 +4322,6 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
         </div>
     `;
 }
-
 function renderSparkCard(spark, isOwner, currentId, realmId) {
     const ownerId = databaseCache?.realms?.[realmId]?.realm_ownerid || spark.owner || 'UNKNOWN';
     const targetUrl = `spark.html?realm=${realmId}&current=${currentId}&spark=${spark.id}`;
