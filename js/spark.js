@@ -303,6 +303,7 @@ function loadSpark(spark) {
         const liveSpark = databaseCache?.realms?.[activeRealmId]?.currents?.[activeCurrentId]?.sparks?.[spark.id] || spark;
         mountPoint.innerHTML = renderSparkInteractionGroup(liveSpark, activeRealmId, activeCurrentId, visitorUid);
     }
+}
     
 /*
  * Objective: Change viewports to adjacent spark structures.
