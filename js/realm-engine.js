@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @21:58:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -4229,6 +4229,7 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
     const likeCount = spark.stats?.likes?.count || 0;
     const feedbackCount = spark.stats?.feedback?.count || 0;
     const shareCount = spark.stats?.reshares?.count || 0;
+    const cloneCount = spark.stats?.clones?.count || spark.stats?.saves?.count || 0;
     const transactionAmt = spark.stats?.transactions?.total_amount || 0;
 
     const hasLiked = visitorUid && spark.stats?.likes?.users?.[visitorUid];
@@ -4264,47 +4265,49 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
                 ${showViews ? `
                 <div class="hud-stat-pair" style="${btnStyle}" title="${isViewsEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
                     <i class="fas fa-eye" style="font-size: 10px; color: ${isViewsEnabled ? pearlColor : disabledColor};"></i>
-                    <span style="font-size: 9px; color: ${isViewsEnabled ? pearlColor : disabledColor}; font-weight: 600;">${viewCount}</span>
+                    <span id="view-count-${sparkId}" style="font-size: 9px; color: ${isViewsEnabled ? pearlColor : disabledColor}; font-weight: 600;">${viewCount}</span>
                 </div>
                 ` : ''}
 
                 ${showLikes ? `
                 <button onclick="likeSpark(this, '${realmId}', '${currentId}', '${sparkId}')" title="${isLikesEnabled ? 'Like' : 'Disabled (Owner Only)'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                     <i class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
-                    <span style="font-size: 9px; color: ${isLikesEnabled ? pearlColor : disabledColor}; font-weight: 600;">${likeCount}</span>
+                    <span id="like-count-${sparkId}" style="font-size: 9px; color: ${isLikesEnabled ? pearlColor : disabledColor}; font-weight: 600;">${likeCount}</span>
                 </button>
                 ` : ''}
 
                 ${showFeedback ? `
                 <button onclick="openFeedback(event, '${realmId}', '${currentId}', '${sparkId}')" title="${isFeedbackEnabled ? 'Leave Feedback' : 'Disabled (Owner Only)'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                     <i class="fas fa-comment" style="font-size: 10px; color: ${isFeedbackEnabled ? pearlColor : disabledColor};"></i>
-                    <span style="font-size: 9px; color: ${isFeedbackEnabled ? pearlColor : disabledColor}; font-weight: 600;">${feedbackCount}</span>
+                    <span id="feedback-count-${sparkId}" style="font-size: 9px; color: ${isFeedbackEnabled ? pearlColor : disabledColor}; font-weight: 600;">${feedbackCount}</span>
                 </button>
                 ` : ''}
 
                 ${showShares ? `
                 <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${sparkId}')" title="${isHierarchyPrivate ? 'Restricted: Private Node' : (isSharesEnabled ? 'Share' : 'Disabled (Owner Only)')}" style="${btnStyle}" ${isHierarchyPrivate ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : `onmouseover="${onHover}" onmouseout="${onOut}"`}>
                     <i class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
-                    <span style="font-size: 9px; color: ${isSharesEnabled ? pearlColor : disabledColor}; font-weight: 600;">${shareCount}</span>
+                    <span id="share-count-${sparkId}" style="font-size: 9px; color: ${isSharesEnabled ? pearlColor : disabledColor}; font-weight: 600;">${shareCount}</span>
                 </button>
                 ` : ''}
 
                 ${showMonetizationStat ? `
                 <div class="hud-stat-pair" style="${btnStyle}" title="${isMonetizationEnabled ? txActionTitle : 'Disabled (Owner Only)'}">
                     <i class="fas ${txIcon}" style="font-size: 10px; color: ${isMonetizationEnabled ? pearlColor : disabledColor};"></i>
-                    <span style="font-size: 9px; color: ${isMonetizationEnabled ? pearlColor : disabledColor}; font-weight: 600;">${transactionAmt}</span>
+                    <span id="monetization-count-${sparkId}" style="font-size: 9px; color: ${isMonetizationEnabled ? pearlColor : disabledColor}; font-weight: 600;">${transactionAmt}</span>
                 </div>
                 ` : ''}
 
                 ${!isOwner && visitorUid ? `
                 <button id="${sparkElementId}" onclick="window.cloneSpark(this, '${visitorUid}', '${realmId}', '${currentId}', '${sparkId}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                     <i class="fas fa-save" style="font-size: 10px; color: ${pearlColor};"></i>
+                    <span id="clone-count-${sparkId}" style="font-size: 9px; color: ${pearlColor}; font-weight: 600;">${cloneCount}</span>
                 </button>
                 ` : ''}
 
                 ${!isOwner && showPayOwnerIcon ? `
                 <button onclick="window.payOwner(this, '${realmId}', '${currentId}', '${sparkId}')" title="${txActionTitle}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                     <i class="fas ${txIcon}" style="font-size: 10px; color: ${pearlColor};"></i>
+                    <span id="tip-action-amount-${sparkId}" style="font-size: 9px; color: ${pearlColor}; font-weight: 600;">${transactionAmt}</span>
                 </button>
                 ` : ''}
 
