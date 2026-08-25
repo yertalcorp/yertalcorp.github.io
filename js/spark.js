@@ -8,7 +8,7 @@ let currentIndex = -1;
 let currentId = '';
 let userId = '';
 
-console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 20:10:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL SPARKS LOADED | ${new Date().toLocaleDateString()} @ 12:33:00 `, "background: var(--branding-color); color: var(--bg-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 /*
  * Objective: Capture live UI state from the simulation iframe.
  * Task: Directly update the spark object's parameter_map with current UI values.
@@ -296,14 +296,14 @@ function loadSpark(spark) {
     }
 
     // 3. HUD INTERACTION MOUNT
-        const visitorUid = window.auth?.currentUser?.uid || (typeof userId !== 'undefined' ? userId : null);
-        const mountPoint = document.getElementById('spark-hud-actions-mount') || document.getElementById('spark-interaction-container');
+    const visitorUid = window.auth?.currentUser?.uid || (typeof userId !== 'undefined' ? userId : null);
+    const mountPoint = document.getElementById('spark-hud-actions-mount');
 
-        if (mountPoint && typeof renderSparkInteractionGroup === 'function') {
-            const liveSpark = databaseCache?.realms?.[activeRealmId]?.currents?.[activeCurrentId]?.sparks?.[spark.id] || spark;
-            mountPoint.innerHTML = renderSparkInteractionGroup(liveSpark, activeRealmId, activeCurrentId, visitorUid);
-        }
+    if (mountPoint && typeof renderSparkInteractionGroup === 'function') {
+        const liveSpark = databaseCache?.realms?.[activeRealmId]?.currents?.[activeCurrentId]?.sparks?.[spark.id] || spark;
+        mountPoint.innerHTML = renderSparkInteractionGroup(liveSpark, activeRealmId, activeCurrentId, visitorUid);
     }
+    
 /*
  * Objective: Change viewports to adjacent spark structures.
  * Task: Maintain state continuity across transitions by preserving realm configuration URL parameters.
