@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:46:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:51:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -1721,9 +1721,59 @@ const cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spark
             }
             databaseCache.realms[visitorRealmId].currents[sourceCurrentId].sparks[sparkId] = clonedData;
 
-            // 9. SUCCESS UI FEEDBACK
+            // 9. DYNAMIC HOME LINK UPDATER & SUCCESS INTERACTIVE HUD MODAL
             setNeonPermanent();
-            alert(`Spark '${sparkData.name || sparkId}' successfully cloned into your collection!`);
+
+            // Update top bar home links if missing target realm parameter
+            const homeButtons = document.querySelectorAll('#exit-btn, #home-btn, .back-to-realm-btn, a[href*="mode=circuits"]');
+            homeButtons.forEach(navBtn => {
+                const currentHref = navBtn.getAttribute('href') || '';
+                if (!currentHref.includes('realm=') || currentHref.includes('mode=circuits')) {
+                    const targetUrl = `/arcade/index.html?realm=${visitorRealmId}`;
+                    navBtn.setAttribute('href', targetUrl);
+                    navBtn.onclick = (e) => {
+                        e.preventDefault();
+                        window.location.href = targetUrl;
+                    };
+                }
+            });
+
+            // Clean up any existing clone modal
+            const existingModal = document.getElementById('clone-success-modal');
+            if (existingModal) existingModal.remove();
+
+            // Build direct target URL for newly forged realm
+            const destinationUrl = `/arcade/index.html?realm=${visitorRealmId}`;
+
+            const modalOverlay = document.createElement('div');
+            modalOverlay.id = 'clone-success-modal';
+            modalOverlay.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+                display: flex; justify-content: center; align-items: center; z-index: 300000;
+            `;
+
+            modalOverlay.innerHTML = `
+                <div class="hud-body-centered glass-3d" style="background: var(--bg-color-low, #111); border: 1px solid var(--glow-color, #00f2ff); border-radius: 12px; padding: 24px; max-width: 420px; width: 90%; text-align: center; box-shadow: 0 0 25px rgba(0,242,255,0.3);">
+                    <i class="fas fa-check-circle" style="font-size: 2.5rem; color: var(--glow-color, #00f2ff); margin-bottom: 12px; filter: drop-shadow(0 0 10px var(--glow-color));"></i>
+                    <h3 class="metallic-text" style="margin: 0 0 8px 0; font-size: 14px; letter-spacing: 1px;">SPARK CLONED SUCCESSFULLY</h3>
+                    <p style="font-size: 10px; color: var(--branding-text-color, #ccc); margin-bottom: 20px; line-height: 1.4;">
+                        '${sparkData.name || sparkId}' has been forged into your active realm collection.
+                    </p>
+                    <div style="display: flex; gap: 12px; justify-content: center;">
+                        <button onclick="document.getElementById('clone-success-modal').remove()" 
+                                style="background: transparent; border: 1px solid var(--fg-color-mid, #666); color: var(--list-color, #fff); padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold;">
+                            CONTINUE BROWSING
+                        </button>
+                        <a href="${destinationUrl}" 
+                           style="background: var(--glow-color, #00f2ff); color: #000; padding: 6px 18px; border-radius: 4px; text-decoration: none; font-size: 10px; font-weight: bold; box-shadow: 0 0 12px var(--glow-color, #00f2ff); display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-home"></i> GO TO MY REALM
+                        </a>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modalOverlay);
             console.log(`[Forge Success] Spark ${sparkId} cloned from ${sourceOwnerId} to ${visitorUid} in active realm ${visitorRealmId}.`);
         } else {
             console.error("[CLONE ERROR] Source spark or source current metadata was not found in database.");
