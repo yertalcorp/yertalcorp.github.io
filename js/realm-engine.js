@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:17:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -643,7 +643,7 @@ const updateSparkViews = async function(realmId, currentId, sparkId, country = '
     }
 }
 // Export for module consumers (like spark.js) for in spark interaction zone
-export {likeSpark, openFeedback,shareSpark,cloneSpark,updateSparkViews, deleteSpark, payOwner};
+export {likeSpark, openFeedback,cloneSpark,updateSparkViews, deleteSpark, payOwner};
 
 // FUNCTION: payOwner
 const payOwner = function(btn, realmId, currentId, sparkId) {
