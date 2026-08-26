@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:14:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @11:33:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -783,23 +783,24 @@ const openFeedback = async (event, realmId, currentId, sparkId) => {
     let leftPos, topPos;
 
     if (existingPanel) {
-        // Capture position from existing panel if it's already on screen
         leftPos = existingPanel.style.left;
         topPos = existingPanel.style.top;
         existingPanel.remove(); 
     } else if (event) {
-        // SAFE CHECK: Line 605 fix
         const target = event.target || event.currentTarget;
         const card = target?.closest ? target.closest('.spark-card') : null;
         const rect = card ? card.getBoundingClientRect() : target?.getBoundingClientRect?.();
         
         if (rect) {
-            leftPos = `${rect.left + 10}px`;
-            topPos = `${rect.top + window.scrollY}px`;
+            const panelHeight = 360; // Estimated panel height
+            leftPos = `${Math.max(10, rect.left)}px`;
+            
+            // Adjust top position to render ABOVE the icon when at the bottom of the screen
+            const calculatedTop = rect.top + window.scrollY - panelHeight;
+            topPos = `${Math.max(10, calculatedTop)}px`;
         }
     }
 
-    // Default fallback if position wasn't captured
     if (!leftPos) { leftPos = '20px'; topPos = '20px'; }
 
     if (!hudOverlay) {
@@ -887,8 +888,8 @@ const openFeedback = async (event, realmId, currentId, sparkId) => {
 };
 
 /*
- * Objective: Remove feedback and decrement UI spark card count.
- * Task: Transactional delete + DOM update for the numeric stat.
+ * Objective: Remove feedback and decrement UI spark count.
+ * Task: Transactional delete + direct DOM update targeting feedback-count-${sparkId}.
  */
 window.deleteFeedback = async (realmId, currentId, sparkId, entryKey) => {
     if (!confirm("Permanently delete this transmission?")) return;
@@ -897,7 +898,7 @@ window.deleteFeedback = async (realmId, currentId, sparkId, entryKey) => {
     const feedbackRef = ref(db, path);
 
     try {
-        await runTransaction(feedbackRef, (currentData) => {
+        const result = await runTransaction(feedbackRef, (currentData) => {
             if (currentData && currentData.entries && currentData.entries[entryKey]) {
                 delete currentData.entries[entryKey];
                 // Decrease count, ensuring it never goes below 0
@@ -906,14 +907,31 @@ window.deleteFeedback = async (realmId, currentId, sparkId, entryKey) => {
             return currentData;
         });
 
-        // --- UI SYNC: Update the Spark Card Count ---
-        const card = document.querySelector(`.spark-card[data-spark-id="${sparkId}"]`);
-        if (card) {
-            const label = card.querySelector('.stat-feedback');
-            if (label) {
-                const currentText = label.innerText.replace(/[^0-9]/g, '');
-                const newCount = Math.max(0, (parseInt(currentText) || 1) - 1);
-                label.innerHTML = `<i class="fas fa-comment"></i> FEEDBACK: ${newCount}`;
+        // --- DIRECT DOM SYNC: Update targeted count span ---
+        if (result.committed) {
+            const updated = result.snapshot.val() || {};
+            const newCount = updated.count !== undefined ? updated.count : 0;
+
+            const countEl = document.getElementById(`feedback-count-${sparkId}`);
+            const iconEl = document.getElementById(`feedback-icon-${sparkId}`);
+
+            if (countEl) {
+                countEl.textContent = newCount;
+            }
+
+            if (iconEl) {
+                const visitorUid = auth.currentUser?.uid;
+                const userHasFeedback = visitorUid && updated.entries && Object.values(updated.entries).some(e => e.uid === visitorUid);
+                iconEl.style.color = userHasFeedback ? "var(--glow-color, #00f2ff)" : "var(--list-color, #ffffff)";
+                iconEl.style.filter = userHasFeedback ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
+            }
+
+            // Sync databaseCache
+            if (databaseCache?.realms?.[realmId]?.currents?.[currentId]?.sparks?.[sparkId]) {
+                if (!databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats) {
+                    databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats = {};
+                }
+                databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats.feedback = updated;
             }
         }
 
@@ -956,20 +974,24 @@ window.saveEdit = async (realmId, currentId, sparkId, entryKey) => {
         console.error("Edit failed:", e);
     }
 };
+
+/*
+ * Objective: Submit feedback entry and increment UI spark count.
+ * Task: Transactional write + direct DOM update targeting feedback-count-${sparkId}.
+ */
 window.submitSparkFeedback = async (realmId, currentId, sparkId) => {
     const msgInput = document.getElementById('feedback-msg');
-    const message = msgInput.value.trim();
+    const message = msgInput ? msgInput.value.trim() : '';
     if (!message) return;
 
     const visitorName = auth.currentUser?.displayName || "Anonymous User";
     const visitorUid = auth.currentUser?.uid || "anon";
     
-    // Per your suggestion: Create key by date/timestamp
     const timestampKey = Date.now(); 
     const feedbackRef = ref(db, getSparkStatsPath(realmId, currentId, sparkId, 'feedback'));
 
     try {
-        await runTransaction(feedbackRef, (currentData) => {
+        const result = await runTransaction(feedbackRef, (currentData) => {
             if (!currentData) currentData = { count: 0, entries: {} };
             if (!currentData.entries) currentData.entries = {};
 
@@ -984,13 +1006,29 @@ window.submitSparkFeedback = async (realmId, currentId, sparkId) => {
             return currentData;
         });
 
-        // Sync the Spark Card UI
-        const card = document.querySelector(`.spark-card[data-spark-id="${sparkId}"]`);
-        if (card) {
-            const label = card.querySelector('.stat-feedback');
-            if (label) {
-                const currentCount = parseInt(label.innerText.replace(/[^0-9]/g, '')) || 0;
-                label.innerHTML = `<i class="fas fa-comment"></i> FEEDBACK: ${currentCount + 1}`;
+        // --- DIRECT DOM SYNC: Update targeted count span & icon glow ---
+        if (result.committed) {
+            const updated = result.snapshot.val() || {};
+            const newCount = updated.count !== undefined ? updated.count : 0;
+
+            const countEl = document.getElementById(`feedback-count-${sparkId}`);
+            const iconEl = document.getElementById(`feedback-icon-${sparkId}`);
+
+            if (countEl) {
+                countEl.textContent = newCount;
+            }
+
+            if (iconEl) {
+                iconEl.style.color = "var(--glow-color, #00f2ff)";
+                iconEl.style.filter = "drop-shadow(0 0 5px var(--glow-color))";
+            }
+
+            // Sync databaseCache
+            if (databaseCache?.realms?.[realmId]?.currents?.[currentId]?.sparks?.[sparkId]) {
+                if (!databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats) {
+                    databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats = {};
+                }
+                databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats.feedback = updated;
             }
         }
 
@@ -1008,7 +1046,6 @@ const likeSpark = async (btnElement, realmId, currentId, sparkId) => {
     if (!auth.currentUser || !ownerUid || ownerUid === "undefined") return;
 
     const visitorUid = auth.currentUser.uid;
-    const icon = btnElement.querySelector('i');
     const likesRef = ref(db, getSparkStatsPath(realmId, currentId, sparkId, 'likes'));
 
     try {
@@ -1028,30 +1065,31 @@ const likeSpark = async (btnElement, realmId, currentId, sparkId) => {
             return currentData; 
         });
 
-        // 2. UI and Style Updates (The Toggle Fix)
+        // 2. Direct Target DOM Updates (Standardized Color Palette)
         if (result.committed) {
             const updated = result.snapshot.val(); 
             const isNowLiked = updated.users && updated.users[visitorUid];
+            const count = updated.count !== undefined ? updated.count : 0;
             
-            // Update Icon Color & Glow
-            icon.style.color = isNowLiked ? "var(--glow-color)" : "#f3e5ab";
-            icon.style.filter = isNowLiked ? "drop-shadow(0 0 8px var(--glow-color))" : "none";
+            const countEl = document.getElementById(`like-count-${sparkId}`);
+            const iconEl = document.getElementById(`like-icon-${sparkId}`) || btnElement.querySelector('i');
             
-            const card = btnElement.closest('.spark-card'); 
-            const likeLabel = card.querySelector('.stat-likes');
-            
-            if (likeLabel) {
-                const count = updated.count !== undefined ? updated.count : 0;
-                // FIX: Matches the new labeled format in renderSparkCard
-                likeLabel.innerHTML = `
-                 <i class="fas fa-thumbs-up" style="margin-right: 2px;"></i> 
-                     LIKES: ${count}
-                 `;
+            if (countEl) {
+                countEl.textContent = count;
+            }
+
+            if (iconEl) {
+                // UNIFIED COLOR MATCHING: Uses var(--glow-color) when liked, var(--list-color) when unliked
+                iconEl.style.color = isNowLiked ? "var(--glow-color)" : "var(--list-color)";
+                iconEl.style.filter = isNowLiked ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
             }
 
             // 3. Cache Synchronization
             try {
                 if (databaseCache?.realms?.[realmId]?.currents?.[currentId]?.sparks?.[sparkId]) {
+                    if (!databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats) {
+                        databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats = {};
+                    }
                     databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats.likes = updated;
                 }
             } catch (e) {}
@@ -1082,23 +1120,21 @@ const shareSpark = async (btnElement, realmId, currentId, sparkId) => {
     const shareData = { title: shareTitle, text: 'Explore this brilliant spark:', url: shareUrl };
     const visitorUid = auth.currentUser ? auth.currentUser.uid : "anonymous";
 
-    const setNeonFeedback = () => {
-        const icon = btnElement.querySelector('i');
+    const setNeonFeedback = (hasShared = true) => {
+        const icon = document.getElementById(`share-icon-${sparkId}`) || btnElement?.querySelector('i');
         if (icon) {
-            icon.style.color = "var(--glow-color)";
-            icon.style.filter = "drop-shadow(0 0 8px var(--glow-color))";
+            icon.style.color = hasShared ? "var(--glow-color, #00f2ff)" : "var(--list-color, #ffffff)";
+            icon.style.filter = hasShared ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
         }
     };
 
     const performReshareUpdate = async () => {
-        // Path matches the rules update we discussed earlier
         const resharePath = getSparkStatsPath(realmId, currentId, sparkId, 'reshares');
         const reshareRef = ref(db, resharePath);
 
         try {
             const result = await runTransaction(reshareRef, (currentData) => {
                 // 1. Data Transformation Logic
-                // If it's a number (old style) or empty, initialize the new object
                 if (typeof currentData !== 'object' || currentData === null) {
                     const oldCount = typeof currentData === 'number' ? currentData : 0;
                     currentData = { count: oldCount, users: {} };
@@ -1118,22 +1154,24 @@ const shareSpark = async (btnElement, realmId, currentId, sparkId) => {
 
             if (result.committed) {
                 const updated = result.snapshot.val();
-                const card = btnElement.closest('.spark-card');
-                const reshareLabel = card ? card.querySelector('.stat-reshares') : null;
+                const displayCount = updated?.count || 0;
                 
-                if (reshareLabel) {
-                    const displayCount = updated.count || 0;
-                    reshareLabel.innerHTML = `
-                        <i class="fas fa-retweet" style="font-size: 8px; margin-right: 3px;"></i> 
-                        SHARES: ${displayCount}
-                    `;
+                // Direct target resolution for the numeric span generated by renderSparkInteractionGroup
+                const shareCountEl = document.getElementById(`share-count-${sparkId}`);
+                if (shareCountEl) {
+                    shareCountEl.textContent = displayCount;
                 }
                 
-                setNeonFeedback();
+                // Update icon styling & glow instantly
+                setNeonFeedback(true);
                 
+                // Cache Synchronization
                 try {
                     if (databaseCache?.realms?.[realmId]?.currents?.[currentId]?.sparks?.[sparkId]) {
-                        databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats.forges = updated;
+                        if (!databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats) {
+                            databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats = {};
+                        }
+                        databaseCache.realms[realmId].currents[currentId].sparks[sparkId].stats.reshares = updated;
                     }
                 } catch (e) {}
             }
@@ -1409,7 +1447,7 @@ watchAuthState(async (currentUser) => {
 
 /* 
  * Objective: Clone Spark into visitor's active realm.
- * Task: Handle capacity verification, write cloned spark, and set realm_setup_complete on success.
+ * Task: Handle capacity verification, write cloned spark, set realm_setup_complete on success, and instantly update source HUD count.
  */
 const cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, sparkId) => {
     console.group(`[CLONE SPARK] Initiated for Spark: ${sparkId}`);
@@ -1420,12 +1458,18 @@ const cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spark
     const profilePath = `users/${visitorUid}/profile`;
     const sourcePath = getSparkPath(sourceRealmId, sourceCurrentId, sparkId);
 
+    // Direct Target Resolution for Icons & Counts
     const setNeonPermanent = () => {
-        const icon = btn.querySelector('i');
+        const icon = document.getElementById(`clone-icon-${sparkId}`) || btn?.querySelector('i');
+        const saveButton = document.getElementById(`save-btn-${sparkId}`) || btn;
+
         if (icon) {
-            icon.style.color = "var(--glow-color)";
+            icon.style.color = "var(--glow-color, #00f2ff)";
             icon.style.filter = "drop-shadow(0 0 5px var(--glow-color))";
-            btn.style.pointerEvents = "none"; 
+        }
+        if (saveButton) {
+            saveButton.style.pointerEvents = "none";
+            saveButton.title = "Already in Your Realm";
         }
     };
 
@@ -1549,7 +1593,7 @@ const cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spark
             // 6. UPDATE SOURCE FORGE STATS
             console.log("[CLONE STEP 6] Running transaction on source spark forges count...");
             const sourceForgeRef = ref(db, `${sourcePath}/stats/forges`);
-            await runTransaction(sourceForgeRef, (forgeObj) => {
+            const forgeResult = await runTransaction(sourceForgeRef, (forgeObj) => {
                 if (!forgeObj) {
                     forgeObj = { count: 1, users: { [visitorUid]: saveDate } };
                     return forgeObj;
@@ -1561,6 +1605,25 @@ const cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spark
                 
                 return forgeObj;
             });
+
+            // INSTANT REAL-TIME DOM UPDATE FOR SOURCE HUD CLONE COUNT
+            if (forgeResult.committed) {
+                const updatedForgeData = forgeResult.snapshot.val();
+                const newCloneCount = updatedForgeData?.count || 0;
+
+                const cloneCountEl = document.getElementById(`clone-count-${sparkId}`);
+                if (cloneCountEl) {
+                    cloneCountEl.textContent = newCloneCount;
+                }
+
+                // Sync source spark's forge count in databaseCache
+                if (databaseCache?.realms?.[sourceRealmId]?.currents?.[sourceCurrentId]?.sparks?.[sparkId]) {
+                    if (!databaseCache.realms[sourceRealmId].currents[sourceCurrentId].sparks[sparkId].stats) {
+                        databaseCache.realms[sourceRealmId].currents[sourceCurrentId].sparks[sparkId].stats = {};
+                    }
+                    databaseCache.realms[sourceRealmId].currents[sourceCurrentId].sparks[sparkId].stats.forges = updatedForgeData;
+                }
+            }
 
             // 7. BUILD CLONED SPARK DATA
             const clonedData = {
@@ -1579,7 +1642,7 @@ const cloneSpark = async (btn, visitorUid, sourceRealmId, sourceCurrentId, spark
                 }
             };
             
-            // Delete uneccessary properties from the copied spark data
+            // Delete unnecessary properties from the copied spark data
             delete clonedData.logic_used;
             if (clonedData.index !== undefined && clonedData.index !== -1) {
                 delete clonedData.code;
@@ -4171,9 +4234,8 @@ function genSparkImage(sparkImageFromDB) {
 }
 
 /*
- * Renders standardized 2-row interaction panel for Spark HUD:
- * Row 1: Time Ago (SOURCED / FORGED)
- * Row 2: Inline [Icon : Number] Pairs with dedicated Icon & Count DOM Signatures
+ * Renders standardized 2-row interaction panel for Spark HUD & Main Realm Grid.
+ * Encapsulates its own wrapper ID (#spark-interaction-${spark.id}) for complete independence.
  */
 export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUid) {
     if (!spark) return '';
@@ -4254,7 +4316,7 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
     const timeAgoText = typeof formatTimeAgo === 'function' ? formatTimeAgo(spark.created) : '';
 
     return `
-        <div class="spark-hud-panel" style="display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%;">
+        <div class="spark-hud-panel" id="spark-interaction-${sparkId}" style="display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%;">
             
             <!-- ROW 1: TIME AGO -->
             <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none; letter-spacing: 0.5px; text-transform: uppercase;">
@@ -4322,6 +4384,7 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
         </div>
     `;
 }
+
 function renderSparkCard(spark, isOwner, currentId, realmId) {
     const ownerId = databaseCache?.realms?.[realmId]?.realm_ownerid || spark.owner || 'UNKNOWN';
     const targetUrl = `spark.html?realm=${realmId}&current=${currentId}&spark=${spark.id}`;
