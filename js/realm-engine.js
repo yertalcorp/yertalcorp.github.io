@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:02:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -713,7 +713,7 @@ window.sendPayment = async function(realmId, currentId, sparkId, mode) {
     if (!amount || amount <= 0) return alert("Invalid amount.");
     
     // Only enforce a cap on Tips to prevent errors; Sales are uncapped
-    if (mode === 'tip' && amount > MAXTIP) {
+    if (mode === 'tip' && typeof MAXTIP !== 'undefined' && amount > MAXTIP) {
         return alert("For security, tips are capped at ₹1,00,000. For larger amounts, please contact the merchant.");
     }
 
@@ -727,12 +727,15 @@ window.sendPayment = async function(realmId, currentId, sparkId, mode) {
     const path = getSparkStatsPath(realmId, currentId, sparkId, 'transactions');
 
     const updates = {};
+    // 1. Log detailed transaction entry
     updates[`${path}/ledger/${txId}`] = {
         amt: amount,
         ts: new Date().toISOString(),
         uid: visitorUid,
-        type: mode // Explicitly log if it was a tip or sale
+        type: mode
     };
+    // 2. Map visitor UID directly so renderSparkInteractionGroup detects hasPaid
+    updates[`${path}/users/${visitorUid}`] = true;
     updates[`${path}/total_amount`] = increment(amount);
     updates[`${path}/count`] = increment(1);
 
@@ -741,29 +744,46 @@ window.sendPayment = async function(realmId, currentId, sparkId, mode) {
         btn.innerText = "PAYMENT COMPLETE";
         btn.style.color = "#00ff00";
         
+        // 3. TARGET DOM RESOLUTION FOR SPARK HUD & GRID CARDS
+        const targetSparkId = paymentHud.getAttribute('data-target-id') || sparkId;
         
-        // Update the UI in the stats row
-        // Locate the card using the ID stored on the HUD
-        const hud = document.getElementById('payment-hud');
-        const sparkId = hud.getAttribute('data-target-id');
-        const card = document.querySelector(`[data-spark-id="${sparkId}"]`);
-        const txLabel = card.querySelector('.stat-transactions');
-            
-        if (txLabel) {
-            // Assuming 'type' is passed to sendPayment (e.g., 'sale' or 'tip')
-            const labelText = mode === 'sale' ? 'SALES' : 'TIPS';
-            const iconClass = mode === 'sale' ? 'fa-shopping-cart' : 'fa-hand-holding-usd';
-    
-            // Calculate new total (extracting number from current text)
-            const currentText = txLabel.innerText.split(': ')[1] || "0";
-            const newTotal = parseFloat(currentText.replace(/,/g, '')) + amount;
+        const tipCountEl = document.getElementById(`tip-action-amount-${targetSparkId}`);
+        const statCountEl = document.getElementById(`monetization-count-${targetSparkId}`);
+        const tipIconEl = document.getElementById(`tip-icon-${targetSparkId}`);
+        const statIconEl = document.getElementById(`monetization-icon-${targetSparkId}`);
 
-            txLabel.innerHTML = `
-             <i class="fas ${iconClass}" style="margin-right: 2px;"></i> 
-             ${labelText}: ${newTotal.toLocaleString('en-IN')}
-             `;
-            console.log("✅ Tip logged and UI updated");
+        // Extract current amount and add new amount
+        const currentAmountText = tipCountEl?.textContent || statCountEl?.textContent || "0";
+        const newTotal = (parseFloat(currentAmountText.replace(/,/g, '')) || 0) + amount;
+
+        // Update amount displays
+        if (tipCountEl) tipCountEl.textContent = newTotal.toLocaleString('en-IN');
+        if (statCountEl) statCountEl.textContent = newTotal.toLocaleString('en-IN');
+
+        // Apply neon glow feedback instantly to icons
+        if (tipIconEl) {
+            tipIconEl.style.color = "var(--glow-color, #00f2ff)";
+            tipIconEl.style.filter = "drop-shadow(0 0 5px var(--glow-color))";
         }
+        if (statIconEl) {
+            statIconEl.style.color = "var(--glow-color, #00f2ff)";
+            statIconEl.style.filter = "drop-shadow(0 0 5px var(--glow-color))";
+        }
+
+        // 4. LOCAL CACHE SYNCHRONIZATION
+        try {
+            const sparkCache = databaseCache?.realms?.[realmId]?.currents?.[currentId]?.sparks?.[targetSparkId];
+            if (sparkCache) {
+                if (!sparkCache.stats) sparkCache.stats = {};
+                if (!sparkCache.stats.transactions) sparkCache.stats.transactions = { total_amount: 0, ledger: {}, users: {} };
+                
+                sparkCache.stats.transactions.total_amount = newTotal;
+                if (!sparkCache.stats.transactions.users) sparkCache.stats.transactions.users = {};
+                sparkCache.stats.transactions.users[visitorUid] = true;
+            }
+        } catch (e) {}
+
+        console.log("✅ Tip/Payment logged, icons set to glow, and UI updated successfully.");
         setTimeout(() => paymentHud.remove(), 1500);
 
     } catch (err) {
@@ -4317,7 +4337,14 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
     const hasLiked = visitorUid && spark.stats?.likes?.users?.[visitorUid];
     const hasFeedback = visitorUid && spark.stats?.feedback?.users?.[visitorUid];
     const hasShared = visitorUid && spark.stats?.reshares?.users?.[visitorUid];
-    const hasPaid = visitorUid && spark.stats?.transactions?.ledger?.[visitorUid];
+    const hasPaid = visitorUid && (
+        spark.stats?.transactions?.users?.[visitorUid] || 
+        spark.stats?.transactions?.ledger?.[visitorUid]
+    );
+    const hasCloned = visitorUid && (
+        spark.stats?.clones?.users?.[visitorUid] || 
+        spark.stats?.saves?.users?.[visitorUid]
+    );
 
     const listColor = "var(--list-color, #ffffff)";
     const neonColor = "var(--glow-color, #00f2ff)";
@@ -4334,6 +4361,9 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
 
     const payIconColor = (!isOwner && hasPaid) ? neonColor : listColor;
     const payIconGlow = (!isOwner && hasPaid) ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
+
+    const cloneIconColor = hasCloned ? neonColor : listColor;
+    const cloneIconGlow = hasCloned ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
 
     // Compact spacing to prevent card overflow
     const btnStyle = `background: none; border: none; cursor: pointer; padding: 1px 2px; display: inline-flex; align-items: center; justify-content: center; gap: 2px; transition: all 0.3s ease; white-space: nowrap;`;
@@ -4389,8 +4419,8 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
                 ` : ''}
 
                 ${!isOwner && visitorUid ? `
-                <button id="${sparkElementId}" onclick="window.cloneSpark(this, '${visitorUid}', '${realmId}', '${currentId}', '${sparkId}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                    <i id="clone-icon-${sparkId}" class="fas fa-save" style="font-size: 9px; color: ${listColor};"></i>
+                <button id="${sparkElementId}" onclick="window.cloneSpark(this, '${visitorUid}', '${realmId}', '${currentId}', '${sparkId}')" title="${hasCloned ? 'Already Cloned to My Realm' : 'Save to My Realm'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                    <i id="clone-icon-${sparkId}" class="fas fa-save" style="font-size: 9px; color: ${cloneIconColor}; filter: ${cloneIconGlow};"></i>
                     <span id="clone-count-${sparkId}" style="font-size: 8.5px; color: ${listColor}; font-weight: 600;">${cloneCount}</span>
                 </button>
                 ` : ''}
