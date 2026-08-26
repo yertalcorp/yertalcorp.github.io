@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:02:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -4319,30 +4319,31 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
     const hasShared = visitorUid && spark.stats?.reshares?.users?.[visitorUid];
     const hasPaid = visitorUid && spark.stats?.transactions?.ledger?.[visitorUid];
 
-    const pearlColor = "var(--list-color, #ffffff)";
+    const listColor = "var(--list-color, #ffffff)";
     const neonColor = "var(--glow-color, #00f2ff)";
     const disabledColor = "var(--fg-color-mid, #888888)";
 
-    const likeIconColor = hasLiked ? neonColor : pearlColor;
+    const likeIconColor = hasLiked ? neonColor : listColor;
     const likeIconGlow = hasLiked ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
 
-    const feedbackIconColor = hasFeedback ? neonColor : pearlColor;
+    const feedbackIconColor = hasFeedback ? neonColor : listColor;
     const feedbackIconGlow = hasFeedback ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
 
-    const shareIconColor = isHierarchyPrivate ? disabledColor : (hasShared ? neonColor : pearlColor);
+    const shareIconColor = isHierarchyPrivate ? disabledColor : (hasShared ? neonColor : listColor);
     const shareIconGlow = isHierarchyPrivate ? "none" : (hasShared ? "drop-shadow(0 0 5px var(--glow-color))" : "none");
 
-    const payIconColor = (!isOwner && hasPaid) ? neonColor : pearlColor;
+    const payIconColor = (!isOwner && hasPaid) ? neonColor : listColor;
     const payIconGlow = (!isOwner && hasPaid) ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
 
-    const btnStyle = `background: none; border: none; cursor: pointer; padding: 2px 4px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.3s ease;`;
-    const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
+    // Compact spacing to prevent card overflow
+    const btnStyle = `background: none; border: none; cursor: pointer; padding: 1px 2px; display: inline-flex; align-items: center; justify-content: center; gap: 2px; transition: all 0.3s ease; white-space: nowrap;`;
+    const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.15)';"
     const onOut = "this.style.filter='none'; this.style.transform='scale(1)';"
 
     const timeAgoText = typeof formatTimeAgo === 'function' ? formatTimeAgo(spark.created) : '';
 
     return `
-        <div class="spark-hud-panel" id="spark-interaction-${sparkId}" style="display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%;">
+        <div class="spark-hud-panel" id="spark-interaction-${sparkId}" style="display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; max-width: 100%; box-sizing: border-box; overflow: hidden;">
             
             <!-- ROW 1: TIME AGO -->
             <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none; letter-spacing: 0.5px; text-transform: uppercase;">
@@ -4350,60 +4351,60 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
             </div>
 
             <!-- ROW 2: ICON + NUM PAIRS -->
-            <div class="hud-action-row" style="display: flex; align-items: center; justify-content: center; gap: 0.7rem;">
+            <div class="hud-action-row" style="display: flex; align-items: center; justify-content: center; gap: 0.35rem; width: 100%; max-width: 100%; flex-wrap: nowrap; overflow: hidden;">
                 
                 ${showViews ? `
                 <div class="hud-stat-pair" style="${btnStyle}" title="${isViewsEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
-                    <i id="view-icon-${sparkId}" class="fas fa-eye" style="font-size: 10px; color: ${isViewsEnabled ? pearlColor : disabledColor};"></i>
-                    <span id="view-count-${sparkId}" style="font-size: 9px; color: ${isViewsEnabled ? pearlColor : disabledColor}; font-weight: 600;">${viewCount}</span>
+                    <i id="view-icon-${sparkId}" class="fas fa-eye" style="font-size: 9px; color: ${isViewsEnabled ? listColor : disabledColor};"></i>
+                    <span id="view-count-${sparkId}" style="font-size: 8.5px; color: ${isViewsEnabled ? listColor : disabledColor}; font-weight: 600;">${viewCount}</span>
                 </div>
                 ` : ''}
 
                 ${showLikes ? `
                 <button onclick="likeSpark(this, '${realmId}', '${currentId}', '${sparkId}')" title="${isLikesEnabled ? 'Like' : 'Disabled (Owner Only)'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                    <i id="like-icon-${sparkId}" class="fas fa-thumbs-up" style="font-size: 10px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
-                    <span id="like-count-${sparkId}" style="font-size: 9px; color: ${isLikesEnabled ? pearlColor : disabledColor}; font-weight: 600;">${likeCount}</span>
+                    <i id="like-icon-${sparkId}" class="fas fa-thumbs-up" style="font-size: 9px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
+                    <span id="like-count-${sparkId}" style="font-size: 8.5px; color: ${isLikesEnabled ? listColor : disabledColor}; font-weight: 600;">${likeCount}</span>
                 </button>
                 ` : ''}
 
                 ${showFeedback ? `
                 <button onclick="openFeedback(event, '${realmId}', '${currentId}', '${sparkId}')" title="${isFeedbackEnabled ? 'Leave Feedback' : 'Disabled (Owner Only)'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                    <i id="feedback-icon-${sparkId}" class="fas fa-comment" style="font-size: 10px; color: ${feedbackIconColor}; filter: ${feedbackIconGlow};"></i>
-                    <span id="feedback-count-${sparkId}" style="font-size: 9px; color: ${isFeedbackEnabled ? pearlColor : disabledColor}; font-weight: 600;">${feedbackCount}</span>
+                    <i id="feedback-icon-${sparkId}" class="fas fa-comment" style="font-size: 9px; color: ${feedbackIconColor}; filter: ${feedbackIconGlow};"></i>
+                    <span id="feedback-count-${sparkId}" style="font-size: 8.5px; color: ${isFeedbackEnabled ? listColor : disabledColor}; font-weight: 600;">${feedbackCount}</span>
                 </button>
                 ` : ''}
 
                 ${showShares ? `
                 <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${sparkId}')" title="${isHierarchyPrivate ? 'Restricted: Private Node' : (isSharesEnabled ? 'Share' : 'Disabled (Owner Only)')}" style="${btnStyle}" ${isHierarchyPrivate ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : `onmouseover="${onHover}" onmouseout="${onOut}"`}>
-                    <i id="share-icon-${sparkId}" class="fas fa-share-alt" style="font-size: 10px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
-                    <span id="share-count-${sparkId}" style="font-size: 9px; color: ${isSharesEnabled ? pearlColor : disabledColor}; font-weight: 600;">${shareCount}</span>
+                    <i id="share-icon-${sparkId}" class="fas fa-share-alt" style="font-size: 9px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
+                    <span id="share-count-${sparkId}" style="font-size: 8.5px; color: ${isSharesEnabled ? listColor : disabledColor}; font-weight: 600;">${shareCount}</span>
                 </button>
                 ` : ''}
 
                 ${showMonetizationStat ? `
                 <div class="hud-stat-pair" style="${btnStyle}" title="${isMonetizationEnabled ? txActionTitle : 'Disabled (Owner Only)'}">
-                    <i id="monetization-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 10px; color: ${payIconColor}; filter: ${payIconGlow};"></i>
-                    <span id="monetization-count-${sparkId}" style="font-size: 9px; color: ${isMonetizationEnabled ? pearlColor : disabledColor}; font-weight: 600;">${transactionAmt}</span>
+                    <i id="monetization-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 9px; color: ${payIconColor}; filter: ${payIconGlow};"></i>
+                    <span id="monetization-count-${sparkId}" style="font-size: 8.5px; color: ${isMonetizationEnabled ? listColor : disabledColor}; font-weight: 600;">${transactionAmt}</span>
                 </div>
                 ` : ''}
 
                 ${!isOwner && visitorUid ? `
                 <button id="${sparkElementId}" onclick="window.cloneSpark(this, '${visitorUid}', '${realmId}', '${currentId}', '${sparkId}')" title="Save to My Realm" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                    <i id="clone-icon-${sparkId}" class="fas fa-save" style="font-size: 10px; color: ${pearlColor};"></i>
-                    <span id="clone-count-${sparkId}" style="font-size: 9px; color: ${pearlColor}; font-weight: 600;">${cloneCount}</span>
+                    <i id="clone-icon-${sparkId}" class="fas fa-save" style="font-size: 9px; color: ${listColor};"></i>
+                    <span id="clone-count-${sparkId}" style="font-size: 8.5px; color: ${listColor}; font-weight: 600;">${cloneCount}</span>
                 </button>
                 ` : ''}
 
                 ${showPayOwnerIcon ? `
                 <button onclick="${isOwner ? 'void(0)' : `window.payOwner(this, '${realmId}', '${currentId}', '${sparkId}')`}" title="${isOwner ? 'Your Tip/Sales Jar' : txActionTitle}" style="${btnStyle}" ${isOwner ? 'disabled style="opacity:0.6; cursor:default;"' : `onmouseover="${onHover}" onmouseout="${onOut}"`}>
-                    <i id="tip-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 10px; color: ${payIconColor}; filter: ${payIconGlow};"></i>
-                    <span id="tip-action-amount-${sparkId}" style="font-size: 9px; color: ${pearlColor}; font-weight: 600;">${transactionAmt}</span>
+                    <i id="tip-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 9px; color: ${payIconColor}; filter: ${payIconGlow};"></i>
+                    <span id="tip-action-amount-${sparkId}" style="font-size: 8.5px; color: ${listColor}; font-weight: 600;">${transactionAmt}</span>
                 </button>
                 ` : ''}
 
                 ${isOwner ? `
-                <button onclick="deleteSpark('${realmId}', '${currentId}', '${sparkId}', '${realmOwnerId}')" title="Delete" style="${btnStyle}" onmouseover="this.style.color='var(--error-color)'; this.style.filter='drop-shadow(0 0 8px var(--error-color))'; this.style.transform='scale(1.2)';" onmouseout="${onOut}">
-                    <i class="fas fa-trash" style="font-size: 10px; color: ${pearlColor};"></i>
+                <button onclick="deleteSpark('${realmId}', '${currentId}', '${sparkId}', '${realmOwnerId}')" title="Delete" style="${btnStyle}" onmouseover="this.style.color='var(--error-color)'; this.style.filter='drop-shadow(0 0 8px var(--error-color))'; this.style.transform='scale(1.15)';" onmouseout="${onOut}">
+                    <i class="fas fa-trash" style="font-size: 9px; color: ${listColor};"></i>
                 </button>
                 ` : ''}
             </div>
