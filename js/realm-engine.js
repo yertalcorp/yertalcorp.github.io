@@ -4307,22 +4307,28 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
     const isFeedbackEnabled = realmConfig.show_feedback !== false;
     const isSharesEnabled = realmConfig.show_shares !== false;
 
-    // Platform Master Feature Flags
+    // Master Platform Feature Flags (Hard Controls for Everyone)
     const masterMonetizationOn = masterFlags.enable_monetization_stats === true;
     const masterPayOwnerOn = masterFlags.enable_pay_owner_icon === true;
 
-    // Realm Specific Toggles
-    const isMonetizationEnabled = isSalesMode ? realmConfig.show_sales === true : realmConfig.show_tips === true;
-    const isPayOwnerEnabled = realmConfig.show_pay_owner === true;
+    // Realm Specific Toggles (Configured by Owner for Visitors)
+    const isMonetizationEnabled = isSalesMode ? realmConfig.show_sales !== false : realmConfig.show_tips !== false;
+    const isPayOwnerEnabled = realmConfig.show_pay_owner !== false;
 
-    // 2. VISIBILITY ELIGIBILITY
+    // 2. VISIBILITY ELIGIBILITY LOGIC
+    // Owner sees everything unless restricted by Master Platform Flags.
+    // Visitors only see icons if enabled in Realm Config.
     const showViews = isOwner || isViewsEnabled;
     const showLikes = isOwner || isLikesEnabled;
     const showFeedback = isOwner || isFeedbackEnabled;
     const showShares = isOwner || isSharesEnabled;
 
-    const showMonetizationStat = masterMonetizationOn && (isOwner || isMonetizationEnabled);
-    const showPayOwnerIcon = masterPayOwnerOn && (isOwner || isPayOwnerEnabled);
+    // Monetization Visibility:
+    // If masterPayOwnerOn is active, visitors get the interactive Pay Button (if enabled in realm config).
+    // Owner sees the Pay Jar button (disabled/read-only mode) so there is NO duplicate stat icon.
+    const showPayButton = masterPayOwnerOn && (isOwner || isPayOwnerEnabled);
+    // Passive stat display ONLY renders if masterMonetizationOn is true AND Pay Button is OFF.
+    const showMonetizationStat = masterMonetizationOn && !showPayButton && (isOwner || isMonetizationEnabled);
 
     // 3. PRIVACY & STATS RESOLUTION
     const isHierarchyPrivate = realmData.realm_privacy === 'private' || currentData.privacy === 'private' || spark.privacy === 'private';
@@ -4334,6 +4340,7 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
     const cloneCount = spark.stats?.clones?.count || spark.stats?.saves?.count || 0;
     const transactionAmt = spark.stats?.transactions?.total_amount || 0;
 
+    // Visitor Interaction States
     const hasLiked = visitorUid && spark.stats?.likes?.users?.[visitorUid];
     const hasFeedback = visitorUid && spark.stats?.feedback?.users?.[visitorUid];
     const hasShared = visitorUid && spark.stats?.reshares?.users?.[visitorUid];
@@ -4346,26 +4353,30 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
         spark.stats?.saves?.users?.[visitorUid]
     );
 
+    // Color System Definitions
     const listColor = "var(--list-color, #ffffff)";
     const neonColor = "var(--glow-color, #00f2ff)";
     const disabledColor = "var(--fg-color-mid, #888888)";
 
-    const likeIconColor = hasLiked ? neonColor : listColor;
-    const likeIconGlow = hasLiked ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
+    // Color & Glow Assignment for Visitor Interactions vs Owner Disabled States
+    const viewIconColor = (isOwner && !isViewsEnabled) ? disabledColor : listColor;
 
-    const feedbackIconColor = hasFeedback ? neonColor : listColor;
-    const feedbackIconGlow = hasFeedback ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
+    const likeIconColor = (isOwner && !isLikesEnabled) ? disabledColor : (hasLiked ? neonColor : listColor);
+    const likeIconGlow = hasLiked && (!isOwner || isLikesEnabled) ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
 
-    const shareIconColor = isHierarchyPrivate ? disabledColor : (hasShared ? neonColor : listColor);
-    const shareIconGlow = isHierarchyPrivate ? "none" : (hasShared ? "drop-shadow(0 0 5px var(--glow-color))" : "none");
+    const feedbackIconColor = (isOwner && !isFeedbackEnabled) ? disabledColor : (hasFeedback ? neonColor : listColor);
+    const feedbackIconGlow = hasFeedback && (!isOwner || isFeedbackEnabled) ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
 
-    const payIconColor = (!isOwner && hasPaid) ? neonColor : listColor;
-    const payIconGlow = (!isOwner && hasPaid) ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
+    const shareIconColor = isHierarchyPrivate ? disabledColor : ((isOwner && !isSharesEnabled) ? disabledColor : (hasShared ? neonColor : listColor));
+    const shareIconGlow = !isHierarchyPrivate && hasShared && (!isOwner || isSharesEnabled) ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
+
+    const payIconColor = (isOwner && !isPayOwnerEnabled) ? disabledColor : ((!isOwner && hasPaid) ? neonColor : listColor);
+    const payIconGlow = (!isOwner && hasPaid && isPayOwnerEnabled) ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
 
     const cloneIconColor = hasCloned ? neonColor : listColor;
     const cloneIconGlow = hasCloned ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
 
-    // Compact spacing to prevent card overflow
+    // Compact styling to prevent row overflow
     const btnStyle = `background: none; border: none; cursor: pointer; padding: 1px 2px; display: inline-flex; align-items: center; justify-content: center; gap: 2px; transition: all 0.3s ease; white-space: nowrap;`;
     const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.15)';"
     const onOut = "this.style.filter='none'; this.style.transform='scale(1)';"
@@ -4375,65 +4386,65 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
     return `
         <div class="spark-hud-panel" id="spark-interaction-${sparkId}" style="display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; max-width: 100%; box-sizing: border-box; overflow: hidden;">
             
-            <!-- ROW 1: TIME AGO -->
+            <!-- ROW 1: CREATION TIMESTAMP -->
             <div class="metallic-text" style="font-size: 7px; opacity: 0.4; text-shadow: none; filter: none; letter-spacing: 0.5px; text-transform: uppercase;">
                 ${spark.link ? 'SOURCED' : 'FORGED'}: ${timeAgoText}
             </div>
 
-            <!-- ROW 2: ICON + NUM PAIRS -->
+            <!-- ROW 2: ACTION & STAT PAIRS -->
             <div class="hud-action-row" style="display: flex; align-items: center; justify-content: center; gap: 0.35rem; width: 100%; max-width: 100%; flex-wrap: nowrap; overflow: hidden;">
                 
                 ${showViews ? `
-                <div class="hud-stat-pair" style="${btnStyle}" title="${isViewsEnabled ? 'Public View' : 'Disabled (Owner Only)'}">
-                    <i id="view-icon-${sparkId}" class="fas fa-eye" style="font-size: 9px; color: ${isViewsEnabled ? listColor : disabledColor};"></i>
-                    <span id="view-count-${sparkId}" style="font-size: 8.5px; color: ${isViewsEnabled ? listColor : disabledColor}; font-weight: 600;">${viewCount}</span>
+                <div class="hud-stat-pair" style="${btnStyle}" title="${isViewsEnabled ? 'Public Views' : 'Views Disabled for Visitors'}">
+                    <i id="view-icon-${sparkId}" class="fas fa-eye" style="font-size: 9px; color: ${viewIconColor};"></i>
+                    <span id="view-count-${sparkId}" style="font-size: 8.5px; color: ${viewIconColor}; font-weight: 600;">${viewCount}</span>
                 </div>
                 ` : ''}
 
                 ${showLikes ? `
-                <button onclick="likeSpark(this, '${realmId}', '${currentId}', '${sparkId}')" title="${isLikesEnabled ? 'Like' : 'Disabled (Owner Only)'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                <button onclick="likeSpark(this, '${realmId}', '${currentId}', '${sparkId}')" title="${isLikesEnabled ? 'Like' : 'Likes Disabled for Visitors'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                     <i id="like-icon-${sparkId}" class="fas fa-thumbs-up" style="font-size: 9px; color: ${likeIconColor}; filter: ${likeIconGlow};"></i>
-                    <span id="like-count-${sparkId}" style="font-size: 8.5px; color: ${isLikesEnabled ? listColor : disabledColor}; font-weight: 600;">${likeCount}</span>
+                    <span id="like-count-${sparkId}" style="font-size: 8.5px; color: ${likeIconColor}; font-weight: 600;">${likeCount}</span>
                 </button>
                 ` : ''}
 
                 ${showFeedback ? `
-                <button onclick="openFeedback(event, '${realmId}', '${currentId}', '${sparkId}')" title="${isFeedbackEnabled ? 'Leave Feedback' : 'Disabled (Owner Only)'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
+                <button onclick="openFeedback(event, '${realmId}', '${currentId}', '${sparkId}')" title="${isFeedbackEnabled ? 'Leave Feedback' : 'Feedback Disabled for Visitors'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                     <i id="feedback-icon-${sparkId}" class="fas fa-comment" style="font-size: 9px; color: ${feedbackIconColor}; filter: ${feedbackIconGlow};"></i>
-                    <span id="feedback-count-${sparkId}" style="font-size: 8.5px; color: ${isFeedbackEnabled ? listColor : disabledColor}; font-weight: 600;">${feedbackCount}</span>
+                    <span id="feedback-count-${sparkId}" style="font-size: 8.5px; color: ${feedbackIconColor}; font-weight: 600;">${feedbackCount}</span>
                 </button>
                 ` : ''}
 
                 ${showShares ? `
-                <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${sparkId}')" title="${isHierarchyPrivate ? 'Restricted: Private Node' : (isSharesEnabled ? 'Share' : 'Disabled (Owner Only)')}" style="${btnStyle}" ${isHierarchyPrivate ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : `onmouseover="${onHover}" onmouseout="${onOut}"`}>
+                <button onclick="shareSpark(this, '${realmId}', '${currentId}', '${sparkId}')" title="${isHierarchyPrivate ? 'Restricted: Private Node' : (isSharesEnabled ? 'Share' : 'Shares Disabled for Visitors')}" style="${btnStyle}" ${isHierarchyPrivate ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : `onmouseover="${onHover}" onmouseout="${onOut}"`}>
                     <i id="share-icon-${sparkId}" class="fas fa-share-alt" style="font-size: 9px; color: ${shareIconColor}; filter: ${shareIconGlow};"></i>
-                    <span id="share-count-${sparkId}" style="font-size: 8.5px; color: ${isSharesEnabled ? listColor : disabledColor}; font-weight: 600;">${shareCount}</span>
+                    <span id="share-count-${sparkId}" style="font-size: 8.5px; color: ${shareIconColor}; font-weight: 600;">${shareCount}</span>
                 </button>
                 ` : ''}
 
                 ${showMonetizationStat ? `
-                <div class="hud-stat-pair" style="${btnStyle}" title="${isMonetizationEnabled ? txActionTitle : 'Disabled (Owner Only)'}">
-                    <i id="monetization-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 9px; color: ${payIconColor}; filter: ${payIconGlow};"></i>
-                    <span id="monetization-count-${sparkId}" style="font-size: 8.5px; color: ${isMonetizationEnabled ? listColor : disabledColor}; font-weight: 600;">${transactionAmt}</span>
+                <div class="hud-stat-pair" style="${btnStyle}" title="${isMonetizationEnabled ? txActionTitle : 'Monetization Stats Disabled for Visitors'}">
+                    <i id="monetization-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 9px; color: ${(isOwner && !isMonetizationEnabled) ? disabledColor : listColor};"></i>
+                    <span id="monetization-count-${sparkId}" style="font-size: 8.5px; color: ${(isOwner && !isMonetizationEnabled) ? disabledColor : listColor}; font-weight: 600;">${transactionAmt}</span>
                 </div>
                 ` : ''}
 
                 ${!isOwner && visitorUid ? `
                 <button id="${sparkElementId}" onclick="window.cloneSpark(this, '${visitorUid}', '${realmId}', '${currentId}', '${sparkId}')" title="${hasCloned ? 'Already Cloned to My Realm' : 'Save to My Realm'}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
                     <i id="clone-icon-${sparkId}" class="fas fa-save" style="font-size: 9px; color: ${cloneIconColor}; filter: ${cloneIconGlow};"></i>
-                    <span id="clone-count-${sparkId}" style="font-size: 8.5px; color: ${listColor}; font-weight: 600;">${cloneCount}</span>
+                    <span id="clone-count-${sparkId}" style="font-size: 8.5px; color: ${cloneIconColor}; font-weight: 600;">${cloneCount}</span>
                 </button>
                 ` : ''}
 
-                ${showPayOwnerIcon ? `
-                <button onclick="${isOwner ? 'void(0)' : `window.payOwner(this, '${realmId}', '${currentId}', '${sparkId}')`}" title="${isOwner ? 'Your Tip/Sales Jar' : txActionTitle}" style="${btnStyle}" ${isOwner ? 'disabled style="opacity:0.6; cursor:default;"' : `onmouseover="${onHover}" onmouseout="${onOut}"`}>
+                ${showPayButton ? `
+                <button onclick="${isOwner ? 'void(0)' : `window.payOwner(this, '${realmId}', '${currentId}', '${sparkId}')`}" title="${isOwner ? (isPayOwnerEnabled ? `Total Revenue (${txActionTitle})` : `Pay Owner Disabled for Visitors`) : txActionTitle}" style="${btnStyle}" ${isOwner ? 'disabled style="opacity:0.6; cursor:default;"' : `onmouseover="${onHover}" onmouseout="${onOut}"`}>
                     <i id="tip-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 9px; color: ${payIconColor}; filter: ${payIconGlow};"></i>
-                    <span id="tip-action-amount-${sparkId}" style="font-size: 8.5px; color: ${listColor}; font-weight: 600;">${transactionAmt}</span>
+                    <span id="tip-action-amount-${sparkId}" style="font-size: 8.5px; color: ${payIconColor}; font-weight: 600;">${transactionAmt}</span>
                 </button>
                 ` : ''}
 
                 ${isOwner ? `
-                <button onclick="deleteSpark('${realmId}', '${currentId}', '${sparkId}', '${realmOwnerId}')" title="Delete" style="${btnStyle}" onmouseover="this.style.color='var(--error-color)'; this.style.filter='drop-shadow(0 0 8px var(--error-color))'; this.style.transform='scale(1.15)';" onmouseout="${onOut}">
+                <button onclick="deleteSpark('${realmId}', '${currentId}', '${sparkId}', '${realmOwnerId}')" title="Delete Spark" style="${btnStyle}" onmouseover="this.style.color='var(--error-color)'; this.style.filter='drop-shadow(0 0 8px var(--error-color))'; this.style.transform='scale(1.15)';" onmouseout="${onOut}">
                     <i class="fas fa-trash" style="font-size: 9px; color: ${listColor};"></i>
                 </button>
                 ` : ''}
