@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @12:39:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @14:57:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -4317,6 +4317,7 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
     const hasLiked = visitorUid && spark.stats?.likes?.users?.[visitorUid];
     const hasFeedback = visitorUid && spark.stats?.feedback?.users?.[visitorUid];
     const hasShared = visitorUid && spark.stats?.reshares?.users?.[visitorUid];
+    const hasPaid = visitorUid && spark.stats?.transactions?.ledger?.[visitorUid];
 
     const pearlColor = "var(--list-color, #ffffff)";
     const neonColor = "var(--glow-color, #00f2ff)";
@@ -4330,6 +4331,9 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
 
     const shareIconColor = isHierarchyPrivate ? disabledColor : (hasShared ? neonColor : pearlColor);
     const shareIconGlow = isHierarchyPrivate ? "none" : (hasShared ? "drop-shadow(0 0 5px var(--glow-color))" : "none");
+
+    const payIconColor = (!isOwner && hasPaid) ? neonColor : pearlColor;
+    const payIconGlow = (!isOwner && hasPaid) ? "drop-shadow(0 0 5px var(--glow-color))" : "none";
 
     const btnStyle = `background: none; border: none; cursor: pointer; padding: 2px 4px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.3s ease;`;
     const onHover = "this.style.filter='drop-shadow(0 0 8px var(--glow-color))'; this.style.transform='scale(1.2)';"
@@ -4378,7 +4382,7 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
 
                 ${showMonetizationStat ? `
                 <div class="hud-stat-pair" style="${btnStyle}" title="${isMonetizationEnabled ? txActionTitle : 'Disabled (Owner Only)'}">
-                    <i id="monetization-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 10px; color: ${isMonetizationEnabled ? pearlColor : disabledColor};"></i>
+                    <i id="monetization-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 10px; color: ${payIconColor}; filter: ${payIconGlow};"></i>
                     <span id="monetization-count-${sparkId}" style="font-size: 9px; color: ${isMonetizationEnabled ? pearlColor : disabledColor}; font-weight: 600;">${transactionAmt}</span>
                 </div>
                 ` : ''}
@@ -4390,9 +4394,9 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
                 </button>
                 ` : ''}
 
-                ${!isOwner && showPayOwnerIcon ? `
-                <button onclick="window.payOwner(this, '${realmId}', '${currentId}', '${sparkId}')" title="${txActionTitle}" style="${btnStyle}" onmouseover="${onHover}" onmouseout="${onOut}">
-                    <i id="tip-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 10px; color: ${pearlColor};"></i>
+                ${showPayOwnerIcon ? `
+                <button onclick="${isOwner ? 'void(0)' : `window.payOwner(this, '${realmId}', '${currentId}', '${sparkId}')`}" title="${isOwner ? 'Your Tip/Sales Jar' : txActionTitle}" style="${btnStyle}" ${isOwner ? 'disabled style="opacity:0.6; cursor:default;"' : `onmouseover="${onHover}" onmouseout="${onOut}"`}>
+                    <i id="tip-icon-${sparkId}" class="fas ${txIcon}" style="font-size: 10px; color: ${payIconColor}; filter: ${payIconGlow};"></i>
                     <span id="tip-action-amount-${sparkId}" style="font-size: 9px; color: ${pearlColor}; font-weight: 600;">${transactionAmt}</span>
                 </button>
                 ` : ''}
