@@ -9,7 +9,7 @@ window.update = update;
 window.get = get;
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:15:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
+console.log(`%c YERTAL REALM LOADED | ${new Date().toLocaleDateString()} @15:46:00 `, "background: var(--bg-color); color: var(--branding-color); font-weight: bold; border: 1px solid var(--branding-color); padding: 4px;");
 
 /* export variables that spark.js will use */
 export let databaseCache = {};
@@ -4316,18 +4316,12 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
     const isPayOwnerEnabled = realmConfig.show_pay_owner !== false;
 
     // 2. VISIBILITY ELIGIBILITY LOGIC
-    // Owner sees everything unless restricted by Master Platform Flags.
-    // Visitors only see icons if enabled in Realm Config.
     const showViews = isOwner || isViewsEnabled;
     const showLikes = isOwner || isLikesEnabled;
     const showFeedback = isOwner || isFeedbackEnabled;
     const showShares = isOwner || isSharesEnabled;
 
-    // Monetization Visibility:
-    // If masterPayOwnerOn is active, visitors get the interactive Pay Button (if enabled in realm config).
-    // Owner sees the Pay Jar button (disabled/read-only mode) so there is NO duplicate stat icon.
     const showPayButton = masterPayOwnerOn && (isOwner || isPayOwnerEnabled);
-    // Passive stat display ONLY renders if masterMonetizationOn is true AND Pay Button is OFF.
     const showMonetizationStat = masterMonetizationOn && !showPayButton && (isOwner || isMonetizationEnabled);
 
     // 3. PRIVACY & STATS RESOLUTION
@@ -4337,28 +4331,42 @@ export function renderSparkInteractionGroup(spark, realmId, currentId, visitorUi
     const likeCount = spark.stats?.likes?.count || 0;
     const feedbackCount = spark.stats?.feedback?.count || 0;
     const shareCount = spark.stats?.reshares?.count || 0;
-    const cloneCount = spark.stats?.clones?.count || spark.stats?.saves?.count || 0;
+    const cloneCount = spark.stats?.forges?.count || spark.stats?.clones?.count || spark.stats?.saves?.count || 0;
     const transactionAmt = spark.stats?.transactions?.total_amount || 0;
 
-    // Visitor Interaction States
-    const hasLiked = visitorUid && spark.stats?.likes?.users?.[visitorUid];
-    const hasFeedback = visitorUid && spark.stats?.feedback?.users?.[visitorUid];
-    const hasShared = visitorUid && spark.stats?.reshares?.users?.[visitorUid];
-    const hasPaid = visitorUid && (
-        spark.stats?.transactions?.users?.[visitorUid] || 
-        spark.stats?.transactions?.ledger?.[visitorUid]
-    );
-    const hasCloned = visitorUid && (
-        spark.stats?.clones?.users?.[visitorUid] || 
-        spark.stats?.saves?.users?.[visitorUid]
+    // Visitor Interaction Checks (Matching Exact DB Node Schema)
+    const hasLiked = Boolean(visitorUid && spark.stats?.likes?.users?.[visitorUid]);
+    
+    // Feedback Node Check: Check entries map for matching visitor UID
+    const feedbackEntries = spark.stats?.feedback?.entries || {};
+    const hasFeedback = Boolean(
+        visitorUid && Object.values(feedbackEntries).some(entry => entry && entry.uid === visitorUid)
     );
 
-    // Color System Definitions
+    const hasShared = Boolean(visitorUid && spark.stats?.reshares?.users?.[visitorUid]);
+
+    const hasPaid = Boolean(
+        visitorUid && (
+            spark.stats?.transactions?.users?.[visitorUid] || 
+            spark.stats?.transactions?.ledger?.[visitorUid]
+        )
+    );
+
+    // Forges Node Check: Check users map for visitor UID key
+    const hasCloned = Boolean(
+        visitorUid && (
+            spark.stats?.forges?.users?.[visitorUid] || 
+            spark.stats?.clones?.users?.[visitorUid] || 
+            spark.stats?.saves?.users?.[visitorUid]
+        )
+    );
+
+    // Color Palette Definitions
     const listColor = "var(--list-color, #ffffff)";
     const neonColor = "var(--glow-color, #00f2ff)";
     const disabledColor = "var(--fg-color-mid, #888888)";
 
-    // Color & Glow Assignment for Visitor Interactions vs Owner Disabled States
+    // Color & Glow Assignment
     const viewIconColor = (isOwner && !isViewsEnabled) ? disabledColor : listColor;
 
     const likeIconColor = (isOwner && !isLikesEnabled) ? disabledColor : (hasLiked ? neonColor : listColor);
