@@ -774,9 +774,6 @@ function renderHomeCreationTemplates(templatesList) {
     const el = document.getElementById('templates-grid');
     if (!el || !Array.isArray(templatesList)) return;
 
-    // Enforce 4 cards per row grid layout
-    el.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
-
     el.innerHTML = templatesList.map(t => {
         const realmId = t.realm_id || 'realm-default';
         const title = t.realm_title || 'Circuit Template';
@@ -786,28 +783,26 @@ function renderHomeCreationTemplates(templatesList) {
         const accentColor = t.realm_accent_color || 'var(--neon-color)';
 
         return `
-            <div class="glass-card metallic-bezel relative overflow-hidden group p-6 flex flex-col items-center justify-between text-center cursor-pointer rounded-[1.5rem] border border-white/10 hover:border-white/40 hover:scale-[1.03] transition-all duration-500 min-h-[220px]"
+            <div class="glass-card metallic-bezel template-card group"
                  style="--card-accent: ${accentColor};"
-                 onclick="window.location.href='https://yertal.in/arcade/index.html?realm=${realmId}'"
-                 onmouseenter="this.style.borderColor=var(--card-accent); this.style.boxShadow='0 10px 30px -10px ' + var(--card-accent);"
-                 onmouseleave="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='none';">
+                 onclick="window.location.href='https://yertal.in/arcade/index.html?realm=${realmId}'">
                 
-                ${bgImage ? `<div class="absolute inset-0 bg-cover bg-center opacity-25 group-hover:opacity-50 group-hover:scale-110 transition-all duration-700 ease-out" style="background-image: url('${bgImage}');"></div>` : ''}
+                ${bgImage ? `<div class="template-card-bg" style="background-image: url('${bgImage}');"></div>` : ''}
                 
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40 z-0"></div>
                 
                 <div class="relative z-10 flex flex-col items-center w-full my-auto">
-                    <div class="w-14 h-14 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center mb-4 group-hover:border-[var(--card-accent)] group-hover:scale-110 transition-all duration-500 shadow-lg">
-                        <i class="${iconClass} text-2xl transition-transform duration-500 group-hover:rotate-6" style="color: var(--card-accent); filter: drop-shadow(0 0 12px var(--card-accent));"></i>
+                    <div class="template-icon-wrapper">
+                        <i class="${iconClass} template-icon"></i>
                     </div>
                     
-                    <h4 class="text-sm uppercase font-black tracking-wider text-white mb-2 group-hover:text-cyan-300 transition-colors">${title}</h4>
+                    <h4 class="text-xs uppercase font-black tracking-wider text-white mb-1 group-hover:text-cyan-300 transition-colors">${title}</h4>
                     
-                    ${subtitle ? `<p class="text-[11px] text-slate-300 font-mono leading-relaxed line-clamp-2 px-2 group-hover:text-white transition-colors">${subtitle}</p>` : ''}
+                    ${subtitle ? `<p class="text-[10px] text-slate-300 font-mono leading-relaxed line-clamp-2 px-1 group-hover:text-white transition-colors">${subtitle}</p>` : ''}
                 </div>
 
-                <div class="relative z-10 pt-3 border-t border-white/5 w-full flex justify-center items-center">
-                    <span class="text-[10px] font-mono font-bold tracking-[0.2em] uppercase opacity-70 group-hover:opacity-100 transition-all duration-300 flex items-center gap-1" style="color: var(--card-accent);">
+                <div class="relative z-10 pt-2 border-t border-white/10 w-full flex justify-center items-center">
+                    <span class="text-[9px] font-mono font-bold tracking-[0.2em] uppercase opacity-80 group-hover:opacity-100 transition-all duration-300 flex items-center gap-1" style="color: var(--card-accent);">
                         LAUNCH CIRCUIT <span class="group-hover:translate-x-1 transition-transform">→</span>
                     </span>
                 </div>
