@@ -773,6 +773,12 @@ function renderHomeCircuits(templatesList) {
     const el = document.getElementById('templates-grid');
     if (!el || !Array.isArray(templatesList)) return;
 
+    // Enforce 4-column grid layout via inline style to bypass CSS wild-card resets
+    el.style.display = "grid";
+    el.style.gridTemplateColumns = "repeat(4, minmax(0, 1fr))";
+    el.style.gap = "1.5rem";
+    el.style.width = "100%";
+
     el.innerHTML = templatesList.map(t => {
         const realmId = t.realm_id || 'realm-default';
         const title = t.realm_title || 'Circuit Template';
@@ -788,7 +794,7 @@ function renderHomeCircuits(templatesList) {
                  onmouseenter="this.style.borderColor=var(--card-accent); this.style.boxShadow='0 12px 35px -8px ' + var(--card-accent);"
                  onmouseleave="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='none';">
                 
-                <!-- Background Image Layer with High Vibrancy Zoom -->
+                <!-- Background Image Layer with Vibrant Zoom -->
                 ${bgImage ? `<div class="absolute inset-0 bg-cover bg-center opacity-45 group-hover:opacity-80 group-hover:scale-115 transition-all duration-700 ease-out" style="background-image: url('${bgImage}');"></div>` : ''}
                 
                 <!-- Ambient Dark Gradient Layer -->
