@@ -3,104 +3,106 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 16:36:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:11:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
 
+/* Tag/Function: initRealmsHome */
 async function initRealmsHome() {
     try {
         console.log("%c [SYSTEM INITIALIZATION] Fetching architecture paths...", "color: #00f2ff; font-weight: bold;");
         
-        // Fetch 'realms' alongside existing paths
-        const paths = ['settings/ui-settings', 'realmshome', 'auth_ui', 'realms'];[cite: 1]
-        const results = await Promise.all(paths.map(p => fetch(`${firebaseConfig.databaseURL}/${p}.json`).then(r => r.json())));[cite: 1]
-        const data = {};[cite: 1]
-        paths.forEach((p, i) => { data[p] = results[i]; });[cite: 1]
+        // Fetch paths without extra DB requests
+        const paths = ['settings/ui-settings', 'realmshome', 'auth_ui'];
+        const results = await Promise.all(paths.map(p => fetch(`${firebaseConfig.databaseURL}/${p}.json`).then(r => r.json())));
+        const data = {};
+        paths.forEach((p, i) => { data[p] = results[i]; });
 
-        console.log("[SYSTEM DATA INITIALIZED] Payload received:", data);[cite: 1]
+        console.log("[SYSTEM DATA INITIALIZED] Payload received:", data);
 
-        if (data && data['settings/ui-settings'] && data['realmshome']) {[cite: 1]
-            currentUi = data['settings/ui-settings'];[cite: 1]
-            currentAuth = data.auth_ui;[cite: 1]
-            const realms = data['realmshome'];[cite: 1]
-            const allRealms = data['realms'] || {};
+        if (data && data['settings/ui-settings'] && data['realmshome']) {
+            currentUi = data['settings/ui-settings'];
+            currentAuth = data.auth_ui;
+            const realms = data['realmshome'];
 
-            console.log("[CONFIG SYNC] UI settings parsed successfully:", currentUi);[cite: 1]
-            console.log("[CONFIG SYNC] Realms home structural payload mapping:", realms);[cite: 1]
+            console.log("[CONFIG SYNC] UI settings parsed successfully:", currentUi);
+            console.log("[CONFIG SYNC] Realms home structural payload mapping:", realms);
 
-            applyGlobalStyles({ 'ui-settings': currentUi });[cite: 1]
+            applyGlobalStyles({ 'ui-settings': currentUi });
 
+            // Dynamic Router for the System Sections
             const sectionRouter = {
                 navigation: () => { 
-                    console.log("-> Executing section: navigation");[cite: 1]
+                    console.log("-> Executing section: navigation");
                     renderBranding(realms.navigation.branding); 
                     renderNavbar(realms.navigation.menu_items); 
                 },
                 hero: async () => { 
-                    console.log("-> Executing section: hero");[cite: 1]
+                    console.log("-> Executing section: hero");
                     await renderHero(user, realms.hero); 
                 },
                 featured_realms: () => { 
-                    console.log("-> Executing section: featured_realms");[cite: 1]
+                    console.log("-> Executing section: featured_realms");
                     renderFeaturedRealms(realms.featured_realms); 
                 },
                 how_realms_work: () => { 
-                    console.log("-> Executing section: how_realms_work");[cite: 1]
+                    console.log("-> Executing section: how_realms_work");
                     renderHowRealmsWork(realms.how_realms_work); 
                 },
                 trending_sparks: () => { 
-                    console.log("-> Executing section: trending_sparks");[cite: 1]
+                    console.log("-> Executing section: trending_sparks");
                     renderTrendingSparks(realms.trending_sparks); 
                 },
                 creation_templates: () => { 
-                    console.log("-> Executing section: creation_templates");[cite: 1]
-                    renderHomeCreationTemplates(realms.creation_templates, allRealms); 
+                    console.log("-> Executing section: creation_templates");
+                    renderHomeCreationTemplates(realms.creation_templates); 
                 },
                 learn_to_build: () => { 
-                    console.log("-> Executing section: learn_to_build");[cite: 1]
+                    console.log("-> Executing section: learn_to_build");
                     renderLearnToBuild(realms.learn_to_build); 
                 },
                 future_community: () => { 
-                    console.log("-> Executing section: future_community");[cite: 1]
+                    console.log("-> Executing section: future_community");
                     renderCommunity(realms.future_community); 
                 },
                 final_cta: () => { 
-                    console.log("-> Executing section: final_cta");[cite: 1]
+                    console.log("-> Executing section: final_cta");
                     renderFinalCTA(realms.final_cta); 
                 },
                 footer: () => { 
-                    console.log("-> Executing section: footer");[cite: 1]
+                    console.log("-> Executing section: footer");
                     renderFooter(realms.footer); 
                 }
             };
 
-            Object.keys(realms).forEach(key => {[cite: 1]
-                if (sectionRouter[key]) {[cite: 1]
-                    sectionRouter[key]();[cite: 1]
+            Object.keys(realms).forEach(key => {
+                if (sectionRouter[key]) {
+                    sectionRouter[key]();
                 } else {
-                    console.warn(`[ROUTER WARNING] Unknown key matched in payload path: "${key}"`);[cite: 1]
+                    console.warn(`[ROUTER WARNING] Unknown key matched in payload path: "${key}"`);
                 }
             });
 
-            initBackgroundEffects();[cite: 1]
+            // Animated cosmic particles engine
+            initBackgroundEffects();
             
-            console.log("[AUTH SYNC] Binding secure gateway profiles...");[cite: 1]
-            watchAuthState((u) => {[cite: 1]
-                user = u;[cite: 1]
-                renderAuthStatus(user, currentAuth);[cite: 1]
-                if (realms && realms.hero) {[cite: 1]
-                    renderHero(user, realms.hero);[cite: 1]
+            console.log("[AUTH SYNC] Binding secure gateway profiles...");
+            watchAuthState((u) => {
+                user = u;
+                renderAuthStatus(user, currentAuth);
+                if (realms && realms.hero) {
+                    renderHero(user, realms.hero);
                 }
             });
             
-            document.body.style.opacity = '1';[cite: 1]
-            console.log("%c [SYSTEM ONLINE] View execution stream complete.", "color: #4ade80; font-weight: bold;");[cite: 1]
+            document.body.style.opacity = '1';
+            console.log("%c [SYSTEM ONLINE] View execution stream complete.", "color: #4ade80; font-weight: bold;");
         } else {
-            console.error("[CRITICAL SHUTDOWN] Validation conditions failed. Missing 'settings/ui-settings' or 'realmshome' entries.");[cite: 1]
+            console.error("[CRITICAL SHUTDOWN] Validation conditions failed. Missing 'settings/ui-settings' or 'realmshome' entries.");
         }
     } catch (error) {
-        console.error("System Error: Realms Architecture Offline.", error);[cite: 1]
+        console.error("System Error: Realms Architecture Offline.", error);
     }
 }
 
@@ -759,7 +761,8 @@ async function renderTrendingSparks(headerData) {
     }
 }
 
-function renderHomeCreationTemplates(templateObjects, allRealms) {
+/* Tag/Function: renderHomeCreationTemplates */
+function renderHomeCreationTemplates(templatesList) {
     const headerEl = document.getElementById('templates-header');
     if (headerEl) {
         headerEl.innerHTML = `
@@ -769,30 +772,44 @@ function renderHomeCreationTemplates(templateObjects, allRealms) {
     }
     
     const el = document.getElementById('templates-grid');
-    if (!el || !Array.isArray(templateObjects)) return;
+    if (!el || !Array.isArray(templatesList)) return;
 
-    // Map through array of objects extracting realm_id property
-    el.innerHTML = templateObjects.map(item => {
-        const realmId = item && item.realm_id ? item.realm_id : (typeof item === 'string' ? item : '');
-        const realmData = allRealms[realmId] || {};
-        
-        const title = realmData.realm_title || realmId.replace('realm-', '').replace('-', ' ');
-        const subtitle = realmData.realm_subtitle || '';
-        const bgImage = realmData.realm_image || '';
-        const iconClass = realmData.realm_icon || 'fas fa-microchip';
+    // Enforce 4 cards per row grid layout
+    el.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6";
+
+    el.innerHTML = templatesList.map(t => {
+        const realmId = t.realm_id || 'realm-default';
+        const title = t.realm_title || 'Circuit Template';
+        const iconClass = t.realm_icon || 'fas fa-microchip';
+        const bgImage = t.realm_image || '';
+        const subtitle = t.realm_subtitle || '';
+        const accentColor = t.realm_accent_color || 'var(--neon-color)';
 
         return `
-            <div class="glass-card metallic-bezel relative overflow-hidden group p-6 flex flex-col items-center justify-center text-center cursor-pointer rounded-[1.5rem] hover:scale-[1.03] transition-all duration-300 min-h-[160px]"
-                 onclick="window.location.href='https://yertal.in/arcade/index.html?realm=${realmId}'">
+            <div class="glass-card metallic-bezel relative overflow-hidden group p-6 flex flex-col items-center justify-between text-center cursor-pointer rounded-[1.5rem] border border-white/10 hover:border-white/40 hover:scale-[1.03] transition-all duration-500 min-h-[220px]"
+                 style="--card-accent: ${accentColor};"
+                 onclick="window.location.href='https://yertal.in/arcade/index.html?realm=${realmId}'"
+                 onmouseenter="this.style.borderColor=var(--card-accent); this.style.boxShadow='0 10px 30px -10px ' + var(--card-accent);"
+                 onmouseleave="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='none';">
                 
-                ${bgImage ? `<div class="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-40 transition-opacity duration-500" style="background-image: url('${bgImage}');"></div>` : ''}
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent z-0"></div>
+                ${bgImage ? `<div class="absolute inset-0 bg-cover bg-center opacity-25 group-hover:opacity-50 group-hover:scale-110 transition-all duration-700 ease-out" style="background-image: url('${bgImage}');"></div>` : ''}
                 
-                <div class="relative z-10 flex flex-col items-center">
-                    <i class="${iconClass} text-3xl mb-3 transition-transform duration-300 group-hover:scale-110" style="color: var(--neon-color); filter: drop-shadow(0 0 10px var(--neon-color));"></i>
-                    <span class="text-xs uppercase font-extrabold tracking-widest text-white mb-1">${title}</span>
-                    ${subtitle ? `<span class="text-[10px] text-slate-400 font-mono mb-2 line-clamp-1">${subtitle}</span>` : ''}
-                    <span class="text-[9px] font-mono tracking-wider text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">LAUNCH CIRCUIT →</span>
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40 z-0"></div>
+                
+                <div class="relative z-10 flex flex-col items-center w-full my-auto">
+                    <div class="w-14 h-14 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center mb-4 group-hover:border-[var(--card-accent)] group-hover:scale-110 transition-all duration-500 shadow-lg">
+                        <i class="${iconClass} text-2xl transition-transform duration-500 group-hover:rotate-6" style="color: var(--card-accent); filter: drop-shadow(0 0 12px var(--card-accent));"></i>
+                    </div>
+                    
+                    <h4 class="text-sm uppercase font-black tracking-wider text-white mb-2 group-hover:text-cyan-300 transition-colors">${title}</h4>
+                    
+                    ${subtitle ? `<p class="text-[11px] text-slate-300 font-mono leading-relaxed line-clamp-2 px-2 group-hover:text-white transition-colors">${subtitle}</p>` : ''}
+                </div>
+
+                <div class="relative z-10 pt-3 border-t border-white/5 w-full flex justify-center items-center">
+                    <span class="text-[10px] font-mono font-bold tracking-[0.2em] uppercase opacity-70 group-hover:opacity-100 transition-all duration-300 flex items-center gap-1" style="color: var(--card-accent);">
+                        LAUNCH CIRCUIT <span class="group-hover:translate-x-1 transition-transform">→</span>
+                    </span>
                 </div>
             </div>
         `;
