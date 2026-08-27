@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 17:42:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 18:08:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -789,9 +789,8 @@ function renderHomeCircuits(templatesList) {
 
         return `
             <div class="glass-card action-card metallic-bezel relative overflow-hidden group p-6 flex flex-col items-center justify-between text-center cursor-pointer rounded-[1.5rem] border border-white/10 transition-all duration-500 min-h-[230px]"
-                 style="--card-accent: ${accentColor};"
                  onclick="window.location.href='https://yertal.in/arcade/index.html?realm=${realmId}'"
-                 onmouseenter="this.style.borderColor=var(--card-accent); this.style.boxShadow='0 12px 35px -8px ' + var(--card-accent);"
+                 onmouseenter="this.style.borderColor='${accentColor}'; this.style.boxShadow='0 12px 35px -8px ${accentColor}';"
                  onmouseleave="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='none';">
                 
                 <!-- Background Image Layer with Vibrant Zoom -->
@@ -802,14 +801,15 @@ function renderHomeCircuits(templatesList) {
                 
                 <!-- Radiant Glow Aura Behind Icon -->
                 <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full opacity-0 group-hover:opacity-40 transition-opacity duration-500 blur-2xl pointer-events-none z-0" 
-                     style="background: var(--card-accent);"></div>
+                     style="background: ${accentColor};"></div>
 
                 <!-- Main Content Layer -->
                 <div class="relative z-10 flex flex-col items-center w-full my-auto">
                     <!-- Icon Container -->
-                    <div class="w-14 h-14 rounded-2xl bg-black/70 border border-white/15 flex items-center justify-center mb-3 group-hover:border-[var(--card-accent)] group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-500 shadow-2xl backdrop-blur-md">
+                    <div class="w-14 h-14 rounded-2xl bg-black/70 border border-white/15 flex items-center justify-center mb-3 transition-all duration-500 shadow-2xl backdrop-blur-md"
+                         style="group-hover: border-color: ${accentColor};">
                         <i class="${iconClass} text-2xl transition-transform duration-500 group-hover:rotate-12" 
-                           style="color: var(--card-accent); filter: drop-shadow(0 0 14px var(--card-accent));"></i>
+                           style="color: ${accentColor}; filter: drop-shadow(0 0 14px ${accentColor});"></i>
                     </div>
                     
                     <h4 class="text-xs uppercase font-black tracking-widest text-white mb-2 group-hover:text-white transition-colors drop-shadow-md">${title}</h4>
@@ -819,7 +819,7 @@ function renderHomeCircuits(templatesList) {
 
                 <!-- CTA Footer Line -->
                 <div class="relative z-10 pt-3 border-t border-white/10 w-full flex justify-center items-center">
-                    <span class="text-[9px] font-mono font-black tracking-[0.2em] uppercase opacity-85 group-hover:opacity-100 transition-all duration-300 flex items-center gap-1" style="color: var(--card-accent); filter: drop-shadow(0 0 8px var(--card-accent));">
+                    <span class="text-[9px] font-mono font-black tracking-[0.2em] uppercase opacity-85 group-hover:opacity-100 transition-all duration-300 flex items-center gap-1" style="color: ${accentColor}; filter: drop-shadow(0 0 8px ${accentColor});">
                         LAUNCH CIRCUIT <span class="group-hover:translate-x-1.5 transition-transform duration-300">→</span>
                     </span>
                 </div>
