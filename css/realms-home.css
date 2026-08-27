@@ -542,7 +542,97 @@ html.realms-page-root .mx-auto {
     border-color: transparent ;
     box-shadow: none ;
 }
+/* --- ZERO COLD START TEMPLATE GRID --- */
+#templates-grid {
+    background: transparent;
+    background-color: transparent;
+    border: none;
+    border-color: transparent;
+    box-shadow: none;
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+}
 
+@media (min-width: 640px) {
+    #templates-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    #templates-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.template-card {
+    position: relative;
+    overflow: hidden;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 220px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.template-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--card-accent, var(--neon-color));
+    box-shadow: 0 12px 30px -10px var(--card-accent, var(--neon-color));
+}
+
+.template-card-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.25;
+    transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.template-card:hover .template-card-bg {
+    opacity: 0.5;
+    transform: scale(1.1);
+}
+
+.template-icon-wrapper {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    transition: all 0.5s ease;
+}
+
+.template-card:hover .template-icon-wrapper {
+    border-color: var(--card-accent, var(--neon-color));
+    transform: scale(1.1);
+}
+
+.template-icon {
+    font-size: 1.5rem;
+    color: var(--card-accent, var(--neon-color));
+    filter: drop-shadow(0 0 10px var(--card-accent, var(--neon-color)));
+    transition: transform 0.5s ease;
+}
+
+.template-card:hover .template-icon {
+    transform: rotate(6deg);
+}
 /* --- SPECIFIC HERO BLOCK OVERRIDE --- */
 html.realms-page-root [class*="realms-hero-container"] {
     background: transparent ;
