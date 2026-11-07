@@ -632,7 +632,11 @@ function prevAssembleSpark(spark) {
 
 watchAuthState(async (user) => {
     console.log("%c[AUTH] State Changed", "color: #00ff00;");
-    if (!user) return;
+    if (!user) {
+     alert("Please log in to access this page.");
+        console.warn("Please log in to access sparks.");
+        return;
+    }
 
     userId = user.uid; 
     // Load the spark for the realm, current, spark defined in the URL
