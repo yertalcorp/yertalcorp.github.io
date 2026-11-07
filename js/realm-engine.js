@@ -1462,6 +1462,7 @@ watchAuthState(async (currentUser) => {
     // 1. NOT LOGGED IN: Redirect to home login page
     if (!currentUser) {
         console.warn("[AUTH]: No currentUser detected. Redirecting to home...");
+        alert("Please log in to access this page.");
         window.location.href = "https://yertal.in/index.html";
         return;
     }
