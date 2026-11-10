@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 15:27:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 15:40:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -842,7 +842,7 @@ function renderLearnToBuild(data) {
     const el = document.getElementById('action-grid');
     if (!el || !data.modules) return;
 
-    // Metadata mapping with customized descriptions, CTAs, and exact URLs
+    // Explicit mapping for metadata, exact URLs, descriptions, and CTAs
     const moduleMeta = {
         'books': {
             badge: 'PUBLICATIONS',
@@ -879,7 +879,7 @@ function renderLearnToBuild(data) {
         const meta = moduleMeta[key];
         const isExternal = meta.type === 'external';
 
-        // Gated auth check: External opens new tab, Tutorial checks user session
+        // Gated logic: External links open new tab. Tutorial checks auth state.
         const clickAction = isExternal 
             ? `window.open('${meta.url}', '_blank')`
             : `if (typeof user !== 'undefined' && user) { window.location.href='${meta.url}'; } else { window.openAuthHUD('personal'); }`;
@@ -896,24 +896,24 @@ function renderLearnToBuild(data) {
                 <div>
                     <!-- Top Header: Icon Container & Category Pill Badge -->
                     <div class="flex items-center justify-between mb-5">
-                        <div class="w-11 h-11 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg"
+                        <div class="w-12 h-12 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-lg"
                              style="border-color: rgba(0, 242, 255, 0.2);">
-                            <i class="${m.icon} text-xl" style="color: var(--neon-color); filter: drop-shadow(0 0 8px var(--neon-color));"></i>
+                            <i class="${m.icon} text-xl transition-transform duration-300 group-hover:rotate-12" style="color: var(--neon-color); filter: drop-shadow(0 0 8px var(--neon-color));"></i>
                         </div>
-                        <span class="text-[9px] font-bold tracking-widest px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 group-hover:text-white group-hover:border-[var(--neon-color)] transition-colors"
+                        <span class="text-[10px] font-bold tracking-widest px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 group-hover:text-white group-hover:border-[var(--neon-color)] transition-colors"
                               style="font-family: var(--nav-font), sans-serif;">
                             ${meta.badge}
                         </span>
                     </div>
 
-                    <!-- Card Title (Matching Header Font & Increased Size) -->
+                    <!-- Card Title -->
                     <h3 class="uppercase font-extrabold tracking-tight text-white text-xl mb-3 group-hover:text-[var(--neon-color)] transition-colors"
                         style="font-family: var(--nav-font), sans-serif;">
                         ${m.title}
                     </h3>
                     
-                    <!-- Card Description (Brightened Slate & Larger Line Height) -->
-                    <p class="text-sm text-slate-200 leading-relaxed font-normal mb-6"
+                    <!-- Card Description (Enlarged to text-base, high-contrast text-white, font-bold) -->
+                    <p class="text-base text-white font-bold leading-relaxed mb-6"
                        style="font-family: var(--nav-font), sans-serif;">
                         ${meta.desc}
                     </p>
