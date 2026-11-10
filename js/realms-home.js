@@ -828,23 +828,92 @@ function renderHomeCircuits(templatesList) {
     }).join('');
 }
 
+/* Tag/Function: renderLearnToBuild */
 function renderLearnToBuild(data) {
     const headerEl = document.getElementById('learn-header');
     if (headerEl) {
         headerEl.innerHTML = `
-            <h3 class="text-xs uppercase tracking-[0.5em] text-slate-500 mb-2">// INTELLECTUAL CURRICULUM</h3>
-            <h2 class="text-2xl font-bold uppercase tracking-tight text-white">${data.section_title || 'Learn to Build Realms'}</h2>
+            <h2 class="text-2xl font-bold uppercase tracking-tight text-white">${data.section_title || 'KNOWLEDGE HUB'}</h2>
         `;
     }
     const el = document.getElementById('action-grid');
     if (!el || !data.modules) return;
-    el.innerHTML = data.modules.map(m => `
-        <div class="glass-card action-card p-8 flex flex-col h-full group cursor-pointer relative overflow-hidden" onclick="window.open('${m.link}', '_blank')">
-            <div class="flex items-center justify-center"><i class="${m.icon} text-3xl" style="color: var(--neon-color);"></i></div>
-            <h3 class="mt-8 mb-1 uppercase tracking-tighter text-white text-xl">${m.title}</h3>
-            <span class="text-[9px] font-bold uppercase tracking-widest mt-4" style="color: var(--accent-color);">${data.cta_label || 'LEARN HOW REALMS ARE BUILT'} →</span>
-        </div>
-    `).join('');
+
+    // Helper map for distinct module metadata, badges, descriptions & CTAs
+    const moduleMeta = {
+        'books': {
+            badge: 'PUBLICATIONS',
+            desc: 'Authored books on system architecture, algorithms, and tech leadership.',
+            cta: 'EXPLORE BOOKS',
+            external: true
+        },
+        'curriculum': {
+            badge: 'LEARNING PATHS',
+            desc: 'Structured developer roadmaps and educational resources.',
+            cta: 'VIEW CURRICULUM',
+            external: true
+        },
+        'blog': {
+            badge: 'TECH DEEP DIVES',
+            desc: 'Articles, architectural reflections, and platform engineering notes.',
+            cta: 'READ ARTICLES',
+            external: true
+        },
+        'tutorials': {
+            badge: 'INTERACTIVE GUIDE',
+            desc: 'Step-by-step documentation and live builder tutorials for creating realms.',
+            cta: 'START TUTORIAL',
+            external: false
+        }
+    };
+
+    el.innerHTML = data.modules.map(m => {
+        // Match key based on title/link keywords or default fallback
+        const key = Object.keys(moduleMeta).find(k => (m.title || '').toLowerCase().includes(k)) || 'books';
+        const meta = moduleMeta[key];
+        const isExternal = m.link && m.link.startsWith('http');
+        const clickHandler = isExternal ? `window.open('${m.link}', '_blank')` : `window.location.href='${m.link}'`;
+
+        return `
+            <div class="glass-card action-card metallic-bezel p-6 flex flex-col justify-between h-full group cursor-pointer relative overflow-hidden rounded-[1.5rem] border border-white/10 transition-all duration-500 hover:-translate-y-1"
+                 onclick="${clickHandler}"
+                 onmouseenter="this.style.borderColor='var(--neon-color)'; this.style.boxShadow='0 10px 30px -5px rgba(0, 242, 255, 0.25)';"
+                 onmouseleave="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='none';">
+                
+                <!-- Ambient Subtle Glow Backdrop -->
+                <div class="absolute -top-10 -right-10 w-24 h-24 rounded-full bg-[var(--neon-color)] opacity-0 group-hover:opacity-15 blur-xl transition-opacity duration-500 pointer-events-none"></div>
+
+                <div>
+                    <!-- Top Header: FA Icon Badge & Category Pill -->
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg"
+                             style="border-color: rgba(0, 242, 255, 0.2);">
+                            <i class="${m.icon} text-2xl" style="color: var(--neon-color); filter: drop-shadow(0 0 8px var(--neon-color));"></i>
+                        </div>
+                        <span class="text-[9px] font-mono font-bold tracking-widest px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-slate-400 group-hover:text-white group-hover:border-[var(--neon-color)] transition-colors">
+                            ${meta.badge}
+                        </span>
+                    </div>
+
+                    <!-- Module Title & Description -->
+                    <h3 class="uppercase font-black tracking-tight text-white text-lg mb-2 group-hover:text-[var(--neon-color)] transition-colors">
+                        ${m.title}
+                    </h3>
+                    <p class="text-xs text-slate-400 font-mono leading-relaxed line-clamp-3 mb-4">
+                        ${meta.desc}
+                    </p>
+                </div>
+
+                <!-- Footer Call To Action -->
+                <div class="pt-4 border-t border-white/10 flex items-center justify-between">
+                    <span class="text-[10px] font-mono font-bold uppercase tracking-[0.2em] group-hover:translate-x-1 transition-transform duration-300" style="color: var(--neon-color);">
+                        ${meta.cta} ${isExternal ? '↗' : '→'}
+                    </span>
+                    ${isExternal ? '<i class="fas fa-external-link-alt text-[9px] text-slate-500 group-hover:text-slate-300"></i>' : '<i class="fas fa-unlock-alt text-[9px] text-cyan-400"></i>'}
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 function renderCommunity(data) {
