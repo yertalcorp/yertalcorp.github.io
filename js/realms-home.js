@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 18:08:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 15:17:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -839,48 +839,55 @@ function renderLearnToBuild(data) {
     const el = document.getElementById('action-grid');
     if (!el || !data.modules) return;
 
-    // Helper map for distinct module metadata, badges, descriptions & CTAs
+    // Explicit mapping for metadata, exact URLs, descriptions, and CTAs
     const moduleMeta = {
         'books': {
             badge: 'PUBLICATIONS',
-            desc: 'Authored books on system architecture, algorithms, and tech leadership.',
+            desc: 'Authored publications on software engineering, system architecture, and tech leadership.',
             cta: 'EXPLORE BOOKS',
-            external: true
+            url: 'https://yertalcorp.wordpress.com/books/',
+            type: 'external'
         },
         'curriculum': {
-            badge: 'LEARNING PATHS',
-            desc: 'Structured developer roadmaps and educational resources.',
-            cta: 'VIEW CURRICULUM',
-            external: true
+            badge: 'FREE COMMUNITY ACCESS',
+            desc: 'Join our developer community to access free structured curriculum and learning roadmaps.',
+            cta: 'JOIN & VIEW CURRICULUM',
+            url: 'https://yertalcorp.wordpress.com/community/',
+            type: 'external'
         },
         'blog': {
             badge: 'TECH DEEP DIVES',
-            desc: 'Articles, architectural reflections, and platform engineering notes.',
+            desc: 'Engineering articles, architectural reflections, and platform deep dives.',
             cta: 'READ ARTICLES',
-            external: true
+            url: 'https://yertalcorp.wordpress.com/blog/',
+            type: 'external'
         },
         'tutorials': {
-            badge: 'INTERACTIVE GUIDE',
-            desc: 'Step-by-step documentation and live builder tutorials for creating realms.',
+            badge: 'INTERACTIVE BUILDER',
+            desc: 'Step-by-step interactive tutorial on how to construct and deploy your own realms.',
             cta: 'START TUTORIAL',
-            external: false
+            url: './arcade/index.html?mode=circuits', // Target workspace destination when logged in
+            type: 'gated'
         }
     };
 
     el.innerHTML = data.modules.map(m => {
-        // Match key based on title/link keywords or default fallback
         const key = Object.keys(moduleMeta).find(k => (m.title || '').toLowerCase().includes(k)) || 'books';
         const meta = moduleMeta[key];
-        const isExternal = m.link && m.link.startsWith('http');
-        const clickHandler = isExternal ? `window.open('${m.link}', '_blank')` : `window.location.href='${m.link}'`;
+        const isExternal = meta.type === 'external';
+
+        // Gated logic: External links open new tab. Tutorial checks auth state.
+        const clickAction = isExternal 
+            ? `window.open('${meta.url}', '_blank')`
+            : `if (typeof user !== 'undefined' && user) { window.location.href='${meta.url}'; } else { window.openAuthHUD('personal'); }`;
 
         return `
             <div class="glass-card action-card metallic-bezel p-6 flex flex-col justify-between h-full group cursor-pointer relative overflow-hidden rounded-[1.5rem] border border-white/10 transition-all duration-500 hover:-translate-y-1"
-                 onclick="${clickHandler}"
+                 onclick="${clickAction}"
                  onmouseenter="this.style.borderColor='var(--neon-color)'; this.style.boxShadow='0 10px 30px -5px rgba(0, 242, 255, 0.25)';"
                  onmouseleave="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='none';">
                 
-                <!-- Ambient Subtle Glow Backdrop -->
+                <!-- Ambient Subtle Neon Glow -->
                 <div class="absolute -top-10 -right-10 w-24 h-24 rounded-full bg-[var(--neon-color)] opacity-0 group-hover:opacity-15 blur-xl transition-opacity duration-500 pointer-events-none"></div>
 
                 <div>
@@ -895,7 +902,7 @@ function renderLearnToBuild(data) {
                         </span>
                     </div>
 
-                    <!-- Module Title & Description -->
+                    <!-- Title & Description -->
                     <h3 class="uppercase font-black tracking-tight text-white text-lg mb-2 group-hover:text-[var(--neon-color)] transition-colors">
                         ${m.title}
                     </h3>
@@ -909,7 +916,7 @@ function renderLearnToBuild(data) {
                     <span class="text-[10px] font-mono font-bold uppercase tracking-[0.2em] group-hover:translate-x-1 transition-transform duration-300" style="color: var(--neon-color);">
                         ${meta.cta} ${isExternal ? '↗' : '→'}
                     </span>
-                    ${isExternal ? '<i class="fas fa-external-link-alt text-[9px] text-slate-500 group-hover:text-slate-300"></i>' : '<i class="fas fa-unlock-alt text-[9px] text-cyan-400"></i>'}
+                    ${isExternal ? '<i class="fas fa-external-link-alt text-[9px] text-slate-500 group-hover:text-slate-300"></i>' : '<i class="fas fa-lock text-[9px] text-cyan-400"></i>'}
                 </div>
             </div>
         `;
