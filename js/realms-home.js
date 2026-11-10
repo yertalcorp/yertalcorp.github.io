@@ -3,7 +3,7 @@ import { firebaseConfig, ref, set, get, push, runTransaction, auth, db, update, 
 import { loginWithProvider, logout, watchAuthState } from '/config/auth.js';
 
 // Build Check: Manually update the time string below when pushing new code
-console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 15:17:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
+console.log(`%c YERTAL REALMS-FX LOADED | ${new Date().toLocaleDateString()} @ 15:27:00 `, "background: #000; color: #00f2ff; font-weight: bold; border: 1px solid #00f2ff; padding: 4px;");
 
 // 1. ADD these declarations at the very top of the file
 let currentItems, currentAuth, currentUi, user, heroData;
@@ -833,13 +833,16 @@ function renderLearnToBuild(data) {
     const headerEl = document.getElementById('learn-header');
     if (headerEl) {
         headerEl.innerHTML = `
-            <h2 class="text-2xl font-bold uppercase tracking-tight text-white">${data.section_title || 'KNOWLEDGE HUB'}</h2>
+            <h2 class="text-2xl lg:text-3xl font-black uppercase tracking-tight text-white mb-2"
+                style="font-family: var(--nav-font), sans-serif;">
+                ${data.section_title || 'KNOWLEDGE HUB'}
+            </h2>
         `;
     }
     const el = document.getElementById('action-grid');
     if (!el || !data.modules) return;
 
-    // Explicit mapping for metadata, exact URLs, descriptions, and CTAs
+    // Metadata mapping with customized descriptions, CTAs, and exact URLs
     const moduleMeta = {
         'books': {
             badge: 'PUBLICATIONS',
@@ -866,7 +869,7 @@ function renderLearnToBuild(data) {
             badge: 'INTERACTIVE BUILDER',
             desc: 'Step-by-step interactive tutorial on how to construct and deploy your own realms.',
             cta: 'START TUTORIAL',
-            url: './arcade/index.html?mode=circuits', // Target workspace destination when logged in
+            url: './arcade/index.html?mode=circuits',
             type: 'gated'
         }
     };
@@ -876,7 +879,7 @@ function renderLearnToBuild(data) {
         const meta = moduleMeta[key];
         const isExternal = meta.type === 'external';
 
-        // Gated logic: External links open new tab. Tutorial checks auth state.
+        // Gated auth check: External opens new tab, Tutorial checks user session
         const clickAction = isExternal 
             ? `window.open('${meta.url}', '_blank')`
             : `if (typeof user !== 'undefined' && user) { window.location.href='${meta.url}'; } else { window.openAuthHUD('personal'); }`;
@@ -887,36 +890,45 @@ function renderLearnToBuild(data) {
                  onmouseenter="this.style.borderColor='var(--neon-color)'; this.style.boxShadow='0 10px 30px -5px rgba(0, 242, 255, 0.25)';"
                  onmouseleave="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='none';">
                 
-                <!-- Ambient Subtle Neon Glow -->
+                <!-- Ambient Glow Effect on Hover -->
                 <div class="absolute -top-10 -right-10 w-24 h-24 rounded-full bg-[var(--neon-color)] opacity-0 group-hover:opacity-15 blur-xl transition-opacity duration-500 pointer-events-none"></div>
 
                 <div>
-                    <!-- Top Header: FA Icon Badge & Category Pill -->
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="w-12 h-12 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg"
+                    <!-- Top Header: Icon Container & Category Pill Badge -->
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="w-11 h-11 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg"
                              style="border-color: rgba(0, 242, 255, 0.2);">
-                            <i class="${m.icon} text-2xl" style="color: var(--neon-color); filter: drop-shadow(0 0 8px var(--neon-color));"></i>
+                            <i class="${m.icon} text-xl" style="color: var(--neon-color); filter: drop-shadow(0 0 8px var(--neon-color));"></i>
                         </div>
-                        <span class="text-[9px] font-mono font-bold tracking-widest px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-slate-400 group-hover:text-white group-hover:border-[var(--neon-color)] transition-colors">
+                        <span class="text-[9px] font-bold tracking-widest px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 group-hover:text-white group-hover:border-[var(--neon-color)] transition-colors"
+                              style="font-family: var(--nav-font), sans-serif;">
                             ${meta.badge}
                         </span>
                     </div>
 
-                    <!-- Title & Description -->
-                    <h3 class="uppercase font-black tracking-tight text-white text-lg mb-2 group-hover:text-[var(--neon-color)] transition-colors">
+                    <!-- Card Title (Matching Header Font & Increased Size) -->
+                    <h3 class="uppercase font-extrabold tracking-tight text-white text-xl mb-3 group-hover:text-[var(--neon-color)] transition-colors"
+                        style="font-family: var(--nav-font), sans-serif;">
                         ${m.title}
                     </h3>
-                    <p class="text-xs text-slate-400 font-mono leading-relaxed line-clamp-3 mb-4">
+                    
+                    <!-- Card Description (Brightened Slate & Larger Line Height) -->
+                    <p class="text-sm text-slate-200 leading-relaxed font-normal mb-6"
+                       style="font-family: var(--nav-font), sans-serif;">
                         ${meta.desc}
                     </p>
                 </div>
 
-                <!-- Footer Call To Action -->
-                <div class="pt-4 border-t border-white/10 flex items-center justify-between">
-                    <span class="text-[10px] font-mono font-bold uppercase tracking-[0.2em] group-hover:translate-x-1 transition-transform duration-300" style="color: var(--neon-color);">
+                <!-- Card Footer Action CTA -->
+                <div class="pt-4 border-t border-white/10 flex items-center justify-between mt-auto">
+                    <span class="text-xs font-bold uppercase tracking-[0.2em] group-hover:translate-x-1 transition-transform duration-300 flex items-center gap-1" 
+                          style="font-family: var(--nav-font), sans-serif; color: var(--neon-color);">
                         ${meta.cta} ${isExternal ? '↗' : '→'}
                     </span>
-                    ${isExternal ? '<i class="fas fa-external-link-alt text-[9px] text-slate-500 group-hover:text-slate-300"></i>' : '<i class="fas fa-lock text-[9px] text-cyan-400"></i>'}
+                    ${isExternal 
+                        ? '<i class="fas fa-external-link-alt text-[10px] text-slate-400 group-hover:text-slate-200"></i>' 
+                        : '<i class="fas fa-lock text-[10px] text-cyan-400"></i>'
+                    }
                 </div>
             </div>
         `;
