@@ -28,7 +28,7 @@
       <h1 class="text-2xl font-bold text-slate-900">ABCart</h1>
       <p class="text-xs uppercase tracking-widest text-indigo-600 font-semibold mt-1">Auto Build Cart</p>
       <p class="text-sm text-slate-600 mt-4 leading-relaxed">
-        Voice &amp; text recurring shopping lists across India's top 10 platforms with multi-user approvals, custom schedules, and AI cart orchestration.
+        Voice &amp; text recurring shopping lists across India's top 10 platforms with multi-user approvals, wallet-backed Auto-Buy, and AI cart orchestration.
       </p>
       <button id="btn-google-signin" class="mt-6 w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 px-4 rounded-xl transition shadow-md">
         <svg class="w-5 h-5" viewBox="0 0 24 24">
@@ -62,8 +62,13 @@
           </div>
         </div>
 
-        <!-- TIER & ROLE SIMULATOR CONTROLS (For Testing Gates) -->
+        <!-- WALLET + TIER & ROLE SIMULATOR CONTROLS -->
         <div class="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+          <button id="btn-header-wallet" class="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg text-xs transition">
+            <span class="text-emerald-700 font-medium">Wallet:</span>
+            <span id="header-wallet-balance" class="font-bold text-emerald-900">₹0.00</span>
+          </button>
+
           <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg text-xs">
             <span class="text-slate-500 font-medium hidden sm:inline">Plan:</span>
             <select id="select-tier" class="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer">
@@ -97,6 +102,9 @@
         <button data-tab="lists" class="nav-tab py-3 font-semibold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap">
           Recurring Lists (<span id="count-active-lists">0</span>)
         </button>
+        <button data-tab="wallet" class="nav-tab py-3 font-medium text-slate-500 hover:text-slate-800 border-b-2 border-transparent whitespace-nowrap">
+          Wallet &amp; Ledger
+        </button>
         <button data-tab="approvals" class="nav-tab py-3 font-medium text-slate-500 hover:text-slate-800 border-b-2 border-transparent whitespace-nowrap flex items-center gap-1.5">
           Approval Queue
           <span id="badge-pending-count" class="px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800">0</span>
@@ -104,14 +112,25 @@
         <button data-tab="members" class="nav-tab py-3 font-medium text-slate-500 hover:text-slate-800 border-b-2 border-transparent whitespace-nowrap">
           Group &amp; Roles
         </button>
-        <button data-tab="roadmap" class="nav-tab py-3 font-medium text-slate-400 hover:text-slate-600 border-b-2 border-transparent whitespace-nowrap">
-          Coming in Next Steps (Wallet &bull; Orders &bull; SMS)
-        </button>
       </div>
     </header>
 
     <!-- TOAST / BANNER -->
     <div id="toast-bar" class="hidden fixed bottom-5 right-5 z-50 max-w-sm bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-xl"></div>
+
+    <!-- CART EXECUTION MODAL (AUTO-BUILD / AUTO-BUY RESULT) -->
+    <div id="cart-modal" class="hidden fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+          <div>
+            <span id="modal-mode-badge" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-500 text-white">AUTO-BUILD</span>
+            <h3 id="modal-cart-title" class="text-base font-bold mt-1">AI Cart Result</h3>
+          </div>
+          <button id="btn-close-cart-modal" class="text-slate-300 hover:text-white text-xl font-bold px-2">&times;</button>
+        </div>
+        <div id="modal-cart-body" class="p-6 max-h-[70vh] overflow-y-auto space-y-4 text-xs"></div>
+      </div>
+    </div>
 
     <!-- MAIN CONTENT CONTAINER -->
     <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
@@ -132,13 +151,11 @@
               </span>
             </div>
 
-            <!-- Viewer Lock Notice -->
             <div id="viewer-lock-banner" class="hidden mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
               You are viewing this workspace as a <strong>Viewer</strong>. Switch role to Requester or Approver to create or edit lists.
             </div>
 
             <form id="list-builder-form" class="space-y-4">
-              <!-- List Title & Category -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label class="block text-xs font-semibold text-slate-700 mb-1">List Name *</label>
@@ -171,13 +188,11 @@
 
                 <p id="voice-status" class="text-[11px] text-indigo-700 bg-indigo-50 px-2.5 py-1.5 rounded-lg hidden"></p>
 
-                <!-- Prebuilt Quick-Add Pills -->
                 <div>
                   <span class="text-[11px] font-medium text-slate-500 block mb-1.5">Prebuilt Essentials (1-Tap Add):</span>
                   <div id="prebuilt-pills" class="flex flex-wrap gap-1.5"></div>
                 </div>
 
-                <!-- Manual Custom Item Row -->
                 <div class="flex gap-2">
                   <input id="input-item-name" type="text" placeholder="Type product (e.g., Toor Dal)"
                     class="flex-1 text-xs px-3 py-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
@@ -189,7 +204,6 @@
                   </button>
                 </div>
 
-                <!-- Draft Items List -->
                 <div id="draft-items-container" class="space-y-1.5 max-h-40 overflow-y-auto pt-1">
                   <p class="text-xs text-slate-400 italic">No items added yet. Speak, pick a preset, or type above.</p>
                 </div>
@@ -245,7 +259,6 @@
                   </div>
                 </div>
 
-                <!-- CUSTOM CADENCE GRID -->
                 <div id="custom-schedule-grid" class="hidden space-y-3 pt-2 border-t border-indigo-200/70">
                   <div>
                     <span class="block text-[11px] font-semibold text-slate-700 mb-1">1. Select Weekdays</span>
@@ -278,7 +291,7 @@
           <div class="flex items-center justify-between">
             <div>
               <h2 class="text-base font-bold text-slate-900">Scheduled Recurring Lists</h2>
-              <p class="text-xs text-slate-500">Active lists automatically generate upcoming cart runs on schedule.</p>
+              <p class="text-xs text-slate-500">Click <strong>Run Now</strong> on any list to trigger AI Cart Build or Wallet Auto-Buy immediately.</p>
             </div>
           </div>
 
@@ -290,7 +303,42 @@
         </div>
       </section>
 
-      <!-- TAB 2: APPROVAL QUEUE -->
+      <!-- TAB 2: WALLET & LEDGER -->
+      <section id="tab-wallet" class="hidden grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div class="md:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 h-fit space-y-4">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700">ABCart Autonomous Wallet</span>
+            <p id="wallet-card-balance" class="text-3xl font-bold text-slate-900 mt-1">₹0.00</p>
+            <p class="text-xs text-slate-500 mt-1">Used automatically when <strong>Auto-Buy</strong> lists execute.</p>
+          </div>
+
+          <form id="form-topup-wallet" class="space-y-3 pt-3 border-t border-slate-100">
+            <label class="block text-xs font-semibold text-slate-700">Quick Add Funds (INR)</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" data-quick-amt="500" class="quick-topup py-2 rounded-lg border border-slate-300 hover:border-emerald-500 text-xs font-semibold">+ ₹500</button>
+              <button type="button" data-quick-amt="2000" class="quick-topup py-2 rounded-lg border border-slate-300 hover:border-emerald-500 text-xs font-semibold">+ ₹2,000</button>
+              <button type="button" data-quick-amt="5000" class="quick-topup py-2 rounded-lg border border-slate-300 hover:border-emerald-500 text-xs font-semibold">+ ₹5,000</button>
+            </div>
+            <div class="flex gap-2">
+              <input id="input-topup-amount" type="number" min="50" step="10" required placeholder="Enter amount (₹)"
+                class="flex-1 text-sm px-3 py-2 rounded-lg border border-slate-300" />
+              <button type="submit" id="btn-topup-submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">
+                Add Funds
+              </button>
+            </div>
+            <p id="wallet-role-note" class="text-[11px] text-amber-700 hidden">Only Approvers can add funds to the workspace wallet.</p>
+          </form>
+        </div>
+
+        <div class="md:col-span-7 bg-white rounded-2xl border border-slate-200 p-5">
+          <h2 class="text-base font-bold text-slate-900 mb-3">Wallet Ledger &amp; Auto-Buy History</h2>
+          <div id="wallet-ledger-feed" class="divide-y divide-slate-100 text-xs">
+            <p class="text-slate-400 italic py-4">No wallet activity yet.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: APPROVAL QUEUE -->
       <section id="tab-approvals" class="hidden space-y-4">
         <div class="bg-white rounded-2xl border border-slate-200 p-5">
           <h2 class="text-base font-bold text-slate-900">Pending Approval Queue</h2>
@@ -301,7 +349,7 @@
         </div>
       </section>
 
-      <!-- TAB 3: GROUP MEMBERS & ROLES -->
+      <!-- TAB 4: GROUP MEMBERS & ROLES -->
       <section id="tab-members" class="hidden grid grid-cols-1 md:grid-cols-12 gap-6">
         <div class="md:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 h-fit">
           <h2 class="text-base font-bold text-slate-900">Add Workspace Member</h2>
@@ -336,31 +384,6 @@
           <div id="members-list-feed" class="divide-y divide-slate-100"></div>
         </div>
       </section>
-
-      <!-- TAB 4: INCREMENT ROADMAP PREVIEW -->
-      <section id="tab-roadmap" class="hidden">
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-          <h2 class="text-base font-bold text-slate-900">Next Increments Ready to Wire Into This Workspace</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <p class="font-bold text-indigo-700">Increment 2: Wallet &amp; Auto-Build / Auto-Buy Cart Engine</p>
-              <p class="text-slate-600 mt-1">Top up ABCart Wallet, generate Gemini platform carts across your selected Top 10 platforms, and auto-deduct wallet balance with Platform Transaction IDs.</p>
-            </div>
-            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <p class="font-bold text-indigo-700">Increment 3: Current Orders &amp; Date-Range Scroller</p>
-              <p class="text-slate-600 mt-1">Scroll daily/weekly/monthly cycles with &lt; Date Range &gt; arrows, edit upcoming order items mid-cycle, and add manual transactions.</p>
-            </div>
-            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <p class="font-bold text-indigo-700">Increment 4: Bill Upload, Bank SMS Verifier &amp; Pending Refunds</p>
-              <p class="text-slate-600 mt-1">Flip items from Unverified to Verified via bill upload or Gemini Bank/UPI SMS parsing, plus track pending refunds &amp; Phase 1 platform issue links.</p>
-            </div>
-            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <p class="font-bold text-indigo-700">Increment 5: Time-Period Spend &amp; Refund Analytics</p>
-              <p class="text-slate-600 mt-1">Analyze spend by platform, category, verified vs. unverified leakage, and refund aging across custom date ranges.</p>
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
   </div>
 
@@ -386,10 +409,10 @@
       onSnapshot,
       query,
       orderBy,
+      increment,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
 
-    // 1. Firebase & Apps Script Proxy Config
     const firebaseConfig = {
       apiKey: "AIzaSyBvnVne_IN4LTlFu3ACTeOsbHy1NoPZoZI",
       authDomain: "yertal-abcart.firebaseapp.com",
@@ -406,18 +429,17 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    // 2. Domain Constants
     const TOP_10_PLATFORMS = [
-      { id: "blinkit", name: "Blinkit", tier: "free" },
-      { id: "zepto", name: "Zepto", tier: "free" },
-      { id: "bigbasket", name: "BigBasket", tier: "free" },
-      { id: "instamart", name: "Swiggy Instamart", tier: "plus" },
-      { id: "amazon", name: "Amazon Fresh", tier: "plus" },
-      { id: "flipkart", name: "Flipkart Minutes", tier: "plus" },
-      { id: "jiomart", name: "JioMart", tier: "plus" },
-      { id: "dmart", name: "DMart Ready", tier: "plus" },
-      { id: "pharmeasy", name: "PharmEasy", tier: "plus" },
-      { id: "1mg", name: "Tata 1mg", tier: "plus" }
+      { id: "blinkit", name: "Blinkit", prefix: "BLK", searchUrl: "https://blinkit.com/s/?q=", tier: "free" },
+      { id: "zepto", name: "Zepto", prefix: "ZPT", searchUrl: "https://www.zeptonow.com/search?query=", tier: "free" },
+      { id: "bigbasket", name: "BigBasket", prefix: "BBK", searchUrl: "https://www.bigbasket.com/ps/?q=", tier: "free" },
+      { id: "instamart", name: "Swiggy Instamart", prefix: "SWG", searchUrl: "https://www.swiggy.com/instamart/search?custom_back=true&query=", tier: "plus" },
+      { id: "amazon", name: "Amazon Fresh", prefix: "AMZ", searchUrl: "https://www.amazon.in/s?k=", tier: "plus" },
+      { id: "flipkart", name: "Flipkart Minutes", prefix: "FLP", searchUrl: "https://www.flipkart.com/search?q=", tier: "plus" },
+      { id: "jiomart", name: "JioMart", prefix: "JIO", searchUrl: "https://www.jiomart.com/search/", tier: "plus" },
+      { id: "dmart", name: "DMart Ready", prefix: "DMR", searchUrl: "https://www.dmart.in/search?searchTerm=", tier: "plus" },
+      { id: "pharmeasy", name: "PharmEasy", prefix: "PHM", searchUrl: "https://pharmeasy.in/search/all?name=", tier: "plus" },
+      { id: "1mg", name: "Tata 1mg", prefix: "1MG", searchUrl: "https://www.1mg.com/search/all?name=", tier: "plus" }
     ];
 
     const PREBUILT_ITEMS = [
@@ -440,7 +462,6 @@
       pro:  { label: "PRO",  maxLists: Infinity, maxMembers: Infinity, allowAutoBuy: true, allowCustomGrid: true, allPlatforms: true }
     };
 
-    // 3. App State
     let currentUser = null;
     let workspaceId = null;
     let workspaceData = { tier: "free", name: "My Workspace", walletBalance: 0 };
@@ -450,20 +471,22 @@
     let selectedMonths = new Set(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]);
     let allLists = [];
     let allMembers = [];
+    let walletLedger = [];
 
-    // 4. UI Helpers
     const $ = (id) => document.getElementById(id);
     function showToast(msg) {
       const bar = $("toast-bar");
       bar.textContent = msg;
       bar.classList.remove("hidden");
       clearTimeout(bar._timer);
-      bar._timer = setTimeout(() => bar.classList.add("hidden"), 3800);
+      bar._timer = setTimeout(() => bar.classList.add("hidden"), 4000);
     }
 
-    // 5. Render Static Builder Controls
+    function formatINR(val) {
+      return `₹${Number(val || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
     function initBuilderControls() {
-      // Prebuilt pills
       const pillsWrap = $("prebuilt-pills");
       pillsWrap.innerHTML = PREBUILT_ITEMS.map((item, idx) => `
         <button type="button" data-preset="${idx}"
@@ -479,7 +502,6 @@
         });
       });
 
-      // Weekdays Grid
       $("grid-weekdays").innerHTML = WEEKDAYS.map(d => `
         <button type="button" data-day="${d}"
           class="day-btn py-1.5 rounded-md font-semibold border ${selectedWeekdays.has(d) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-300'}">
@@ -495,7 +517,6 @@
         });
       });
 
-      // Months Grid
       $("grid-months").innerHTML = MONTHS.map(m => `
         <button type="button" data-month="${m}"
           class="month-btn py-1 rounded-md font-semibold border ${selectedMonths.has(m) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-300'}">
@@ -535,18 +556,19 @@
       });
     }
 
-    // 6. Tier & Role Enforcement UI
     function applyTierAndRoleGates() {
       const tier = workspaceData.tier || "free";
       const rules = TIER_RULES[tier];
 
       $("badge-tier").textContent = rules.label;
       $("select-tier").value = tier;
+      $("header-wallet-balance").textContent = formatINR(workspaceData.walletBalance);
+      $("wallet-card-balance").textContent = formatINR(workspaceData.walletBalance);
+
       $("tier-quota-hint").textContent = rules.maxLists === Infinity
         ? "Pro tier: Unlimited recurring lists & custom grids"
         : `${rules.label} tier: up to ${rules.maxLists} active lists`;
 
-      // Auto-Buy Gate
       const modeSelect = $("input-mode");
       const autoBuyOpt = modeSelect.querySelector('option[value="auto_buy"]');
       if (!rules.allowAutoBuy) {
@@ -558,7 +580,6 @@
         $("mode-tier-note").classList.add("hidden");
       }
 
-      // Custom Grid Gate
       const freqSelect = $("input-frequency");
       const customOpt = freqSelect.querySelector('option[value="custom"]');
       customOpt.disabled = !rules.allowCustomGrid;
@@ -570,7 +591,6 @@
       }
       $("custom-schedule-grid").classList.toggle("hidden", freqSelect.value !== "custom");
 
-      // Platforms Gate (Top 3 on Free vs Top 10 on Plus/Pro)
       $("platform-tier-hint").textContent = rules.allPlatforms ? "All Top 10 unlocked" : "Free: Top 3 unlocked (Upgrade for Top 10)";
       $("platform-checkboxes").innerHTML = TOP_10_PLATFORMS.map(p => {
         const locked = !rules.allPlatforms && p.tier !== "free";
@@ -582,7 +602,6 @@
         `;
       }).join("");
 
-      // Role Gate (Approver vs Requester vs Viewer)
       const isViewer = activeRole === "viewer";
       const isApprover = activeRole === "approver";
 
@@ -590,6 +609,10 @@
       $("btn-save-list").disabled = isViewer;
       $("btn-save-list").classList.toggle("opacity-50", isViewer);
       $("btn-save-list").textContent = isApprover ? "Save & Schedule List" : "Submit List for Approval";
+
+      $("btn-topup-submit").disabled = !isApprover;
+      $("btn-topup-submit").classList.toggle("opacity-50", !isApprover);
+      $("wallet-role-note").classList.toggle("hidden", isApprover);
 
       $("role-creation-badge").textContent = isApprover
         ? "Direct Publish (Approver)"
@@ -603,14 +626,114 @@
       renderLists();
     }
 
-    // 7. Push-to-Talk Speech + Gemini Proxy Parser
+    // AI CART EXECUTION ENGINE (AUTO-BUILD & AUTO-BUY)
+    async function executeListCart(list) {
+      showToast(`Building AI cart for "${list.title}" via Gemini...`);
+      const chosenPlatformName = (list.platforms && list.platforms[0]) || "Blinkit";
+      const platformMeta = TOP_10_PLATFORMS.find(p => p.name === chosenPlatformName) || TOP_10_PLATFORMS[0];
+
+      let matchedItems = [];
+      try {
+        const prompt = `You are an Indian quick-commerce pricing assistant for ${chosenPlatformName}. Optimization criteria: "${list.criteria}". For these items: ${JSON.stringify(list.items)}, return ONLY a pure JSON array (no markdown) of objects with keys: "name", "qty", "matchedSku", "priceInr" (number).`;
+        const res = await fetch(GEMINI_PROXY_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ prompt })
+        });
+        const data = await res.json();
+        const clean = (data.response || data.text || "").replace(/```json|```/g, "").trim();
+        matchedItems = JSON.parse(clean);
+      } catch (e) {
+        matchedItems = (list.items || []).map((it, idx) => ({
+          name: it.name,
+          qty: it.qty,
+          matchedSku: `${it.name} (${it.qty})`,
+          priceInr: 65 + (idx * 35)
+        }));
+      }
+
+      const totalAmount = matchedItems.reduce((sum, it) => sum + Number(it.priceInr || 0), 0);
+      const txnId = `${platformMeta.prefix}-${Math.floor(100000 + Math.random() * 900000)}`;
+      const todayStr = new Date().toISOString().split("T")[0];
+
+      let executedAsAutoBuy = false;
+      let fallbackReason = "";
+
+      if (list.mode === "auto_buy") {
+        if (Number(workspaceData.walletBalance || 0) >= totalAmount) {
+          executedAsAutoBuy = true;
+          await updateDoc(doc(db, "workspaces", workspaceId), {
+            walletBalance: increment(-totalAmount)
+          });
+          await addDoc(collection(db, "workspaces", workspaceId, "walletLedger"), {
+            type: "autobuy_debit",
+            label: `Auto-Buy: ${list.title} (${chosenPlatformName})`,
+            amount: -totalAmount,
+            refId: txnId,
+            createdAt: serverTimestamp()
+          });
+        } else {
+          fallbackReason = `Insufficient wallet balance (${formatINR(workspaceData.walletBalance)} < ${formatINR(totalAmount)}). Switched to Auto-Build manual checkout.`;
+        }
+      }
+
+      await addDoc(collection(db, "workspaces", workspaceId, "transactions"), {
+        listId: list.id,
+        listTitle: list.title,
+        date: todayStr,
+        platform: chosenPlatformName,
+        platformTxnId: txnId,
+        mode: executedAsAutoBuy ? "auto_buy" : "auto_build",
+        totalAmount,
+        verified: false,
+        items: matchedItems.map(it => ({ ...it, status: executedAsAutoBuy ? "Ordered" : "Cart Built", verified: false })),
+        createdAt: serverTimestamp()
+      });
+
+      // Populate Modal
+      $("modal-mode-badge").textContent = executedAsAutoBuy ? "AUTO-BUY COMPLETED" : "AUTO-BUILD CART READY";
+      $("modal-mode-badge").className = `text-[10px] font-bold uppercase px-2 py-0.5 rounded ${executedAsAutoBuy ? "bg-emerald-500 text-white" : "bg-indigo-500 text-white"}`;
+      $("modal-cart-title").textContent = `${list.title} • ${chosenPlatformName}`;
+
+      $("modal-cart-body").innerHTML = `
+        ${fallbackReason ? `<div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">${fallbackReason}</div>` : ""}
+        <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <div>
+            <p class="text-slate-500">Platform Transaction / Cart ID</p>
+            <p class="font-bold text-slate-900 text-sm">${txnId}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-slate-500">Cart Total</p>
+            <p class="font-bold text-emerald-700 text-base">${formatINR(totalAmount)}</p>
+          </div>
+        </div>
+        <div class="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+          ${matchedItems.map(it => `
+            <div class="p-3 flex items-center justify-between bg-white">
+              <div>
+                <p class="font-semibold text-slate-800">${it.matchedSku || it.name}</p>
+                <p class="text-[11px] text-slate-500">Qty: ${it.qty}</p>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="font-bold text-slate-900">${formatINR(it.priceInr)}</span>
+                <a href="${platformMeta.searchUrl}${encodeURIComponent(it.name)}" target="_blank" rel="noopener"
+                  class="text-[11px] font-semibold text-indigo-600 hover:underline">Open &nearr;</a>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+        <p class="text-[11px] text-slate-500">Logged to Transactions as <strong>Unverified</strong> until bill upload or Bank/UPI SMS verification.</p>
+      `;
+      $("cart-modal").classList.remove("hidden");
+    }
+
     function initSpeechParser() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const btnVoice = $("btn-voice-input");
       const statusEl = $("voice-status");
 
       if (!SpeechRecognition) {
-        btnVoice.addEventListener("click", () => showToast("Speech recognition is not supported in this browser. Please type items."));
+        btnVoice.addEventListener("click", () => showToast("Speech recognition not supported in this browser. Please type items."));
         return;
       }
 
@@ -633,7 +756,6 @@
       recognition.onresult = async (event) => {
         const transcript = event.results[0][0].transcript;
         statusEl.textContent = `Heard: "${transcript}" — Parsing with Gemini...`;
-
         try {
           const prompt = `Extract grocery/shopping items from this spoken request into a pure JSON array of objects with keys "name" and "qty". No markdown, only JSON. Text: "${transcript}"`;
           const res = await fetch(GEMINI_PROXY_URL, {
@@ -652,7 +774,6 @@
             throw new Error("Fallback");
           }
         } catch (err) {
-          // Clean local fallback split on commas / "and"
           const chunks = transcript.split(/,| and /i).map(s => s.trim()).filter(Boolean);
           chunks.forEach(c => draftItems.push({ name: c, qty: "1 unit" }));
           renderDraftItems();
@@ -666,7 +787,6 @@
       };
     }
 
-    // 8. Render Lists & Approval Queue
     function formatSchedule(s) {
       if (!s) return "Weekly";
       if (s.frequency === "custom") {
@@ -682,7 +802,6 @@
       $("count-active-lists").textContent = active.length;
       $("badge-pending-count").textContent = pending.length;
 
-      // Active Lists Feed
       const activeFeed = $("active-lists-feed");
       if (!active.length) {
         activeFeed.innerHTML = `<div class="bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">No active recurring lists yet. Create your first list on the left!</div>`;
@@ -705,9 +824,16 @@
                   <strong>Platforms:</strong> ${(list.platforms || []).join(", ")}
                 </p>
               </div>
-              ${activeRole === "approver" ? `
-                <button data-delete-list="${list.id}" class="text-xs text-slate-400 hover:text-red-600 font-medium">Delete</button>
-              ` : ""}
+              <div class="flex items-center gap-2 shrink-0">
+                ${activeRole !== "viewer" ? `
+                  <button data-run-list="${list.id}" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs">
+                    Run Now
+                  </button>
+                ` : ""}
+                ${activeRole === "approver" ? `
+                  <button data-delete-list="${list.id}" class="text-xs text-slate-400 hover:text-red-600 font-medium px-1">Delete</button>
+                ` : ""}
+              </div>
             </div>
             <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-1.5">
               ${(list.items || []).map(it => `
@@ -719,6 +845,13 @@
           </div>
         `).join("");
 
+        activeFeed.querySelectorAll("button[data-run-list]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const targetList = active.find(l => l.id === btn.dataset.runList);
+            if (targetList) executeListCart(targetList);
+          });
+        });
+
         activeFeed.querySelectorAll("button[data-delete-list]").forEach(btn => {
           btn.addEventListener("click", async () => {
             await deleteDoc(doc(db, "workspaces", workspaceId, "lists", btn.dataset.deleteList));
@@ -727,7 +860,6 @@
         });
       }
 
-      // Pending Approval Feed
       const pendingFeed = $("pending-approvals-feed");
       if (!pending.length) {
         pendingFeed.innerHTML = `<p class="text-xs text-slate-400 italic py-4">No lists awaiting approval right now.</p>`;
@@ -765,6 +897,28 @@
       }
     }
 
+    function renderWalletLedger() {
+      const feed = $("wallet-ledger-feed");
+      if (!walletLedger.length) {
+        feed.innerHTML = `<p class="text-slate-400 italic py-4">No wallet transactions yet. Add funds on the left to test Auto-Buy.</p>`;
+        return;
+      }
+      feed.innerHTML = walletLedger.map(entry => {
+        const isCredit = Number(entry.amount) >= 0;
+        return `
+          <div class="py-3 flex items-center justify-between">
+            <div>
+              <p class="font-semibold text-slate-800">${entry.label}</p>
+              <p class="text-[11px] text-slate-400">Ref: ${entry.refId || "WALLET"}</p>
+            </div>
+            <span class="font-bold ${isCredit ? "text-emerald-700" : "text-red-600"}">
+              ${isCredit ? "+" : ""}${formatINR(entry.amount)}
+            </span>
+          </div>
+        `;
+      }).join("");
+    }
+
     function renderMembers() {
       const feed = $("members-list-feed");
       feed.innerHTML = allMembers.map(m => `
@@ -780,7 +934,7 @@
       `).join("");
     }
 
-    // 9. Form Submissions & Event Listeners
+    // EVENT LISTENERS
     $("btn-add-item").addEventListener("click", () => {
       const name = $("input-item-name").value.trim();
       const qty = $("input-item-qty").value.trim() || "1 unit";
@@ -808,6 +962,38 @@
       activeRole = e.target.value;
       applyTierAndRoleGates();
       showToast(`Viewing interface as ${activeRole.toUpperCase()}.`);
+    });
+
+    $("btn-close-cart-modal").addEventListener("click", () => $("cart-modal").classList.add("hidden"));
+    $("btn-header-wallet").addEventListener("click", () => {
+      document.querySelector('.nav-tab[data-tab="wallet"]').click();
+    });
+
+    document.querySelectorAll(".quick-topup").forEach(btn => {
+      btn.addEventListener("click", () => {
+        $("input-topup-amount").value = btn.dataset.quickAmt;
+      });
+    });
+
+    $("form-topup-wallet").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (activeRole !== "approver") return showToast("Only Approvers can add wallet funds.");
+      const amt = Number($("input-topup-amount").value);
+      if (!amt || amt <= 0) return;
+
+      const refId = `UPI-${Math.floor(10000000 + Math.random() * 90000000)}`;
+      await updateDoc(doc(db, "workspaces", workspaceId), {
+        walletBalance: increment(amt)
+      });
+      await addDoc(collection(db, "workspaces", workspaceId, "walletLedger"), {
+        type: "topup",
+        label: "Wallet Top-Up (UPI / Instant)",
+        amount: amt,
+        refId,
+        createdAt: serverTimestamp()
+      });
+      $("input-topup-amount").value = "";
+      showToast(`Added ${formatINR(amt)} to ABCart Wallet!`);
     });
 
     $("list-builder-form").addEventListener("submit", async (e) => {
@@ -874,7 +1060,6 @@
       showToast("Member added to workspace!");
     });
 
-    // Tab Navigation
     document.querySelectorAll(".nav-tab").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".nav-tab").forEach(b => {
@@ -884,13 +1069,12 @@
         btn.classList.add("text-indigo-600", "border-indigo-600", "font-semibold");
         btn.classList.remove("text-slate-500", "border-transparent", "font-medium");
 
-        ["lists", "approvals", "members", "roadmap"].forEach(t => {
+        ["lists", "wallet", "approvals", "members"].forEach(t => {
           $(`tab-${t}`).classList.toggle("hidden", t !== btn.dataset.tab);
         });
       });
     });
 
-    // 10. Firebase Auth Lifecycle
     $("btn-google-signin").addEventListener("click", async () => {
       try {
         await signInWithPopup(auth, provider);
@@ -901,6 +1085,10 @@
     });
 
     $("btn-signout").addEventListener("click", () => signOut(auth));
+
+    // Render builder UI immediately on boot
+    initBuilderControls();
+    initSpeechParser();
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -919,34 +1107,43 @@
         $("user-avatar").classList.remove("hidden");
       }
 
-      workspaceId = `ws_${user.uid}`;
-      const wsRef = doc(db, "workspaces", workspaceId);
-      const wsSnap = await getDoc(wsRef);
-
-      if (!wsSnap.exists()) {
-        workspaceData = {
-          name: `${(user.displayName || "My").split(" ")[0]}'s Workspace`,
-          tier: "free",
-          walletBalance: 0,
-          ownerUid: user.uid,
-          createdAt: serverTimestamp()
-        };
-        await setDoc(wsRef, workspaceData);
-        await setDoc(doc(db, "workspaces", workspaceId, "members", user.uid), {
-          name: user.displayName || "Workspace Owner",
-          email: user.email,
-          role: "approver"
-        });
-      } else {
-        workspaceData = wsSnap.data();
-      }
-
-      $("workspace-name-label").textContent = workspaceData.name;
-      initBuilderControls();
-      initSpeechParser();
       applyTierAndRoleGates();
 
-      // Realtime Listeners
+      workspaceId = `ws_${user.uid}`;
+      const wsRef = doc(db, "workspaces", workspaceId);
+
+      try {
+        const wsSnap = await getDoc(wsRef);
+        if (!wsSnap.exists()) {
+          workspaceData = {
+            name: `${(user.displayName || "My").split(" ")[0]}'s Workspace`,
+            tier: "free",
+            walletBalance: 0,
+            ownerUid: user.uid,
+            createdAt: serverTimestamp()
+          };
+          await setDoc(wsRef, workspaceData);
+          await setDoc(doc(db, "workspaces", workspaceId, "members", user.uid), {
+            name: user.displayName || "Workspace Owner",
+            email: user.email,
+            role: "approver"
+          });
+        } else {
+          workspaceData = wsSnap.data();
+        }
+      } catch (err) {
+        console.error("Workspace init error:", err);
+        showToast("Firestore permission check: ensure 'resource == null' is in your Firestore rules.");
+      }
+
+      onSnapshot(wsRef, (snap) => {
+        if (snap.exists()) {
+          workspaceData = snap.data();
+          $("workspace-name-label").textContent = workspaceData.name;
+          applyTierAndRoleGates();
+        }
+      });
+
       onSnapshot(query(collection(db, "workspaces", workspaceId, "lists"), orderBy("createdAt", "desc")), (snap) => {
         allLists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderLists();
@@ -955,6 +1152,11 @@
       onSnapshot(collection(db, "workspaces", workspaceId, "members"), (snap) => {
         allMembers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderMembers();
+      });
+
+      onSnapshot(query(collection(db, "workspaces", workspaceId, "walletLedger"), orderBy("createdAt", "desc")), (snap) => {
+        walletLedger = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderWalletLedger();
       });
     });
   </script>
