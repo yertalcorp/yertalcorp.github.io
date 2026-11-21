@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "yertal-abcart"
+  },
+  "targets": {
+    "yertal-abcart": {
+      "hosting": {
+        "abcart": [
+          "abcart"
+        ]
+      }
+    }
+  }
+}
