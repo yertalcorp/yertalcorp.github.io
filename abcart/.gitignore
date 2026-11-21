@@ -1,0 +1,25 @@
+# Environment & Secret Keys (never commit raw Gemini or service account keys)
+.env
+.env.*
+*.pem
+*serviceAccountKey*.json
+*firebase-adminsdk*.json
+
+# Firebase CLI & Emulators
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+pubsub-debug.log
+
+# Node / Build artifacts (if you add local tooling later)
+node_modules/
+dist/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
