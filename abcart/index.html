@@ -1,1 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ABCart — Auto Build Cart | Autonomous Recurring Procurement</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .pulse-mic { animation: pulseRing 1.4s infinite; }
+    @keyframes pulseRing {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+      70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
 
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
+      <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-2xl shadow-lg">
+        AB
+      </div>
+      <h1 class="text-2xl font-bold text-slate-900">ABCart</h1>
+      <p class="text-xs uppercase tracking-widest text-indigo-600 font-semibold mt-1">Auto Build Cart</p>
+      <p class="text-sm text-slate-600 mt-4 leading-relaxed">
+        Voice &amp; text recurring shopping lists across India's top 10 platforms with multi-user approvals, custom schedules, and AI cart orchestration.
+      </p>
+      <button id="btn-google-signin" class="mt-6 w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 px-4 rounded-xl transition shadow-md">
+        <svg class="w-5 h-5" viewBox="0 0 24 24">
+          <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.6 2.8C6.1 7.2 8.8 5 12 5z"/>
+          <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
+          <path fill="#FBBC05" d="M5.2 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.6 7.4C.6 9.4 0 11.6 0 14s.6 4.6 1.6 6.6l3.6-2.8z"/>
+          <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.2 0-5.9-2.2-6.8-5.1l-3.6 2.8C3.5 19.9 7.4 23 12 23z"/>
+        </svg>
+        Continue with Google
+      </button>
+      <p id="auth-error" class="text-xs text-red-600 mt-3 hidden"></p>
+      <p class="text-[11px] text-slate-400 mt-6">Hosted on abcart.web.app &bull; Powered by Yertal</p>
+    </div>
+  </div>
+
+  <!-- MAIN APP SHELL -->
+  <div id="app-shell" class="hidden min-h-screen flex flex-col">
+    <!-- TOP NAVBAR -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow">
+            AB
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-900 tracking-tight">ABCart</span>
+              <span id="badge-tier" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">FREE</span>
+            </div>
+            <p id="workspace-name-label" class="text-xs text-slate-500">My Household Workspace</p>
+          </div>
+        </div>
+
+        <!-- TIER & ROLE SIMULATOR CONTROLS (For Testing Gates) -->
+        <div class="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+          <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg text-xs">
+            <span class="text-slate-500 font-medium hidden sm:inline">Plan:</span>
+            <select id="select-tier" class="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer">
+              <option value="free">Free (2 Lists)</option>
+              <option value="plus">Plus (10 Lists)</option>
+              <option value="pro">Pro (Unlimited)</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1.5 rounded-lg text-xs">
+            <span class="text-indigo-600 font-medium hidden sm:inline">Active Role:</span>
+            <select id="select-active-role" class="bg-transparent font-semibold text-indigo-900 focus:outline-none cursor-pointer">
+              <option value="approver">Approver</option>
+              <option value="requester">Requester</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2 pl-2 border-l border-slate-200">
+            <img id="user-avatar" src="" alt="User" class="w-8 h-8 rounded-full border border-slate-300 hidden" />
+            <span id="user-display-name" class="text-xs font-medium text-slate-700 hidden md:inline"></span>
+            <button id="btn-signout" class="text-xs text-slate-500 hover:text-red-600 font-medium px-2 py-1 rounded">
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-NAVIGATION TABS -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center gap-6 text-sm border-t border-slate-100 overflow-x-auto">
+        <button data-tab="lists" class="nav-tab py-3 font-semibold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap">
+          Recurring Lists (<span id="count-active-lists">0</span>)
+        </button>
+        <button data-tab="approvals" class="nav-tab py-3 font-medium text-slate-500 hover:text-slate-800 border-b-2 border-transparent whitespace-nowrap flex items-center gap-1.5">
+          Approval Queue
+          <span id="badge-pending-count" class="px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800">0</span>
+        </button>
+        <button data-tab="members" class="nav-tab py-3 font-medium text-slate-500 hover:text-slate-800 border-b-2 border-transparent whitespace-nowrap">
+          Group &amp; Roles
+        </button>
+        <button data-tab="roadmap" class="nav-tab py-3 font-medium text-slate-400 hover:text-slate-600 border-b-2 border-transparent whitespace-nowrap">
+          Coming in Next Steps (Wallet &bull; Orders &bull; SMS)
+        </button>
+      </div>
+    </header>
+
+    <!-- TOAST / BANNER -->
+    <div id="toast-bar" class="hidden fixed bottom-5 right-5 z-50 max-w-sm bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-xl"></div>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
+
+      <!-- TAB 1: RECURRING LISTS + LIST BUILDER -->
+      <section id="tab-lists" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT: SMART LIST BUILDER (5 Cols) -->
+        <div class="lg:col-span-5">
+          <div id="builder-card" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h2 class="text-base font-bold text-slate-900">Create Recurring List</h2>
+                <p id="tier-quota-hint" class="text-xs text-slate-500 mt-0.5">Free tier: up to 2 active lists</p>
+              </div>
+              <span id="role-creation-badge" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+                Direct Publish (Approver)
+              </span>
+            </div>
+
+            <!-- Viewer Lock Notice -->
+            <div id="viewer-lock-banner" class="hidden mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+              You are viewing this workspace as a <strong>Viewer</strong>. Switch role to Requester or Approver to create or edit lists.
+            </div>
+
+            <form id="list-builder-form" class="space-y-4">
+              <!-- List Title & Category -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">List Name *</label>
+                  <input id="input-list-title" type="text" required placeholder="e.g., Weekly Kitchen Staples"
+                    class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Category</label>
+                  <select id="input-list-category" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <option value="Groceries & Fresh">Groceries &amp; Fresh</option>
+                    <option value="Pharmacy & Wellness">Pharmacy &amp; Wellness</option>
+                    <option value="Household & Cleaning">Household &amp; Cleaning</option>
+                    <option value="Office Pantry">Office Pantry</option>
+                    <option value="Pet Care">Pet Care</option>
+                    <option value="Custom">Custom List</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Speech + Text Item Entry -->
+              <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-700">Add Products (Voice, Prebuilt, or Custom)</span>
+                  <button type="button" id="btn-voice-input"
+                    class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm">
+                    <span id="mic-dot" class="w-2 h-2 rounded-full bg-white"></span>
+                    <span id="mic-label">Speak Items</span>
+                  </button>
+                </div>
+
+                <p id="voice-status" class="text-[11px] text-indigo-700 bg-indigo-50 px-2.5 py-1.5 rounded-lg hidden"></p>
+
+                <!-- Prebuilt Quick-Add Pills -->
+                <div>
+                  <span class="text-[11px] font-medium text-slate-500 block mb-1.5">Prebuilt Essentials (1-Tap Add):</span>
+                  <div id="prebuilt-pills" class="flex flex-wrap gap-1.5"></div>
+                </div>
+
+                <!-- Manual Custom Item Row -->
+                <div class="flex gap-2">
+                  <input id="input-item-name" type="text" placeholder="Type product (e.g., Toor Dal)"
+                    class="flex-1 text-xs px-3 py-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <input id="input-item-qty" type="text" placeholder="Qty (1 kg)" value="1 unit"
+                    class="w-24 text-xs px-2.5 py-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <button type="button" id="btn-add-item"
+                    class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold">
+                    + Add
+                  </button>
+                </div>
+
+                <!-- Draft Items List -->
+                <div id="draft-items-container" class="space-y-1.5 max-h-40 overflow-y-auto pt-1">
+                  <p class="text-xs text-slate-400 italic">No items added yet. Speak, pick a preset, or type above.</p>
+                </div>
+              </div>
+
+              <!-- Optimization Criteria & Execution Mode -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Selection Criteria</label>
+                  <select id="input-criteria" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <option value="Cheapest">Cheapest Price</option>
+                    <option value="Fastest Delivery">Fastest Delivery</option>
+                    <option value="Best Quality">Best Quality / Organic</option>
+                    <option value="Best Selling">Best Selling / Most Popular</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Execution Mode</label>
+                  <select id="input-mode" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <option value="auto_build">Auto-Build (Build cart, I checkout)</option>
+                    <option value="auto_buy">Auto-Buy (Deduct wallet &amp; buy)</option>
+                  </select>
+                  <p id="mode-tier-note" class="text-[10px] text-amber-600 mt-1 hidden">Auto-Buy requires Plus or Pro plan.</p>
+                </div>
+              </div>
+
+              <!-- Top 10 Approved Platforms -->
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-xs font-semibold text-slate-700">Approved Platforms (Select 1 or more)</label>
+                  <span id="platform-tier-hint" class="text-[10px] text-slate-500">Free: Top 3 unlocked</span>
+                </div>
+                <div id="platform-checkboxes" class="grid grid-cols-2 gap-1.5 text-xs"></div>
+              </div>
+
+              <!-- Schedule Frequency & Custom Grid -->
+              <div class="p-3.5 rounded-xl bg-indigo-50/60 border border-indigo-100 space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Schedule Duration</label>
+                    <select id="input-frequency" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 bg-white focus:outline-none">
+                      <option value="daily">Daily</option>
+                      <option value="weekly" selected>Weekly</option>
+                      <option value="fortnightly">Fortnightly</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="custom">Custom Grid (Days, Months, Year, Time)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Trigger Time</label>
+                    <input id="input-schedule-time" type="time" value="08:30"
+                      class="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 bg-white focus:outline-none" />
+                  </div>
+                </div>
+
+                <!-- CUSTOM CADENCE GRID -->
+                <div id="custom-schedule-grid" class="hidden space-y-3 pt-2 border-t border-indigo-200/70">
+                  <div>
+                    <span class="block text-[11px] font-semibold text-slate-700 mb-1">1. Select Weekdays</span>
+                    <div id="grid-weekdays" class="grid grid-cols-7 gap-1 text-center text-[11px]"></div>
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-[11px] font-semibold text-slate-700">2. Select Months</span>
+                      <select id="grid-year" class="text-[11px] px-2 py-0.5 rounded border border-slate-300 bg-white font-semibold">
+                        <option value="2026">Year: 2026</option>
+                        <option value="2027">Year: 2027</option>
+                        <option value="every">Every Year</option>
+                      </select>
+                    </div>
+                    <div id="grid-months" class="grid grid-cols-4 sm:grid-cols-6 gap-1 text-center text-[11px]"></div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" id="btn-save-list"
+                class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow transition">
+                Save &amp; Schedule List
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- RIGHT: ACTIVE RECURRING LISTS (7 Cols) -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Scheduled Recurring Lists</h2>
+              <p class="text-xs text-slate-500">Active lists automatically generate upcoming cart runs on schedule.</p>
+            </div>
+          </div>
+
+          <div id="active-lists-feed" class="space-y-3">
+            <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-400">
+              Loading your workspace lists...
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: APPROVAL QUEUE -->
+      <section id="tab-approvals" class="hidden space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5">
+          <h2 class="text-base font-bold text-slate-900">Pending Approval Queue</h2>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Lists or edits submitted by <strong>Requesters</strong> stay paused here until an <strong>Approver</strong> signs off.
+          </p>
+          <div id="pending-approvals-feed" class="mt-4 space-y-3"></div>
+        </div>
+      </section>
+
+      <!-- TAB 3: GROUP MEMBERS & ROLES -->
+      <section id="tab-members" class="hidden grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div class="md:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 h-fit">
+          <h2 class="text-base font-bold text-slate-900">Add Workspace Member</h2>
+          <p id="member-tier-hint" class="text-xs text-slate-500 mt-0.5">Assign Approver, Requester, or Viewer permissions.</p>
+          <form id="form-add-member" class="mt-4 space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Member Name</label>
+              <input id="input-member-name" type="text" required placeholder="e.g., Family Member / Flatmate"
+                class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Google Email</label>
+              <input id="input-member-email" type="email" required placeholder="member@gmail.com"
+                class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Role</label>
+              <select id="input-member-role" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300">
+                <option value="approver">Approver (Full control &amp; wallet)</option>
+                <option value="requester" selected>Requester (Can create/edit, needs approval)</option>
+                <option value="viewer">Viewer (Read-only)</option>
+              </select>
+            </div>
+            <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold">
+              Add to Group
+            </button>
+          </form>
+        </div>
+
+        <div class="md:col-span-7 bg-white rounded-2xl border border-slate-200 p-5">
+          <h2 class="text-base font-bold text-slate-900 mb-3">Workspace Group Members</h2>
+          <div id="members-list-feed" class="divide-y divide-slate-100"></div>
+        </div>
+      </section>
+
+      <!-- TAB 4: INCREMENT ROADMAP PREVIEW -->
+      <section id="tab-roadmap" class="hidden">
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+          <h2 class="text-base font-bold text-slate-900">Next Increments Ready to Wire Into This Workspace</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <p class="font-bold text-indigo-700">Increment 2: Wallet &amp; Auto-Build / Auto-Buy Cart Engine</p>
+              <p class="text-slate-600 mt-1">Top up ABCart Wallet, generate Gemini platform carts across your selected Top 10 platforms, and auto-deduct wallet balance with Platform Transaction IDs.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <p class="font-bold text-indigo-700">Increment 3: Current Orders &amp; Date-Range Scroller</p>
+              <p class="text-slate-600 mt-1">Scroll daily/weekly/monthly cycles with &lt; Date Range &gt; arrows, edit upcoming order items mid-cycle, and add manual transactions.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <p class="font-bold text-indigo-700">Increment 4: Bill Upload, Bank SMS Verifier &amp; Pending Refunds</p>
+              <p class="text-slate-600 mt-1">Flip items from Unverified to Verified via bill upload or Gemini Bank/UPI SMS parsing, plus track pending refunds &amp; Phase 1 platform issue links.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <p class="font-bold text-indigo-700">Increment 5: Time-Period Spend &amp; Refund Analytics</p>
+              <p class="text-slate-600 mt-1">Analyze spend by platform, category, verified vs. unverified leakage, and refund aging across custom date ranges.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- FIREBASE + APPLICATION LOGIC -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      deleteDoc,
+      collection,
+      addDoc,
+      onSnapshot,
+      query,
+      orderBy,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
+
+    // 1. Firebase & Apps Script Proxy Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBvnVne_IN4LTlFu3ACTeOsbHy1NoPZoZI",
+      authDomain: "yertal-abcart.firebaseapp.com",
+      projectId: "yertal-abcart",
+      storageBucket: "yertal-abcart.firebasestorage.app",
+      messagingSenderId: "718412836992",
+      appId: "1:718412836992:web:dd02a98edb68df330f3665"
+    };
+
+    const GEMINI_PROXY_URL = "https://script.google.com/macros/s/AKfycbyL-7ToYTJE9hdq9JgIt1GFurVXMYYYuKa77thRp6C5ZYxJtF1n_Po6NIS3Q8uCR_XC/exec";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    // 2. Domain Constants
+    const TOP_10_PLATFORMS = [
+      { id: "blinkit", name: "Blinkit", tier: "free" },
+      { id: "zepto", name: "Zepto", tier: "free" },
+      { id: "bigbasket", name: "BigBasket", tier: "free" },
+      { id: "instamart", name: "Swiggy Instamart", tier: "plus" },
+      { id: "amazon", name: "Amazon Fresh", tier: "plus" },
+      { id: "flipkart", name: "Flipkart Minutes", tier: "plus" },
+      { id: "jiomart", name: "JioMart", tier: "plus" },
+      { id: "dmart", name: "DMart Ready", tier: "plus" },
+      { id: "pharmeasy", name: "PharmEasy", tier: "plus" },
+      { id: "1mg", name: "Tata 1mg", tier: "plus" }
+    ];
+
+    const PREBUILT_ITEMS = [
+      { name: "Toned Milk", qty: "1 L" },
+      { name: "Whole Wheat Atta", qty: "5 kg" },
+      { name: "Toor Dal", qty: "1 kg" },
+      { name: "Cold-Pressed Groundnut Oil", qty: "1 L" },
+      { name: "Fresh Coriander & Curry Leaves", qty: "1 pack" },
+      { name: "Dolo 650 Tablets", qty: "1 strip" },
+      { name: "Dishwash Liquid", qty: "750 ml" },
+      { name: "Filter Coffee Powder", qty: "250 g" }
+    ];
+
+    const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    const TIER_RULES = {
+      free: { label: "FREE", maxLists: 2, maxMembers: 1, allowAutoBuy: false, allowCustomGrid: false, allPlatforms: false },
+      plus: { label: "PLUS", maxLists: 10, maxMembers: 5, allowAutoBuy: true, allowCustomGrid: false, allPlatforms: true },
+      pro:  { label: "PRO",  maxLists: Infinity, maxMembers: Infinity, allowAutoBuy: true, allowCustomGrid: true, allPlatforms: true }
+    };
+
+    // 3. App State
+    let currentUser = null;
+    let workspaceId = null;
+    let workspaceData = { tier: "free", name: "My Workspace", walletBalance: 0 };
+    let activeRole = "approver";
+    let draftItems = [];
+    let selectedWeekdays = new Set(["Mon", "Thu"]);
+    let selectedMonths = new Set(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]);
+    let allLists = [];
+    let allMembers = [];
+
+    // 4. UI Helpers
+    const $ = (id) => document.getElementById(id);
+    function showToast(msg) {
+      const bar = $("toast-bar");
+      bar.textContent = msg;
+      bar.classList.remove("hidden");
+      clearTimeout(bar._timer);
+      bar._timer = setTimeout(() => bar.classList.add("hidden"), 3800);
+    }
+
+    // 5. Render Static Builder Controls
+    function initBuilderControls() {
+      // Prebuilt pills
+      const pillsWrap = $("prebuilt-pills");
+      pillsWrap.innerHTML = PREBUILT_ITEMS.map((item, idx) => `
+        <button type="button" data-preset="${idx}"
+          class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-slate-300 hover:border-indigo-500 hover:text-indigo-700 transition">
+          + ${item.name} (${item.qty})
+        </button>
+      `).join("");
+      pillsWrap.querySelectorAll("button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const preset = PREBUILT_ITEMS[Number(btn.dataset.preset)];
+          draftItems.push({ ...preset });
+          renderDraftItems();
+        });
+      });
+
+      // Weekdays Grid
+      $("grid-weekdays").innerHTML = WEEKDAYS.map(d => `
+        <button type="button" data-day="${d}"
+          class="day-btn py-1.5 rounded-md font-semibold border ${selectedWeekdays.has(d) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-300'}">
+          ${d}
+        </button>
+      `).join("");
+      $("grid-weekdays").querySelectorAll(".day-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const d = btn.dataset.day;
+          if (selectedWeekdays.has(d)) selectedWeekdays.delete(d);
+          else selectedWeekdays.add(d);
+          btn.className = `day-btn py-1.5 rounded-md font-semibold border ${selectedWeekdays.has(d) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-300'}`;
+        });
+      });
+
+      // Months Grid
+      $("grid-months").innerHTML = MONTHS.map(m => `
+        <button type="button" data-month="${m}"
+          class="month-btn py-1 rounded-md font-semibold border ${selectedMonths.has(m) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-300'}">
+          ${m}
+        </button>
+      `).join("");
+      $("grid-months").querySelectorAll(".month-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const m = btn.dataset.month;
+          if (selectedMonths.has(m)) selectedMonths.delete(m);
+          else selectedMonths.add(m);
+          btn.className = `month-btn py-1 rounded-md font-semibold border ${selectedMonths.has(m) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-300'}`;
+        });
+      });
+    }
+
+    function renderDraftItems() {
+      const container = $("draft-items-container");
+      if (!draftItems.length) {
+        container.innerHTML = `<p class="text-xs text-slate-400 italic">No items added yet. Speak, pick a preset, or type above.</p>`;
+        return;
+      }
+      container.innerHTML = draftItems.map((item, i) => `
+        <div class="flex items-center justify-between bg-white px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+          <div>
+            <span class="font-semibold text-slate-800">${item.name}</span>
+            <span class="text-slate-500 ml-1.5">&bull; ${item.qty}</span>
+          </div>
+          <button type="button" data-remove="${i}" class="text-red-500 hover:text-red-700 font-bold px-1.5">&times;</button>
+        </div>
+      `).join("");
+      container.querySelectorAll("button[data-remove]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          draftItems.splice(Number(btn.dataset.remove), 1);
+          renderDraftItems();
+        });
+      });
+    }
+
+    // 6. Tier & Role Enforcement UI
+    function applyTierAndRoleGates() {
+      const tier = workspaceData.tier || "free";
+      const rules = TIER_RULES[tier];
+
+      $("badge-tier").textContent = rules.label;
+      $("select-tier").value = tier;
+      $("tier-quota-hint").textContent = rules.maxLists === Infinity
+        ? "Pro tier: Unlimited recurring lists & custom grids"
+        : `${rules.label} tier: up to ${rules.maxLists} active lists`;
+
+      // Auto-Buy Gate
+      const modeSelect = $("input-mode");
+      const autoBuyOpt = modeSelect.querySelector('option[value="auto_buy"]');
+      if (!rules.allowAutoBuy) {
+        autoBuyOpt.disabled = true;
+        if (modeSelect.value === "auto_buy") modeSelect.value = "auto_build";
+        $("mode-tier-note").classList.remove("hidden");
+      } else {
+        autoBuyOpt.disabled = false;
+        $("mode-tier-note").classList.add("hidden");
+      }
+
+      // Custom Grid Gate
+      const freqSelect = $("input-frequency");
+      const customOpt = freqSelect.querySelector('option[value="custom"]');
+      customOpt.disabled = !rules.allowCustomGrid;
+      customOpt.textContent = rules.allowCustomGrid
+        ? "Custom Grid (Days, Months, Year, Time)"
+        : "Custom Grid (Pro Plan Only)";
+      if (!rules.allowCustomGrid && freqSelect.value === "custom") {
+        freqSelect.value = "weekly";
+      }
+      $("custom-schedule-grid").classList.toggle("hidden", freqSelect.value !== "custom");
+
+      // Platforms Gate (Top 3 on Free vs Top 10 on Plus/Pro)
+      $("platform-tier-hint").textContent = rules.allPlatforms ? "All Top 10 unlocked" : "Free: Top 3 unlocked (Upgrade for Top 10)";
+      $("platform-checkboxes").innerHTML = TOP_10_PLATFORMS.map(p => {
+        const locked = !rules.allPlatforms && p.tier !== "free";
+        return `
+          <label class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border ${locked ? 'bg-slate-100 border-slate-200 opacity-55 cursor-not-allowed' : 'bg-white border-slate-200 hover:border-indigo-400 cursor-pointer'}">
+            <input type="checkbox" name="platform" value="${p.name}" ${p.id === "blinkit" ? "checked" : ""} ${locked ? "disabled" : ""} class="rounded text-indigo-600" />
+            <span class="truncate">${p.name}</span>
+          </label>
+        `;
+      }).join("");
+
+      // Role Gate (Approver vs Requester vs Viewer)
+      const isViewer = activeRole === "viewer";
+      const isApprover = activeRole === "approver";
+
+      $("viewer-lock-banner").classList.toggle("hidden", !isViewer);
+      $("btn-save-list").disabled = isViewer;
+      $("btn-save-list").classList.toggle("opacity-50", isViewer);
+      $("btn-save-list").textContent = isApprover ? "Save & Schedule List" : "Submit List for Approval";
+
+      $("role-creation-badge").textContent = isApprover
+        ? "Direct Publish (Approver)"
+        : isViewer
+          ? "Read-Only (Viewer)"
+          : "Requires Approval (Requester)";
+      $("role-creation-badge").className = `text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+        isApprover ? "bg-emerald-50 text-emerald-700" : isViewer ? "bg-slate-100 text-slate-600" : "bg-amber-50 text-amber-800"
+      }`;
+
+      renderLists();
+    }
+
+    // 7. Push-to-Talk Speech + Gemini Proxy Parser
+    function initSpeechParser() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const btnVoice = $("btn-voice-input");
+      const statusEl = $("voice-status");
+
+      if (!SpeechRecognition) {
+        btnVoice.addEventListener("click", () => showToast("Speech recognition is not supported in this browser. Please type items."));
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-IN";
+      recognition.interimResults = false;
+
+      btnVoice.addEventListener("click", () => {
+        try {
+          recognition.start();
+          $("mic-dot").classList.add("bg-red-400", "pulse-mic");
+          $("mic-label").textContent = "Listening...";
+          statusEl.textContent = "Speak your shopping list (e.g., 'Add 2 kg Toor Dal, 1 liter Nandini milk, and Dolo 650')...";
+          statusEl.classList.remove("hidden");
+        } catch (e) {
+          recognition.stop();
+        }
+      });
+
+      recognition.onresult = async (event) => {
+        const transcript = event.results[0][0].transcript;
+        statusEl.textContent = `Heard: "${transcript}" — Parsing with Gemini...`;
+
+        try {
+          const prompt = `Extract grocery/shopping items from this spoken request into a pure JSON array of objects with keys "name" and "qty". No markdown, only JSON. Text: "${transcript}"`;
+          const res = await fetch(GEMINI_PROXY_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ prompt })
+          });
+          const data = await res.json();
+          const rawText = (data.response || data.text || JSON.stringify(data)).replace(/```json|```/g, "").trim();
+          const parsed = JSON.parse(rawText);
+          if (Array.isArray(parsed) && parsed.length) {
+            parsed.forEach(p => draftItems.push({ name: p.name || "Item", qty: p.qty || "1 unit" }));
+            renderDraftItems();
+            statusEl.textContent = `Added ${parsed.length} item(s) via Gemini Voice Parser.`;
+          } else {
+            throw new Error("Fallback");
+          }
+        } catch (err) {
+          // Clean local fallback split on commas / "and"
+          const chunks = transcript.split(/,| and /i).map(s => s.trim()).filter(Boolean);
+          chunks.forEach(c => draftItems.push({ name: c, qty: "1 unit" }));
+          renderDraftItems();
+          statusEl.textContent = `Added ${chunks.length} item(s) from speech.`;
+        }
+      };
+
+      recognition.onend = () => {
+        $("mic-dot").classList.remove("bg-red-400", "pulse-mic");
+        $("mic-label").textContent = "Speak Items";
+      };
+    }
+
+    // 8. Render Lists & Approval Queue
+    function formatSchedule(s) {
+      if (!s) return "Weekly";
+      if (s.frequency === "custom") {
+        return `Custom: ${(s.weekdays || []).join(", ")} | ${(s.months || []).length} mos (${s.year}) @ ${s.time}`;
+      }
+      return `${s.frequency.charAt(0).toUpperCase() + s.frequency.slice(1)} @ ${s.time || "08:30"}`;
+    }
+
+    function renderLists() {
+      const active = allLists.filter(l => l.status === "active");
+      const pending = allLists.filter(l => l.status === "pending_approval");
+
+      $("count-active-lists").textContent = active.length;
+      $("badge-pending-count").textContent = pending.length;
+
+      // Active Lists Feed
+      const activeFeed = $("active-lists-feed");
+      if (!active.length) {
+        activeFeed.innerHTML = `<div class="bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">No active recurring lists yet. Create your first list on the left!</div>`;
+      } else {
+        activeFeed.innerHTML = active.map(list => `
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:border-indigo-200 transition">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="font-bold text-slate-900 text-sm">${list.title}</h3>
+                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">${list.category}</span>
+                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${list.mode === 'auto_buy' ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700'}">
+                    ${list.mode === 'auto_buy' ? 'AUTO-BUY' : 'AUTO-BUILD'}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">
+                  <strong>Schedule:</strong> ${formatSchedule(list.schedule)} &bull; <strong>Criteria:</strong> ${list.criteria}
+                </p>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  <strong>Platforms:</strong> ${(list.platforms || []).join(", ")}
+                </p>
+              </div>
+              ${activeRole === "approver" ? `
+                <button data-delete-list="${list.id}" class="text-xs text-slate-400 hover:text-red-600 font-medium">Delete</button>
+              ` : ""}
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-1.5">
+              ${(list.items || []).map(it => `
+                <span class="text-[11px] bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg text-slate-700">
+                  ${it.name} <span class="text-slate-400">(${it.qty})</span>
+                </span>
+              `).join("")}
+            </div>
+          </div>
+        `).join("");
+
+        activeFeed.querySelectorAll("button[data-delete-list]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            await deleteDoc(doc(db, "workspaces", workspaceId, "lists", btn.dataset.deleteList));
+            showToast("List deleted.");
+          });
+        });
+      }
+
+      // Pending Approval Feed
+      const pendingFeed = $("pending-approvals-feed");
+      if (!pending.length) {
+        pendingFeed.innerHTML = `<p class="text-xs text-slate-400 italic py-4">No lists awaiting approval right now.</p>`;
+      } else {
+        pendingFeed.innerHTML = pending.map(list => `
+          <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-sm text-slate-900">${list.title}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">PENDING APPROVAL</span>
+              </div>
+              <p class="text-xs text-slate-600 mt-1">Submitted by ${list.createdByName || "Requester"} &bull; ${(list.items || []).length} items &bull; ${formatSchedule(list.schedule)}</p>
+            </div>
+            ${activeRole === "approver" ? `
+              <div class="flex items-center gap-2">
+                <button data-approve="${list.id}" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">Approve &amp; Activate</button>
+                <button data-reject="${list.id}" class="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-red-50 text-red-600 text-xs font-semibold">Reject</button>
+              </div>
+            ` : `<span class="text-xs text-slate-500 italic">Waiting for Approver sign-off</span>`}
+          </div>
+        `).join("");
+
+        pendingFeed.querySelectorAll("button[data-approve]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            await updateDoc(doc(db, "workspaces", workspaceId, "lists", btn.dataset.approve), { status: "active" });
+            showToast("List approved and scheduled!");
+          });
+        });
+        pendingFeed.querySelectorAll("button[data-reject]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            await deleteDoc(doc(db, "workspaces", workspaceId, "lists", btn.dataset.reject));
+            showToast("Pending list rejected.");
+          });
+        });
+      }
+    }
+
+    function renderMembers() {
+      const feed = $("members-list-feed");
+      feed.innerHTML = allMembers.map(m => `
+        <div class="py-3 flex items-center justify-between">
+          <div>
+            <p class="text-sm font-semibold text-slate-800">${m.name}</p>
+            <p class="text-xs text-slate-500">${m.email}</p>
+          </div>
+          <span class="text-xs font-bold uppercase px-2.5 py-1 rounded-full ${
+            m.role === 'approver' ? 'bg-indigo-100 text-indigo-800' : m.role === 'requester' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
+          }">${m.role}</span>
+        </div>
+      `).join("");
+    }
+
+    // 9. Form Submissions & Event Listeners
+    $("btn-add-item").addEventListener("click", () => {
+      const name = $("input-item-name").value.trim();
+      const qty = $("input-item-qty").value.trim() || "1 unit";
+      if (!name) return;
+      draftItems.push({ name, qty });
+      $("input-item-name").value = "";
+      renderDraftItems();
+    });
+
+    $("input-frequency").addEventListener("change", (e) => {
+      $("custom-schedule-grid").classList.toggle("hidden", e.target.value !== "custom");
+    });
+
+    $("select-tier").addEventListener("change", async (e) => {
+      const newTier = e.target.value;
+      workspaceData.tier = newTier;
+      applyTierAndRoleGates();
+      if (workspaceId) {
+        await updateDoc(doc(db, "workspaces", workspaceId), { tier: newTier });
+      }
+      showToast(`Switched workspace plan to ${newTier.toUpperCase()}.`);
+    });
+
+    $("select-active-role").addEventListener("change", (e) => {
+      activeRole = e.target.value;
+      applyTierAndRoleGates();
+      showToast(`Viewing interface as ${activeRole.toUpperCase()}.`);
+    });
+
+    $("list-builder-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (activeRole === "viewer") return showToast("Viewers cannot create lists.");
+      if (!draftItems.length) return showToast("Please add at least one product to the list.");
+
+      const tier = workspaceData.tier || "free";
+      const maxLists = TIER_RULES[tier].maxLists;
+      const activeCount = allLists.filter(l => l.status === "active").length;
+      if (activeCount >= maxLists) {
+        return showToast(`Your ${tier.toUpperCase()} plan allows up to ${maxLists} active lists. Upgrade plan in the header to add more.`);
+      }
+
+      const selectedPlatforms = Array.from(document.querySelectorAll('input[name="platform"]:checked')).map(cb => cb.value);
+      if (!selectedPlatforms.length) return showToast("Select at least one approved platform.");
+
+      const freq = $("input-frequency").value;
+      const schedule = {
+        frequency: freq,
+        time: $("input-schedule-time").value || "08:30",
+        weekdays: freq === "custom" ? Array.from(selectedWeekdays) : [],
+        months: freq === "custom" ? Array.from(selectedMonths) : [],
+        year: freq === "custom" ? $("grid-year").value : ""
+      };
+
+      const status = activeRole === "approver" ? "active" : "pending_approval";
+
+      await addDoc(collection(db, "workspaces", workspaceId, "lists"), {
+        title: $("input-list-title").value.trim(),
+        category: $("input-list-category").value,
+        criteria: $("input-criteria").value,
+        mode: $("input-mode").value,
+        platforms: selectedPlatforms,
+        schedule,
+        items: [...draftItems],
+        status,
+        createdBy: currentUser.uid,
+        createdByName: currentUser.displayName || currentUser.email,
+        createdAt: serverTimestamp()
+      });
+
+      $("input-list-title").value = "";
+      draftItems = [];
+      renderDraftItems();
+      showToast(status === "active" ? "List scheduled and active!" : "List submitted to Approver queue!");
+    });
+
+    $("form-add-member").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const tier = workspaceData.tier || "free";
+      const maxMembers = TIER_RULES[tier].maxMembers;
+      if (allMembers.length >= maxMembers) {
+        return showToast(`${tier.toUpperCase()} plan supports up to ${maxMembers} member(s). Switch to Plus or Pro in the header.`);
+      }
+      await addDoc(collection(db, "workspaces", workspaceId, "members"), {
+        name: $("input-member-name").value.trim(),
+        email: $("input-member-email").value.trim().toLowerCase(),
+        role: $("input-member-role").value,
+        addedAt: serverTimestamp()
+      });
+      $("input-member-name").value = "";
+      $("input-member-email").value = "";
+      showToast("Member added to workspace!");
+    });
+
+    // Tab Navigation
+    document.querySelectorAll(".nav-tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".nav-tab").forEach(b => {
+          b.classList.remove("text-indigo-600", "border-indigo-600", "font-semibold");
+          b.classList.add("text-slate-500", "border-transparent", "font-medium");
+        });
+        btn.classList.add("text-indigo-600", "border-indigo-600", "font-semibold");
+        btn.classList.remove("text-slate-500", "border-transparent", "font-medium");
+
+        ["lists", "approvals", "members", "roadmap"].forEach(t => {
+          $(`tab-${t}`).classList.toggle("hidden", t !== btn.dataset.tab);
+        });
+      });
+    });
+
+    // 10. Firebase Auth Lifecycle
+    $("btn-google-signin").addEventListener("click", async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        $("auth-error").textContent = err.message;
+        $("auth-error").classList.remove("hidden");
+      }
+    });
+
+    $("btn-signout").addEventListener("click", () => signOut(auth));
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        currentUser = null;
+        $("auth-screen").classList.remove("hidden");
+        $("app-shell").classList.add("hidden");
+        return;
+      }
+
+      currentUser = user;
+      $("auth-screen").classList.add("hidden");
+      $("app-shell").classList.remove("hidden");
+      $("user-display-name").textContent = user.displayName || user.email;
+      if (user.photoURL) {
+        $("user-avatar").src = user.photoURL;
+        $("user-avatar").classList.remove("hidden");
+      }
+
+      workspaceId = `ws_${user.uid}`;
+      const wsRef = doc(db, "workspaces", workspaceId);
+      const wsSnap = await getDoc(wsRef);
+
+      if (!wsSnap.exists()) {
+        workspaceData = {
+          name: `${(user.displayName || "My").split(" ")[0]}'s Workspace`,
+          tier: "free",
+          walletBalance: 0,
+          ownerUid: user.uid,
+          createdAt: serverTimestamp()
+        };
+        await setDoc(wsRef, workspaceData);
+        await setDoc(doc(db, "workspaces", workspaceId, "members", user.uid), {
+          name: user.displayName || "Workspace Owner",
+          email: user.email,
+          role: "approver"
+        });
+      } else {
+        workspaceData = wsSnap.data();
+      }
+
+      $("workspace-name-label").textContent = workspaceData.name;
+      initBuilderControls();
+      initSpeechParser();
+      applyTierAndRoleGates();
+
+      // Realtime Listeners
+      onSnapshot(query(collection(db, "workspaces", workspaceId, "lists"), orderBy("createdAt", "desc")), (snap) => {
+        allLists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderLists();
+      });
+
+      onSnapshot(collection(db, "workspaces", workspaceId, "members"), (snap) => {
+        allMembers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderMembers();
+      });
+    });
+  </script>
+</body>
+</html>
