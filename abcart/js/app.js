@@ -140,10 +140,11 @@ export async function ensureModelPool(wsId) {
 }
 
 async function sendSingleModelRequest(prompt, targetModel) {
+  const idToken = currentUser ? await currentUser.getIdToken() : "";
   const res = await fetch(GEMINI_PROXY_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ prompt, model: targetModel })
+    body: JSON.stringify({ prompt, model: targetModel, idToken, token: idToken })
   });
   const raw = await res.text();
   let parsed;
