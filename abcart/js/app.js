@@ -140,11 +140,21 @@ export async function ensureModelPool(wsId) {
 }
 
 async function sendSingleModelRequest(prompt, targetModel) {
-  const idToken = currentUser ? await currentUser.getIdToken() : "";
-  const res = await fetch(GEMINI_PROXY_URL, {
+  const idToken = currentUser ? await currentUser.getIdToken(true) : "";
+  const proxyEndpoint = idToken
+    ? `${GEMINI_PROXY_URL}?idToken=${encodeURIComponent(idToken)}`
+    : GEMINI_PROXY_URL;
+
+  const res = await fetch(proxyEndpoint, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ prompt, model: targetModel, idToken, token: idToken })
+    body: JSON.stringify({
+      prompt,
+      model: targetModel,
+      idToken,
+      token: idToken,
+      authorization: `Bearer ${idToken}`
+    })
   });
   const raw = await res.text();
   let parsed;
@@ -172,7 +182,6 @@ async function sendSingleModelRequest(prompt, targetModel) {
   if (extracted && String(extracted).trim()) return String(extracted).trim();
   throw new Error(`Empty response from ${targetModel} (keys: ${Object.keys(parsed).join(", ") || "none"})`);
 }
-
 function getNextUntriedModel(currentModels) {
   const activeNames = new Set(currentModels.map(m => m.name));
   return MODEL_CANDIDATE_CATALOG.find(name => !activeNames.has(name)) || null;
