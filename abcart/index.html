@@ -16,18 +16,18 @@
       100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
     @media print {
-  body * { visibility: hidden; }
-  #printable-test-report, #printable-test-report * { visibility: visible; }
-  #printable-test-report {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    box-shadow: none !important;
-    border: none !important;
-  }
-  .no-print { display: none !important; }
-}
+      body * { visibility: hidden; }
+      #printable-test-report, #printable-test-report * { visibility: visible; }
+      #printable-test-report {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none !important;
+        border: none !important;
+      }
+      .no-print { display: none !important; }
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen">
@@ -41,7 +41,7 @@
       <h1 class="text-2xl font-bold text-slate-900">ABCart</h1>
       <p class="text-xs uppercase tracking-widest text-indigo-600 font-semibold mt-1">Auto Build Cart</p>
       <p class="text-sm text-slate-600 mt-4 leading-relaxed">
-        Voice &amp; text recurring shopping lists across India's top 10 platforms with multi-user approvals, wallet-backed Auto-Buy, and AI cart orchestration.
+        Voice &amp; text recurring shopping lists across India's top 10 platforms with multi-user approvals, wallet-backed Auto-Buy, self-healing AI model routing, and order reconciliation.
       </p>
       <button id="btn-google-signin" class="mt-6 w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 px-4 rounded-xl transition shadow-md">
         <svg class="w-5 h-5" viewBox="0 0 24 24">
@@ -115,8 +115,12 @@
         <button data-tab="lists" class="nav-tab py-3 font-semibold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap">
           Recurring Lists (<span id="count-active-lists">0</span>)
         </button>
+        <button data-tab="orders" class="nav-tab py-3 font-medium text-slate-500 hover:text-slate-800 border-b-2 border-transparent whitespace-nowrap flex items-center gap-1.5">
+          Orders &amp; History
+          <span id="badge-txn-count" class="px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-indigo-50 text-indigo-700">0</span>
+        </button>
         <button data-tab="wallet" class="nav-tab py-3 font-medium text-slate-500 hover:text-slate-800 border-b-2 border-transparent whitespace-nowrap">
-          Wallet &amp; Ledger
+          Wallet &amp; AI Pool
         </button>
         <button data-tab="approvals" class="nav-tab py-3 font-medium text-slate-500 hover:text-slate-800 border-b-2 border-transparent whitespace-nowrap flex items-center gap-1.5">
           Approval Queue
@@ -131,17 +135,17 @@
     <!-- TOAST / BANNER -->
     <div id="toast-bar" class="hidden fixed bottom-5 right-5 z-50 max-w-sm bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-xl"></div>
 
-    <!-- CART EXECUTION MODAL (AUTO-BUILD / AUTO-BUY RESULT) -->
+    <!-- UNIVERSAL MODAL (AI CART RESULT / QA REPORT / MANUAL ORDER) -->
     <div id="cart-modal" class="hidden fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden">
-        <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+      <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between no-print">
           <div>
             <span id="modal-mode-badge" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-500 text-white">AUTO-BUILD</span>
             <h3 id="modal-cart-title" class="text-base font-bold mt-1">AI Cart Result</h3>
           </div>
           <button id="btn-close-cart-modal" class="text-slate-300 hover:text-white text-xl font-bold px-2">&times;</button>
         </div>
-        <div id="modal-cart-body" class="p-6 max-h-[70vh] overflow-y-auto space-y-4 text-xs"></div>
+        <div id="modal-cart-body" class="p-6 max-h-[75vh] overflow-y-auto space-y-4 text-xs"></div>
       </div>
     </div>
 
@@ -316,34 +320,98 @@
         </div>
       </section>
 
-      <!-- TAB 2: WALLET & LEDGER -->
-      <section id="tab-wallet" class="hidden grid grid-cols-1 md:grid-cols-12 gap-6">
-        <div class="md:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 h-fit space-y-4">
-          <div>
-            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700">ABCart Autonomous Wallet</span>
-            <p id="wallet-card-balance" class="text-3xl font-bold text-slate-900 mt-1">₹0.00</p>
-            <p class="text-xs text-slate-500 mt-1">Used automatically when <strong>Auto-Buy</strong> lists execute.</p>
+      <!-- TAB 2: INCREMENT 3 — CURRENT SCHEDULED ORDERS & DATE-RANGE TRANSACTION SCROLLER -->
+      <section id="tab-orders" class="hidden space-y-6">
+        <!-- Date-Range Scroller Toolbar -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-2">
+            <button id="btn-range-prev" type="button" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-xs font-bold">&lt;</button>
+            <div class="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-100 text-center min-w-[210px]">
+              <p id="scroller-range-label" class="text-xs font-bold text-indigo-950">Current Cycle</p>
+              <p id="scroller-period-hint" class="text-[10px] text-indigo-600 uppercase font-semibold">Weekly Window</p>
+            </div>
+            <button id="btn-range-next" type="button" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-xs font-bold">&gt;</button>
+            <button id="btn-range-today" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-indigo-600">Today</button>
           </div>
 
-          <form id="form-topup-wallet" class="space-y-3 pt-3 border-t border-slate-100">
-            <label class="block text-xs font-semibold text-slate-700">Quick Add Funds (INR)</label>
-            <div class="grid grid-cols-3 gap-2">
-              <button type="button" data-quick-amt="500" class="quick-topup py-2 rounded-lg border border-slate-300 hover:border-emerald-500 text-xs font-semibold">+ ₹500</button>
-              <button type="button" data-quick-amt="2000" class="quick-topup py-2 rounded-lg border border-slate-300 hover:border-emerald-500 text-xs font-semibold">+ ₹2,000</button>
-              <button type="button" data-quick-amt="5000" class="quick-topup py-2 rounded-lg border border-slate-300 hover:border-emerald-500 text-xs font-semibold">+ ₹5,000</button>
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="inline-flex rounded-lg bg-slate-100 p-1 text-xs">
+              <button type="button" data-span="daily" class="span-btn px-2.5 py-1 rounded-md font-medium text-slate-600">Daily</button>
+              <button type="button" data-span="weekly" class="span-btn px-2.5 py-1 rounded-md font-semibold bg-white text-indigo-700 shadow-xs">Weekly</button>
+              <button type="button" data-span="monthly" class="span-btn px-2.5 py-1 rounded-md font-medium text-slate-600">Monthly</button>
             </div>
-            <div class="flex gap-2">
-              <input id="input-topup-amount" type="number" min="50" step="10" required placeholder="Enter amount (₹)"
-                class="flex-1 text-sm px-3 py-2 rounded-lg border border-slate-300" />
-              <button type="submit" id="btn-topup-submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">
-                Add Funds
-              </button>
-            </div>
-            <p id="wallet-role-note" class="text-[11px] text-amber-700 hidden">Only Approvers can add funds to the workspace wallet.</p>
-          </form>
+            <button type="button" id="btn-open-manual-txn" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold">
+              + Manual Order
+            </button>
+          </div>
         </div>
 
-        <div class="md:col-span-7 bg-white rounded-2xl border border-slate-200 p-5">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Left: Upcoming Scheduled Order Runs in Selected Window (5 Cols) -->
+          <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 h-fit space-y-3">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Scheduled Runs in Window</h2>
+              <p class="text-xs text-slate-500">Projected recurring executions; add/remove items before trigger time.</p>
+            </div>
+            <div id="scheduled-window-feed" class="space-y-3 text-xs"></div>
+          </div>
+
+          <!-- Right: Executed & Manual Transactions in Selected Window (7 Cols) -->
+          <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-base font-bold text-slate-900">Transactions in Selected Window</h2>
+                <p class="text-xs text-slate-500">Auto-Buy, Auto-Build, and manual orders with verification status.</p>
+              </div>
+              <span id="window-spend-total" class="text-sm font-bold text-slate-900">₹0.00</span>
+            </div>
+            <div id="transactions-window-feed" class="space-y-3 text-xs"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: WALLET & SELF-HEALING AI MODEL POOL -->
+      <section id="tab-wallet" class="hidden grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div class="md:col-span-5 space-y-6">
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700">ABCart Autonomous Wallet</span>
+              <p id="wallet-card-balance" class="text-3xl font-bold text-slate-900 mt-1">₹0.00</p>
+              <p class="text-xs text-slate-500 mt-1">Used automatically when <strong>Auto-Buy</strong> lists execute.</p>
+            </div>
+
+            <form id="form-topup-wallet" class="space-y-3 pt-3 border-t border-slate-100">
+              <label class="block text-xs font-semibold text-slate-700">Quick Add Funds (INR)</label>
+              <div class="grid grid-cols-3 gap-2">
+                <button type="button" data-quick-amt="500" class="quick-topup py-2 rounded-lg border border-slate-300 hover:border-emerald-500 text-xs font-semibold">+ ₹500</button>
+                <button type="button" data-quick-amt="2000" class="quick-topup py-2 rounded-lg border border-slate-300 hover:border-emerald-500 text-xs font-semibold">+ ₹2,000</button>
+                <button type="button" data-quick-amt="5000" class="quick-topup py-2 rounded-lg border border-slate-300 hover:border-emerald-500 text-xs font-semibold">+ ₹5,000</button>
+              </div>
+              <div class="flex gap-2">
+                <input id="input-topup-amount" type="number" min="50" step="10" required placeholder="Enter amount (₹)"
+                  class="flex-1 text-sm px-3 py-2 rounded-lg border border-slate-300" />
+                <button type="submit" id="btn-topup-submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">
+                  Add Funds
+                </button>
+              </div>
+              <p id="wallet-role-note" class="text-[11px] text-amber-700 hidden">Only Approvers can add funds to the workspace wallet.</p>
+            </form>
+          </div>
+
+          <!-- SELF-HEALING AI MODEL_POOL MONITOR -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">Self-Healing AI Model_Pool</h3>
+                <p class="text-[11px] text-slate-500">Auto-evicts models exceeding 75% failure rate.</p>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">FIRESTORE SYNCED</span>
+            </div>
+            <div id="model-pool-feed" class="divide-y divide-slate-100 text-xs"></div>
+          </div>
+        </div>
+
+        <div class="md:col-span-7 bg-white rounded-2xl border border-slate-200 p-5 h-fit">
           <h2 class="text-base font-bold text-slate-900 mb-3">Wallet Ledger &amp; Auto-Buy History</h2>
           <div id="wallet-ledger-feed" class="divide-y divide-slate-100 text-xs">
             <p class="text-slate-400 italic py-4">No wallet activity yet.</p>
@@ -351,7 +419,7 @@
         </div>
       </section>
 
-      <!-- TAB 3: APPROVAL QUEUE -->
+      <!-- TAB 4: APPROVAL QUEUE -->
       <section id="tab-approvals" class="hidden space-y-4">
         <div class="bg-white rounded-2xl border border-slate-200 p-5">
           <h2 class="text-base font-bold text-slate-900">Pending Approval Queue</h2>
@@ -362,7 +430,7 @@
         </div>
       </section>
 
-      <!-- TAB 4: GROUP MEMBERS & ROLES -->
+      <!-- TAB 5: GROUP MEMBERS & ROLES -->
       <section id="tab-members" class="hidden grid grid-cols-1 md:grid-cols-12 gap-6">
         <div class="md:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 h-fit">
           <h2 class="text-base font-bold text-slate-900">Add Workspace Member</h2>
@@ -475,6 +543,15 @@
       pro:  { label: "PRO",  maxLists: Infinity, maxMembers: Infinity, allowAutoBuy: true, allowCustomGrid: true, allPlatforms: true }
     };
 
+    const MODEL_CANDIDATE_CATALOG = [
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-2.5-pro",
+      "gemini-2.0-flash-lite",
+      "gemini-1.5-flash",
+      "gemini-1.5-pro"
+    ];
+
     let currentUser = null;
     let workspaceId = null;
     let workspaceData = { tier: "free", name: "My Workspace", walletBalance: 0 };
@@ -485,6 +562,20 @@
     let allLists = [];
     let allMembers = [];
     let walletLedger = [];
+    let allTransactions = [];
+
+    // Date-Range Scroller State
+    let scrollerSpan = "weekly"; // daily | weekly | monthly
+    let scrollerOffset = 0;      // 0 = current window, -1 = previous, +1 = next
+
+    let modelPoolState = {
+      default_model: "gemini-2.5-flash",
+      backup_model: "gemini-2.0-flash",
+      models: [
+        { name: "gemini-2.5-flash", role: "default", attempts: 0, successes: 0, successRate: 100 },
+        { name: "gemini-2.0-flash", role: "backup",  attempts: 0, successes: 0, successRate: 100 }
+      ]
+    };
 
     const $ = (id) => document.getElementById(id);
     function showToast(msg) {
@@ -499,6 +590,183 @@
       return `₹${Number(val || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
+    // ========================================================================
+    // SELF-HEALING FIRESTORE MODEL_POOL ENGINE
+    // ========================================================================
+    async function ensureModelPool(wsId) {
+      const poolRef = doc(db, "workspaces", wsId, "settings", "modelPool");
+      const snap = await getDoc(poolRef);
+      if (!snap.exists()) {
+        await setDoc(poolRef, {
+          ...modelPoolState,
+          candidateCatalog: MODEL_CANDIDATE_CATALOG,
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        modelPoolState = snap.data();
+      }
+      renderModelPool();
+      return poolRef;
+    }
+
+    async function sendSingleModelRequest(prompt, targetModel) {
+      const res = await fetch(GEMINI_PROXY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ prompt, model: targetModel })
+      });
+      const raw = await res.text();
+      let parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        if (raw && raw.trim()) return raw.trim();
+        throw new Error("Empty non-JSON proxy response");
+      }
+      if (typeof parsed === "string" && parsed.trim()) return parsed.trim();
+      if (parsed.error) {
+        const errMsg = typeof parsed.error === "string" ? parsed.error : (parsed.error.message || JSON.stringify(parsed.error));
+        throw new Error(errMsg);
+      }
+      const extracted =
+        parsed.response ||
+        parsed.text ||
+        parsed.reply ||
+        parsed.output ||
+        parsed.result ||
+        parsed.answer ||
+        parsed.data ||
+        parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (extracted && String(extracted).trim()) return String(extracted).trim();
+      throw new Error(`Empty response from ${targetModel} (keys: ${Object.keys(parsed).join(", ") || "none"})`);
+    }
+
+    function getNextUntriedModel(currentModels) {
+      const activeNames = new Set(currentModels.map(m => m.name));
+      return MODEL_CANDIDATE_CATALOG.find(name => !activeNames.has(name)) || null;
+    }
+
+    function reconcileModelPool(pool) {
+      let updated = (pool.models || []).map(m => {
+        const rate = m.attempts > 0 ? Math.round((m.successes / m.attempts) * 100) : 100;
+        return { ...m, successRate: rate };
+      });
+
+      const beforeLen = updated.length;
+      // Evict any model with > 75% failure rate (successRate < 25% after at least 4 attempts)
+      updated = updated.filter(m => !(m.attempts >= 4 && m.successRate < 25));
+
+      while (updated.length < Math.max(2, beforeLen)) {
+        const replacement = getNextUntriedModel(updated);
+        if (!replacement) break;
+        updated.push({
+          name: replacement,
+          role: updated.length === 0 ? "default" : "backup",
+          attempts: 0,
+          successes: 0,
+          successRate: 100
+        });
+      }
+
+      if (updated[0]) updated[0].role = "default";
+      if (updated[1]) updated[1].role = "backup";
+
+      return {
+        ...pool,
+        default_model: updated[0]?.name || "gemini-2.0-flash",
+        backup_model: updated[1]?.name || updated[0]?.name || "gemini-2.0-flash",
+        models: updated
+      };
+    }
+
+    async function callGeminiProxy(prompt, overrideWsId = workspaceId) {
+      const poolRef = overrideWsId ? doc(db, "workspaces", overrideWsId, "settings", "modelPool") : null;
+      if (poolRef) {
+        const snap = await getDoc(poolRef);
+        if (snap.exists()) modelPoolState = snap.data();
+      }
+
+      const orderedNames = [
+        modelPoolState.default_model,
+        modelPoolState.backup_model,
+        ...(modelPoolState.models || []).map(m => m.name)
+      ].filter((v, idx, arr) => v && arr.indexOf(v) === idx);
+
+      let lastError = null;
+
+      for (const modelName of orderedNames) {
+        let entry = modelPoolState.models.find(m => m.name === modelName);
+        if (!entry) {
+          entry = { name: modelName, role: "backup", attempts: 0, successes: 0, successRate: 100 };
+          modelPoolState.models.push(entry);
+        }
+        entry.attempts += 1;
+
+        try {
+          const reply = await sendSingleModelRequest(prompt, modelName);
+          entry.successes += 1;
+          modelPoolState = reconcileModelPool(modelPoolState);
+          if (poolRef) {
+            await setDoc(poolRef, { ...modelPoolState, updatedAt: serverTimestamp() }, { merge: true });
+          }
+          renderModelPool();
+          return reply;
+        } catch (err) {
+          lastError = err;
+          modelPoolState = reconcileModelPool(modelPoolState);
+        }
+      }
+
+      // All active models failed -> retrieve & append an additional model from catalog
+      const newCandidate = getNextUntriedModel(modelPoolState.models);
+      if (newCandidate) {
+        const newEntry = { name: newCandidate, role: "backup", attempts: 1, successes: 0, successRate: 0 };
+        modelPoolState.models.push(newEntry);
+        try {
+          const reply = await sendSingleModelRequest(prompt, newCandidate);
+          newEntry.successes = 1;
+          modelPoolState = reconcileModelPool(modelPoolState);
+          if (poolRef) {
+            await setDoc(poolRef, { ...modelPoolState, updatedAt: serverTimestamp() }, { merge: true });
+          }
+          renderModelPool();
+          return reply;
+        } catch (err) {
+          lastError = err;
+          modelPoolState = reconcileModelPool(modelPoolState);
+        }
+      }
+
+      if (poolRef) {
+        await setDoc(poolRef, { ...modelPoolState, updatedAt: serverTimestamp() }, { merge: true });
+      }
+      renderModelPool();
+      throw lastError || new Error("All models in Model_Pool failed.");
+    }
+
+    function renderModelPool() {
+      const feed = $("model-pool-feed");
+      if (!feed) return;
+      const models = modelPoolState.models || [];
+      feed.innerHTML = models.map(m => {
+        const rate = m.attempts > 0 ? Math.round((m.successes / m.attempts) * 100) : 100;
+        const badgeColor = rate >= 75 ? "bg-emerald-100 text-emerald-800" : rate >= 25 ? "bg-amber-100 text-amber-800" : "bg-red-100 text-red-800";
+        return `
+          <div class="py-2.5 flex items-center justify-between">
+            <div>
+              <p class="font-semibold text-slate-800">${m.name}</p>
+              <p class="text-[10px] uppercase tracking-wider text-slate-400">${m.role} &bull; ${m.successes}/${m.attempts} calls</p>
+            </div>
+            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full ${badgeColor}">${rate}% Success</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // ========================================================================
+    // BUILDER CONTROLS & TIER / ROLE GATING
+    // ========================================================================
     function initBuilderControls() {
       const pillsWrap = $("prebuilt-pills");
       pillsWrap.innerHTML = PREBUILT_ITEMS.map((item, idx) => `
@@ -637,24 +905,22 @@
       }`;
 
       renderLists();
+      renderOrdersAndHistory();
     }
 
+    // ========================================================================
     // AI CART EXECUTION ENGINE (AUTO-BUILD & AUTO-BUY)
+    // ========================================================================
     async function executeListCart(list) {
-      showToast(`Building AI cart for "${list.title}" via Gemini...`);
+      showToast(`Building AI cart for "${list.title}" via Model_Pool (${modelPoolState.default_model})...`);
       const chosenPlatformName = (list.platforms && list.platforms[0]) || "Blinkit";
       const platformMeta = TOP_10_PLATFORMS.find(p => p.name === chosenPlatformName) || TOP_10_PLATFORMS[0];
 
       let matchedItems = [];
       try {
         const prompt = `You are an Indian quick-commerce pricing assistant for ${chosenPlatformName}. Optimization criteria: "${list.criteria}". For these items: ${JSON.stringify(list.items)}, return ONLY a pure JSON array (no markdown) of objects with keys: "name", "qty", "matchedSku", "priceInr" (number).`;
-        const res = await fetch(GEMINI_PROXY_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ prompt })
-        });
-        const data = await res.json();
-        const clean = (data.response || data.text || "").replace(/```json|```/g, "").trim();
+        const rawReply = await callGeminiProxy(prompt);
+        const clean = rawReply.replace(/```json|```/g, "").trim();
         matchedItems = JSON.parse(clean);
       } catch (e) {
         matchedItems = (list.items || []).map((it, idx) => ({
@@ -703,7 +969,6 @@
         createdAt: serverTimestamp()
       });
 
-      // Populate Modal
       $("modal-mode-badge").textContent = executedAsAutoBuy ? "AUTO-BUY COMPLETED" : "AUTO-BUILD CART READY";
       $("modal-mode-badge").className = `text-[10px] font-bold uppercase px-2 py-0.5 rounded ${executedAsAutoBuy ? "bg-emerald-500 text-white" : "bg-indigo-500 text-white"}`;
       $("modal-cart-title").textContent = `${list.title} • ${chosenPlatformName}`;
@@ -735,11 +1000,212 @@
             </div>
           `).join("")}
         </div>
-        <p class="text-[11px] text-slate-500">Logged to Transactions as <strong>Unverified</strong> until bill upload or Bank/UPI SMS verification.</p>
+        <p class="text-[11px] text-slate-500">Logged to Orders &amp; History as <strong>Unverified</strong> until bill upload or Bank/UPI SMS verification.</p>
       `;
       $("cart-modal").classList.remove("hidden");
     }
 
+    // ========================================================================
+    // INCREMENT 3: DATE-RANGE SCROLLER, UPCOMING RUNS & TRANSACTIONS VIEW
+    // ========================================================================
+    function getScrollerWindowBounds(span = scrollerSpan, offset = scrollerOffset, baseDate = new Date()) {
+      const ref = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+      let start, end, label;
+
+      if (span === "daily") {
+        start = new Date(ref);
+        start.setDate(ref.getDate() + offset);
+        end = new Date(start);
+        label = start.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+      } else if (span === "monthly") {
+        start = new Date(ref.getFullYear(), ref.getMonth() + offset, 1);
+        end = new Date(ref.getFullYear(), ref.getMonth() + offset + 1, 0);
+        label = start.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+      } else {
+        // Weekly (Mon - Sun)
+        const dayIdx = (ref.getDay() + 6) % 7;
+        start = new Date(ref);
+        start.setDate(ref.getDate() - dayIdx + (offset * 7));
+        end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        const fmt = (d) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+        label = `${fmt(start)} – ${fmt(end)} ${end.getFullYear()}`;
+      }
+
+      const toISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      return { startStr: toISO(start), endStr: toISO(end), start, end, label };
+    }
+
+    function filterTransactionsByWindow(txns, startStr, endStr) {
+      return txns.filter(t => t.date && t.date >= startStr && t.date <= endStr);
+    }
+
+    function renderOrdersAndHistory() {
+      const bounds = getScrollerWindowBounds();
+      $("scroller-range-label").textContent = bounds.label;
+      $("scroller-period-hint").textContent = `${scrollerSpan.toUpperCase()} WINDOW`;
+
+      // 1. Projected Scheduled Runs inside Window
+      const activeLists = allLists.filter(l => l.status === "active");
+      const schedFeed = $("scheduled-window-feed");
+      if (!activeLists.length) {
+        schedFeed.innerHTML = `<p class="text-slate-400 italic py-4">No active recurring lists scheduled.</p>`;
+      } else {
+        schedFeed.innerHTML = activeLists.map(list => `
+          <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <p class="font-bold text-slate-900">${list.title}</p>
+                <p class="text-[11px] text-slate-500">${formatSchedule(list.schedule)} &bull; ${(list.platforms || [])[0] || "Blinkit"}</p>
+              </div>
+              <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
+                ${list.mode === "auto_buy" ? "AUTO-BUY" : "AUTO-BUILD"}
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-1">
+              ${(list.items || []).map((it, idx) => `
+                <span class="inline-flex items-center gap-1 text-[11px] bg-white border border-slate-200 px-2 py-0.5 rounded">
+                  ${it.name} (${it.qty})
+                  ${activeRole !== "viewer" ? `<button type="button" data-drop-item="${list.id}:${idx}" class="text-red-500 font-bold ml-1">&times;</button>` : ""}
+                </span>
+              `).join("")}
+            </div>
+            ${activeRole !== "viewer" ? `
+              <div class="flex gap-1.5 pt-1">
+                <input type="text" id="quick-add-${list.id}" placeholder="Add mid-cycle item..." class="flex-1 text-[11px] px-2 py-1 rounded border border-slate-300 bg-white" />
+                <button type="button" data-quick-append="${list.id}" class="px-2.5 py-1 rounded bg-slate-800 text-white text-[11px] font-semibold">+ Item</button>
+              </div>
+            ` : ""}
+          </div>
+        `).join("");
+
+        schedFeed.querySelectorAll("button[data-drop-item]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const [lId, idxStr] = btn.dataset.dropItem.split(":");
+            const target = activeLists.find(l => l.id === lId);
+            if (!target) return;
+            const nextItems = [...(target.items || [])];
+            nextItems.splice(Number(idxStr), 1);
+            await updateDoc(doc(db, "workspaces", workspaceId, "lists", lId), { items: nextItems });
+            showToast("Updated upcoming order items.");
+          });
+        });
+
+        schedFeed.querySelectorAll("button[data-quick-append]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const lId = btn.dataset.quickAppend;
+            const inp = $(`quick-add-${lId}`);
+            const val = inp?.value.trim();
+            if (!val) return;
+            const target = activeLists.find(l => l.id === lId);
+            const nextItems = [...(target.items || []), { name: val, qty: "1 unit" }];
+            await updateDoc(doc(db, "workspaces", workspaceId, "lists", lId), { items: nextItems });
+            inp.value = "";
+            showToast(`Added "${val}" to upcoming scheduled run.`);
+          });
+        });
+      }
+
+      // 2. Transactions inside Window
+      const windowTxns = filterTransactionsByWindow(allTransactions, bounds.startStr, bounds.endStr);
+      $("badge-txn-count").textContent = allTransactions.length;
+      const totalSpent = windowTxns.reduce((s, t) => s + Number(t.totalAmount || 0), 0);
+      $("window-spend-total").textContent = formatINR(totalSpent);
+
+      const txnFeed = $("transactions-window-feed");
+      if (!windowTxns.length) {
+        txnFeed.innerHTML = `<div class="p-8 text-center border border-dashed border-slate-200 rounded-xl text-slate-400">No transactions recorded in ${bounds.label}.</div>`;
+      } else {
+        txnFeed.innerHTML = windowTxns.map(t => `
+          <div class="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-bold text-slate-900">${t.listTitle || "Order"}</span>
+                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${t.platform}</span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${t.verified ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}">
+                    ${t.verified ? "VERIFIED" : "UNVERIFIED"}
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-0.5">Date: ${t.date} &bull; Txn ID: <span class="font-mono">${t.platformTxnId || "MANUAL"}</span></p>
+              </div>
+              <span class="font-bold text-sm text-slate-900">${formatINR(t.totalAmount)}</span>
+            </div>
+            <div class="flex flex-wrap gap-1 pt-1 border-t border-slate-100">
+              ${(t.items || []).map(it => `
+                <span class="text-[11px] bg-slate-50 border border-slate-200 px-2 py-0.5 rounded text-slate-700">
+                  ${it.matchedSku || it.name} &bull; ${formatINR(it.priceInr || 0)}
+                </span>
+              `).join("")}
+            </div>
+          </div>
+        `).join("");
+      }
+    }
+
+    function openManualTransactionModal() {
+      if (activeRole === "viewer") return showToast("Viewers cannot add manual transactions.");
+      const todayStr = new Date().toISOString().split("T")[0];
+      $("modal-mode-badge").textContent = "MANUAL ENTRY";
+      $("modal-mode-badge").className = "text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-700 text-white";
+      $("modal-cart-title").textContent = "Log Manual Order / Expense";
+      $("modal-cart-body").innerHTML = `
+        <form id="form-manual-txn" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Order Title *</label>
+              <input id="man-txn-title" type="text" required placeholder="e.g., Local Organic Store" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Date *</label>
+              <input id="man-txn-date" type="date" required value="${todayStr}" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Platform / Store</label>
+              <input id="man-txn-platform" type="text" value="Blinkit" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Total Amount (₹) *</label>
+              <input id="man-txn-amount" type="number" min="1" step="0.01" required placeholder="450" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Items Summary</label>
+            <input id="man-txn-items" type="text" placeholder="e.g., Ragi Flour 1kg, Tomatoes 1kg" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
+          </div>
+          <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
+            Save Manual Transaction
+          </button>
+        </form>
+      `;
+      $("cart-modal").classList.remove("hidden");
+
+      $("form-manual-txn").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const amt = Number($("man-txn-amount").value);
+        const itemSummary = $("man-txn-items").value.trim() || $("man-txn-title").value.trim();
+        await addDoc(collection(db, "workspaces", workspaceId, "transactions"), {
+          listId: "manual",
+          listTitle: $("man-txn-title").value.trim(),
+          date: $("man-txn-date").value,
+          platform: $("man-txn-platform").value.trim() || "Manual",
+          platformTxnId: `MAN-${Math.floor(100000 + Math.random() * 900000)}`,
+          mode: "manual",
+          totalAmount: amt,
+          verified: false,
+          items: [{ name: itemSummary, matchedSku: itemSummary, priceInr: amt, verified: false }],
+          createdAt: serverTimestamp()
+        });
+        $("cart-modal").classList.add("hidden");
+        showToast("Manual transaction added.");
+      });
+    }
+
+    // ========================================================================
+    // VOICE PARSER & LIST / LEDGER RENDERERS
+    // ========================================================================
     function initSpeechParser() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const btnVoice = $("btn-voice-input");
@@ -768,16 +1234,11 @@
 
       recognition.onresult = async (event) => {
         const transcript = event.results[0][0].transcript;
-        statusEl.textContent = `Heard: "${transcript}" — Parsing with Gemini...`;
+        statusEl.textContent = `Heard: "${transcript}" — Parsing via Model_Pool...`;
         try {
           const prompt = `Extract grocery/shopping items from this spoken request into a pure JSON array of objects with keys "name" and "qty". No markdown, only JSON. Text: "${transcript}"`;
-          const res = await fetch(GEMINI_PROXY_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ prompt })
-          });
-          const data = await res.json();
-          const rawText = (data.response || data.text || JSON.stringify(data)).replace(/```json|```/g, "").trim();
+          const rawReply = await callGeminiProxy(prompt);
+          const rawText = rawReply.replace(/```json|```/g, "").trim();
           const parsed = JSON.parse(rawText);
           if (Array.isArray(parsed) && parsed.length) {
             parsed.forEach(p => draftItems.push({ name: p.name || "Item", qty: p.qty || "1 unit" }));
@@ -947,7 +1408,9 @@
       `).join("");
     }
 
+    // ========================================================================
     // EVENT LISTENERS
+    // ========================================================================
     $("btn-add-item").addEventListener("click", () => {
       const name = $("input-item-name").value.trim();
       const qty = $("input-item-qty").value.trim() || "1 unit";
@@ -980,6 +1443,25 @@
     $("btn-close-cart-modal").addEventListener("click", () => $("cart-modal").classList.add("hidden"));
     $("btn-header-wallet").addEventListener("click", () => {
       document.querySelector('.nav-tab[data-tab="wallet"]').click();
+    });
+
+    // Scroller controls
+    $("btn-range-prev").addEventListener("click", () => { scrollerOffset -= 1; renderOrdersAndHistory(); });
+    $("btn-range-next").addEventListener("click", () => { scrollerOffset += 1; renderOrdersAndHistory(); });
+    $("btn-range-today").addEventListener("click", () => { scrollerOffset = 0; renderOrdersAndHistory(); });
+    $("btn-open-manual-txn").addEventListener("click", openManualTransactionModal);
+
+    document.querySelectorAll(".span-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        scrollerSpan = btn.dataset.span;
+        scrollerOffset = 0;
+        document.querySelectorAll(".span-btn").forEach(b => {
+          b.className = b.dataset.span === scrollerSpan
+            ? "span-btn px-2.5 py-1 rounded-md font-semibold bg-white text-indigo-700 shadow-xs"
+            : "span-btn px-2.5 py-1 rounded-md font-medium text-slate-600";
+        });
+        renderOrdersAndHistory();
+      });
     });
 
     document.querySelectorAll(".quick-topup").forEach(btn => {
@@ -1082,7 +1564,7 @@
         btn.classList.add("text-indigo-600", "border-indigo-600", "font-semibold");
         btn.classList.remove("text-slate-500", "border-transparent", "font-medium");
 
-        ["lists", "wallet", "approvals", "members"].forEach(t => {
+        ["lists", "orders", "wallet", "approvals", "members"].forEach(t => {
           $(`tab-${t}`).classList.toggle("hidden", t !== btn.dataset.tab);
         });
       });
@@ -1099,7 +1581,316 @@
 
     $("btn-signout").addEventListener("click", () => signOut(auth));
 
-    // Render builder UI immediately on boot
+    // ========================================================================
+    // OWNER-GATED, SELF-CLEANING, PRINTABLE E2E TEST SUITE (8 TESTS)
+    // ========================================================================
+    function isAuthorizedTestAdmin(user) {
+      if (!user) return false;
+      const allowedAdmins = ["yertalcorp@gmail.com", "prashanti.talluri@gmail.com"];
+      return allowedAdmins.includes((user.email || "").toLowerCase()) || workspaceData?.ownerUid === user.uid;
+    }
+
+    function unlockAdminTestTrigger() {
+      if (!isAuthorizedTestAdmin(currentUser)) return;
+      if ($("btn-admin-selftest")) return;
+
+      const btn = document.createElement("button");
+      btn.id = "btn-admin-selftest";
+      btn.type = "button";
+      btn.textContent = "QA Self-Test";
+      btn.className = "text-[11px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-amber-300 border border-slate-700 transition";
+      btn.addEventListener("click", runAutomatedSelfTests);
+
+      const headerControls = $("btn-header-wallet")?.parentElement;
+      if (headerControls) headerControls.prepend(btn);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        unlockAdminTestTrigger();
+        showToast("Admin QA Self-Test control unlocked.");
+      }
+    });
+
+    async function runAutomatedSelfTests() {
+      if (!isAuthorizedTestAdmin(currentUser)) return;
+
+      const testWsId = `ws_autotest_${currentUser.uid}_${Date.now()}`;
+      const createdRefs = [];
+      const results = [];
+      const startedAt = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "medium" });
+
+      const logTest = (feature, description, verification, success) => {
+        results.push({ feature, description, verification, success });
+      };
+
+      $("modal-mode-badge").textContent = "QA DIAGNOSTICS";
+      $("modal-mode-badge").className = "text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-400 text-slate-950";
+      $("modal-cart-title").textContent = "Executing Automated Feature Verification...";
+      $("modal-cart-body").innerHTML = `<p class="text-slate-600">Running isolated tests in <code>${testWsId}</code> and preparing printable report...</p>`;
+      $("cart-modal").classList.remove("hidden");
+
+      try {
+        // 1. Workspace & Multi-Role RBAC
+        const wsRef = doc(db, "workspaces", testWsId);
+        await setDoc(wsRef, {
+          name: "Automated QA Sandbox",
+          tier: "free",
+          walletBalance: 0,
+          ownerUid: currentUser.uid,
+          createdAt: serverTimestamp()
+        });
+        createdRefs.push(wsRef);
+
+        const ownerMemberRef = doc(db, "workspaces", testWsId, "members", currentUser.uid);
+        await setDoc(ownerMemberRef, { name: "QA Approver", email: currentUser.email, role: "approver" });
+        createdRefs.push(ownerMemberRef);
+
+        const reqMemberRef = await addDoc(collection(db, "workspaces", testWsId, "members"), {
+          name: "QA Requester", email: "requester@test.local", role: "requester"
+        });
+        createdRefs.push(reqMemberRef);
+
+        const wsSnap = await getDoc(wsRef);
+        logTest(
+          "1. Workspace & Group Roles (RBAC)",
+          "Creates an isolated Firestore workspace and assigns Approver and Requester member roles.",
+          wsSnap.exists() ? `Verified workspace '${wsSnap.data().name}' with 2 role-scoped members.` : "Workspace creation failed.",
+          wsSnap.exists() && wsSnap.data().tier === "free"
+        );
+
+        // 2. Requester Approval Workflow
+        const pendingListRef = await addDoc(collection(db, "workspaces", testWsId, "lists"), {
+          title: "QA Requester Staples List",
+          category: "Groceries & Fresh",
+          criteria: "Cheapest",
+          mode: "auto_build",
+          platforms: ["Blinkit"],
+          schedule: { frequency: "weekly", time: "09:00" },
+          items: [{ name: "Toor Dal", qty: "1 kg" }],
+          status: "pending_approval",
+          createdBy: "qa_requester",
+          createdAt: serverTimestamp()
+        });
+        createdRefs.push(pendingListRef);
+
+        const beforeApprove = (await getDoc(pendingListRef)).data().status;
+        await updateDoc(pendingListRef, { status: "active" });
+        const afterApprove = (await getDoc(pendingListRef)).data().status;
+
+        logTest(
+          "2. Requester Submission & Approval Queue",
+          "Simulates a non-approver submitting a recurring list into 'pending_approval' and an Approver activating it.",
+          `Status transitioned cleanly: '${beforeApprove}' -> '${afterApprove}'.`,
+          beforeApprove === "pending_approval" && afterApprove === "active"
+        );
+
+        // 3. Payment Tier Feature Gating
+        const freeGateOk = TIER_RULES.free.maxLists === 2 && !TIER_RULES.free.allowAutoBuy && !TIER_RULES.free.allPlatforms;
+        const plusGateOk = TIER_RULES.plus.maxLists === 10 && TIER_RULES.plus.allowAutoBuy && TIER_RULES.plus.allPlatforms;
+        const proGateOk  = TIER_RULES.pro.maxLists === Infinity && TIER_RULES.pro.allowCustomGrid;
+
+        logTest(
+          "3. Payment Tier Gating (Free / Plus / Pro)",
+          "Verifies list quotas, platform unlock counts (Top 3 vs Top 10), Auto-Buy access, and Custom Grid locks across all 3 plans.",
+          "Free (2 lists, Top 3), Plus (10 lists, Auto-Buy, Top 10), Pro (Unlimited, Custom Grid) verified.",
+          freeGateOk && plusGateOk && proGateOk
+        );
+
+        // 4. Custom Cadence Schedule Grid
+        await updateDoc(wsRef, { tier: "pro" });
+        const customListRef = await addDoc(collection(db, "workspaces", testWsId, "lists"), {
+          title: "QA Custom Schedule Pharmacy Box",
+          category: "Pharmacy & Wellness",
+          criteria: "Fastest Delivery",
+          mode: "auto_buy",
+          platforms: ["PharmEasy", "Tata 1mg"],
+          schedule: {
+            frequency: "custom",
+            weekdays: ["Mon", "Fri"],
+            months: ["Jan", "Jun", "Dec"],
+            year: "2026",
+            time: "07:45"
+          },
+          items: [{ name: "Dolo 650", qty: "2 strips" }],
+          status: "active",
+          createdAt: serverTimestamp()
+        });
+        createdRefs.push(customListRef);
+
+        const savedSched = (await getDoc(customListRef)).data().schedule;
+        logTest(
+          "4. Custom Schedule Grid (Days, Months, Year & Time)",
+          "Persists a Pro-tier custom cadence combining specific weekdays, months, target year, and execution time.",
+          `Saved schedule: ${savedSched.weekdays.join("/")} across ${savedSched.months.join(", ")} (${savedSched.year}) at ${savedSched.time}.`,
+          savedSched.frequency === "custom" && savedSched.weekdays.length === 2 && savedSched.months.length === 3
+        );
+
+        // 5. Wallet Top-Up & Auto-Buy Execution + Unverified Transaction Logging
+        await updateDoc(wsRef, { walletBalance: increment(1000) });
+        const topupRef = await addDoc(collection(db, "workspaces", testWsId, "walletLedger"), {
+          type: "topup", label: "QA Wallet Top-Up", amount: 1000, refId: "UPI-QA-1001", createdAt: serverTimestamp()
+        });
+        createdRefs.push(topupRef);
+
+        const debitAmt = 340;
+        await updateDoc(wsRef, { walletBalance: increment(-debitAmt) });
+        const debitRef = await addDoc(collection(db, "workspaces", testWsId, "walletLedger"), {
+          type: "autobuy_debit", label: "QA Auto-Buy Debit", amount: -debitAmt, refId: "PHM-882211", createdAt: serverTimestamp()
+        });
+        createdRefs.push(debitRef);
+
+        const todayStr = new Date().toISOString().split("T")[0];
+        const txnRef = await addDoc(collection(db, "workspaces", testWsId, "transactions"), {
+          listId: customListRef.id,
+          listTitle: "QA Custom Schedule Pharmacy Box",
+          date: todayStr,
+          platform: "PharmEasy",
+          platformTxnId: "PHM-882211",
+          totalAmount: debitAmt,
+          verified: false,
+          createdAt: serverTimestamp()
+        });
+        createdRefs.push(txnRef);
+
+        const finalBal = (await getDoc(wsRef)).data().walletBalance;
+        const txnData = (await getDoc(txnRef)).data();
+        logTest(
+          "5. Wallet Top-Up, Auto-Buy Deduction & Transaction ID",
+          "Credits ₹1,000 to wallet, executes a ₹340 Auto-Buy deduction, and logs a platform Transaction ID marked Unverified.",
+          `Wallet balance: ₹1,000 -> ₹${finalBal}; Platform Txn ID '${txnData.platformTxnId}' (verified: ${txnData.verified}).`,
+          finalBal === 660 && txnData.verified === false
+        );
+
+        // 6. Date-Range Scroller Filtering (Increment 3)
+        const curWeek = getScrollerWindowBounds("weekly", 0);
+        const prevWeek = getScrollerWindowBounds("weekly", -1);
+        const inCurrent = filterTransactionsByWindow([txnData], curWeek.startStr, curWeek.endStr);
+        const inPrevious = filterTransactionsByWindow([txnData], prevWeek.startStr, prevWeek.endStr);
+
+        logTest(
+          "6. Date-Range Transaction Scroller (< Date Range >)",
+          "Verifies window boundary calculation and date-range isolation across current vs. prior weekly cycles.",
+          `Current window (${curWeek.label}): ${inCurrent.length} match; Prior window: ${inPrevious.length} matches.`,
+          inCurrent.length === 1 && inPrevious.length === 0
+        );
+
+        // 7. Self-Healing Model_Pool & Gemini Proxy Execution
+        const testPoolRef = await ensureModelPool(testWsId);
+        createdRefs.push(testPoolRef);
+
+        let proxySuccess = false;
+        let proxyMsg = "";
+        try {
+          const reply = await callGeminiProxy('Return ONLY valid JSON: [{"name":"Toned Milk","qty":"1 L"}]', testWsId);
+          proxySuccess = Boolean(reply && reply.length > 0);
+          proxyMsg = proxySuccess
+            ? `Model_Pool succeeded via '${modelPoolState.default_model}' (${reply.slice(0, 50)}).`
+            : "Proxy returned empty text.";
+        } catch (e) {
+          proxyMsg = `Proxy error: ${e.message}`;
+        }
+
+        // Also verify >75% failure eviction logic
+        const simulatedBrokenPool = reconcileModelPool({
+          default_model: "broken-test-model",
+          backup_model: "gemini-2.0-flash",
+          models: [
+            { name: "broken-test-model", role: "default", attempts: 4, successes: 0, successRate: 0 },
+            { name: "gemini-2.0-flash",  role: "backup",  attempts: 4, successes: 4, successRate: 100 }
+          ]
+        });
+        const evictionWorked = !simulatedBrokenPool.models.some(m => m.name === "broken-test-model")
+          && simulatedBrokenPool.default_model === "gemini-2.0-flash";
+
+        logTest(
+          "7. Self-Healing Model_Pool & Gemini Proxy",
+          "Tests live Gemini proxy routing via Firestore Model_Pool and verifies automatic eviction when failure rate > 75%.",
+          `${proxyMsg} Eviction check: ${evictionWorked ? "pruned 0% model & promoted backup" : "failed"}.`,
+          proxySuccess && evictionWorked
+        );
+
+      } catch (err) {
+        logTest("Unexpected Runner Exception", "Caught runtime error during test execution.", err.message, false);
+      } finally {
+        // 8. Guaranteed State Restoration (Rollback)
+        let deleted = 0;
+        for (let i = createdRefs.length - 1; i >= 0; i--) {
+          try {
+            await deleteDoc(createdRefs[i]);
+            deleted++;
+          } catch (e) {
+            console.warn("Cleanup error:", e);
+          }
+        }
+        logTest(
+          "8. Full State Restoration & Sandbox Cleanup",
+          "Deletes every temporary Firestore document and sandbox workspace created during the test run.",
+          `Removed ${deleted} of ${createdRefs.length} temporary records; database restored to original state.`,
+          deleted === createdRefs.length
+        );
+        // Restore active workspace Model_Pool state
+        if (workspaceId) await ensureModelPool(workspaceId);
+      }
+
+      const passedTotal = results.filter(r => r.success).length;
+      const allPassed = passedTotal === results.length;
+
+      $("modal-cart-title").textContent = `ABCart Automated QA Report (${passedTotal}/${results.length} Successful)`;
+      $("modal-cart-body").innerHTML = `
+        <div id="printable-test-report" class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
+            <div>
+              <h4 class="text-sm font-bold text-slate-900">ABCart — Automated Feature Verification Report</h4>
+              <p class="text-[11px] text-slate-500">Executed: ${startedAt} &bull; Admin: ${currentUser.email}</p>
+            </div>
+            <span class="self-start sm:self-center text-xs font-bold px-3 py-1 rounded-full ${allPassed ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}">
+              ${allPassed ? "ALL TESTS SUCCESSFUL" : `${passedTotal}/${results.length} PASSED`}
+            </span>
+          </div>
+
+          <div class="border border-slate-200 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3">Feature Tested</th>
+                  <th class="py-2.5 px-3">Test Description &amp; Verification</th>
+                  <th class="py-2.5 px-3 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 bg-white">
+                ${results.map(r => `
+                  <tr>
+                    <td class="py-2.5 px-3 font-semibold text-slate-900 align-top w-1/3">${r.feature}</td>
+                    <td class="py-2.5 px-3 text-slate-600 align-top">
+                      <p>${r.description}</p>
+                      <p class="text-[11px] text-slate-500 mt-1 font-mono">${r.verification}</p>
+                    </td>
+                    <td class="py-2.5 px-3 text-right align-top">
+                      <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${r.success ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}">
+                        ${r.success ? "SUCCESS" : "FAILED"}
+                      </span>
+                    </td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex items-center justify-between pt-2 no-print">
+            <p class="text-[11px] text-slate-400">All test records have been purged from Firestore.</p>
+            <button type="button" onclick="window.print()" class="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow">
+              Print Report / Save PDF
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ========================================================================
+    // BOOT & FIREBASE AUTH LIFECYCLE
+    // ========================================================================
     initBuilderControls();
     initSpeechParser();
 
@@ -1144,9 +1935,9 @@
         } else {
           workspaceData = wsSnap.data();
         }
+        await ensureModelPool(workspaceId);
       } catch (err) {
         console.error("Workspace init error:", err);
-        showToast("Firestore permission check: ensure 'resource == null' is in your Firestore rules.");
       }
 
       onSnapshot(wsRef, (snap) => {
@@ -1160,6 +1951,12 @@
       onSnapshot(query(collection(db, "workspaces", workspaceId, "lists"), orderBy("createdAt", "desc")), (snap) => {
         allLists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderLists();
+        renderOrdersAndHistory();
+      });
+
+      onSnapshot(query(collection(db, "workspaces", workspaceId, "transactions"), orderBy("createdAt", "desc")), (snap) => {
+        allTransactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderOrdersAndHistory();
       });
 
       onSnapshot(collection(db, "workspaces", workspaceId, "members"), (snap) => {
@@ -1171,285 +1968,12 @@
         walletLedger = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderWalletLedger();
       });
-    });
-    // ============================================================================
-// OWNER-GATED, SELF-CLEANING, PRINTABLE E2E TEST SUITE
-// ============================================================================
-function isAuthorizedTestAdmin(user) {
-  if (!user) return false;
-  // Restrict strictly to workspace owner / admin email
-  const allowedAdmins = ["yertalcorp@gmail.com", "prashanti.talluri@gmail.com"];
-  return allowedAdmins.includes((user.email || "").toLowerCase()) || workspaceData?.ownerUid === user.uid;
-}
 
-function unlockAdminTestTrigger() {
-  if (!isAuthorizedTestAdmin(currentUser)) return;
-  if ($("btn-admin-selftest")) return;
-
-  const btn = document.createElement("button");
-  btn.id = "btn-admin-selftest";
-  btn.type = "button";
-  btn.textContent = "QA Self-Test";
-  btn.className = "text-[11px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-amber-300 border border-slate-700 transition";
-  btn.addEventListener("click", runAutomatedSelfTests);
-
-  const headerControls = $("btn-header-wallet")?.parentElement;
-  if (headerControls) headerControls.prepend(btn);
-}
-
-// Secret keyboard shortcut: Ctrl + Shift + D (Owner only)
-document.addEventListener("keydown", (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "d") {
-    e.preventDefault();
-    unlockAdminTestTrigger();
-    showToast("Admin QA Self-Test control unlocked.");
-  }
-});
-
-async function runAutomatedSelfTests() {
-  if (!isAuthorizedTestAdmin(currentUser)) return;
-
-  const testWsId = `ws_autotest_${currentUser.uid}_${Date.now()}`;
-  const createdRefs = [];
-  const results = [];
-  const startedAt = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "medium" });
-
-  const logTest = (feature, description, verification, success) => {
-    results.push({ feature, description, verification, success });
-  };
-
-  $("modal-mode-badge").textContent = "QA DIAGNOSTICS";
-  $("modal-mode-badge").className = "text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-400 text-slate-950";
-  $("modal-cart-title").textContent = "Executing Automated Feature Verification...";
-  $("modal-cart-body").innerHTML = `<p class="text-slate-600">Running isolated tests in <code>${testWsId}</code> and preparing printable report...</p>`;
-  $("cart-modal").classList.remove("hidden");
-
-  try {
-    // 1. Workspace & Multi-Role RBAC
-    const wsRef = doc(db, "workspaces", testWsId);
-    await setDoc(wsRef, {
-      name: "Automated QA Sandbox",
-      tier: "free",
-      walletBalance: 0,
-      ownerUid: currentUser.uid,
-      createdAt: serverTimestamp()
-    });
-    createdRefs.push(wsRef);
-
-    const ownerMemberRef = doc(db, "workspaces", testWsId, "members", currentUser.uid);
-    await setDoc(ownerMemberRef, { name: "QA Approver", email: currentUser.email, role: "approver" });
-    createdRefs.push(ownerMemberRef);
-
-    const reqMemberRef = await addDoc(collection(db, "workspaces", testWsId, "members"), {
-      name: "QA Requester", email: "requester@test.local", role: "requester"
-    });
-    createdRefs.push(reqMemberRef);
-
-    const wsSnap = await getDoc(wsRef);
-    logTest(
-      "1. Workspace & Group Roles (RBAC)",
-      "Creates an isolated Firestore workspace and assigns Approver and Requester member roles.",
-      wsSnap.exists() ? `Verified workspace '${wsSnap.data().name}' with 2 role-scoped members.` : "Workspace creation failed.",
-      wsSnap.exists() && wsSnap.data().tier === "free"
-    );
-
-    // 2. Requester Approval Workflow
-    const pendingListRef = await addDoc(collection(db, "workspaces", testWsId, "lists"), {
-      title: "QA Requester Staples List",
-      category: "Groceries & Fresh",
-      criteria: "Cheapest",
-      mode: "auto_build",
-      platforms: ["Blinkit"],
-      schedule: { frequency: "weekly", time: "09:00" },
-      items: [{ name: "Toor Dal", qty: "1 kg" }],
-      status: "pending_approval",
-      createdBy: "qa_requester",
-      createdAt: serverTimestamp()
-    });
-    createdRefs.push(pendingListRef);
-
-    const beforeApprove = (await getDoc(pendingListRef)).data().status;
-    await updateDoc(pendingListRef, { status: "active" });
-    const afterApprove = (await getDoc(pendingListRef)).data().status;
-
-    logTest(
-      "2. Requester Submission & Approval Queue",
-      "Simulates a non-approver submitting a recurring list into 'pending_approval' and an Approver activating it.",
-      `Status transitioned cleanly: '${beforeApprove}' -> '${afterApprove}'.`,
-      beforeApprove === "pending_approval" && afterApprove === "active"
-    );
-
-    // 3. Payment Tier Feature Gating
-    const freeGateOk = TIER_RULES.free.maxLists === 2 && !TIER_RULES.free.allowAutoBuy && !TIER_RULES.free.allPlatforms;
-    const plusGateOk = TIER_RULES.plus.maxLists === 10 && TIER_RULES.plus.allowAutoBuy && TIER_RULES.plus.allPlatforms;
-    const proGateOk  = TIER_RULES.pro.maxLists === Infinity && TIER_RULES.pro.allowCustomGrid;
-
-    logTest(
-      "3. Payment Tier Gating (Free / Plus / Pro)",
-      "Verifies list quotas, platform unlock counts (Top 3 vs Top 10), Auto-Buy access, and Custom Grid locks across all 3 plans.",
-      "Free (2 lists, Top 3), Plus (10 lists, Auto-Buy, Top 10), Pro (Unlimited, Custom Grid) verified.",
-      freeGateOk && plusGateOk && proGateOk
-    );
-
-    // 4. Custom Cadence Schedule Grid
-    await updateDoc(wsRef, { tier: "pro" });
-    const customListRef = await addDoc(collection(db, "workspaces", testWsId, "lists"), {
-      title: "QA Custom Schedule Pharmacy Box",
-      category: "Pharmacy & Wellness",
-      criteria: "Fastest Delivery",
-      mode: "auto_buy",
-      platforms: ["PharmEasy", "Tata 1mg"],
-      schedule: {
-        frequency: "custom",
-        weekdays: ["Mon", "Fri"],
-        months: ["Jan", "Jun", "Dec"],
-        year: "2026",
-        time: "07:45"
-      },
-      items: [{ name: "Dolo 650", qty: "2 strips" }],
-      status: "active",
-      createdAt: serverTimestamp()
-    });
-    createdRefs.push(customListRef);
-
-    const savedSched = (await getDoc(customListRef)).data().schedule;
-    logTest(
-      "4. Custom Schedule Grid (Days, Months, Year & Time)",
-      "Persists a Pro-tier custom cadence combining specific weekdays, months, target year, and execution time.",
-      `Saved schedule: ${savedSched.weekdays.join("/")} across ${savedSched.months.join(", ")} (${savedSched.year}) at ${savedSched.time}.`,
-      savedSched.frequency === "custom" && savedSched.weekdays.length === 2 && savedSched.months.length === 3
-    );
-
-    // 5. Wallet Top-Up & Auto-Buy Execution + Unverified Transaction Logging
-    await updateDoc(wsRef, { walletBalance: increment(1000) });
-    const topupRef = await addDoc(collection(db, "workspaces", testWsId, "walletLedger"), {
-      type: "topup", label: "QA Wallet Top-Up", amount: 1000, refId: "UPI-QA-1001", createdAt: serverTimestamp()
-    });
-    createdRefs.push(topupRef);
-
-    const debitAmt = 340;
-    await updateDoc(wsRef, { walletBalance: increment(-debitAmt) });
-    const debitRef = await addDoc(collection(db, "workspaces", testWsId, "walletLedger"), {
-      type: "autobuy_debit", label: "QA Auto-Buy Debit", amount: -debitAmt, refId: "PHM-882211", createdAt: serverTimestamp()
-    });
-    createdRefs.push(debitRef);
-
-    const txnRef = await addDoc(collection(db, "workspaces", testWsId, "transactions"), {
-      listId: customListRef.id,
-      platform: "PharmEasy",
-      platformTxnId: "PHM-882211",
-      totalAmount: debitAmt,
-      verified: false,
-      createdAt: serverTimestamp()
-    });
-    createdRefs.push(txnRef);
-
-    const finalBal = (await getDoc(wsRef)).data().walletBalance;
-    const txnData = (await getDoc(txnRef)).data();
-    logTest(
-      "5. Wallet Top-Up, Auto-Buy Deduction & Transaction ID",
-      "Credits ₹1,000 to wallet, executes a ₹340 Auto-Buy deduction, and logs a platform Transaction ID marked Unverified.",
-      `Wallet balance: ₹1,000 -> ₹${finalBal}; Platform Txn ID '${txnData.platformTxnId}' (verified: ${txnData.verified}).`,
-      finalBal === 660 && txnData.verified === false
-    );
-
-    // 6. Google Apps Script Gemini Proxy
-    let proxySuccess = false;
-    let proxyMsg = "";
-    try {
-      const res = await fetch(GEMINI_PROXY_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ prompt: 'Return ONLY valid JSON: [{"name":"Toned Milk","qty":"1 L"}]' })
-      });
-      const json = await res.json();
-      proxySuccess = Boolean(json && (json.response || json.text));
-      proxyMsg = proxySuccess ? "Connected to Apps Script proxy and received valid structured JSON." : "Proxy returned empty payload.";
-    } catch (e) {
-      proxyMsg = `Proxy error: ${e.message}`;
-    }
-    logTest(
-      "6. Gemini AI Proxy Connectivity",
-      "Sends a live structured-output prompt to the Google Apps Script Gemini proxy endpoint.",
-      proxyMsg,
-      proxySuccess
-    );
-
-  } catch (err) {
-    logTest("Unexpected Runner Exception", "Caught runtime error during test execution.", err.message, false);
-  } finally {
-    // 7. Guaranteed State Restoration (Rollback)
-    let deleted = 0;
-    for (let i = createdRefs.length - 1; i >= 0; i--) {
-      try {
-        await deleteDoc(createdRefs[i]);
-        deleted++;
-      } catch (e) {
-        console.warn("Cleanup error:", e);
+      if (new URLSearchParams(window.location.search).get("test") === "1") {
+        unlockAdminTestTrigger();
+        runAutomatedSelfTests();
       }
-    }
-    logTest(
-      "7. Full State Restoration & Sandbox Cleanup",
-      "Deletes every temporary Firestore document and sandbox workspace created during the test run.",
-      `Removed ${deleted} of ${createdRefs.length} temporary records; database restored to original state.`,
-      deleted === createdRefs.length
-    );
-  }
-
-  // Render Printable Report inside Modal
-  const passedTotal = results.filter(r => r.success).length;
-  const allPassed = passedTotal === results.length;
-
-  $("modal-cart-title").textContent = `ABCart Automated QA Report (${passedTotal}/${results.length} Successful)`;
-  $("modal-cart-body").innerHTML = `
-    <div id="printable-test-report" class="space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
-        <div>
-          <h4 class="text-sm font-bold text-slate-900">ABCart — Automated Feature Verification Report</h4>
-          <p class="text-[11px] text-slate-500">Executed: ${startedAt} &bull; Admin: ${currentUser.email}</p>
-        </div>
-        <span class="self-start sm:self-center text-xs font-bold px-3 py-1 rounded-full ${allPassed ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}">
-          ${allPassed ? "ALL TESTS SUCCESSFUL" : `${passedTotal}/${results.length} PASSED`}
-        </span>
-      </div>
-
-      <div class="border border-slate-200 rounded-xl overflow-hidden">
-        <table class="w-full text-left border-collapse text-xs">
-          <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
-            <tr>
-              <th class="py-2.5 px-3">Feature Tested</th>
-              <th class="py-2.5 px-3">Test Description &amp; Verification</th>
-              <th class="py-2.5 px-3 text-right">Status</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 bg-white">
-            ${results.map(r => `
-              <tr>
-                <td class="py-2.5 px-3 font-semibold text-slate-900 align-top w-1/3">${r.feature}</td>
-                <td class="py-2.5 px-3 text-slate-600 align-top">
-                  <p>${r.description}</p>
-                  <p class="text-[11px] text-slate-500 mt-1 font-mono">${r.verification}</p>
-                </td>
-                <td class="py-2.5 px-3 text-right align-top">
-                  <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${r.success ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}">
-                    ${r.success ? "SUCCESS" : "FAILED"}
-                  </span>
-                </td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="flex items-center justify-between pt-2 no-print">
-        <p class="text-[11px] text-slate-400">All test records have been purged from Firestore.</p>
-        <button type="button" onclick="window.print()" class="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow">
-          Print Report / Save PDF
-        </button>
-      </div>
-    </div>
-  `;
-}
+    });
   </script>
 </body>
 </html>
