@@ -22,7 +22,7 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
 
-import { initQATestSuite } from "./qa-tests.js";
+import { initQATestSuite } from "./qa-tests.js?v=1";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBvnVne_IN4LTlFu3ACTeOsbHy1NoPZoZI",
