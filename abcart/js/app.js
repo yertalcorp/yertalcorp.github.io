@@ -33,7 +33,7 @@ const firebaseConfig = {
   appId: "1:718412836992:web:dd02a98edb68df330f3665"
 };
 
-const GEMINI_PROXY_URL = "https://script.google.com/macros/s/AKfycbxl3vsAej1WngKculXvMRyXGfmE0VQ0t--TMd3JN4rKg32B59BfOE3sYgoGGAuf8JeX/exec";
+const GEMINI_PROXY_URL = "https://script.google.com/macros/s/AKfycbz5Ecpl-Oi34Suy2uLL9rcY4uW2jDH4UG6fsCdR07ncYjLungK6o0gsel68jePUei28/exec";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
