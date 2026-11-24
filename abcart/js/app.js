@@ -73,13 +73,10 @@ export const TIER_RULES = {
   pro:  { label: "PRO",  maxLists: Infinity, maxMembers: Infinity, allowAutoBuy: true, allowCustomGrid: true, allPlatforms: true }
 };
 
-const MODEL_CANDIDATE_CATALOG = [
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
-  "gemini-2.5-pro",
-  "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
-  "gemini-1.5-pro"
+const FALLBACK_FREE_TIER_MODELS = [
+  "gemini-3.8-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash-lite"
 ];
 
 let currentUser = null;
@@ -98,11 +95,12 @@ let scrollerSpan = "weekly";
 let scrollerOffset = 0;
 
 let modelPoolState = {
-  default_model: "gemini-2.5-flash",
-  backup_model: "gemini-2.0-flash",
+  default_model: "gemini-3.8-flash",
+  backup_model: "gemini-3.6-flash",
+  candidateCatalog: [...FALLBACK_FREE_TIER_MODELS],
   models: [
-    { name: "gemini-2.5-flash", role: "default", attempts: 0, successes: 0, successRate: 100 },
-    { name: "gemini-2.0-flash", role: "backup",  attempts: 0, successes: 0, successRate: 100 }
+    { name: "gemini-3.8-flash", role: "default", attempts: 0, successes: 0, successRate: 100 },
+    { name: "gemini-3.6-flash", role: "backup",  attempts: 0, successes: 0, successRate: 100 }
   ]
 };
 
@@ -135,6 +133,119 @@ export async function ensureModelPool(wsId) {
   } else {
     modelPoolState = snap.data();
   }
+  renderModelPool();
+  return poolRef;
+}
+
+// ============================================================================
+// SELF-HEALING FIRESTORE MODEL_POOL ENGINE (WITH LAZY FREE-TIER DISCOVERY)
+// ============================================================================
+function isEligibleFreeTierModel(modelName, supportedMethods = ["generateContent"]) {
+  const cleanName = (modelName || "").replace(/^models\//, "");
+  if (!supportedMethods.includes("generateContent")) return false;
+
+  // Must be gemini-<major> where major >= 3 (allows gemini-3.*, gemini-4.*, etc.)
+  const verMatch = cleanName.match(/^gemini-(\d+)(?:\.(\d+))?/i);
+  if (!verMatch || Number(verMatch[1]) < 3) return false;
+
+  // Exclude paid-only tiers (pro, ultra) and non-text media/specialized endpoints
+  const blockedPatterns = [
+    /\bpro\b/i,
+    /\bultra\b/i,
+    /tts/i,
+    /image/i,
+    /audio/i,
+    /live/i,
+    /transcribe/i,
+    /veo/i,
+    /imagen/i,
+    /embedding/i,
+    /aqa/i,
+    /robotics/i,
+    /computer-use/i,
+    /deep-research/i,
+    /exp/i
+  ];
+  return !blockedPatterns.some(rx => rx.test(cleanName));
+}
+
+function rankFreeModelName(name) {
+  // Rank highest major.minor version first (e.g., gemini-4.* > gemini-3.8 > gemini-3.6)
+  let score = 0;
+  const verMatch = name.match(/^gemini-(\d+(?:\.\d+)?)/i);
+  if (verMatch) score += parseFloat(verMatch[1]) * 1000;
+  if (!/lite/i.test(name)) score += 50;
+  if (!/preview/i.test(name)) score += 20;
+  if (!/-\d{3,}/.test(name)) score += 10;
+  return score;
+}
+
+async function discoverLiveFreeTierModels() {
+  if (!currentUser) return [...FALLBACK_FREE_TIER_MODELS];
+  try {
+    const idToken = await currentUser.getIdToken(true);
+    const res = await fetch(`${GEMINI_PROXY_URL}?idToken=${encodeURIComponent(idToken)}`, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "listModels", idToken })
+    });
+    const parsed = JSON.parse(await res.text());
+    const rawModels = Array.isArray(parsed.models) ? parsed.models : [];
+    const discovered = rawModels
+      .filter(m => isEligibleFreeTierModel(m.name, m.supportedGenerationMethods || []))
+      .map(m => m.name.replace(/^models\//, ""))
+      .sort((a, b) => rankFreeModelName(b) - rankFreeModelName(a));
+
+    if (discovered.length > 0) {
+      return [...new Set(discovered)];
+    }
+  } catch (err) {
+    console.warn("Lazy free-tier model discovery failed:", err.message);
+  }
+  return [...FALLBACK_FREE_TIER_MODELS];
+}
+
+export async function ensureModelPool(wsId) {
+  const poolRef = doc(db, "workspaces", wsId, "settings", "modelPool");
+  const snap = await getDoc(poolRef);
+
+  if (!snap.exists()) {
+    modelPoolState = {
+      default_model: FALLBACK_FREE_TIER_MODELS[0],
+      backup_model: FALLBACK_FREE_TIER_MODELS[1],
+      candidateCatalog: [...FALLBACK_FREE_TIER_MODELS],
+      models: [
+        { name: FALLBACK_FREE_TIER_MODELS[0], role: "default", attempts: 0, successes: 0, successRate: 100 },
+        { name: FALLBACK_FREE_TIER_MODELS[1], role: "backup",  attempts: 0, successes: 0, successRate: 100 }
+      ]
+    };
+    await setDoc(poolRef, { ...modelPoolState, updatedAt: serverTimestamp() });
+  } else {
+    const stored = snap.data();
+    // Filter out any stale < gemini-3.* models that may still exist in Firestore
+    const validCatalog = (stored.candidateCatalog || FALLBACK_FREE_TIER_MODELS)
+      .filter(name => isEligibleFreeTierModel(name));
+    const activeCatalog = validCatalog.length ? validCatalog : [...FALLBACK_FREE_TIER_MODELS];
+
+    const validStoredModels = (stored.models || []).filter(m => isEligibleFreeTierModel(m.name));
+    const seededModels = validStoredModels.length
+      ? validStoredModels
+      : [
+          { name: activeCatalog[0], role: "default", attempts: 0, successes: 0, successRate: 100 },
+          ...(activeCatalog[1] ? [{ name: activeCatalog[1], role: "backup", attempts: 0, successes: 0, successRate: 100 }] : [])
+        ];
+
+    modelPoolState = reconcileModelPool({
+      ...stored,
+      candidateCatalog: activeCatalog,
+      models: seededModels
+    });
+
+    if (validStoredModels.length !== (stored.models || []).length) {
+      await setDoc(poolRef, { ...modelPoolState, updatedAt: serverTimestamp() }, { merge: true });
+    }
+  }
+
   renderModelPool();
   return poolRef;
 }
@@ -184,12 +295,16 @@ async function sendSingleModelRequest(prompt, targetModel) {
   if (extracted && String(extracted).trim()) return String(extracted).trim();
   throw new Error(`Empty response from ${targetModel} (keys: ${Object.keys(parsed).join(", ") || "none"})`);
 }
-function getNextUntriedModel(currentModels) {
+
+function getNextUntriedModel(currentModels, catalog) {
   const activeNames = new Set(currentModels.map(m => m.name));
-  return MODEL_CANDIDATE_CATALOG.find(name => !activeNames.has(name)) || null;
+  return (catalog || FALLBACK_FREE_TIER_MODELS).find(name => !activeNames.has(name)) || null;
 }
 
 export function reconcileModelPool(pool) {
+  const catalog = (pool.candidateCatalog || FALLBACK_FREE_TIER_MODELS).filter(name => isEligibleFreeTierModel(name));
+  const effectiveCatalog = catalog.length ? catalog : [...FALLBACK_FREE_TIER_MODELS];
+
   let updated = (pool.models || []).map(m => {
     const rate = m.attempts > 0 ? Math.round((m.successes / m.attempts) * 100) : 100;
     return { ...m, successRate: rate };
@@ -200,7 +315,7 @@ export function reconcileModelPool(pool) {
   updated = updated.filter(m => !(m.attempts >= 4 && m.successRate < 25));
 
   while (updated.length < Math.max(2, beforeLen)) {
-    const replacement = getNextUntriedModel(updated);
+    const replacement = getNextUntriedModel(updated, effectiveCatalog);
     if (!replacement) break;
     updated.push({
       name: replacement,
@@ -216,8 +331,9 @@ export function reconcileModelPool(pool) {
 
   return {
     ...pool,
-    default_model: updated[0]?.name || "gemini-2.0-flash",
-    backup_model: updated[1]?.name || updated[0]?.name || "gemini-2.0-flash",
+    candidateCatalog: effectiveCatalog,
+    default_model: updated[0]?.name || effectiveCatalog[0],
+    backup_model: updated[1]?.name || updated[0]?.name || effectiveCatalog[0],
     models: updated
   };
 }
@@ -226,18 +342,27 @@ export async function callGeminiProxy(prompt, overrideWsId = workspaceId) {
   const poolRef = overrideWsId ? doc(db, "workspaces", overrideWsId, "settings", "modelPool") : null;
   if (poolRef) {
     const snap = await getDoc(poolRef);
-    if (snap.exists()) modelPoolState = snap.data();
+    if (snap.exists()) {
+      const stored = snap.data();
+      const validStored = (stored.models || []).filter(m => isEligibleFreeTierModel(m.name));
+      if (validStored.length) {
+        modelPoolState = reconcileModelPool({ ...stored, models: validStored });
+      }
+    }
   }
 
-  const orderedNames = [
+  // 1. Try stored default and backup models from Firestore first (no lazy polling yet)
+  const storedOrderedNames = [
     modelPoolState.default_model,
     modelPoolState.backup_model,
     ...(modelPoolState.models || []).map(m => m.name)
-  ].filter((v, idx, arr) => v && arr.indexOf(v) === idx);
+  ].filter((v, idx, arr) => v && isEligibleFreeTierModel(v) && arr.indexOf(v) === idx);
 
   let lastError = null;
+  const attemptedInThisCall = new Set();
 
-  for (const modelName of orderedNames) {
+  for (const modelName of storedOrderedNames) {
+    attemptedInThisCall.add(modelName);
     let entry = modelPoolState.models.find(m => m.name === modelName);
     if (!entry) {
       entry = { name: modelName, role: "backup", attempts: 0, successes: 0, successRate: 100 };
@@ -260,14 +385,27 @@ export async function callGeminiProxy(prompt, overrideWsId = workspaceId) {
     }
   }
 
-  // All active models failed -> retrieve & append an additional model from catalog
-  const newCandidate = getNextUntriedModel(modelPoolState.models);
-  if (newCandidate) {
-    const newEntry = { name: newCandidate, role: "backup", attempts: 1, successes: 0, successRate: 0 };
-    modelPoolState.models.push(newEntry);
+  // 2. LAZY POLLING: All stored free-tier models in Firestore failed -> discover latest >= gemini-3.* free-tier models
+  const discoveredCatalog = await discoverLiveFreeTierModels();
+  modelPoolState.candidateCatalog = discoveredCatalog;
+
+  const freshCandidates = discoveredCatalog.filter(name => !attemptedInThisCall.has(name));
+  for (const freshModel of freshCandidates) {
+    let entry = modelPoolState.models.find(m => m.name === freshModel);
+    if (!entry) {
+      entry = { name: freshModel, role: "backup", attempts: 0, successes: 0, successRate: 100 };
+      modelPoolState.models.push(entry);
+    }
+    entry.attempts += 1;
+
     try {
-      const reply = await sendSingleModelRequest(prompt, newCandidate);
-      newEntry.successes = 1;
+      const reply = await sendSingleModelRequest(prompt, freshModel);
+      entry.successes += 1;
+      // Promote the newly discovered working model to default and persist to Firestore
+      modelPoolState.models = [
+        { ...entry, role: "default" },
+        ...modelPoolState.models.filter(m => m.name !== freshModel)
+      ];
       modelPoolState = reconcileModelPool(modelPoolState);
       if (poolRef) {
         await setDoc(poolRef, { ...modelPoolState, updatedAt: serverTimestamp() }, { merge: true });
@@ -284,9 +422,8 @@ export async function callGeminiProxy(prompt, overrideWsId = workspaceId) {
     await setDoc(poolRef, { ...modelPoolState, updatedAt: serverTimestamp() }, { merge: true });
   }
   renderModelPool();
-  throw lastError || new Error("All models in Model_Pool failed.");
+  throw lastError || new Error("All stored and discovered free-tier models (>= gemini-3.*) failed.");
 }
-
 function renderModelPool() {
   const feed = $("model-pool-feed");
   if (!feed) return;
