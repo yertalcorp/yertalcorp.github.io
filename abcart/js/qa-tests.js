@@ -239,11 +239,23 @@ export function initQATestSuite({ db, firestoreOps, getContext, appHelpers }) {
         `${proxyMsg} Eviction check: ${evictionWorked ? "pruned 0% model & promoted backup" : "failed"}.`,
         proxySuccess && evictionWorked
       );
+    // 8. Order & Item-Level SMS / Bill Verification (Increment 4)
+      await verifyTransactionRecord(testWsId, txnRef.id, "bank_sms", "UTR 632819402112");
+      const verifiedTxn = (await getDoc(txnRef)).data();
+      const allItemsVerified = Array.isArray(verifiedTxn.items)
+        ? verifiedTxn.items.every(it => it.verified === true)
+        : true;
 
+      logTest(
+        "8. Bank SMS & Bill Order Verification",
+        "Verifies an unverified Auto-Buy transaction via Bank/UPI SMS reference and cascades verified status to line items.",
+        `Txn '${verifiedTxn.platformTxnId}' status: verified=${verifiedTxn.verified} (${verifiedTxn.verificationRef}).`,
+        verifiedTxn.verified === true && verifiedTxn.verificationMethod === "bank_sms" && allItemsVerified
+      );
     } catch (err) {
       logTest("Unexpected Runner Exception", "Caught runtime error during test execution.", err.message, false);
     } finally {
-      // 8. Guaranteed State Restoration (Rollback)
+      // 9. Guaranteed State Restoration (Rollback)
       let deleted = 0;
       for (let i = createdRefs.length - 1; i >= 0; i--) {
         try {
@@ -254,7 +266,7 @@ export function initQATestSuite({ db, firestoreOps, getContext, appHelpers }) {
         }
       }
       logTest(
-        "8. Full State Restoration & Sandbox Cleanup",
+        "9. Full State Restoration & Sandbox Cleanup",
         "Deletes every temporary Firestore document and sandbox workspace created during the test run.",
         `Removed ${deleted} of ${createdRefs.length} temporary records; database restored to original state.`,
         deleted === createdRefs.length
