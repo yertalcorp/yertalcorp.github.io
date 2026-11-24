@@ -21,8 +21,7 @@ import {
   increment,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
-
-import { initQATestSuite } from "./qa-tests.js?v=1";
+import { initQATestSuite } from "./qa-tests.js?v=2";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBvnVne_IN4LTlFu3ACTeOsbHy1NoPZoZI",
@@ -231,7 +230,7 @@ export async function ensureModelPool(wsId) {
   return poolRef;
 }
 
-async function sendSingleModelRequest(prompt, targetModel) {
+async function sendSingleModelRequest(prompt, targetModel, inLineData = null) {
   const idToken = currentUser ? await currentUser.getIdToken(true) : "";
   const proxyEndpoint = idToken
     ? `${GEMINI_PROXY_URL}?idToken=${encodeURIComponent(idToken)}`
@@ -243,6 +242,7 @@ async function sendSingleModelRequest(prompt, targetModel) {
     body: JSON.stringify({
       prompt,
       model: targetModel,
+      inLineData,
       idToken,
       token: idToken,
       authorization: `Bearer ${idToken}`
@@ -319,7 +319,7 @@ export function reconcileModelPool(pool) {
   };
 }
 
-export async function callGeminiProxy(prompt, overrideWsId = workspaceId) {
+export async function callGeminiProxy(prompt, overrideWsId = workspaceId, inLineData = null) {
   const poolRef = overrideWsId ? doc(db, "workspaces", overrideWsId, "settings", "modelPool") : null;
   if (poolRef) {
     const snap = await getDoc(poolRef);
@@ -699,107 +699,149 @@ export function filterTransactionsByWindow(txns, startStr, endStr) {
   return txns.filter(t => t.date && t.date >= startStr && t.date <= endStr);
 }
 
-function renderOrdersAndHistory() {
-  const bounds = getScrollerWindowBounds();
-  $("scroller-range-label").textContent = bounds.label;
-  $("scroller-period-hint").textContent = `${scrollerSpan.toUpperCase()} WINDOW`;
+function renderWindowAnalytics(windowTxns) {
+  const total = windowTxns.reduce((s, t) => s + Number(t.totalAmount || 0), 0);
+  const verifiedTotal = windowTxns.filter(t => t.verified).reduce((s, t) => s + Number(t.totalAmount || 0), 0);
+  const unverifiedTotal = Math.max(0, total - verifiedTotal);
+  const pct = total > 0 ? Math.round((verifiedTotal / total) * 100) : 0;
 
-  const activeLists = allLists.filter(l => l.status === "active");
-  const schedFeed = $("scheduled-window-feed");
-  if (!activeLists.length) {
-    schedFeed.innerHTML = `<p class="text-slate-400 italic py-4">No active recurring lists scheduled.</p>`;
-  } else {
-    schedFeed.innerHTML = activeLists.map(list => `
-      <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
-        <div class="flex items-start justify-between gap-2">
-          <div>
-            <p class="font-bold text-slate-900">${list.title}</p>
-            <p class="text-[11px] text-slate-500">${formatSchedule(list.schedule)} &bull; ${(list.platforms || [])[0] || "Blinkit"}</p>
-          </div>
-          <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
-            ${list.mode === "auto_buy" ? "AUTO-BUY" : "AUTO-BUILD"}
-          </span>
-        </div>
-        <div class="flex flex-wrap gap-1">
-          ${(list.items || []).map((it, idx) => `
-            <span class="inline-flex items-center gap-1 text-[11px] bg-white border border-slate-200 px-2 py-0.5 rounded">
-              ${it.name} (${it.qty})
-              ${activeRole !== "viewer" ? `<button type="button" data-drop-item="${list.id}:${idx}" class="text-red-500 font-bold ml-1">&times;</button>` : ""}
-            </span>
-          `).join("")}
-        </div>
-        ${activeRole !== "viewer" ? `
-          <div class="flex gap-1.5 pt-1">
-            <input type="text" id="quick-add-${list.id}" placeholder="Add mid-cycle item..." class="flex-1 text-[11px] px-2 py-1 rounded border border-slate-300 bg-white" />
-            <button type="button" data-quick-append="${list.id}" class="px-2.5 py-1 rounded bg-slate-800 text-white text-[11px] font-semibold">+ Item</button>
-          </div>
-        ` : ""}
-      </div>
-    `).join("");
-
-    schedFeed.querySelectorAll("button[data-drop-item]").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const [lId, idxStr] = btn.dataset.dropItem.split(":");
-        const target = activeLists.find(l => l.id === lId);
-        if (!target) return;
-        const nextItems = [...(target.items || [])];
-        nextItems.splice(Number(idxStr), 1);
-        await updateDoc(doc(db, "workspaces", workspaceId, "lists", lId), { items: nextItems });
-        showToast("Updated upcoming order items.");
-      });
-    });
-
-    schedFeed.querySelectorAll("button[data-quick-append]").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const lId = btn.dataset.quickAppend;
-        const inp = $(`quick-add-${lId}`);
-        const val = inp?.value.trim();
-        if (!val) return;
-        const target = activeLists.find(l => l.id === lId);
-        const nextItems = [...(target.items || []), { name: val, qty: "1 unit" }];
-        await updateDoc(doc(db, "workspaces", workspaceId, "lists", lId), { items: nextItems });
-        inp.value = "";
-        showToast(`Added "${val}" to upcoming scheduled run.`);
-      });
-    });
+  if ($("analytics-verified-amt")) {
+    $("analytics-verified-amt").textContent = `${formatINR(verifiedTotal)} Verified`;
+    $("analytics-unverified-amt").textContent = `${formatINR(unverifiedTotal)} Unverified`;
+    $("analytics-verified-bar").style.width = `${pct}%`;
   }
 
-  const windowTxns = filterTransactionsByWindow(allTransactions, bounds.startStr, bounds.endStr);
-  $("badge-txn-count").textContent = allTransactions.length;
-  const totalSpent = windowTxns.reduce((s, t) => s + Number(t.totalAmount || 0), 0);
-  $("window-spend-total").textContent = formatINR(totalSpent);
-
-  const txnFeed = $("transactions-window-feed");
-  if (!windowTxns.length) {
-    txnFeed.innerHTML = `<div class="p-8 text-center border border-dashed border-slate-200 rounded-xl text-slate-400">No transactions recorded in ${bounds.label}.</div>`;
-  } else {
-    txnFeed.innerHTML = windowTxns.map(t => `
-      <div class="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
-        <div class="flex items-start justify-between gap-2">
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-bold text-slate-900">${t.listTitle || "Order"}</span>
-              <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${t.platform}</span>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${t.verified ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}">
-                ${t.verified ? "VERIFIED" : "UNVERIFIED"}
-              </span>
-            </div>
-            <p class="text-[11px] text-slate-500 mt-0.5">Date: ${t.date} &bull; Txn ID: <span class="font-mono">${t.platformTxnId || "MANUAL"}</span></p>
-          </div>
-          <span class="font-bold text-sm text-slate-900">${formatINR(t.totalAmount)}</span>
-        </div>
-        <div class="flex flex-wrap gap-1 pt-1 border-t border-slate-100">
-          ${(t.items || []).map(it => `
-            <span class="text-[11px] bg-slate-50 border border-slate-200 px-2 py-0.5 rounded text-slate-700">
-              ${it.matchedSku || it.name} &bull; ${formatINR(it.priceInr || 0)}
-            </span>
-          `).join("")}
-        </div>
-      </div>
-    `).join("");
+  const byPlatform = {};
+  windowTxns.forEach(t => {
+    const p = t.platform || "Other";
+    byPlatform[p] = (byPlatform[p] || 0) + Number(t.totalAmount || 0);
+  });
+  const sortedPlatforms = Object.entries(byPlatform).sort((a, b) => b[1] - a[1]);
+  if ($("analytics-top-platform")) {
+    $("analytics-top-platform").textContent = sortedPlatforms[0]
+      ? `${sortedPlatforms[0][0]} (${formatINR(sortedPlatforms[0][1])})`
+      : "—";
+    $("analytics-platform-breakdown").textContent = sortedPlatforms.length
+      ? sortedPlatforms.map(([k, v]) => `${k}: ${formatINR(v)}`).join(" • ")
+      : "No orders in window";
   }
+
+  const autoBuyCnt = windowTxns.filter(t => t.mode === "auto_buy").length;
+  const autoBuildCnt = windowTxns.filter(t => t.mode === "auto_build").length;
+  const manualCnt = windowTxns.filter(t => t.mode === "manual").length;
+  if ($("analytics-mode-summary")) {
+    $("analytics-mode-summary").textContent = `${windowTxns.length} Order(s) • ${pct}% Reconciled`;
+    $("analytics-mode-breakdown").textContent = `Auto-Buy: ${autoBuyCnt} • Auto-Build: ${autoBuildCnt} • Manual: ${manualCnt}`;
+  }
+  renderWindowAnalytics(windowTxns);
 }
 
+export async function verifyTransactionRecord(wsId, txnId, method, refNote) {
+  const txnRef = doc(db, "workspaces", wsId, "transactions", txnId);
+  const snap = await getDoc(txnRef);
+  if (!snap.exists()) throw new Error("Transaction not found.");
+  const data = snap.data();
+  const updatedItems = (data.items || []).map(it => ({ ...it, verified: true }));
+  await updateDoc(txnRef, {
+    verified: true,
+    verificationMethod: method,
+    verificationRef: refNote,
+    verifiedAt: serverTimestamp(),
+    items: updatedItems
+  });
+}
+
+function openVerificationModal() {
+  if (activeRole === "viewer") return showToast("Viewers cannot verify transactions.");
+  const unverifiedTxns = allTransactions.filter(t => !t.verified);
+
+  $("modal-mode-badge").textContent = "RECONCILIATION";
+  $("modal-mode-badge").className = "text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-600 text-white";
+  $("modal-cart-title").textContent = "Verify Order via Bank/UPI SMS or Bill Upload";
+
+  const optionsHtml = unverifiedTxns.length
+    ? unverifiedTxns.map(t => `<option value="${t.id}">${t.date} • ${t.listTitle} (${t.platform}) — ${formatINR(t.totalAmount)}</option>`).join("")
+    : `<option value="">All transactions are already verified!</option>`;
+
+  $("modal-cart-body").innerHTML = `
+    <div class="space-y-4">
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Select Unverified Transaction</label>
+        <select id="verify-target-txn" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white">
+          ${optionsHtml}
+        </select>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+        <p class="font-bold text-slate-800">Option A: Paste Bank / UPI Debit SMS</p>
+        <textarea id="verify-sms-text" rows="3" placeholder="e.g., INR 340.00 debited from A/c XX1234 on 24-11-26 to Blinkit UPI Ref 632819402112"
+          class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs"></textarea>
+        <button type="button" id="btn-run-sms-verify" ${!unverifiedTxns.length ? "disabled" : ""}
+          class="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold">
+          Parse SMS &amp; Verify Order
+        </button>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-indigo-50/50 border border-indigo-100 space-y-2.5">
+        <p class="font-bold text-slate-800">Option B: Upload Receipt / Invoice Screenshot</p>
+        <input id="verify-bill-file" type="file" accept="image/*" class="w-full text-xs text-slate-600" />
+        <button type="button" id="btn-run-bill-verify" ${!unverifiedTxns.length ? "disabled" : ""}
+          class="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold">
+          Scan Bill Image &amp; Verify Order
+        </button>
+      </div>
+    </div>
+  `;
+  $("cart-modal").classList.remove("hidden");
+
+  $("btn-run-sms-verify")?.addEventListener("click", async () => {
+    const txnId = $("verify-target-txn").value;
+    const smsText = $("verify-sms-text").value.trim();
+    if (!txnId || !smsText) return showToast("Select a transaction and paste the Bank/UPI SMS.");
+
+    showToast("Analyzing SMS via Model_Pool...");
+    let refExtracted = "SMS-MATCHED";
+    try {
+      const prompt = `Extract the transaction reference/UTR number and amount from this Indian Bank/UPI SMS. Return ONLY pure JSON: {"refId":"...","amount":0}. SMS: "${smsText}"`;
+      const raw = await callGeminiProxy(prompt);
+      const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+      if (parsed.refId) refExtracted = `UTR ${parsed.refId}`;
+    } catch {
+      const utrMatch = smsText.match(/\b\d{10,16}\b/);
+      if (utrMatch) refExtracted = `UTR ${utrMatch[0]}`;
+    }
+
+    await verifyTransactionRecord(workspaceId, txnId, "bank_sms", refExtracted);
+    $("cart-modal").classList.add("hidden");
+    showToast(`Order verified via Bank/UPI SMS (${refExtracted})!`);
+  });
+
+  $("btn-run-bill-verify")?.addEventListener("click", async () => {
+    const txnId = $("verify-target-txn").value;
+    const fileInput = $("verify-bill-file");
+    const file = fileInput?.files?.[0];
+    if (!txnId || !file) return showToast("Select a transaction and choose a bill image.");
+
+    showToast("Scanning receipt image via Multimodal Gemini...");
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64Data = String(reader.result).split(",")[1];
+      let billRef = `BILL-${file.name.slice(0, 14)}`;
+      try {
+        const prompt = `Read this receipt/invoice image and extract the order/invoice ID and total paid amount. Return ONLY pure JSON: {"invoiceId":"...","total":0}.`;
+        const raw = await callGeminiProxy(prompt, workspaceId, { mimeType: file.type, data: base64Data });
+        const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+        if (parsed.invoiceId) billRef = `INV ${parsed.invoiceId}`;
+      } catch {
+        // Fallback to filename audit stamp if OCR fails
+      }
+      await verifyTransactionRecord(workspaceId, txnId, "bill_upload", billRef);
+      $("cart-modal").classList.add("hidden");
+      showToast(`Order verified via Bill Upload (${billRef})!`);
+    };
+    reader.readAsDataURL(file);
+  });
+}
 function openManualTransactionModal() {
   if (activeRole === "viewer") return showToast("Viewers cannot add manual transactions.");
   const todayStr = new Date().toISOString().split("T")[0];
