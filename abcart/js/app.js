@@ -119,25 +119,6 @@ function formatINR(val) {
 }
 
 // ============================================================================
-// SELF-HEALING FIRESTORE MODEL_POOL ENGINE
-// ============================================================================
-export async function ensureModelPool(wsId) {
-  const poolRef = doc(db, "workspaces", wsId, "settings", "modelPool");
-  const snap = await getDoc(poolRef);
-  if (!snap.exists()) {
-    await setDoc(poolRef, {
-      ...modelPoolState,
-      candidateCatalog: MODEL_CANDIDATE_CATALOG,
-      updatedAt: serverTimestamp()
-    });
-  } else {
-    modelPoolState = snap.data();
-  }
-  renderModelPool();
-  return poolRef;
-}
-
-// ============================================================================
 // SELF-HEALING FIRESTORE MODEL_POOL ENGINE (WITH LAZY FREE-TIER DISCOVERY)
 // ============================================================================
 function isEligibleFreeTierModel(modelName, supportedMethods = ["generateContent"]) {
