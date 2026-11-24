@@ -33,7 +33,7 @@ const firebaseConfig = {
   appId: "1:718412836992:web:dd02a98edb68df330f3665"
 };
 
-const GEMINI_PROXY_URL = "https://script.google.com/macros/s/AKfycbwO8XAF40o5sBn7tDMf1ODDsd7Bnsz8ekin7OAt28Pa-gu40DchFrwDT5tVFIwGHt1X/exec";
+const GEMINI_PROXY_URL = "https://script.google.com/macros/s/AKfycbyQ9EgrXEaSeJouDFr_upukCnk8R7Q352rFvnddr75M8cpMdhw1nHBdmgpjStbXWyDv/exec";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -166,8 +166,10 @@ async function sendSingleModelRequest(prompt, targetModel) {
   }
   if (typeof parsed === "string" && parsed.trim()) return parsed.trim();
   if (parsed.error) {
-    const errMsg = typeof parsed.error === "string" ? parsed.error : (parsed.error.message || JSON.stringify(parsed.error));
-    throw new Error(errMsg);
+    const baseMsg = typeof parsed.error === "string" ? parsed.error : (parsed.error.message || JSON.stringify(parsed.error));
+    const detailMsg = parsed.details?.error?.message ? ` — ${parsed.details.error.message}` : "";
+    const modelTag = parsed.modelUsed || targetModel;
+    throw new Error(`[${modelTag}] ${baseMsg}${detailMsg}`);
   }
   const extracted =
     parsed.response ||
